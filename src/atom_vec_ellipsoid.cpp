@@ -44,9 +44,9 @@ AtomVecEllipsoid::AtomVecEllipsoid(LAMMPS *lmp) :
   bonus_flag = 1;
 
   size_forward_bonus = 4;
-  size_border_bonus = 8;
-  size_restart_bonus_one = 8;
-  size_data_bonus = 8;
+  size_border_bonus = 10;
+  size_restart_bonus_one = 10;
+  size_data_bonus = 10;
 
   atom->ellipsoid_flag = 1;
   atom->rmass_flag = atom->angmom_flag = atom->torque_flag = 1;
@@ -197,6 +197,7 @@ int AtomVecEllipsoid::pack_border_bonus(int n, int *list, double *buf)
 {
   int i, j, m;
   double *shape, *quat;
+  double *block;
 
   m = 0;
   for (i = 0; i < n; i++) {
@@ -207,6 +208,7 @@ int AtomVecEllipsoid::pack_border_bonus(int n, int *list, double *buf)
       buf[m++] = ubuf(1).d;
       shape = bonus[ellipsoid[j]].shape;
       quat = bonus[ellipsoid[j]].quat;
+      block = bonus[ellipsoid[j]].block;
       buf[m++] = shape[0];
       buf[m++] = shape[1];
       buf[m++] = shape[2];
@@ -214,6 +216,8 @@ int AtomVecEllipsoid::pack_border_bonus(int n, int *list, double *buf)
       buf[m++] = quat[1];
       buf[m++] = quat[2];
       buf[m++] = quat[3];
+      buf[m++] = block[0];
+      buf[m++] = block[1];
     }
   }
 
@@ -226,6 +230,8 @@ int AtomVecEllipsoid::unpack_border_bonus(int n, int first, double *buf)
 {
   int i, j, m, last;
   double *shape, *quat;
+  double *block;
+  bool flag_super;
 
   m = 0;
   last = first + n;
@@ -237,6 +243,7 @@ int AtomVecEllipsoid::unpack_border_bonus(int n, int first, double *buf)
       if (j == nmax_bonus) grow_bonus();
       shape = bonus[j].shape;
       quat = bonus[j].quat;
+      block = bonus[j].block;
       shape[0] = buf[m++];
       shape[1] = buf[m++];
       shape[2] = buf[m++];
@@ -244,7 +251,13 @@ int AtomVecEllipsoid::unpack_border_bonus(int n, int first, double *buf)
       quat[1] = buf[m++];
       quat[2] = buf[m++];
       quat[3] = buf[m++];
+      block[0] = buf[m++];
+      block[1] = buf[m++];
+      block[2] = block[0] / block[1];
+      flag_super = ((std::fabs(block[0] - 2) > EPSBLOCK2) && (std::fabs(block[1] - 2) > EPSBLOCK2));
+      bonus[j].flag_super = flag_super;
       bonus[j].ilocal = i;
+      bonus[j].radcirc = compute_radcirc(shape, block, flag_super);
       ellipsoid[i] = j;
       nghost_bonus++;
     }
@@ -269,6 +282,7 @@ int AtomVecEllipsoid::pack_exchange_bonus(int i, double *buf)
     int j = ellipsoid[i];
     double *shape = bonus[j].shape;
     double *quat = bonus[j].quat;
+    double *block = bonus[j].block;
     buf[m++] = shape[0];
     buf[m++] = shape[1];
     buf[m++] = shape[2];
@@ -276,6 +290,8 @@ int AtomVecEllipsoid::pack_exchange_bonus(int i, double *buf)
     buf[m++] = quat[1];
     buf[m++] = quat[2];
     buf[m++] = quat[3];
+    buf[m++] = block[0];
+    buf[m++] = block[1];
   }
 
   return m;
@@ -293,6 +309,8 @@ int AtomVecEllipsoid::unpack_exchange_bonus(int ilocal, double *buf)
     if (nlocal_bonus == nmax_bonus) grow_bonus();
     double *shape = bonus[nlocal_bonus].shape;
     double *quat = bonus[nlocal_bonus].quat;
+    double *block = bonus[nlocal_bonus].block;
+    bool &flag_super = bonus[nlocal_bonus].flag_super;
     shape[0] = buf[m++];
     shape[1] = buf[m++];
     shape[2] = buf[m++];
@@ -300,6 +318,11 @@ int AtomVecEllipsoid::unpack_exchange_bonus(int ilocal, double *buf)
     quat[1] = buf[m++];
     quat[2] = buf[m++];
     quat[3] = buf[m++];
+    block[0] = buf[m++];
+    block[1] = buf[m++];
+    block[2] = block[0] / block[1];
+    flag_super = ((std::fabs(block[0] - 2) > EPSBLOCK2) && (std::fabs(block[1] - 2) > EPSBLOCK2));
+    bonus[nlocal_bonus].radcirc = compute_radcirc(shape, block, flag_super);
     bonus[nlocal_bonus].ilocal = ilocal;
     ellipsoid[ilocal] = nlocal_bonus++;
   }
@@ -350,6 +373,8 @@ int AtomVecEllipsoid::pack_restart_bonus(int i, double *buf)
     buf[m++] = bonus[j].quat[1];
     buf[m++] = bonus[j].quat[2];
     buf[m++] = bonus[j].quat[3];
+    buf[m++] = bonus[j].block[0];
+    buf[m++] = bonus[j].block[1];
   }
 
   return m;
@@ -370,6 +395,8 @@ int AtomVecEllipsoid::unpack_restart_bonus(int ilocal, double *buf)
     if (nlocal_bonus == nmax_bonus) grow_bonus();
     double *shape = bonus[nlocal_bonus].shape;
     double *quat = bonus[nlocal_bonus].quat;
+    double *block = bonus[nlocal_bonus].block;
+    bool &flag_super = bonus[nlocal_bonus].flag_super;
     shape[0] = buf[m++];
     shape[1] = buf[m++];
     shape[2] = buf[m++];
@@ -377,6 +404,11 @@ int AtomVecEllipsoid::unpack_restart_bonus(int ilocal, double *buf)
     quat[1] = buf[m++];
     quat[2] = buf[m++];
     quat[3] = buf[m++];
+    block[0] = buf[m++];
+    block[1] = buf[m++];
+    block[2] = block[0] / block[1];
+    flag_super = ((std::fabs(block[0] - 2) > EPSBLOCK2) && (std::fabs(block[1] - 2) > EPSBLOCK2));
+    bonus[nlocal_bonus].radcirc = compute_radcirc(shape, block, flag_super);
     bonus[nlocal_bonus].ilocal = ilocal;
     ellipsoid[ilocal] = nlocal_bonus++;
   }
@@ -480,7 +512,9 @@ void AtomVecEllipsoid::pack_data_pre(int ilocal)
 
   if (ellipsoid_flag >= 0) {
     shape = bonus[ellipsoid_flag].shape;
-    rmass[ilocal] /= 4.0 * MY_PI / 3.0 * shape[0] * shape[1] * shape[2];
+    block = bonus[ellipsoid_flag].block;
+    flag_super = bonus[ellipsoid_flag].flag_super;
+    rmass[ilocal] /= compute_volume(shape, block, flag_super);
   }
 }
 
@@ -519,6 +553,8 @@ int AtomVecEllipsoid::pack_data_bonus(double *buf, int /*flag*/)
       buf[m++] = bonus[j].quat[1];
       buf[m++] = bonus[j].quat[2];
       buf[m++] = bonus[j].quat[3];
+      buf[m++] = bonus[j].block[0];
+      buf[m++] = bonus[j].block[1];
     } else
       m += size_data_bonus;
   }
@@ -750,8 +786,8 @@ double AtomVecEllipsoid::compute_volume(double *shape, double *block, bool flag_
 
   if (flag_super) {
     double e1 = 2.0 / block[0], e2 = 2.0 / block[1];
-    unitvol = e1 * e2 * std::beta(0.5 * e1, 1.0 + e1) *
-                        std::beta(0.5 * e2, 0.5 * e2); // CAN'T GET std::beta to be recognized, need help
+    unitvol = e1 * e2 * std::tr1::beta(0.5 * e1, 1.0 + e1) *
+                        std::tr1::beta(0.5 * e2, 0.5 * e2); // CAN'T GET std::beta to be recognized, need help
   }
   return unitvol * shape[0] * shape[1] * shape[2];
 }
