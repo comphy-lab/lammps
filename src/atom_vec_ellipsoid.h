@@ -31,7 +31,6 @@ class AtomVecEllipsoid : virtual public AtomVec {
     double quat[4];
     double block[3];
     double inertia[3];
-    double radcirc;
     bool flag_super;
     int ilocal;
   };
@@ -77,7 +76,7 @@ class AtomVecEllipsoid : virtual public AtomVec {
 
  protected:
   int *ellipsoid;
-  double *rmass;
+  double *radius, *rmass;
   double **angmom;
   double **quat_hold;
 
