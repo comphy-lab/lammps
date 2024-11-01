@@ -22,7 +22,7 @@ Generates a simple initial ssDNA or dsDNA configuration from a given sequence.
 For dsDNA the sequence should be preceded by the 'DOUBLE' keyword.
 
 Usage: 
-$$ python generate.py box_offset box_length sequence_file [topology (strand OR ring)] [twist ((p-p_0)/p_0) for strand OR Delta_Lk for ring] 
+$$ python generate.py box_offset box_length sequence_file [topology (strand OR ring)] [twist ((Lk-Lk_0)/Lk_0) for strand OR Delta_Lk=(Lk-Lk_0) for ring] 
 """
 
 # for python2/3 compatibility
@@ -58,11 +58,11 @@ try:
     box_offset = float(sys.argv[1])
     box_length = float(sys.argv[2])
     infile = sys.argv[3]
-    # default is strand with no twist, i.e. pitch = 10.5 bp
+    # default is strand with no twist, i.e. pitch = 10.55 bp
     if len(sys.argv) == 4:
         topo = 'strand'
         twist = 0
-    # default is no twist, i.e. pitch = 10.5 bp
+    # default is no twist, i.e. pitch = 10.55 bp
     elif len(sys.argv) == 5:
         topo = sys.argv[4]
         twist = 0
@@ -72,7 +72,7 @@ try:
 
 except:
     print("Usage: %s <%s> <%s> <%s> <%s> <%s> " % (sys.argv[0], \
-        "box offset", "box length", "file with sequences", "[topology (strand OR ring)]", "[twist ((p-p_0)/p_0) for strand OR Delta_Lk for ring]"), file=sys.stderr)
+        "box offset", "box length", "file with sequences", "[topology (strand OR ring)]", "[twist ((Lk-Lk_0)/Lk_0) for strand OR Delta_Lk=(Lk-Lk_0) for ring]"), file=sys.stderr)
     sys.exit(1)
 box = np.array ([box_length, box_length, box_length])
 
@@ -322,10 +322,10 @@ def get_rotation_matrix(axis, anglest, nbp=0):
                 angle = (np.pi / 180.) * (anglest[0])
             elif anglest[1] in ["bp"]:
 
-                # strand: angle is 360/pitch
-                # pitch is p = 10.5 * (1-twist)
+                # strand: angle is 360 devided by default no. bpspitch
+                # positive/negative supercoiling increases/decreases the angle
                 if nbp == 0:
-                    ang = 360./(10.5*(1-twist))
+                    ang = 360./10.55*(1+twist)
 
                 # ring: angle depends on Delta_Lk = Lk - Lk_0
                 else:
