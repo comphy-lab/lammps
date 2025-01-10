@@ -222,14 +222,27 @@ void BondOxdnaFene::compute(int eflag, int vflag)
 
     // determine tetramer types
     // 3'neighbor a - a - b - 5'neighbor b
+
     if (id3p[a] != -1) {
       a3ptype = atomtype[atom->map(id3p[a])];
+      a3ptype %= 4; // unique base pairing
+     if (a3ptype == 0) a3ptype = 4;
     }
     else a3ptype = 0;
-    atype   = atomtype[a];
-    btype   = atomtype[b];
+
+    atype = atomtype[a];
+    atype %= 4; // unique base pairing
+    if (atype == 0) atype = 4;
+
+    btype = atomtype[b];
+    btype %= 4; // unique base pairing
+    if (btype == 0) btype = 4;
+
     if (id5p[b] != -1) {
       b5ptype = atomtype[atom->map(id5p[b])];
+      b5ptype = atomtype[atom->map(id5p[b])];
+      b5ptype %= 4; // unique base pairing
+     if (b5ptype == 0) b5ptype = 4;
     }
     else b5ptype = 0;
 
