@@ -14,7 +14,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   make clean-all | tee -a $EXDIR/test.log
   make purge | tee -a $EXDIR/test.log
   make pu | tee -a $EXDIR/test.log
-  make ps | tee -a $EXDIR/test.log
+  make pi | tee -a $EXDIR/test.log
   make -j8 mpi | tee -a $EXDIR/test.log
 
   ######################################################
