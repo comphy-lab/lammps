@@ -31,6 +31,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <cassert>
 
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
@@ -90,6 +91,23 @@ PairOxdnaExcv::~PairOxdnaExcv()
     memory->destroy(cutsq_bb_ast);
     memory->destroy(cutsq_bb_c);
 
+    memory->destroy(sigma4_sb);
+    memory->destroy(cut4_sb_ast);
+    memory->destroy(b4_sb);
+    memory->destroy(cut4_sb_c);
+    memory->destroy(lj14_sb);
+    memory->destroy(lj24_sb);
+    memory->destroy(cut4sq_sb_ast);
+    memory->destroy(cut4sq_sb_c);
+
+    memory->destroy(sigma4_bb);
+    memory->destroy(cut4_bb_ast);
+    memory->destroy(b4_bb);
+    memory->destroy(cut4_bb_c);
+    memory->destroy(lj14_bb);
+    memory->destroy(lj24_bb);
+    memory->destroy(cut4sq_bb_ast);
+    memory->destroy(cut4sq_bb_c);
   }
 }
 
@@ -148,6 +166,9 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
   int *ellipsoid = atom->ellipsoid;
 
   int a,b,in,ia,ib,anum,bnum,atype,btype;
+  tagint *id3p = atom->id3p;
+  tagint *id5p = atom->id5p;
+  int _3ptype,_5ptype;
 
   evdwl = 0.0;
   ev_init(eflag,vflag);
@@ -259,12 +280,14 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
       // excluded volume interaction
 
       // backbone-backbone
+
+      // interaction coefficients depend on base step
       if (rsq_ss < cutsq_ss_c[atype][btype]) {
 
         evdwl = F3(rsq_ss,cutsq_ss_ast[atype][btype],cut_ss_c[atype][btype],lj1_ss[atype][btype],
                         lj2_ss[atype][btype],epsilon_ss[atype][btype],b_ss[atype][btype],fpair);
 
-        // knock out nearest-neighbor interaction between ss
+        // knock out nearest-neighbor interaction between ss on same strand
         fpair *= factor_lj;
         evdwl *= factor_lj;
 
@@ -306,10 +329,49 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
       }
 
       // backbone-base
-      if (rsq_sb < cutsq_sb_c[atype][btype]) {
 
-        evdwl = F3(rsq_sb,cutsq_sb_ast[atype][btype],cut_sb_c[atype][btype],lj1_sb[atype][btype],
-                        lj2_sb[atype][btype],epsilon_sb[atype][btype],b_sb[atype][btype],fpair);
+      evdwl = 0.0;
+
+      // determine bond topology 
+      if (factor_lj) { // a-b not nearest-neighbors on same strand, arguments depend on base step
+
+        if (rsq_sb < cutsq_sb_c[atype][btype]) {
+          evdwl = F3(rsq_sb,cutsq_sb_ast[atype][btype],cut_sb_c[atype][btype],lj1_sb[atype][btype],
+                          lj2_sb[atype][btype],epsilon_sb[atype][btype],b_sb[atype][btype],fpair);
+        }
+
+      }
+      else { // a-b nearest-neighbors on same strand, arguments depends on tetramer
+
+        if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
+
+          // determine type of 3'-partner of a and 5'-partner of b
+          _3ptype = type[atom->map(id3p[a])];
+          _5ptype = type[atom->map(id5p[b])];
+
+          if (rsq_sb < cut4sq_sb_c[_3ptype][atype][btype][_5ptype]) {
+            evdwl = F3(rsq_sb,cut4sq_sb_ast[_3ptype][atype][btype][_5ptype],cut4_sb_c[_3ptype][atype][btype][_5ptype],
+                            lj14_sb[_3ptype][atype][btype][_5ptype],lj24_sb[_3ptype][atype][btype][_5ptype],
+                            epsilon_sb[atype][btype],b4_sb[_3ptype][atype][btype][_5ptype],fpair);
+          }
+        }
+
+        if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
+
+          // determine type of 3'-partner of b and 5'-partner of a
+          _3ptype = type[atom->map(id3p[b])];
+          _5ptype = type[atom->map(id5p[a])];
+
+          if (rsq_sb < cut4sq_sb_c[_3ptype][btype][atype][_5ptype]) {
+            evdwl = F3(rsq_sb,cut4sq_sb_ast[_3ptype][btype][atype][_5ptype],cut4_sb_c[_3ptype][btype][atype][_5ptype],
+                            lj14_sb[_3ptype][btype][atype][_5ptype],lj24_sb[_3ptype][btype][atype][_5ptype],
+                            epsilon_sb[btype][atype],b4_sb[_3ptype][btype][atype][_5ptype],fpair);
+          }
+        }
+
+      }
+
+      if (evdwl) {
 
         delf[0] = delr_sb[0]*fpair;
         delf[1] = delr_sb[1]*fpair;
@@ -346,10 +408,47 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
       }
 
       // base-backbone
-      if (rsq_bs < cutsq_sb_c[atype][btype]) {
 
-        evdwl = F3(rsq_bs,cutsq_sb_ast[atype][btype],cut_sb_c[atype][btype],lj1_sb[atype][btype],
-                        lj2_sb[atype][btype],epsilon_sb[atype][btype],b_sb[atype][btype],fpair);
+      evdwl = 0.0;
+
+      // determine bond topology 
+      if (factor_lj) { // a-b not nearest-neighbors on same strand, arguments depend on base step
+
+        if (rsq_bs < cutsq_sb_c[atype][btype]) {
+          evdwl = F3(rsq_bs,cutsq_sb_ast[atype][btype],cut_sb_c[atype][btype],lj1_sb[atype][btype],
+                         lj2_sb[atype][btype],epsilon_sb[atype][btype],b_sb[atype][btype],fpair);
+        }
+
+      }
+      else { // a-b nearest-neighbors on same strand, arguments depends on tetramer
+
+        if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
+
+          // determine type of 3'-partner of a and 5'-partner of b
+          _3ptype = type[atom->map(id3p[a])];
+          _5ptype = type[atom->map(id5p[b])];
+
+          if (rsq_bs < cut4sq_sb_c[_3ptype][atype][btype][_5ptype]) {
+            evdwl = F3(rsq_bs,cut4sq_sb_ast[_3ptype][atype][btype][_5ptype],cut4_sb_c[_3ptype][atype][btype][_5ptype],lj14_sb[_3ptype][atype][btype][_5ptype],
+                           lj24_sb[_3ptype][atype][btype][_5ptype],epsilon_sb[atype][btype],b4_sb[_3ptype][atype][btype][_5ptype],fpair);
+          }
+        }
+
+        if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
+
+          // determine type of 3'-partner of b and 5'-partner of a
+          _3ptype = type[atom->map(id3p[b])];
+          _5ptype = type[atom->map(id5p[a])];
+
+          if (rsq_bs < cut4sq_sb_c[_3ptype][btype][atype][_5ptype]) {
+            evdwl = F3(rsq_bs,cut4sq_sb_ast[_3ptype][btype][atype][_5ptype],cut4_sb_c[_3ptype][btype][atype][_5ptype],lj14_sb[_3ptype][btype][atype][_5ptype],
+                           lj24_sb[_3ptype][btype][atype][_5ptype],epsilon_sb[btype][atype],b4_sb[_3ptype][btype][atype][_5ptype],fpair);
+          }
+        }
+
+      }
+
+      if (evdwl) {
 
         delf[0] = delr_bs[0]*fpair;
         delf[1] = delr_bs[1]*fpair;
@@ -386,10 +485,49 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
       }
 
       // base-base
-      if (rsq_bb < cutsq_bb_c[atype][btype]) {
 
-        evdwl = F3(rsq_bb,cutsq_bb_ast[atype][btype],cut_bb_c[atype][btype],lj1_bb[atype][btype],
-                        lj2_bb[atype][btype],epsilon_bb[atype][btype],b_bb[atype][btype],fpair);
+      evdwl = 0.0;
+
+      // determine bond topology 
+      if (factor_lj) { // a-b not nearest-neighbors on same strand, arguments depend on base step
+
+        if (rsq_bb < cutsq_bb_c[atype][btype]) {
+          evdwl = F3(rsq_bb,cutsq_bb_ast[atype][btype],cut_bb_c[atype][btype],lj1_bb[atype][btype],
+                          lj2_bb[atype][btype],epsilon_bb[atype][btype],b_bb[atype][btype],fpair);
+        }
+
+      }
+      else { // a-b nearest-neighbors on same strand, arguments depends on tetramer
+
+        if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
+
+          // determine type of 3'-partner of a and 5'-partner of b
+          _3ptype = type[atom->map(id3p[a])];
+          _5ptype = type[atom->map(id5p[b])];
+
+          if (rsq_bb < cut4sq_bb_c[_3ptype][atype][btype][_5ptype]) {
+            evdwl = F3(rsq_bb,cut4sq_bb_ast[_3ptype][atype][btype][_5ptype],cut4_bb_c[_3ptype][atype][btype][_5ptype],
+                            lj14_bb[_3ptype][atype][btype][_5ptype],lj24_bb[_3ptype][atype][btype][_5ptype],
+                            epsilon_bb[atype][btype],b4_bb[_3ptype][atype][btype][_5ptype],fpair);
+          }
+        }
+
+        if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
+
+          // determine type of 3'-partner of b and 5'-partner of a
+          _3ptype = type[atom->map(id3p[b])];
+          _5ptype = type[atom->map(id5p[a])];
+
+          if (rsq_bb < cut4sq_bb_c[_3ptype][btype][atype][_5ptype]) {
+            evdwl = F3(rsq_bb,cut4sq_bb_ast[_3ptype][btype][atype][_5ptype],cut4_bb_c[_3ptype][btype][atype][_5ptype],
+                            lj14_bb[_3ptype][btype][atype][_5ptype],lj24_bb[_3ptype][btype][atype][_5ptype],
+                            epsilon_bb[btype][atype],b4_bb[_3ptype][btype][atype][_5ptype],fpair);
+          }
+        }
+
+      }
+
+      if (evdwl) {
 
         delf[0] = delr_bb[0]*fpair;
         delf[1] = delr_bb[1]*fpair;
@@ -483,6 +621,23 @@ void PairOxdnaExcv::allocate()
   memory->create(cutsq_bb_ast,n+1,n+1,"pair:cutsq_bb_ast");
   memory->create(cutsq_bb_c,n+1,n+1,"pair:cutsq_bb_c");
 
+  memory->create(sigma4_sb,n+1,n+1,n+1,n+1,"pair:sigma4_sb");
+  memory->create(cut4_sb_ast,n+1,n+1,n+1,n+1,"pair:cut4_sb_ast");
+  memory->create(b4_sb,n+1,n+1,n+1,n+1,"pair:b4_sb");
+  memory->create(cut4_sb_c,n+1,n+1,n+1,n+1,"pair:cut4_sb_c");
+  memory->create(lj14_sb,n+1,n+1,n+1,n+1,"pair:lj14_sb");
+  memory->create(lj24_sb,n+1,n+1,n+1,n+1,"pair:lj24_sb");
+  memory->create(cut4sq_sb_ast,n+1,n+1,n+1,n+1,"pair:cut4sq_sb_ast");
+  memory->create(cut4sq_sb_c,n+1,n+1,n+1,n+1,"pair:cut4sq_sb_c");
+
+  memory->create(sigma4_bb,n+1,n+1,n+1,n+1,"pair:sigma4_bb");
+  memory->create(cut4_bb_ast,n+1,n+1,n+1,n+1,"pair:cut4_bb_ast");
+  memory->create(b4_bb,n+1,n+1,n+1,n+1,"pair:b4_bb");
+  memory->create(cut4_bb_c,n+1,n+1,n+1,n+1,"pair:cut4_bb_c");
+  memory->create(lj14_bb,n+1,n+1,n+1,n+1,"pair:lj14_bb");
+  memory->create(lj24_bb,n+1,n+1,n+1,n+1,"pair:lj24_bb");
+  memory->create(cut4sq_bb_ast,n+1,n+1,n+1,n+1,"pair:cut4sq_bb_ast");
+  memory->create(cut4sq_bb_c,n+1,n+1,n+1,n+1,"pair:cut4sq_bb_c");
 }
 
 /* ----------------------------------------------------------------------
@@ -506,9 +661,13 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
   if (narg != 3 && narg != 11) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv");
   if (!allocated) allocate();
 
-  int ilo,ihi,jlo,jhi;
+  int ilo,ihi,jlo,jhi,nlo,nhi;
   utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
   utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
+
+  assert((ilo == jlo) & (ihi == jhi));
+  nlo = ilo;
+  nhi = ihi;
 
   count = 0;
 
@@ -638,6 +797,23 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
     }
   }
 
+  for (int i = nlo; i <= nhi; i++) {
+    for (int j = nlo; j <= nhi; j++) {
+      for (int k = nlo; k <= nhi; k++) {
+        for (int l = nlo; l <= nhi; l++) {
+          sigma4_sb[i][j][k][l] = sigma_sb_one;
+          cut4_sb_ast[i][j][k][l] = cut_sb_ast_one;
+          b4_sb[i][j][k][l] = b_sb_one;
+          cut4_sb_c[i][j][k][l] = cut_sb_c_one;
+          cut4sq_sb_ast[i][j][k][l] = cut4_sb_ast[i][j][k][l]*cut4_sb_ast[i][j][k][l];
+          cut4sq_sb_c[i][j][k][l]  = cut4_sb_c[i][j][k][l]*cut4_sb_c[i][j][k][l];
+          lj14_sb[i][j][k][l] = 4.0 * epsilon_sb[j][k] * pow(sigma4_sb[i][j][k][l],12.0);
+          lj24_sb[i][j][k][l] = 4.0 * epsilon_sb[j][k] * pow(sigma4_sb[i][j][k][l],6.0);
+       }
+      }
+    }
+  }
+
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv");
 
   count = 0;
@@ -661,6 +837,23 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
       cut_bb_c[i][j] = cut_bb_c_one;
       setflag[i][j] = 1;
       count++;
+    }
+  }
+
+  for (int i = nlo; i <= nhi; i++) {
+    for (int j = nlo; j <= nhi; j++) {
+      for (int k = nlo; k <= nhi; k++) {
+        for (int l = nlo; l <= nhi; l++) {
+          sigma4_bb[i][j][k][l] = sigma_bb_one;
+          cut4_bb_ast[i][j][k][l] = cut_bb_ast_one;
+          b4_bb[i][j][k][l] = b_bb_one;
+          cut4_bb_c[i][j][k][l] = cut_bb_c_one;
+          cut4sq_bb_ast[i][j][k][l] = cut4_bb_ast[i][j][k][l]*cut4_bb_ast[i][j][k][l];
+          cut4sq_bb_c[i][j][k][l]  = cut4_bb_c[i][j][k][l]*cut4_bb_c[i][j][k][l];
+          lj14_bb[i][j][k][l] = 4.0 * epsilon_bb[j][k] * pow(sigma4_bb[i][j][k][l],12.0);
+          lj24_bb[i][j][k][l] = 4.0 * epsilon_bb[j][k] * pow(sigma4_bb[i][j][k][l],6.0);
+       }
+      }
     }
   }
 
@@ -966,11 +1159,14 @@ void *PairOxdnaExcv::extract(const char *str, int &dim)
   if (strcmp(str,"cut_ss_ast") == 0) return (void *) cut_ss_ast;
   if (strcmp(str,"b_ss") == 0) return (void *) b_ss;
   if (strcmp(str,"cut_ss_c") == 0) return (void *) cut_ss_c;
+
   if (strcmp(str,"epsilon_sb") == 0) return (void *) epsilon_sb;
   if (strcmp(str,"sigma_sb") == 0) return (void *) sigma_sb;
   if (strcmp(str,"cut_sb_ast") == 0) return (void *) cut_sb_ast;
   if (strcmp(str,"b_sb") == 0) return (void *) b_sb;
   if (strcmp(str,"cut_sb_c") == 0) return (void *) cut_sb_c;
+  if (strcmp(str,"sigma4_sb") == 0) return (void *) sigma_sb;
+
   if (strcmp(str,"epsilon_bb") == 0) return (void *) epsilon_bb;
   if (strcmp(str,"sigma_bb") == 0) return (void *) sigma_bb;
   if (strcmp(str,"cut_bb_ast") == 0) return (void *) cut_bb_ast;

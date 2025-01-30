@@ -225,24 +225,15 @@ void BondOxdnaFene::compute(int eflag, int vflag)
 
     if (id3p[a] != -1) {
       a3ptype = atomtype[atom->map(id3p[a])];
-      a3ptype %= 4; // unique base pairing
-     if (a3ptype == 0) a3ptype = 4;
     }
     else a3ptype = 0;
 
     atype = atomtype[a];
-    atype %= 4; // unique base pairing
-    if (atype == 0) atype = 4;
-
     btype = atomtype[b];
-    btype %= 4; // unique base pairing
-    if (btype == 0) btype = 4;
 
     if (id5p[b] != -1) {
       b5ptype = atomtype[atom->map(id5p[b])];
       b5ptype = atomtype[atom->map(id5p[b])];
-      b5ptype %= 4; // unique base pairing
-     if (b5ptype == 0) b5ptype = 4;
     }
     else b5ptype = 0;
 
@@ -345,11 +336,12 @@ void BondOxdnaFene::allocate()
 {
   allocated = 1;
   int n = atom->nbondtypes;
+  int m = atom->ntypes;
 
-  memory->create(k, n + 1, "bond:k");
-  memory->create(Delta, n + 1, 5, 5, 5, 5, "bond:Delta");
-  memory->create(r0, n + 1, 5, 5, 5, 5, "bond:r0");
-  memory->create(setflag, n + 1, "bond:setflag");
+  memory->create(k, n+1, "bond:k");
+  memory->create(Delta, n+1, m+1, m+1, m+1, m+1, "bond:Delta");
+  memory->create(r0, n+1, m+1, m+1, m+1, m+1, "bond:r0");
+  memory->create(setflag, n+1, "bond:setflag");
 
   for (int i = 1; i <= n; i++) setflag[i] = 0;
 }
@@ -407,13 +399,14 @@ void BondOxdnaFene::coeff(int narg, char **arg)
   }
 
   int count = 0;
+  int n = atom->ntypes;
 
   for (int i = ilo; i <= ihi; i++) {
     k[i] = k_one;
-    for (int n1 = 0; n1 <= 4; n1++) {
-      for (int n2 = 0; n2 <= 4; n2++) {
-        for (int n3 = 0; n3 <= 4; n3++) {
-          for (int n4 = 0; n4 <= 4; n4++) {
+    for (int n1 = 0; n1 <= n; n1++) {
+      for (int n2 = 0; n2 <= n; n2++) {
+        for (int n3 = 0; n3 <= n; n3++) {
+          for (int n4 = 0; n4 <= n; n4++) {
             Delta[i][n1][n2][n3][n4] = Delta_one;
             r0[i][n1][n2][n3][n4] = r0_one;
           }
