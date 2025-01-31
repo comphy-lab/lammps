@@ -37,7 +37,7 @@ using namespace LAMMPS_NS;
 PairOxdna2Dh::PairOxdna2Dh(LAMMPS *lmp) : Pair(lmp)
 {
   single_enable = 0;
-  writedata = 1;
+  writedata = 0;
   trim_flag = 0;
 }
 
@@ -534,37 +534,6 @@ void PairOxdna2Dh::read_restart_settings(FILE *fp)
   MPI_Bcast(&offset_flag,1,MPI_INT,0,world);
   MPI_Bcast(&mix_flag,1,MPI_INT,0,world);
   MPI_Bcast(&tail_flag,1,MPI_INT,0,world);
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes to data file
-------------------------------------------------------------------------- */
-
-void PairOxdna2Dh::write_data(FILE *fp)
-{
-  for (int i = 1; i <= atom->ntypes; i++)
-    fprintf(fp,"%d\
-         %g %g\
-         %g %g %g\
-         \n",i,
-        kappa_dh[i][i],qeff_dh_pf[i][i],
-        b_dh[i][i],cut_dh_ast[i][i],cut_dh_c[i][i]);
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes all pairs to data file
-------------------------------------------------------------------------- */
-
-void PairOxdna2Dh::write_data_all(FILE *fp)
-{
-  for (int i = 1; i <= atom->ntypes; i++)
-    for (int j = i; j <= atom->ntypes; j++)
-      fprintf(fp,"%d %d\
-         %g %g\
-         %g %g %g\
-         \n",i,j,
-        kappa_dh[i][j],qeff_dh_pf[i][j],
-        b_dh[i][j],cut_dh_ast[i][j],cut_dh_c[i][j]);
 }
 
 /* ---------------------------------------------------------------------- */

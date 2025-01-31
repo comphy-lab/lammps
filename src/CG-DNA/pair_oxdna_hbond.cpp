@@ -39,7 +39,7 @@ using namespace MFOxdna;
 PairOxdnaHbond::PairOxdnaHbond(LAMMPS *lmp) : Pair(lmp)
 {
   single_enable = 0;
-  writedata = 1;
+  writedata = 0;
   trim_flag = 0;
 
   // sequence-specific base-pairing strength
@@ -1215,63 +1215,6 @@ void PairOxdnaHbond::read_restart_settings(FILE *fp)
   MPI_Bcast(&offset_flag,1,MPI_INT,0,world);
   MPI_Bcast(&mix_flag,1,MPI_INT,0,world);
   MPI_Bcast(&tail_flag,1,MPI_INT,0,world);
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes to data file
-------------------------------------------------------------------------- */
-
-void PairOxdnaHbond::write_data(FILE *fp)
-{
-  for (int i = 1; i <= atom->ntypes; i++)
-    fprintf(fp,"%d\
-         %g %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         \n",i,
-        epsilon_hb[i][i],a_hb[i][i],cut_hb_0[i][i],cut_hb_c[i][i],cut_hb_lo[i][i],cut_hb_hi[i][i],
-        cut_hb_lc[i][i],cut_hb_hc[i][i],b_hb_lo[i][i],b_hb_hi[i][i],shift_hb[i][i],
-        a_hb1[i][i],theta_hb1_0[i][i],dtheta_hb1_ast[i][i],b_hb1[i][i],dtheta_hb1_c[i][i],
-        a_hb2[i][i],theta_hb2_0[i][i],dtheta_hb2_ast[i][i],b_hb2[i][i],dtheta_hb2_c[i][i],
-        a_hb3[i][i],theta_hb3_0[i][i],dtheta_hb3_ast[i][i],b_hb3[i][i],dtheta_hb3_c[i][i],
-        a_hb4[i][i],theta_hb4_0[i][i],dtheta_hb4_ast[i][i],b_hb4[i][i],dtheta_hb4_c[i][i],
-        a_hb7[i][i],theta_hb7_0[i][i],dtheta_hb7_ast[i][i],b_hb7[i][i],dtheta_hb7_c[i][i],
-        a_hb8[i][i],theta_hb8_0[i][i],dtheta_hb8_ast[i][i],b_hb8[i][i],dtheta_hb8_c[i][i]);
-
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes all pairs to data file
-------------------------------------------------------------------------- */
-
-void PairOxdnaHbond::write_data_all(FILE *fp)
-{
-  for (int i = 1; i <= atom->ntypes; i++)
-    for (int j = i; j <= atom->ntypes; j++)
-      fprintf(fp,"%d %d\
-         %g %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         \n",i,j,
-        epsilon_hb[i][j],a_hb[i][j],cut_hb_0[i][j],cut_hb_c[i][j],cut_hb_lo[i][j],cut_hb_hi[i][j],
-        cut_hb_lc[i][j],cut_hb_hc[i][j],b_hb_lo[i][j],b_hb_hi[i][j],shift_hb[i][j],
-        a_hb1[i][j],theta_hb1_0[i][j],dtheta_hb1_ast[i][j],b_hb1[i][j],dtheta_hb1_c[i][j],
-        a_hb2[i][j],theta_hb2_0[i][j],dtheta_hb2_ast[i][j],b_hb2[i][j],dtheta_hb2_c[i][j],
-        a_hb3[i][j],theta_hb3_0[i][j],dtheta_hb3_ast[i][j],b_hb3[i][j],dtheta_hb3_c[i][j],
-        a_hb4[i][j],theta_hb4_0[i][j],dtheta_hb4_ast[i][j],b_hb4[i][j],dtheta_hb4_c[i][j],
-        a_hb7[i][j],theta_hb7_0[i][j],dtheta_hb7_ast[i][j],b_hb7[i][j],dtheta_hb7_c[i][j],
-        a_hb8[i][j],theta_hb8_0[i][j],dtheta_hb8_ast[i][j],b_hb8[i][j],dtheta_hb8_c[i][j]);
-
 }
 
 /* ---------------------------------------------------------------------- */

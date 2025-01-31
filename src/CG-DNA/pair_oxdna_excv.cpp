@@ -41,7 +41,7 @@ using namespace MFOxdna;
 PairOxdnaExcv::PairOxdnaExcv(LAMMPS *lmp) : Pair(lmp)
 {
   single_enable = 0;
-  writedata = 1;
+  writedata = 0;
 
   // set comm size needed by this Pair
   comm_forward = 9;
@@ -1029,41 +1029,6 @@ void PairOxdnaExcv::read_restart_settings(FILE *fp)
   MPI_Bcast(&offset_flag,1,MPI_INT,0,world);
   MPI_Bcast(&mix_flag,1,MPI_INT,0,world);
   MPI_Bcast(&tail_flag,1,MPI_INT,0,world);
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes to data file
-------------------------------------------------------------------------- */
-
-void PairOxdnaExcv::write_data(FILE *fp)
-{
-  for (int i = 1; i <= atom->ntypes; i++)
-    fprintf(fp,"%d\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         \n",i,
-        epsilon_ss[i][i],sigma_ss[i][i],cut_ss_ast[i][i],b_ss[i][i],cut_ss_c[i][i],
-        epsilon_sb[i][i],sigma_sb[i][i],cut_sb_ast[i][i],b_sb[i][i],cut_sb_c[i][i],
-        epsilon_bb[i][i],sigma_bb[i][i],cut_bb_ast[i][i],b_bb[i][i],cut_bb_c[i][i]);
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes all pairs to data file
-------------------------------------------------------------------------- */
-
-void PairOxdnaExcv::write_data_all(FILE *fp)
-{
-  for (int i = 1; i <= atom->ntypes; i++)
-    for (int j = i; j <= atom->ntypes; j++)
-      fprintf(fp,"%d %d\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         %g %g %g %g %g\
-         \n",i,j,
-        epsilon_ss[i][j],sigma_ss[i][j],cut_ss_ast[i][j],b_ss[i][j],cut_ss_c[i][j],
-        epsilon_sb[i][j],sigma_sb[i][j],cut_sb_ast[i][j],b_sb[i][j],cut_sb_c[i][j],
-        epsilon_bb[i][j],sigma_bb[i][j],cut_bb_ast[i][j],b_bb[i][j],cut_bb_c[i][j]);
 }
 
 /* ---------------------------------------------------------------------- */
