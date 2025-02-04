@@ -196,11 +196,15 @@ class FixSurfaceGlobal : public FixSurface {
   Connect2d *connect2d;             // 2d connection info
   Connect3d *connect3d;             // 3d connection info
 
+  // arrays for precalculated metrics
+
+  int *exposed_pt;       // if point is exposed and can exert forces in non-normal direction
+
   // struct for storing contact data
 
   struct ContactSurf {
     int index, neigh_index, type, jflag, nside, use_surf_normal;
-    double contact[3], r[3], overlap, dist_nonflat_connection;
+    double contact[3], r[3], overlap, dist_nonflat;
   };
 
   ContactSurf *contact_surfs;
@@ -224,8 +228,10 @@ class FixSurfaceGlobal : public FixSurface {
 
   void surface_attributes();
 
-  void walk_flat_connections2d(int, int, int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  void walk_flat_connections3d(int, int, int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_flat_connections2d(int, int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_flat_connections3d(int, int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+
+  void surface_connectivity_attributes();
 
   int modify_param_move(Motion *, int, char **);
 
