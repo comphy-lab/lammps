@@ -31,6 +31,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <cassert>
 
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
@@ -245,9 +246,10 @@ void PairOxdnaStk::compute(int eflag, int vflag)
   int **bondlist = neighbor->bondlist;
   int nbondlist = neighbor->nbondlist;
 
+  tagint *id3p = atom->id3p;
   tagint *id5p = atom->id5p;
 
-  int a,b,btemp,in,atype,btype;
+  int a,b,btemp,in,a3ptype,atype,btype,b5ptype;
 
   double f1,f4t4,f4t5,f4t6,f5c1,f5c2;
   double df1,df4t4,df4t5,df4t6,df5c1,df5c2;
@@ -302,8 +304,21 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     delr_st[1] = x[b][1] + rb_cst[1] - x[a][1] - ra_cst[1];
     delr_st[2] = x[b][2] + rb_cst[2] - x[a][2] - ra_cst[2];
 
+    // determine tetramer types
+    // 3'neighbor a - a - b - 5'neighbor b
+
+    if (id3p[a] != -1) {
+      a3ptype = type[atom->map(id3p[a])];
+    }
+    else a3ptype = 0;
+
     atype = type[a];
     btype = type[b];
+
+    if (id5p[b] != -1) {
+      b5ptype = type[atom->map(id5p[b])];
+    }
+    else b5ptype = 0;
 
     rsq_st = delr_st[0]*delr_st[0] + delr_st[1]*delr_st[1] + delr_st[2]*delr_st[2];
     r_st = sqrt(rsq_st);
@@ -336,9 +351,11 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     delr_ss_norm[1] = delr_ss[1] * rinv_ss;
     delr_ss_norm[2] = delr_ss[2] * rinv_ss;
 
-    f1 = F1(r_st, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[atype][btype],
-        cut_st_lc[atype][btype], cut_st_hc[atype][btype], cut_st_lo[atype][btype], cut_st_hi[atype][btype],
-        b_st_lo[atype][btype], b_st_hi[atype][btype], shift_st[atype][btype]);
+    f1 = F1(r_st, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype],
+        cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype],
+        cut_st_lo[a3ptype][atype][btype][b5ptype], cut_st_hi[a3ptype][atype][btype][b5ptype],
+        b_st_lo[a3ptype][atype][btype][b5ptype], b_st_hi[a3ptype][atype][btype][b5ptype],
+        shift_st[a3ptype][atype][btype][b5ptype]);
 
     // early rejection criterium
     if (f1) {
@@ -408,9 +425,9 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     // early rejection criterium
     if (evdwl) {
 
-    df1 = DF1(r_st, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[atype][btype],
-        cut_st_lc[atype][btype], cut_st_hc[atype][btype], cut_st_lo[atype][btype], cut_st_hi[atype][btype],
-        b_st_lo[atype][btype], b_st_hi[atype][btype]);
+    df1 = DF1(r_st, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype],
+        cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype], cut_st_lo[a3ptype][atype][btype][b5ptype], cut_st_hi[a3ptype][atype][btype][b5ptype],
+        b_st_lo[a3ptype][atype][btype][b5ptype], b_st_hi[a3ptype][atype][btype][b5ptype]);
 
     df4t4 = DF4(theta4, a_st4[atype][btype], theta_st4_0[atype][btype], dtheta_st4_ast[atype][btype],
         b_st4[atype][btype], dtheta_st4_c[atype][btype])/sin(theta4);
@@ -707,16 +724,16 @@ void PairOxdnaStk::allocate()
 
   memory->create(epsilon_st,n+1,n+1,"pair:epsilon_st");
   memory->create(a_st,n+1,n+1,"pair:a_st");
-  memory->create(cut_st_0,n+1,n+1,"pair:cut_st_0");
-  memory->create(cut_st_c,n+1,n+1,"pair:cut_st_c");
-  memory->create(cut_st_lo,n+1,n+1,"pair:cut_st_lo");
-  memory->create(cut_st_hi,n+1,n+1,"pair:cut_st_hi");
-  memory->create(cut_st_lc,n+1,n+1,"pair:cut_st_lc");
-  memory->create(cut_st_hc,n+1,n+1,"pair:cut_st_hc");
-  memory->create(b_st_lo,n+1,n+1,"pair:b_st_lo");
-  memory->create(b_st_hi,n+1,n+1,"pair:b_st_hi");
-  memory->create(shift_st,n+1,n+1,"pair:shift_st");
-  memory->create(cutsq_st_hc,n+1,n+1,"pair:cutsq_st_hc");
+  memory->create(cut_st_0,n+1,n+1,n+1,n+1,"pair:cut_st_0");
+  memory->create(cut_st_c,n+1,n+1,n+1,n+1,"pair:cut_st_c");
+  memory->create(cut_st_lo,n+1,n+1,n+1,n+1,"pair:cut_st_lo");
+  memory->create(cut_st_hi,n+1,n+1,n+1,n+1,"pair:cut_st_hi");
+  memory->create(cut_st_lc,n+1,n+1,n+1,n+1,"pair:cut_st_lc");
+  memory->create(cut_st_hc,n+1,n+1,n+1,n+1,"pair:cut_st_hc");
+  memory->create(b_st_lo,n+1,n+1,n+1,n+1,"pair:b_st_lo");
+  memory->create(b_st_hi,n+1,n+1,n+1,n+1,"pair:b_st_hi");
+  memory->create(shift_st,n+1,n+1,n+1,n+1,"pair:shift_st");
+  memory->create(cutsq_st_hc,n+1,n+1,n+1,n+1,"pair:cutsq_st_hc");
 
   memory->create(a_st4,n+1,n+1,"pair:a_st4");
   memory->create(theta_st4_0,n+1,n+1,"pair:theta_st4_0");
@@ -781,9 +798,13 @@ void PairOxdnaStk::coeff(int narg, char **arg)
   if (narg != 7 && narg != 24) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/stk");
   if (!allocated) allocate();
 
-  int ilo,ihi,jlo,jhi,imod4,jmod4;
+  int ilo,ihi,jlo,jhi,nlo,nhi,jmod4,kmod4;
   utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
   utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
+
+  assert((ilo == jlo) & (ihi == jhi));
+  nlo = ilo;
+  nhi = ihi;
 
   // stacking interaction
   count = 0;
@@ -943,27 +964,38 @@ void PairOxdnaStk::coeff(int narg, char **arg)
   b_st2_one = a_st2_one*a_st2_one*cosphi_st2_ast_one*cosphi_st2_ast_one/(1-a_st2_one*cosphi_st2_ast_one*cosphi_st2_ast_one);
   cosphi_st2_c_one = 1/(a_st2_one*cosphi_st2_ast_one);
 
-  for (int i = ilo; i <= ihi; i++) {
-    for (int j = MAX(jlo,i); j <= jhi; j++) {
-
-      imod4 = i%4;
-      if (imod4 == 0) imod4 = 4;
+  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
+    for (int j = nlo; j <= nhi; j++) {
       jmod4 = j%4;
       if (jmod4 == 0) jmod4 = 4;
 
-      epsilon_st[i][j] = epsilon_st_one;
-      if (seqdepflag) epsilon_st[i][j] *= eta_st[imod4-1][jmod4-1];
-      a_st[i][j] = a_st_one;
-      cut_st_0[i][j] = cut_st_0_one;
-      cut_st_c[i][j] = cut_st_c_one;
-      cut_st_lo[i][j] = cut_st_lo_one;
-      cut_st_hi[i][j] = cut_st_hi_one;
-      cut_st_lc[i][j] = cut_st_lc_one;
-      cut_st_hc[i][j] = cut_st_hc_one;
-      b_st_lo[i][j] = b_st_lo_one;
-      b_st_hi[i][j] = b_st_hi_one;
-      shift_st[i][j] = shift_st_one;
-      if (seqdepflag) shift_st[i][j] *= eta_st[imod4-1][jmod4-1];
+      for (int k = nlo; k <= nhi; k++) {
+        kmod4 = k%4;
+        if (kmod4 == 0) kmod4 = 4;
+
+        epsilon_st[j][k] = epsilon_st_one;
+        if (seqdepflag) epsilon_st[j][k] *= eta_st[jmod4-1][kmod4-1];
+        a_st[j][k] = a_st_one;
+
+      // parameters depending on tetramer
+        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
+          cut_st_0[i][j][k][l] = cut_st_0_one;
+          cut_st_c[i][j][k][l] = cut_st_c_one;
+          cut_st_lo[i][j][k][l] = cut_st_lo_one;
+          cut_st_hi[i][j][k][l] = cut_st_hi_one;
+          cut_st_lc[i][j][k][l] = cut_st_lc_one;
+          cut_st_hc[i][j][k][l] = cut_st_hc_one;
+          cutsq_st_hc[i][j][k][l] = cut_st_hc[i][j][k][l]*cut_st_hc[i][j][k][l];
+          b_st_lo[i][j][k][l] = b_st_lo_one;
+          b_st_hi[i][j][k][l] = b_st_hi_one;
+          shift_st[i][j][k][l] = shift_st_one;
+
+          if (seqdepflag) {
+            shift_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
+          }
+
+        }
+      }
 
       a_st4[i][j] = a_st4_one;
       theta_st4_0[i][j] = theta_st4_0_one;
@@ -1032,8 +1064,6 @@ void PairOxdnaStk::init_list(int id, NeighList *ptr)
 double PairOxdnaStk::init_one(int i, int j)
 {
 
-  int imod4,jmod4;
-
   if (setflag[i][j] == 0) {
     error->all(FLERR,"Coefficient mixing not defined in oxDNA");
   }
@@ -1041,66 +1071,8 @@ double PairOxdnaStk::init_one(int i, int j)
     error->all(FLERR,"Offset not supported in oxDNA");
   }
 
-  imod4 = i%4;
-  if (imod4 == 0) imod4 = 4;
-  jmod4 = j%4;
-  if (jmod4 == 0) jmod4 = 4;
-
-  if (seqdepflag) {
-    epsilon_st[j][i] = epsilon_st[i][j]  / eta_st[imod4-1][jmod4-1] * eta_st[jmod4-1][imod4-1];
-  }
-  else {
-    epsilon_st[j][i] = epsilon_st[i][j];
-  }
-  a_st[j][i] = a_st[i][j];
-  b_st_lo[j][i] = b_st_lo[i][j];
-  b_st_hi[j][i] = b_st_hi[i][j];
-  cut_st_0[j][i] = cut_st_0[i][j];
-  cut_st_c[j][i] = cut_st_c[i][j];
-  cut_st_lo[j][i] = cut_st_lo[i][j];
-  cut_st_hi[j][i] = cut_st_hi[i][j];
-  cut_st_lc[j][i] = cut_st_lc[i][j];
-  cut_st_hc[j][i] = cut_st_hc[i][j];
-  if (seqdepflag) {
-    shift_st[j][i] = shift_st[i][j] / eta_st[imod4-1][jmod4-1] * eta_st[jmod4-1][imod4-1];
-  }
-  else {
-    shift_st[j][i] = shift_st[i][j];
-  }
-
-  a_st4[j][i] = a_st4[i][j];
-  theta_st4_0[j][i] = theta_st4_0[i][j];
-  dtheta_st4_ast[j][i] = dtheta_st4_ast[i][j];
-  b_st4[j][i] = b_st4[i][j];
-  dtheta_st4_c[j][i] = dtheta_st4_c[i][j];
-
-  a_st5[j][i] = a_st5[i][j];
-  theta_st5_0[j][i] = theta_st5_0[i][j];
-  dtheta_st5_ast[j][i] = dtheta_st5_ast[i][j];
-  b_st5[j][i] = b_st5[i][j];
-  dtheta_st5_c[j][i] = dtheta_st5_c[i][j];
-
-  a_st6[j][i] = a_st6[i][j];
-  theta_st6_0[j][i] = theta_st6_0[i][j];
-  dtheta_st6_ast[j][i] = dtheta_st6_ast[i][j];
-  b_st6[j][i] = b_st6[i][j];
-  dtheta_st6_c[j][i] = dtheta_st6_c[i][j];
-
-  a_st1[j][i] = a_st1[i][j];
-  cosphi_st1_ast[j][i] = cosphi_st1_ast[i][j];
-  b_st1[j][i] = b_st1[i][j];
-  cosphi_st1_c[j][i] = cosphi_st1_c[i][j];
-
-  a_st2[j][i] = a_st2[i][j];
-  cosphi_st2_ast[j][i] = cosphi_st2_ast[i][j];
-  b_st2[j][i] = b_st2[i][j];
-  cosphi_st2_c[j][i] = cosphi_st2_c[i][j];
-
-  cutsq_st_hc[i][j] = cut_st_hc[i][j]*cut_st_hc[i][j];
-  cutsq_st_hc[j][i] = cutsq_st_hc[i][j];
-
   // set the master list distance cutoff
-  return cut_st_hc[i][j];
+  return cut_st_hc[0][i][j][0];
 
 }
 
