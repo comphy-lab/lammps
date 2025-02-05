@@ -346,8 +346,15 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
 
           // determine type of 3'-partner of a and 5'-partner of b
-          _3ptype = type[atom->map(id3p[a])];
-          _5ptype = type[atom->map(id5p[b])];
+          if (id3p[a] != -1) {
+            _3ptype = type[atom->map(id3p[a])];
+          }
+          else _3ptype = 0;
+
+          if (id5p[b] != -1) {
+                    _5ptype = type[atom->map(id5p[b])];
+          }
+          else _5ptype = 0;
 
           if (rsq_sb < cut4sq_sb_c[_3ptype][atype][btype][_5ptype]) {
             evdwl = F3(rsq_sb,cut4sq_sb_ast[_3ptype][atype][btype][_5ptype],cut4_sb_c[_3ptype][atype][btype][_5ptype],
@@ -359,8 +366,15 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
 
           // determine type of 3'-partner of b and 5'-partner of a
-          _3ptype = type[atom->map(id3p[b])];
-          _5ptype = type[atom->map(id5p[a])];
+          if (id3p[b] != -1) {
+            _3ptype = type[atom->map(id3p[b])];
+          }
+          else _3ptype = 0;
+
+          if (id5p[a] != -1) {
+            _5ptype = type[atom->map(id5p[a])];
+          }
+          else _5ptype = 0;
 
           if (rsq_sb < cut4sq_sb_c[_3ptype][btype][atype][_5ptype]) {
             evdwl = F3(rsq_sb,cut4sq_sb_ast[_3ptype][btype][atype][_5ptype],cut4_sb_c[_3ptype][btype][atype][_5ptype],
@@ -425,8 +439,15 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
 
           // determine type of 3'-partner of a and 5'-partner of b
-          _3ptype = type[atom->map(id3p[a])];
-          _5ptype = type[atom->map(id5p[b])];
+          if (id3p[a] != -1) {
+            _3ptype = type[atom->map(id3p[a])];
+          }
+          else _3ptype = 0;
+
+          if (id5p[b] != -1) {
+            _5ptype = type[atom->map(id5p[b])];
+          }
+          else _5ptype = 0;
 
           if (rsq_bs < cut4sq_sb_c[_3ptype][atype][btype][_5ptype]) {
             evdwl = F3(rsq_bs,cut4sq_sb_ast[_3ptype][atype][btype][_5ptype],cut4_sb_c[_3ptype][atype][btype][_5ptype],lj14_sb[_3ptype][atype][btype][_5ptype],
@@ -437,8 +458,15 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
 
           // determine type of 3'-partner of b and 5'-partner of a
-          _3ptype = type[atom->map(id3p[b])];
-          _5ptype = type[atom->map(id5p[a])];
+          if (id3p[b] != -1) {
+            _3ptype = type[atom->map(id3p[b])];
+          }
+          else _3ptype = 0;
+
+          if (id5p[a] != -1) {
+            _5ptype = type[atom->map(id5p[a])];
+          }
+          else _5ptype = 0;
 
           if (rsq_bs < cut4sq_sb_c[_3ptype][btype][atype][_5ptype]) {
             evdwl = F3(rsq_bs,cut4sq_sb_ast[_3ptype][btype][atype][_5ptype],cut4_sb_c[_3ptype][btype][atype][_5ptype],lj14_sb[_3ptype][btype][atype][_5ptype],
@@ -502,8 +530,15 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
 
           // determine type of 3'-partner of a and 5'-partner of b
-          _3ptype = type[atom->map(id3p[a])];
-          _5ptype = type[atom->map(id5p[b])];
+          if (id3p[a] != -1) {
+            _3ptype = type[atom->map(id3p[a])];
+          }
+          else _3ptype = 0;
+
+          if (id5p[b] != -1) {
+            _5ptype = type[atom->map(id5p[b])];
+          }
+          else _5ptype = 0;
 
           if (rsq_bb < cut4sq_bb_c[_3ptype][atype][btype][_5ptype]) {
             evdwl = F3(rsq_bb,cut4sq_bb_ast[_3ptype][atype][btype][_5ptype],cut4_bb_c[_3ptype][atype][btype][_5ptype],
@@ -515,8 +550,15 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
 
           // determine type of 3'-partner of b and 5'-partner of a
-          _3ptype = type[atom->map(id3p[b])];
-          _5ptype = type[atom->map(id5p[a])];
+          if (id3p[b] != -1) {
+            _3ptype = type[atom->map(id3p[b])];
+          }
+          else _3ptype = 0;
+
+          if (id5p[a] != -1) {
+            _5ptype = type[atom->map(id5p[a])];
+          }
+          else _5ptype = 0;
 
           if (rsq_bb < cut4sq_bb_c[_3ptype][btype][atype][_5ptype]) {
             evdwl = F3(rsq_bb,cut4sq_bb_ast[_3ptype][btype][atype][_5ptype],cut4_bb_c[_3ptype][btype][atype][_5ptype],
@@ -811,10 +853,10 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
   }
 
   // backbone-base parameters depending on tetramer
-  for (int i = nlo; i <= nhi; i++) {
+  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
-        for (int l = nlo; l <= nhi; l++) {
+        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
           sigma4_sb[i][j][k][l] = sigma_sb_one;
           cut4_sb_ast[i][j][k][l] = cut_sb_ast_one;
           b4_sb[i][j][k][l] = b_sb_one;
@@ -861,10 +903,10 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
   }
 
   // base-base parameters depending on tetramer
-  for (int i = nlo; i <= nhi; i++) {
+  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
-        for (int l = nlo; l <= nhi; l++) {
+        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
           sigma4_bb[i][j][k][l] = sigma_bb_one;
           cut4_bb_ast[i][j][k][l] = cut_bb_ast_one;
           b4_bb[i][j][k][l] = b_bb_one;
