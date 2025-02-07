@@ -373,8 +373,9 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     if (cost4 < -1.0) cost4 = -1.0;
     theta4 = acos(cost4);
 
-    f4t4 = F4(theta4, a_st4[atype][btype], theta_st4_0[atype][btype], dtheta_st4_ast[atype][btype],
-        b_st4[atype][btype], dtheta_st4_c[atype][btype]);
+    f4t4 = F4(theta4, a_st4[a3ptype][atype][btype][b5ptype], theta_st4_0[atype][btype],
+        dtheta_st4_ast[a3ptype][atype][btype][b5ptype], b_st4[a3ptype][atype][btype][b5ptype],
+        dtheta_st4_c[a3ptype][atype][btype][b5ptype]);
 
     // early rejection criterium
     if (f4t4) {
@@ -426,11 +427,12 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     if (evdwl) {
 
     df1 = DF1(r_st, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype],
-        cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype], cut_st_lo[a3ptype][atype][btype][b5ptype], cut_st_hi[a3ptype][atype][btype][b5ptype],
-        b_st_lo[a3ptype][atype][btype][b5ptype], b_st_hi[a3ptype][atype][btype][b5ptype]);
+        cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype], cut_st_lo[a3ptype][atype][btype][b5ptype], 
+        cut_st_hi[a3ptype][atype][btype][b5ptype], b_st_lo[a3ptype][atype][btype][b5ptype], b_st_hi[a3ptype][atype][btype][b5ptype]);
 
-    df4t4 = DF4(theta4, a_st4[atype][btype], theta_st4_0[atype][btype], dtheta_st4_ast[atype][btype],
-        b_st4[atype][btype], dtheta_st4_c[atype][btype])/sin(theta4);
+    df4t4 = DF4(theta4, a_st4[a3ptype][atype][btype][b5ptype], theta_st4_0[atype][btype],
+        dtheta_st4_ast[a3ptype][atype][btype][b5ptype], b_st4[a3ptype][atype][btype][b5ptype],
+        dtheta_st4_c[a3ptype][atype][btype][b5ptype])/sin(theta4);
 
     df4t5 = DF4(theta5p, a_st5[atype][btype], theta_st5_0[atype][btype], dtheta_st5_ast[atype][btype],
         b_st5[atype][btype], dtheta_st5_c[atype][btype])/sin(theta5p);
@@ -735,11 +737,11 @@ void PairOxdnaStk::allocate()
   memory->create(shift_st,n+1,n+1,n+1,n+1,"pair:shift_st");
   memory->create(cutsq_st_hc,n+1,n+1,n+1,n+1,"pair:cutsq_st_hc");
 
-  memory->create(a_st4,n+1,n+1,"pair:a_st4");
+  memory->create(a_st4,n+1,n+1,n+1,n+1,"pair:a_st4");
   memory->create(theta_st4_0,n+1,n+1,"pair:theta_st4_0");
-  memory->create(dtheta_st4_ast,n+1,n+1,"pair:dtheta_st4_ast");
-  memory->create(b_st4,n+1,n+1,"pair:b_st4");
-  memory->create(dtheta_st4_c,n+1,n+1,"pair:dtheta_st4_c");
+  memory->create(dtheta_st4_ast,n+1,n+1,n+1,n+1,"pair:dtheta_st4_ast");
+  memory->create(b_st4,n+1,n+1,n+1,n+1,"pair:b_st4");
+  memory->create(dtheta_st4_c,n+1,n+1,n+1,n+1,"pair:dtheta_st4_c");
 
   memory->create(a_st5,n+1,n+1,"pair:a_st5");
   memory->create(theta_st5_0,n+1,n+1,"pair:theta_st5_0");
@@ -989,19 +991,18 @@ void PairOxdnaStk::coeff(int narg, char **arg)
           b_st_lo[i][j][k][l] = b_st_lo_one;
           b_st_hi[i][j][k][l] = b_st_hi_one;
           shift_st[i][j][k][l] = shift_st_one;
-
           if (seqdepflag) {
             shift_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
           }
 
+          a_st4[i][j][k][l] = a_st4_one;
+          dtheta_st4_ast[i][j][k][l] = dtheta_st4_ast_one;
+          b_st4[i][j][k][l] = b_st4_one;
+          dtheta_st4_c[i][j][k][l] = dtheta_st4_c_one;
         }
       }
 
-      a_st4[i][j] = a_st4_one;
       theta_st4_0[i][j] = theta_st4_0_one;
-      dtheta_st4_ast[i][j] = dtheta_st4_ast_one;
-      b_st4[i][j] = b_st4_one;
-      dtheta_st4_c[i][j] = dtheta_st4_c_one;
 
       a_st5[i][j] = a_st5_one;
       theta_st5_0[i][j] = theta_st5_0_one;
