@@ -204,7 +204,7 @@ class FixSurfaceGlobal : public FixSurface {
   // struct for storing contact data
 
   struct ContactSurf {
-    int index, neigh_index, type, jflag, nside, use_surf_normal;
+    int index, neigh_index, type, jflag, nside;
     double contact[3], norm[3], overlap, dist_nonflat;
   };
 
