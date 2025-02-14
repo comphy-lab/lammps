@@ -2694,28 +2694,13 @@ void FixSurfaceGlobal::surface_connectivity_attributes()
       //   (b) has a non-flat connection
       for (n = 0; n < connect3d[i].ne1; n++)
         if (connect3d[i].aflag_e1[n] != FLAT)
-          exposed_edge[i][0] = 1;
+          exposed_edge[i][0] = 2;
       for (n = 0; n < connect3d[i].ne2; n++)
         if (connect3d[i].aflag_e2[n] != FLAT)
-          exposed_edge[i][1] = 1;
+          exposed_edge[i][1] = 2;
       for (n = 0; n < connect3d[i].ne3; n++)
         if (connect3d[i].aflag_e3[n] != FLAT)
-          exposed_edge[i][2] = 1;
-
-      // partially exposed corner if:
-      //   associated with an exposed edge
-      if (exposed_edge[i][0] == 1) {
-        exposed_pt[tris[i].p1] = 2;
-        exposed_pt[tris[i].p2] = 2;
-      }
-      if (exposed_edge[i][1] == 1) {
-        exposed_pt[tris[i].p2] = 2;
-        exposed_pt[tris[i].p3] = 2;
-      }
-      if (exposed_edge[i][2] == 1) {
-        exposed_pt[tris[i].p1] = 2;
-        exposed_pt[tris[i].p3] = 2;
-      }
+          exposed_edge[i][2] = 2;
 
       // exposed corner if:
       //   (a) unconnected on corner
@@ -2736,6 +2721,20 @@ void FixSurfaceGlobal::surface_connectivity_attributes()
       for (n = 0; n < connect3d[i].nc3; n++)
         if (connect3d[i].aflag_c3[n] != FLAT)
           exposed_pt[tris[i].p3] = 2;
+
+      //   (c) associated with an exposed edge
+      if (exposed_edge[i][0] == 1) {
+        exposed_pt[tris[i].p1] = 3;
+        exposed_pt[tris[i].p2] = 3;
+      }
+      if (exposed_edge[i][1] == 1) {
+        exposed_pt[tris[i].p2] = 3;
+        exposed_pt[tris[i].p3] = 3;
+      }
+      if (exposed_edge[i][2] == 1) {
+        exposed_pt[tris[i].p1] = 3;
+        exposed_pt[tris[i].p3] = 3;
+      }
     }
   }
 }
@@ -3343,21 +3342,15 @@ void FixSurfaceGlobal::move_variable(int imotion, int i)
 void FixSurfaceGlobal::walk_connections2d(int n, int nsidej, std::vector<int> *flat_surfs, std::unordered_set<int> *processed_contacts, std::unordered_set<int> *hidden_contacts, std::map<int, int> *contacts_map)
 {
   int j = contact_surfs[n].index;
-  int jflag = contact_surfs[n].jflag;
-
-  // Unless it's an exposed point on border, use surf norm
-  if ((jflag == -1 && exposed_pt[lines[j].p1] != 0) ||
-      (jflag == -2 && exposed_pt[lines[j].p2] != 0)) {
-    MathExtra::copy3(lines[j].norm, contact_surfs[n].norm);
-    if (contact_surfs[n].nside == OPPOSITE_SIDE)
-      MathExtra::negate3(contact_surfs[n].norm);
-  }
 
   processed_contacts->insert(j);
   flat_surfs->push_back(n);
 
   int k, m, aflag, nsidek, which, nconnect, convex_flag;
   double r, *xjoint;
+
+  int jflag = contact_surfs[n].jflag;
+  int flat_internal_contact = 0;
 
   for (nconnect = 0; nconnect < (connect2d[j].np1 + connect2d[j].np2); nconnect++) {
     if (nconnect < connect2d[j].np1) {
@@ -3379,6 +3372,9 @@ void FixSurfaceGlobal::walk_connections2d(int n, int nsidej, std::vector<int> *f
     m = (*contacts_map)[k];
 
     if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
+      if (contact_surfs[m].jflag > -1)
+        flat_internal_contact = 1;
+
       // flat, same-type: walk
       if (processed_contacts->find(k) == processed_contacts->end()) {
         // which side is associated with the initial closest flat surf
@@ -3418,6 +3414,19 @@ void FixSurfaceGlobal::walk_connections2d(int n, int nsidej, std::vector<int> *f
       }
     }
   }
+
+  // Unless it's an exposed point on border, use surf norm
+  int use_surf_normal = 1;
+  if ((jflag == -1 && exposed_pt[lines[j].p1] != 0) ||
+      (jflag == -2 && exposed_pt[lines[j].p2] != 0))
+    if (!flat_internal_contact)
+      use_surf_normal = 0;
+
+  if (use_surf_normal) {
+    MathExtra::copy3(lines[j].norm, contact_surfs[n].norm);
+    if (contact_surfs[n].nside == OPPOSITE_SIDE)
+      MathExtra::negate3(contact_surfs[n].norm);
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -3425,44 +3434,19 @@ void FixSurfaceGlobal::walk_connections2d(int n, int nsidej, std::vector<int> *f
 void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *flat_surfs, std::unordered_set<int> *processed_contacts, std::unordered_set<int> *hidden_contacts, std::map<int, int> *contacts_map)
 {
   int j = contact_surfs[n].index;
-  int jflag = contact_surfs[n].jflag;
-
-  // Check if edge/corner has exposure
-  // Need to update for values 0, 1, 2
-  int use_surf_normal = 1;
-  if (jflag == -1 && exposed_edge[j][0] == 1)
-    use_surf_normal = 0;
-  if (jflag == -2 && exposed_edge[j][1] == 1)
-    use_surf_normal = 0;
-  if (jflag == -3 && exposed_edge[j][2] == 1)
-    use_surf_normal = 0;
-  if (jflag == -4) {
-    if (exposed_pt[tris[j].p1] == 1)
-      use_surf_normal = 0;
-    if (exposed_pt[tris[j].p1] == 2)
-      use_surf_normal = 0;
-  }
-  if (jflag == -5 && exposed_pt[tris[j].p2] == 1)
-    use_surf_normal = 0;
-  if (jflag == -6 && exposed_pt[tris[j].p3] == 1)
-    use_surf_normal = 0;
-
-  if (use_surf_normal) {
-    MathExtra::copy3(tris[j].norm, contact_surfs[n].norm);
-    if (contact_surfs[n].nside == OPPOSITE_SIDE)
-      MathExtra::negate3(contact_surfs[n].norm);
-  }
 
   processed_contacts->insert(j);
   flat_surfs->push_back(n);
 
-  int k, m, aflag, nsidek, which, contact_at_joint, nconnect, nc, ntotal, convex_flag;
+  int k, m, aflag, nsidek, which, nconnect, nc, ntotal, convex_flag;
   double r, *xjoint;
+
+  int jflag = contact_surfs[n].jflag;
+  int flat_internal_contact = 0;
 
   // Loop through edge-connected surfs
   ntotal = connect3d[j].ne1 + connect3d[j].ne2 + connect3d[j].ne3;
   for (nconnect = 0; nconnect < ntotal; nconnect++) {
-    contact_at_joint = 0;
     if (nconnect < connect3d[j].ne1) {
       // e1 = p1+p2
       nc = nconnect;
@@ -3470,8 +3454,6 @@ void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *f
       aflag = connect3d[j].aflag_e1[nc];
       nsidek = connect3d[j].nside_e1[nc];
       which = connect3d[j].ewhich_e1[nc];
-      if (jflag == -1 || jflag == -4 || jflag == -5)
-        contact_at_joint = 1; // closest PoC for j is at shared edge/corner
     } else if (nconnect < connect3d[j].ne1 + connect3d[j].ne2) {
       // e2 = p2+p3
       nc = nconnect - connect3d[j].ne1;
@@ -3479,8 +3461,6 @@ void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *f
       aflag = connect3d[j].aflag_e2[nc];
       nsidek = connect3d[j].nside_e2[nc];
       which = connect3d[j].ewhich_e2[nc];
-      if (jflag == -2 || jflag == -5 || jflag == -6)
-        contact_at_joint = 1;
     } else {
       // e3 = p1+p3
       nc = nconnect - connect3d[j].ne1 - connect3d[j].ne2;
@@ -3488,8 +3468,6 @@ void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *f
       aflag = connect3d[j].aflag_e3[nc];
       nsidek = connect3d[j].nside_e3[nc];
       which = connect3d[j].ewhich_e3[nc];
-      if (jflag == -3 || jflag == -4 || jflag == -6)
-        contact_at_joint = 1;
     }
 
     // Skip if not in contact
@@ -3501,6 +3479,9 @@ void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *f
     // Different type flat surfs act independently
     if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
       // flat, same-type: walk
+      if (contact_surfs[m].jflag > -4)
+        flat_internal_contact = 1;
+
       if (processed_contacts->find(k) == processed_contacts->end()) {
         // which side is associated with the initial closest flat surf
         if (nsidej == OPPOSITE_SIDE) {
@@ -3515,7 +3496,7 @@ void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *f
       }
     } else {
       // Convex: hide contact, adjust forces near joint
-      // Concave or flat + different types: 2x forces - process later
+      // Concave or flat + different types: 2x forces, use surface normal
       convex_flag = 0;
       if ((nsidej == SAME_SIDE && aflag == CONVEX) ||
         (nsidej == OPPOSITE_SIDE && aflag == CONCAVE))
@@ -3543,34 +3524,24 @@ void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *f
     }
   }
 
-  // Loop through corner-connected surfs to find any flat connections
+  // Loop through corner-connected surfs to find any other flat connections
   ntotal = connect3d[j].nc1 + connect3d[j].nc2 + connect3d[j].nc3;
   for (nconnect = 0; nconnect < ntotal; nconnect++) {
-    contact_at_joint = 0;
     if (nconnect < connect3d[j].nc1) {
       nc = nconnect;
       k = connect3d[j].neigh_c1[nc];
       aflag = connect3d[j].aflag_c1[nc];
       nsidek = connect3d[j].nside_c1[nc];
-      which = connect3d[j].cwhich_c1[nc];
-      if (jflag == -1 || jflag == -3 || jflag == -4)
-        contact_at_joint = 1; // closest PoC for j is at shared edge/corner
     } else if (nconnect < connect3d[j].nc1 + connect3d[j].nc2) {
       nc = nconnect - connect3d[j].nc1;
       k = connect3d[j].neigh_c2[nc];
       aflag = connect3d[j].aflag_c2[nc];
       nsidek = connect3d[j].nside_c2[nc];
-      which = connect3d[j].cwhich_c2[nc];
-      if (jflag == -2 || jflag == -4 || jflag == -5)
-        contact_at_joint = 1;
     } else {
       nc = nconnect - connect3d[j].nc1 - connect3d[j].nc2;
       k = connect3d[j].neigh_c3[nc];
       aflag = connect3d[j].aflag_c3[nc];
       nsidek = connect3d[j].nside_c3[nc];
-      which = connect3d[j].cwhich_c3[nc];
-      if (jflag == -3 || jflag == -4 || jflag == -6)
-        contact_at_joint = 1;
     }
 
     // Skip if not in contact
@@ -3578,7 +3549,11 @@ void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *f
       continue;
 
     m = (*contacts_map)[k];
+
     if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
+      if (contact_surfs[m].jflag > -4)
+        flat_internal_contact = 1;
+
       // flat, same-type: walk
       if (processed_contacts->find(k) == processed_contacts->end()) {
         // which side is associated with the initial closest flat surf
@@ -3593,5 +3568,25 @@ void FixSurfaceGlobal::walk_connections3d(int n, int nsidej, std::vector<int> *f
         walk_connections3d(m, nsidek, flat_surfs, processed_contacts, hidden_contacts, contacts_map);
       }
     }
+  }
+
+  // Check if edge has exposure
+  int use_surf_normal = 1;
+  if ((jflag == -1 && exposed_edge[j][0] != 0) ||
+      (jflag == -2 && exposed_edge[j][1] != 0) ||
+      (jflag == -3 && exposed_edge[j][2] != 0))
+    use_surf_normal = 0;
+
+  // Check if corner has exposure and there's no internal contact
+  if ((jflag == -4 && exposed_pt[tris[j].p1] != 0) ||
+      (jflag == -5 && exposed_pt[tris[j].p2] != 0) ||
+      (jflag == -6 && exposed_pt[tris[j].p3] != 0))
+    if (!flat_internal_contact)
+      use_surf_normal = 0;
+
+  if (use_surf_normal) {
+    MathExtra::copy3(tris[j].norm, contact_surfs[n].norm);
+    if (contact_surfs[n].nside == OPPOSITE_SIDE)
+      MathExtra::negate3(contact_surfs[n].norm);
   }
 }
