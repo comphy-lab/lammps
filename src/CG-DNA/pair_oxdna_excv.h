@@ -28,7 +28,9 @@ class PairOxdnaExcv : public Pair {
  public:
   PairOxdnaExcv(class LAMMPS *);
   ~PairOxdnaExcv() override;
-  virtual void compute_interaction_sites(double *, double *, double *, double *, double *);
+  virtual void compute_backbone_site(double *, double *, double *, double *) const;
+  template <int N>
+  void compute_base_site(double *, double *, double *, double *) const;
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;

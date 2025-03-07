@@ -29,6 +29,8 @@ class PairOxdnaHbond : public Pair {
  public:
   PairOxdnaHbond(class LAMMPS *);
   ~PairOxdnaHbond() override;
+  template <int N>
+  void compute_base_site(double *, double *, double *, double *) const;
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;

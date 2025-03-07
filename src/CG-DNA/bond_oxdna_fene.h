@@ -28,7 +28,7 @@ class BondOxdnaFene : public Bond {
  public:
   BondOxdnaFene(class LAMMPS *lmp) : Bond(lmp) {}
   ~BondOxdnaFene() override;
-  virtual void compute_interaction_sites(double *, double *, double *, double *) const;
+  virtual void compute_backbone_site(double *, double *, double *, double *) const;
   void compute(int, int) override;
   void coeff(int, char **) override;
   void init_style() override;
