@@ -199,7 +199,7 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
   // distance COM-hbonding site
   double d_chb = ConstantsOxdna::get_d_chb();
   // vectors COM-h-bonding site in lab frame
-  double ra_chb[3],rb_chb[3];
+  double ra_cb[3],rb_cb[3];
   // Cartesian unit vectors in lab frame
   double ax[3],ay[3],az[3];
   double bx[3],by[3],bz[3];
@@ -247,24 +247,18 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
     // vector COM - base site a
     switch (atype%4) {
       case 0:
-        compute_base_site<0>(ax,ay,az,ra_chb);
+        compute_base_site<0>(ax,ay,az,ra_cb);
         break;
       case 1:
-        compute_base_site<1>(ax,ay,az,ra_chb);
+        compute_base_site<1>(ax,ay,az,ra_cb);
         break;
       case 2:
-        compute_base_site<2>(ax,ay,az,ra_chb);
+        compute_base_site<2>(ax,ay,az,ra_cb);
         break;
       case 3:
-        compute_base_site<3>(ax,ay,az,ra_chb);
+        compute_base_site<3>(ax,ay,az,ra_cb);
         break;
     }
-
-
-//    ra_chb[0] = d_chb*ax[0];
-//    ra_chb[1] = d_chb*ax[1];
-//    ra_chb[2] = d_chb*ax[2];
-
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -284,27 +278,23 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
       // vector COM - base site b
       switch (btype%4) {
         case 0:
-          compute_base_site<0>(bx,by,bz,rb_chb);
+          compute_base_site<0>(bx,by,bz,rb_cb);
           break;
         case 1:
-          compute_base_site<1>(bx,by,bz,rb_chb);
+          compute_base_site<1>(bx,by,bz,rb_cb);
           break;
         case 2:
-          compute_base_site<2>(bx,by,bz,rb_chb);
+          compute_base_site<2>(bx,by,bz,rb_cb);
           break;
         case 3:
-          compute_base_site<3>(bx,by,bz,rb_chb);
+          compute_base_site<3>(bx,by,bz,rb_cb);
           break;
       }
 
-//    rb_chb[0] = d_chb*bx[0];
-//    rb_chb[1] = d_chb*bx[1];
-//    rb_chb[2] = d_chb*bx[2];
-
       // vector h-bonding site b to a
-      delr_hb[0] = x[a][0] + ra_chb[0] - x[b][0] - rb_chb[0];
-      delr_hb[1] = x[a][1] + ra_chb[1] - x[b][1] - rb_chb[1];
-      delr_hb[2] = x[a][2] + ra_chb[2] - x[b][2] - rb_chb[2];
+      delr_hb[0] = x[a][0] + ra_cb[0] - x[b][0] - rb_cb[0];
+      delr_hb[1] = x[a][1] + ra_cb[1] - x[b][1] - rb_cb[1];
+      delr_hb[2] = x[a][2] + ra_cb[2] - x[b][2] - rb_cb[2];
 
       rsq_hb = delr_hb[0]*delr_hb[0] + delr_hb[1]*delr_hb[1] + delr_hb[2]*delr_hb[2];
       r_hb = sqrt(rsq_hb);
@@ -489,7 +479,7 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
       f[a][1] += delf[1];
       f[a][2] += delf[2];
 
-      MathExtra::cross3(ra_chb,delf,delta);
+      MathExtra::cross3(ra_cb,delf,delta);
 
       torque[a][0] += delta[0];
       torque[a][1] += delta[1];
@@ -502,7 +492,7 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
         f[b][2] -= delf[2];
 
 
-        MathExtra::cross3(rb_chb,delf,deltb);
+        MathExtra::cross3(rb_cb,delf,deltb);
 
         torque[b][0] -= deltb[0];
         torque[b][1] -= deltb[1];
