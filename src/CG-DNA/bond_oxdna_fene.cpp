@@ -48,8 +48,8 @@ BondOxdnaFene::~BondOxdnaFene()
 /* ----------------------------------------------------------------------
     compute vector COM-sugar-phosphate backbone interaction site in oxDNA
 ------------------------------------------------------------------------- */
-void BondOxdnaFene::compute_backbone_site(double e1[3], double /*e2*/[3], double /*e3*/[3],
-                                              double r[3]) const
+void BondOxdnaFene::compute_backbone_site(double e1[3], double /*e2*/[3],
+  double /*e3*/[3], double r[3]) const
 {
   double d_cs = ConstantsOxdna::get_d_cs();
 

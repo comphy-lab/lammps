@@ -130,11 +130,11 @@ PairOxdnaHbond::~PairOxdnaHbond()
 
 /* --------------------------------------------------------------
     compute vector COM-hydrogen bonding interaction site in oxDNA
-    identical templates for A=1, C=2, G=3, T=0 in oxDNA/oxDNA2
+    identical templates for A=1, C=2, G=3, T=0
 ----------------------------------------------------------------- */
 template <>
 void PairOxdnaHbond::compute_base_site<0>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rb[3]) const
+  double /*e3*/[3], double rb[3]) const
 {
   double d_cb = ConstantsOxdna::get_d_cb();
 
@@ -146,7 +146,7 @@ void PairOxdnaHbond::compute_base_site<0>(double e1[3], double /*e2*/[3],
 
 template <>
 void PairOxdnaHbond::compute_base_site<1>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rb[3]) const
+  double /*e3*/[3], double rb[3]) const
 {
   double d_cb = ConstantsOxdna::get_d_cb();
 
@@ -157,7 +157,7 @@ void PairOxdnaHbond::compute_base_site<1>(double e1[3], double /*e2*/[3],
 }
 template <>
 void PairOxdnaHbond::compute_base_site<2>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rb[3]) const
+  double /*e3*/[3], double rb[3]) const
 {
   double d_cb = ConstantsOxdna::get_d_cb();
 
@@ -168,7 +168,7 @@ void PairOxdnaHbond::compute_base_site<2>(double e1[3], double /*e2*/[3],
 }
 template <>
 void PairOxdnaHbond::compute_base_site<3>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rb[3]) const
+  double /*e3*/[3], double rb[3]) const
 {
   double d_cb = ConstantsOxdna::get_d_cb();
 

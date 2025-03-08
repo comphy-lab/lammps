@@ -63,7 +63,7 @@ PairOxdna2Dh::~PairOxdna2Dh()
 }
 
 /* ----------------------------------------------------------------------
-    compute vector COM-sugar-phosphate backbone interaction site in oxDNA2
+   compute vector COM-sugar-phosphate backbone interaction site in oxDNA2
 ------------------------------------------------------------------------- */
 void PairOxdna2Dh::compute_backbone_site(double e1[3],
   double e2[3], double /*e3*/[3], double r[3]) const
