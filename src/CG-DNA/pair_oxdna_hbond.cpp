@@ -196,8 +196,6 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
   double theta7,t7dir[3],cost7;
   double theta8,t8dir[3],cost8;
 
-  // distance COM-hbonding site
-  double d_chb = ConstantsOxdna::get_d_chb();
   // vectors COM-h-bonding site in lab frame
   double ra_cb[3],rb_cb[3];
   // Cartesian unit vectors in lab frame
