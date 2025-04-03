@@ -929,7 +929,11 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
     }
   }
 
+  if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv" + utils::errorurl(21));
+
   // backbone-base parameters depending on tetramer
+  count = 0;
+
   for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
@@ -942,6 +946,7 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
           cut4sq_sb_c[i][j][k][l]  = cut4_sb_c[i][j][k][l]*cut4_sb_c[i][j][k][l];
           lj14_sb[i][j][k][l] = 4.0 * epsilon_sb[j][k] * pow(sigma4_sb[i][j][k][l],12.0);
           lj24_sb[i][j][k][l] = 4.0 * epsilon_sb[j][k] * pow(sigma4_sb[i][j][k][l],6.0);
+          count++;
        }
       }
     }
@@ -979,7 +984,11 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
     }
   }
 
+  if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv");
+
   // base-base parameters depending on tetramer
+  count = 0;
+
   for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
@@ -992,6 +1001,7 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
           cut4sq_bb_c[i][j][k][l]  = cut4_bb_c[i][j][k][l]*cut4_bb_c[i][j][k][l];
           lj14_bb[i][j][k][l] = 4.0 * epsilon_bb[j][k] * pow(sigma4_bb[i][j][k][l],12.0);
           lj24_bb[i][j][k][l] = 4.0 * epsilon_bb[j][k] * pow(sigma4_bb[i][j][k][l],6.0);
+          count++;
        }
       }
     }
