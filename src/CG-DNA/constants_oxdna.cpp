@@ -33,7 +33,6 @@ ConstantsOxdna::ConstantsOxdna(class LAMMPS *lmp) : Pointers(lmp)
 // oxDNA 1 parameters
 double ConstantsOxdna::d_cs = -0.4;
 double ConstantsOxdna::d_cst = +0.34;
-double ConstantsOxdna::d_chb = +0.4;
 double ConstantsOxdna::d_cb = +0.4;
 // oxDNA 2 parameters
 double ConstantsOxdna::d_cs_x = -0.34;
@@ -52,7 +51,6 @@ void ConstantsOxdna::set_real_units()
   // oxDNA 1 parameters in real units
   d_cs = -3.4072;
   d_cst = +2.89612;
-  d_chb = +3.4072;
   d_cb = +3.4072;
   // oxDNA 2 parameters in real units
   d_cs_x = -2.89612;
