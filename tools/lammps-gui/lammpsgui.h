@@ -112,7 +112,6 @@ private slots:
     void run_buffer() { do_run(true); }
     void run_file() { do_run(false); }
     void restart_lammps() { lammps.close(); };
-    void run_wham();
 
     void edit_variables();
     void render_image();

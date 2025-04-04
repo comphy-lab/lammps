@@ -75,8 +75,6 @@
     <addaction name="actionRun_File"/>
     <addaction name="actionStop_LAMMPS"/>
     <addaction name="actionRestart_LAMMPS"/>
-<!-- <addaction name="separator"/>
-    <addaction name="actionRun_WHAM"/> -->
     <addaction name="separator"/>
     <addaction name="actionSet_Variables"/>
     <addaction name="separator"/>
@@ -298,14 +296,6 @@
     <string>Restart &amp;LAMMPS</string>
    </property>
   </action>
-<!--  <action name="actionRun_WHAM">
-   <property name="icon">
-    <iconset theme=":/icons/system-run.png"/>
-   </property>
-   <property name="text">
-    <string>Run &amp;WHAM Utility</string>
-   </property>
-</action> -->
   <action name="actionImage">
    <property name="icon">
     <iconset theme=":/icons/emblem-photos.png"/>
