@@ -72,6 +72,7 @@ PairMLIAP::~PairMLIAP()
     memory->destroy(setflag);
     memory->destroy(cutsq);
     memory->destroy(map);
+    memory->destroy(cutghost);
   }
 }
 
@@ -124,6 +125,7 @@ void PairMLIAP::allocate()
   memory->create(setflag,n+1,n+1,"pair:setflag");
   memory->create(cutsq,n+1,n+1,"pair:cutsq");
   memory->create(map,n+1,"pair:map");
+  if (ghostneigh) memory->create(cutghost, n+1, n+1, "pair:cutghost");
 }
 
 /* ----------------------------------------------------------------------
@@ -354,7 +356,9 @@ void PairMLIAP::init_style()
 double PairMLIAP::init_one(int i, int j)
 {
   if (setflag[i][j] == 0) error->all(FLERR,"All pair coeffs are not set");
+
   double cutmax = sqrt(descriptor->cutsq[map[i]][map[j]]);
+  if (ghostneigh) cutghost[i][j] =  cutghost[j][i] = cutmax;
   return cutmax;
 }
 

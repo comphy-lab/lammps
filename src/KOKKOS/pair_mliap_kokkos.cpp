@@ -55,6 +55,7 @@ PairMLIAPKokkos<DeviceType>::~PairMLIAPKokkos()
   memoryKK->destroy_kokkos(k_setflag, setflag);
   memoryKK->destroy_kokkos(k_eatom, eatom);
   memoryKK->destroy_kokkos(k_vatom, vatom);
+  if (ghostneigh) memoryKK->destroy_kokkos(k_cutghost, cutghost);
   delete model;
   delete descriptor;
   model=nullptr;
@@ -113,7 +114,6 @@ void PairMLIAPKokkos<DeviceType>::compute(int eflag, int vflag)
   // calculate force contributions beta_i*dB_i/dR_j
   atomKK->sync(descriptor_space,F_MASK);
   k_data->sync(descriptor_space, NUMNEIGHS_MASK | IATOMS_MASK | IELEMS_MASK | ELEMS_MASK | BETAS_MASK | JATOMS_MASK | PAIR_I_MASK | JELEMS_MASK | RIJ_MASK );
-
   descriptor->compute_forces(data);
 
   e_tally(data);
@@ -146,6 +146,7 @@ void PairMLIAPKokkos<DeviceType>::allocate()
   memoryKK->create_kokkos(k_cutsq, cutsq, n+1, n+1, "pair_mliap:cutsq");
   memoryKK->create_kokkos(k_setflag, setflag, n+1, n+1, "pair_mliap:setflag");
 
+  if (ghostneigh) memoryKK->create_kokkos(k_cutghost, cutghost, n+1, n+1, "pair_mliap:cutghost");
   // this is for the base class so it doesn't double delete
   allocated = 1;
 }

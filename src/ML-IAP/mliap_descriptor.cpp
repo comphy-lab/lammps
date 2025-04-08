@@ -28,13 +28,15 @@ MLIAPDescriptor::MLIAPDescriptor(LAMMPS *lmp) :
     radelem(nullptr), wjelem(nullptr)
 {
   cutmax = 0.0;
+  allocated_elements = 0;
 }
 
 /* ---------------------------------------------------------------------- */
 
 MLIAPDescriptor::~MLIAPDescriptor()
 {
-  for (int i = 0; i < nelements; i++) delete[] elements[i];
+  if (allocated_elements)
+    for (int i = 0; i < nelements; i++) delete[] elements[i];
   delete[] elements;
   memory->destroy(cutsq);
   memory->destroy(radelem);
