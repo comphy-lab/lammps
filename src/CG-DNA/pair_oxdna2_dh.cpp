@@ -380,14 +380,13 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 
   cut_dh_ast_one = 3.0*lambda_dh_one;
 
-  b_dh_one = -(exp(-cut_dh_ast_one/lambda_dh_one) * qeff_dh_pf_one * qeff_dh_pf_one *
+  b_dh_one = (exp(-cut_dh_ast_one/lambda_dh_one) * qeff_dh_pf_one *
       (cut_dh_ast_one + lambda_dh_one) * (cut_dh_ast_one + lambda_dh_one))/
-      (-4.0 * cut_dh_ast_one * cut_dh_ast_one * cut_dh_ast_one *
-      lambda_dh_one * lambda_dh_one * qeff_dh_pf_one);
+      (4.0 * cut_dh_ast_one * cut_dh_ast_one * cut_dh_ast_one *
+      lambda_dh_one * lambda_dh_one);
 
-  cut_dh_c_one =  cut_dh_ast_one * (qeff_dh_pf_one*cut_dh_ast_one +
-      3.0*qeff_dh_pf_one * lambda_dh_one)/
-      (qeff_dh_pf_one * (cut_dh_ast_one+lambda_dh_one));
+  cut_dh_c_one =  cut_dh_ast_one * (cut_dh_ast_one + 3.0 * lambda_dh_one)/
+      (cut_dh_ast_one + lambda_dh_one);
 
   for (int i = ilo; i <= ihi; i++) {
     for (int j = MAX(jlo,i); j <= jhi; j++) {
