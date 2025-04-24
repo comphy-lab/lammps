@@ -786,8 +786,9 @@ void FixRigidSmall::initial_integrate(int vflag)
    use domain->remap() in case xcm is far away from box
      due to first-time definition of rigid body in setup_bodies_static()
      or due to box flip
-   also adjust imagebody = rigid body image flags, due to xcm remap
-   then communicate bodies so other procs will know of changes to body xcm
+   also adjust imagebody = rigid body image flags, due to xcm remap 
+   also remap vcm if xcm crosses periodic shearing boundary
+   then communicate bodies so other procs will know of changes to body xcm/vcm
    then adjust xcmimage flags of all atoms in bodies via image_shift()
      for two effects
      (1) change in true image flags due to pbc() call during exchange
@@ -795,19 +796,37 @@ void FixRigidSmall::initial_integrate(int vflag)
    xcmimage flags are always -1,0,-1 so that body can be unwrapped
      around in-box xcm and stay close to simulation box
    if just inferred unwrapped from atom image flags,
-     then a body could end up very far away
-     when unwrapped by true image flags
-   then set_xv() will compute huge displacements every step to reset coords of
-     all the body atoms to be back inside the box, ditto for triclinic box flip
-     note: so just want to avoid that numeric problem?
+     then an unwrapped body could end up very far away from box
+   set_xv() would then compute huge displacements every step to 
+     reset coords of all body atoms to be back inside the box,
+     ditto for triclinic box flip which could cause numeric problems
 ------------------------------------------------------------------------- */
 
 void FixRigidSmall::pre_neighbor()
 {
+  /*
+  printf("PRENEIGH step %ld xcm1 %g %g vcm1 %g %g xcm2 %g %g vcm2 %g %g\n",
+         update->ntimestep,
+         body[0].xcm[0],body[0].xcm[1],
+         body[0].vcm[0],body[0].vcm[1],
+         body[1].xcm[0],body[1].xcm[1],
+         body[1].vcm[0],body[1].vcm[1]);
+  */
+  
   for (int ibody = 0; ibody < nlocal_body; ibody++) {
     Body *b = &body[ibody];
-    domain->remap(b->xcm,b->image);
+    //domain->remap(b->xcm,b->image);
+    domain->remap(b->xcm,b->image,b->vcm);
   }
+
+  /*
+  printf("POSTNEIGH step %ld xcm1 %g %g vcm1 %g %g xcm2 %g %g vcm2 %g %g\n",
+         update->ntimestep,
+         body[0].xcm[0],body[0].xcm[1],
+         body[0].vcm[0],body[0].vcm[1],
+         body[1].xcm[0],body[1].xcm[1],
+         body[1].vcm[0],body[1].vcm[1]);
+  */     
 
   nghost_body = 0;
   commflag = FULL_BODY;

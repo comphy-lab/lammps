@@ -969,20 +969,24 @@ void FixRigid::initial_integrate(int vflag)
    use domain->remap() in case xcm is far away from box
      due to first-time definition of rigid body in setup_bodies_static()
      or due to box flip
+   also remap vcm if xcm crosses periodic shearing boundary
    also adjust imagebody = rigid body image flags, due to xcm remap
    also reset body xcmimage flags of all atoms in bodies
    xcmimage flags are relative to xcm so that body can be unwrapped
    if don't do this, would need xcm to move with true image flags
      then a body could end up very far away from box
-     set_xv() will then compute huge displacements every step to
-       reset coords of all body atoms to be back inside the box,
-       ditto for triclinic box flip, which causes numeric problems
+   set_xv() would then compute huge displacements every step to
+     reset coords of all body atoms to be back inside the box,
+     ditto for triclinic box flip which could cause numeric problems
 ------------------------------------------------------------------------- */
 
 void FixRigid::pre_neighbor()
 {
-  for (int ibody = 0; ibody < nbody; ibody++)
-    domain->remap(xcm[ibody],imagebody[ibody]);
+  for (int ibody = 0; ibody < nbody; ibody++) {
+    //domain->remap(xcm[ibody],imagebody[ibody]);
+    domain->remap(xcm[ibody],imagebody[ibody],vcm[ibody]);
+  }
+  
   image_shift();
 }
 

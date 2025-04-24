@@ -134,7 +134,7 @@ class Domain : protected Pointers {
   int closest_image(int, int);
   int closest_image(const double *const, int);
   void closest_image(const double *const, const double *const, double *const);
-  void remap(double *, imageint &);
+  void remap(double *, imageint &, double *v = nullptr);
   void remap(double *);
   void remap_all();
   void remap_near(double *, double *);
