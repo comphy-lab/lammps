@@ -1785,7 +1785,7 @@ ColorMap::~ColorMap()
 }
 
 /* ----------------------------------------------------------------------
-   redefine color map
+   redefine a color map
    args = lo hi style delta N entry1 entry2 ... entryN as defined by caller
    return 1 if any error in args, else return 0
 ------------------------------------------------------------------------- */
@@ -1849,13 +1849,11 @@ int ColorMap::reset(int narg, char **arg)
         mentry[i].lo = NUMERIC;
         mentry[i].lvalue = utils::numeric(FLERR,arg[n],false,lmp);
       } else if (strcmp(arg[n],"min") == 0) mentry[i].lo = MINVALUE;
-      else if (strcmp(arg[n],"max") == 0) mentry[i].lo = MAXVALUE;
       else return 1;
       if (!islower(arg[n+1][0])) {
         mentry[i].hi = NUMERIC;
         mentry[i].hvalue = utils::numeric(FLERR,arg[n+1],false,lmp);
-      } else if (strcmp(arg[n+1],"min") == 0) mentry[i].hi = MINVALUE;
-      else if (strcmp(arg[n+1],"max") == 0) mentry[i].hi = MAXVALUE;
+      } else if (strcmp(arg[n+1],"max") == 0) mentry[i].hi = MAXVALUE;
       else return 1;
       mentry[i].color = image->color2rgb(arg[n+2]);
       n += 3;
@@ -1867,7 +1865,7 @@ int ColorMap::reset(int narg, char **arg)
       // current code is just 1st nentry values of ALL or USER
       // need to comment out error check in DumpImage::modify_param()
       //   for amap check on (narg < n) to get it to work
-      // need to add extra logic here to check not accessing undefined colors
+      // need to add extra logic here to ensure not accessinging undefined colors
       if (i == 0) {
         if (n+1 > narg) return 1;
         if (strcmp(arg[n],"ALL") == 0) expandflag = 1;
@@ -1883,6 +1881,9 @@ int ColorMap::reset(int narg, char **arg)
       }
       n += 1;
     }
+
+    // error return if color string was not recognized
+    
     if (mentry[i].color == nullptr) return 1;
   }
 
@@ -1890,8 +1891,11 @@ int ColorMap::reset(int narg, char **arg)
     if (nentry < 2) return 1;
     if (mentry[0].single != MINVALUE || mentry[nentry-1].single != MAXVALUE)
       return 1;
-    for (int i = 2; i < nentry-1; i++)
+    for (int i = 1; i < nentry-1; i++)
+      if (mentry[i].single != NUMERIC) return 1;
+    for (int i = 2; i < nentry-1; i++) {
       if (mentry[i].svalue <= mentry[i-1].svalue) return 1;
+    }
   } else if (mstyle == DISCRETE) {
     if (nentry < 1) return 1;
     if (mentry[nentry-1].lo != MINVALUE || mentry[nentry-1].hi != MAXVALUE)
@@ -1930,7 +1934,7 @@ int ColorMap::minmax(double mindynamic, double maxdynamic)
     if (mrange == ABSOLUTE) mentry[nentry-1].svalue = hicurrent;
     else mentry[nentry-1].svalue = 1.0;
 
-    // error in ABSOLUTE mode if new lo/hi current cause
+    // error in ABSOLUTE mode if current lo/hi values cause
     // first/last entry to become lo > hi with adjacent entry
 
     if (mrange == ABSOLUTE) {
@@ -1952,8 +1956,25 @@ int ColorMap::minmax(double mindynamic, double maxdynamic)
         else mentry[i].hvalue = 1.0;
       }
     }
-  }
 
+  // set rounddown_flag if bin boundary is essentially at hicurrent
+  // this is to prevent all atoms with values >= hicurrent being assigned
+  //   the color for a bin starting at highcurrent,
+  //   more sensible to assign them color for bin ending at hicurrent
+  // rounddown_flag is used in value2color()
+    
+  } else if (mstyle == SEQUENTIAL) { 
+    // NOTE: need to formalize and pre-set these 2 epsilon constants
+    double epsbin;
+    if (mrange == ABSOLUTE) epsbin = (hicurrent-locurrent) * 1.0e-12;
+    else epsbin = 1.0e-9;
+    
+    int ibin = static_cast<int> ((hicurrent-locurrent) * mbinsizeinv);
+    int jbin = static_cast<int> ((hicurrent-locurrent-epsbin) * mbinsizeinv);
+    if (jbin < ibin) rounddown_flag = 1;
+    else rounddown_flag = 0;
+  }
+  
   return 0;
 }
 
@@ -1964,7 +1985,7 @@ int ColorMap::minmax(double mindynamic, double maxdynamic)
 
 double *ColorMap::value2color(double value)
 {
-  double lo;//,hi;
+  double lo,hi;
 
   value = MAX(value,locurrent);
   value = MIN(value,hicurrent);
@@ -1973,10 +1994,10 @@ double *ColorMap::value2color(double value)
     if (locurrent == hicurrent) value = 0.0;
     else value = (value-locurrent) / (hicurrent-locurrent);
     lo = 0.0;
-    //hi = 1.0;
+    hi = 1.0;
   } else {
     lo = locurrent;
-    //hi = hicurrent;
+    hi = hicurrent;
   }
 
   if (mstyle == CONTINUOUS) {
@@ -1998,6 +2019,7 @@ double *ColorMap::value2color(double value)
         return mentry[i].color;
   } else {
     int ibin = static_cast<int> ((value-lo) * mbinsizeinv);
+    if (value == hi && rounddown_flag) ibin--;
     return mentry[ibin%nentry].color;
   }
 

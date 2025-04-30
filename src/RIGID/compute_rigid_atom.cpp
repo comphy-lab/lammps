@@ -12,7 +12,7 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-#include "compute_rigid_local.h"
+#include "compute_rigid_atom.h"
 
 #include "atom.h"
 #include "domain.h"
@@ -34,17 +34,17 @@ enum{ID,MOL,MASS,X,Y,Z,XU,YU,ZU,VX,VY,VZ,FX,FY,FZ,IX,IY,IZ,
 
 /* ---------------------------------------------------------------------- */
 
-ComputeRigidLocal::ComputeRigidLocal(LAMMPS *lmp, int narg, char **arg) :
+ComputeRigidAtom::ComputeRigidAtom(LAMMPS *lmp, int narg, char **arg) :
   Compute(lmp, narg, arg),
-  rstyle(nullptr), idrigid(nullptr), fixrigid(nullptr), vlocal(nullptr), alocal(nullptr)
+  rstyle(nullptr), idrigid(nullptr), fixrigid(nullptr)
 {
   if (narg < 5) error->all(FLERR,"Illegal compute rigid/local command");
 
-  local_flag = 1;
-  nvalues = narg - 4;
+  peratom_flag = 1;
 
   idrigid = utils::strdup(arg[3]);
 
+  nvalues = narg - 4;
   rstyle = new int[nvalues];
 
   nvalues = 0;
@@ -86,65 +86,59 @@ ComputeRigidLocal::ComputeRigidLocal(LAMMPS *lmp, int narg, char **arg) :
     else error->all(FLERR,"Invalid keyword in compute rigid/local command");
   }
 
-  if (nvalues == 1) size_local_cols = 0;
-  else size_local_cols = nvalues;
+  if (nvalues == 1) size_peratom_cols = 0;
+  else size_peratom_cols = nvalues;
 
-  ncount = nmax = 0;
-  vlocal = nullptr;
-  alocal = nullptr;
+  maxatom = 0;
+  vector_atom = nullptr;
+  array_atom = nullptr;
 }
 
 /* ---------------------------------------------------------------------- */
 
-ComputeRigidLocal::~ComputeRigidLocal()
+ComputeRigidAtom::~ComputeRigidAtom()
 {
-  memory->destroy(vlocal);
-  memory->destroy(alocal);
+  memory->destroy(vector_atom);
+  memory->destroy(array_atom);
   delete[] idrigid;
   delete[] rstyle;
 }
 
 /* ---------------------------------------------------------------------- */
 
-void ComputeRigidLocal::init()
+void ComputeRigidAtom::init()
 {
   // set fixrigid
 
   auto ifix = modify->get_fix_by_id(idrigid);
-  if (!ifix) error->all(FLERR,"FixRigidSmall ID {} for compute rigid/local does not exist", idrigid);
+  if (!ifix) error->all(FLERR,"FixRigidSmall ID {} for compute rigid/atom does not exist", idrigid);
   fixrigid = dynamic_cast<FixRigidSmall *>(ifix);
   if (!fixrigid)
-    error->all(FLERR,"Fix ID {} for compute rigid/local does not point to fix rigid/small", idrigid);
+    error->all(FLERR,"Fix ID {} for compute rigid/atom does not point to fix rigid/small", idrigid);
 
   // do initial memory allocation so that memory_usage() is correct
 
-  ncount = compute_rigid(0);
-  if (ncount > nmax) reallocate(ncount);
-  size_local_rows = ncount;
-}
-
-/* ---------------------------------------------------------------------- */
-
-void ComputeRigidLocal::compute_local()
-{
-  invoked_local = update->ntimestep;
-
-  // count local entries and compute bond info
-
-  ncount = compute_rigid(0);
-  if (ncount > nmax) reallocate(ncount);
-  size_local_rows = ncount;
-  ncount = compute_rigid(1);
+  if (atom->nmax > maxatom) {
+    maxatom = atom->nmax;
+    if (nvalues == 1) {
+      memory->destroy(vector_atom);
+      memory->create(vector_atom, maxatom, "rigid/atom:vector_atom");
+    } else {
+      memory->destroy(array_atom);
+      memory->create(array_atom, maxatom, nvalues, "rigid/atom:array_atom");
+    }
+  }
 }
 
 /* ----------------------------------------------------------------------
-   count rigid bodies and compute rigid info on this proc
-   if flag is set, compute requested info about rigid body
-   owning atom of rigid body must be in group
+   loop over atoms, store rigid body info for the body it is in
+   set output to zero if atom not in group or not in a body
 ------------------------------------------------------------------------- */
 
-int ComputeRigidLocal::compute_rigid(int flag)
+void ComputeRigidAtom::compute_peratom()
 {
+  invoked_peratom = update->ntimestep;
+
   int i,m,n,ibody;
   double *ptr;
   FixRigidSmall::Body *body;
@@ -160,157 +154,152 @@ int ComputeRigidLocal::compute_rigid(int flag)
 
   m = 0;
   for (i = 0; i < nlocal; i++) {
-    if (!(mask[i] & groupbit)) continue;
-    ibody = fixrigid->bodyown[i];
-    if (ibody < 0) continue;
+    if (!(mask[i] & groupbit)) {
+      zero(i);
+      continue;
+    }
+    
+    ibody = fixrigid->atom2body[i];
+    if (ibody < 0) {
+      zero(i);
+      continue;
+    }
+    
     body = &fixrigid->body[ibody];
 
-    if (flag) {
-      if (nvalues == 1) ptr = &vlocal[m];
-      else ptr = alocal[m];
+    if (nvalues == 1) ptr = &vector_atom[i];
+    else ptr = array_atom[i];
 
-      for (n = 0; n < nvalues; n++) {
-        switch (rstyle[n]) {
-        case ID:
-          ptr[n] = tag[body->ilocal];
-          break;
-        case MOL:
-          ptr[n] = molecule[body->ilocal];
-          break;
-        case MASS:
-          ptr[n] = body->mass;
-          break;
-        case X:
-          ptr[n] = body->xcm[0];
-          break;
-        case Y:
-          ptr[n] = body->xcm[1];
-          break;
-        case Z:
-          ptr[n] = body->xcm[2];
-          break;
-        case XU:
-          ptr[n] = body->xcm[0] +
-            ((body->image & IMGMASK) - IMGMAX) * xprd;
-          break;
-        case YU:
-          ptr[n] = body->xcm[1] +
-            ((body->image >> IMGBITS & IMGMASK) - IMGMAX) * yprd;
-          break;
-        case ZU:
-          ptr[n] = body->xcm[2] +
-            ((body->image >> IMG2BITS) - IMGMAX) * zprd;
-          break;
-        case VX:
-          ptr[n] = body->vcm[0];
-          break;
-        case VY:
-          ptr[n] = body->vcm[1];
-          break;
-        case VZ:
-          ptr[n] = body->vcm[2];
-          break;
-        case FX:
-          ptr[n] = body->fcm[0];
-          break;
-        case FY:
-          ptr[n] = body->fcm[1];
-          break;
-        case FZ:
-          ptr[n] = body->fcm[2];
-          break;
-        case IX:
-          ptr[n] = (body->image & IMGMASK) - IMGMAX;
-          break;
-        case IY:
-          ptr[n] = (body->image >> IMGBITS & IMGMASK) - IMGMAX;
-          break;
-        case IZ:
-          ptr[n] = (body->image >> IMG2BITS) - IMGMAX;
-          break;
-        case TQX:
-          ptr[n] = body->torque[0];
-          break;
-        case TQY:
-          ptr[n] = body->torque[1];
-          break;
-        case TQZ:
-          ptr[n] = body->torque[2];
-          break;
-        case OMEGAX:
-          ptr[n] = body->omega[0];
-          break;
-        case OMEGAY:
-          ptr[n] = body->omega[1];
-          break;
-        case OMEGAZ:
-          ptr[n] = body->omega[2];
-          break;
-        case ANGMOMX:
-          ptr[n] = body->angmom[0];
-          break;
-        case ANGMOMY:
-          ptr[n] = body->angmom[1];
-          break;
-        case ANGMOMZ:
-          ptr[n] = body->angmom[2];
-          break;
-        case QUATW:
-          ptr[n] = body->quat[0];
-          break;
-        case QUATI:
-          ptr[n] = body->quat[1];
-          break;
-        case QUATJ:
-          ptr[n] = body->quat[2];
-          break;
-        case QUATK:
-          ptr[n] = body->quat[3];
-          break;
-        case INERTIAX:
-          ptr[n] = body->inertia[0];
-          break;
-        case INERTIAY:
-          ptr[n] = body->inertia[1];
-          break;
-        case INERTIAZ:
-          ptr[n] = body->inertia[2];
-          break;
-        }
+    for (n = 0; n < nvalues; n++) {
+      switch (rstyle[n]) {
+      case ID:
+        ptr[n] = tag[body->ilocal];
+        break;
+      case MOL:
+        ptr[n] = molecule[body->ilocal];
+        break;
+      case MASS:
+        ptr[n] = body->mass;
+        break;
+      case X:
+        ptr[n] = body->xcm[0];
+        break;
+      case Y:
+        ptr[n] = body->xcm[1];
+        break;
+      case Z:
+        ptr[n] = body->xcm[2];
+        break;
+      case XU:
+        ptr[n] = body->xcm[0] +
+          ((body->image & IMGMASK) - IMGMAX) * xprd;
+        break;
+      case YU:
+        ptr[n] = body->xcm[1] +
+          ((body->image >> IMGBITS & IMGMASK) - IMGMAX) * yprd;
+        break;
+      case ZU:
+        ptr[n] = body->xcm[2] +
+          ((body->image >> IMG2BITS) - IMGMAX) * zprd;
+        break;
+      case VX:
+        ptr[n] = body->vcm[0];
+        break;
+      case VY:
+        ptr[n] = body->vcm[1];
+        break;
+      case VZ:
+        ptr[n] = body->vcm[2];
+        break;
+      case FX:
+        ptr[n] = body->fcm[0];
+        break;
+      case FY:
+        ptr[n] = body->fcm[1];
+        break;
+      case FZ:
+        ptr[n] = body->fcm[2];
+        break;
+      case IX:
+        ptr[n] = (body->image & IMGMASK) - IMGMAX;
+        break;
+      case IY:
+        ptr[n] = (body->image >> IMGBITS & IMGMASK) - IMGMAX;
+        break;
+      case IZ:
+        ptr[n] = (body->image >> IMG2BITS) - IMGMAX;
+        break;
+      case TQX:
+        ptr[n] = body->torque[0];
+        break;
+      case TQY:
+        ptr[n] = body->torque[1];
+        break;
+      case TQZ:
+        ptr[n] = body->torque[2];
+        break;
+      case OMEGAX:
+        ptr[n] = body->omega[0];
+        break;
+      case OMEGAY:
+        ptr[n] = body->omega[1];
+        break;
+      case OMEGAZ:
+        ptr[n] = body->omega[2];
+        break;
+      case ANGMOMX:
+        ptr[n] = body->angmom[0];
+        break;
+      case ANGMOMY:
+        ptr[n] = body->angmom[1];
+        break;
+      case ANGMOMZ:
+        ptr[n] = body->angmom[2];
+        break;
+      case QUATW:
+        ptr[n] = body->quat[0];
+        break;
+      case QUATI:
+        ptr[n] = body->quat[1];
+        break;
+      case QUATJ:
+        ptr[n] = body->quat[2];
+        break;
+      case QUATK:
+        ptr[n] = body->quat[3];
+        break;
+      case INERTIAX:
+        ptr[n] = body->inertia[0];
+        break;
+      case INERTIAY:
+        ptr[n] = body->inertia[1];
+        break;
+      case INERTIAZ:
+        ptr[n] = body->inertia[2];
+        break;
       }
     }
-
-    m++;
-  }
-
-  return m;
-}
-
-/* ---------------------------------------------------------------------- */
-
-void ComputeRigidLocal::reallocate(int n)
-{
-  // grow vector_local or array_local
-
-  while (nmax < n) nmax += DELTA;
-
-  if (nvalues == 1) {
-    memory->destroy(vlocal);
-    memory->create(vlocal,nmax,"rigid/local:vector_local");
-    vector_local = vlocal;
-  } else {
-    memory->destroy(alocal);
-    memory->create(alocal,nmax,nvalues,"rigid/local:array_local");
-    array_local = alocal;
   }
 }
 
 /* ----------------------------------------------------------------------
-   memory usage of local data
+   zero the peratom output for atom I
 ------------------------------------------------------------------------- */
 
-double ComputeRigidLocal::memory_usage()
+void ComputeRigidAtom::zero(int i)
 {
-  double bytes = (double)nmax*nvalues * sizeof(double);
+  if (nvalues == 1) vector_atom[i] = 0.0;
+  else {
+    for (int n = 0; n < nvalues; n++) array_atom[i][n] = 0.0;
+  }
+}
+
+/* ----------------------------------------------------------------------
+   memory usage of peratom data
+------------------------------------------------------------------------- */
+
+double ComputeRigidAtom::memory_usage()
+{
+  double bytes = (double)maxatom*nvalues * sizeof(double);
   return bytes;
 }

@@ -21,6 +21,8 @@
 #include "comm.h"
 #include "domain.h"
 #include "error.h"
+#include "fix.h"
+#include "fix_deform.h"
 #include "force.h"
 #include "group.h"
 #include "hashlittle.h"
@@ -559,6 +561,16 @@ void FixRigidSmall::init()
     if (ifix->box_change) boxflag = true;
   }
 
+  // check for fix deform with V_REMAP set
+
+  deform_vremap = 0;
+  const auto &fixes = modify->get_fix_list();
+  for (const auto &fix : fixes)
+    if (utils::strmatch(fix->style,"^deform")) {
+      if ((dynamic_cast<FixDeform *>(fix))->remapflag == Domain::V_REMAP)
+        deform_vremap = 1;
+    }
+
   // add gravity forces based on gravity vector from fix
 
   if (id_gravity) {
@@ -804,29 +816,10 @@ void FixRigidSmall::initial_integrate(int vflag)
 
 void FixRigidSmall::pre_neighbor()
 {
-  /*
-  printf("PRENEIGH step %ld xcm1 %g %g vcm1 %g %g xcm2 %g %g vcm2 %g %g\n",
-         update->ntimestep,
-         body[0].xcm[0],body[0].xcm[1],
-         body[0].vcm[0],body[0].vcm[1],
-         body[1].xcm[0],body[1].xcm[1],
-         body[1].vcm[0],body[1].vcm[1]);
-  */
-  
   for (int ibody = 0; ibody < nlocal_body; ibody++) {
     Body *b = &body[ibody];
-    //domain->remap(b->xcm,b->image);
     domain->remap(b->xcm,b->image,b->vcm);
   }
-
-  /*
-  printf("POSTNEIGH step %ld xcm1 %g %g vcm1 %g %g xcm2 %g %g vcm2 %g %g\n",
-         update->ntimestep,
-         body[0].xcm[0],body[0].xcm[1],
-         body[0].vcm[0],body[0].vcm[1],
-         body[1].xcm[0],body[1].xcm[1],
-         body[1].vcm[0],body[1].vcm[1]);
-  */     
 
   nghost_body = 0;
   commflag = FULL_BODY;
@@ -985,9 +978,11 @@ void FixRigidSmall::apply_langevin_thermostat()
     gamma1 = -body[ibody].mass / t_period / ftm2v;
     gamma2 = sqrt(body[ibody].mass) * tsqrt *
       sqrt(24.0*boltz/t_period/dt/mvv2e) / ftm2v;
+    if (deform_vremap) remove_bias(ibody,vcm);
     langextra[ibody][0] = gamma1*vcm[0] + gamma2*(random->uniform()-0.5);
     langextra[ibody][1] = gamma1*vcm[1] + gamma2*(random->uniform()-0.5);
     langextra[ibody][2] = gamma1*vcm[2] + gamma2*(random->uniform()-0.5);
+    if (deform_vremap) restore_bias(ibody,vcm);
 
     gamma1 = -1.0 / t_period / ftm2v;
     gamma2 = tsqrt * sqrt(24.0*boltz/t_period/dt/mvv2e) / ftm2v;
@@ -1009,6 +1004,37 @@ void FixRigidSmall::apply_langevin_thermostat()
 
     MathExtra::matvec(ex_space,ey_space,ez_space,tbody,&langextra[ibody][3]);
   }
+}
+
+/* ----------------------------------------------------------------------
+   remove velocity bias from VCM of Body ibody to leave thermal VCM
+------------------------------------------------------------------------- */
+
+void FixRigidSmall::remove_bias(int ibody, double *vcm)
+{
+  double lamda[3];
+  double *h_rate = domain->h_rate;
+  double *h_ratelo = domain->h_ratelo;
+
+  domain->x2lamda(body[ibody].xcm, lamda);
+  vbias[0] = h_rate[0] * lamda[0] + h_rate[5] * lamda[1] + h_rate[4] * lamda[2] + h_ratelo[0];
+  vbias[1] = h_rate[1] * lamda[1] + h_rate[3] * lamda[2] + h_ratelo[1];
+  vbias[2] = h_rate[2] * lamda[2] + h_ratelo[2];
+  vcm[0] -= vbias[0];
+  vcm[1] -= vbias[1];
+  vcm[2] -= vbias[2];
+}
+
+/* ----------------------------------------------------------------------
+   add back velocity bias to VCM of Body ibody removed by remove_bias()
+   assume remove_bias() was previously called
+------------------------------------------------------------------------- */
+
+void FixRigidSmall::restore_bias(int /*i*/, double *vcm)
+{
+  vcm[0] += vbias[0];
+  vcm[1] += vbias[1];
+  vcm[2] += vbias[2];
 }
 
 /* ---------------------------------------------------------------------- */
