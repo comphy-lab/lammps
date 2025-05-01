@@ -230,9 +230,10 @@ class FixSurfaceGlobal : public FixSurface {
   void surface_attributes();
 
   void walk_connections2d(int, int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  void walk_connections3d(int, int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_connections3d(int, int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
   int adjust_exposed_corner_int(int, int, int, int);
   int adjust_exposed_corner_ext(int, int, int, int);
+  void reprocess_concave_corners(int, std::unordered_set<int> *, std::map<int, int> *);
 
   void surface_connectivity_attributes();
 
