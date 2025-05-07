@@ -204,7 +204,7 @@ class FixSurfaceGlobal : public FixSurface {
 
   struct ContactSurf {
     int index, neigh_index, type, flag, nside, norm_def, exposed;
-    double contact[3], dr[3], surf_norm[3], force_norm[3], overlap, dist;
+    double contact[3], dr[3], surf_norm[3], force_norm[3], overlap, dist, cor_int[3], cor_ext[3];
   };
 
   ContactSurf *contact_surfs;
@@ -228,12 +228,15 @@ class FixSurfaceGlobal : public FixSurface {
 
   void surface_attributes();
 
-  void walk_connections2d(int, int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  void walk_connections3d(int, int, double, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  int adjust_exposed_corner_int(int, int, int, int);
-  int adjust_exposed_corner_ext(int, int, int, int);
+  void prewalk_connections2d(int, int, std::unordered_set<int> *, std::map<int, int> *);
+  void prewalk_connections3d(int, int, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_connections3d(int, double, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void adjust_exposed_corner_int(int, int, int, int);
+  void adjust_exposed_corner_ext(int, int, int, int);
   void process_convex_surfs(double, std::vector<int> *, std::unordered_set<int>*);
   void process_concave_tris(double, std::vector<int> *, std::unordered_set<int> *);
+  int rescale_overlaps(double, std::vector<int> *);
 
   void surface_connectivity_attributes();
 
