@@ -49,9 +49,11 @@ action  atom_vec_oxdna.cpp
 action  atom_vec_oxdna.h
 action  bond_oxdna_fene.cpp bond_fene.h
 action  bond_oxdna2_fene.cpp bond_fene.h
+action  bond_oxdna3_fene.cpp bond_fene.h
 action  bond_oxrna2_fene.cpp bond_fene.h
 action  bond_oxdna_fene.h bond_fene.h
 action  bond_oxdna2_fene.h bond_fene.h
+action  bond_oxdna3_fene.h bond_fene.h
 action  bond_oxrna2_fene.h bond_fene.h
 action  fix_nve_dotc_langevin.cpp atom_vec_ellipsoid.h
 action  fix_nve_dotc_langevin.h atom_vec_ellipsoid.h
