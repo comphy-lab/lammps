@@ -3755,8 +3755,12 @@ void FixSurfaceGlobal::adjust_exposed_corner_int(int j, int k, int n, int m, int
     if (exposed_edge[j][2]) pte = tris[j].p1;
   }
 
-  if (pte == -1)
-    error->one(FLERR, "Missing exposed edge");
+  // If triangle only touches exposed edge with a corner
+  //    maybe better to default to surf norm...
+  if (pte == -1) {
+    MathExtra::copy3(contact_surfs[n].dr, contact_surfs[n].cor_int);
+    return;
+  }
 
   double jline_exposed[3];
   MathExtra::sub3(points[ptc].x, points[pte].x, jline_exposed);
@@ -3895,8 +3899,12 @@ void FixSurfaceGlobal::adjust_exposed_corner_ext(int j, int k, int n, int m)
     if (exposed_edge[j][2]) ptj = tris[j].p1;
   }
 
-  if (ptj == -1)
-    error->one(FLERR, "Missing exposed edge");
+  // If triangle only touches exposed edge with a corner
+  //    maybe better to default to surf norm...
+  if (ptj == -1) {
+    MathExtra::copy3(contact_surfs[n].dr, contact_surfs[n].cor_int);
+    return;
+  }
 
   double jline[3];
   MathExtra::sub3(points[ptj].x, points[pt].x, jline);
