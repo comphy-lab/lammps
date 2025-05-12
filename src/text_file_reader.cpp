@@ -44,7 +44,7 @@ using namespace LAMMPS_NS;
 TextFileReader::TextFileReader(const std::string &filename, const std::string &filetype) :
     filetype(filetype), closefp(true), line(nullptr), ignore_comments(true)
 {
-  set_bufsize(1024);
+  set_bufsize(65536);
   fp = fopen(filename.c_str(), "r");
 
   if (fp == nullptr) {
