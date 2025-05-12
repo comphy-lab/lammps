@@ -41,7 +41,7 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
   r0[ilo][0][0][0][0] = 0.0;
 
   if (comm->me == 0) { // read values from potential file
-    PotentialFileReader reader(lmp, arg[1], "oxdna potential", " (fene)");
+    PotentialFileReader reader(lmp, arg[1], "oxdna3 potential", " (fene)");
     char * line;
     std::string iloc, potential_name;
 
@@ -75,7 +75,7 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
           break;
         } else continue;
       } catch (std::exception &e) {
-        error->one(FLERR, "Problem parsing oxDNA potential file: {}", e.what());
+        error->one(FLERR, "Problem parsing oxdna3 potential file: {}", e.what());
       }
     }
     if ((iloc != arg[0]) || (potential_name != "fene"))
@@ -130,5 +130,5 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
     count++;
   }
 
-  if (count == 0) error->all(FLERR, "Incorrect args for bond coefficients in oxdna/fene" + utils::errorurl(21));
+  if (count == 0) error->all(FLERR, "Incorrect args for bond coefficients in oxdna3/fene" + utils::errorurl(21));
 }

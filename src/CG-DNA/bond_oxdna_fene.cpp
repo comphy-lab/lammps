@@ -352,7 +352,7 @@ void BondOxdnaFene::allocate()
 
 void BondOxdnaFene::coeff(int narg, char **arg)
 {
-  if (narg != 2 && narg != 4) error->all(FLERR, "Incorrect args for bond coefficients in oxdna/fene" + utils::errorurl(21));
+  if (narg != 2 && narg != 4) error->all(FLERR, "Incorrect args for bond coefficients in oxdna/fene, oxdna2/fene or oxrna2/fene" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo, ihi;
@@ -385,7 +385,7 @@ void BondOxdnaFene::coeff(int narg, char **arg)
             break;
           } else continue;
         } catch (std::exception &e) {
-          error->one(FLERR, "Problem parsing oxDNA potential file: {}", e.what());
+          error->one(FLERR, "Problem parsing oxdna, oxdna2 or oxrna2 potential file: {}", e.what());
         }
       }
       if ((iloc != arg[0]) || (potential_name != "fene"))
@@ -417,7 +417,7 @@ void BondOxdnaFene::coeff(int narg, char **arg)
     count++;
   }
 
-  if (count == 0) error->all(FLERR, "Incorrect args for bond coefficients in oxdna/fene" + utils::errorurl(21));
+  if (count == 0) error->all(FLERR, "Incorrect args for bond coefficients in oxdna/fene, oxdna2/fene or oxrna2/fene" + utils::errorurl(21));
 }
 
 /* ----------------------------------------------------------------------
