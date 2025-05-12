@@ -82,25 +82,46 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
       error->one(FLERR, "No corresponding fene potential found in file {} for bond type {}",
                  arg[1], arg[0]);
 
+    // calculate sequence-averaged parameters 
     Delta[ilo][0][0][0][0] /= pow(n,4); 
     r0[ilo][0][0][0][0] /= pow(n,4); 
 
+    // assign sequence-averaged parameters to terminal bases n2
+    for (int n2 = 1; n2 <= n; n2++) {
+      for (int n3 = 1; n3 <= n; n3++) {
+        for (int n4 = 1; n4 <= n; n4++) {
+          Delta[ilo][0][n2][n3][n4] = Delta[ilo][0][0][0][0]; 
+          r0[ilo][0][n2][n3][n4] = r0[ilo][0][0][0][0]; 
+        }
+      }
+    }
+    // assign sequence-averaged parameters to terminal bases n3
+    for (int n1 = 1; n1 <= n; n1++) {
+      for (int n2 = 1; n2 <= n; n2++) {
+        for (int n3 = 1; n3 <= n; n3++) {
+          Delta[ilo][n1][n2][n3][0] = Delta[ilo][0][0][0][0]; 
+          r0[ilo][n1][n2][n3][0] = r0[ilo][0][0][0][0]; 
+        }
+      }
+    }
+
   }
 
+  // communicate parameters for bond type ilo
   MPI_Bcast(&k[ilo], 1, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&Delta[ilo][0][0][0][0], 1, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&r0[ilo][0][0][0][0], 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&Delta[ilo][0][0][0][0], 625, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&r0[ilo][0][0][0][0], 625, MPI_DOUBLE, 0, world);
 
+  // set parameters for all other bond types
   int count = 0;
-
   for (int i = ilo; i <= ihi; i++) {
     k[i] = k[ilo];
     for (int n1 = 0; n1 <= n; n1++) {
       for (int n2 = 0; n2 <= n; n2++) {
         for (int n3 = 0; n3 <= n; n3++) {
           for (int n4 = 0; n4 <= n; n4++) {
-            Delta[i][n1][n2][n3][n4] = Delta[ilo][0][0][0][0];
-            r0[i][n1][n2][n3][n4] = r0[ilo][0][0][0][0];
+            Delta[i][n1][n2][n3][n4] = Delta[ilo][n1][n2][n3][n4];
+            r0[i][n1][n2][n3][n4] = r0[ilo][n1][n2][n3][n4];
           }
         }
       }
