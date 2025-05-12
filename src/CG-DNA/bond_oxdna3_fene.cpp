@@ -29,50 +29,69 @@ using namespace LAMMPS_NS;
 
 void BondOxdna3Fene::coeff(int narg, char **arg)
 {
-  if (narg != 2 && narg != 4) error->all(FLERR, "Incorrect args for bond coefficients in oxdna/fene" + utils::errorurl(21));
+  if (narg != 2) error->all(FLERR, "Incorrect args for bond coefficients in oxdna3/fene, use potential file" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo, ihi;
   utils::bounds(FLERR, arg[0], 1, atom->nbondtypes, ilo, ihi, error);
 
-  if (narg == 4) {
-    k[ilo] = utils::numeric(FLERR, arg[1], false, lmp);
-    Delta[ilo][0][0][0][0] = utils::numeric(FLERR, arg[2], false, lmp);
-    r0[ilo][0][0][0][0] = utils::numeric(FLERR, arg[3], false, lmp);
-  } else {
-    if (comm->me == 0) { // read values from potential file
-      PotentialFileReader reader(lmp, arg[1], "oxdna potential", " (fene)");
-      char * line;
-      std::string iloc, potential_name;
+  int n = atom->ntypes;
 
-      while ((line = reader.next_line())) {
-        try {
-          ValueTokenizer values(line);
-          iloc = values.next_string();
-          potential_name = values.next_string();
-          if (iloc == arg[0] && potential_name == "fene") {
-            k[ilo] = values.next_double();
-            Delta[ilo][0][0][0][0] = values.next_double();
-            r0[ilo][0][0][0][0] = values.next_double();
+  Delta[ilo][0][0][0][0] = 0.0;
+  r0[ilo][0][0][0][0] = 0.0;
 
-            break;
-          } else continue;
-        } catch (std::exception &e) {
-          error->one(FLERR, "Problem parsing oxDNA potential file: {}", e.what());
-        }
+  if (comm->me == 0) { // read values from potential file
+    PotentialFileReader reader(lmp, arg[1], "oxdna potential", " (fene)");
+    char * line;
+    std::string iloc, potential_name;
+
+    while ((line = reader.next_line())) {
+      try {
+        ValueTokenizer values(line);
+        iloc = values.next_string();
+        potential_name = values.next_string();
+        if (iloc == arg[0] && potential_name == "fene") {
+          k[ilo] = values.next_double();
+          for (int n1 = 1; n1 <= n; n1++) {
+            for (int n2 = 1; n2 <= n; n2++) {
+              for (int n3 = 1; n3 <= n; n3++) {
+                for (int n4 = 1; n4 <= n; n4++) {
+                Delta[ilo][n1][n2][n3][n4] = values.next_double();
+                Delta[ilo][0][0][0][0] += Delta[ilo][n1][n2][n3][n4];
+                }
+              }
+            }
+          }
+          for (int n1 = 1; n1 <= n; n1++) {
+            for (int n2 = 1; n2 <= n; n2++) {
+              for (int n3 = 1; n3 <= n; n3++) {
+                for (int n4 = 1; n4 <= n; n4++) {
+                  r0[ilo][n1][n2][n3][n4] = values.next_double();
+                  r0[ilo][0][0][0][0] += r0[ilo][n1][n2][n3][n4];
+                }
+              }
+            }
+          }
+          break;
+        } else continue;
+      } catch (std::exception &e) {
+        error->one(FLERR, "Problem parsing oxDNA potential file: {}", e.what());
       }
-      if ((iloc != arg[0]) || (potential_name != "fene"))
-        error->one(FLERR, "No corresponding fene potential found in file {} for bond type {}",
-                   arg[1], arg[0]);
     }
+    if ((iloc != arg[0]) || (potential_name != "fene"))
+      error->one(FLERR, "No corresponding fene potential found in file {} for bond type {}",
+                 arg[1], arg[0]);
 
-    MPI_Bcast(&k[ilo], 1, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&Delta[ilo][0][0][0][0], 1, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&r0[ilo][0][0][0][0], 1, MPI_DOUBLE, 0, world);
+    Delta[ilo][0][0][0][0] /= pow(n,4); 
+    r0[ilo][0][0][0][0] /= pow(n,4); 
+
   }
 
+  MPI_Bcast(&k[ilo], 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&Delta[ilo][0][0][0][0], 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&r0[ilo][0][0][0][0], 1, MPI_DOUBLE, 0, world);
+
   int count = 0;
-  int n = atom->ntypes;
 
   for (int i = ilo; i <= ihi; i++) {
     k[i] = k[ilo];
