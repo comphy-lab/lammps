@@ -42,6 +42,7 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
 
   if (comm->me == 0) { // read values from potential file
     PotentialFileReader reader(lmp, arg[1], "oxdna3 potential", " (fene)");
+    reader.set_bufsize(65336);
     char * line;
     std::string iloc, potential_name;
 

@@ -44,7 +44,7 @@ using namespace LAMMPS_NS;
 TextFileReader::TextFileReader(const std::string &filename, const std::string &filetype) :
     filetype(filetype), closefp(true), line(nullptr), ignore_comments(true)
 {
-  set_bufsize(65536);
+  set_bufsize(1024);
   fp = fopen(filename.c_str(), "r");
 
   if (fp == nullptr) {
@@ -93,7 +93,9 @@ TextFileReader::~TextFileReader()
   delete[] line;
 }
 
-/** adjust line buffer size */
+/** adjust line buffer size
+ *
+ * \param  newsize  New size of the internal line buffer */
 
 void TextFileReader::set_bufsize(int newsize)
 {
