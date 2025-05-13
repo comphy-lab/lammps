@@ -1419,6 +1419,8 @@
 /pair_oxdna_*.h
 /pair_oxdna2_*.cpp
 /pair_oxdna2_*.h
+/pair_oxdna3_*.cpp
+/pair_oxdna3_*.h
 /pair_oxrna2_*.cpp
 /pair_oxrna2_*.h
 /mf_oxdna.h
