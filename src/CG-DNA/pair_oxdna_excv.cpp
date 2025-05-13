@@ -407,62 +407,9 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
 
       // backbone-base
 
-      evdwl = 0.0;
-
-      // determine bond topology 
-      if (factor_lj) { // a-b not nearest-neighbors on same strand, arguments depend on base step
-
-        if (rsq_sb < cutsq_sb_c[atype][btype]) {
-          evdwl = F3(rsq_sb,cutsq_sb_ast[atype][btype],cut_sb_c[atype][btype],lj1_sb[atype][btype],
-                          lj2_sb[atype][btype],epsilon_sb[atype][btype],b_sb[atype][btype],fpair);
-        }
-
-      }
-      else { // a-b nearest-neighbors on same strand, arguments depends on tetramer
-
-        if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
-
-          // determine type of 3'-partner of a and 5'-partner of b
-          if (id3p[a] != -1) {
-            _3ptype = type[atom->map(id3p[a])];
-          }
-          else _3ptype = 0;
-
-          if (id5p[b] != -1) {
-                    _5ptype = type[atom->map(id5p[b])];
-          }
-          else _5ptype = 0;
-
-          if (rsq_sb < cut4sq_sb_c[_3ptype][atype][btype][_5ptype]) {
-            evdwl = F3(rsq_sb,cut4sq_sb_ast[_3ptype][atype][btype][_5ptype],cut4_sb_c[_3ptype][atype][btype][_5ptype],
-                            lj14_sb[_3ptype][atype][btype][_5ptype],lj24_sb[_3ptype][atype][btype][_5ptype],
-                            epsilon_sb[atype][btype],b4_sb[_3ptype][atype][btype][_5ptype],fpair);
-          }
-        }
-
-        if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
-
-          // determine type of 3'-partner of b and 5'-partner of a
-          if (id3p[b] != -1) {
-            _3ptype = type[atom->map(id3p[b])];
-          }
-          else _3ptype = 0;
-
-          if (id5p[a] != -1) {
-            _5ptype = type[atom->map(id5p[a])];
-          }
-          else _5ptype = 0;
-
-          if (rsq_sb < cut4sq_sb_c[_3ptype][btype][atype][_5ptype]) {
-            evdwl = F3(rsq_sb,cut4sq_sb_ast[_3ptype][btype][atype][_5ptype],cut4_sb_c[_3ptype][btype][atype][_5ptype],
-                            lj14_sb[_3ptype][btype][atype][_5ptype],lj24_sb[_3ptype][btype][atype][_5ptype],
-                            epsilon_sb[btype][atype],b4_sb[_3ptype][btype][atype][_5ptype],fpair);
-          }
-        }
-
-      }
-
-      if (evdwl) {
+      if (rsq_sb < cutsq_sb_c[atype][btype]) {
+        evdwl = F3(rsq_sb,cutsq_sb_ast[atype][btype],cut_sb_c[atype][btype],lj1_sb[atype][btype],
+                        lj2_sb[atype][btype],epsilon_sb[atype][btype],b_sb[atype][btype],fpair);
 
         delf[0] = delr_sb[0]*fpair;
         delf[1] = delr_sb[1]*fpair;
@@ -500,60 +447,9 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
 
       // base-backbone
 
-      evdwl = 0.0;
-
-      // determine bond topology 
-      if (factor_lj) { // a-b not nearest-neighbors on same strand, arguments depend on base step
-
-        if (rsq_bs < cutsq_sb_c[atype][btype]) {
-          evdwl = F3(rsq_bs,cutsq_sb_ast[atype][btype],cut_sb_c[atype][btype],lj1_sb[atype][btype],
-                         lj2_sb[atype][btype],epsilon_sb[atype][btype],b_sb[atype][btype],fpair);
-        }
-
-      }
-      else { // a-b nearest-neighbors on same strand, arguments depends on tetramer
-
-        if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
-
-          // determine type of 3'-partner of a and 5'-partner of b
-          if (id3p[a] != -1) {
-            _3ptype = type[atom->map(id3p[a])];
-          }
-          else _3ptype = 0;
-
-          if (id5p[b] != -1) {
-            _5ptype = type[atom->map(id5p[b])];
-          }
-          else _5ptype = 0;
-
-          if (rsq_bs < cut4sq_sb_c[_3ptype][atype][btype][_5ptype]) {
-            evdwl = F3(rsq_bs,cut4sq_sb_ast[_3ptype][atype][btype][_5ptype],cut4_sb_c[_3ptype][atype][btype][_5ptype],lj14_sb[_3ptype][atype][btype][_5ptype],
-                           lj24_sb[_3ptype][atype][btype][_5ptype],epsilon_sb[atype][btype],b4_sb[_3ptype][atype][btype][_5ptype],fpair);
-          }
-        }
-
-        if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
-
-          // determine type of 3'-partner of b and 5'-partner of a
-          if (id3p[b] != -1) {
-            _3ptype = type[atom->map(id3p[b])];
-          }
-          else _3ptype = 0;
-
-          if (id5p[a] != -1) {
-            _5ptype = type[atom->map(id5p[a])];
-          }
-          else _5ptype = 0;
-
-          if (rsq_bs < cut4sq_sb_c[_3ptype][btype][atype][_5ptype]) {
-            evdwl = F3(rsq_bs,cut4sq_sb_ast[_3ptype][btype][atype][_5ptype],cut4_sb_c[_3ptype][btype][atype][_5ptype],lj14_sb[_3ptype][btype][atype][_5ptype],
-                           lj24_sb[_3ptype][btype][atype][_5ptype],epsilon_sb[btype][atype],b4_sb[_3ptype][btype][atype][_5ptype],fpair);
-          }
-        }
-
-      }
-
-      if (evdwl) {
+      if (rsq_bs < cutsq_sb_c[atype][btype]) {
+        evdwl = F3(rsq_bs,cutsq_sb_ast[atype][btype],cut_sb_c[atype][btype],lj1_sb[atype][btype],
+                       lj2_sb[atype][btype],epsilon_sb[atype][btype],b_sb[atype][btype],fpair);
 
         delf[0] = delr_bs[0]*fpair;
         delf[1] = delr_bs[1]*fpair;

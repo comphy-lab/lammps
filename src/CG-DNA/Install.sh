@@ -69,6 +69,7 @@ action  pair_oxdna2_excv.cpp atom_vec_ellipsoid.h
 action  pair_oxrna2_excv.cpp atom_vec_ellipsoid.h
 action  pair_oxdna_excv.h atom_vec_ellipsoid.h
 action  pair_oxdna2_excv.h atom_vec_ellipsoid.h
+action  pair_oxdna3_excv.h atom_vec_ellipsoid.h
 action  pair_oxrna2_excv.h atom_vec_ellipsoid.h
 action  pair_oxdna_hbond.cpp atom_vec_ellipsoid.h
 action  pair_oxdna_hbond.h atom_vec_ellipsoid.h
