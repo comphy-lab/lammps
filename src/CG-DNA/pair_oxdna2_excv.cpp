@@ -25,11 +25,11 @@ using namespace LAMMPS_NS;
 void PairOxdna2Excv::compute_backbone_site(double e1[3],
   double e2[3], double /*e3*/[3], double rs[3]) const
 {
-  double d_cback_x = ConstantsOxdna::get_d_cback_x();
-  double d_cback_y = ConstantsOxdna::get_d_cback_y();
+  double d_cbk_x = ConstantsOxdna::get_d_cbk_x();
+  double d_cbk_y = ConstantsOxdna::get_d_cbk_y();
 
-  rs[0] = d_cback_x * e1[0] + d_cback_y * e2[0];
-  rs[1] = d_cback_x * e1[1] + d_cback_y * e2[1];
-  rs[2] = d_cback_x * e1[2] + d_cback_y * e2[2];
+  rs[0] = d_cbk_x * e1[0] + d_cbk_y * e2[0];
+  rs[1] = d_cbk_x * e1[1] + d_cbk_y * e2[1];
+  rs[2] = d_cbk_x * e1[2] + d_cbk_y * e2[2];
 
 }

@@ -24,22 +24,22 @@ class ConstantsOxdna : protected Pointers {
   virtual ~ConstantsOxdna(){};
 
   // oxDNA 1 getters
-  static double get_d_cback() { return d_cback; }
-  static double get_d_cstack() { return d_cstack; }
-  static double get_d_cbase() { return d_cbase; }
+  static double get_d_cbk() { return d_cbk; }
+  static double get_d_cstk() { return d_cstk; }
+  static double get_d_cbs() { return d_cbs; }
 
   // oxDNA 2 getters
-  static double get_d_cback_x() { return d_cback_x; }
-  static double get_d_cback_y() { return d_cback_y; }
+  static double get_d_cbk_x() { return d_cbk_x; }
+  static double get_d_cbk_y() { return d_cbk_y; }
   static double get_lambda_dh_one_prefactor() { return lambda_dh_one_prefactor; }
   static double get_qeff_dh_pf_one_prefactor() { return qeff_dh_pf_one_prefactor; }
 
   // oxRNA 2 getters
-  static double get_d_cback_z() { return d_cback_z; }
-  static double get_d_cstack_x_3p() { return d_cstack_x_3p; }
-  static double get_d_cstack_y_3p() { return d_cstack_y_3p; }
-  static double get_d_cstack_x_5p() { return d_cstack_x_5p; }
-  static double get_d_cstack_y_5p() { return d_cstack_y_5p; }
+  static double get_d_cbk_z() { return d_cbk_z; }
+  static double get_d_cstk_x_3p() { return d_cstk_x_3p; }
+  static double get_d_cstk_y_3p() { return d_cstk_y_3p; }
+  static double get_d_cstk_x_5p() { return d_cstk_x_5p; }
+  static double get_d_cstk_y_5p() { return d_cstk_y_5p; }
 
  private:
   std::string units;
@@ -47,16 +47,16 @@ class ConstantsOxdna : protected Pointers {
   void set_real_units();
 
   // oxDNA 1 parameters
-  static double d_cback, d_cstack, d_cbase;
+  static double d_cbk, d_cstk, d_cbs;
 
   // oxDNA 2 parameters
-  static double d_cback_x, d_cback_y;
+  static double d_cbk_x, d_cbk_y;
   static double lambda_dh_one_prefactor, qeff_dh_pf_one_prefactor;
 
   // oxRNA 2 parameters
-  static double d_cback_z;
-  static double d_cstack_x_3p, d_cstack_y_3p;
-  static double d_cstack_x_5p, d_cstack_y_5p;
+  static double d_cbk_z;
+  static double d_cstk_x_3p, d_cstk_y_3p;
+  static double d_cstk_x_5p, d_cstk_y_5p;
 };
 
 }    // namespace LAMMPS_NS
