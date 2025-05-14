@@ -36,6 +36,21 @@
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
 
+/* -----------------------------------------------------------------------
+    compute vector COM-sugar-phosphate backbone interaction site in oxDNA3
+-------------------------------------------------------------------------- */
+void PairOxdna3Excv::compute_backbone_site(double e1[3],
+  double e2[3], double /*e3*/[3], double rs[3]) const
+{
+  double dx_cbk_oxdna3 = ConstantsOxdna::get_dx_cbk_oxdna3();
+  double dy_cbk_oxdna3 = ConstantsOxdna::get_dy_cbk_oxdna3();
+
+  rs[0] = dx_cbk_oxdna3 * e1[0] + dy_cbk_oxdna3 * e2[0];
+  rs[1] = dx_cbk_oxdna3 * e1[1] + dy_cbk_oxdna3 * e2[1];
+  rs[2] = dx_cbk_oxdna3 * e1[2] + dy_cbk_oxdna3 * e2[2];
+
+}
+
 /* ---------------------------------------------------------------
     compute vector COM-hydrogen bonding interaction site in oxDNA3
     A=1, C=2, G=3, T=0

@@ -31,8 +31,10 @@ class ConstantsOxdna : protected Pointers {
   // oxDNA2 getters
   static double get_dx_cbk_oxdna2() { return dx_cbk_oxdna2; }
   static double get_dy_cbk_oxdna2() { return dy_cbk_oxdna2; }
-  static double get_lambda_dh_one_prefactor() { return lambda_dh_one_prefactor; }
-  static double get_qeff_dh_pf_one_prefactor() { return qeff_dh_pf_one_prefactor; }
+
+  // oxDNA3 getters
+  static double get_dx_cbk_oxdna3() { return dx_cbk_oxdna3; }
+  static double get_dy_cbk_oxdna3() { return dy_cbk_oxdna3; }
 
   // oxRNA2 getters
   static double get_dx_cbk_oxrna2() { return dx_cbk_oxrna2; }
@@ -41,6 +43,10 @@ class ConstantsOxdna : protected Pointers {
   static double get_dy_cstk_3p_oxrna2() { return dy_cstk_3p_oxrna2; }
   static double get_dx_cstk_5p_oxrna2() { return dx_cstk_5p_oxrna2; }
   static double get_dy_cstk_5p_oxrna2() { return dy_cstk_5p_oxrna2; }
+
+  // electrostatic getters
+  static double get_lambda_dh_one_prefactor() { return lambda_dh_one_prefactor; }
+  static double get_qeff_dh_pf_one_prefactor() { return qeff_dh_pf_one_prefactor; }
 
  private:
   std::string units;
@@ -52,12 +58,18 @@ class ConstantsOxdna : protected Pointers {
 
   // oxDNA2 parameters
   static double dx_cbk_oxdna2, dy_cbk_oxdna2;
-  static double lambda_dh_one_prefactor, qeff_dh_pf_one_prefactor;
+
+  // oxDNA3 parameters
+  static double dx_cbk_oxdna3, dy_cbk_oxdna3;
 
   // oxRNA2 parameters
   static double dx_cbk_oxrna2, dz_cbk_oxrna2;
   static double dx_cstk_3p_oxrna2, dy_cstk_3p_oxrna2;
   static double dx_cstk_5p_oxrna2, dy_cstk_5p_oxrna2;
+
+  // electrostatic parameters
+  static double lambda_dh_one_prefactor, qeff_dh_pf_one_prefactor;
+
 };
 
 }

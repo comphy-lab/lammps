@@ -14,8 +14,8 @@
    Contributing author: Oliver Henrich (University of Strathclyde, Glasgow)
 ------------------------------------------------------------------------- */
 
-#include "constants_oxdna.h"
 #include "pair_oxdna2_excv.h"
+#include "constants_oxdna.h"
 
 using namespace LAMMPS_NS;
 
