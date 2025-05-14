@@ -91,15 +91,6 @@ PairOxdnaExcv::~PairOxdnaExcv()
     memory->destroy(cutsq_bb_ast);
     memory->destroy(cutsq_bb_c);
 
-    memory->destroy(sigma4_sb);
-    memory->destroy(cut4_sb_ast);
-    memory->destroy(b4_sb);
-    memory->destroy(cut4_sb_c);
-    memory->destroy(lj14_sb);
-    memory->destroy(lj24_sb);
-    memory->destroy(cut4sq_sb_ast);
-    memory->destroy(cut4sq_sb_c);
-
     memory->destroy(sigma4_bb);
     memory->destroy(cut4_bb_ast);
     memory->destroy(b4_bb);
@@ -117,27 +108,27 @@ PairOxdnaExcv::~PairOxdnaExcv()
 void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rs[3]) const
 {
-  double d_cs = ConstantsOxdna::get_d_cs();
+  double d_cback = ConstantsOxdna::get_d_cback();
 
-  rs[0] = d_cs*e1[0];
-  rs[1] = d_cs*e1[1];
-  rs[2] = d_cs*e1[2];
+  rs[0] = d_cback*e1[0];
+  rs[1] = d_cback*e1[1];
+  rs[2] = d_cback*e1[2];
 
 }
 
-/* --------------------------------------------------------------
-    compute vector COM-hydrogen bonding interaction site in oxDNA
-    identical templates for A=1, C=2, G=3, T=0 in oxDNA/oxDNA2
------------------------------------------------------------------ */
+/* ---------------------------------------------------------------------
+    compute vector COM-hydrogen bonding interaction site in oxDNA/oxDNA2
+    identical templates for A=1, C=2, G=3, T=0
+------------------------------------------------------------------------ */
 template <>
 void PairOxdnaExcv::compute_base_site<0>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
 
-  rb[0] = d_cb*e1[0];
-  rb[1] = d_cb*e1[1];
-  rb[2] = d_cb*e1[2];
+  rb[0] = d_cbase*e1[0];
+  rb[1] = d_cbase*e1[1];
+  rb[2] = d_cbase*e1[2];
 
 }
 
@@ -145,33 +136,33 @@ template <>
 void PairOxdnaExcv::compute_base_site<1>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
 
-  rb[0] = d_cb*e1[0];
-  rb[1] = d_cb*e1[1];
-  rb[2] = d_cb*e1[2];
+  rb[0] = d_cbase*e1[0];
+  rb[1] = d_cbase*e1[1];
+  rb[2] = d_cbase*e1[2];
 
 }
 template <>
 void PairOxdnaExcv::compute_base_site<2>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
 
-  rb[0] = d_cb*e1[0];
-  rb[1] = d_cb*e1[1];
-  rb[2] = d_cb*e1[2];
+  rb[0] = d_cbase*e1[0];
+  rb[1] = d_cbase*e1[1];
+  rb[2] = d_cbase*e1[2];
 
 }
 template <>
 void PairOxdnaExcv::compute_base_site<3>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
 
-  rb[0] = d_cb*e1[0];
-  rb[1] = d_cb*e1[1];
-  rb[2] = d_cb*e1[2];
+  rb[0] = d_cbase*e1[0];
+  rb[1] = d_cbase*e1[1];
+  rb[2] = d_cbase*e1[2];
 
 }
 
@@ -189,8 +180,8 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
   double delr_bs[3],rsq_bs,delr_bb[3],rsq_bb;
 
   // vectors COM-backbone site, COM-base site in lab frame
-  double ra_cs[3],ra_cb[3];
-  double rb_cs[3],rb_cb[3];
+  double ra_cback[3],ra_cbase[3];
+  double rb_cback[3],rb_cbase[3];
   // Cartesian unit vectors in lab frame
   double ax[3],ay[3],az[3];
   double bx[3],by[3],bz[3];
@@ -264,31 +255,31 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
     az[2] = nz[a][2];
 
     // vector COM - backbone site a
-    compute_backbone_site(ax,ay,az,ra_cs);
+    compute_backbone_site(ax,ay,az,ra_cback);
 
     // vector COM - base site a
     switch (atype%4) {
       case 0:
-        compute_base_site<0>(ax,ay,az,ra_cb);
+        compute_base_site<0>(ax,ay,az,ra_cbase);
         break;
       case 1:
-        compute_base_site<1>(ax,ay,az,ra_cb);
+        compute_base_site<1>(ax,ay,az,ra_cbase);
         break;       
       case 2: 
-        compute_base_site<2>(ax,ay,az,ra_cb);
+        compute_base_site<2>(ax,ay,az,ra_cbase);
         break;
       case 3: 
-        compute_base_site<3>(ax,ay,az,ra_cb);
+        compute_base_site<3>(ax,ay,az,ra_cbase);
         break;
     }   
 
-    rtmp_s[0] = x[a][0] + ra_cs[0];
-    rtmp_s[1] = x[a][1] + ra_cs[1];
-    rtmp_s[2] = x[a][2] + ra_cs[2];
+    rtmp_s[0] = x[a][0] + ra_cback[0];
+    rtmp_s[1] = x[a][1] + ra_cback[1];
+    rtmp_s[2] = x[a][2] + ra_cback[2];
 
-    rtmp_b[0] = x[a][0] + ra_cb[0];
-    rtmp_b[1] = x[a][1] + ra_cb[1];
-    rtmp_b[2] = x[a][2] + ra_cb[2];
+    rtmp_b[0] = x[a][0] + ra_cbase[0];
+    rtmp_b[1] = x[a][1] + ra_cbase[1];
+    rtmp_b[2] = x[a][2] + ra_cbase[2];
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -312,46 +303,46 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
       bz[2] = nz[b][2];
 
       // vector COM - backbone site b
-      compute_backbone_site(bx,by,bz,rb_cs);
+      compute_backbone_site(bx,by,bz,rb_cback);
 
       // vector COM - base site b
       switch (btype%4) {
         case 0:
-          compute_base_site<0>(bx,by,bz,rb_cb);
+          compute_base_site<0>(bx,by,bz,rb_cbase);
           break;
         case 1:
-          compute_base_site<1>(bx,by,bz,rb_cb);
+          compute_base_site<1>(bx,by,bz,rb_cbase);
           break;       
         case 2: 
-          compute_base_site<2>(bx,by,bz,rb_cb);
+          compute_base_site<2>(bx,by,bz,rb_cbase);
           break;
         case 3: 
-          compute_base_site<3>(bx,by,bz,rb_cb);
+          compute_base_site<3>(bx,by,bz,rb_cbase);
           break;
       }   
 
       // vector backbone site b to a
-      delr_ss[0] = rtmp_s[0] - (x[b][0] + rb_cs[0]);
-      delr_ss[1] = rtmp_s[1] - (x[b][1] + rb_cs[1]);
-      delr_ss[2] = rtmp_s[2] - (x[b][2] + rb_cs[2]);
+      delr_ss[0] = rtmp_s[0] - (x[b][0] + rb_cback[0]);
+      delr_ss[1] = rtmp_s[1] - (x[b][1] + rb_cback[1]);
+      delr_ss[2] = rtmp_s[2] - (x[b][2] + rb_cback[2]);
       rsq_ss = delr_ss[0]*delr_ss[0] + delr_ss[1]*delr_ss[1] + delr_ss[2]*delr_ss[2];
 
       // vector base site b to backbone site a
-      delr_sb[0] =  rtmp_s[0] - (x[b][0] + rb_cb[0]);
-      delr_sb[1] =  rtmp_s[1] - (x[b][1] + rb_cb[1]);
-      delr_sb[2] =  rtmp_s[2] - (x[b][2] + rb_cb[2]);
+      delr_sb[0] =  rtmp_s[0] - (x[b][0] + rb_cbase[0]);
+      delr_sb[1] =  rtmp_s[1] - (x[b][1] + rb_cbase[1]);
+      delr_sb[2] =  rtmp_s[2] - (x[b][2] + rb_cbase[2]);
       rsq_sb = delr_sb[0]*delr_sb[0] + delr_sb[1]*delr_sb[1] + delr_sb[2]*delr_sb[2];
 
       // vector backbone site b to base site a
-      delr_bs[0] = rtmp_b[0] - (x[b][0] + rb_cs[0]);
-      delr_bs[1] = rtmp_b[1] - (x[b][1] + rb_cs[1]);
-      delr_bs[2] = rtmp_b[2] - (x[b][2] + rb_cs[2]);
+      delr_bs[0] = rtmp_b[0] - (x[b][0] + rb_cback[0]);
+      delr_bs[1] = rtmp_b[1] - (x[b][1] + rb_cback[1]);
+      delr_bs[2] = rtmp_b[2] - (x[b][2] + rb_cback[2]);
       rsq_bs = delr_bs[0]*delr_bs[0] + delr_bs[1]*delr_bs[1] + delr_bs[2]*delr_bs[2];
 
       // vector base site b to a
-      delr_bb[0] = rtmp_b[0] - (x[b][0] + rb_cb[0]);
-      delr_bb[1] = rtmp_b[1] - (x[b][1] + rb_cb[1]);
-      delr_bb[2] = rtmp_b[2] - (x[b][2] + rb_cb[2]);
+      delr_bb[0] = rtmp_b[0] - (x[b][0] + rb_cbase[0]);
+      delr_bb[1] = rtmp_b[1] - (x[b][1] + rb_cbase[1]);
+      delr_bb[2] = rtmp_b[2] - (x[b][2] + rb_cbase[2]);
       rsq_bb = delr_bb[0]*delr_bb[0] + delr_bb[1]*delr_bb[1] + delr_bb[2]*delr_bb[2];
 
       // excluded volume interaction
@@ -383,7 +374,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         f[a][1] += delf[1];
         f[a][2] += delf[2];
 
-        MathExtra::cross3(ra_cs,delf,delta);
+        MathExtra::cross3(ra_cback,delf,delta);
 
         torque[a][0] += delta[0];
         torque[a][1] += delta[1];
@@ -395,7 +386,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
           f[b][1] -= delf[1];
           f[b][2] -= delf[2];
 
-          MathExtra::cross3(rb_cs,delf,deltb);
+          MathExtra::cross3(rb_cback,delf,deltb);
 
           torque[b][0] -= deltb[0];
           torque[b][1] -= deltb[1];
@@ -423,7 +414,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         f[a][1] += delf[1];
         f[a][2] += delf[2];
 
-        MathExtra::cross3(ra_cs,delf,delta);
+        MathExtra::cross3(ra_cback,delf,delta);
 
         torque[a][0] += delta[0];
         torque[a][1] += delta[1];
@@ -435,7 +426,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
           f[b][1] -= delf[1];
           f[b][2] -= delf[2];
 
-          MathExtra::cross3(rb_cb,delf,deltb);
+          MathExtra::cross3(rb_cbase,delf,deltb);
 
           torque[b][0] -= deltb[0];
           torque[b][1] -= deltb[1];
@@ -463,7 +454,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         f[a][1] += delf[1];
         f[a][2] += delf[2];
 
-        MathExtra::cross3(ra_cb,delf,delta);
+        MathExtra::cross3(ra_cbase,delf,delta);
 
         torque[a][0] += delta[0];
         torque[a][1] += delta[1];
@@ -475,7 +466,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
           f[b][1] -= delf[1];
           f[b][2] -= delf[2];
 
-          MathExtra::cross3(rb_cs,delf,deltb);
+          MathExtra::cross3(rb_cback,delf,deltb);
 
           torque[b][0] -= deltb[0];
           torque[b][1] -= deltb[1];
@@ -556,7 +547,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         f[a][1] += delf[1];
         f[a][2] += delf[2];
 
-        MathExtra::cross3(ra_cb,delf,delta);
+        MathExtra::cross3(ra_cbase,delf,delta);
 
         torque[a][0] += delta[0];
         torque[a][1] += delta[1];
@@ -568,7 +559,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
           f[b][1] -= delf[1];
           f[b][2] -= delf[2];
 
-          MathExtra::cross3(rb_cb,delf,deltb);
+          MathExtra::cross3(rb_cbase,delf,deltb);
 
           torque[b][0] -= deltb[0];
           torque[b][1] -= deltb[1];
@@ -635,15 +626,6 @@ void PairOxdnaExcv::allocate()
   memory->create(lj2_bb,n+1,n+1,"pair:lj2_bb");
   memory->create(cutsq_bb_ast,n+1,n+1,"pair:cutsq_bb_ast");
   memory->create(cutsq_bb_c,n+1,n+1,"pair:cutsq_bb_c");
-
-  memory->create(sigma4_sb,n+1,n+1,n+1,n+1,"pair:sigma4_sb");
-  memory->create(cut4_sb_ast,n+1,n+1,n+1,n+1,"pair:cut4_sb_ast");
-  memory->create(b4_sb,n+1,n+1,n+1,n+1,"pair:b4_sb");
-  memory->create(cut4_sb_c,n+1,n+1,n+1,n+1,"pair:cut4_sb_c");
-  memory->create(lj14_sb,n+1,n+1,n+1,n+1,"pair:lj14_sb");
-  memory->create(lj24_sb,n+1,n+1,n+1,n+1,"pair:lj24_sb");
-  memory->create(cut4sq_sb_ast,n+1,n+1,n+1,n+1,"pair:cut4sq_sb_ast");
-  memory->create(cut4sq_sb_c,n+1,n+1,n+1,n+1,"pair:cut4sq_sb_c");
 
   memory->create(sigma4_bb,n+1,n+1,n+1,n+1,"pair:sigma4_bb");
   memory->create(cut4_bb_ast,n+1,n+1,n+1,n+1,"pair:cut4_bb_ast");
@@ -826,29 +808,6 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
   }
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv" + utils::errorurl(21));
-
-  // backbone-base parameters depending on tetramer
-  count = 0;
-
-  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
-    for (int j = nlo; j <= nhi; j++) {
-      for (int k = nlo; k <= nhi; k++) {
-        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
-          sigma4_sb[i][j][k][l] = sigma_sb_one;
-          cut4_sb_ast[i][j][k][l] = cut_sb_ast_one;
-          b4_sb[i][j][k][l] = b_sb_one;
-          cut4_sb_c[i][j][k][l] = cut_sb_c_one;
-          cut4sq_sb_ast[i][j][k][l] = cut4_sb_ast[i][j][k][l]*cut4_sb_ast[i][j][k][l];
-          cut4sq_sb_c[i][j][k][l]  = cut4_sb_c[i][j][k][l]*cut4_sb_c[i][j][k][l];
-          lj14_sb[i][j][k][l] = 4.0 * epsilon_sb[j][k] * pow(sigma4_sb[i][j][k][l],12.0);
-          lj24_sb[i][j][k][l] = 4.0 * epsilon_sb[j][k] * pow(sigma4_sb[i][j][k][l],6.0);
-          count++;
-       }
-      }
-    }
-  }
-
-  if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv");
 
   // base-base
   count = 0;

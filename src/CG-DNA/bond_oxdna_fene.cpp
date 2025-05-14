@@ -51,11 +51,11 @@ BondOxdnaFene::~BondOxdnaFene()
 void BondOxdnaFene::compute_backbone_site(double e1[3], double /*e2*/[3],
   double /*e3*/[3], double r[3]) const
 {
-  double d_cs = ConstantsOxdna::get_d_cs();
+  double d_cback = ConstantsOxdna::get_d_cback();
 
-  r[0] = d_cs * e1[0];
-  r[1] = d_cs * e1[1];
-  r[2] = d_cs * e1[2];
+  r[0] = d_cback * e1[0];
+  r[1] = d_cback * e1[1];
+  r[2] = d_cback * e1[2];
 }
 
 /* ----------------------------------------------------------------------
@@ -154,7 +154,7 @@ void BondOxdnaFene::compute(int eflag, int vflag)
   double rsq, Deltasq, rlogarg;
   double r, rr0, rr0sq;
   // vectors COM-backbone site in lab frame
-  double ra_cs[3], rb_cs[3];
+  double ra_cback[3], rb_cback[3];
   // Cartesian unit vectors in lab frame
   double ax[3], ay[3], az[3];
   double bx[3], by[3], bz[3];
@@ -238,13 +238,13 @@ void BondOxdnaFene::compute(int eflag, int vflag)
     else b5ptype = 0;
 
     // vector COM-backbone site a and b
-    compute_backbone_site(ax, ay, az, ra_cs);
-    compute_backbone_site(bx, by, bz, rb_cs);
+    compute_backbone_site(ax, ay, az, ra_cback);
+    compute_backbone_site(bx, by, bz, rb_cback);
 
     // vector backbone site b to a
-    delr[0] = x[a][0] + ra_cs[0] - x[b][0] - rb_cs[0];
-    delr[1] = x[a][1] + ra_cs[1] - x[b][1] - rb_cs[1];
-    delr[2] = x[a][2] + ra_cs[2] - x[b][2] - rb_cs[2];
+    delr[0] = x[a][0] + ra_cback[0] - x[b][0] - rb_cback[0];
+    delr[1] = x[a][1] + ra_cback[1] - x[b][1] - rb_cback[1];
+    delr[2] = x[a][2] + ra_cback[2] - x[b][2] - rb_cback[2];
     rsq = delr[0] * delr[0] + delr[1] * delr[1] + delr[2] * delr[2];
     r = sqrt(rsq);
 
@@ -300,7 +300,7 @@ void BondOxdnaFene::compute(int eflag, int vflag)
       f[a][1] += delf[1];
       f[a][2] += delf[2];
 
-      MathExtra::cross3(ra_cs, delf, delta);
+      MathExtra::cross3(ra_cback, delf, delta);
 
       torque[a][0] += delta[0];
       torque[a][1] += delta[1];
@@ -313,7 +313,7 @@ void BondOxdnaFene::compute(int eflag, int vflag)
       f[b][1] -= delf[1];
       f[b][2] -= delf[2];
 
-      MathExtra::cross3(rb_cs, delf, deltb);
+      MathExtra::cross3(rb_cback, delf, deltb);
 
       torque[b][0] -= deltb[0];
       torque[b][1] -= deltb[1];

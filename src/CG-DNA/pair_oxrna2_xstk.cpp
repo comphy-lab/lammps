@@ -118,9 +118,9 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
   double theta8,theta8p,t8dir[3],cost8;
 
   // distance COM-h-bonding site
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
   // vectors COM-h-bonding site in lab frame
-  double ra_cb[3],rb_cb[3];
+  double ra_cbase[3],rb_cbase[3];
 
   // Cartesian unit vectors in lab frame
   double ax[3],az[3];
@@ -165,9 +165,9 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
     ax[1] = nx_xtrct[a][1];
     ax[2] = nx_xtrct[a][2];
 
-    ra_cb[0] = d_cb*ax[0];
-    ra_cb[1] = d_cb*ax[1];
-    ra_cb[2] = d_cb*ax[2];
+    ra_cbase[0] = d_cbase*ax[0];
+    ra_cbase[1] = d_cbase*ax[1];
+    ra_cbase[2] = d_cbase*ax[2];
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -184,14 +184,14 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
       bx[1] = nx_xtrct[b][1];
       bx[2] = nx_xtrct[b][2];
 
-      rb_cb[0] = d_cb*bx[0];
-      rb_cb[1] = d_cb*bx[1];
-      rb_cb[2] = d_cb*bx[2];
+      rb_cbase[0] = d_cbase*bx[0];
+      rb_cbase[1] = d_cbase*bx[1];
+      rb_cbase[2] = d_cbase*bx[2];
 
       // vector h-bonding site b to a
-      delr_hb[0] = x[a][0] + ra_cb[0] - x[b][0] - rb_cb[0];
-      delr_hb[1] = x[a][1] + ra_cb[1] - x[b][1] - rb_cb[1];
-      delr_hb[2] = x[a][2] + ra_cb[2] - x[b][2] - rb_cb[2];
+      delr_hb[0] = x[a][0] + ra_cbase[0] - x[b][0] - rb_cbase[0];
+      delr_hb[1] = x[a][1] + ra_cbase[1] - x[b][1] - rb_cbase[1];
+      delr_hb[2] = x[a][2] + ra_cbase[2] - x[b][2] - rb_cbase[2];
 
       rsq_hb = delr_hb[0]*delr_hb[0] + delr_hb[1]*delr_hb[1] + delr_hb[2]*delr_hb[2];
       r_hb = sqrt(rsq_hb);
@@ -377,7 +377,7 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
       f[a][1] += delf[1];
       f[a][2] += delf[2];
 
-      MathExtra::cross3(ra_cb,delf,delta);
+      MathExtra::cross3(ra_cbase,delf,delta);
 
       torque[a][0] += delta[0];
       torque[a][1] += delta[1];
@@ -390,7 +390,7 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
         f[b][2] -= delf[2];
 
 
-        MathExtra::cross3(rb_cb,delf,deltb);
+        MathExtra::cross3(rb_cbase,delf,deltb);
 
         torque[b][0] -= deltb[0];
         torque[b][1] -= deltb[1];

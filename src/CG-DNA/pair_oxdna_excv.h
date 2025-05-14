@@ -56,8 +56,6 @@ class PairOxdnaExcv : public Pair {
   double **epsilon_bb, **sigma_bb, **cut_bb_ast, **cutsq_bb_ast;
   double **lj1_bb, **lj2_bb, **b_bb, **cut_bb_c, **cutsq_bb_c;
   // tetramer-dependent coefficients
-  double ****sigma4_sb, ****cut4_sb_ast, ****cut4sq_sb_ast;
-  double ****lj14_sb, ****lj24_sb, ****b4_sb, ****cut4_sb_c, ****cut4sq_sb_c;
   double ****sigma4_bb, ****cut4_bb_ast, ****cut4sq_bb_ast;
   double ****lj14_bb, ****lj24_bb, ****b4_bb, ****cut4_bb_c, ****cut4sq_bb_c;
 

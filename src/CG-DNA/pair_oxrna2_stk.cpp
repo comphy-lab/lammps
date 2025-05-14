@@ -235,12 +235,12 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
   double cosphi1,cosphi2,cosphi1dir[3],cosphi2dir[3];
 
   // distances COM-backbone site, COM-3' and COM-5' stacking site
-  double d_cs_x = ConstantsOxdna::get_d_cs();
-  double d_cs_z = ConstantsOxdna::get_d_cs_z();
-  double d_cst_x_3p = ConstantsOxdna::get_d_cst_x_3p();
-  double d_cst_y_3p = ConstantsOxdna::get_d_cst_y_3p();
-  double d_cst_x_5p = ConstantsOxdna::get_d_cst_x_5p();
-  double d_cst_y_5p = ConstantsOxdna::get_d_cst_y_5p();
+  double d_cback_x = ConstantsOxdna::get_d_cback();
+  double d_cback_z = ConstantsOxdna::get_d_cback_z();
+  double d_cstack_x_3p = ConstantsOxdna::get_d_cstack_x_3p();
+  double d_cstack_y_3p = ConstantsOxdna::get_d_cstack_y_3p();
+  double d_cstack_x_5p = ConstantsOxdna::get_d_cstack_x_5p();
+  double d_cstack_y_5p = ConstantsOxdna::get_d_cstack_y_5p();
 
   // 3' and p5' auxiliary vectors
   double  d3p_x=-0.462510,d3p_y=-0.528218,d3p_z=+0.712089;
@@ -248,8 +248,8 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
   double aux3p[3], aux5p[3];
 
   // vectors COM-backbone site, COM-stacking site in lab frame
-  double ra_cs[3],ra_cst[3];
-  double rb_cs[3],rb_cst[3];
+  double ra_cback[3],ra_cstack[3];
+  double rb_cback[3],rb_cstack[3];
 
   // Cartesian unit vectors in lab frame
   double ax[3],ay[3],az[3];
@@ -320,19 +320,19 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
     bz[2] = nz_xtrct[b][2];
 
     // vector COM a - 5'-stacking site a
-    ra_cst[0] = d_cst_x_5p*ax[0] + d_cst_y_5p*ay[0];
-    ra_cst[1] = d_cst_x_5p*ax[1] + d_cst_y_5p*ay[1];
-    ra_cst[2] = d_cst_x_5p*ax[2] + d_cst_y_5p*ay[2];
+    ra_cstack[0] = d_cstack_x_5p*ax[0] + d_cstack_y_5p*ay[0];
+    ra_cstack[1] = d_cstack_x_5p*ax[1] + d_cstack_y_5p*ay[1];
+    ra_cstack[2] = d_cstack_x_5p*ax[2] + d_cstack_y_5p*ay[2];
 
     // vector COM b - 3'-stacking site b
-    rb_cst[0] = d_cst_x_3p*bx[0] + d_cst_y_3p*by[0];
-    rb_cst[1] = d_cst_x_3p*bx[1] + d_cst_y_3p*by[1];
-    rb_cst[2] = d_cst_x_3p*bx[2] + d_cst_y_3p*by[2];
+    rb_cstack[0] = d_cstack_x_3p*bx[0] + d_cstack_y_3p*by[0];
+    rb_cstack[1] = d_cstack_x_3p*bx[1] + d_cstack_y_3p*by[1];
+    rb_cstack[2] = d_cstack_x_3p*bx[2] + d_cstack_y_3p*by[2];
 
     // vector 5'-stacking site a to 3'-stacking site b
-    delr_st[0] = x[b][0] + rb_cst[0] - x[a][0] - ra_cst[0];
-    delr_st[1] = x[b][1] + rb_cst[1] - x[a][1] - ra_cst[1];
-    delr_st[2] = x[b][2] + rb_cst[2] - x[a][2] - ra_cst[2];
+    delr_st[0] = x[b][0] + rb_cstack[0] - x[a][0] - ra_cstack[0];
+    delr_st[1] = x[b][1] + rb_cstack[1] - x[a][1] - ra_cstack[1];
+    delr_st[2] = x[b][2] + rb_cstack[2] - x[a][2] - ra_cstack[2];
 
     atype = type[a];
     btype = type[b];
@@ -346,19 +346,19 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
     delr_st_norm[2] = delr_st[2] * rinv_st;
 
     // vector COM a - backbone site a
-    ra_cs[0] = d_cs_x*ax[0] + d_cs_z*az[0];
-    ra_cs[1] = d_cs_x*ax[1] + d_cs_z*az[1];
-    ra_cs[2] = d_cs_x*ax[2] + d_cs_z*az[2];
+    ra_cback[0] = d_cback_x*ax[0] + d_cback_z*az[0];
+    ra_cback[1] = d_cback_x*ax[1] + d_cback_z*az[1];
+    ra_cback[2] = d_cback_x*ax[2] + d_cback_z*az[2];
 
     // vector COM b - backbone site b
-    rb_cs[0] = d_cs_x*bx[0] + d_cs_z*bz[0];
-    rb_cs[1] = d_cs_x*bx[1] + d_cs_z*bz[1];
-    rb_cs[2] = d_cs_x*bx[2] + d_cs_z*bz[2];
+    rb_cback[0] = d_cback_x*bx[0] + d_cback_z*bz[0];
+    rb_cback[1] = d_cback_x*bx[1] + d_cback_z*bz[1];
+    rb_cback[2] = d_cback_x*bx[2] + d_cback_z*bz[2];
 
     // vector backbone site a to b
-    delr_ss[0] = (x[b][0] + rb_cs[0] - x[a][0] - ra_cs[0]);
-    delr_ss[1] = (x[b][1] + rb_cs[1] - x[a][1] - ra_cs[1]);
-    delr_ss[2] = (x[b][2] + rb_cs[2] - x[a][2] - ra_cs[2]);
+    delr_ss[0] = (x[b][0] + rb_cback[0] - x[a][0] - ra_cback[0]);
+    delr_ss[1] = (x[b][1] + rb_cback[1] - x[a][1] - ra_cback[1]);
+    delr_ss[2] = (x[b][2] + rb_cback[2] - x[a][2] - ra_cback[2]);
 
     rsq_ss = delr_ss[0]*delr_ss[0] + delr_ss[1]*delr_ss[1] + delr_ss[2]*delr_ss[2];
     r_ss = sqrt(rsq_ss);
@@ -512,7 +512,7 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
       f[a][1] -= delf[1];
       f[a][2] -= delf[2];
 
-      MathExtra::cross3(ra_cst,delf,delta);
+      MathExtra::cross3(ra_cstack,delf,delta);
 
     }
     if (newton_bond || b < nlocal) {
@@ -521,7 +521,7 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
       f[b][1] += delf[1];
       f[b][2] += delf[2];
 
-      MathExtra::cross3(rb_cst,delf,deltb);
+      MathExtra::cross3(rb_cstack,delf,deltb);
 
     }
 
@@ -612,7 +612,7 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
       f[a][1] -= delf[1];
       f[a][2] -= delf[2];
 
-      MathExtra::cross3(ra_cs,delf,delta);
+      MathExtra::cross3(ra_cback,delf,delta);
 
     }
     if (newton_bond || b < nlocal) {
@@ -621,7 +621,7 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
       f[b][1] += delf[1];
       f[b][2] += delf[2];
 
-      MathExtra::cross3(rb_cs,delf,deltb);
+      MathExtra::cross3(rb_cback,delf,deltb);
 
     }
 

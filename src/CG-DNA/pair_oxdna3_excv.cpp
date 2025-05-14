@@ -36,19 +36,19 @@
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
 
-/* --------------------------------------------------------------
-    compute vector COM-hydrogen bonding interaction site in oxDNA
-    identical templates for A=1, C=2, G=3, T=0 in oxDNA/oxDNA2
------------------------------------------------------------------ */
+/* ---------------------------------------------------------------
+    compute vector COM-hydrogen bonding interaction site in oxDNA3
+    A=1, C=2, G=3, T=0
+------------------------------------------------------------------ */
 template <>
 void PairOxdna3Excv::compute_base_site<0>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
 
-  rb[0] = d_cb*e1[0];
-  rb[1] = d_cb*e1[1];
-  rb[2] = d_cb*e1[2];
+  rb[0] = d_cbase*e1[0];
+  rb[1] = d_cbase*e1[1];
+  rb[2] = d_cbase*e1[2];
 
 }
 
@@ -56,33 +56,33 @@ template <>
 void PairOxdna3Excv::compute_base_site<1>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
 
-  rb[0] = d_cb*e1[0];
-  rb[1] = d_cb*e1[1];
-  rb[2] = d_cb*e1[2];
+  rb[0] = d_cbase*e1[0];
+  rb[1] = d_cbase*e1[1];
+  rb[2] = d_cbase*e1[2];
 
 }
 template <>
 void PairOxdna3Excv::compute_base_site<2>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
 
-  rb[0] = d_cb*e1[0];
-  rb[1] = d_cb*e1[1];
-  rb[2] = d_cb*e1[2];
+  rb[0] = d_cbase*e1[0];
+  rb[1] = d_cbase*e1[1];
+  rb[2] = d_cbase*e1[2];
 
 }
 template <>
 void PairOxdna3Excv::compute_base_site<3>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cb = ConstantsOxdna::get_d_cb();
+  double d_cbase = ConstantsOxdna::get_d_cbase();
 
-  rb[0] = d_cb*e1[0];
-  rb[1] = d_cb*e1[1];
-  rb[2] = d_cb*e1[2];
+  rb[0] = d_cbase*e1[0];
+  rb[1] = d_cbase*e1[1];
+  rb[2] = d_cbase*e1[2];
 
 }
 
@@ -248,29 +248,6 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
   }
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv" + utils::errorurl(21));
-
-  // backbone-base parameters depending on tetramer
-  count = 0;
-
-  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
-    for (int j = nlo; j <= nhi; j++) {
-      for (int k = nlo; k <= nhi; k++) {
-        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
-          sigma4_sb[i][j][k][l] = sigma_sb_one;
-          cut4_sb_ast[i][j][k][l] = cut_sb_ast_one;
-          b4_sb[i][j][k][l] = b_sb_one;
-          cut4_sb_c[i][j][k][l] = cut_sb_c_one;
-          cut4sq_sb_ast[i][j][k][l] = cut4_sb_ast[i][j][k][l]*cut4_sb_ast[i][j][k][l];
-          cut4sq_sb_c[i][j][k][l]  = cut4_sb_c[i][j][k][l]*cut4_sb_c[i][j][k][l];
-          lj14_sb[i][j][k][l] = 4.0 * epsilon_sb[j][k] * pow(sigma4_sb[i][j][k][l],12.0);
-          lj24_sb[i][j][k][l] = 4.0 * epsilon_sb[j][k] * pow(sigma4_sb[i][j][k][l],6.0);
-          count++;
-       }
-      }
-    }
-  }
-
-  if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv");
 
   // base-base
   count = 0;
