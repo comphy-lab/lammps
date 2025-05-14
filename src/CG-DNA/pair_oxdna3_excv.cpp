@@ -36,25 +36,10 @@
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
 
-/* -----------------------------------------------------------------------
-    compute vector COM-sugar-phosphate backbone interaction site in oxDNA3
--------------------------------------------------------------------------- */
-void PairOxdna3Excv::compute_backbone_site(double e1[3],
-  double e2[3], double /*e3*/[3], double rbk[3]) const
-{
-  double dx_cbk_oxdna3 = ConstantsOxdna::get_dx_cbk_oxdna3();
-  double dy_cbk_oxdna3 = ConstantsOxdna::get_dy_cbk_oxdna3();
-
-  rbk[0] = dx_cbk_oxdna3 * e1[0] + dy_cbk_oxdna3 * e2[0];
-  rbk[1] = dx_cbk_oxdna3 * e1[1] + dy_cbk_oxdna3 * e2[1];
-  rbk[2] = dx_cbk_oxdna3 * e1[2] + dy_cbk_oxdna3 * e2[2];
-
-}
-
-/* ---------------------------------------------------------------
-    compute vector COM-hydrogen bonding interaction site in oxDNA3
-    A=1, C=2, G=3, T=0
------------------------------------------------------------------- */
+/* --------------------------------------------------------------
+   compute vector COM-hydrogen bonding interaction site in oxDNA3
+   A=1, C=2, G=3, T=0
+----------------------------------------------------------------- */
 template <>
 void PairOxdna3Excv::compute_base_site<0>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rbs[3]) const
@@ -109,7 +94,7 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
 {
   int count;
 
-  if (narg != 3 && narg != 11) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/excv" + utils::errorurl(21));
+  if (narg != 3 && narg != 11) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/excv, use potential file" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi,nlo,nhi;
@@ -179,7 +164,7 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
             break;
           } else continue;
         } catch (std::exception &e) {
-          error->one(FLERR, "Problem parsing oxDNA potential file: {}", e.what());
+          error->one(FLERR, "Problem parsing oxdna3 potential file: {}", e.what());
         }
       }
       if ((iloc != arg[0]) || (jloc != arg[1]) || (potential_name != "excv"))
