@@ -35,6 +35,9 @@ class ConstantsOxdna : protected Pointers {
   // oxDNA3 getters
   static double get_dx_cbk_oxdna3() { return dx_cbk_oxdna3; }
   static double get_dy_cbk_oxdna3() { return dy_cbk_oxdna3; }
+  static double get_dx_cstk_oxdna3() { return dx_cstk_oxdna3; }
+  static double get_dx_cbs_pur_oxdna3() { return dx_cbs_pur_oxdna3; }
+  static double get_dx_cbs_pyr_oxdna3() { return dx_cbs_pyr_oxdna3; }
 
   // oxRNA2 getters
   static double get_dx_cbk_oxrna2() { return dx_cbk_oxrna2; }
@@ -61,6 +64,8 @@ class ConstantsOxdna : protected Pointers {
 
   // oxDNA3 parameters
   static double dx_cbk_oxdna3, dy_cbk_oxdna3;
+  static double dx_cstk_oxdna3;
+  static double dx_cbs_pur_oxdna3, dx_cbs_pyr_oxdna3;
 
   // oxRNA2 parameters
   static double dx_cbk_oxrna2, dz_cbk_oxrna2;

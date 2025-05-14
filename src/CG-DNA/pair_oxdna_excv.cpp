@@ -106,13 +106,13 @@ PairOxdnaExcv::~PairOxdnaExcv()
     compute vector COM-sugar-phosphate backbone interaction site in oxDNA
 ------------------------------------------------------------------------- */
 void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rs[3]) const
+    double /*e3*/[3], double rbk[3]) const
 {
   double dx_cbk_oxdna1 = ConstantsOxdna::get_dx_cbk_oxdna1();
 
-  rs[0] = dx_cbk_oxdna1*e1[0];
-  rs[1] = dx_cbk_oxdna1*e1[1];
-  rs[2] = dx_cbk_oxdna1*e1[2];
+  rbk[0] = dx_cbk_oxdna1*e1[0];
+  rbk[1] = dx_cbk_oxdna1*e1[1];
+  rbk[2] = dx_cbk_oxdna1*e1[2];
 
 }
 
@@ -122,47 +122,47 @@ void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
 ------------------------------------------------------------------------ */
 template <>
 void PairOxdnaExcv::compute_base_site<0>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rb[3]) const
+    double /*e3*/[3], double rbs[3]) const
 {
   double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = dx_cbs_oxdna1*e1[0];
-  rb[1] = dx_cbs_oxdna1*e1[1];
-  rb[2] = dx_cbs_oxdna1*e1[2];
+  rbs[0] = dx_cbs_oxdna1*e1[0];
+  rbs[1] = dx_cbs_oxdna1*e1[1];
+  rbs[2] = dx_cbs_oxdna1*e1[2];
 
 }
 
 template <>
 void PairOxdnaExcv::compute_base_site<1>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rb[3]) const
+    double /*e3*/[3], double rbs[3]) const
 {
   double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = dx_cbs_oxdna1*e1[0];
-  rb[1] = dx_cbs_oxdna1*e1[1];
-  rb[2] = dx_cbs_oxdna1*e1[2];
+  rbs[0] = dx_cbs_oxdna1*e1[0];
+  rbs[1] = dx_cbs_oxdna1*e1[1];
+  rbs[2] = dx_cbs_oxdna1*e1[2];
 
 }
 template <>
 void PairOxdnaExcv::compute_base_site<2>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rb[3]) const
+    double /*e3*/[3], double rbs[3]) const
 {
   double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = dx_cbs_oxdna1*e1[0];
-  rb[1] = dx_cbs_oxdna1*e1[1];
-  rb[2] = dx_cbs_oxdna1*e1[2];
+  rbs[0] = dx_cbs_oxdna1*e1[0];
+  rbs[1] = dx_cbs_oxdna1*e1[1];
+  rbs[2] = dx_cbs_oxdna1*e1[2];
 
 }
 template <>
 void PairOxdnaExcv::compute_base_site<3>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rb[3]) const
+    double /*e3*/[3], double rbs[3]) const
 {
   double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = dx_cbs_oxdna1*e1[0];
-  rb[1] = dx_cbs_oxdna1*e1[1];
-  rb[2] = dx_cbs_oxdna1*e1[2];
+  rbs[0] = dx_cbs_oxdna1*e1[0];
+  rbs[1] = dx_cbs_oxdna1*e1[1];
+  rbs[2] = dx_cbs_oxdna1*e1[2];
 
 }
 

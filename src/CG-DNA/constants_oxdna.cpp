@@ -42,6 +42,9 @@ double ConstantsOxdna::dy_cbk_oxdna2 = +0.3408;
 // oxDNA3 parameters
 double ConstantsOxdna::dx_cbk_oxdna3 = -0.34;
 double ConstantsOxdna::dy_cbk_oxdna3 = +0.3408;
+double ConstantsOxdna::dx_cstk_oxdna3 = +0.37;
+double ConstantsOxdna::dx_cbs_pur_oxdna3 = +0.43;
+double ConstantsOxdna::dx_cbs_pyr_oxdna3 = +0.37;
 
 // oxRNA2 parameters
 double ConstantsOxdna::dx_cbk_oxrna2 = -0.4;
@@ -69,6 +72,9 @@ void ConstantsOxdna::set_real_units()
   // oxDNA3 parameters in real units
   dx_cbk_oxdna3 = -2.89612;
   dy_cbk_oxdna3 = +2.9029344;
+  dx_cstk_oxdna3 = +3.15166;
+  dx_cbs_pur_oxdna3 = +3.66274;
+  dx_cbs_pyr_oxdna3 = +3.15166;
 
   // oxRNA2 parameters in real units
   dx_cbk_oxrna2 = -3.4072;
