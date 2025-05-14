@@ -124,7 +124,7 @@ void PairOxdnaXstk::compute(int eflag, int vflag)
   double theta8,theta8p,t8dir[3],cost8;
 
   // distance COM-h-bonding site
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
   // vectors COM-h-bonding site in lab frame
   double ra_cbs[3],rb_cbs[3];
   // Cartesian unit vectors in lab frame
@@ -172,9 +172,9 @@ void PairOxdnaXstk::compute(int eflag, int vflag)
     ax[2] = nx_xtrct[a][2];
     // a(y/z) not needed here as oxDNA(1) co-linear
 
-    ra_cbs[0] = d_cbs*ax[0];
-    ra_cbs[1] = d_cbs*ax[1];
-    ra_cbs[2] = d_cbs*ax[2];
+    ra_cbs[0] = dx_cbs_oxdna1*ax[0];
+    ra_cbs[1] = dx_cbs_oxdna1*ax[1];
+    ra_cbs[2] = dx_cbs_oxdna1*ax[2];
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -192,9 +192,9 @@ void PairOxdnaXstk::compute(int eflag, int vflag)
       bx[2] = nx_xtrct[b][2];
       // b(y/z) not needed here as oxDNA(1) co-linear
 
-      rb_cbs[0] = d_cbs*bx[0];
-      rb_cbs[1] = d_cbs*bx[1];
-      rb_cbs[2] = d_cbs*bx[2];
+      rb_cbs[0] = dx_cbs_oxdna1*bx[0];
+      rb_cbs[1] = dx_cbs_oxdna1*bx[1];
+      rb_cbs[2] = dx_cbs_oxdna1*bx[2];
 
       // vector h-bonding site b to a
       delr_bsbs[0] = x[a][0] + ra_cbs[0] - x[b][0] - rb_cbs[0];

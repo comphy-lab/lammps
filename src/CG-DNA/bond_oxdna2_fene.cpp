@@ -25,10 +25,10 @@ using namespace LAMMPS_NS;
 void BondOxdna2Fene::compute_backbone_site(double e1[3], double e2[3],
   double /*e3*/[3], double r[3]) const
 {
-  double d_cbk_x = ConstantsOxdna::get_d_cbk_x();
-  double d_cbk_y = ConstantsOxdna::get_d_cbk_y();
+  double dx_cbk_oxdna2 = ConstantsOxdna::get_dx_cbk_oxdna2();
+  double dy_cbk_oxdna2 = ConstantsOxdna::get_dy_cbk_oxdna2();
 
-  r[0] = d_cbk_x * e1[0] + d_cbk_y * e2[0];
-  r[1] = d_cbk_x * e1[1] + d_cbk_y * e2[1];
-  r[2] = d_cbk_x * e1[2] + d_cbk_y * e2[2];
+  r[0] = dx_cbk_oxdna2 * e1[0] + dy_cbk_oxdna2 * e2[0];
+  r[1] = dx_cbk_oxdna2 * e1[1] + dy_cbk_oxdna2 * e2[1];
+  r[2] = dx_cbk_oxdna2 * e1[2] + dy_cbk_oxdna2 * e2[2];
 }

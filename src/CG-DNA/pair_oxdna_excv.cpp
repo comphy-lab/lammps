@@ -108,11 +108,11 @@ PairOxdnaExcv::~PairOxdnaExcv()
 void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rs[3]) const
 {
-  double d_cbk = ConstantsOxdna::get_d_cbk();
+  double dx_cbk_oxdna1 = ConstantsOxdna::get_dx_cbk_oxdna1();
 
-  rs[0] = d_cbk*e1[0];
-  rs[1] = d_cbk*e1[1];
-  rs[2] = d_cbk*e1[2];
+  rs[0] = dx_cbk_oxdna1*e1[0];
+  rs[1] = dx_cbk_oxdna1*e1[1];
+  rs[2] = dx_cbk_oxdna1*e1[2];
 
 }
 
@@ -124,11 +124,11 @@ template <>
 void PairOxdnaExcv::compute_base_site<0>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = d_cbs*e1[0];
-  rb[1] = d_cbs*e1[1];
-  rb[2] = d_cbs*e1[2];
+  rb[0] = dx_cbs_oxdna1*e1[0];
+  rb[1] = dx_cbs_oxdna1*e1[1];
+  rb[2] = dx_cbs_oxdna1*e1[2];
 
 }
 
@@ -136,33 +136,33 @@ template <>
 void PairOxdnaExcv::compute_base_site<1>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = d_cbs*e1[0];
-  rb[1] = d_cbs*e1[1];
-  rb[2] = d_cbs*e1[2];
+  rb[0] = dx_cbs_oxdna1*e1[0];
+  rb[1] = dx_cbs_oxdna1*e1[1];
+  rb[2] = dx_cbs_oxdna1*e1[2];
 
 }
 template <>
 void PairOxdnaExcv::compute_base_site<2>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = d_cbs*e1[0];
-  rb[1] = d_cbs*e1[1];
-  rb[2] = d_cbs*e1[2];
+  rb[0] = dx_cbs_oxdna1*e1[0];
+  rb[1] = dx_cbs_oxdna1*e1[1];
+  rb[2] = dx_cbs_oxdna1*e1[2];
 
 }
 template <>
 void PairOxdnaExcv::compute_base_site<3>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = d_cbs*e1[0];
-  rb[1] = d_cbs*e1[1];
-  rb[2] = d_cbs*e1[2];
+  rb[0] = dx_cbs_oxdna1*e1[0];
+  rb[1] = dx_cbs_oxdna1*e1[1];
+  rb[2] = dx_cbs_oxdna1*e1[2];
 
 }
 

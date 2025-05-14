@@ -51,11 +51,11 @@ BondOxdnaFene::~BondOxdnaFene()
 void BondOxdnaFene::compute_backbone_site(double e1[3], double /*e2*/[3],
   double /*e3*/[3], double r[3]) const
 {
-  double d_cbk = ConstantsOxdna::get_d_cbk();
+  double dx_cbk_oxdna1 = ConstantsOxdna::get_dx_cbk_oxdna1();
 
-  r[0] = d_cbk * e1[0];
-  r[1] = d_cbk * e1[1];
-  r[2] = d_cbk * e1[2];
+  r[0] = dx_cbk_oxdna1 * e1[0];
+  r[1] = dx_cbk_oxdna1 * e1[1];
+  r[2] = dx_cbk_oxdna1 * e1[2];
 }
 
 /* ----------------------------------------------------------------------

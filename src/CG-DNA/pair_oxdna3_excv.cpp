@@ -44,11 +44,11 @@ template <>
 void PairOxdna3Excv::compute_base_site<0>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = d_cbs*e1[0];
-  rb[1] = d_cbs*e1[1];
-  rb[2] = d_cbs*e1[2];
+  rb[0] = dx_cbs_oxdna1*e1[0];
+  rb[1] = dx_cbs_oxdna1*e1[1];
+  rb[2] = dx_cbs_oxdna1*e1[2];
 
 }
 
@@ -56,33 +56,33 @@ template <>
 void PairOxdna3Excv::compute_base_site<1>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = d_cbs*e1[0];
-  rb[1] = d_cbs*e1[1];
-  rb[2] = d_cbs*e1[2];
+  rb[0] = dx_cbs_oxdna1*e1[0];
+  rb[1] = dx_cbs_oxdna1*e1[1];
+  rb[2] = dx_cbs_oxdna1*e1[2];
 
 }
 template <>
 void PairOxdna3Excv::compute_base_site<2>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = d_cbs*e1[0];
-  rb[1] = d_cbs*e1[1];
-  rb[2] = d_cbs*e1[2];
+  rb[0] = dx_cbs_oxdna1*e1[0];
+  rb[1] = dx_cbs_oxdna1*e1[1];
+  rb[2] = dx_cbs_oxdna1*e1[2];
 
 }
 template <>
 void PairOxdna3Excv::compute_base_site<3>(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rb[3]) const
 {
-  double d_cbs = ConstantsOxdna::get_d_cbs();
+  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
 
-  rb[0] = d_cbs*e1[0];
-  rb[1] = d_cbs*e1[1];
-  rb[2] = d_cbs*e1[2];
+  rb[0] = dx_cbs_oxdna1*e1[0];
+  rb[1] = dx_cbs_oxdna1*e1[1];
+  rb[2] = dx_cbs_oxdna1*e1[2];
 
 }
 

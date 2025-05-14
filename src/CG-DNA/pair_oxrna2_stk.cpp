@@ -235,12 +235,12 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
   double cosphi1,cosphi2,cosphi1dir[3],cosphi2dir[3];
 
   // distances COM-backbone site, COM-3' and COM-5' stacking site
-  double d_cbk_x = ConstantsOxdna::get_d_cbk();
-  double d_cbk_z = ConstantsOxdna::get_d_cbk_z();
-  double d_cstk_x_3p = ConstantsOxdna::get_d_cstk_x_3p();
-  double d_cstk_y_3p = ConstantsOxdna::get_d_cstk_y_3p();
-  double d_cstk_x_5p = ConstantsOxdna::get_d_cstk_x_5p();
-  double d_cstk_y_5p = ConstantsOxdna::get_d_cstk_y_5p();
+  double dx_cbk_oxdna2 = ConstantsOxdna::get_dx_cbk_oxdna1();
+  double dz_cbk_oxrna2 = ConstantsOxdna::get_dz_cbk_oxrna2();
+  double dx_cstk_3p_oxrna2 = ConstantsOxdna::get_dx_cstk_3p_oxrna2();
+  double dy_cstk_3p_oxrna2 = ConstantsOxdna::get_dy_cstk_3p_oxrna2();
+  double dx_cstk_5p_oxrna2 = ConstantsOxdna::get_dx_cstk_5p_oxrna2();
+  double dy_cstk_5p_oxrna2 = ConstantsOxdna::get_dy_cstk_5p_oxrna2();
 
   // 3' and p5' auxiliary vectors
   double  d3p_x=-0.462510,d3p_y=-0.528218,d3p_z=+0.712089;
@@ -320,14 +320,14 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
     bz[2] = nz_xtrct[b][2];
 
     // vector COM a - 5'-stacking site a
-    ra_cstk[0] = d_cstk_x_5p*ax[0] + d_cstk_y_5p*ay[0];
-    ra_cstk[1] = d_cstk_x_5p*ax[1] + d_cstk_y_5p*ay[1];
-    ra_cstk[2] = d_cstk_x_5p*ax[2] + d_cstk_y_5p*ay[2];
+    ra_cstk[0] = dx_cstk_5p_oxrna2*ax[0] + dy_cstk_5p_oxrna2*ay[0];
+    ra_cstk[1] = dx_cstk_5p_oxrna2*ax[1] + dy_cstk_5p_oxrna2*ay[1];
+    ra_cstk[2] = dx_cstk_5p_oxrna2*ax[2] + dy_cstk_5p_oxrna2*ay[2];
 
     // vector COM b - 3'-stacking site b
-    rb_cstk[0] = d_cstk_x_3p*bx[0] + d_cstk_y_3p*by[0];
-    rb_cstk[1] = d_cstk_x_3p*bx[1] + d_cstk_y_3p*by[1];
-    rb_cstk[2] = d_cstk_x_3p*bx[2] + d_cstk_y_3p*by[2];
+    rb_cstk[0] = dx_cstk_3p_oxrna2*bx[0] + dy_cstk_3p_oxrna2*by[0];
+    rb_cstk[1] = dx_cstk_3p_oxrna2*bx[1] + dy_cstk_3p_oxrna2*by[1];
+    rb_cstk[2] = dx_cstk_3p_oxrna2*bx[2] + dy_cstk_3p_oxrna2*by[2];
 
     // vector 5'-stacking site a to 3'-stacking site b
     delr_stkstk[0] = x[b][0] + rb_cstk[0] - x[a][0] - ra_cstk[0];
@@ -346,14 +346,14 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
     delr_stkstk_norm[2] = delr_stkstk[2] * rinv_stkstk;
 
     // vector COM a - backbone site a
-    ra_cbk[0] = d_cbk_x*ax[0] + d_cbk_z*az[0];
-    ra_cbk[1] = d_cbk_x*ax[1] + d_cbk_z*az[1];
-    ra_cbk[2] = d_cbk_x*ax[2] + d_cbk_z*az[2];
+    ra_cbk[0] = dx_cbk_oxdna2*ax[0] + dz_cbk_oxrna2*az[0];
+    ra_cbk[1] = dx_cbk_oxdna2*ax[1] + dz_cbk_oxrna2*az[1];
+    ra_cbk[2] = dx_cbk_oxdna2*ax[2] + dz_cbk_oxrna2*az[2];
 
     // vector COM b - backbone site b
-    rb_cbk[0] = d_cbk_x*bx[0] + d_cbk_z*bz[0];
-    rb_cbk[1] = d_cbk_x*bx[1] + d_cbk_z*bz[1];
-    rb_cbk[2] = d_cbk_x*bx[2] + d_cbk_z*bz[2];
+    rb_cbk[0] = dx_cbk_oxdna2*bx[0] + dz_cbk_oxrna2*bz[0];
+    rb_cbk[1] = dx_cbk_oxdna2*bx[1] + dz_cbk_oxrna2*bz[1];
+    rb_cbk[2] = dx_cbk_oxdna2*bx[2] + dz_cbk_oxrna2*bz[2];
 
     // vector backbone site a to b
     delr_bkbk[0] = (x[b][0] + rb_cbk[0] - x[a][0] - ra_cbk[0]);

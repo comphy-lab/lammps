@@ -23,42 +23,42 @@ class ConstantsOxdna : protected Pointers {
   ConstantsOxdna(class LAMMPS *lmp);
   virtual ~ConstantsOxdna(){};
 
-  // oxDNA 1 getters
-  static double get_d_cbk() { return d_cbk; }
-  static double get_d_cstk() { return d_cstk; }
-  static double get_d_cbs() { return d_cbs; }
+  // oxDNA1 getters
+  static double get_dx_cbk_oxdna1() { return dx_cbk_oxdna1; }
+  static double get_dx_cstk_oxdna1() { return dx_cstk_oxdna1; }
+  static double get_dx_cbs_oxdna1() { return dx_cbs_oxdna1; }
 
-  // oxDNA 2 getters
-  static double get_d_cbk_x() { return d_cbk_x; }
-  static double get_d_cbk_y() { return d_cbk_y; }
+  // oxDNA2 getters
+  static double get_dx_cbk_oxdna2() { return dx_cbk_oxdna2; }
+  static double get_dy_cbk_oxdna2() { return dy_cbk_oxdna2; }
   static double get_lambda_dh_one_prefactor() { return lambda_dh_one_prefactor; }
   static double get_qeff_dh_pf_one_prefactor() { return qeff_dh_pf_one_prefactor; }
 
-  // oxRNA 2 getters
-  static double get_d_cbk_z() { return d_cbk_z; }
-  static double get_d_cstk_x_3p() { return d_cstk_x_3p; }
-  static double get_d_cstk_y_3p() { return d_cstk_y_3p; }
-  static double get_d_cstk_x_5p() { return d_cstk_x_5p; }
-  static double get_d_cstk_y_5p() { return d_cstk_y_5p; }
+  // oxRNA2 getters
+  static double get_dx_cbk_oxrna2() { return dx_cbk_oxrna2; }
+  static double get_dz_cbk_oxrna2() { return dz_cbk_oxrna2; }
+  static double get_dx_cstk_3p_oxrna2() { return dx_cstk_3p_oxrna2; }
+  static double get_dy_cstk_3p_oxrna2() { return dy_cstk_3p_oxrna2; }
+  static double get_dx_cstk_5p_oxrna2() { return dx_cstk_5p_oxrna2; }
+  static double get_dy_cstk_5p_oxrna2() { return dy_cstk_5p_oxrna2; }
 
  private:
   std::string units;
   bool real_flag;
   void set_real_units();
 
-  // oxDNA 1 parameters
-  static double d_cbk, d_cstk, d_cbs;
+  // oxDNA1 parameters
+  static double dx_cbk_oxdna1, dx_cstk_oxdna1, dx_cbs_oxdna1;
 
-  // oxDNA 2 parameters
-  static double d_cbk_x, d_cbk_y;
+  // oxDNA2 parameters
+  static double dx_cbk_oxdna2, dy_cbk_oxdna2;
   static double lambda_dh_one_prefactor, qeff_dh_pf_one_prefactor;
 
-  // oxRNA 2 parameters
-  static double d_cbk_z;
-  static double d_cstk_x_3p, d_cstk_y_3p;
-  static double d_cstk_x_5p, d_cstk_y_5p;
+  // oxRNA2 parameters
+  static double dx_cbk_oxrna2, dz_cbk_oxrna2;
+  static double dx_cstk_3p_oxrna2, dy_cstk_3p_oxrna2;
+  static double dx_cstk_5p_oxrna2, dy_cstk_5p_oxrna2;
 };
 
-}    // namespace LAMMPS_NS
-
+}
 #endif
