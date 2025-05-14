@@ -762,15 +762,15 @@ void FixSurfaceGlobal::pre_neighbor()
   MyPage<int> *ipage = list->ipage;
 
   if (use_history) {
-    fix_history->nlocal_neigh = nlocal;
-    npartner = fix_history->npartner;         // # of touching partners of each atom
-    partner = fix_history->partner;           // global atom IDs for the partners
-    valuepartner = fix_history->valuepartner; // values for the partners
+    //fix_history->nlocal_neigh = nlocal;
+    //npartner = fix_history->npartner;         // # of touching partners of each atom
+    //partner = fix_history->partner;           // global atom IDs for the partners
+    //valuepartner = fix_history->valuepartner; // values for the partners
     firstflag = fix_history->firstflag;       // ptr to each atom's neighbor flag
     firstvalue = fix_history->firstvalue;     // ptr to each atom's values
-    ipage_atom = listhistory->ipage_atom;     // pages of partner atom IDs
-    dpage_atom = listhistory->dpage_atom;     // pages of partner values
-    dnum = listhistory->get_dnum();
+    //ipage_atom = listhistory->ipage_atom;     // pages of partner atom IDs
+    //dpage_atom = listhistory->dpage_atom;     // pages of partner values
+    dnum = fix_history->get_dnum();
     dnumbytes = dnum * sizeof(double);
   }
 
@@ -1088,9 +1088,13 @@ void FixSurfaceGlobal::post_force(int vflag)
       // Closest distance from sphere to surface
       //   Not perfect, e.g. when over a convex corner
       if (dimension == 3) {
-        dot = MathExtra::dot3(dr, norm);
-        MathExtra::scaleadd3(-dot, norm, dr, residual);
-        distance_from_surf = MIN(distance_from_surf, MathExtra::len3(residual));
+        if (jflag == 1) {
+          distance_from_surf = 0.0;
+        } else {
+          dot = MathExtra::dot3(dr, norm);
+          MathExtra::scaleadd3(-dot, norm, dr, residual);
+          distance_from_surf = MIN(distance_from_surf, MathExtra::len3(residual));
+        }
       }
 
       // Ensure interior contacts always win in a tie, needed for convex flat structures
