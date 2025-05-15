@@ -175,7 +175,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
 {
   double delf[3],delta[3],deltb[3]; // force, torque increment;
   double evdwl,fpair,factor_lj;
-  double rtmp_s[3],rtmp_b[3];
+  double rtmp_bk[3],rtmp_bs[3];
   double delr_bkbk[3],rsq_bkbk,delr_bkbs[3],rsq_bkbs;
   double delr_bsbk[3],rsq_bsbk,delr_bsbs[3],rsq_bsbs;
 
@@ -273,13 +273,13 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         break;
     }   
 
-    rtmp_s[0] = x[a][0] + ra_cbk[0];
-    rtmp_s[1] = x[a][1] + ra_cbk[1];
-    rtmp_s[2] = x[a][2] + ra_cbk[2];
+    rtmp_bk[0] = x[a][0] + ra_cbk[0];
+    rtmp_bk[1] = x[a][1] + ra_cbk[1];
+    rtmp_bk[2] = x[a][2] + ra_cbk[2];
 
-    rtmp_b[0] = x[a][0] + ra_cbs[0];
-    rtmp_b[1] = x[a][1] + ra_cbs[1];
-    rtmp_b[2] = x[a][2] + ra_cbs[2];
+    rtmp_bs[0] = x[a][0] + ra_cbs[0];
+    rtmp_bs[1] = x[a][1] + ra_cbs[1];
+    rtmp_bs[2] = x[a][2] + ra_cbs[2];
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -322,27 +322,27 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
       }   
 
       // vector backbone site b to a
-      delr_bkbk[0] = rtmp_s[0] - (x[b][0] + rb_cbk[0]);
-      delr_bkbk[1] = rtmp_s[1] - (x[b][1] + rb_cbk[1]);
-      delr_bkbk[2] = rtmp_s[2] - (x[b][2] + rb_cbk[2]);
+      delr_bkbk[0] = rtmp_bk[0] - (x[b][0] + rb_cbk[0]);
+      delr_bkbk[1] = rtmp_bk[1] - (x[b][1] + rb_cbk[1]);
+      delr_bkbk[2] = rtmp_bk[2] - (x[b][2] + rb_cbk[2]);
       rsq_bkbk = delr_bkbk[0]*delr_bkbk[0] + delr_bkbk[1]*delr_bkbk[1] + delr_bkbk[2]*delr_bkbk[2];
 
       // vector base site b to backbone site a
-      delr_bkbs[0] =  rtmp_s[0] - (x[b][0] + rb_cbs[0]);
-      delr_bkbs[1] =  rtmp_s[1] - (x[b][1] + rb_cbs[1]);
-      delr_bkbs[2] =  rtmp_s[2] - (x[b][2] + rb_cbs[2]);
+      delr_bkbs[0] =  rtmp_bk[0] - (x[b][0] + rb_cbs[0]);
+      delr_bkbs[1] =  rtmp_bk[1] - (x[b][1] + rb_cbs[1]);
+      delr_bkbs[2] =  rtmp_bk[2] - (x[b][2] + rb_cbs[2]);
       rsq_bkbs = delr_bkbs[0]*delr_bkbs[0] + delr_bkbs[1]*delr_bkbs[1] + delr_bkbs[2]*delr_bkbs[2];
 
       // vector backbone site b to base site a
-      delr_bsbk[0] = rtmp_b[0] - (x[b][0] + rb_cbk[0]);
-      delr_bsbk[1] = rtmp_b[1] - (x[b][1] + rb_cbk[1]);
-      delr_bsbk[2] = rtmp_b[2] - (x[b][2] + rb_cbk[2]);
+      delr_bsbk[0] = rtmp_bs[0] - (x[b][0] + rb_cbk[0]);
+      delr_bsbk[1] = rtmp_bs[1] - (x[b][1] + rb_cbk[1]);
+      delr_bsbk[2] = rtmp_bs[2] - (x[b][2] + rb_cbk[2]);
       rsq_bsbk = delr_bsbk[0]*delr_bsbk[0] + delr_bsbk[1]*delr_bsbk[1] + delr_bsbk[2]*delr_bsbk[2];
 
       // vector base site b to a
-      delr_bsbs[0] = rtmp_b[0] - (x[b][0] + rb_cbs[0]);
-      delr_bsbs[1] = rtmp_b[1] - (x[b][1] + rb_cbs[1]);
-      delr_bsbs[2] = rtmp_b[2] - (x[b][2] + rb_cbs[2]);
+      delr_bsbs[0] = rtmp_bs[0] - (x[b][0] + rb_cbs[0]);
+      delr_bsbs[1] = rtmp_bs[1] - (x[b][1] + rb_cbs[1]);
+      delr_bsbs[2] = rtmp_bs[2] - (x[b][2] + rb_cbs[2]);
       rsq_bsbs = delr_bsbs[0]*delr_bsbs[0] + delr_bsbs[1]*delr_bsbs[1] + delr_bsbs[2]*delr_bsbs[2];
 
       // excluded volume interaction
@@ -355,7 +355,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         evdwl = F3(rsq_bkbk,cutsq_bkbk_ast[atype][btype],cut_bkbk_c[atype][btype],lj1_bkbk[atype][btype],
                         lj2_bkbk[atype][btype],epsilon_bkbk[atype][btype],b_bkbk[atype][btype],fpair);
 
-        // knock out nearest-neighbor interaction between ss on same strand
+        // knock out nearest-neighbor interaction between backbone sites on same strand
         fpair *= factor_lj;
         evdwl *= factor_lj;
 
@@ -393,7 +393,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
           torque[b][2] -= deltb[2];
 
         }
-
+printf("backbone-backbone %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
       }
 
       // backbone-base
@@ -433,7 +433,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
           torque[b][2] -= deltb[2];
 
         }
-
+printf("backbone-base %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
       }
 
       // base-backbone
@@ -473,63 +473,61 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
           torque[b][2] -= deltb[2];
 
         }
-
+printf("base-backbone %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
       }
 
       // base-base
 
       evdwl = 0.0;
 
-      // determine bond topology 
-      if (factor_lj) { // a-b not nearest-neighbors on same strand, arguments depend on base step
+      // bond-topology: a-b nearest-neighbors on same strand, arguments depends on tetramer
+      if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
 
+        // determine type of 3'-partner of a and 5'-partner of b
+        if (id3p[a] != -1) {
+          _3ptype = type[atom->map(id3p[a])];
+        }
+        else _3ptype = 0;
+
+        if (id5p[b] != -1) {
+          _5ptype = type[atom->map(id5p[b])];
+        }
+        else _5ptype = 0;
+
+        if (rsq_bsbs < cut4sq_bsbs_c[_3ptype][atype][btype][_5ptype]) {
+          evdwl = F3(rsq_bsbs,cut4sq_bsbs_ast[_3ptype][atype][btype][_5ptype],cut4_bsbs_c[_3ptype][atype][btype][_5ptype],
+                          lj14_bsbs[_3ptype][atype][btype][_5ptype],lj24_bsbs[_3ptype][atype][btype][_5ptype],
+                          epsilon_bsbs[atype][btype],b4_bsbs[_3ptype][atype][btype][_5ptype],fpair);
+        }
+printf("base-base 1 %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
+      }
+      // bond-topology: a-b nearest-neighbors on same strand, arguments depends on tetramer
+      else if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
+
+        // determine type of 3'-partner of b and 5'-partner of a
+        if (id3p[b] != -1) {
+          _3ptype = type[atom->map(id3p[b])];
+        }
+        else _3ptype = 0;
+
+        if (id5p[a] != -1) {
+          _5ptype = type[atom->map(id5p[a])];
+        }
+        else _5ptype = 0;
+
+        if (rsq_bsbs < cut4sq_bsbs_c[_3ptype][btype][atype][_5ptype]) {
+          evdwl = F3(rsq_bsbs,cut4sq_bsbs_ast[_3ptype][btype][atype][_5ptype],cut4_bsbs_c[_3ptype][btype][atype][_5ptype],
+                          lj14_bsbs[_3ptype][btype][atype][_5ptype],lj24_bsbs[_3ptype][btype][atype][_5ptype],
+                          epsilon_bsbs[btype][atype],b4_bsbs[_3ptype][btype][atype][_5ptype],fpair);
+        }
+printf("base-base 2 %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
+      }
+      else {
         if (rsq_bsbs < cutsq_bsbs_c[atype][btype]) {
           evdwl = F3(rsq_bsbs,cutsq_bsbs_ast[atype][btype],cut_bsbs_c[atype][btype],lj1_bsbs[atype][btype],
                           lj2_bsbs[atype][btype],epsilon_bsbs[atype][btype],b_bsbs[atype][btype],fpair);
         }
-
-      }
-      else { // a-b nearest-neighbors on same strand, arguments depends on tetramer
-
-        if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
-
-          // determine type of 3'-partner of a and 5'-partner of b
-          if (id3p[a] != -1) {
-            _3ptype = type[atom->map(id3p[a])];
-          }
-          else _3ptype = 0;
-
-          if (id5p[b] != -1) {
-            _5ptype = type[atom->map(id5p[b])];
-          }
-          else _5ptype = 0;
-
-          if (rsq_bsbs < cut4sq_bsbs_c[_3ptype][atype][btype][_5ptype]) {
-            evdwl = F3(rsq_bsbs,cut4sq_bsbs_ast[_3ptype][atype][btype][_5ptype],cut4_bsbs_c[_3ptype][atype][btype][_5ptype],
-                            lj14_bsbs[_3ptype][atype][btype][_5ptype],lj24_bsbs[_3ptype][atype][btype][_5ptype],
-                            epsilon_bsbs[atype][btype],b4_bsbs[_3ptype][atype][btype][_5ptype],fpair);
-          }
-        }
-
-        if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
-
-          // determine type of 3'-partner of b and 5'-partner of a
-          if (id3p[b] != -1) {
-            _3ptype = type[atom->map(id3p[b])];
-          }
-          else _3ptype = 0;
-
-          if (id5p[a] != -1) {
-            _5ptype = type[atom->map(id5p[a])];
-          }
-          else _5ptype = 0;
-
-          if (rsq_bsbs < cut4sq_bsbs_c[_3ptype][btype][atype][_5ptype]) {
-            evdwl = F3(rsq_bsbs,cut4sq_bsbs_ast[_3ptype][btype][atype][_5ptype],cut4_bsbs_c[_3ptype][btype][atype][_5ptype],
-                            lj14_bsbs[_3ptype][btype][atype][_5ptype],lj24_bsbs[_3ptype][btype][atype][_5ptype],
-                            epsilon_bsbs[btype][atype],b4_bsbs[_3ptype][btype][atype][_5ptype],fpair);
-          }
-        }
+printf("base-base 3 %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
 
       }
 

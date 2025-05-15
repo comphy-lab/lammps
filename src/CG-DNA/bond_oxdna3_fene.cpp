@@ -90,14 +90,14 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
     // assign sequence-averaged parameters to terminal bases n2
     for (int n2 = 1; n2 <= n; n2++) {
       for (int n3 = 1; n3 <= n; n3++) {
-        for (int n4 = 1; n4 <= n; n4++) {
+        for (int n4 = 0; n4 <= n; n4++) {
           Delta[ilo][0][n2][n3][n4] = Delta[ilo][0][0][0][0]; 
           r0[ilo][0][n2][n3][n4] = r0[ilo][0][0][0][0]; 
         }
       }
     }
     // assign sequence-averaged parameters to terminal bases n3
-    for (int n1 = 1; n1 <= n; n1++) {
+    for (int n1 = 0; n1 <= n; n1++) {
       for (int n2 = 1; n2 <= n; n2++) {
         for (int n3 = 1; n3 <= n; n3++) {
           Delta[ilo][n1][n2][n3][0] = Delta[ilo][0][0][0][0]; 

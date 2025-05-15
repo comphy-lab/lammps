@@ -94,7 +94,7 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
 {
   int count;
 
-  if (narg != 3 && narg != 11) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/excv, use potential file" + utils::errorurl(21));
+  if (narg != 3) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/excv, use potential file" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi,nlo,nhi;
@@ -114,76 +114,110 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
   double epsilon_bsbs_one, sigma_bsbs_one;
   double cut_bsbs_ast_one, cut_bsbs_c_one, b_bsbs_one;
 
-  if (narg == 11) {
-    // Excluded volume interaction
-    // LJ parameters
-    epsilon_bkbk_one = utils::numeric(FLERR,arg[2],false,lmp);
-    sigma_bkbk_one = utils::numeric(FLERR,arg[3],false,lmp);
-    cut_bkbk_ast_one = utils::numeric(FLERR,arg[4],false,lmp);
+  sigma4_bsbs[0][0][0][0] = 0.0;
+  cut4_bsbs_ast[0][0][0][0] = 0.0;
 
-    // LJ parameters
-    epsilon_bkbs_one = utils::numeric(FLERR,arg[5],false,lmp);
-    sigma_bkbs_one = utils::numeric(FLERR,arg[6],false,lmp);
-    cut_bkbs_ast_one = utils::numeric(FLERR,arg[7],false,lmp);
+  if (comm->me == 0) {
+    PotentialFileReader reader(lmp, arg[2], "oxdna3 potential", " (excv)");
+    reader.set_bufsize(65336);
+    char * line;
+    std::string iloc, jloc, potential_name;
 
-    // LJ parameters
-    epsilon_bsbs_one = utils::numeric(FLERR,arg[8],false,lmp);
-    sigma_bsbs_one = utils::numeric(FLERR,arg[9],false,lmp);
-    cut_bsbs_ast_one = utils::numeric(FLERR,arg[10],false,lmp);
-  }
-  else {
-    if (comm->me == 0) {
-      PotentialFileReader reader(lmp, arg[2], "oxdna3 potential", " (excv)");
-      reader.set_bufsize(65336);
-      char * line;
-      std::string iloc, jloc, potential_name;
+    while ((line = reader.next_line())) {
+      try {
+        ValueTokenizer values(line);
+        iloc = values.next_string();
+        jloc = values.next_string();
+        potential_name = values.next_string();
+        if (iloc == arg[0] && jloc == arg[1] && potential_name == "excv") {
+          // Excluded volume interaction
+          // LJ backbone-backbone parameters
+          epsilon_bkbk_one = values.next_double();
+          sigma_bkbk_one = values.next_double();
+          cut_bkbk_ast_one = values.next_double();
 
-      while ((line = reader.next_line())) {
-        try {
-          ValueTokenizer values(line);
-          iloc = values.next_string();
-          jloc = values.next_string();
-          potential_name = values.next_string();
-          if (iloc == arg[0] && jloc == arg[1] && potential_name == "excv") {
-            // Excluded volume interaction
-            // LJ backbone-backbone parameters
-            epsilon_bkbk_one = values.next_double();
-            sigma_bkbk_one = values.next_double();
-            cut_bkbk_ast_one = values.next_double();
+          // LJ backbone-base parameters
+          epsilon_bkbs_one = values.next_double();
+          sigma_bkbs_one = values.next_double();
+          cut_bkbs_ast_one = values.next_double();
 
-            // LJ backbone-base parameters
-            epsilon_bkbs_one = values.next_double();
-            sigma_bkbs_one = values.next_double();
-            cut_bkbs_ast_one = values.next_double();
+          // LJ base-base parameters
+          epsilon_bsbs_one = values.next_double();
+          sigma_bsbs_one = values.next_double();
+          cut_bsbs_ast_one = values.next_double();
 
-            // LJ base-base parameters
-            epsilon_bsbs_one = values.next_double();
-            sigma_bsbs_one = values.next_double();
-            cut_bsbs_ast_one = values.next_double();
+          for (int n1 = nlo; n1 <= nhi; n1++) {
+            for (int n2 = nlo; n2 <= nhi; n2++) {
+              for (int n3 = nlo; n3 <= nhi; n3++) {
+                for (int n4 = nlo; n4 <= nhi; n4++) {
+                sigma4_bsbs[n1][n2][n3][n4] = values.next_double();
+                sigma4_bsbs[0][0][0][0] += sigma4_bsbs[n1][n2][n3][n4];
+                }
+              }
+            }
+          }
 
-            break;
-          } else continue;
-        } catch (std::exception &e) {
-          error->one(FLERR, "Problem parsing oxdna3 potential file: {}", e.what());
+          for (int n1 = nlo; n1 <= nhi; n1++) {
+            for (int n2 = nlo; n2 <= nhi; n2++) {
+              for (int n3 = nlo; n3 <= nhi; n3++) {
+                for (int n4 = nlo; n4 <= nhi; n4++) {
+                cut4_bsbs_ast[n1][n2][n3][n4] = values.next_double();
+                cut4_bsbs_ast[0][0][0][0] += cut4_bsbs_ast[n1][n2][n3][n4];
+                }
+              }
+            }
+          }
+
+          break;
+        } else continue;
+      } catch (std::exception &e) {
+        error->one(FLERR, "Problem parsing oxdna3 potential file: {}", e.what());
+      }
+    }
+    if ((iloc != arg[0]) || (jloc != arg[1]) || (potential_name != "excv"))
+      error->one(FLERR, "No corresponding excv potential found in file {} for pair type {} {}",
+                 arg[2], arg[0], arg[1]);
+
+
+  // calculate sequence-averaged parameters 
+  sigma4_bsbs[0][0][0][0] /= pow(nhi,4);
+  cut4_bsbs_ast[0][0][0][0] /= pow(nhi,4);
+
+   // assign sequence-averaged parameters to terminal bases n2
+    for (int n2 = 1; n2 <= nhi; n2++) {
+      for (int n3 = 1; n3 <= nhi; n3++) {
+        for (int n4 = 0; n4 <= nhi; n4++) {
+          sigma4_bsbs[0][n2][n3][n4] = sigma4_bsbs[0][0][0][0];
+          cut4_bsbs_ast[0][n2][n3][n4] = cut4_bsbs_ast[0][0][0][0];
         }
       }
-      if ((iloc != arg[0]) || (jloc != arg[1]) || (potential_name != "excv"))
-        error->one(FLERR, "No corresponding excv potential found in file {} for pair type {} {}",
-                   arg[2], arg[0], arg[1]);
+    }
+    // assign sequence-averaged parameters to terminal bases n3
+    for (int n1 = 0; n1 <= nhi; n1++) {
+      for (int n2 = 1; n2 <= nhi; n2++) {
+        for (int n3 = 1; n3 <= nhi; n3++) {
+          sigma4_bsbs[n1][n2][n3][0] = sigma4_bsbs[0][0][0][0];
+          cut4_bsbs_ast[n1][n2][n3][0] = cut4_bsbs_ast[0][0][0][0];
+        }
+      }
     }
 
-    MPI_Bcast(&epsilon_bkbk_one, 1, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&sigma_bkbk_one, 1, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&cut_bkbk_ast_one, 1, MPI_DOUBLE, 0, world);
-
-    MPI_Bcast(&epsilon_bkbs_one, 1, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&sigma_bkbs_one, 1, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&cut_bkbs_ast_one, 1, MPI_DOUBLE, 0, world);
-
-    MPI_Bcast(&epsilon_bsbs_one, 1, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&sigma_bsbs_one, 1, MPI_DOUBLE, 0, world);
-    MPI_Bcast(&cut_bsbs_ast_one, 1, MPI_DOUBLE, 0, world);
   }
+
+  MPI_Bcast(&epsilon_bkbk_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&sigma_bkbk_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&cut_bkbk_ast_one, 1, MPI_DOUBLE, 0, world);
+
+  MPI_Bcast(&epsilon_bkbs_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&sigma_bkbs_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&cut_bkbs_ast_one, 1, MPI_DOUBLE, 0, world);
+
+  MPI_Bcast(&epsilon_bsbs_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&sigma_bsbs_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&cut_bsbs_ast_one, 1, MPI_DOUBLE, 0, world);
+
+  MPI_Bcast(&sigma4_bsbs, 625, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&cut4_bsbs_ast, 625, MPI_DOUBLE, 0, world);
 
   // backbone-backbone
   count = 0;
@@ -288,10 +322,21 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
         for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
-          sigma4_bsbs[i][j][k][l] = sigma_bsbs_one;
-          cut4_bsbs_ast[i][j][k][l] = cut_bsbs_ast_one;
-          b4_bsbs[i][j][k][l] = b_bsbs_one;
-          cut4_bsbs_c[i][j][k][l] = cut_bsbs_c_one;
+
+          b4_bsbs[i][j][k][l] = 4.0/sigma4_bsbs[i][j][k][l]
+              *(6.0*pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],7)
+              -12.0*pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],13))
+              *4.0/sigma4_bsbs[i][j][k][l]*(6.0*pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],7)
+              -12.0*pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],13))
+              /4.0/(4.0*(pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],12)
+              -pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],6)));
+
+          cut4_bsbs_c[i][j][k][l] = cut4_bsbs_ast[i][j][k][l]
+              - 2.0*4.0*(pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],12)
+              -pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],6))
+              /(4.0/sigma4_bsbs[i][j][k][l]*(6.0*pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],7)
+              -12.0*pow(sigma4_bsbs[i][j][k][l]/cut4_bsbs_ast[i][j][k][l],13)));
+
           cut4sq_bsbs_ast[i][j][k][l] = cut4_bsbs_ast[i][j][k][l]*cut4_bsbs_ast[i][j][k][l];
           cut4sq_bsbs_c[i][j][k][l]  = cut4_bsbs_c[i][j][k][l]*cut4_bsbs_c[i][j][k][l];
           lj14_bsbs[i][j][k][l] = 4.0 * epsilon_bsbs[j][k] * pow(sigma4_bsbs[i][j][k][l],12.0);

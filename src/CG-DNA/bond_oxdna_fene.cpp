@@ -426,10 +426,11 @@ void BondOxdnaFene::coeff(int narg, char **arg)
 
 void BondOxdnaFene::init_style()
 {
-  if (force->special_lj[1] != 0.0 || force->special_lj[2] != 1.0 || force->special_lj[3] != 1.0)
+  if (force->special_lj[1] != 1e-100 || force->special_lj[2] != 1.0 || force->special_lj[3] != 1.0)
     error->all(
         FLERR,
-        "Must use 'special_bonds lj 0 1 1' with bond style oxdna/fene, oxdna2/fene or oxrna2/fene");
+        "Must use 'special_bonds lj 1e-100 1 1' with bond style oxdna/fene, oxdna2/fene, oxdna3/fene or oxrna2/fene");
+
 }
 
 /* ---------------------------------------------------------------------- */
