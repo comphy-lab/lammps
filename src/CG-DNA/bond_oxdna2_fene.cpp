@@ -24,16 +24,8 @@ using namespace LAMMPS_NS;
    compute vector COM-sugar-phosphate backbone interaction site in oxDNA2
 ------------------------------------------------------------------------- */
 void BondOxdna2Fene::compute_backbone_site(double e1[3], double e2[3],
-  double /*e3*/[3], double r[3]) const
+  double /*e3*/[3], double rbk[3]) const
 {
-  double dx_cbk_oxdna2 = ConstantsOxdna::get_dx_cbk_oxdna2();
-  double dy_cbk_oxdna2 = ConstantsOxdna::get_dy_cbk_oxdna2();
-
-  NucleotideOxdna2 n2;
-
-  n2.backbone_site();
-
-  r[0] = dx_cbk_oxdna2 * e1[0] + dy_cbk_oxdna2 * e2[0];
-  r[1] = dx_cbk_oxdna2 * e1[1] + dy_cbk_oxdna2 * e2[1];
-  r[2] = dx_cbk_oxdna2 * e1[2] + dy_cbk_oxdna2 * e2[2];
+  NucleotideOxdna2 oxdna2;
+  oxdna2.backbone_site(e1, e2, NULL, rbk);
 }

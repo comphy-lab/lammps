@@ -17,6 +17,7 @@
 
 #include "pair_oxrna2_excv.h"
 #include "constants_oxdna.h"
+#include "nucleotide_oxdna.h"
 
 using namespace LAMMPS_NS;
 
@@ -26,11 +27,6 @@ using namespace LAMMPS_NS;
 void PairOxrna2Excv::compute_backbone_site(double e1[3], double /*e2*/[3],
   double e3[3], double rbk[3]) const
 {
-  double dx_cbk_oxdna2 = ConstantsOxdna::get_dx_cbk_oxdna1();
-  double dz_cbk_oxrna2 = ConstantsOxdna::get_dz_cbk_oxrna2();
-
-  rbk[0] = dx_cbk_oxdna2 * e1[0] + dz_cbk_oxrna2 * e3[0];
-  rbk[1] = dx_cbk_oxdna2 * e1[1] + dz_cbk_oxrna2 * e3[1];
-  rbk[2] = dx_cbk_oxdna2 * e1[2] + dz_cbk_oxrna2 * e3[2];
-
+  NucleotideOxrna2 oxrna2;
+  oxrna2.backbone_site(e1, NULL, e3, rbk);
 }

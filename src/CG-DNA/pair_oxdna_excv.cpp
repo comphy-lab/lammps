@@ -109,16 +109,8 @@ PairOxdnaExcv::~PairOxdnaExcv()
 void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rbk[3]) const
 {
-  double dx_cbk_oxdna1 = ConstantsOxdna::get_dx_cbk_oxdna1();
-
-  NucleotideOxdna1 n1;
-
-  n1.backbone_site();
-
-  rbk[0] = dx_cbk_oxdna1*e1[0];
-  rbk[1] = dx_cbk_oxdna1*e1[1];
-  rbk[2] = dx_cbk_oxdna1*e1[2];
-
+  NucleotideOxdna1 oxdna1;
+  oxdna1.backbone_site(e1, NULL, NULL, rbk);
 }
 
 /* ---------------------------------------------------------------------
@@ -134,7 +126,7 @@ void PairOxdnaExcv::compute_base_site<0>(double e1[3], double /*e2*/[3],
   rbs[0] = dx_cbs_oxdna1*e1[0];
   rbs[1] = dx_cbs_oxdna1*e1[1];
   rbs[2] = dx_cbs_oxdna1*e1[2];
-printf("dx_cbs_oxdna1\n");
+//printf("dx_cbs_oxdna1\n");
 
 }
 
@@ -147,7 +139,7 @@ void PairOxdnaExcv::compute_base_site<1>(double e1[3], double /*e2*/[3],
   rbs[0] = dx_cbs_oxdna1*e1[0];
   rbs[1] = dx_cbs_oxdna1*e1[1];
   rbs[2] = dx_cbs_oxdna1*e1[2];
-printf("dx_cbs_oxdna1\n");
+//printf("dx_cbs_oxdna1\n");
 }
 template <>
 void PairOxdnaExcv::compute_base_site<2>(double e1[3], double /*e2*/[3],
@@ -158,7 +150,7 @@ void PairOxdnaExcv::compute_base_site<2>(double e1[3], double /*e2*/[3],
   rbs[0] = dx_cbs_oxdna1*e1[0];
   rbs[1] = dx_cbs_oxdna1*e1[1];
   rbs[2] = dx_cbs_oxdna1*e1[2];
-printf("dx_cbs_oxdna1\n");
+//printf("dx_cbs_oxdna1\n");
 
 }
 template <>
@@ -170,7 +162,7 @@ void PairOxdnaExcv::compute_base_site<3>(double e1[3], double /*e2*/[3],
   rbs[0] = dx_cbs_oxdna1*e1[0];
   rbs[1] = dx_cbs_oxdna1*e1[1];
   rbs[2] = dx_cbs_oxdna1*e1[2];
-printf("dx_cbs_oxdna1\n");
+//printf("dx_cbs_oxdna1\n");
 
 }
 
@@ -401,12 +393,14 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
           torque[b][2] -= deltb[2];
 
         }
+/*
 if ((atom->tag[a] == id5p[b] && atom->tag[b] == id3p[a])||(atom->tag[a] == id3p[b] && atom->tag[b] == id5p[a])){
  printf("bonded back-back %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
 }
 else {
  printf("non-bonded back-back %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
 }
+*/
       }
 
       // backbone-base
@@ -446,12 +440,14 @@ else {
           torque[b][2] -= deltb[2];
 
         }
+/*
 if ((atom->tag[a] == id5p[b] && atom->tag[b] == id3p[a])||(atom->tag[a] == id3p[b] && atom->tag[b] == id5p[a])){
  printf("bonded back-base %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
 }
 else {
  printf("non-bonded back-base %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
 }
+*/
       }
 
       // base-backbone
@@ -491,12 +487,14 @@ else {
           torque[b][2] -= deltb[2];
 
         }
+/*
 if ((atom->tag[a] == id5p[b] && atom->tag[b] == id3p[a])||(atom->tag[a] == id3p[b] && atom->tag[b] == id5p[a])){
  printf("bonded base-back %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
 }
 else {
  printf("non-bonded base-back %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
 }
+*/
       }
 
       // base-base
@@ -522,7 +520,7 @@ else {
                           lj14_bsbs[_3ptype][atype][btype][_5ptype],lj24_bsbs[_3ptype][atype][btype][_5ptype],
                           epsilon_bsbs[atype][btype],b4_bsbs[_3ptype][atype][btype][_5ptype],fpair);
         }
-printf("1 bonded base-base %d %d %le  %le %le\n", atom->tag[a],atom->tag[b], evdwl, sqrt(pow(rb_cbs[0],2)+pow(rb_cbs[1],2)+pow(rb_cbs[2],2)), sqrt(pow(rb_cbs[0],2)+pow(rb_cbs[1],2)+pow(rb_cbs[2],2)));
+//printf("1 bonded base-base %d %d %le  %le %le\n", atom->tag[a],atom->tag[b], evdwl, sqrt(pow(rb_cbs[0],2)+pow(rb_cbs[1],2)+pow(rb_cbs[2],2)), sqrt(pow(rb_cbs[0],2)+pow(rb_cbs[1],2)+pow(rb_cbs[2],2)));
       }
       // bond-topology: a-b nearest-neighbors on same strand, arguments depends on tetramer
       else if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
@@ -543,14 +541,14 @@ printf("1 bonded base-base %d %d %le  %le %le\n", atom->tag[a],atom->tag[b], evd
                           lj14_bsbs[_3ptype][btype][atype][_5ptype],lj24_bsbs[_3ptype][btype][atype][_5ptype],
                           epsilon_bsbs[btype][atype],b4_bsbs[_3ptype][btype][atype][_5ptype],fpair);
         }
-printf("2 bonded base-base %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
+//printf("2 bonded base-base %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
       }
       else {
         if (rsq_bsbs < cutsq_bsbs_c[atype][btype]) {
           evdwl = F3(rsq_bsbs,cutsq_bsbs_ast[atype][btype],cut_bsbs_c[atype][btype],lj1_bsbs[atype][btype],
                           lj2_bsbs[atype][btype],epsilon_bsbs[atype][btype],b_bsbs[atype][btype],fpair);
         }
-printf("non-bonded base-base %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
+//printf("non-bonded base-base %d %d %le\n", atom->tag[a],atom->tag[b], evdwl);
 
       }
 
