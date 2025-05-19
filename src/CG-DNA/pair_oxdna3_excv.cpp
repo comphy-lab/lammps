@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna3_excv.h"
+#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "atom_vec_ellipsoid.h"
@@ -49,7 +50,7 @@ void PairOxdna3Excv::compute_base_site<0>(double e1[3], double /*e2*/[3],
   rbs[0] = dx_cbs_pyr_oxdna3*e1[0];
   rbs[1] = dx_cbs_pyr_oxdna3*e1[1];
   rbs[2] = dx_cbs_pyr_oxdna3*e1[2];
-
+printf("dx_cbs_pyr_oxdna3\n");
 }
 
 template <>
@@ -61,6 +62,7 @@ void PairOxdna3Excv::compute_base_site<1>(double e1[3], double /*e2*/[3],
   rbs[0] = dx_cbs_pur_oxdna3*e1[0];
   rbs[1] = dx_cbs_pur_oxdna3*e1[1];
   rbs[2] = dx_cbs_pur_oxdna3*e1[2];
+printf("dx_cbs_pur_oxdna3\n");
 
 }
 template <>
@@ -72,6 +74,7 @@ void PairOxdna3Excv::compute_base_site<2>(double e1[3], double /*e2*/[3],
   rbs[0] = dx_cbs_pyr_oxdna3*e1[0];
   rbs[1] = dx_cbs_pyr_oxdna3*e1[1];
   rbs[2] = dx_cbs_pyr_oxdna3*e1[2];
+printf("dx_cbs_pyr_oxdna3\n");
 
 }
 template <>
@@ -83,6 +86,7 @@ void PairOxdna3Excv::compute_base_site<3>(double e1[3], double /*e2*/[3],
   rbs[0] = dx_cbs_pur_oxdna3*e1[0];
   rbs[1] = dx_cbs_pur_oxdna3*e1[1];
   rbs[2] = dx_cbs_pur_oxdna3*e1[2];
+printf("dx_cbs_pur_oxdna3\n");
 
 }
 

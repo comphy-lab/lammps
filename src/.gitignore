@@ -1424,6 +1424,7 @@
 /pair_oxrna2_*.cpp
 /pair_oxrna2_*.h
 /mf_oxdna.h
+/nucleotide_oxdna.h
 /pair_pedone.cpp
 /pair_pedone.h
 /pair_peri.cpp

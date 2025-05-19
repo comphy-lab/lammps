@@ -16,6 +16,7 @@
 
 #include "bond_oxdna2_fene.h"
 #include "constants_oxdna.h"
+#include "nucleotide_oxdna.h"
 
 using namespace LAMMPS_NS;
 
@@ -27,6 +28,10 @@ void BondOxdna2Fene::compute_backbone_site(double e1[3], double e2[3],
 {
   double dx_cbk_oxdna2 = ConstantsOxdna::get_dx_cbk_oxdna2();
   double dy_cbk_oxdna2 = ConstantsOxdna::get_dy_cbk_oxdna2();
+
+  NucleotideOxdna2 n2;
+
+  n2.backbone_site();
 
   r[0] = dx_cbk_oxdna2 * e1[0] + dy_cbk_oxdna2 * e2[0];
   r[1] = dx_cbk_oxdna2 * e1[1] + dy_cbk_oxdna2 * e2[1];

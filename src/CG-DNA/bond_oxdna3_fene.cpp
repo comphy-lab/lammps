@@ -16,6 +16,7 @@
 
 #include "bond_oxdna3_fene.h"
 #include "constants_oxdna.h"
+#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
