@@ -27,8 +27,7 @@ namespace LAMMPS_NS {
 class PairOxdna3Excv : public PairOxdna2Excv {
  public:
   PairOxdna3Excv(class LAMMPS *lmp) : PairOxdna2Excv(lmp) {}
-  template <int N>
-  void compute_base_site(double *, double *, double *, double *) const;
+  void compute_base_site(int, double *, double *, double *, double *) const override;
   void coeff(int, char **) override;
 };
 

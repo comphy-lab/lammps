@@ -41,53 +41,25 @@ using namespace MFOxdna;
    compute vector COM-hydrogen bonding interaction site in oxDNA3
    A=1, C=2, G=3, T=0
 ----------------------------------------------------------------- */
-template <>
-void PairOxdna3Excv::compute_base_site<0>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rbs[3]) const
+void PairOxdna3Excv::compute_base_site(int type, double e1[3],
+  double /*e2*/[3], double /*e3*/[3], double rbs[3]) const
 {
-  double dx_cbs_pyr_oxdna3 = ConstantsOxdna::get_dx_cbs_pyr_oxdna3();
 
-  rbs[0] = dx_cbs_pyr_oxdna3*e1[0];
-  rbs[1] = dx_cbs_pyr_oxdna3*e1[1];
-  rbs[2] = dx_cbs_pyr_oxdna3*e1[2];
-printf("dx_cbs_pyr_oxdna3\n");
-}
-
-template <>
-void PairOxdna3Excv::compute_base_site<1>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rbs[3]) const
-{
-  double dx_cbs_pur_oxdna3 = ConstantsOxdna::get_dx_cbs_pur_oxdna3();
-
-  rbs[0] = dx_cbs_pur_oxdna3*e1[0];
-  rbs[1] = dx_cbs_pur_oxdna3*e1[1];
-  rbs[2] = dx_cbs_pur_oxdna3*e1[2];
-printf("dx_cbs_pur_oxdna3\n");
-
-}
-template <>
-void PairOxdna3Excv::compute_base_site<2>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rbs[3]) const
-{
-  double dx_cbs_pyr_oxdna3 = ConstantsOxdna::get_dx_cbs_pyr_oxdna3();
-
-  rbs[0] = dx_cbs_pyr_oxdna3*e1[0];
-  rbs[1] = dx_cbs_pyr_oxdna3*e1[1];
-  rbs[2] = dx_cbs_pyr_oxdna3*e1[2];
-printf("dx_cbs_pyr_oxdna3\n");
-
-}
-template <>
-void PairOxdna3Excv::compute_base_site<3>(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rbs[3]) const
-{
-  double dx_cbs_pur_oxdna3 = ConstantsOxdna::get_dx_cbs_pur_oxdna3();
-
-  rbs[0] = dx_cbs_pur_oxdna3*e1[0];
-  rbs[1] = dx_cbs_pur_oxdna3*e1[1];
-  rbs[2] = dx_cbs_pur_oxdna3*e1[2];
-printf("dx_cbs_pur_oxdna3\n");
-
+  NucleotideOxdna3 oxdna3;
+  switch (type) {
+    case 0:
+      oxdna3.base_site<0>(e1, NULL, NULL, rbs);
+      break;
+    case 1:
+      oxdna3.base_site<1>(e1, NULL, NULL, rbs);
+      break;
+    case 2:
+      oxdna3.base_site<2>(e1, NULL, NULL, rbs);
+      break;
+    case 3:
+      oxdna3.base_site<3>(e1, NULL, NULL, rbs);
+      break;
+  }
 }
 
 /* ----------------------------------------------------------------------
