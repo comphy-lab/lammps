@@ -184,8 +184,8 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
   MPI_Bcast(&sigma_bsbs_one, 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&cut_bsbs_ast_one, 1, MPI_DOUBLE, 0, world);
 
-  MPI_Bcast(&sigma4_bsbs, 625, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&cut4_bsbs_ast, 625, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&sigma4_bsbs[0][0][0][0], 625, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&cut4_bsbs_ast[0][0][0][0], 625, MPI_DOUBLE, 0, world);
 
   // backbone-backbone
   count = 0;
