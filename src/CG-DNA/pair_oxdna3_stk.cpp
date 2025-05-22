@@ -44,7 +44,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 {
   int count;
 
-  if (narg != 7) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/stk, use potential file" + utils::errorurl(21));
+  if (narg != 4) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/stk, use potential file" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi,nlo,nhi,jmod4,kmod4;
@@ -74,18 +74,22 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   double a_st1_one, cosphi_st1_ast_one, b_st1_one, cosphi_st1_c_one;
   double a_st2_one, cosphi_st2_ast_one, b_st2_one, cosphi_st2_c_one;
 
+  seqdepflag = 1; // default sequence-dependent stacking strength in oxDNA3
+
+/*
   if (strcmp(arg[2], "seqav") != 0 && strcmp(arg[2], "seqdep") != 0) {
     error->all(FLERR,"Incorrect setting, select seqav or seqdep in oxdna/stk");
   }
   if (strcmp(arg[2],"seqav")  == 0) seqdepflag = 0;
   if (strcmp(arg[2],"seqdep") == 0) seqdepflag = 1;
+*/
 
-  T = utils::numeric(FLERR,arg[3],false,lmp);
-  xi_st_one = utils::numeric(FLERR,arg[4],false,lmp);
-  kappa_st_one = utils::numeric(FLERR,arg[5],false,lmp);
+  T = utils::numeric(FLERR,arg[2],false,lmp);
+//  xi_st_one = utils::numeric(FLERR,arg[4],false,lmp);
+//  kappa_st_one = utils::numeric(FLERR,arg[5],false,lmp);
 
   if (comm->me == 0) {
-    PotentialFileReader reader(lmp, arg[6], "oxdna potential", " (stk)");
+    PotentialFileReader reader(lmp, arg[3], "oxdna potential", " (stk)");
     reader.set_bufsize(65336);
     char * line;
     std::string iloc, jloc, potential_name;
@@ -98,7 +102,10 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
         potential_name = values.next_string();
         if (iloc == arg[0] && jloc == arg[1] && potential_name == "stk") {
 
+          xi_st_one = values.next_double(); 
+          kappa_st_one = values.next_double();
           a_st_one = values.next_double();
+
           cut_st_0_one = values.next_double();
           cut_st_c_one = values.next_double();
           cut_st_lo_one = values.next_double();
@@ -107,6 +114,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
           a_st4_one = values.next_double();
           theta_st4_0_one = values.next_double();
           dtheta_st4_ast_one = values.next_double();
+
           a_st5_one = values.next_double();
           theta_st5_0_one = values.next_double();
           dtheta_st5_ast_one = values.next_double();

@@ -648,7 +648,7 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
             break;
           } else continue;
         } catch (std::exception &e) {
-          error->one(FLERR, "Problem parsing oxDNA potential file: {}", e.what());
+          error->one(FLERR, "Problem parsing oxdna potential file: {}", e.what());
         }
       }
       if ((iloc != arg[0]) || (jloc != arg[1]) || (potential_name != "excv"))
@@ -810,10 +810,10 @@ double PairOxdnaExcv::init_one(int i, int j)
 {
 
   if (setflag[i][j] == 0) {
-    error->all(FLERR,"Coefficient mixing not defined in oxDNA");
+    error->all(FLERR,"Coefficient mixing not defined in oxdna");
   }
   if (offset_flag) {
-    error->all(FLERR,"Offset not supported in oxDNA");
+    error->all(FLERR,"Offset not supported in oxdna");
   }
 
   // set the master list distance cutoff
