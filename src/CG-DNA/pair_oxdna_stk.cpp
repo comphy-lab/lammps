@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna_stk.h"
+#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
@@ -210,6 +211,26 @@ void PairOxdnaStk::ev_tally_xyz(int i, int j, int nlocal, int newton_bond,
 }
 
 /* ----------------------------------------------------------------------
+    compute vector COM-backbone interaction site in oxDNA
+------------------------------------------------------------------------- */
+void PairOxdnaStk::compute_backbone_site(double e1[3], double /*e2*/[3],
+    double /*e3*/[3], double rbk[3]) const
+{
+  NucleotideOxdna1 oxdna1;
+  oxdna1.backbone_site(e1, NULL, NULL, rbk);
+}
+
+/* ----------------------------------------------------------------------
+    compute vector COM-stacking interaction site in oxDNA
+------------------------------------------------------------------------- */
+void PairOxdnaStk::compute_stacking_site(double e1[3], double /*e2*/[3],
+    double /*e3*/[3], double rstk[3]) const
+{
+  NucleotideOxdna1 oxdna1;
+  oxdna1.stacking_site(e1, NULL, NULL, rstk);
+}
+
+/* ----------------------------------------------------------------------
    compute function for oxDNA pair interactions
    s=sugar-phosphate backbone site, b=base site, st=stacking site
 ------------------------------------------------------------------------- */
@@ -225,9 +246,6 @@ void PairOxdnaStk::compute(int eflag, int vflag)
   double theta6p,t6pdir[3],cost6p;
   double cosphi1,cosphi2,cosphi1dir[3],cosphi2dir[3];
 
-  // distances COM-backbone site, COM-stacking site
-  double dx_cbk_oxdna1 = ConstantsOxdna::get_dx_cbk_oxdna1();
-  double dx_cstk_oxdna1 = ConstantsOxdna::get_dx_cstk_oxdna1();
   // vectors COM-backbone site, COM-stacking site in lab frame
   double ra_cbk[3],ra_cstk[3];
   double rb_cbk[3],rb_cstk[3];
@@ -290,14 +308,10 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     // (a/b)y/z not needed here as oxDNA(1) co-linear
 
     // vector COM a - stacking site a
-    ra_cstk[0] = dx_cstk_oxdna1*ax[0];
-    ra_cstk[1] = dx_cstk_oxdna1*ax[1];
-    ra_cstk[2] = dx_cstk_oxdna1*ax[2];
+    compute_stacking_site(ax,ay,az,ra_cstk);
 
     // vector COM b - stacking site b
-    rb_cstk[0] = dx_cstk_oxdna1*bx[0];
-    rb_cstk[1] = dx_cstk_oxdna1*bx[1];
-    rb_cstk[2] = dx_cstk_oxdna1*bx[2];
+    compute_stacking_site(bx,by,bz,rb_cstk);
 
     // vector stacking site a to b
     delr_stkstk[0] = x[b][0] + rb_cstk[0] - x[a][0] - ra_cstk[0];
@@ -329,14 +343,10 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     delr_stkstk_norm[2] = delr_stkstk[2] * rinv_stkstk;
 
     // vector COM a - backbone site a
-    ra_cbk[0] = dx_cbk_oxdna1*ax[0];
-    ra_cbk[1] = dx_cbk_oxdna1*ax[1];
-    ra_cbk[2] = dx_cbk_oxdna1*ax[2];
+    compute_backbone_site(ax,ay,az,ra_cbk);
 
     // vector COM b - backbone site b
-    rb_cbk[0] = dx_cbk_oxdna1*bx[0];
-    rb_cbk[1] = dx_cbk_oxdna1*bx[1];
-    rb_cbk[2] = dx_cbk_oxdna1*bx[2];
+    compute_backbone_site(bx,by,bz,rb_cbk);
 
     // vector backbone site b to a
     delr_bkbk[0] = (x[b][0] + rb_cbk[0] - x[a][0] - ra_cbk[0]);
@@ -356,7 +366,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
         cut_st_lo[a3ptype][atype][btype][b5ptype], cut_st_hi[a3ptype][atype][btype][b5ptype],
         b_st_lo[a3ptype][atype][btype][b5ptype], b_st_hi[a3ptype][atype][btype][b5ptype],
         shift_st[a3ptype][atype][btype][b5ptype]);
-
+//printf("%d %d  %le  %le %le %le %le %le %le %le %le %le %le  %le\n", atom->tag[a], atom->tag[b], r_stkstk, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype], cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype], cut_st_lo[a3ptype][atype][btype][b5ptype], cut_st_hi[a3ptype][atype][btype][b5ptype], b_st_lo[a3ptype][atype][btype][b5ptype], b_st_hi[a3ptype][atype][btype][b5ptype], shift_st[a3ptype][atype][btype][b5ptype], f1);
     // early rejection criterium
     if (f1) {
 
@@ -388,6 +398,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
 
     f4t5 = F4(theta5p, a_st5[atype][btype], theta_st5_0[atype][btype], dtheta_st5_ast[atype][btype],
         b_st5[atype][btype], dtheta_st5_c[atype][btype]);
+//printf("%d %d  %le %le %le %le %le\n", atom->tag[a], atom->tag[b], a_st5[atype][btype], theta_st5_0[atype][btype], dtheta_st5_ast[atype][btype], b_st5[atype][btype], dtheta_st5_c[atype][btype]);
 
     // early rejection criterium
     if (f4t5) {
@@ -414,6 +425,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
 
     f4t6 = F4(theta6p, a_st6[atype][btype], theta_st6_0[atype][btype], dtheta_st6_ast[atype][btype],
         b_st6[atype][btype], dtheta_st6_c[atype][btype]);
+//printf("%d %d  %le %le %le %le %le\n", atom->tag[a], atom->tag[b], a_st6[atype][btype], theta_st6_0[atype][btype], dtheta_st6_ast[atype][btype], b_st6[atype][btype], dtheta_st6_c[atype][btype]);
 
     f5c1 = F5(-cosphi1, a_st1[atype][btype], -cosphi_st1_ast[atype][btype], b_st1[atype][btype],
         -cosphi_st1_c[atype][btype]);
@@ -422,7 +434,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
         -cosphi_st2_c[atype][btype]);
 
     evdwl = f1 * f4t4 * f4t5 * f4t6 * f5c1 * f5c2;
-
+//printf("%d %d   %le %le %le %le %le %le\n", atom->tag[a], atom->tag[b], f1 , f4t4 , f4t5 , f4t6 , f5c1 , f5c2);
     // early rejection criterium
     if (evdwl) {
 

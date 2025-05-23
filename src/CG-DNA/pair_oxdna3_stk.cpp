@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna3_stk.h"
+#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
@@ -35,6 +36,16 @@
 
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
+
+/* ----------------------------------------------------------------------
+    compute vector COM-stacking interaction site in oxDNA3
+------------------------------------------------------------------------- */
+void PairOxdna3Stk::compute_stacking_site(double e1[3], double /*e2*/[3],
+    double /*e3*/[3], double rstk[3]) const
+{
+  NucleotideOxdna3 oxdna3;
+  oxdna3.stacking_site(e1, NULL, NULL, rstk);
+}
 
 /* ----------------------------------------------------------------------
    set coeffs for one or more type pairs
@@ -311,9 +322,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
         for (int l = 0; l <= nhi; l++) {
 
           cutsq_st_hc[i][j][k][l] = cut_st_hc[i][j][k][l]*cut_st_hc[i][j][k][l];
-          if (seqdepflag) {
-            shift_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
-          }
+
           b_st_lo[i][j][k][l] = 2*a_st_one*exp(-a_st_one*(cut_st_lo[i][j][k][l]-cut_st_0[i][j][k][l]))*
                 2*a_st_one*exp(-a_st_one*(cut_st_lo[i][j][k][l]-cut_st_0[i][j][k][l]))*
                 (1-exp(-a_st_one*(cut_st_lo[i][j][k][l]-cut_st_0[i][j][k][l])))*
@@ -342,6 +351,9 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
           tmp = 1 - exp(-(cut_st_c[i][j][k][l]-cut_st_0[i][j][k][l]) * a_st_one);
           shift_st[i][j][k][l] = epsilon_st_one * tmp * tmp;
+          if (seqdepflag) {
+            shift_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
+          }
 
           b_st4[i][j][k][l] = a_st4[i][j][k][l]*a_st4[i][j][k][l]*dtheta_st4_ast[i][j][k][l]*
                 dtheta_st4_ast[i][j][k][l]/(1-a_st4[i][j][k][l]*dtheta_st4_ast[i][j][k][l]*dtheta_st4_ast[i][j][k][l]);
