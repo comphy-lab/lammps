@@ -155,8 +155,6 @@ class PPPM_RK : public PPPM {
   virtual void waitReceiptGridPotentialsEV(int eflag, int vflag){
       if(eflag) MPI_Wait(&mpi_requests_energy,MPI_STATUS_IGNORE);
       if(vflag) MPI_Wait(&mpi_requests_virial,MPI_STATUS_IGNORE);
-      energy = energy_buf;
-      memcpy(virial, virial_mpi_buf, 6*sizeof(double));
   
       int buf_len = 0;
       double *xsrc, *ysrc, *zsrc, *usrc;
@@ -172,8 +170,7 @@ class PPPM_RK : public PPPM {
       }
 
       //Update from buffers
-      if(eflag) energy = energy_buf;
-      if(vflag) memcpy(virial,virial_mpi_buf, 6*sizeof(double));
+      //energy and virial are updated in PPPM_RK::compute_interpolate_forces(int eflag, int vflag)
       if(u_brick != nullptr){
   	  for (int k = nzlo_in; k <= nzhi_in; k++)
     	  for (int j = nylo_in; j <= nyhi_in; j++)
@@ -189,12 +186,12 @@ class PPPM_RK : public PPPM {
       }
   }
   void post_sending_scatter_grid_potentials_ev(int eflag, int vflag){
+	//energy_buf and virial_mpi_buf are filled at the end of 
+		//PPPM_RK::compute_grid_potentials(int eflag, int vflag)
   	if (eflag){ 
-	    energy_buf = energy/(block_size-1);
 	    MPI_Ibcast(&energy_buf,1,MPI_DOUBLE,0,block_energy,&mpi_requests_energy);
   	}
   	if (vflag){ 
-	    for(int ii=0; ii<6; ii++) virial_mpi_buf[ii] = virial[ii]/(block_size-1);
 	    MPI_Ibcast(virial_mpi_buf,6,MPI_DOUBLE,0,block_virial,&mpi_requests_virial);
   	}
 	int buf_len = 0;

@@ -477,6 +477,8 @@ void PPPM_RK::compute_grid_potentials(int eflag, int vflag)
 
   poisson();
 
+  if (eflag_global) MPI_Allreduce(&energy,&energy_buf,1,MPI_DOUBLE,MPI_SUM,world);
+  if (vflag_global) MPI_Allreduce(virial,virial_mpi_buf,6,MPI_DOUBLE,MPI_SUM,world);
 }
 
 /*Given updated grid potentials, finish computing the long-range forces
@@ -518,9 +520,7 @@ void PPPM_RK::compute_interpolate_forces(int eflag, int vflag)
   const double qscale = qqrd2e * scale;
 
   if (eflag_global) {
-    double energy_all;
-    MPI_Allreduce(&energy,&energy_all,1,MPI_DOUBLE,MPI_SUM,world);
-    energy = energy_all;
+    energy = energy_buf;
 
     energy *= 0.5*volume;
     energy -= g_ewald*qsqsum/MY_PIS +
@@ -531,9 +531,7 @@ void PPPM_RK::compute_interpolate_forces(int eflag, int vflag)
   // sum global virial across procs
 
   if (vflag_global) {
-    double virial_all[6];
-    MPI_Allreduce(virial,virial_all,6,MPI_DOUBLE,MPI_SUM,world);
-    for (i = 0; i < 6; i++) virial[i] = 0.5*qscale*volume*virial_all[i];
+    for (i = 0; i < 6; i++) virial[i] = 0.5*qscale*volume*virial_mpi_buf[i];
   }
 
   // per-atom energy/virial
