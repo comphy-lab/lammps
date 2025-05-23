@@ -114,23 +114,23 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
           sigma_bsbs_one = values.next_double();
           cut_bsbs_ast_one = values.next_double();
 
-          for (int n1 = nlo; n1 <= nhi; n1++) {
-            for (int n2 = nlo; n2 <= nhi; n2++) {
-              for (int n3 = nlo; n3 <= nhi; n3++) {
-                for (int n4 = nlo; n4 <= nhi; n4++) {
-                sigma4_bsbs[n1][n2][n3][n4] = values.next_double();
-                sigma4_bsbs[0][0][0][0] += sigma4_bsbs[n1][n2][n3][n4];
+          for (int i = nlo; i <= nhi; i++) {
+            for (int j = nlo; j <= nhi; j++) {
+              for (int k = nlo; k <= nhi; k++) {
+                for (int l = nlo; l <= nhi; l++) {
+                sigma4_bsbs[i][j][k][l] = values.next_double();
+                sigma4_bsbs[0][0][0][0] += sigma4_bsbs[i][j][k][l];
                 }
               }
             }
           }
 
-          for (int n1 = nlo; n1 <= nhi; n1++) {
-            for (int n2 = nlo; n2 <= nhi; n2++) {
-              for (int n3 = nlo; n3 <= nhi; n3++) {
-                for (int n4 = nlo; n4 <= nhi; n4++) {
-                cut4_bsbs_ast[n1][n2][n3][n4] = values.next_double();
-                cut4_bsbs_ast[0][0][0][0] += cut4_bsbs_ast[n1][n2][n3][n4];
+          for (int i = nlo; i <= nhi; i++) {
+            for (int j = nlo; j <= nhi; j++) {
+              for (int k = nlo; k <= nhi; k++) {
+                for (int l = nlo; l <= nhi; l++) {
+                cut4_bsbs_ast[i][j][k][l] = values.next_double();
+                cut4_bsbs_ast[0][0][0][0] += cut4_bsbs_ast[i][j][k][l];
                 }
               }
             }
@@ -147,25 +147,25 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
                  arg[2], arg[0], arg[1]);
 
 
-  // calculate sequence-averaged parameters 
-  sigma4_bsbs[0][0][0][0] /= pow(nhi,4);
-  cut4_bsbs_ast[0][0][0][0] /= pow(nhi,4);
+    // calculate sequence-averaged parameters 
+    sigma4_bsbs[0][0][0][0] /= pow(nhi,4);
+    cut4_bsbs_ast[0][0][0][0] /= pow(nhi,4);
 
-   // assign sequence-averaged parameters to terminal bases n2
-    for (int n2 = 1; n2 <= nhi; n2++) {
-      for (int n3 = 1; n3 <= nhi; n3++) {
-        for (int n4 = 0; n4 <= nhi; n4++) {
-          sigma4_bsbs[0][n2][n3][n4] = sigma4_bsbs[0][0][0][0];
-          cut4_bsbs_ast[0][n2][n3][n4] = cut4_bsbs_ast[0][0][0][0];
+    // assign sequence-averaged parameters to terminal bases j
+    for (int j = 1; j <= nhi; j++) {
+      for (int k = 1; k <= nhi; k++) {
+        for (int l = 0; l <= nhi; l++) {
+          sigma4_bsbs[0][j][k][l] = sigma4_bsbs[0][0][0][0];
+          cut4_bsbs_ast[0][j][k][l] = cut4_bsbs_ast[0][0][0][0];
         }
       }
     }
-    // assign sequence-averaged parameters to terminal bases n3
-    for (int n1 = 0; n1 <= nhi; n1++) {
-      for (int n2 = 1; n2 <= nhi; n2++) {
-        for (int n3 = 1; n3 <= nhi; n3++) {
-          sigma4_bsbs[n1][n2][n3][0] = sigma4_bsbs[0][0][0][0];
-          cut4_bsbs_ast[n1][n2][n3][0] = cut4_bsbs_ast[0][0][0][0];
+    // assign sequence-averaged parameters to terminal bases k
+    for (int i = 0; i <= nhi; i++) {
+      for (int j = 1; j <= nhi; j++) {
+        for (int k = 1; k <= nhi; k++) {
+          sigma4_bsbs[i][j][k][0] = sigma4_bsbs[0][0][0][0];
+          cut4_bsbs_ast[i][j][k][0] = cut4_bsbs_ast[0][0][0][0];
         }
       }
     }

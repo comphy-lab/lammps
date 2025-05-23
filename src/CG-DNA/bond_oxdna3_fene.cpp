@@ -54,22 +54,22 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
         potential_name = values.next_string();
         if (iloc == arg[0] && potential_name == "fene") {
           k[ilo] = values.next_double();
-          for (int n1 = 1; n1 <= n; n1++) {
-            for (int n2 = 1; n2 <= n; n2++) {
-              for (int n3 = 1; n3 <= n; n3++) {
-                for (int n4 = 1; n4 <= n; n4++) {
-                Delta[ilo][n1][n2][n3][n4] = values.next_double();
-                Delta[ilo][0][0][0][0] += Delta[ilo][n1][n2][n3][n4];
+          for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+              for (int k = 1; k <= n; k++) {
+                for (int l = 1; l <= n; l++) {
+                Delta[ilo][i][j][k][l] = values.next_double();
+                Delta[ilo][0][0][0][0] += Delta[ilo][i][j][k][l];
                 }
               }
             }
           }
-          for (int n1 = 1; n1 <= n; n1++) {
-            for (int n2 = 1; n2 <= n; n2++) {
-              for (int n3 = 1; n3 <= n; n3++) {
-                for (int n4 = 1; n4 <= n; n4++) {
-                  r0[ilo][n1][n2][n3][n4] = values.next_double();
-                  r0[ilo][0][0][0][0] += r0[ilo][n1][n2][n3][n4];
+          for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+              for (int k = 1; k <= n; k++) {
+                for (int l = 1; l <= n; l++) {
+                  r0[ilo][i][j][k][l] = values.next_double();
+                  r0[ilo][0][0][0][0] += r0[ilo][i][j][k][l];
                 }
               }
             }
@@ -88,21 +88,21 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
     Delta[ilo][0][0][0][0] /= pow(n,4); 
     r0[ilo][0][0][0][0] /= pow(n,4); 
 
-    // assign sequence-averaged parameters to terminal bases n2
-    for (int n2 = 1; n2 <= n; n2++) {
-      for (int n3 = 1; n3 <= n; n3++) {
-        for (int n4 = 0; n4 <= n; n4++) {
-          Delta[ilo][0][n2][n3][n4] = Delta[ilo][0][0][0][0]; 
-          r0[ilo][0][n2][n3][n4] = r0[ilo][0][0][0][0]; 
+    // assign sequence-averaged parameters to terminal bases j
+    for (int j = 1; j <= n; j++) {
+      for (int k = 1; k <= n; k++) {
+        for (int l = 0; l <= n; l++) {
+          Delta[ilo][0][j][k][l] = Delta[ilo][0][0][0][0]; 
+          r0[ilo][0][j][k][l] = r0[ilo][0][0][0][0]; 
         }
       }
     }
-    // assign sequence-averaged parameters to terminal bases n3
-    for (int n1 = 0; n1 <= n; n1++) {
-      for (int n2 = 1; n2 <= n; n2++) {
-        for (int n3 = 1; n3 <= n; n3++) {
-          Delta[ilo][n1][n2][n3][0] = Delta[ilo][0][0][0][0]; 
-          r0[ilo][n1][n2][n3][0] = r0[ilo][0][0][0][0]; 
+    // assign sequence-averaged parameters to terminal bases k
+    for (int i = 0; i <= n; i++) {
+      for (int j = 1; j <= n; j++) {
+        for (int k = 1; k <= n; k++) {
+          Delta[ilo][i][j][k][0] = Delta[ilo][0][0][0][0]; 
+          r0[ilo][i][j][k][0] = r0[ilo][0][0][0][0]; 
         }
       }
     }
@@ -116,19 +116,19 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
 
   // set parameters for all other bond types
   int count = 0;
-  for (int i = ilo; i <= ihi; i++) {
-    k[i] = k[ilo];
-    for (int n1 = 0; n1 <= n; n1++) {
-      for (int n2 = 0; n2 <= n; n2++) {
-        for (int n3 = 0; n3 <= n; n3++) {
-          for (int n4 = 0; n4 <= n; n4++) {
-            Delta[i][n1][n2][n3][n4] = Delta[ilo][n1][n2][n3][n4];
-            r0[i][n1][n2][n3][n4] = r0[ilo][n1][n2][n3][n4];
+  for (int ib = ilo; ib <= ihi; ib++) {
+    k[ib] = k[ilo];
+    for (int i = 0; i <= n; i++) {
+      for (int j = 0; j <= n; j++) {
+        for (int k = 0; k <= n; k++) {
+          for (int l = 0; l <= n; l++) {
+            Delta[ib][i][j][k][l] = Delta[ilo][i][j][k][l];
+            r0[ib][i][j][k][l] = r0[ilo][i][j][k][l];
           }
         }
       }
     }
-    setflag[i] = 1;
+    setflag[ib] = 1;
     count++;
   }
 
