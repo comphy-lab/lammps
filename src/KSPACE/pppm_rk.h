@@ -32,6 +32,7 @@ class PPPM_RK : public PPPM {
   void init() override;
 
   virtual void compute_grid_potentials(int, int) override;
+  //virtual void compute(int, int) override;
   virtual void r2k_comm(int &eflag, int &vflag) override;
   virtual void k2r_comm(int eflag, int vflag) override;
  protected:
@@ -43,6 +44,8 @@ class PPPM_RK : public PPPM {
 
   double energy_buf;
   double virial_mpi_buf[6];
+  int flags_buf[2];
+  double domain_boxbuf[6];
 
   int rproc;                            // 1 if an Rspace proc, 0 if Kspace
   int me_block;                          // proc ID within Rspace/Kspace block
@@ -64,6 +67,10 @@ class PPPM_RK : public PPPM {
   MPI_Request mpi_requests_grid_u;  
   MPI_Request mpi_requests_energy;  
   MPI_Request mpi_requests_virial;  
+  MPI_Request mpi_requests_flags;
+  MPI_Request mpi_requests_domain_box;
+  // Tags for communication within MPI_Comm block
+  enum MPI_Block_Tags {TAG_FLAGS=1,TAG_BOX,N_MPI_TAGS}; 
 
   MPI_Status mpi_status_density;  //Statuses for asynchronous communications
   MPI_Status mpi_status_grid_x;  

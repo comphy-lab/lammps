@@ -308,86 +308,83 @@ void PPPM_RK::deallocateBuf(){
 void PPPM_RK::r2k_comm(int &eflag, int &vflag)
 {
   if (rproc){
-      compute_charge_densities(eflag,vflag);
-      //Post sending of density brick gathering
-      for (int k = nzlo_in; k <= nzhi_in; k++)
-      for (int j = nylo_in; j <= nyhi_in; j++)
-	memcpy( &density_brick_buf[k][j][nxlo_in] , &density_brick[k][j][nxlo_in], (nxhi_in-nxlo_in+1)*sizeof(FFT_SCALAR));
+    compute_charge_densities(eflag,vflag);
+    //Post sending of density brick gathering
+    for (int k = nzlo_in; k <= nzhi_in; k++)
+    for (int j = nylo_in; j <= nyhi_in; j++)
+      memcpy( &density_brick_buf[k][j][nxlo_in] , &density_brick[k][j][nxlo_in], (nxhi_in-nxlo_in+1)*sizeof(FFT_SCALAR));
 
-      MPI_Igatherv(&density_brick_buf[nzlo_in][nylo_in][nxlo_in],nfft_brick,MPI_DOUBLE,
-		NULL,NULL,NULL, MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
+    MPI_Igatherv(&density_brick_buf[nzlo_in][nylo_in][nxlo_in],nfft_brick,MPI_DOUBLE,
+      NULL,NULL,NULL, MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
 
-      //post_recving_scatter_grid_potentials_ev(eflag, vflag);
-      if (eflag) MPI_Ibcast(&energy_buf,1,MPI_DOUBLE,0,block_energy,&mpi_requests_energy);
-      if (vflag) MPI_Ibcast(virial_mpi_buf,6,MPI_DOUBLE,0,block_virial,&mpi_requests_virial);
-      int buf_len = 0;
-      double *xsrc, *ysrc, *zsrc, *usrc;
-      getVDXYZBrickBuf(xsrc, ysrc, zsrc, buf_len);
-      if(buf_len>0){ 
-    	MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-       		xsrc,buf_len,MPI_DOUBLE,0,block_kforce_x,&mpi_requests_grid_x);
-    	MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-       		ysrc,buf_len,MPI_DOUBLE,0,block_kforce_y,&mpi_requests_grid_y);
-    	MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-       		zsrc,buf_len,MPI_DOUBLE,0,block_kforce_z,&mpi_requests_grid_z);
+    // Rspace sends eflag,vflag (and possibly domain box_change) to Kspace
+    if (me_block == 1) {
+      flags_buf[0] = eflag; flags_buf[1] = vflag;
+      MPI_Isend(flags_buf,2,MPI_INT,0,TAG_FLAGS,block,&mpi_requests_flags);
+      // send box bounds from Rspace to Kspace if simulation box is dynamic
+      if (domain->box_change) {
+	memcpy(domain_boxbuf,domain->boxlo,3*sizeof(double));
+	memcpy(domain_boxbuf+3,domain->boxhi,3*sizeof(double));
+      	MPI_Isend(domain_boxbuf,6,MPI_DOUBLE,0,TAG_BOX,block,&mpi_requests_domain_box);
       }
-      getUBrickBuf(usrc, buf_len);
-      if(buf_len>0){ 
+    } 
+
+    //Posting R-process recv communications
+    if (eflag) MPI_Ibcast(&energy_buf,1,MPI_DOUBLE,0,block_energy,&mpi_requests_energy);
+    if (vflag) MPI_Ibcast(virial_mpi_buf,6,MPI_DOUBLE,0,block_virial,&mpi_requests_virial);
+    int buf_len = 0;
+    double *xsrc, *ysrc, *zsrc, *usrc;
+    getVDXYZBrickBuf(xsrc, ysrc, zsrc, buf_len);
+    if(buf_len>0){ 
+      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
+       		xsrc,buf_len,MPI_DOUBLE,0,block_kforce_x,&mpi_requests_grid_x);
+      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
+       		ysrc,buf_len,MPI_DOUBLE,0,block_kforce_y,&mpi_requests_grid_y);
+      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
+       		zsrc,buf_len,MPI_DOUBLE,0,block_kforce_z,&mpi_requests_grid_z);
+    }
+    getUBrickBuf(usrc, buf_len);
+    if(buf_len>0){ 
     	MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
        		usrc,buf_len,MPI_DOUBLE,0,block_kforce_u,&mpi_requests_grid_u);
-      }
-  }
-
-  // send eflag,vflag from Rspace to Kspace
-
-  if (me_block == 1) {
-    int flags[2];
-    flags[0] = eflag; flags[1] = vflag;
-    MPI_Send(flags,2,MPI_INT,0,0,block);
-  } else if (!rproc) {
-    int flags[2];
-    MPI_Recv(flags,2,MPI_INT,1,0,block,MPI_STATUS_IGNORE);
-    eflag = flags[0]; vflag = flags[1];
-  }
-
-  // send box bounds from Rspace to Kspace if simulation box is dynamic
-
-  if (domain->box_change) {
-    if (me_block == 1) {
-      MPI_Send(domain->boxlo,3,MPI_DOUBLE,0,0,block);
-      MPI_Send(domain->boxhi,3,MPI_DOUBLE,0,0,block);
-    } else if (!rproc) {
-      MPI_Recv(domain->boxlo,3,MPI_DOUBLE,1,0,block,MPI_STATUS_IGNORE);
-      MPI_Recv(domain->boxhi,3,MPI_DOUBLE,1,0,block,MPI_STATUS_IGNORE);
+    }
+  } //rproc
+  else{ //kproc
+    // Kspace receives eflag,vflag from Rspace
+    MPI_Recv(flags_buf,2,MPI_INT,1,TAG_FLAGS,block,MPI_STATUS_IGNORE);
+    eflag = flags_buf[0]; vflag = flags_buf[1];
+    // send box bounds from Rspace to Kspace if simulation box is dynamic
+    if (domain->box_change) {
+      MPI_Recv(domain_boxbuf,6,MPI_DOUBLE,1,TAG_BOX,block,MPI_STATUS_IGNORE);
+      memcpy(domain->boxlo,domain_boxbuf  ,3*sizeof(double));
+      memcpy(domain->boxhi,domain_boxbuf+3,3*sizeof(double));
       domain->set_global_box();
       domain->set_local_box();
       force->kspace->setup();
     }
-  }
+    //K-processes to receive brick charge densities
+    MPI_Igatherv(NULL,0,MPI_DOUBLE,&density_brick_buf[nzlo_in][nylo_in][nxlo_in],
+	density_sizes,density_disps, MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
+    MPI_Wait(&mpi_requests_density,MPI_STATUS_IGNORE);
 
-  //K-processes to receive brick charge densities
-  if (!rproc) {
-        MPI_Igatherv(NULL,0,MPI_DOUBLE,&density_brick_buf[nzlo_in][nylo_in][nxlo_in],
-		density_sizes,density_disps, MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
-	MPI_Wait(&mpi_requests_density,MPI_STATUS_IGNORE);
+    FFT_SCALAR *buf_loc = &density_brick_buf[nzlo_in][nylo_in][nxlo_in];
+    int idx = 0;
+    int zlo, zhi, ylo, yhi, xlo, xhi;
+    for(int k = 1; k<block_size; k++){
+	zlo = partitionInfoK[k][1];
+	zhi = partitionInfoK[k][2];
+	ylo = partitionInfoK[k][3];
+	yhi = partitionInfoK[k][4];
+	xlo = partitionInfoK[k][5];
+	xhi = partitionInfoK[k][6];
+	for(int zz=zlo; zz<=zhi; zz++)
+	for(int yy=ylo; yy<=yhi; yy++)
+	for(int xx=xlo; xx<=xhi; xx++)
+          density_brick[zz][yy][xx] = buf_loc[idx++];
+    }
 
- 	FFT_SCALAR *buf_loc = &density_brick_buf[nzlo_in][nylo_in][nxlo_in];
- 	int idx = 0;
-	int zlo, zhi, ylo, yhi, xlo, xhi;
-	for(int k = 1; k<block_size; k++){
-	
-		zlo = partitionInfoK[k][1];
-		zhi = partitionInfoK[k][2];
-		ylo = partitionInfoK[k][3];
-		yhi = partitionInfoK[k][4];
-		xlo = partitionInfoK[k][5];
-		xhi = partitionInfoK[k][6];
-		for(int zz=zlo; zz<=zhi; zz++)
-		for(int yy=ylo; yy<=yhi; yy++)
-		for(int xx=xlo; xx<=xhi; xx++)
-			density_brick[zz][yy][xx] = buf_loc[idx++];
-	}
-  }
+  }//else kproc
+
 }
 
 /* ----------------------------------------------------------------------
@@ -395,8 +392,15 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
 ------------------------------------------------------------------------- */
 void PPPM_RK::k2r_comm(int eflag, int vflag)
 {
-  //R-side waits on its send of charge densities
-  if (rproc) MPI_Wait(&mpi_requests_density,MPI_STATUS_IGNORE);
+  //R-side waits on its send of flags, domain_box, and charge densities
+  if (rproc) {
+    if (me_block==1){
+      MPI_Wait(&mpi_requests_flags,MPI_STATUS_IGNORE);
+      if (domain->box_change) 
+        MPI_Wait(&mpi_requests_domain_box,MPI_STATUS_IGNORE);
+    }
+    MPI_Wait(&mpi_requests_density,MPI_STATUS_IGNORE);
+  }
   if (!rproc) {
     //K-side communicates grid values to R-side
     post_sending_scatter_grid_potentials_ev(eflag, vflag);
@@ -405,6 +409,7 @@ void PPPM_RK::k2r_comm(int eflag, int vflag)
   else{ 
     //R-processes wait for the grid potentials
     waitReceiptGridPotentialsEV(eflag, vflag);
+    //R-processes interpolate long-range forces from grid potentials
     compute_interpolate_forces(eflag, vflag);
   }
 }
@@ -457,6 +462,14 @@ void PPPM_RK::compute_charge_densities(int eflag, int vflag)
 
 }
 
+#if 0
+void PPPM_RK::compute(int eflag, int vflag)
+{
+  r2k_comm(eflag,vflag);
+  if(!rproc) compute_grid_potentials(eflag, vflag);
+  k2r_comm(eflag,vflag);
+}
+#endif
 //Computes only the grid potentials from K-space processes
 void PPPM_RK::compute_grid_potentials(int eflag, int vflag)
 {
