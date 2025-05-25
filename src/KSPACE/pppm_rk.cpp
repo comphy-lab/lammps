@@ -392,25 +392,26 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
 ------------------------------------------------------------------------- */
 void PPPM_RK::k2r_comm(int eflag, int vflag)
 {
-  //R-side waits on its send of flags, domain_box, and charge densities
   if (rproc) {
+    //R-side waits on its send of flags, domain_box, and charge densities
     if (me_block==1){
       MPI_Wait(&mpi_requests_flags,MPI_STATUS_IGNORE);
       if (domain->box_change) 
         MPI_Wait(&mpi_requests_domain_box,MPI_STATUS_IGNORE);
     }
     MPI_Wait(&mpi_requests_density,MPI_STATUS_IGNORE);
+    /***Done waiting on the R-process sends***/
+
+    /***R-process wait on the receives***/
+    //R-processes wait to receive the grid potentials
+    waitReceiptGridPotentialsEV(eflag, vflag);
+    //R-processes interpolate long-range forces from grid potentials
+    compute_interpolate_forces(eflag, vflag);
   }
   if (!rproc) {
     //K-side communicates grid values to R-side
     post_sending_scatter_grid_potentials_ev(eflag, vflag);
     wait_sending_scatter_grid_potentials_ev(eflag, vflag);
-  }
-  else{ 
-    //R-processes wait for the grid potentials
-    waitReceiptGridPotentialsEV(eflag, vflag);
-    //R-processes interpolate long-range forces from grid potentials
-    compute_interpolate_forces(eflag, vflag);
   }
 }
 

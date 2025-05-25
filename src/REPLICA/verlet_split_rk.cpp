@@ -90,6 +90,7 @@ void VerletSplitRK::init()
 ------------------------------------------------------------------------- */
 
 void VerletSplitRK::setup(int flag)
+#if 0
 {
   if (comm->me == 0 && screen)
     fprintf(screen,"Setting up Verlet/split/rk run ...\n");
@@ -98,6 +99,93 @@ void VerletSplitRK::setup(int flag)
   if (!rproc) force->kspace->setup();
   else Verlet::setup(flag);
 }
+#else
+{
+  if (comm->me == 0 && screen) {
+    fputs("Setting up Verlet/split/rk run ...\n",screen);
+    if (flag) {
+      utils::print(screen,"  Unit style    : {}\n"
+                        "  Current step  : {}\n"
+                        "  Time step     : {}\n",
+                 update->unit_style,update->ntimestep,update->dt);
+      timer->print_timeout(screen);
+    }
+  }
+
+  if (lmp->kokkos)
+    error->all(FLERR,"KOKKOS package requires run_style verlet/kk");
+
+  rproc = (universe->iworld == 0) ? 1 : 0;
+
+  if(rproc){
+    update->setupflag = 1;
+  
+    // setup domain, communication and neighboring
+    // acquire ghosts
+    // build neighbor lists
+  
+    atom->setup();
+    modify->setup_pre_exchange();
+    if (triclinic) domain->x2lamda(atom->nlocal);
+    domain->pbc();
+    domain->reset_box();
+    comm->setup();
+    if (neighbor->style) neighbor->setup_bins();
+    comm->exchange();
+    if (atom->sortfreq > 0) atom->sort();
+    comm->borders();
+    if (triclinic) domain->lamda2x(atom->nlocal+atom->nghost);
+    domain->image_check();
+    domain->box_too_small_check();
+    modify->setup_pre_neighbor();
+    neighbor->build(1);
+    modify->setup_post_neighbor();
+    neighbor->ncalls = 0;
+  
+    // compute all forces
+  
+    force->setup();
+    ev_set(update->ntimestep);
+    force_clear();
+    modify->setup_pre_force(vflag);
+  }
+
+  if (force->kspace){ 
+    force->kspace->setup();
+    if (kspace_compute_flag) 
+    	force->kspace->r2k_comm(eflag,vflag);
+  }
+  if(rproc){
+    if (pair_compute_flag) force->pair->compute(eflag,vflag);
+    else if (force->pair) force->pair->compute_dummy(eflag,vflag);
+
+    if (atom->molecular != Atom::ATOMIC) {
+      if (force->bond) force->bond->compute(eflag,vflag);
+      if (force->angle) force->angle->compute(eflag,vflag);
+      if (force->dihedral) force->dihedral->compute(eflag,vflag);
+      if (force->improper) force->improper->compute(eflag,vflag);
+    }
+  }
+  if (force->kspace) {
+    if (kspace_compute_flag){
+	if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
+
+    	force->kspace->k2r_comm(eflag,vflag);
+    }
+    else force->kspace->compute_dummy(eflag,vflag);
+  }
+
+
+  if (rproc){
+    modify->setup_pre_reverse(eflag,vflag);
+    if (force->newton) comm->reverse_comm();
+
+    modify->setup(vflag);
+    output->setup(flag);
+    update->setupflag = 0;
+  }
+}
+#endif
 
 /* ----------------------------------------------------------------------
    setup without output
@@ -107,11 +195,83 @@ void VerletSplitRK::setup(int flag)
 ------------------------------------------------------------------------- */
 
 void VerletSplitRK::setup_minimal(int flag)
+#if 0
 {
   rproc = (universe->iworld == 0) ? 1 : 0;
   if (!rproc) force->kspace->setup();
   else Verlet::setup_minimal(flag);
 }
+#else
+{
+  rproc = (universe->iworld == 0) ? 1 : 0;
+  if(rproc){
+    update->setupflag = 1;
+  
+    // setup domain, communication and neighboring
+    // acquire ghosts
+    // build neighbor lists
+  
+    if (flag) {
+      modify->setup_pre_exchange();
+      if (triclinic) domain->x2lamda(atom->nlocal);
+      domain->pbc();
+      domain->reset_box();
+      comm->setup();
+      if (neighbor->style) neighbor->setup_bins();
+      comm->exchange();
+      comm->borders();
+      if (triclinic) domain->lamda2x(atom->nlocal+atom->nghost);
+      domain->image_check();
+      domain->box_too_small_check();
+      modify->setup_pre_neighbor();
+      neighbor->build(1);
+      modify->setup_post_neighbor();
+      neighbor->ncalls = 0;
+    }
+  
+    // compute all forces
+  
+    ev_set(update->ntimestep);
+    force_clear();
+    modify->setup_pre_force(vflag);
+  }//rproc
+
+  if (force->kspace){ 
+    force->kspace->setup();
+    if (kspace_compute_flag) 
+    	force->kspace->r2k_comm(eflag,vflag);
+  }
+
+  if(rproc){
+    if (pair_compute_flag) force->pair->compute(eflag,vflag);
+    else if (force->pair) force->pair->compute_dummy(eflag,vflag);
+  
+    if (atom->molecular != Atom::ATOMIC) {
+      if (force->bond) force->bond->compute(eflag,vflag);
+      if (force->angle) force->angle->compute(eflag,vflag);
+      if (force->dihedral) force->dihedral->compute(eflag,vflag);
+      if (force->improper) force->improper->compute(eflag,vflag);
+    }
+  }//rproc
+
+  if (force->kspace) {
+    if (kspace_compute_flag){
+	if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
+
+    	force->kspace->k2r_comm(eflag,vflag);
+    }
+    else force->kspace->compute_dummy(eflag,vflag);
+  }
+
+  if(rproc){
+    modify->setup_pre_reverse(eflag,vflag);
+    if (force->newton) comm->reverse_comm();
+  
+    modify->setup(vflag);
+    update->setupflag = 0;
+  }//rproc
+}
+#endif
 
 /* ----------------------------------------------------------------------
    run for N steps
