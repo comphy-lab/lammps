@@ -366,7 +366,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
         cut_st_lo[a3ptype][atype][btype][b5ptype], cut_st_hi[a3ptype][atype][btype][b5ptype],
         b_st_lo[a3ptype][atype][btype][b5ptype], b_st_hi[a3ptype][atype][btype][b5ptype],
         shift_st[a3ptype][atype][btype][b5ptype]);
-//printf("%d %d  %le  %le %le %le %le %le %le %le %le %le %le  %le\n", atom->tag[a], atom->tag[b], r_stkstk, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype], cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype], cut_st_lo[a3ptype][atype][btype][b5ptype], cut_st_hi[a3ptype][atype][btype][b5ptype], b_st_lo[a3ptype][atype][btype][b5ptype], b_st_hi[a3ptype][atype][btype][b5ptype], shift_st[a3ptype][atype][btype][b5ptype], f1);
+
     // early rejection criterium
     if (f1) {
 
@@ -432,7 +432,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
         -cosphi_st2_c[atype][btype]);
 
     evdwl = f1 * f4t4 * f4t5 * f4t6 * f5c1 * f5c2;
-//printf("%d %d   %le %le %le %le %le %le\n", atom->tag[a], atom->tag[b], f1 , f4t4 , f4t5 , f4t6 , f5c1 , f5c2);
+
     // early rejection criterium
     if (evdwl) {
 
