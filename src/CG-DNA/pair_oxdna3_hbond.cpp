@@ -89,8 +89,10 @@ void PairOxdna3Hbond::coeff(int narg, char **arg)
   double a_hb3_one, theta_hb3_0_one, dtheta_hb3_ast_one;
   double b_hb3_one, dtheta_hb3_c_one;
 
-  double a_hb4_one, theta_hb4_0_one, dtheta_hb4_ast_one;
-  double b_hb4_one, dtheta_hb4_c_one;
+  double a_hb4_at, theta_hb4_0_at, dtheta_hb4_ast_at;
+  double a_hb4_cg, theta_hb4_0_cg, dtheta_hb4_ast_cg;
+  double b_hb4_at, dtheta_hb4_c_at;
+  double b_hb4_cg, dtheta_hb4_c_cg;
 
   double a_hb7_one, theta_hb7_0_one, dtheta_hb7_ast_one;
   double b_hb7_one, dtheta_hb7_c_one;
@@ -134,9 +136,13 @@ void PairOxdna3Hbond::coeff(int narg, char **arg)
           theta_hb3_0_one = values.next_double();
           dtheta_hb3_ast_one = values.next_double();
 
-          a_hb4_one = values.next_double();
-          theta_hb4_0_one = values.next_double();
-          dtheta_hb4_ast_one = values.next_double();
+          a_hb4_at = values.next_double();
+          theta_hb4_0_at = values.next_double();
+          dtheta_hb4_ast_at = values.next_double();
+
+          a_hb4_cg = values.next_double();
+          theta_hb4_0_cg = values.next_double();
+          dtheta_hb4_ast_cg = values.next_double();
 
           a_hb7_one = values.next_double();
           theta_hb7_0_one = values.next_double();
@@ -176,9 +182,13 @@ void PairOxdna3Hbond::coeff(int narg, char **arg)
   MPI_Bcast(&theta_hb3_0_one, 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&dtheta_hb3_ast_one, 1, MPI_DOUBLE, 0, world);
 
-  MPI_Bcast(&a_hb4_one, 1, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&theta_hb4_0_one, 1, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&dtheta_hb4_ast_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&a_hb4_at, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&theta_hb4_0_at, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&dtheta_hb4_ast_at, 1, MPI_DOUBLE, 0, world);
+
+  MPI_Bcast(&a_hb4_cg, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&theta_hb4_0_cg, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&dtheta_hb4_ast_cg, 1, MPI_DOUBLE, 0, world);
 
   MPI_Bcast(&a_hb7_one, 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&theta_hb7_0_one, 1, MPI_DOUBLE, 0, world);
@@ -224,8 +234,11 @@ void PairOxdna3Hbond::coeff(int narg, char **arg)
   b_hb3_one = a_hb3_one*a_hb3_one*dtheta_hb3_ast_one*dtheta_hb3_ast_one/(1-a_hb3_one*dtheta_hb3_ast_one*dtheta_hb3_ast_one);
   dtheta_hb3_c_one = 1/(a_hb3_one*dtheta_hb3_ast_one);
 
-  b_hb4_one = a_hb4_one*a_hb4_one*dtheta_hb4_ast_one*dtheta_hb4_ast_one/(1-a_hb4_one*dtheta_hb4_ast_one*dtheta_hb4_ast_one);
-  dtheta_hb4_c_one = 1/(a_hb4_one*dtheta_hb4_ast_one);
+  b_hb4_at = a_hb4_at*a_hb4_at*dtheta_hb4_ast_at*dtheta_hb4_ast_at/(1-a_hb4_at*dtheta_hb4_ast_at*dtheta_hb4_ast_at);
+  dtheta_hb4_c_at = 1/(a_hb4_at*dtheta_hb4_ast_at);
+
+  b_hb4_cg = a_hb4_cg*a_hb4_cg*dtheta_hb4_ast_cg*dtheta_hb4_ast_cg/(1-a_hb4_cg*dtheta_hb4_ast_cg*dtheta_hb4_ast_cg);
+  dtheta_hb4_c_cg = 1/(a_hb4_cg*dtheta_hb4_ast_cg);
 
   b_hb7_one = a_hb7_one*a_hb7_one*dtheta_hb7_ast_one*dtheta_hb7_ast_one/(1-a_hb7_one*dtheta_hb7_ast_one*dtheta_hb7_ast_one);
   dtheta_hb7_c_one = 1/(a_hb7_one*dtheta_hb7_ast_one);
@@ -273,11 +286,21 @@ void PairOxdna3Hbond::coeff(int narg, char **arg)
       b_hb3[i][j] = b_hb3_one;
       dtheta_hb3_c[i][j] = dtheta_hb3_c_one;
 
-      a_hb4[i][j] = a_hb4_one;
-      theta_hb4_0[i][j] = theta_hb4_0_one;
-      dtheta_hb4_ast[i][j] = dtheta_hb4_ast_one;
-      b_hb4[i][j] = b_hb4_one;
-      dtheta_hb4_c[i][j] = dtheta_hb4_c_one;
+      if((imod4==1 && jmod4==4) || (imod4==4 && jmod4==1)){
+        a_hb4[i][j] = a_hb4_at;
+        theta_hb4_0[i][j] = theta_hb4_0_at;
+        dtheta_hb4_ast[i][j] = dtheta_hb4_ast_at;
+        b_hb4[i][j] = b_hb4_at;
+        dtheta_hb4_c[i][j] = dtheta_hb4_c_at;
+      }
+
+      if((imod4==2 && jmod4==3) || (imod4==3 && jmod4==2)){
+        a_hb4[i][j] = a_hb4_cg;
+        theta_hb4_0[i][j] = theta_hb4_0_cg;
+        dtheta_hb4_ast[i][j] = dtheta_hb4_ast_cg;
+        b_hb4[i][j] = b_hb4_cg;
+        dtheta_hb4_c[i][j] = dtheta_hb4_c_cg;
+      }
 
       a_hb7[i][j] = a_hb7_one;
       theta_hb7_0[i][j] = theta_hb7_0_one;
