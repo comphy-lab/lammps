@@ -27,8 +27,7 @@ namespace LAMMPS_NS {
 class PairOxdna3Hbond : public PairOxdnaHbond {
  public:
   PairOxdna3Hbond(class LAMMPS *lmp) : PairOxdnaHbond(lmp) {}
-  template <int N>
-  void compute_base_site(double *, double *, double *, double *) const;
+  void compute_base_site(int, double *, double *, double *, double *) const override;
   void coeff(int, char **) override;
 };
 
