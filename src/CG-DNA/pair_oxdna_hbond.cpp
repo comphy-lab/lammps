@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna_hbond.h"
+#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
@@ -129,53 +130,14 @@ PairOxdnaHbond::~PairOxdnaHbond()
 }
 
 /* ---------------------------------------------------------------------
-    compute vector COM-hydrogen bonding interaction site in oxDNA/oxDNA2
+    compute vector COM-base site in oxDNA/oxDNA2
     identical templates for A=1, C=2, G=3, T=0
 ------------------------------------------------------------------------ */
-template <>
-void PairOxdnaHbond::compute_base_site<0>(double e1[3], double /*e2*/[3],
-  double /*e3*/[3], double rbs[3]) const
+inline void PairOxdnaHbond::compute_base_site(int /*type*/, double e1[3],
+  double /*e2*/[3], double /*e3*/[3], double rbs[3]) const
 {
-  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
-
-  rbs[0] = dx_cbs_oxdna1*e1[0];
-  rbs[1] = dx_cbs_oxdna1*e1[1];
-  rbs[2] = dx_cbs_oxdna1*e1[2];
-
-}
-
-template <>
-void PairOxdnaHbond::compute_base_site<1>(double e1[3], double /*e2*/[3],
-  double /*e3*/[3], double rbs[3]) const
-{
-  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
-
-  rbs[0] = dx_cbs_oxdna1*e1[0];
-  rbs[1] = dx_cbs_oxdna1*e1[1];
-  rbs[2] = dx_cbs_oxdna1*e1[2];
-
-}
-template <>
-void PairOxdnaHbond::compute_base_site<2>(double e1[3], double /*e2*/[3],
-  double /*e3*/[3], double rbs[3]) const
-{
-  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
-
-  rbs[0] = dx_cbs_oxdna1*e1[0];
-  rbs[1] = dx_cbs_oxdna1*e1[1];
-  rbs[2] = dx_cbs_oxdna1*e1[2];
-
-}
-template <>
-void PairOxdnaHbond::compute_base_site<3>(double e1[3], double /*e2*/[3],
-  double /*e3*/[3], double rbs[3]) const
-{
-  double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
-
-  rbs[0] = dx_cbs_oxdna1*e1[0];
-  rbs[1] = dx_cbs_oxdna1*e1[1];
-  rbs[2] = dx_cbs_oxdna1*e1[2];
-
+  NucleotideOxdna1 oxdna1;
+  oxdna1.base_site<0>(e1, NULL, NULL, rbs);
 }
 
 /* ----------------------------------------------------------------------
@@ -243,20 +205,7 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
     ax[2] = nx_xtrct[a][2];
 
     // vector COM - base site a
-    switch (atype%4) {
-      case 0:
-        compute_base_site<0>(ax,ay,az,ra_cbs);
-        break;
-      case 1:
-        compute_base_site<1>(ax,ay,az,ra_cbs);
-        break;
-      case 2:
-        compute_base_site<2>(ax,ay,az,ra_cbs);
-        break;
-      case 3:
-        compute_base_site<3>(ax,ay,az,ra_cbs);
-        break;
-    }
+    compute_base_site(atype%4, ax,ay,az,ra_cbs);
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -274,20 +223,7 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
       bx[2] = nx_xtrct[b][2];
 
       // vector COM - base site b
-      switch (btype%4) {
-        case 0:
-          compute_base_site<0>(bx,by,bz,rb_cbs);
-          break;
-        case 1:
-          compute_base_site<1>(bx,by,bz,rb_cbs);
-          break;
-        case 2:
-          compute_base_site<2>(bx,by,bz,rb_cbs);
-          break;
-        case 3:
-          compute_base_site<3>(bx,by,bz,rb_cbs);
-          break;
-      }
+      compute_base_site(btype%4, bx,by,bz,rb_cbs);
 
       // vector h-bonding site b to a
       delr_bsbs[0] = x[a][0] + ra_cbs[0] - x[b][0] - rb_cbs[0];

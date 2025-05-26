@@ -40,7 +40,7 @@ using namespace MFOxdna;
 /* ----------------------------------------------------------------------
     compute vector COM-stacking interaction site in oxDNA3
 ------------------------------------------------------------------------- */
-void PairOxdna3Stk::compute_stacking_site(double e1[3], double /*e2*/[3],
+inline void PairOxdna3Stk::compute_stacking_site(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rstk[3]) const
 {
   NucleotideOxdna3 oxdna3;

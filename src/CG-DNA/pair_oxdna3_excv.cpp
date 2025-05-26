@@ -33,7 +33,7 @@ using namespace LAMMPS_NS;
    compute vector COM-hydrogen bonding interaction site in oxDNA3
    A=1, C=2, G=3, T=0
 ----------------------------------------------------------------- */
-void PairOxdna3Excv::compute_base_site(int type, double e1[3],
+inline void PairOxdna3Excv::compute_base_site(int type, double e1[3],
   double /*e2*/[3], double /*e3*/[3], double rbs[3]) const
 {
 

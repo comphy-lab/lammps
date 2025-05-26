@@ -213,7 +213,7 @@ void PairOxdnaStk::ev_tally_xyz(int i, int j, int nlocal, int newton_bond,
 /* ----------------------------------------------------------------------
     compute vector COM-backbone interaction site in oxDNA
 ------------------------------------------------------------------------- */
-void PairOxdnaStk::compute_backbone_site(double e1[3], double /*e2*/[3],
+inline void PairOxdnaStk::compute_backbone_site(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rbk[3]) const
 {
   NucleotideOxdna1 oxdna1;
@@ -223,7 +223,7 @@ void PairOxdnaStk::compute_backbone_site(double e1[3], double /*e2*/[3],
 /* ----------------------------------------------------------------------
     compute vector COM-stacking interaction site in oxDNA
 ------------------------------------------------------------------------- */
-void PairOxdnaStk::compute_stacking_site(double e1[3], double /*e2*/[3],
+inline void PairOxdnaStk::compute_stacking_site(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rstk[3]) const
 {
   NucleotideOxdna1 oxdna1;

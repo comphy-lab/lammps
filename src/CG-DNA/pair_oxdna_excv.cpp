@@ -106,7 +106,7 @@ PairOxdnaExcv::~PairOxdnaExcv()
 /* ----------------------------------------------------------------------
     compute vector COM-sugar-phosphate backbone interaction site in oxDNA
 ------------------------------------------------------------------------- */
-void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
+inline void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rbk[3]) const
 {
   NucleotideOxdna1 oxdna1;
@@ -117,7 +117,7 @@ void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
     compute vector COM-base site in oxDNA/oxDNA2
     identical templates for A=1, C=2, G=3, T=0
 ------------------------------------------------------------------------ */
-void PairOxdnaExcv::compute_base_site(int /*type*/, double e1[3],
+inline void PairOxdnaExcv::compute_base_site(int /*type*/, double e1[3],
   double /*e2*/[3], double /*e3*/[3], double rbs[3]) const
 {
   NucleotideOxdna1 oxdna1;
