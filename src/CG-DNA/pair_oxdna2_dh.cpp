@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna2_dh.h"
+#include "atom_vec_oxdna.h"
 #include "nucleotide_oxdna.h"
 
 #include "atom.h"
@@ -95,6 +96,7 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
   double **f = atom->f;
   double **torque = atom->torque;
   int *type = atom->type;
+  tagint *qeff = atom->qeff;
 
   int nlocal = atom->nlocal;
   int newton_pair = force->newton_pair;
@@ -177,11 +179,11 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
 
         if (r <= cut_dh_ast[atype][btype]) {
 
-          fpair = qeff_dh_pf[atype][btype] * exp(-kappa_dh[atype][btype] * r) *
+          fpair = qeff[a]*qeff[b]*qeff_dh_pf[atype][btype] * exp(-kappa_dh[atype][btype] * r) *
                   (kappa_dh[atype][btype] + rinv) * rinv * rinv;
 
           if (eflag) {
-            evdwl = qeff_dh_pf[atype][btype] * exp(-kappa_dh[atype][btype]*r) * rinv;
+            evdwl = qeff[a]*qeff[b]*qeff_dh_pf[atype][btype] * exp(-kappa_dh[atype][btype]*r) * rinv;
           }
 
         }
@@ -299,9 +301,13 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 
   count = 0;
 
+  int nlocal = atom->nlocal;
+  tagint *qeff = atom->qeff;
+  tagint *id3p = atom->id3p;
+
   double T, rhos_dh_one, qeff_dh_one;
 
-  half_charged_ends_flag = 0;
+  no_3p_charge_flag = 0;
 
   T = utils::numeric(FLERR,arg[2],false,lmp);
   rhos_dh_one = utils::numeric(FLERR,arg[3],false,lmp);
@@ -333,8 +339,8 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
     MPI_Bcast(&qeff_dh_one, 1, MPI_DOUBLE, 0, world);
   } else qeff_dh_one = utils::numeric(FLERR,arg[4],false,lmp); // else, it is effective charge
 
-  if (narg == 6 && strcmp(arg[5],"half_charged_ends")  == 0) {
-    half_charged_ends_flag = 1;
+  if (narg == 6 && strcmp(arg[5],"no_3p_charge")  == 0) {
+    no_3p_charge_flag = 1;
   }
 
   double lambda_dh_one, kappa_dh_one, qeff_dh_pf_one;
@@ -404,6 +410,12 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
       setflag[i][j] = 1;
       count++;
     }
+  }
+
+  // optionally remove charge from 3'-end
+  for (int in = 0; in < nlocal; in++) {
+    qeff[in] = 1;
+    if (id3p[in] == -1 && no_3p_charge_flag) qeff[in] = 0;
   }
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
