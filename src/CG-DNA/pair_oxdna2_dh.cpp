@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna2_dh.h"
+#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
@@ -65,15 +66,11 @@ PairOxdna2Dh::~PairOxdna2Dh()
 /* ----------------------------------------------------------------------
    compute vector COM-sugar-phosphate backbone interaction site in oxDNA2
 ------------------------------------------------------------------------- */
-void PairOxdna2Dh::compute_backbone_site(double e1[3],
-  double e2[3], double /*e3*/[3], double r[3]) const
+inline void PairOxdna2Dh::compute_backbone_site(double e1[3], double e2[3],
+  double /*e3*/[3], double rbk[3]) const
 {
-  double dx_cbk_oxdna2 = ConstantsOxdna::get_dx_cbk_oxdna2();
-  double dy_cbk_oxdna2 = ConstantsOxdna::get_dy_cbk_oxdna2();
-
-  r[0] = dx_cbk_oxdna2*e1[0] + dy_cbk_oxdna2*e2[0];
-  r[1] = dx_cbk_oxdna2*e1[1] + dy_cbk_oxdna2*e2[1];
-  r[2] = dx_cbk_oxdna2*e1[2] + dy_cbk_oxdna2*e2[2];
+  NucleotideOxdna2 oxdna2;
+  oxdna2.backbone_site(e1, e2, NULL, rbk);
 }
 
 /* ----------------------------------------------------------------------
@@ -293,7 +290,7 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 {
   int count;
 
-  if (narg != 5) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
+  if (narg != 5 && narg != 6) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi;
@@ -304,12 +301,15 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 
   double T, rhos_dh_one, qeff_dh_one;
 
+  half_charged_ends_flag = 0;
+
   T = utils::numeric(FLERR,arg[2],false,lmp);
   rhos_dh_one = utils::numeric(FLERR,arg[3],false,lmp);
 
   if (utils::strmatch(arg[4], "^[a-zA-Z0-9_]*\\.cgdna$")) { // if last arg is a potential file
     if (comm->me == 0) { // read value from potential file
       PotentialFileReader reader(lmp, arg[4], "oxdna potential", " (dh)");
+      reader.set_bufsize(65336);
       char * line;
       std::string iloc, jloc, potential_name;
       while ((line = reader.next_line())) {
@@ -332,6 +332,10 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
     }
     MPI_Bcast(&qeff_dh_one, 1, MPI_DOUBLE, 0, world);
   } else qeff_dh_one = utils::numeric(FLERR,arg[4],false,lmp); // else, it is effective charge
+
+  if (narg == 6 && strcmp(arg[5],"half_charged_ends")  == 0) {
+    half_charged_ends_flag = 1;
+  }
 
   double lambda_dh_one, kappa_dh_one, qeff_dh_pf_one;
   double b_dh_one, cut_dh_ast_one, cut_dh_c_one;
