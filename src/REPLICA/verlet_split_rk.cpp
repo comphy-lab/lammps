@@ -466,19 +466,8 @@ void VerletSplitRK::run(int n)
         output->write(ntimestep);
         timer->stamp(Timer::OUTPUT);
       }
-    }
-  }
+    } //rproc
+  } //for i
 }
 
 
-
-/* ----------------------------------------------------------------------
-   memory usage of Kspace force array on rproc procs
-------------------------------------------------------------------------- */
-
-double VerletSplitRK::memory_usage()
-{
-  //double bytes = (double)maxatom*3 * sizeof(double);
-  double bytes = 0.0;
-  return bytes;
-}

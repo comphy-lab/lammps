@@ -60,15 +60,41 @@ PPPM_RK::PPPM_RK(LAMMPS *lmp) : PPPM(lmp),
 {
 
   rk_flag = 1;
+
 }
 
 void PPPM_RK::init()
 {
   PPPM::init();
   if (me == 0) utils::logmesg(lmp,"PPPM_RK initialization ...\n");
+#if 1
+  memory->create3d_offset(density_brick_buf,
+	nzlo_in,nzhi_in,nylo_in,nyhi_in,
+        nxlo_in,nxhi_in,"pppm_split:density_brick_buf");
+	
+  if (differentiation_flag == 1) {
+  	memory->create3d_offset(u_brick_buf,
+		nzlo_in,nzhi_in,nylo_in,nyhi_in,
+                nxlo_in,nxhi_in,"pppm_split:u_brick_buf");
+  }
+  else{
+  	memory->create3d_offset(vdx_brick_buf,
+		nzlo_in,nzhi_in,nylo_in,nyhi_in,
+               		nxlo_in,nxhi_in,"pppm_split:vdx_brick_buf");
+    	memory->create3d_offset(vdy_brick_buf,
+		nzlo_in,nzhi_in,nylo_in,nyhi_in,
+                       	nxlo_in,nxhi_in,"pppm_split:vdy_brick_buf");
+    	memory->create3d_offset(vdz_brick_buf,
+		nzlo_in,nzhi_in,nylo_in,nyhi_in,
+                       	nxlo_in,nxhi_in,"pppm_split:vdz_brick_buf");
+  }
+#endif
   setupRKBlock();
-  allocateBuf();
 }
+
+//Adapted from the constructor of VerletSplit
+/*Main purpose is to instantiate the inter-RK block communicator
+  and to assign values to ratio, rproc, me_block, and block_size*/
 void PPPM_RK::setupRKBlock()
 {
   // error checks on partitions
@@ -210,6 +236,36 @@ void PPPM_RK::setupRKBlock()
   delete [] bmap;
   delete [] bmapall;
 
+  /*Copy communicators, assign structures helpful for inter-RK communication*/
+  MPI_Comm_dup(block, &block_density_brick);
+  MPI_Comm_dup(block, &block_kforce_x);
+  MPI_Comm_dup(block, &block_kforce_y);
+  MPI_Comm_dup(block, &block_kforce_z);
+  MPI_Comm_dup(block, &block_kforce_u);
+  MPI_Comm_dup(block, &block_energy);
+  MPI_Comm_dup(block, &block_virial);
+
+  density_sizes = new int[block_size];
+  density_disps = new int[block_size];
+  
+  memory->create(partitionInfoK,block_size,7,"pppm:partitionInfoK");
+
+
+  int partitionInfo[7];
+  partitionInfo[0] = (nzhi_in - nzlo_in + 1)*(nyhi_in - nylo_in + 1)*(nxhi_in - nxlo_in + 1);
+  partitionInfo[1] = nzlo_in;
+  partitionInfo[2] = nzhi_in;
+  partitionInfo[3] = nylo_in;
+  partitionInfo[4] = nyhi_in;
+  partitionInfo[5] = nxlo_in;
+  partitionInfo[6] = nxhi_in;
+  MPI_Gather(partitionInfo,7,MPI_INT,&partitionInfoK[0][0],7,MPI_INT,0,block);
+  density_sizes[0] = 0;
+  density_disps[0] = 0;
+  for (int i = 1; i < block_size; i++) {
+ 	density_sizes[i] = partitionInfoK[i][0];
+	density_disps[i] = density_disps[i-1]+density_sizes[i-1];
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -220,84 +276,29 @@ void PPPM_RK::setupRKBlock()
 
 PPPM_RK::~PPPM_RK()
 {
+  memory->destroy3d_offset(density_brick_buf,nzlo_in,nylo_in,nxlo_in);
+  if (differentiation_flag == 1) {
+	memory->destroy3d_offset(u_brick_buf,nzlo_in,nylo_in,nxlo_in);
+  }
+  else{
+	memory->destroy3d_offset(vdx_brick_buf,nzlo_in,nylo_in,nxlo_in);
+	memory->destroy3d_offset(vdy_brick_buf,nzlo_in,nylo_in,nxlo_in);
+	memory->destroy3d_offset(vdz_brick_buf,nzlo_in,nylo_in,nxlo_in);
+  }
   MPI_Comm_free(&block);
-  deallocateBuf();
-}
 
-void PPPM_RK::allocateBuf(){
-    	memory->create3d_offset(density_brick_buf,
-		nzlo_in,nzhi_in,nylo_in,nyhi_in,
-                    nxlo_in,nxhi_in,"pppm_split:density_brick_buf");
-	
-	if (differentiation_flag == 1) {
-    		memory->create3d_offset(u_brick_buf,
-			nzlo_in,nzhi_in,nylo_in,nyhi_in,
-                          nxlo_in,nxhi_in,"pppm_split:u_brick_buf");
-	}
-	else{
-    		memory->create3d_offset(vdx_brick_buf,
-			nzlo_in,nzhi_in,nylo_in,nyhi_in,
-                		nxlo_in,nxhi_in,"pppm_split:vdx_brick_buf");
-    		memory->create3d_offset(vdy_brick_buf,
-			nzlo_in,nzhi_in,nylo_in,nyhi_in,
-                        	nxlo_in,nxhi_in,"pppm_split:vdy_brick_buf");
-    		memory->create3d_offset(vdz_brick_buf,
-			nzlo_in,nzhi_in,nylo_in,nyhi_in,
-                        	nxlo_in,nxhi_in,"pppm_split:vdz_brick_buf");
-	}
-	MPI_Comm_dup(block, &block_density_brick);
-	MPI_Comm_dup(block, &block_kforce_x);
-	MPI_Comm_dup(block, &block_kforce_y);
-	MPI_Comm_dup(block, &block_kforce_z);
-	MPI_Comm_dup(block, &block_kforce_u);
-	MPI_Comm_dup(block, &block_energy);
-	MPI_Comm_dup(block, &block_virial);
+  MPI_Comm_free(&block_density_brick);
+  MPI_Comm_free(&block_kforce_x);
+  MPI_Comm_free(&block_kforce_y);
+  MPI_Comm_free(&block_kforce_z);
+  MPI_Comm_free(&block_kforce_u);
+  MPI_Comm_free(&block_energy);
+  MPI_Comm_free(&block_virial);
 
-  	density_sizes = new int[block_size];
-  	density_disps = new int[block_size];
+  delete [] density_sizes;
+  delete [] density_disps;
   
-	memory->create(partitionInfoK,block_size,7,"pppm:partitionInfoK");
-
-
-	int partitionInfo[7];
-	partitionInfo[0] = (nzhi_in - nzlo_in + 1)*(nyhi_in - nylo_in + 1)*(nxhi_in - nxlo_in + 1);
-	partitionInfo[1] = nzlo_in;
-	partitionInfo[2] = nzhi_in;
-	partitionInfo[3] = nylo_in;
-	partitionInfo[4] = nyhi_in;
-	partitionInfo[5] = nxlo_in;
-	partitionInfo[6] = nxhi_in;
-	MPI_Gather(partitionInfo,7,MPI_INT,&partitionInfoK[0][0],7,MPI_INT,0,block);
-	density_sizes[0] = 0;
-	density_disps[0] = 0;
-	for (int i = 1; i < block_size; i++) {
-		density_sizes[i] = partitionInfoK[i][0];
-		density_disps[i] = density_disps[i-1]+density_sizes[i-1];
-	}
-}
-void PPPM_RK::deallocateBuf(){
-	memory->destroy3d_offset(density_brick_buf,nzlo_in,nylo_in,nxlo_in);
-	if (differentiation_flag == 1) {
-		memory->destroy3d_offset(u_brick_buf,nzlo_in,nylo_in,nxlo_in);
-	}
-	else{
-		memory->destroy3d_offset(vdx_brick_buf,nzlo_in,nylo_in,nxlo_in);
-		memory->destroy3d_offset(vdy_brick_buf,nzlo_in,nylo_in,nxlo_in);
-		memory->destroy3d_offset(vdz_brick_buf,nzlo_in,nylo_in,nxlo_in);
-	}
-
-	MPI_Comm_free(&block_density_brick);
-	MPI_Comm_free(&block_kforce_x);
-	MPI_Comm_free(&block_kforce_y);
-	MPI_Comm_free(&block_kforce_z);
-	MPI_Comm_free(&block_kforce_u);
-	MPI_Comm_free(&block_energy);
-	MPI_Comm_free(&block_virial);
-
-  	delete [] density_sizes;
-  	delete [] density_disps;
-  
-	memory->destroy(partitionInfoK);
+  memory->destroy(partitionInfoK);
 }
 
 

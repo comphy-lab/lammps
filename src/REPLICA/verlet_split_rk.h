@@ -33,7 +33,6 @@ class VerletSplitRK : public Verlet {
   void setup(int) override;
   void setup_minimal(int) override;
   void run(int) override;
-  double memory_usage() override;
  private:
   int rproc;
 

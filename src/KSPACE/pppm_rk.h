@@ -83,12 +83,7 @@ class PPPM_RK : public PPPM {
   int *density_sizes, *density_disps;    // MPI gather/scatter params for block comm
   int **partitionInfoK;
   int block_size;
- public:
   void setupRKBlock();
-  //void allocateBuf(const MPI_Comm &block);
-  void allocateBuf();
- protected:
-  void deallocateBuf();
   
   int getVDXYZBrickBuf(FFT_SCALAR *&xsrc, FFT_SCALAR *&ysrc, 
 		  FFT_SCALAR *&zsrc, int &buf_len) const{
