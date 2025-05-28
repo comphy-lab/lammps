@@ -333,21 +333,23 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
     //Posting R-process recv communications
     if (eflag) MPI_Ibcast(&energy_buf,1,MPI_DOUBLE,0,block_energy,&mpi_requests_energy);
     if (vflag) MPI_Ibcast(virial_mpi_buf,6,MPI_DOUBLE,0,block_virial,&mpi_requests_virial);
-    int buf_len = 0;
-    double *xsrc, *ysrc, *zsrc, *usrc;
-    getVDXYZBrickBuf(xsrc, ysrc, zsrc, buf_len);
-    if(buf_len>0){ 
+
+    int buf_len = (nzhi_in - nzlo_in + 1)*(nyhi_in - nylo_in + 1)*(nxhi_in - nxlo_in + 1);
+    if (differentiation_flag == 1) {
+      FFT_SCALAR *usrc = &u_brick_buf[nzlo_in][nylo_in][nxlo_in];
       MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-       		xsrc,buf_len,MPI_DOUBLE,0,block_kforce_x,&mpi_requests_grid_x);
-      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-       		ysrc,buf_len,MPI_DOUBLE,0,block_kforce_y,&mpi_requests_grid_y);
-      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-       		zsrc,buf_len,MPI_DOUBLE,0,block_kforce_z,&mpi_requests_grid_z);
+        usrc,buf_len,MPI_DOUBLE,0,block_kforce_u,&mpi_requests_grid_u);
     }
-    getUBrickBuf(usrc, buf_len);
-    if(buf_len>0){ 
-    	MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-       		usrc,buf_len,MPI_DOUBLE,0,block_kforce_u,&mpi_requests_grid_u);
+    else{
+      FFT_SCALAR *xsrc = &vdx_brick_buf[nzlo_in][nylo_in][nxlo_in];
+      FFT_SCALAR *ysrc = &vdy_brick_buf[nzlo_in][nylo_in][nxlo_in];
+      FFT_SCALAR *zsrc = &vdz_brick_buf[nzlo_in][nylo_in][nxlo_in];
+      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
+      	xsrc,buf_len,MPI_DOUBLE,0,block_kforce_x,&mpi_requests_grid_x);
+      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
+       	ysrc,buf_len,MPI_DOUBLE,0,block_kforce_y,&mpi_requests_grid_y);
+      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
+       	zsrc,buf_len,MPI_DOUBLE,0,block_kforce_z,&mpi_requests_grid_z);
     }
   } //rproc
   else{ //kproc

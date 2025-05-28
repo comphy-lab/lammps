@@ -72,6 +72,8 @@ class PPPM_RK : public PPPM {
   // Tags for communication within MPI_Comm block
   enum MPI_Block_Tags {TAG_FLAGS=1,TAG_BOX,N_MPI_TAGS}; 
 
+#if 0
+  //NOT USED FOR NOW
   MPI_Status mpi_status_density;  //Statuses for asynchronous communications
   MPI_Status mpi_status_grid_x;  
   MPI_Status mpi_status_grid_y;  
@@ -79,45 +81,19 @@ class PPPM_RK : public PPPM {
   MPI_Status mpi_status_grid_u;  
   MPI_Status mpi_status_energy;  
   MPI_Status mpi_status_virial;  
+#endif
 
   int *density_sizes, *density_disps;    // MPI gather/scatter params for block comm
   int **partitionInfoK;
   int block_size;
+
   void setupRKBlock();
   
-  int getVDXYZBrickBuf(FFT_SCALAR *&xsrc, FFT_SCALAR *&ysrc, 
-		  FFT_SCALAR *&zsrc, int &buf_len) const{
-    xsrc = ysrc = zsrc = nullptr;
-    buf_len = 0;
-    if(vdx_brick_buf != nullptr && vdy_brick_buf != nullptr && vdz_brick_buf != nullptr){
-        xsrc = &vdx_brick_buf[nzlo_in][nylo_in][nxlo_in];
-        ysrc = &vdy_brick_buf[nzlo_in][nylo_in][nxlo_in];
-        zsrc = &vdz_brick_buf[nzlo_in][nylo_in][nxlo_in];
-	buf_len = (nzhi_in - nzlo_in + 1)*(nyhi_in - nylo_in + 1)*(nxhi_in - nxlo_in + 1);
-	return 0;
-    }
-    else{ 
-	    return 1;
-    }
-  }
-  int getUBrickBuf(FFT_SCALAR *&usrc, int &buf_len) const{
-    usrc = nullptr;
-    buf_len = 0;
-    if(u_brick_buf != nullptr ){
-        usrc = &u_brick_buf[nzlo_in][nylo_in][nxlo_in];
-	buf_len = (nzhi_in - nzlo_in + 1)*(nyhi_in - nylo_in + 1)*(nxhi_in - nxlo_in + 1);
-	return 0;
-    }
-    else{ 
-	    return 1;
-    }
-  }
   void prepareXYZBrickScatterBufs(){
     FFT_SCALAR *x_buf_loc = &vdx_brick_buf[nzlo_in][nylo_in][nxlo_in];
     FFT_SCALAR *y_buf_loc = &vdy_brick_buf[nzlo_in][nylo_in][nxlo_in];
     FFT_SCALAR *z_buf_loc = &vdz_brick_buf[nzlo_in][nylo_in][nxlo_in];
-    int idx = 0;
-    int zlo, zhi, ylo, yhi, xlo, xhi;
+    int zlo, zhi, ylo, yhi, xlo, xhi, ncpy;
     for(int k = 1; k<block_size; k++){
 	zlo = partitionInfoK[k][1];
 	zhi = partitionInfoK[k][2];
@@ -125,19 +101,22 @@ class PPPM_RK : public PPPM {
 	yhi = partitionInfoK[k][4];
 	xlo = partitionInfoK[k][5];
 	xhi = partitionInfoK[k][6];
+
+	ncpy = xhi-xlo+1;
 	for(int zz=zlo; zz<=zhi; zz++)
-	for(int yy=ylo; yy<=yhi; yy++)
-	for(int xx=xlo; xx<=xhi; xx++){
-		x_buf_loc[idx] = vdx_brick[zz][yy][xx];
-		y_buf_loc[idx] = vdy_brick[zz][yy][xx];
-		z_buf_loc[idx++] = vdz_brick[zz][yy][xx];
+	for(int yy=ylo; yy<=yhi; yy++){
+		memcpy(x_buf_loc,  &vdx_brick[zz][yy][xlo], ncpy*sizeof(FFT_SCALAR));
+		memcpy(y_buf_loc,  &vdy_brick[zz][yy][xlo], ncpy*sizeof(FFT_SCALAR));
+		memcpy(z_buf_loc,  &vdz_brick[zz][yy][xlo], ncpy*sizeof(FFT_SCALAR));
+		x_buf_loc += ncpy;
+		y_buf_loc += ncpy;
+		z_buf_loc += ncpy;
 	}
     }
   }
   void prepareUBrickScatterBufs(){
     FFT_SCALAR *u_buf_loc = &u_brick_buf[nzlo_in][nylo_in][nxlo_in];
-    int idx = 0;
-    int zlo, zhi, ylo, yhi, xlo, xhi;
+    int zlo, zhi, ylo, yhi, xlo, xhi, ncpy;
     for(int k = 1; k<block_size; k++){
 	
 	zlo = partitionInfoK[k][1];
@@ -146,10 +125,13 @@ class PPPM_RK : public PPPM {
 	yhi = partitionInfoK[k][4];
 	xlo = partitionInfoK[k][5];
 	xhi = partitionInfoK[k][6];
+
+	ncpy = xhi-xlo+1;
 	for(int zz=zlo; zz<=zhi; zz++)
-	for(int yy=ylo; yy<=yhi; yy++)
-	for(int xx=xlo; xx<=xhi; xx++)
-		u_buf_loc[idx++] = u_brick[zz][yy][xx];
+	for(int yy=ylo; yy<=yhi; yy++){
+		memcpy(u_buf_loc,  &u_brick[zz][yy][xlo], ncpy*sizeof(FFT_SCALAR));
+		u_buf_loc += ncpy;
+	}
     }
 
   }
@@ -158,27 +140,23 @@ class PPPM_RK : public PPPM {
       if(eflag) MPI_Wait(&mpi_requests_energy,MPI_STATUS_IGNORE);
       if(vflag) MPI_Wait(&mpi_requests_virial,MPI_STATUS_IGNORE);
   
-      int buf_len = 0;
-      double *xsrc, *ysrc, *zsrc, *usrc;
-      getVDXYZBrickBuf(xsrc, ysrc, zsrc, buf_len);
-      if(buf_len > 0) {
-  	    MPI_Wait(&mpi_requests_grid_x,MPI_STATUS_IGNORE);
-  	    MPI_Wait(&mpi_requests_grid_y,MPI_STATUS_IGNORE);
-  	    MPI_Wait(&mpi_requests_grid_z,MPI_STATUS_IGNORE);
+      if (differentiation_flag == 1) {
+  	MPI_Wait(&mpi_requests_grid_u,MPI_STATUS_IGNORE);
       }
-      getUBrickBuf(usrc, buf_len);
-      if(buf_len > 0) {
-  	    MPI_Wait(&mpi_requests_grid_u,MPI_STATUS_IGNORE);
+      else{
+  	MPI_Wait(&mpi_requests_grid_x,MPI_STATUS_IGNORE);
+  	MPI_Wait(&mpi_requests_grid_y,MPI_STATUS_IGNORE);
+  	MPI_Wait(&mpi_requests_grid_z,MPI_STATUS_IGNORE);
       }
 
       //Update from buffers
       //energy and virial are updated in PPPM_RK::compute_interpolate_forces(int eflag, int vflag)
-      if(u_brick != nullptr){
+      if (differentiation_flag == 1) {
   	  for (int k = nzlo_in; k <= nzhi_in; k++)
     	  for (int j = nylo_in; j <= nyhi_in; j++)
 		memcpy( &u_brick[k][j][nxlo_in] , &u_brick_buf[k][j][nxlo_in], (nxhi_in-nxlo_in+1)*sizeof(FFT_SCALAR));
       }
-      if(vdx_brick != nullptr && vdy_brick != nullptr && vdz_brick != nullptr){
+      else{
   	  for (int k = nzlo_in; k <= nzhi_in; k++)
     	  for (int j = nylo_in; j <= nyhi_in; j++){
 		memcpy( &vdx_brick[k][j][nxlo_in] , &vdx_brick_buf[k][j][nxlo_in], (nxhi_in-nxlo_in+1)*sizeof(FFT_SCALAR));
@@ -196,10 +174,16 @@ class PPPM_RK : public PPPM {
   	if (vflag){ 
 	    MPI_Ibcast(virial_mpi_buf,6,MPI_DOUBLE,0,block_virial,&mpi_requests_virial);
   	}
-	int buf_len = 0;
-	double *xsrc, *ysrc, *zsrc, *usrc;
-  	getVDXYZBrickBuf(xsrc, ysrc, zsrc, buf_len);
-        if(buf_len>0){ 
+        if (differentiation_flag == 1) {
+            FFT_SCALAR *usrc = &u_brick_buf[nzlo_in][nylo_in][nxlo_in];
+  	    prepareUBrickScatterBufs();
+    	    MPI_Iscatterv(usrc,density_sizes,density_disps,MPI_DOUBLE,
+              NULL,0,MPI_DOUBLE,  0,block_kforce_u,&mpi_requests_grid_u);
+        }
+        else{
+        	FFT_SCALAR *xsrc = &vdx_brick_buf[nzlo_in][nylo_in][nxlo_in];
+        	FFT_SCALAR *ysrc = &vdy_brick_buf[nzlo_in][nylo_in][nxlo_in];
+        	FFT_SCALAR *zsrc = &vdz_brick_buf[nzlo_in][nylo_in][nxlo_in];
   		prepareXYZBrickScatterBufs();
     		MPI_Iscatterv(xsrc,density_sizes,density_disps,MPI_DOUBLE,
         		NULL,0,MPI_DOUBLE, 0,block_kforce_x,&mpi_requests_grid_x);
@@ -208,29 +192,19 @@ class PPPM_RK : public PPPM {
     		MPI_Iscatterv(zsrc,density_sizes,density_disps,MPI_DOUBLE,
         		NULL,0,MPI_DOUBLE, 0,block_kforce_z,&mpi_requests_grid_z);
 	}
-  	getUBrickBuf(usrc, buf_len);
-        if(buf_len>0){ 
-  		prepareUBrickScatterBufs();
-    		MPI_Iscatterv(usrc,density_sizes,density_disps,MPI_DOUBLE,
-        		NULL,0,MPI_DOUBLE,  0,block_kforce_u,&mpi_requests_grid_u);
-	}
   }
   void wait_sending_scatter_grid_potentials_ev(int eflag, int vflag){
     if(eflag) MPI_Wait(&mpi_requests_energy,MPI_STATUS_IGNORE);
     if(vflag) MPI_Wait(&mpi_requests_virial,MPI_STATUS_IGNORE);
-    int buf_len = 0;
-    double *xsrc, *ysrc, *zsrc, *usrc;
-    getVDXYZBrickBuf(xsrc, ysrc, zsrc, buf_len);
-    if(buf_len > 0) {
-	    MPI_Wait(&mpi_requests_grid_x,MPI_STATUS_IGNORE);
-	    MPI_Wait(&mpi_requests_grid_y,MPI_STATUS_IGNORE);
-	    MPI_Wait(&mpi_requests_grid_z,MPI_STATUS_IGNORE);
-    }
-    getUBrickBuf(usrc, buf_len);
-    if(buf_len > 0) {
-	    MPI_Wait(&mpi_requests_grid_u,MPI_STATUS_IGNORE);
-    }
 
+    if (differentiation_flag == 1) {
+      MPI_Wait(&mpi_requests_grid_u,MPI_STATUS_IGNORE);
+    }
+    else{
+      MPI_Wait(&mpi_requests_grid_x,MPI_STATUS_IGNORE);
+      MPI_Wait(&mpi_requests_grid_y,MPI_STATUS_IGNORE);
+      MPI_Wait(&mpi_requests_grid_z,MPI_STATUS_IGNORE);
+    }
   }
 
 };   // class PPPM_RK
