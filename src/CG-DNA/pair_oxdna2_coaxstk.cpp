@@ -615,6 +615,7 @@ void PairOxdna2Coaxstk::coeff(int narg, char **arg)
   } else {
     if (comm->me == 0) { // read values from potential file
       PotentialFileReader reader(lmp, arg[2], "oxdna potential", " (coaxstk)");
+      reader.set_bufsize(65336);
       char * line;
       std::string iloc, jloc, potential_name;
 
