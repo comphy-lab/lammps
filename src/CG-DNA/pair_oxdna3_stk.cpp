@@ -285,33 +285,33 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
       jmod4 = j%4;
       if (jmod4 == 0) jmod4 = 4;
 
-      theta_st4_0[i][j] = theta_st4_0_one;
-
-      a_st5[i][j] = a_st5_one;
-      theta_st5_0[i][j] = theta_st5_0_one;
-      dtheta_st5_ast[i][j] = dtheta_st5_ast_one;
-      b_st5[i][j] = b_st5_one;
-      dtheta_st5_c[i][j] = dtheta_st5_c_one;
-
-      a_st6[i][j] = a_st6_one;
-      theta_st6_0[i][j] = theta_st6_0_one;
-      dtheta_st6_ast[i][j] = dtheta_st6_ast_one;
-      b_st6[i][j] = b_st6_one;
-      dtheta_st6_c[i][j] = dtheta_st6_c_one;
-
-      a_st1[i][j] = a_st1_one;
-      cosphi_st1_ast[i][j] = cosphi_st1_ast_one;
-      b_st1[i][j] = b_st1_one;
-      cosphi_st1_c[i][j] = cosphi_st1_c_one;
-
-      a_st2[i][j] = a_st2_one;
-      cosphi_st2_ast[i][j] = cosphi_st2_ast_one;
-      b_st2[i][j] = b_st2_one;
-      cosphi_st2_c[i][j] = cosphi_st2_c_one;
-
       for (int k = nlo; k <= nhi; k++) {
         kmod4 = k%4;
         if (kmod4 == 0) kmod4 = 4;
+
+        theta_st4_0[j][k] = theta_st4_0_one;
+
+        a_st5[j][k] = a_st5_one;
+        theta_st5_0[j][k] = theta_st5_0_one;
+        dtheta_st5_ast[j][k] = dtheta_st5_ast_one;
+        b_st5[j][k] = b_st5_one;
+        dtheta_st5_c[j][k] = dtheta_st5_c_one;
+
+        a_st6[j][k] = a_st6_one;
+        theta_st6_0[j][k] = theta_st6_0_one;
+        dtheta_st6_ast[j][k] = dtheta_st6_ast_one;
+        b_st6[j][k] = b_st6_one;
+        dtheta_st6_c[j][k] = dtheta_st6_c_one;
+
+        a_st1[j][k] = a_st1_one;
+        cosphi_st1_ast[j][k] = cosphi_st1_ast_one;
+        b_st1[j][k] = b_st1_one;
+        cosphi_st1_c[j][k] = cosphi_st1_c_one;
+
+        a_st2[j][k] = a_st2_one;
+        cosphi_st2_ast[j][k] = cosphi_st2_ast_one;
+        b_st2[j][k] = b_st2_one;
+        cosphi_st2_c[j][k] = cosphi_st2_c_one;
 
         epsilon_st[j][k] = epsilon_st_one;
         if (seqdepflag) epsilon_st[j][k] *= eta_st[jmod4-1][kmod4-1];
