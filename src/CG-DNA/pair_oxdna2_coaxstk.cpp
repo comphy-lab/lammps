@@ -19,7 +19,6 @@
 
 #include "atom.h"
 #include "comm.h"
-#include "constants_oxdna.h"
 #include "error.h"
 #include "force.h"
 #include "math_const.h"
@@ -27,6 +26,7 @@
 #include "memory.h"
 #include "mf_oxdna.h"
 #include "neigh_list.h"
+#include "nucleotide_oxdna.h"
 #include "potential_file_reader.h"
 
 #include <cmath>
@@ -95,9 +95,30 @@ PairOxdna2Coaxstk::~PairOxdna2Coaxstk()
   }
 }
 
+/* -----------------------------------------------------------------------
+    compute vector COM-sugar-phosphate backbone interaction site
+    uses oxDNA1 backbone site
+-------------------------------------------------------------------------- */
+inline void PairOxdna2Coaxstk::compute_backbone_site(double e1[3], double /*e2*/[3],
+  double /*e3*/[3], double rbk[3]) const
+{
+  NucleotideOxdna1 oxdna1;
+  oxdna1.backbone_site(e1, NULL, NULL, rbk);
+}
+
 /* ----------------------------------------------------------------------
-   compute function for oxDNA pair interactions
-   st=stacking site
+    compute vector COM-stacking interaction site in oxDNA2
+    uses oxDNA1 stacking site
+------------------------------------------------------------------------- */
+inline void PairOxdna2Coaxstk::compute_stacking_site(double e1[3], double /*e2*/[3],
+    double /*e3*/[3], double rstk[3]) const
+{
+  NucleotideOxdna1 oxdna1;
+  oxdna1.stacking_site(e1, NULL, NULL, rstk);
+}
+
+/* ----------------------------------------------------------------------
+   compute function for oxDNA2 pair interactions
 ------------------------------------------------------------------------- */
 
 void PairOxdna2Coaxstk::compute(int eflag, int vflag)
@@ -114,16 +135,13 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
   double theta6,theta6p,t6dir[3],cost6;
   double cosphi3;
 
-  // distances COM-backbone site, COM-stacking site
-  double dx_cbk_oxdna1 = ConstantsOxdna::get_dx_cbk_oxdna1();
-  double dx_cstk_oxdna1 = ConstantsOxdna::get_dx_cstk_oxdna1();
   // vectors COM-backbone site, COM-stacking site in lab frame
   double ra_cbk[3],ra_cstk[3];
   double rb_cbk[3],rb_cstk[3];
 
   // Cartesian unit vectors in lab frame
-  double ax[3],az[3];
-  double bx[3],bz[3];
+  double ax[3],ay[3],az[3];
+  double bx[3],by[3],bz[3];
 
   double **x = atom->x;
   double **f = atom->f;
@@ -165,14 +183,10 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
     ax[2] = nx_xtrct[a][2];
 
     // vector COM a - stacking site a
-    ra_cstk[0] = dx_cstk_oxdna1*ax[0];
-    ra_cstk[1] = dx_cstk_oxdna1*ax[1];
-    ra_cstk[2] = dx_cstk_oxdna1*ax[2];
+    compute_stacking_site(ax,ay,az,ra_cstk);
 
     // vector COM a - backbone site a
-    ra_cbk[0] = dx_cbk_oxdna1*ax[0];
-    ra_cbk[1] = dx_cbk_oxdna1*ax[1];
-    ra_cbk[2] = dx_cbk_oxdna1*ax[2];
+    compute_backbone_site(ax,ay,az,ra_cbk);
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -190,9 +204,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       bx[2] = nx_xtrct[b][2];
 
       // vector COM b - stacking site b
-      rb_cstk[0] = dx_cstk_oxdna1*bx[0];
-      rb_cstk[1] = dx_cstk_oxdna1*bx[1];
-      rb_cstk[2] = dx_cstk_oxdna1*bx[2];
+      compute_stacking_site(bx,by,bz,rb_cstk);
 
       // vector stacking site b to a
       delr_stkstk[0] = x[a][0] + ra_cstk[0] - x[b][0] - rb_cstk[0];
@@ -208,9 +220,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       delr_stkstk_norm[2] = delr_stkstk[2] * rinv_stkstk;
 
       // vector COM b - backbone site b
-      rb_cbk[0] = dx_cbk_oxdna1*bx[0];
-      rb_cbk[1] = dx_cbk_oxdna1*bx[1];
-      rb_cbk[2] = dx_cbk_oxdna1*bx[2];
+      compute_backbone_site(bx,by,bz,rb_cbk);
 
       // vector backbone site b to a
       delr_bkbk[0] = (x[a][0] + ra_cbk[0] - x[b][0] - rb_cbk[0]);
