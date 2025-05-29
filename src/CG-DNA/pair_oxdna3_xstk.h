@@ -28,6 +28,7 @@ class PairOxdna3Xstk : public Pair {
  public:
   PairOxdna3Xstk(class LAMMPS *);
   ~PairOxdna3Xstk() override;
+  void compute_base_site(int, double *, double *, double *, double *) const;
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
@@ -50,15 +51,10 @@ class PairOxdna3Xstk : public Pair {
   double **b_xst2, **dtheta_xst2_c;
   double **a_xst3, **theta_xst3_0, **dtheta_xst3_ast;
   double **b_xst3, **dtheta_xst3_c;
-
-  double **a_xst4, **theta_xst4_0, **dtheta_xst4_ast;
-  double **b_xst4, **dtheta_xst4_c;
-
   double ****a_xst4_33, ****theta_xst4_0_33, ****dtheta_xst4_ast_33;
   double ****b_xst4_33, ****dtheta_xst4_c_33;
   double ****a_xst4_55, ****theta_xst4_0_55, ****dtheta_xst4_ast_55;
   double ****b_xst4_55, ****dtheta_xst4_c_55;
-
   double **a_xst7, **theta_xst7_0, **dtheta_xst7_ast;
   double **b_xst7, **dtheta_xst7_c;
   double **a_xst8, **theta_xst8_0, **dtheta_xst8_ast;
