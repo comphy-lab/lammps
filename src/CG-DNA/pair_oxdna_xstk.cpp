@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna_xstk.h"
+#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
@@ -104,6 +105,17 @@ PairOxdnaXstk::~PairOxdnaXstk()
   }
 }
 
+/* ---------------------------------------------------------------------
+    compute vector COM-base site in oxDNA/oxDNA2
+    identical templates for A=1, C=2, G=3, T=0
+------------------------------------------------------------------------ */
+inline void PairOxdnaXstk::compute_base_site(int /*type*/, double e1[3],
+  double /*e2*/[3], double /*e3*/[3], double rbs[3]) const
+{
+  NucleotideOxdna1 oxdna1;
+  oxdna1.base_site<0>(e1, NULL, NULL, rbs);
+}
+
 /* ----------------------------------------------------------------------
    compute function for oxDNA pair interactions
    hb=hydrogen bonding site
@@ -128,8 +140,8 @@ void PairOxdnaXstk::compute(int eflag, int vflag)
   // vectors COM-h-bonding site in lab frame
   double ra_cbs[3],rb_cbs[3];
   // Cartesian unit vectors in lab frame
-  double ax[3],az[3];
-  double bx[3],bz[3];
+  double ax[3],ay[3],az[3];
+  double bx[3],by[3],bz[3];
 
   double **x = atom->x;
   double **f = atom->f;
@@ -170,11 +182,9 @@ void PairOxdnaXstk::compute(int eflag, int vflag)
     ax[0] = nx_xtrct[a][0];
     ax[1] = nx_xtrct[a][1];
     ax[2] = nx_xtrct[a][2];
-    // a(y/z) not needed here as oxDNA(1) co-linear
 
-    ra_cbs[0] = dx_cbs_oxdna1*ax[0];
-    ra_cbs[1] = dx_cbs_oxdna1*ax[1];
-    ra_cbs[2] = dx_cbs_oxdna1*ax[2];
+    // vector COM - base site a
+    compute_base_site(atype%4,ax,ay,az,ra_cbs);
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -190,11 +200,9 @@ void PairOxdnaXstk::compute(int eflag, int vflag)
       bx[0] = nx_xtrct[b][0];
       bx[1] = nx_xtrct[b][1];
       bx[2] = nx_xtrct[b][2];
-      // b(y/z) not needed here as oxDNA(1) co-linear
 
-      rb_cbs[0] = dx_cbs_oxdna1*bx[0];
-      rb_cbs[1] = dx_cbs_oxdna1*bx[1];
-      rb_cbs[2] = dx_cbs_oxdna1*bx[2];
+      // vector COM - base site b
+      compute_base_site(btype%4,bx,by,bz,rb_cbs);
 
       // vector h-bonding site b to a
       delr_bsbs[0] = x[a][0] + ra_cbs[0] - x[b][0] - rb_cbs[0];
