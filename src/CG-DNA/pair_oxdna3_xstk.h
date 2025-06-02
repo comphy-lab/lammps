@@ -55,9 +55,9 @@ class PairOxdna3Xstk : public Pair {
   double ****b_xst4_33, ****dtheta_xst4_c_33;
   double ****a_xst4_55, ****theta_xst4_0_55, ****dtheta_xst4_ast_55;
   double ****b_xst4_55, ****dtheta_xst4_c_55;
-  double **a_xst7, **theta_xst7_0, **dtheta_xst7_ast;
+  double **a_xst7, **theta_xst7_0_33, **theta_xst7_0_55, **dtheta_xst7_ast;
   double **b_xst7, **dtheta_xst7_c;
-  double **a_xst8, **theta_xst8_0, **dtheta_xst8_ast;
+  double **a_xst8, **theta_xst8_0_33, **theta_xst8_0_55, **dtheta_xst8_ast;
   double **b_xst8, **dtheta_xst8_c;
   double **nx_xtrct, **ny_xtrct, **nz_xtrct;    // per-atom arrays for local unit vectors
 

@@ -98,13 +98,15 @@ PairOxdna3Xstk::~PairOxdna3Xstk()
     memory->destroy(dtheta_xst4_c_55);
 
     memory->destroy(a_xst7);
-    memory->destroy(theta_xst7_0);
+    memory->destroy(theta_xst7_0_33);
+    memory->destroy(theta_xst7_0_55);
     memory->destroy(dtheta_xst7_ast);
     memory->destroy(b_xst7);
     memory->destroy(dtheta_xst7_c);
 
     memory->destroy(a_xst8);
-    memory->destroy(theta_xst8_0);
+    memory->destroy(theta_xst8_0_33);
+    memory->destroy(theta_xst8_0_55);
     memory->destroy(dtheta_xst8_ast);
     memory->destroy(b_xst8);
     memory->destroy(dtheta_xst8_c);
@@ -152,8 +154,8 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
   double theta2,t2dir[3],cost2;
   double theta3,t3dir[3],cost3;
   double theta4,t4dir[3],cost4;
-  double theta7,theta7p,t7dir[3],cost7;
-  double theta8,theta8p,t8dir[3],cost8;
+  double theta7,t7dir[3],cost7;
+  double theta8,t8dir[3],cost8;
 
   // vectors COM-h-bonding site in lab frame
   double ra_cbs[3],rb_cbs[3];
@@ -177,8 +179,9 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
   int a,b,ia,ib,anum,bnum;
   int a3ptype,atype,a5ptype,b3ptype,btype,b5ptype; 
 
-  double f2,f4t1,f4t2,f4t3,f4t4_33,f4t4_55,f4t7,f4t8;
-  double df2,df4t1,df4t2,df4t3,df4t4_33,df4t4_55,df4t7,df4t8,rsint;
+  double f2,f4t1,f4t2,f4t3,f4t4_33,f4t4_55,f4t7_33,f4t7_55,f4t8_33,f4t8_55;
+  double df2,df4t1,df4t2,df4t3,df4t4_33,df4t4_55,df4t7_33,df4t7_55,df4t8_33,df4t8_55;
+  double rsint;
 
   evdwl = 0.0;
   ev_init(eflag,vflag);
@@ -311,50 +314,6 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
       if (cost4 < -1.0) cost4 = -1.0;
       theta4 = acos(cost4);
 
-/*
-      if ((atom->tag[a] == id3p[b]) && (atom->tag[b] == id5p[a])) { // a -> b is 3' -> 5'
-
-        // determine type of 3'-partner of a and 5'-partner of b
-        if (id3p[a] != -1) {
-          _3ptype = type[atom->map(id3p[a])];
-        }
-        else _3ptype = 0;
-
-        if (id5p[b] != -1) {
-          _5ptype = type[atom->map(id5p[b])];
-        }
-        else _5ptype = 0;
-
-        if (rsq_bsbs < cut4sq_bsbs_c[_3ptype][atype][btype][_5ptype]) {
-          evdwl = F3(rsq_bsbs,cut4sq_bsbs_ast[_3ptype][atype][btype][_5ptype],cut4_bsbs_c[_3ptype][atype][btype][_5ptype],
-                          lj14_bsbs[_3ptype][atype][btype][_5ptype],lj24_bsbs[_3ptype][atype][btype][_5ptype],
-                          epsilon_bsbs[atype][btype],b4_bsbs[_3ptype][atype][btype][_5ptype],fpair);
-        }
-
-      }
-      // bond-topology: a-b nearest-neighbors on same strand, arguments depends on tetramer
-      else if ((atom->tag[a] == id5p[b]) && (atom->tag[b] == id3p[a])) { // b -> a is 3' -> 5'
-
-        // determine type of 3'-partner of b and 5'-partner of a
-        if (id3p[b] != -1) {
-          _3ptype = type[atom->map(id3p[b])];
-        }
-        else _3ptype = 0;
-
-        if (id5p[a] != -1) {
-          _5ptype = type[atom->map(id5p[a])];
-        }
-        else _5ptype = 0;
-
-        if (rsq_bsbs < cut4sq_bsbs_c[_3ptype][btype][atype][_5ptype]) {
-          evdwl = F3(rsq_bsbs,cut4sq_bsbs_ast[_3ptype][btype][atype][_5ptype],cut4_bsbs_c[_3ptype][btype][atype][_5ptype],
-                          lj14_bsbs[_3ptype][btype][atype][_5ptype],lj24_bsbs[_3ptype][btype][atype][_5ptype],
-                          epsilon_bsbs[btype][atype],b4_bsbs[_3ptype][btype][atype][_5ptype],fpair);
-        }
-      }
-*/
-
-
       f4t4_33 = F4(theta4, a_xst4_33[a3ptype][atype][btype][b3ptype], theta_xst4_0_33[a3ptype][atype][btype][b3ptype], 
                   dtheta_xst4_ast_33[a3ptype][atype][btype][b3ptype], b_xst4_33[a3ptype][atype][btype][b3ptype],
                   dtheta_xst4_c_33[a3ptype][atype][btype][b3ptype]);
@@ -370,38 +329,26 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
       if (cost7 >  1.0) cost7 =  1.0;
       if (cost7 < -1.0) cost7 = -1.0;
       theta7 = acos(cost7);
-      theta7p = MY_PI - theta7;
 
-      f4t7 = F4(theta7, a_xst7[atype][btype], theta_xst7_0[atype][btype], dtheta_xst7_ast[atype][btype],
-             b_xst7[atype][btype], dtheta_xst7_c[atype][btype]) +
-             F4(theta7p, a_xst7[atype][btype], theta_xst7_0[atype][btype], dtheta_xst7_ast[atype][btype],
+      f4t7_33 = F4(theta7, a_xst7[atype][btype], theta_xst7_0_33[atype][btype], dtheta_xst7_ast[atype][btype],
+             b_xst7[atype][btype], dtheta_xst7_c[atype][btype]);
+      f4t7_55 = F4(theta7, a_xst7[atype][btype], theta_xst7_0_55[atype][btype], dtheta_xst7_ast[atype][btype],
              b_xst7[atype][btype], dtheta_xst7_c[atype][btype]);
 
       // early rejection criterium
-      if (f4t7) {
+      if (f4t7_33 || f4t7_55) {
 
       cost8 = MathExtra::dot3(bz,delr_bsbs_norm);
       if (cost8 >  1.0) cost8 =  1.0;
       if (cost8 < -1.0) cost8 = -1.0;
       theta8 = acos(cost8);
-      theta8p = MY_PI -theta8;
 
-      f4t8 = F4(theta8, a_xst8[atype][btype], theta_xst8_0[atype][btype], dtheta_xst8_ast[atype][btype],
-             b_xst8[atype][btype], dtheta_xst8_c[atype][btype]) +
-             F4(theta8p, a_xst8[atype][btype], theta_xst8_0[atype][btype], dtheta_xst8_ast[atype][btype],
+      f4t8_33 = F4(theta8, a_xst8[atype][btype], theta_xst8_0_33[atype][btype], dtheta_xst8_ast[atype][btype],
+             b_xst8[atype][btype], dtheta_xst8_c[atype][btype]);
+      f4t8_55 = F4(theta8, a_xst8[atype][btype], theta_xst8_0_55[atype][btype], dtheta_xst8_ast[atype][btype],
              b_xst8[atype][btype], dtheta_xst8_c[atype][btype]);
 
-
-      evdwl = f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 + f4t4_55) * f4t7 * f4t8 * factor_lj;
-
-//printf("33 %d %d  %le %le %le %le %le %le %le   %le\n", atom->tag[a], atom->tag[b], f2, f4t1, f4t2 , f4t3 , f4t4_33 , f4t7 , f4t8, f2 * f4t1 * f4t2 * f4t3 * f4t4_33 * f4t7 * f4t8);
-//printf("55 %d %d  %le %le %le %le %le %le %le   %le\n", atom->tag[a], atom->tag[b], f2, f4t1, f4t2 , f4t3 , f4t4_55 , f4t7 , f4t8, f2 * f4t1 * f4t2 * f4t3 * f4t4_33 * f4t7 * f4t8);
-//printf("%d %d  %le %le %le %le %le %le %le %le %le %le %le\n", atom->tag[a], atom->tag[b], r_bsbs, k_xst[atype][btype], cut_xst_0[atype][btype], cut_xst_lc[atype][btype], cut_xst_hc[atype][btype], cut_xst_lo[atype][btype], cut_xst_hi[atype][btype], b_xst_lo[atype][btype], b_xst_hi[atype][btype], cut_xst_c[atype][btype],f2);
-printf("33 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a], atom->tag[b], a3ptype, atype, btype ,b3ptype, cost4, a_xst4_33[a3ptype][atype][btype][b3ptype], theta_xst4_0_33[a3ptype][atype][btype][b3ptype], dtheta_xst4_ast_33[a3ptype][atype][btype][b3ptype], b_xst4_33[a3ptype][atype][btype][b3ptype], dtheta_xst4_c_33[a3ptype][atype][btype][b3ptype], f4t4_33);
-printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a], atom->tag[b], a5ptype, atype, btype, b5ptype, cost4, a_xst4_55[a5ptype][atype][btype][b5ptype], theta_xst4_0_55[a5ptype][atype][btype][b5ptype], dtheta_xst4_ast_55[a5ptype][atype][btype][b5ptype], b_xst4_55[a5ptype][atype][btype][b5ptype], dtheta_xst4_c_55[a5ptype][atype][btype][b5ptype], f4t4_55);
-//printf("%d %d  %le  %le %le %le %le %le  %le\n", atom->tag[a], atom->tag[b], cost7, a_xst7[atype][btype], theta_xst7_0[atype][btype], dtheta_xst7_ast[atype][btype], b_xst7[atype][btype], dtheta_xst7_c[atype][btype], f4t7);
-//printf("%d %d  %le  %le %le %le %le %le  %le\n", atom->tag[a], atom->tag[b], cost8, a_xst8[atype][btype], theta_xst8_0[atype][btype], dtheta_xst8_ast[atype][btype], b_xst8[atype][btype], dtheta_xst8_c[atype][btype], f4t8);
-//printf("%d %d  %le  %le %le %le %le %le  %le\n", atom->tag[a], atom->tag[b], cost3, a_xst3[atype][btype], theta_xst3_0[atype][btype], dtheta_xst3_ast[atype][btype], b_xst3[atype][btype], dtheta_xst3_c[atype][btype], f4t3);
+      evdwl = f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 * f4t7_33 * f4t8_33 + f4t4_55 * f4t7_55 * f4t8_55) * factor_lj;
 
       // early rejection criterium
       if (evdwl) {
@@ -429,15 +376,15 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
                 dtheta_xst4_c_55[a5ptype][atype][btype][b5ptype])*rsint;
 
       rsint = 1.0/sin(theta7);
-      df4t7 = DF4(theta7, a_xst7[atype][btype], theta_xst7_0[atype][btype], dtheta_xst7_ast[atype][btype],
-              b_xst7[atype][btype], dtheta_xst7_c[atype][btype])*rsint -
-              DF4(theta7p, a_xst7[atype][btype], theta_xst7_0[atype][btype], dtheta_xst7_ast[atype][btype],
+      df4t7_33 = DF4(theta7, a_xst7[atype][btype], theta_xst7_0_33[atype][btype], dtheta_xst7_ast[atype][btype],
+              b_xst7[atype][btype], dtheta_xst7_c[atype][btype])*rsint;
+      df4t7_55 = DF4(theta7, a_xst7[atype][btype], theta_xst7_0_55[atype][btype], dtheta_xst7_ast[atype][btype],
               b_xst7[atype][btype], dtheta_xst7_c[atype][btype])*rsint;
 
       rsint = 1.0/sin(theta8);
-      df4t8 = DF4(theta8, a_xst8[atype][btype], theta_xst8_0[atype][btype], dtheta_xst8_ast[atype][btype],
-              b_xst8[atype][btype], dtheta_xst8_c[atype][btype])*rsint -
-              DF4(theta8p, a_xst8[atype][btype], theta_xst8_0[atype][btype], dtheta_xst8_ast[atype][btype],
+      df4t8_33 = DF4(theta8, a_xst8[atype][btype], theta_xst8_0_33[atype][btype], dtheta_xst8_ast[atype][btype],
+              b_xst8[atype][btype], dtheta_xst8_c[atype][btype])*rsint;
+      df4t8_55 = DF4(theta8, a_xst8[atype][btype], theta_xst8_0_55[atype][btype], dtheta_xst8_ast[atype][btype],
               b_xst8[atype][btype], dtheta_xst8_c[atype][btype])*rsint;
 
       // force, torque and virial contribution for forces between h-bonding sites
@@ -455,7 +402,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       deltb[2] = 0.0;
 
       // radial force
-      finc  = -df2 * f4t1 * f4t2 * f4t3 * (f4t4_33 + f4t4_55) * f4t7 * f4t8 * rinv_bsbs *factor_lj;
+      finc  = -df2 * f4t1 * f4t2 * f4t3 * (f4t4_33 * f4t7_33 * f4t8_33 + f4t4_55 * f4t7_55 * f4t8_55) * rinv_bsbs *factor_lj;
 
       delf[0] += delr_bsbs[0] * finc;
       delf[1] += delr_bsbs[1] * finc;
@@ -464,7 +411,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta2 force
       if (theta2) {
 
-        finc  = -f2 * f4t1 * df4t2 * f4t3 * (f4t4_33 + f4t4_55) * f4t7 * f4t8 * rinv_bsbs * factor_lj;
+        finc  = -f2 * f4t1 * df4t2 * f4t3 * (f4t4_33 * f4t7_33 * f4t8_33 + f4t4_55 * f4t7_55 * f4t8_55) * rinv_bsbs * factor_lj;
 
         delf[0] += (delr_bsbs_norm[0]*cost2 + ax[0]) * finc;
         delf[1] += (delr_bsbs_norm[1]*cost2 + ax[1]) * finc;
@@ -475,7 +422,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta3 force
       if (theta3) {
 
-        finc  = -f2 * f4t1 * f4t2 * df4t3 * (f4t4_33 + f4t4_55) * f4t7 * f4t8 * rinv_bsbs * factor_lj;
+        finc  = -f2 * f4t1 * f4t2 * df4t3 * (f4t4_33 * f4t7_33 * f4t8_33 + f4t4_55 * f4t7_55 * f4t8_55) * rinv_bsbs * factor_lj;
 
         delf[0] += (delr_bsbs_norm[0]*cost3 - bx[0]) * finc;
         delf[1] += (delr_bsbs_norm[1]*cost3 - bx[1]) * finc;
@@ -486,7 +433,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta7 force
       if (theta7) {
 
-        finc  = -f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 + f4t4_55) * df4t7 * f4t8 * rinv_bsbs * factor_lj;
+        finc  = -f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 * df4t7_33 * f4t8_33 + f4t4_55 * df4t7_55 * f4t8_55) * rinv_bsbs * factor_lj;
 
         delf[0] += (delr_bsbs_norm[0]*cost7 + az[0]) * finc;
         delf[1] += (delr_bsbs_norm[1]*cost7 + az[1]) * finc;
@@ -497,7 +444,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta8 force
       if (theta8) {
 
-        finc  = -f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 + f4t4_55) * f4t7 * df4t8 * rinv_bsbs * factor_lj;
+        finc  = -f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 * f4t7_33 * df4t8_33 + f4t4_55 * f4t7_55 * df4t8_55) * rinv_bsbs * factor_lj;
 
         delf[0] += (delr_bsbs_norm[0]*cost8 - bz[0]) * finc;
         delf[1] += (delr_bsbs_norm[1]*cost8 - bz[1]) * finc;
@@ -551,7 +498,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta1 torque
       if (theta1) {
 
-        tpair = -f2 * df4t1 * f4t2 * f4t3 * (f4t4_33 + f4t4_55) * f4t7 * f4t8 * factor_lj;
+        tpair = -f2 * df4t1 * f4t2 * f4t3 * (f4t4_33 * f4t7_33 * f4t8_33 + f4t4_55 * f4t7_55 * f4t8_55) * factor_lj;
         MathExtra::cross3(ax,bx,t1dir);
 
         delta[0] += t1dir[0]*tpair;
@@ -567,7 +514,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta2 torque
       if (theta2) {
 
-        tpair = -f2 * f4t1 * df4t2 * f4t3 * (f4t4_33 + f4t4_55) * f4t7 * f4t8 * factor_lj;
+        tpair = -f2 * f4t1 * df4t2 * f4t3 * (f4t4_33 * f4t7_33 * f4t8_33 + f4t4_55 * f4t7_55 * f4t8_55) * factor_lj;
         MathExtra::cross3(ax,delr_bsbs_norm,t2dir);
 
         delta[0] += t2dir[0]*tpair;
@@ -579,7 +526,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta3 torque
       if (theta3) {
 
-        tpair = -f2 * f4t1 * f4t2 * df4t3 * (f4t4_33 + f4t4_55) * f4t7 * f4t8 * factor_lj;
+        tpair = -f2 * f4t1 * f4t2 * df4t3 * (f4t4_33 * f4t7_33 * f4t8_33 + f4t4_55 * f4t7_55 * f4t8_55) * factor_lj;
         MathExtra::cross3(bx,delr_bsbs_norm,t3dir);
 
         deltb[0] += t3dir[0]*tpair;
@@ -591,7 +538,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta4 torque
       if (theta4) {
 
-        tpair = -f2 * f4t1 * f4t2 * f4t3 * (df4t4_33 + df4t4_55) * f4t7 * f4t8 * factor_lj;
+        tpair = -f2 * f4t1 * f4t2 * f4t3 * (df4t4_33 * f4t7_33 * f4t8_33 + df4t4_55 * f4t7_55 * f4t8_55) * factor_lj;
         MathExtra::cross3(bz,az,t4dir);
 
         delta[0] += t4dir[0]*tpair;
@@ -607,7 +554,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta7 torque
       if (theta7) {
 
-        tpair = -f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 + f4t4_55) * df4t7 * f4t8 * factor_lj;
+        tpair = -f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 * df4t7_33 * f4t8_33 + f4t4_55 * df4t7_55 * f4t8_55) * factor_lj;
         MathExtra::cross3(az,delr_bsbs_norm,t7dir);
 
         delta[0] += t7dir[0]*tpair;
@@ -619,7 +566,7 @@ printf("55 %d %d   %d %d %d %d   %le  %le %le %le %le %le   %le\n", atom->tag[a]
       // theta8 torque
       if (theta8) {
 
-        tpair = -f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 + f4t4_55) * f4t7 * df4t8 * factor_lj;
+        tpair = -f2 * f4t1 * f4t2 * f4t3 * (f4t4_33 * f4t7_33 * df4t8_33 + f4t4_55 * f4t7_55 * df4t8_55) * factor_lj;
         MathExtra::cross3(bz,delr_bsbs_norm,t8dir);
 
         deltb[0] += t8dir[0]*tpair;
@@ -715,13 +662,15 @@ void PairOxdna3Xstk::allocate()
   memory->create(dtheta_xst4_c_55,n+1,n+1,n+1,n+1,"pair:dtheta_xst4_c");
 
   memory->create(a_xst7,n+1,n+1,"pair:a_xst7");
-  memory->create(theta_xst7_0,n+1,n+1,"pair:theta_xst7_0");
+  memory->create(theta_xst7_0_33,n+1,n+1,"pair:theta_xst7_0_33");
+  memory->create(theta_xst7_0_55,n+1,n+1,"pair:theta_xst7_0_55");
   memory->create(dtheta_xst7_ast,n+1,n+1,"pair:dtheta_xst7_ast");
   memory->create(b_xst7,n+1,n+1,"pair:b_xst7");
   memory->create(dtheta_xst7_c,n+1,n+1,"pair:dtheta_xst7_c");
 
   memory->create(a_xst8,n+1,n+1,"pair:a_xst8");
-  memory->create(theta_xst8_0,n+1,n+1,"pair:theta_xst8_0");
+  memory->create(theta_xst8_0_33,n+1,n+1,"pair:theta_xst8_0_33");
+  memory->create(theta_xst8_0_55,n+1,n+1,"pair:theta_xst8_0_55");
   memory->create(dtheta_xst8_ast,n+1,n+1,"pair:dtheta_xst8_ast");
   memory->create(b_xst8,n+1,n+1,"pair:b_xst8");
   memory->create(dtheta_xst8_c,n+1,n+1,"pair:dtheta_xst8_c");
@@ -772,10 +721,10 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
   double a_xst3_one, theta_xst3_0_one, dtheta_xst3_ast_one;
   double b_xst3_one, dtheta_xst3_c_one;
 
-  double a_xst7_one, theta_xst7_0_one, dtheta_xst7_ast_one;
+  double a_xst7_one, theta_xst7_0_33_one, theta_xst7_0_55_one, dtheta_xst7_ast_one;
   double b_xst7_one, dtheta_xst7_c_one;
 
-  double a_xst8_one, theta_xst8_0_one, dtheta_xst8_ast_one;
+  double a_xst8_one, theta_xst8_0_33_one, theta_xst8_0_55_one, dtheta_xst8_ast_one;
   double b_xst8_one, dtheta_xst8_c_one;
 
   a_xst4_33[0][0][0][0] = 0.0;
@@ -879,11 +828,13 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
           }
 
           a_xst7_one = values.next_double();
-          theta_xst7_0_one = values.next_double();
+          theta_xst7_0_33_one = values.next_double();
+          theta_xst7_0_55_one = values.next_double();
           dtheta_xst7_ast_one = values.next_double();
 
           a_xst8_one = values.next_double();
-          theta_xst8_0_one = values.next_double();
+          theta_xst8_0_33_one = values.next_double();
+          theta_xst8_0_55_one = values.next_double();
           dtheta_xst8_ast_one = values.next_double();
 
           break;
@@ -904,13 +855,6 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
   a_xst4_55[0][0][0][0] /= pow(nhi,4);
   theta_xst4_0_55[0][0][0][0] /= pow(nhi,4);
   dtheta_xst4_ast_55[0][0][0][0] /= pow(nhi,4);
-
-printf("MEAN  a_xst4_33           %le\n", a_xst4_33[0][0][0][0]);
-printf("MEAN  theta_xst4_0_33     %le\n", theta_xst4_0_33[0][0][0][0]);
-printf("MEAN  dtheta_xst4_ast_33  %le\n", dtheta_xst4_ast_33[0][0][0][0]);
-printf("MEAN  a_xst4_55           %le\n", a_xst4_55[0][0][0][0]);
-printf("MEAN  theta_xst4_0_55     %le\n", theta_xst4_0_55[0][0][0][0]);
-printf("MEAN  dtheta_xst4_ast_55  %le\n", dtheta_xst4_ast_55[0][0][0][0]);
 
   // assign sequence-averaged parameters to terminal bases j
   for (int j = 1; j <= nhi; j++) {
@@ -967,11 +911,13 @@ printf("MEAN  dtheta_xst4_ast_55  %le\n", dtheta_xst4_ast_55[0][0][0][0]);
   MPI_Bcast(&dtheta_xst4_ast_55[0][0][0][0], 625, MPI_DOUBLE, 0, world);
 
   MPI_Bcast(&a_xst7_one, 1, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&theta_xst7_0_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&theta_xst7_0_33_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&theta_xst7_0_55_one, 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&dtheta_xst7_ast_one, 1, MPI_DOUBLE, 0, world);
 
   MPI_Bcast(&a_xst8_one, 1, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&theta_xst8_0_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&theta_xst8_0_33_one, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&theta_xst8_0_55_one, 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&dtheta_xst8_ast_one, 1, MPI_DOUBLE, 0, world);
 
   // smoothing - determined through continuity and differentiability
@@ -1048,13 +994,15 @@ printf("MEAN  dtheta_xst4_ast_55  %le\n", dtheta_xst4_ast_55[0][0][0][0]);
         }
 
         a_xst7[j][k] = a_xst7_one;
-        theta_xst7_0[j][k] = theta_xst7_0_one;
+        theta_xst7_0_33[j][k] = theta_xst7_0_33_one;
+        theta_xst7_0_55[j][k] = theta_xst7_0_55_one;
         dtheta_xst7_ast[j][k] = dtheta_xst7_ast_one;
         b_xst7[j][k] = b_xst7_one;
         dtheta_xst7_c[j][k] = dtheta_xst7_c_one;
 
         a_xst8[j][k] = a_xst8_one;
-        theta_xst8_0[j][k] = theta_xst8_0_one;
+        theta_xst8_0_33[j][k] = theta_xst8_0_33_one;
+        theta_xst8_0_55[j][k] = theta_xst8_0_55_one;
         dtheta_xst8_ast[j][k] = dtheta_xst8_ast_one;
         b_xst8[j][k] = b_xst8_one;
         dtheta_xst8_c[j][k] = dtheta_xst8_c_one;
@@ -1125,13 +1073,15 @@ double PairOxdna3Xstk::init_one(int i, int j)
   dtheta_xst3_c[j][i] = dtheta_xst3_c[i][j];
 
   a_xst7[j][i] = a_xst7[i][j];
-  theta_xst7_0[j][i] = theta_xst7_0[i][j];
+  theta_xst7_0_33[j][i] = theta_xst7_0_33[i][j];
+  theta_xst7_0_55[j][i] = theta_xst7_0_55[i][j];
   dtheta_xst7_ast[j][i] = dtheta_xst7_ast[i][j];
   b_xst7[j][i] = b_xst7[i][j];
   dtheta_xst7_c[j][i] = dtheta_xst7_c[i][j];
 
   a_xst8[j][i] = a_xst8[i][j];
-  theta_xst8_0[j][i] = theta_xst8_0[i][j];
+  theta_xst8_0_33[j][i] = theta_xst8_0_33[i][j];
+  theta_xst8_0_55[j][i] = theta_xst8_0_55[i][j];
   dtheta_xst8_ast[j][i] = dtheta_xst8_ast[i][j];
   b_xst8[j][i] = b_xst8[i][j];
   dtheta_xst8_c[j][i] = dtheta_xst8_c[i][j];
@@ -1187,13 +1137,15 @@ void PairOxdna3Xstk::write_restart(FILE *fp)
         fwrite(&dtheta_xst3_c[i][j],sizeof(double),1,fp);
 
         fwrite(&a_xst7[i][j],sizeof(double),1,fp);
-        fwrite(&theta_xst7_0[i][j],sizeof(double),1,fp);
+        fwrite(&theta_xst7_0_33[i][j],sizeof(double),1,fp);
+        fwrite(&theta_xst7_0_55[i][j],sizeof(double),1,fp);
         fwrite(&dtheta_xst7_ast[i][j],sizeof(double),1,fp);
         fwrite(&b_xst7[i][j],sizeof(double),1,fp);
         fwrite(&dtheta_xst7_c[i][j],sizeof(double),1,fp);
 
         fwrite(&a_xst8[i][j],sizeof(double),1,fp);
-        fwrite(&theta_xst8_0[i][j],sizeof(double),1,fp);
+        fwrite(&theta_xst8_0_33[i][j],sizeof(double),1,fp);
+        fwrite(&theta_xst8_0_55[i][j],sizeof(double),1,fp);
         fwrite(&dtheta_xst8_ast[i][j],sizeof(double),1,fp);
         fwrite(&b_xst8[i][j],sizeof(double),1,fp);
         fwrite(&dtheta_xst8_c[i][j],sizeof(double),1,fp);
@@ -1249,13 +1201,15 @@ void PairOxdna3Xstk::read_restart(FILE *fp)
           utils::sfread(FLERR,&dtheta_xst3_c[i][j],sizeof(double),1,fp,nullptr,error);
 
           utils::sfread(FLERR,&a_xst7[i][j],sizeof(double),1,fp,nullptr,error);
-          utils::sfread(FLERR,&theta_xst7_0[i][j],sizeof(double),1,fp,nullptr,error);
+          utils::sfread(FLERR,&theta_xst7_0_33[i][j],sizeof(double),1,fp,nullptr,error);
+          utils::sfread(FLERR,&theta_xst7_0_55[i][j],sizeof(double),1,fp,nullptr,error);
           utils::sfread(FLERR,&dtheta_xst7_ast[i][j],sizeof(double),1,fp,nullptr,error);
           utils::sfread(FLERR,&b_xst7[i][j],sizeof(double),1,fp,nullptr,error);
           utils::sfread(FLERR,&dtheta_xst7_c[i][j],sizeof(double),1,fp,nullptr,error);
 
           utils::sfread(FLERR,&a_xst8[i][j],sizeof(double),1,fp,nullptr,error);
-          utils::sfread(FLERR,&theta_xst8_0[i][j],sizeof(double),1,fp,nullptr,error);
+          utils::sfread(FLERR,&theta_xst8_0_33[i][j],sizeof(double),1,fp,nullptr,error);
+          utils::sfread(FLERR,&theta_xst8_0_55[i][j],sizeof(double),1,fp,nullptr,error);
           utils::sfread(FLERR,&dtheta_xst8_ast[i][j],sizeof(double),1,fp,nullptr,error);
           utils::sfread(FLERR,&b_xst8[i][j],sizeof(double),1,fp,nullptr,error);
           utils::sfread(FLERR,&dtheta_xst8_c[i][j],sizeof(double),1,fp,nullptr,error);
@@ -1291,13 +1245,15 @@ void PairOxdna3Xstk::read_restart(FILE *fp)
         MPI_Bcast(&dtheta_xst3_c[i][j],1,MPI_DOUBLE,0,world);
 
         MPI_Bcast(&a_xst7[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&theta_xst7_0[i][j],1,MPI_DOUBLE,0,world);
+        MPI_Bcast(&theta_xst7_0_33[i][j],1,MPI_DOUBLE,0,world);
+        MPI_Bcast(&theta_xst7_0_55[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&dtheta_xst7_ast[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&b_xst7[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&dtheta_xst7_c[i][j],1,MPI_DOUBLE,0,world);
 
         MPI_Bcast(&a_xst8[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&theta_xst8_0[i][j],1,MPI_DOUBLE,0,world);
+        MPI_Bcast(&theta_xst8_0_33[i][j],1,MPI_DOUBLE,0,world);
+        MPI_Bcast(&theta_xst8_0_55[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&dtheta_xst8_ast[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&b_xst8[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&dtheta_xst8_c[i][j],1,MPI_DOUBLE,0,world);
@@ -1369,13 +1325,15 @@ void *PairOxdna3Xstk::extract(const char *str, int &dim)
   if (strcmp(str,"dtheta_xst3_c") == 0) return (void *) dtheta_xst3_c;
 
   if (strcmp(str,"a_xst7") == 0) return (void *) a_xst7;
-  if (strcmp(str,"theta_xst7_0") == 0) return (void *) theta_xst7_0;
+  if (strcmp(str,"theta_xst7_0_33") == 0) return (void *) theta_xst7_0_33;
+  if (strcmp(str,"theta_xst7_0_55") == 0) return (void *) theta_xst7_0_55;
   if (strcmp(str,"dtheta_xst7_ast") == 0) return (void *) dtheta_xst7_ast;
   if (strcmp(str,"b_xst7") == 0) return (void *) b_xst7;
   if (strcmp(str,"dtheta_xst7_c") == 0) return (void *) dtheta_xst7_c;
 
   if (strcmp(str,"a_xst8") == 0) return (void *) a_xst8;
-  if (strcmp(str,"theta_xst8_0") == 0) return (void *) theta_xst8_0;
+  if (strcmp(str,"theta_xst8_0_33") == 0) return (void *) theta_xst8_0_33;
+  if (strcmp(str,"theta_xst8_0_55") == 0) return (void *) theta_xst8_0_55;
   if (strcmp(str,"dtheta_xst8_ast") == 0) return (void *) dtheta_xst8_ast;
   if (strcmp(str,"b_xst8") == 0) return (void *) b_xst8;
   if (strcmp(str,"dtheta_xst8_c") == 0) return (void *) dtheta_xst8_c;
