@@ -370,7 +370,6 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
       df4t4_33 = DF4(theta4, a_xst4_33[a3ptype][atype][btype][b3ptype], theta_xst4_0_33[a3ptype][atype][btype][b3ptype],
                 dtheta_xst4_ast_33[a3ptype][atype][btype][b3ptype], b_xst4_33[a3ptype][atype][btype][b3ptype],
                 dtheta_xst4_c_33[a3ptype][atype][btype][b3ptype])*rsint;
-
       df4t4_55 = DF4(theta4, a_xst4_55[a5ptype][atype][btype][b5ptype], theta_xst4_0_55[a5ptype][atype][btype][b5ptype],
                 dtheta_xst4_ast_55[a5ptype][atype][btype][b5ptype], b_xst4_55[a5ptype][atype][btype][b5ptype],
                 dtheta_xst4_c_55[a5ptype][atype][btype][b5ptype])*rsint;
