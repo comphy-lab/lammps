@@ -839,7 +839,7 @@ void FixSurfaceGlobal::pre_neighbor()
 
 void FixSurfaceGlobal::post_force(int vflag)
 {
-  int i, j, k, a, n, m, nconnect, ii, jj, inum, jnum, jflag, otherflag;
+  int i, j, k, a, n, m, nconnect, ii, jj, inum, jnum, jflag;
   int itype, jtype, n_contact_surfs, exposed_flag;
   double xtmp, ytmp, ztmp, radi, delx, dely, delz, meff;
   int *ilist, *jlist, *numneigh, **firstneigh;
@@ -923,6 +923,11 @@ void FixSurfaceGlobal::post_force(int vflag)
     radi = radius[i];
     itype = type[i];
 
+    model->xi = x[i];
+    model->radi = radius[i];
+    model->vi = v[i];
+    model->omegai = omega[i];
+
     // if I is part of rigid body, use body mass
     meff = rmass[i];
     if (fix_rigid && mass_rigid[i] > 0.0) meff = mass_rigid[i];
@@ -973,9 +978,9 @@ void FixSurfaceGlobal::post_force(int vflag)
         //   rsq = squared length of dr
 
         jflag = SurfExtra::
-          overlap_sphere_line(x[i],radius[i],
-                              points[lines[j].p1].x,points[lines[j].p2].x,
-                              contact,dr,rsq);
+          overlap_sphere_line(x[i], radius[i],
+                              points[lines[j].p1].x, points[lines[j].p2].x,
+                              contact, dr, rsq);
       } else {
 
         // check for overlap of sphere and triangle
@@ -988,11 +993,13 @@ void FixSurfaceGlobal::post_force(int vflag)
         //   rsq = squared length of dr
 
         jflag = SurfExtra::
-          overlap_sphere_tri(x[i],radius[i],
-                             points[tris[j].p1].x,points[tris[j].p2].x,
-                             points[tris[j].p3].x,tris[j].norm,
-                             contact,dr,rsq);
+          overlap_sphere_tri(x[i], radius[i],
+                             points[tris[j].p1].x, points[tris[j].p2].x,
+                             points[tris[j].p3].x, tris[j].norm,
+                             contact, dr, rsq);
       }
+
+      // unset non-touching neighbors
 
       if (!jflag) {
         if (use_history) {

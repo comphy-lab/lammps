@@ -195,14 +195,7 @@ class FixSurfaceGlobal : public FixSurface {
   Connect2d *connect2d;             // 2d connection info
   Connect3d *connect3d;             // 3d connection info
 
-  // struct for storing contact data
-
-  struct ContactSurf {
-    int index, neigh_index, type, flag, nside, norm_def, exposed;
-    double contact[3], dr[3], surf_norm[3], force_norm[3], overlap, dist, cor_int[3], cor_ext[3], smooth_ext;
-  };
-
-  ContactSurf *contact_surfs;
+  class ContactSurf *contact_surfs;
   int nmax_contact_surfs;
 
   // data for DumpImage

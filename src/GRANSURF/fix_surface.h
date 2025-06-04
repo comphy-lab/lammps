@@ -90,6 +90,12 @@ class FixSurface : public Fix {
     int *aflag_c3;        // ditto for corner 3
   };
 
+  // struct for storing contact data
+
+  struct ContactSurf {
+    int index, neigh_index, type, flag, nside, norm_def, exposed;
+    double contact[3], dr[3], surf_norm[3], force_norm[3], overlap, dist, cor_int[3], cor_ext[3], smooth_ext;
+  };
 
   FixSurface(class LAMMPS *, int, char **);
   ~FixSurface() override;

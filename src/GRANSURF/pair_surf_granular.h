@@ -22,6 +22,7 @@ PairStyle(surf/granular,PairSurfGranular)
 
 #include "pair_granular.h"
 #include "fix_surface_local.h"
+#include "fix_surface.h"
 
 namespace LAMMPS_NS {
 
@@ -56,6 +57,9 @@ class PairSurfGranular : public PairGranular {
   FixSurfaceLocal::Connect2d *connect2d;   // ptr to connectivity info
   FixSurfaceLocal::Connect3d *connect3d;   // ptr to connectivity info
   MyPoolChunk<int> *tcp;                   // allocator for connectivity info
+
+  class FixSurface::ContactSurf *contact_surfs;
+  int nmax_contact_surfs;
 
   // lines and tris
 

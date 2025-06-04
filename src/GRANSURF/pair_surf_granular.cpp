@@ -24,6 +24,7 @@
 #include "fix_dummy.h"
 #include "fix_neigh_history.h"
 #include "fix_surface_local.h"
+#include "fix_surface.h"
 #include "force.h"
 #include "math_extra.h"
 #include "memory.h"
@@ -33,12 +34,28 @@
 #include "surf_extra.h"
 #include "update.h"
 
+#include <algorithm>
+#include <map>
+#include <unordered_set>
+#include <vector>
+
 using namespace LAMMPS_NS;
 using namespace Granular_NS;
 using namespace MathExtra;
 using namespace SurfExtra;
 
 enum {NONE, LINE, TRI};
+enum{FLAT,FLATEDGE,CONCAVE,CONVEX};
+enum{SAME_SIDE,OPPOSITE_SIDE};
+enum{INTERNAL = 0, NONFLAT = 1, EXTERNAL = 2};
+
+static constexpr int DELTACONTACTS = 4;
+static constexpr double EPSILON = 1e-14;
+
+static inline int FLIPSIDE(int nside) {
+  if (nside == OPPOSITE_SIDE) return SAME_SIDE;
+  else return OPPOSITE_SIDE;
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -50,6 +67,8 @@ PairSurfGranular::PairSurfGranular(LAMMPS *lmp) : PairGranular(lmp)
   endpts = nullptr;
   cmax = 0;
   corners = nullptr;
+
+  contact_surfs = nullptr;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -58,25 +77,33 @@ PairSurfGranular::~PairSurfGranular()
 {
   memory->destroy(endpts);
   memory->destroy(corners);
+
+  memory->sfree(contact_surfs);
 }
 
 /* ---------------------------------------------------------------------- */
 
 void PairSurfGranular::compute(int eflag, int vflag)
 {
-  int i,j,k,ii,jj,inum,jnum,itype,jtype;
-  int isphere,itri,jflag,kflag,otherflag;
-  double xtmp,ytmp,ztmp,radi,delx,dely,delz;
-  double radsphere,rsq,radsum;
-  double factor_couple,factor_lj,mi,mj,meff;
-  double dr[3],contact[3],ds[3],vs[3];
-  double *endpt, *corner;
-  double *forces, *torquesi, *torquesj, dq;
+  int i, j, k, a, n, m, nconnect, ii, jj, inum, jnum, itype, jtype;
+  int isphere, itri, jflag, kflag, n_contact_surfs, exposed_flag, zero_overlap;
+  double xtmp, ytmp, ztmp, radi, delx, dely, delz;
+  double rsq, radsum, max_overlap, tmp_max, dot, distance_from_surf;
+  double factor_lj, mi, mj, meff;
+  double norm[3], dr[3], contact[3], ds[3], xc[3], vc[3], omegac[3], residual[3];
+  double *endpt, *corner, *forces, *torquesi, *torquesj, dq;
   double omega0[3] = {0.0, 0.0, 0.0};
 
-  int *ilist,*jlist,*numneigh,**firstneigh;
-  int *touch,**firsttouch;
-  double *history,*allhistory,**firsthistory;
+  int it, jjtmp, nsidej;
+  std::vector<int> *composite_surfs = new std::vector<int>();
+  std::unordered_set<int> *processed_contacts = new std::unordered_set<int>();
+  std::unordered_set<int> *convex_contacts = new std::unordered_set<int>();
+  std::unordered_set<int> *concave_contacts = new std::unordered_set<int>();
+  std::map<int, int> *contacts_map = new std::map<int, int>();
+
+  int *ilist, *jlist, *numneigh, **firstneigh;
+  int *touch, **firsttouch;
+  double *history, *allhistory, **firsthistory;
 
   bool touchflag = false;
   const bool history_update = update->setupflag == 0;
@@ -145,6 +172,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
   int newton_pair = force->newton_pair;
   double *special_lj = force->special_lj;
   double *heatflow, *temperature;
+
   if (heat_flag) {
     heatflow = atom->heatflow;
     temperature = atom->temperature;
@@ -166,23 +194,22 @@ void PairSurfGranular::compute(int eflag, int vflag)
     ytmp = x[i][1];
     ztmp = x[i][2];
     radi = radius[i];
-    model->xi = x[i];
-    model->radi = radius[i];
-    model->vi = v[i];
-    model->omegai = omega[i];
+
     if (use_history) {
       touch = firsttouch[i];
       allhistory = firsthistory[i];
     }
+
     jlist = firstneigh[i];
     jnum = numneigh[i];
 
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
-      factor_lj = special_lj[sbmask(j)];
-      j &= NEIGHMASK;
 
-      if (factor_lj == 0) continue;
+      // Do we need special bonds?
+      // factor_lj = special_lj[sbmask(j)];
+      // j &= NEIGHMASK;
+      // if (factor_lj == 0) continue;
 
       // sanity check that neighbor list is built correctly
 
@@ -222,16 +249,15 @@ void PairSurfGranular::compute(int eflag, int vflag)
       //   rsq = squared length of dr
 
       if (style == LINE) {
-        endpt = endpts[atom->line[j]];
+        endpt = endpts[line[j]];
         jflag = SurfExtra::
-          overlap_sphere_line(x[i],radius[i],&endpt[0],&endpt[3],contact,dr,rsq);
+          overlap_sphere_line(x[i], radi, &endpt[0], &endpt[3],contact, dr, rsq);
 
       } else if (style == TRI) {
-        corner = corners[atom->tri[j]];
+        corner = corners[tri[j]];
         jflag = SurfExtra::
-          overlap_sphere_tri(x[i],radius[i],
-                             &corner[0],&corner[3],&corner[6],&corner[9],
-                             contact,dr,rsq);
+          overlap_sphere_tri(x[i], radi, &corner[0], &corner[3], &corner[6], &corner[9],
+                             contact, dr, rsq);
       }
 
       // unset non-touching neighbors
@@ -247,6 +273,55 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
       // append surf to list of contacts
 
+      if (n_contact_surfs + 1 > nmax_contact_surfs) {
+        nmax_contact_surfs += DELTACONTACTS;
+        memory->grow(contact_surfs, nmax_contact_surfs * sizeof(FixSurface::ContactSurf),
+                                      "surface/global:contact_surfs");
+      }
+
+      // Store which side is in contact relative to normal vector
+      exposed_flag = 0;
+      if (style == LINE) {
+        MathExtra::copy3(&endpts[line[j]][6], norm);
+        dot = MathExtra::dot3(norm, dr);
+        if (jflag == -1) exposed_flag = connect2d[j].exposed_pt[0];
+        if (jflag == -2) exposed_flag = connect2d[j].exposed_pt[1];
+      } else {
+        MathExtra::copy3(&corners[tri[j]][9], norm);
+        dot = MathExtra::dot3(norm, dr);
+        if (jflag == -1) exposed_flag = connect3d[j].exposed_edge[0];
+        if (jflag == -2) exposed_flag = connect3d[j].exposed_edge[1];
+        if (jflag == -3) exposed_flag = connect3d[j].exposed_edge[2];
+        if (jflag == -4) exposed_flag = connect3d[j].exposed_pt[0];
+        if (jflag == -5) exposed_flag = connect3d[j].exposed_pt[1];
+        if (jflag == -6) exposed_flag = connect3d[j].exposed_pt[2];
+      }
+
+      if (dot >= 0) nsidej = SAME_SIDE;
+      else nsidej = OPPOSITE_SIDE;
+
+      contact_surfs[n_contact_surfs].index = j;
+      contact_surfs[n_contact_surfs].neigh_index = jj;
+      contact_surfs[n_contact_surfs].type = type[j];
+      contact_surfs[n_contact_surfs].flag = jflag;
+      contact_surfs[n_contact_surfs].exposed = exposed_flag;
+      contact_surfs[n_contact_surfs].nside = nsidej;
+      contact_surfs[n_contact_surfs].overlap = radi - sqrt(rsq);
+      contact_surfs[n_contact_surfs].norm_def = -1;
+      contact_surfs[n_contact_surfs].smooth_ext = 0;
+      MathExtra::zero3(contact_surfs[n_contact_surfs].force_norm);
+      MathExtra::copy3(norm, contact_surfs[n_contact_surfs].surf_norm);
+      MathExtra::copy3(dr, contact_surfs[n_contact_surfs].dr);
+      MathExtra::copy3(contact, contact_surfs[n_contact_surfs].contact);
+      MathExtra::zero3(contact_surfs[n_contact_surfs].cor_int);
+      MathExtra::zero3(contact_surfs[n_contact_surfs].cor_ext);
+
+      // Ensure interior contacts always win in a tie, needed for convex flat structures
+      //   that calculate distance to the corner to smooth turning
+      if (jflag == 1)
+        contact_surfs[n_contact_surfs].overlap += EPSILON;
+
+      n_contact_surfs += 1;
     }
 
     // Reduce set of contacts
@@ -599,6 +674,8 @@ void PairSurfGranular::calculate_endpts()
 {
   int i,m;
   double length,theta,dx,dy;
+  double p12[3], norm[3];
+  double zunit[3] = {0.0,0.0,1.0};
   double *endpt;
 
   // realloc endpts array if necssary
@@ -606,7 +683,7 @@ void PairSurfGranular::calculate_endpts()
   if (fsl->nmax_connect > emax) {
     memory->destroy(endpts);
     emax = fsl->nmax_connect;
-    memory->create(endpts,emax,4,"surf/granular:endpts");
+    memory->create(endpts,emax,9,"surf/granular:endpts");
   }
 
   AtomVecLine::Bonus *bonus = avecline->bonus;
@@ -628,6 +705,10 @@ void PairSurfGranular::calculate_endpts()
     endpt[3] = x[i][0] + dx;
     endpt[4] = x[i][1] + dy;
     endpt[5] = 0.0;
+
+    MathExtra::sub3(&endpt[3],&endpt[0],p12);
+    MathExtra::cross3(zunit,p12,norm);
+    MathExtra::normalize3(norm, &endpt[6]);
   }
 }
 
