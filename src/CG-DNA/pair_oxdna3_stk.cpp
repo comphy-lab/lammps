@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna3_stk.h"
-#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
@@ -36,16 +35,6 @@
 
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
-
-/* ----------------------------------------------------------------------
-    compute vector COM-stacking interaction site in oxDNA3
-------------------------------------------------------------------------- */
-inline void PairOxdna3Stk::compute_stacking_site(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rstk[3]) const
-{
-  NucleotideOxdna3 oxdna3;
-  oxdna3.stacking_site(e1, NULL, NULL, rstk);
-}
 
 /* ----------------------------------------------------------------------
    set coeffs for one or more type pairs
