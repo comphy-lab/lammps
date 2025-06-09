@@ -35,6 +35,35 @@
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
 
+/* ---------------------------------------------------------------------- */
+
+PairOxdna3Hbond::PairOxdna3Hbond(LAMMPS *lmp) : PairOxdnaHbond(lmp)
+{
+  // sequence-specific base-pairing strength
+  // A:0 C:1 G:2 T:3, 5'- [i][j] -3'
+
+  alpha_hb[0][0] = 1.00000;
+  alpha_hb[0][1] = 1.00000;
+  alpha_hb[0][2] = 1.00000;
+  alpha_hb[0][3] = 0.7802615690353366;
+
+  alpha_hb[1][0] = 1.00000;
+  alpha_hb[1][1] = 1.00000;
+  alpha_hb[1][2] = 1.1239661354569166;
+  alpha_hb[1][3] = 1.00000;
+
+  alpha_hb[2][0] = 1.00000;
+  alpha_hb[2][1] = 1.1239661354569166;
+  alpha_hb[2][2] = 1.00000;
+  alpha_hb[2][3] = 1.00000;
+
+  alpha_hb[3][0] = 0.7802615690353366;
+  alpha_hb[3][1] = 1.00000;
+  alpha_hb[3][2] = 1.00000;
+  alpha_hb[3][3] = 1.00000;
+
+}
+
 /* --------------------------------------------------------------
    compute vector COM-hydrogen bonding interaction site in oxDNA3
    A=1, C=2, G=3, T=0
