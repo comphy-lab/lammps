@@ -13,10 +13,28 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
+ * For the original PPPM class
    Contributing authors: Roy Pollock (LLNL), Paul Crozier (SNL)
      per-atom energy/virial & group/group energy/force added by Stan Moore (BYU)
      analytic diff (2 FFT) option added by Rolf Isele-Holder (Aachen University)
      triclinic added by Stan Moore (SNL)
+------------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------
+ * For this new derivative class PPPM_RK:
+   Author: Brian Dandurand (Queen's University Belfast)
+   This class PPPM_RK is required to implement the enhanced baseline of:
+	Brian Dandurand, Hans Vandierendonck, and Bronis de Supinski.
+        "Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era".	
+	in Proceedings of the IPDPS Conference. 2025.
+   The enhanced baseline in turn was inspired by the earlier contribution of
+   	D. F. Richards, J. N. Glosli, B. Chan, M. R. Dorr, E. W. Draeger, J.-
+	L. Fattebert, W. D. Krauss, T. Spelce, F. H. Streitz, M. P. Surh, and
+	J. A. Gunnels, 
+	“Beyond homogeneous decomposition: scaling long-range forces 
+	on massively parallel systems,” 
+	in Proceedings of the Conference on High Performance Computing Networking, 
+	Storage and Analysis, ser. SC ’09. New York, NY, USA: 
+	Association for Computing Machinery, 2009.
 ------------------------------------------------------------------------- */
 
 #include "pppm_rk.h"

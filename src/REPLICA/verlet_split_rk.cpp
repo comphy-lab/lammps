@@ -13,7 +13,22 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing authors: Yuxing Peng and Chris Knight (U Chicago)
+   Author: Brian Dandurand (Queen's University Belfast)
+   Based on VerletSplit as originally developed by: 
+	Yuxing Peng and Chris Knight (U Chicago)
+   This class VerletSplitRK corresponds to the enhanced baseline of:
+	Brian Dandurand, Hans Vandierendonck, and Bronis de Supinski.
+        "Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era".	
+	in Proceedings of the IPDPS Conference. 2025.
+   The enhanced baseline in turn was inspired by the earlier contribution of
+   	D. F. Richards, J. N. Glosli, B. Chan, M. R. Dorr, E. W. Draeger, J.-
+	L. Fattebert, W. D. Krauss, T. Spelce, F. H. Streitz, M. P. Surh, and
+	J. A. Gunnels, 
+	“Beyond homogeneous decomposition: scaling long-range forces 
+	on massively parallel systems,” 
+	in Proceedings of the Conference on High Performance Computing Networking, 
+	Storage and Analysis, ser. SC ’09. New York, NY, USA: 
+	Association for Computing Machinery, 2009.
 ------------------------------------------------------------------------- */
 
 #include "verlet_split_rk.h"
