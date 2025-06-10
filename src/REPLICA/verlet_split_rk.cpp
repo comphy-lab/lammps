@@ -15,43 +15,42 @@
 /* ----------------------------------------------------------------------
    Author: Brian Dandurand (Queen's University Belfast)
    Based on VerletSplit as originally developed by: 
-	Yuxing Peng and Chris Knight (U Chicago)
+        Yuxing Peng and Chris Knight (U Chicago)
    This class VerletSplitRK corresponds to the enhanced baseline of:
-	Brian Dandurand, Hans Vandierendonck, and Bronis de Supinski.
-        "Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era".	
-	in Proceedings of the IPDPS Conference. 2025.
+        Brian Dandurand, Hans Vandierendonck, and Bronis de Supinski.
+        "Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era".        
+        in Proceedings of the IPDPS Conference. 2025.
    The enhanced baseline in turn was inspired by the earlier contribution of
-   	D. F. Richards, J. N. Glosli, B. Chan, M. R. Dorr, E. W. Draeger, J.-
-	L. Fattebert, W. D. Krauss, T. Spelce, F. H. Streitz, M. P. Surh, and
-	J. A. Gunnels, 
-	“Beyond homogeneous decomposition: scaling long-range forces 
-	on massively parallel systems,” 
-	in Proceedings of the Conference on High Performance Computing Networking, 
-	Storage and Analysis, ser. SC ’09. New York, NY, USA: 
-	Association for Computing Machinery, 2009.
+           D. F. Richards, J. N. Glosli, B. Chan, M. R. Dorr, E. W. Draeger, J.-
+        L. Fattebert, W. D. Krauss, T. Spelce, F. H. Streitz, M. P. Surh, and
+        J. A. Gunnels, 
+        “Beyond homogeneous decomposition: scaling long-range forces 
+        on massively parallel systems,” 
+        in Proceedings of the Conference on High Performance Computing Networking, 
+        Storage and Analysis, ser. SC ’09. New York, NY, USA: 
+        Association for Computing Machinery, 2009.
 ------------------------------------------------------------------------- */
 
 #include "verlet_split_rk.h"
-#include "universe.h"
-#include "neighbor.h"
-#include "domain.h"
-#include "comm.h"
-#include "atom.h"
-#include "atom_vec.h"
-#include "force.h"
-#include "pair.h"
-#include "bond.h"
+
 #include "angle.h"
+#include "atom.h"
+#include "bond.h"
+#include "comm.h"
 #include "dihedral.h"
+#include "domain.h"
+#include "error.h"
+#include "fix.h"
+#include "force.h"
 #include "improper.h"
 #include "kspace.h"
-#include "output.h"
-#include "update.h"
-#include "fix.h"
 #include "modify.h"
+#include "neighbor.h"
+#include "pair.h"
+#include "output.h"
 #include "timer.h"
-#include "memory.h"
-#include "error.h"
+#include "universe.h"
+#include "update.h"
 
 using namespace LAMMPS_NS;
 
@@ -105,16 +104,6 @@ void VerletSplitRK::init()
 ------------------------------------------------------------------------- */
 
 void VerletSplitRK::setup(int flag)
-#if 0
-{
-  if (comm->me == 0 && screen)
-    fprintf(screen,"Setting up Verlet/split/rk run ...\n");
-
-  rproc = (universe->iworld == 0) ? 1 : 0;
-  if (!rproc) force->kspace->setup();
-  else Verlet::setup(flag);
-}
-#else
 {
   if (comm->me == 0 && screen) {
     fputs("Setting up Verlet/split/rk run ...\n",screen);
@@ -168,7 +157,7 @@ void VerletSplitRK::setup(int flag)
   if (force->kspace){ 
     force->kspace->setup();
     if (kspace_compute_flag) 
-    	force->kspace->r2k_comm(eflag,vflag);
+            force->kspace->r2k_comm(eflag,vflag);
   }
   if(rproc){
     if (pair_compute_flag) force->pair->compute(eflag,vflag);
@@ -183,9 +172,9 @@ void VerletSplitRK::setup(int flag)
   }
   if (force->kspace) {
     if (kspace_compute_flag){
-	if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
+        if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
 
-    	force->kspace->k2r_comm(eflag,vflag);
+            force->kspace->k2r_comm(eflag,vflag);
     }
     else force->kspace->compute_dummy(eflag,vflag);
   }
@@ -200,7 +189,6 @@ void VerletSplitRK::setup(int flag)
     update->setupflag = 0;
   }
 }
-#endif
 
 /* ----------------------------------------------------------------------
    setup without output
@@ -210,16 +198,9 @@ void VerletSplitRK::setup(int flag)
 ------------------------------------------------------------------------- */
 
 void VerletSplitRK::setup_minimal(int flag)
-#if 0
 {
   rproc = (universe->iworld == 0) ? 1 : 0;
-  if (!rproc) force->kspace->setup();
-  else Verlet::setup_minimal(flag);
-}
-#else
-{
-  rproc = (universe->iworld == 0) ? 1 : 0;
-  if(rproc){
+  if (rproc) {
     update->setupflag = 1;
   
     // setup domain, communication and neighboring
@@ -251,13 +232,13 @@ void VerletSplitRK::setup_minimal(int flag)
     modify->setup_pre_force(vflag);
   }//rproc
 
-  if (force->kspace){ 
+  if (force->kspace) { 
     force->kspace->setup();
     if (kspace_compute_flag) 
-    	force->kspace->r2k_comm(eflag,vflag);
+            force->kspace->r2k_comm(eflag,vflag);
   }
 
-  if(rproc){
+  if (rproc) {
     if (pair_compute_flag) force->pair->compute(eflag,vflag);
     else if (force->pair) force->pair->compute_dummy(eflag,vflag);
   
@@ -271,22 +252,19 @@ void VerletSplitRK::setup_minimal(int flag)
 
   if (force->kspace) {
     if (kspace_compute_flag){
-	if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
-
-    	force->kspace->k2r_comm(eflag,vflag);
+        if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
+        force->kspace->k2r_comm(eflag,vflag);
     }
     else force->kspace->compute_dummy(eflag,vflag);
   }
 
-  if(rproc){
+  if (rproc) {
     modify->setup_pre_reverse(eflag,vflag);
     if (force->newton) comm->reverse_comm();
-  
     modify->setup(vflag);
     update->setupflag = 0;
   }//rproc
 }
-#endif
 
 /* ----------------------------------------------------------------------
    run for N steps

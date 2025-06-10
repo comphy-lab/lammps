@@ -21,7 +21,6 @@ IntegrateStyle(verlet/split/rk,VerletSplitRK);
 #define LMP_VERLET_SPLIT_RK_H
 
 #include "verlet.h"
-#include "pppm_rk.h"
 
 namespace LAMMPS_NS {
 
