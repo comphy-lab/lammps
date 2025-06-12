@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna3_stk.h"
-#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
@@ -64,16 +63,6 @@ PairOxdna3Stk::PairOxdna3Stk(LAMMPS *lmp) : PairOxdnaStk(lmp)
   eta_st[2][3] = 0.9403493412105425;
   eta_st[3][3] = 0.9109921004070870;
 
-}
-
-/* ----------------------------------------------------------------------
-    compute vector COM-stacking interaction site in oxDNA3
-------------------------------------------------------------------------- */
-inline void PairOxdna3Stk::compute_stacking_site(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rstk[3]) const
-{
-  NucleotideOxdna3 oxdna3;
-  oxdna3.stacking_site(e1, NULL, NULL, rstk);
 }
 
 /* ----------------------------------------------------------------------
