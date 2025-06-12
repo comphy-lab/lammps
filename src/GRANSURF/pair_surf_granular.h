@@ -23,6 +23,9 @@ PairStyle(surf/granular,PairSurfGranular)
 #include "pair_granular.h"
 #include "fix_surface_local.h"
 #include "fix_surface.h"
+#include <map>
+#include <unordered_set>
+#include <vector>
 
 namespace LAMMPS_NS {
 
@@ -66,6 +69,17 @@ class PairSurfGranular : public PairGranular {
   void calculate_endpts();
   void calculate_corners();
   void corners2norm(double *, double *);
+
+  void prewalk_connections2d(int, int, std::unordered_set<int> *, std::map<int, int> *);
+  void prewalk_connections3d(int, int, std::vector<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void adjust_exposed_corner_int(int, int, int, int);
+  void adjust_exposed_corner_ext(int, int, int, int);
+  void process_convex_surfs(std::vector<int> *, std::unordered_set<int>*);
+  void process_concave_tris(std::vector<int> *, std::unordered_set<int> *);
+
+  int rescale_overlaps(double, std::vector<int> *);
 };
 
 }    // namespace LAMMPS_NS

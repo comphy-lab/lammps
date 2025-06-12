@@ -3380,7 +3380,6 @@ void FixSurfaceGlobal::prewalk_connections2d(int n, int nsidej, std::unordered_s
   }
 }
 
-
 /* ---------------------------------------------------------------------- */
 
 void FixSurfaceGlobal::prewalk_connections3d(int n, int nsidej, std::vector<int> *composite_surfs, std::unordered_set<int> *processed_contacts, std::map<int, int> *contacts_map)
