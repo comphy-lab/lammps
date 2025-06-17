@@ -226,6 +226,12 @@ Atom::Atom(LAMMPS *_lmp) : Pointers(_lmp), atom_style(nullptr), avec(nullptr), a
   apip_lambda_required = nullptr;
   apip_f_const_lambda = apip_f_dyn_lambda = nullptr;
 
+  // LDD package
+
+  ldd_ntypes = 0;
+  ldd_local_density = ldd_energy = ldd_grad_density = ldd_grad_energy = nullptr;
+  ldd_total_energy = nullptr;
+
   // end of customization section
   // --------------------------------------------------------------------
 
@@ -593,6 +599,15 @@ void Atom::peratom_create()
   add_peratom("apip_f_const_lambda",&apip_f_const_lambda,DOUBLE,3,1);
   add_peratom("apip_f_dyn_lambda",&apip_f_dyn_lambda,DOUBLE,3,1);
 
+  // LDD package 
+  
+  int t_ntypes = ldd_ntypes;
+  add_peratom("ldd_local_density",&ldd_local_density,DOUBLE,t_ntypes+1);
+  add_peratom("ldd_energy",&ldd_energy,DOUBLE,t_ntypes+1);
+  add_peratom("ldd_grad_density",&ldd_grad_density,DOUBLE,3*t_ntypes+3);
+  add_peratom("ldd_grad_energy",&ldd_grad_energy,DOUBLE,t_ntypes+1);
+  add_peratom("ldd_total_energy",&ldd_total_energy,DOUBLE,0);
+
   // end of customization section
   // --------------------------------------------------------------------
 }
@@ -679,6 +694,9 @@ void Atom::set_atomflag_defaults()
   apip_lambda_flag = apip_e_fast_flag = apip_e_precise_flag = apip_lambda_input_flag = apip_lambda_input_ta_flag = apip_lambda_required_flag = apip_f_const_lambda_flag = apip_f_dyn_lambda_flag = apip_lambda_const_flag = 0;
 
   pdscale = 1.0;
+
+  // LDD package
+  ldd_big_flag = 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -3198,6 +3216,14 @@ void *Atom::extract(const char *name)
   if (strcmp(name,"apip_f_dyn_lambda") == 0) return (void *) apip_f_dyn_lambda;
   if (strcmp(name,"apip_lambda_const") == 0) return (void *) apip_lambda_const;
 
+  // LDD package
+  
+  if (strcmp(name,"ldd_local_density") == 0) return (void *) ldd_local_density;
+  if (strcmp(name,"ldd_energy") == 0) return (void *) ldd_energy;
+  if (strcmp(name,"ldd_grad_density") == 0) return (void *) ldd_grad_density;
+  if (strcmp(name,"ldd_grad_energy") == 0) return (void *) ldd_grad_energy;
+  if (strcmp(name,"ldd_total_energy") == 0) return (void *) ldd_total_energy;
+
   // end of customization section
   // --------------------------------------------------------------------
 
@@ -3367,6 +3393,15 @@ int Atom::extract_datatype(const char *name)
   if (strcmp(name,"apip_lambda_const") == 0) return LAMMPS_DOUBLE;
   if (strcmp(name,"apip_f_const_lambda") == 0) return LAMMPS_DOUBLE_2D;
   if (strcmp(name,"apip_f_dyn_lambda") == 0) return LAMMPS_DOUBLE_2D;
+  
+  // LDD package
+  
+  if (strcmp(name,"ldd_local_density") == 0) return LAMMPS_DOUBLE_2D;
+  if (strcmp(name,"ldd_energy") == 0) return LAMMPS_DOUBLE_2D;
+  if (strcmp(name,"ldd_grad_density") == 0) return LAMMPS_DOUBLE_2D;
+  if (strcmp(name,"ldd_grad_energy") == 0) return LAMMPS_DOUBLE_2D;
+  if (strcmp(name,"ldd_total_energy") == 0) return LAMMPS_DOUBLE;
+
   // end of customization section
   // --------------------------------------------------------------------
 

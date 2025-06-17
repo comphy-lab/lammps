@@ -1752,12 +1752,13 @@ void Input::pair_coeff()
   if (newarg1) arg[1] = newarg1;
 
   // if arg[1] < arg[0], and neither contain a wildcard, reorder
-
+        // PACKAGE LDD treats pair_coeff i j distinctly from j i and should ignore this reorder
+  bool bLDD = utils::strmatch(force->pair_style, "ldd")|| utils::strmatch(arg[2], "ldd");
   int itype,jtype;
   if (utils::strmatch(arg[0],"^\\d+$") && utils::strmatch(arg[1],"^\\d+$")) {
     itype = utils::inumeric(FLERR,arg[0],false,lmp);
     jtype = utils::inumeric(FLERR,arg[1],false,lmp);
-    if (jtype < itype) {
+    if ((jtype < itype) && (!bLDD)) {
       char *str = arg[0];
       arg[0] = arg[1];
       arg[1] = str;

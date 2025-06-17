@@ -184,6 +184,13 @@ class Atom : protected Pointers {
   double *apip_lambda, *apip_lambda_input, *apip_lambda_input_ta, *apip_e_fast, *apip_e_precise, **apip_f_const_lambda, **apip_f_dyn_lambda, *apip_lambda_const;
   int *apip_lambda_required;
 
+  // LDD package
+
+  int ldd_ntypes;
+  double **ldd_local_density, **ldd_energy;
+  double **ldd_grad_density, **ldd_grad_energy;
+  double *ldd_total_energy;
+
   // end of customization section
   // --------------------------------------------------------------------
 
@@ -236,6 +243,9 @@ class Atom : protected Pointers {
 
   int apip_lambda_flag, apip_e_fast_flag, apip_e_precise_flag, apip_lambda_input_flag, apip_lambda_input_ta_flag, apip_lambda_required_flag, apip_f_const_lambda_flag, apip_f_dyn_lambda_flag, apip_lambda_const_flag;
 
+  // LDD package
+ 
+  int ldd_big_flag;
   // end of customization section
   // --------------------------------------------------------------------
 
