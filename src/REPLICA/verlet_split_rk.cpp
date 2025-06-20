@@ -120,8 +120,7 @@ void VerletSplitRK::setup(int flag)
     error->all(FLERR,"KOKKOS package requires run_style verlet/kk");
 
   rproc = (universe->iworld == 0) ? 1 : 0;
-
-  if(rproc){
+  if (rproc) {
     update->setupflag = 1;
   
     // setup domain, communication and neighboring
@@ -152,14 +151,14 @@ void VerletSplitRK::setup(int flag)
     ev_set(update->ntimestep);
     force_clear();
     modify->setup_pre_force(vflag);
-  }
+  }//rproc
 
   if (force->kspace){ 
     force->kspace->setup();
     if (kspace_compute_flag) 
             force->kspace->r2k_comm(eflag,vflag);
   }
-  if(rproc){
+  if (rproc) {
     if (pair_compute_flag) force->pair->compute(eflag,vflag);
     else if (force->pair) force->pair->compute_dummy(eflag,vflag);
 
@@ -169,7 +168,8 @@ void VerletSplitRK::setup(int flag)
       if (force->dihedral) force->dihedral->compute(eflag,vflag);
       if (force->improper) force->improper->compute(eflag,vflag);
     }
-  }
+  }//rproc
+
   if (force->kspace) {
     if (kspace_compute_flag){
         if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
@@ -180,14 +180,14 @@ void VerletSplitRK::setup(int flag)
   }
 
 
-  if (rproc){
+  if (rproc) {
     modify->setup_pre_reverse(eflag,vflag);
     if (force->newton) comm->reverse_comm();
 
     modify->setup(vflag);
     output->setup(flag);
     update->setupflag = 0;
-  }
+  }//rproc
 }
 
 /* ----------------------------------------------------------------------
@@ -280,7 +280,6 @@ void VerletSplitRK::run(int n)
 {
   bigint ntimestep;
   int nflag,sortflag;
-
   // sync both partitions before start timer
 
   MPI_Barrier(universe->uworld);
@@ -318,20 +317,16 @@ void VerletSplitRK::run(int n)
     // initial time integration
 
     if (rproc) {
+      timer->stamp();
       modify->initial_integrate(vflag);
       if (n_post_integrate) modify->post_integrate();
-#if 0
-    }
+      timer->stamp(Timer::MODIFY);
 
-    // regular communication vs neighbor list rebuild
-
-    if (rproc) nflag = neighbor->decide();
-    MPI_Bcast(&nflag,1,MPI_INT,1,block);
-
-    if (rproc) {
-#else
+      /*Atom-specific information is maintained on R-processes,
+        reneighboring only occurs for R-processes*/
+      timer->stamp(Timer::COMM);
       nflag = neighbor->decide();
-#endif
+      timer->stamp(Timer::NEIGH);
       if (nflag == 0) {
         timer->stamp();
         comm->forward_comm();
@@ -360,20 +355,17 @@ void VerletSplitRK::run(int n)
     // if reneighboring occurred, re-setup Rspace <-> Kspace comm params
     // comm Rspace atom coords to Kspace procs
 
-#if 0
-    if (nflag) rk_setup();
-#endif
+    //Call to VerletSplit::rk_setup() no longer necessary
+    timer->stamp();
     force->kspace->r2k_comm(eflag,vflag);
+    timer->stamp(Timer::KSPACE);
 
-#if 0
-    force_clear();
-#endif
     // force computations
     if (rproc) {
-#if 1
-      force_clear();
-#endif
+      timer->stamp();
+      force_clear(); //Only needs to be called by R-processes
       if (n_pre_force) modify->pre_force(vflag);
+      timer->stamp(Timer::MODIFY);
 
 
       timer->stamp();
@@ -390,53 +382,20 @@ void VerletSplitRK::run(int n)
         timer->stamp(Timer::BOND);
       }
 
-#if 0
-      if (n_pre_reverse) {
-        modify->pre_reverse(eflag,vflag);
-        timer->stamp(Timer::MODIFY);
-      }
-      if (force->newton) {
-        comm->reverse_comm();
-        timer->stamp(Timer::COMM);
-      }
-#endif
-
     } else {
-#if 0
-      // run FixOMP as sole pre_force fix, if defined
-      if (fix_omp) fix_omp->pre_force(vflag);
-
-      if (force->kspace) {
-        timer->stamp();
-        force->kspace->compute(eflag,vflag);
-        timer->stamp(Timer::KSPACE);
-      }
-
-      if (n_pre_reverse) {
-        modify->pre_reverse(eflag,vflag);
-        timer->stamp(Timer::MODIFY);
-      }
-
-      // TIP4P PPPM puts forces on ghost atoms, so must reverse_comm()
-
-      if (tip4pflag && force->newton) {
-        comm->reverse_comm();
-        timer->stamp(Timer::COMM);
-      }
-#else
       timer->stamp();
-      //Compute_grid_potentials(eflag,vflag);
       force->kspace->compute_grid_potentials(eflag,vflag);
       timer->stamp(Timer::KSPACE);
-#endif
     }
 
     // comm and sum Kspace forces back to Rspace procs
 
+    timer->stamp();
     force->kspace->k2r_comm(eflag,vflag);
-    //TODO
+    timer->stamp(Timer::KSPACE);
     if(rproc){
-#if 1
+      /*pre_reverse and reverse_comm only need to be addressed for R-processes
+   	after kspace forces have been accumulated.*/
       if (n_pre_reverse) {
         modify->pre_reverse(eflag,vflag);
         timer->stamp(Timer::MODIFY);
@@ -445,7 +404,6 @@ void VerletSplitRK::run(int n)
         comm->reverse_comm();
         timer->stamp(Timer::COMM);
       }
-#endif
     // force modifications, final time integration, diagnostics
     // all output
       timer->stamp();
