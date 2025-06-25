@@ -32,7 +32,7 @@ class PPPM_RK : public PPPM {
   void init() override;
 
   virtual void compute_grid_potentials(int, int) override;
-  //virtual void compute(int, int) override;
+  virtual void compute(int, int) override;
   virtual void r2k_comm(int &eflag, int &vflag) override;
   virtual void k2r_comm(int eflag, int vflag) override;
  protected:

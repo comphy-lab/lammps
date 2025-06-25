@@ -97,12 +97,12 @@ void PPPM_RK::setupRKBlock()
   // error checks on partitions
 
   if (universe->nworlds != 2)
-    error->universe_all(FLERR,"Verlet/split requires 2 partitions");
+    error->universe_all(FLERR,"pppm/rk requires 2 partitions");
   if (universe->procs_per_world[0] % universe->procs_per_world[1])
-    error->universe_all(FLERR,"Verlet/split requires Rspace partition "
+    error->universe_all(FLERR,"pppm/rk requires Rspace partition "
                         "size be multiple of Kspace partition size");
   if (comm->style != Comm::BRICK)
-    error->universe_all(FLERR,"Verlet/split can only currently be used with comm_style brick");
+    error->universe_all(FLERR,"pppm/rk can only currently be used with comm_style brick");
 
   // rproc = 1 for Rspace procs, 0 for Kspace procs
 
@@ -125,7 +125,7 @@ void PPPM_RK::setupRKBlock()
   int ***kspace_grid2proc;
   memory->create(kspace_grid2proc,kspace_procgrid[0],
                  kspace_procgrid[1],kspace_procgrid[2],
-                 "verlet/split:kspace_grid2proc");
+                 "pppm/rk:kspace_grid2proc");
 
   if (universe->me == universe->root_proc[1]) {
     for (int i = 0; i < comm->procgrid[0]; i++)
@@ -147,7 +147,7 @@ void PPPM_RK::setupRKBlock()
     if (comm->procgrid[2] % kspace_procgrid[2]) flag = 1;
     if (flag)
       error->one(FLERR,
-        "Verlet/split requires Rspace partition layout be "
+        "pppm/rk requires Rspace partition layout be "
         "multiple of Kspace partition layout in each dim");
   }
 
@@ -461,15 +461,14 @@ void PPPM_RK::compute_charge_densities(int eflag, int vflag)
 
 }
 
-#if 0
-// Coded out, invoke PPPM::compute(int,int) instead
+// Assumes partition of processes as enforced in init through setupRKBlock
 void PPPM_RK::compute(int eflag, int vflag)
 {
   r2k_comm(eflag,vflag);
   if(!rproc) compute_grid_potentials(eflag, vflag);
   k2r_comm(eflag,vflag);
 }
-#endif
+
 //Computes only the grid potentials from K-space processes
 void PPPM_RK::compute_grid_potentials(int eflag, int vflag)
 {
