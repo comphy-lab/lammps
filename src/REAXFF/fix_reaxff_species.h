@@ -77,7 +77,6 @@ class FixReaxFFSpecies : public Fix {
   int CheckExistence(int, int);
   void GetUniqueElements();
 
-  int nint(const double &);
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
   void OpenPos();
@@ -88,6 +87,7 @@ class FixReaxFFSpecies : public Fix {
 
   class NeighList *list;
   class FixAveAtom *f_SPECBOND;
+  class FixPropertyAtom *f_clusterID;
   class PairReaxFF *reaxff;
 };
 }    // namespace LAMMPS_NS

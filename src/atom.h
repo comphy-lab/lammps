@@ -16,6 +16,8 @@
 
 #include "pointers.h"
 
+#include "json_fwd.h"
+
 #include <map>
 #include <set>
 
@@ -155,6 +157,13 @@ class Atom : protected Pointers {
   double *eff_plastic_strain_rate;
   double *damage;
 
+  // RHEO package
+
+  int *rheo_status;
+  double *conductivity;
+  double *pressure;
+  double *viscosity;
+
   // SPH package
 
   double *rho, *drho, *esph, *desph, *cv;
@@ -169,6 +178,11 @@ class Atom : protected Pointers {
   // DIELECTRIC package
 
   double *area, *ed, *em, *epsilon, *curvature, *q_scaled;
+
+  // APIP package
+
+  double *apip_lambda, *apip_lambda_input, *apip_lambda_input_ta, *apip_e_fast, *apip_e_precise, **apip_f_const_lambda, **apip_f_dyn_lambda, *apip_lambda_const;
+  int *apip_lambda_required;
 
   // end of customization section
   // --------------------------------------------------------------------
@@ -190,6 +204,7 @@ class Atom : protected Pointers {
   int temperature_flag, heatflow_flag;
   int vfrac_flag, spin_flag, eradius_flag, ervel_flag, erforce_flag;
   int cs_flag, csforce_flag, vforce_flag, ervelforce_flag, etag_flag;
+  int rheo_status_flag, conductivity_flag, pressure_flag, viscosity_flag;
   int rho_flag, esph_flag, cv_flag, vest_flag;
   int dpd_flag, edpd_flag, tdpd_flag;
   int mesont_flag;
@@ -216,6 +231,10 @@ class Atom : protected Pointers {
   // DIELECTRIC package
 
   int dielectric_flag;
+
+  // APIP package
+
+  int apip_lambda_flag, apip_e_fast_flag, apip_e_precise_flag, apip_lambda_input_flag, apip_lambda_input_ta_flag, apip_lambda_required_flag, apip_f_const_lambda_flag, apip_f_dyn_lambda_flag, apip_lambda_const_flag;
 
   // end of customization section
   // --------------------------------------------------------------------
@@ -350,6 +369,7 @@ class Atom : protected Pointers {
   int shape_consistency(int, double &, double &, double &);
 
   void add_molecule(int, char **);
+  void add_molecule(const std::string &, const json &);
   int find_molecule(const char *);
   std::vector<Molecule *> get_molecule_by_id(const std::string &);
   void add_molecule_atom(Molecule *, int, int, tagint);
@@ -370,6 +390,7 @@ class Atom : protected Pointers {
 
   void *extract(const char *);
   int extract_datatype(const char *);
+  int extract_size(const char *, int);
 
   inline int *get_map_array() { return map_array; };
   inline int get_map_size() { return map_tag_max + 1; };
