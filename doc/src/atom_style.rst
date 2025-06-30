@@ -173,6 +173,10 @@ the Additional Information section below.
      - *atomic* + molecule, radius, rmass, omega, torque, line
      -
      - 2-d rigid body particles
+   * - *ldd*
+     - *atom* + local densities + gradients of local densities
+     - :ref:`LDD <PKG-LDD>`
+     -
    * - *mdpd*
      - *atomic* + rho, drho, vest
      - :ref:`DPD-MESO <PKG-DPD-MESO>`
@@ -350,6 +354,14 @@ which store a per-particle mass and length and orientation (i.e. the
 end points of the line segment).  Each particle stores a flag in the
 line vector which indicates whether it is a line segment (1) or a
 point particle (0).
+
+For the *ldd* style, particles are represented as in the basic atomic style,
+but per_atom local density and gradients of local density information is available
+for all types of particles surrounding a given particle i in the system. 
+local densities and gradients are defined via the pair_style ldd/associated 
+pair_coeff commands and zero otherwise. When hybridized with a molecular style,
+local density definitions will inherit the bonded exclusions of other 
+nb pair interactions. See the :doc:``Howto ldd <Howto_ldd>`` doc for details.
 
 The *mdpd* style is for many-body dissipative particle dynamics (mDPD)
 particles which store a density (rho) for considering density-dependent

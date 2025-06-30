@@ -69,6 +69,7 @@ gives those details.
    * :ref:`KOKKOS <PKG-KOKKOS>`
    * :ref:`KSPACE <PKG-KSPACE>`
    * :ref:`LATBOLTZ <PKG-LATBOLTZ>`
+   * :ref:`LDD <PKG-LDD>`
    * :ref:`LEPTON <PKG-LEPTON>`
    * :ref:`MACHDYN <PKG-MACHDYN>`
    * :ref:`MANIFOLD <PKG-MANIFOLD>`
@@ -1435,6 +1436,45 @@ The LATBOLTZ package requires that LAMMPS is build in :ref:`MPI parallel mode <s
 * :doc:`fix lb/momentum <fix_lb_momentum>`
 * :doc:`fix lb/viscous <fix_lb_viscous>`
 * ``examples/PACKAGES/latboltz``
+
+----------
+
+.. _PKG-LDD:
+
+LDD package
+----------------
+
+**Contents:**
+
+An atom_style and pair_style that flexibly define interactions as function
+of the local density and/or gradient of the local density around a central site.
+A dump style natively compatible with BOCS, an external coarse-graining 
+package that can be used to define such potentials from atomistic simulation data.
+`https://github.com/noid-group/BOCS <https://github.com/noid-group/BOCS>`_
+
+The local density potentials implemented define "local density" flexibly with different choices of indicator weighting functions and asymetry in interactions as generically described in:
+Michael R. DeLyser and W. G. Noid (2019). “Analysis of local density potentials” The Journal of Chemical Physics 151,  no. 22: 224106
+DOI: 10.1063/1.512866
+
+
+The square gradient potential implementation is described in:
+Michael R. DeLyser and W. G. Noid (2021) “Coarse-grained models for local density gradients” The Journal of Chemical Physics, 156, 034106
+DOI: 10.1063/5.0075291
+
+
+**Authors:** Michael Delyser, Maria Lesniewski and Will Noid (The Pennyslvania State University)
+
+
+**Supporting info:**
+
+* ``src/LDD``: filenames -> commands
+* ``src/LDD/README``
+* ``examples/PACKAGES/ldd``
+* :doc:`Howto_ldd <Howto_ldd>`
+* :doc:`atom_style ldd <atom_style>`
+* :doc:`dump ldd <dump_ldd>`
+* :doc:`pair_style ldd <pair_ldd>`
+
 
 ----------
 

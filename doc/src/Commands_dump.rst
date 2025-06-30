@@ -24,6 +24,7 @@ An alphabetic list of all LAMMPS :doc:`dump <dump>` commands.
    * :doc:`grid/vtk <dump>`
    * :doc:`h5md <dump_h5md>`
    * :doc:`image <dump_image>`
+   * :doc:`ldd <dump_ldd>`
    * :doc:`local <dump>`
    * :doc:`local/gz <dump>`
    * :doc:`local/zstd <dump>`

@@ -94,6 +94,7 @@ Packages howto
    Howto_rheo
    Howto_spins
    Howto_apip
+   Howto_ldd
 
 Tutorials howto
 ===============
