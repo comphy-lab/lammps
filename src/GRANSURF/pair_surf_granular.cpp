@@ -264,7 +264,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
       if (style == LINE) {
         endpt = endpts[line[j]];
         jflag = SurfExtra::
-          overlap_sphere_line(x[i], radi, &endpt[0], &endpt[3],contact, dr, rsq);
+          overlap_sphere_line(x[i], radi, &endpt[0], &endpt[3], contact, dr, rsq);
 
       } else if (style == TRI) {
         corner = corners[tri[j]];
@@ -1311,34 +1311,18 @@ void PairSurfGranular::adjust_exposed_corner_ext(int j, int k, int n, int m)
 
   int pt = -1;
   int ptj = -1;
-  int ptj3;
   if (contact_surfs[n].flag == -4) {
     pt = 0;
-    if (connect3d[j].exposed_edge[0]) {
-      ptj = 3;
-      ptj3 = 6;
-    } else if (connect3d[j].exposed_edge[2]) {
-      ptj = 6;
-      ptj3 = 3;
-    }
+    if (connect3d[j].exposed_edge[0]) ptj = 3;
+    if (connect3d[j].exposed_edge[2]) ptj = 6;
   } else if (contact_surfs[n].flag == -5) {
     pt = 3;
-    if (connect3d[j].exposed_edge[0]) {
-      ptj = 0;
-      ptj3 = 6;
-    } else if (connect3d[j].exposed_edge[1]) {
-      ptj = 6;
-      ptj3 = 0;
-    }
+    if (connect3d[j].exposed_edge[0]) ptj = 0;
+    if (connect3d[j].exposed_edge[1]) ptj = 6;
   } else if (contact_surfs[n].flag == -6) {
     pt = 6;
-    if (connect3d[j].exposed_edge[1]) {
-      ptj = 3;
-      ptj3 = 0;
-    } else if (connect3d[j].exposed_edge[2]) {
-      ptj = 0;
-      ptj3 = 3;
-    }
+    if (connect3d[j].exposed_edge[1]) ptj = 3;
+    if (connect3d[j].exposed_edge[2]) ptj = 0;
   }
 
   if (ptj == -1) {
@@ -1349,42 +1333,45 @@ void PairSurfGranular::adjust_exposed_corner_ext(int j, int k, int n, int m)
   }
 
   int *tri = atom->tri;
+  double *xcontact = &corners[tri[j]][pt];
   double jline[3];
-  MathExtra::sub3(corners[tri[j]][ptj], corners[tri[j]][pt], jline);
+  // ... assuming corners ordered by pt 0 1 2
+  MathExtra::sub3(&corners[tri[j]][ptj], xcontact, jline);
   MathExtra::norm3(jline);
 
   // If k is an edge, check if its edge-in-contact connects to j's corner
   //   if k is a corner, then find if one of the edges is exposed
   //   if neither, skip
 
-  int ptk = -1;
-  int ptk3;
+  int ptka, ptkb;
   if (contact_surfs[m].flag == -1) {
-    if (EQUAL3(corners[tri[j]][pt], corners[tri[k]][0])) ptk = 3;
-    if (EQUAL3(corners[tri[j]][pt], corners[tri[k]][3])) ptk = 0;
-    ptk3 = 6;
+    ptka = 0;
+    ptkb = 3;
   } else if (contact_surfs[m].flag == -2) {
-    if (EQUAL3(corners[tri[j]][pt], corners[tri[k]][3])) ptk = 6;
-    if (EQUAL3(corners[tri[j]][pt], corners[tri[k]][6])) ptk = 3;
-    ptk3 = 0;
+    ptka = 3;
+    ptkb = 6;
   } else if (contact_surfs[m].flag == -3) {
-    if (EQUAL3(corners[tri[j]][pt], corners[tri[k]][0])) ptk = 6;
-    if (EQUAL3(corners[tri[j]][pt], corners[tri[k]][6])) ptk = 0;
-    ptk3 = 3;
+    ptka = 0;
+    ptkb = 6;
   } else if (contact_surfs[m].flag == -4) {
-    if (connect3d[k].exposed_edge[0]) {
-      ptk = 3;
-      ptk3 = ;
-    } else if (connect3d[k].exposed_edge[2]) {
-      ptk = 6;
-      ptk3 = ; hmm
-    }
+    ptka = 0;
+    if (connect3d[k].exposed_edge[0]) ptkb = 3;
+    if (connect3d[k].exposed_edge[2]) ptkb = 6;
   } else if (contact_surfs[m].flag == -5) {
-    if (connect3d[k].exposed_edge[0]) ptk = 0;
-    if (connect3d[k].exposed_edge[1]) ptk = 6;
+    ptka = 3;
+    if (connect3d[k].exposed_edge[0]) ptkb = 0;
+    if (connect3d[k].exposed_edge[1]) ptkb = 6;
   } else if (contact_surfs[m].flag == -6) {
-    if (connect3d[k].exposed_edge[1]) ptk = 3;
-    if (connect3d[k].exposed_edge[2]) ptk = 0;
+    ptka = 6;
+    if (connect3d[k].exposed_edge[1]) ptkb = 3;
+    if (connect3d[k].exposed_edge[2]) ptkb = 0;
+  }
+
+  int ptk = -1;
+  if (EQUAL3(xcontact, &corners[tri[k]][ptka]))  {
+    ptk = ptkb;
+  } else if (EQUAL3(xcontact, &corners[tri[k]][ptkb]))  {
+    ptk = ptka;
   }
 
   if (ptk == -1)
@@ -1393,28 +1380,33 @@ void PairSurfGranular::adjust_exposed_corner_ext(int j, int k, int n, int m)
   // Calculate k's edge vector
 
   double kline[3];
-  MathExtra::sub3(corners[tri[k]][ptk], corners[tri[j]][pt], kline);
+  MathExtra::sub3(&corners[tri[k]][ptk], xcontact, kline);
   MathExtra::norm3(kline);
 
   // Determine if two vectors are concave or convex
   //   first, get normal vector of each edge (perpendicular to surf norm)
 
   double jnorm[3], knorm[3];
-  MathExtra::cross3(corners[tri[j]][9], jline, jnorm);
+  MathExtra::cross3(&corners[tri[j]][9], jline, jnorm);
   MathExtra::norm3(jnorm);
-  MathExtra::cross3(corners[tri[k]][9], kline, knorm);
+  MathExtra::cross3(&corners[tri[k]][9], kline, knorm);
   MathExtra::norm3(knorm);
 
   // Correct sign to point away from 3rd corner
+  int pt3;
   double dot, line3[3];
-  MathExtra::sub3(points[ptj3].x, points[pt].x, line3);
+
+  if (pt != 0 && ptj != 0) pt3 = 0;
+  if (pt != 3 && ptj != 3) pt3 = 3;
+  if (pt != 6 && ptj != 6) pt3 = 6;
+  MathExtra::sub3(&corners[tri[j]][pt3], xcontact, line3);
   dot = MathExtra::dot3(line3, jnorm);
   if (dot > 0) MathExtra::negate3(jnorm);
 
-  if (pt != tris[k].p1 && ptk != tris[k].p1) pt3 = tris[k].p1;
-  if (pt != tris[k].p2 && ptk != tris[k].p2) pt3 = tris[k].p2;
-  if (pt != tris[k].p3 && ptk != tris[k].p3) pt3 = tris[k].p3;
-  MathExtra::sub3(points[pt3].x, points[pt].x, line3);
+  if (ptka != 0 && ptkb != 0) pt3 = 0;
+  if (ptka != 3 && ptkb != 3) pt3 = 3;
+  if (ptka != 6 && ptkb != 6) pt3 = 6;
+  MathExtra::sub3(&corners[tri[k]][pt3], xcontact, line3);
   dot = MathExtra::dot3(line3, knorm);
   if (dot > 0) MathExtra::negate3(knorm);
 
@@ -1519,6 +1511,9 @@ void PairSurfGranular::process_convex_surfs(std::vector<int> *composite_surfs, s
 
   // Find minimum distance to convex surf
   double max_overlap = -1;
+  double *endpt, *corner;
+  int *line = atom->line;
+  int *tri = atom->tri;
   if (composite_surfs->size() > 1) {
 
     min_dist = BIG;
@@ -1531,15 +1526,17 @@ void PairSurfGranular::process_convex_surfs(std::vector<int> *composite_surfs, s
       contact_surfs[n].dist = BIG;
       for (auto it2 = convex_contacts->begin(); it2 != convex_contacts->end(); it2++) {
         k = *it2;
-        if (dimension == 2) {
-          overlap_sphere_line(contact_surfs[n].contact, 0.0,
-                              points[lines[k].p1].x, points[lines[k].p2].x,
-                              tmp1, tmp2, dist_convex);
-        } else {
-          overlap_sphere_tri(contact_surfs[n].contact, 0.0,
-                             points[tris[k].p1].x, points[tris[k].p2].x,
-                             points[tris[k].p3].x, tris[k].norm,
-                             tmp1, tmp2, dist_convex);
+
+        if (style == LINE) {
+          endpt = endpts[line[k]];
+          SurfExtra::
+            overlap_sphere_line(contact_surfs[n].contact, 0.0, &endpt[0], &endpt[3], tmp1, tmp2, dist_convex);
+
+        } else if (style == TRI) {
+          corner = corners[tri[k]];
+          SurfExtra::
+            overlap_sphere_tri(contact_surfs[n].contact, 0.0, &corner[0], &corner[3], &corner  [6], &corner[9],
+                               tmp1, tmp2, dist_convex);
         }
         contact_surfs[n].dist = MIN(contact_surfs[n].dist, dist_convex);
       }
@@ -1593,26 +1590,26 @@ void PairSurfGranular::process_convex_surfs(std::vector<int> *composite_surfs, s
         int pt1, pt2;
         pt1 = pt2 = -1;
         if (jflag == -1) {
-          pt1 = tris[j].p1;
-          pt2 = tris[j].p2;
+          pt1 = 0;
+          pt2 = 3;
         } else if (jflag == -2) {
-          pt1 = tris[j].p2;
-          pt2 = tris[j].p3;
+          pt1 = 3;
+          pt2 = 6;
         } else if (jflag == -3) {
-          pt1 = tris[j].p1;
-          pt2 = tris[j].p3;
+          pt1 = 0;
+          pt2 = 6;
         } else if (jflag == -4) {
-          pt1 = tris[j].p1;
-          if (connect3d[j].exposed_edge[0] == EXTERNAL) pt2 = tris[j].p2;
-          if (connect3d[j].exposed_edge[2] == EXTERNAL) pt2 = tris[j].p3;
+          pt1 = 0;
+          if (connect3d[j].exposed_edge[0] == EXTERNAL) pt2 = 3;
+          if (connect3d[j].exposed_edge[2] == EXTERNAL) pt2 = 6;
         } else if (jflag == -5) {
-          pt1 = tris[j].p2;
-          if (connect3d[j].exposed_edge[0] == EXTERNAL) pt2 = tris[j].p1;
-          if (connect3d[j].exposed_edge[1] == EXTERNAL) pt2 = tris[j].p3;
+          pt1 = 3;
+          if (connect3d[j].exposed_edge[0] == EXTERNAL) pt2 = 0;
+          if (connect3d[j].exposed_edge[1] == EXTERNAL) pt2 = 6;
         } else if (jflag == -6) {
-          pt1 = tris[j].p3;
-          if (connect3d[j].exposed_edge[1] == EXTERNAL) pt2 = tris[j].p2;
-          if (connect3d[j].exposed_edge[2] == EXTERNAL) pt2 = tris[j].p1;
+          pt1 = 6;
+          if (connect3d[j].exposed_edge[1] == EXTERNAL) pt2 = 3;
+          if (connect3d[j].exposed_edge[2] == EXTERNAL) pt2 = 0;
         }
 
         if (pt1 == -1 || pt2 == -1) {
@@ -1621,8 +1618,9 @@ void PairSurfGranular::process_convex_surfs(std::vector<int> *composite_surfs, s
           continue;
         }
 
+        int *tri = atom->tri;
         double jline[3];
-        MathExtra::sub3(points[pt1].x, points[pt2].x, jline);
+        MathExtra::sub3(&corners[tri[j]][pt1], &corners[tri[j]][pt2], jline);
         MathExtra::norm3(jline);
 
         double n_plane[3];
@@ -1632,10 +1630,10 @@ void PairSurfGranular::process_convex_surfs(std::vector<int> *composite_surfs, s
         // Correct sign to point away from 3rd corner
         int pt3;
         double dot, line3[3];
-        if (pt1 != tris[j].p1 && pt2 != tris[j].p1) pt3 = tris[j].p1;
-        if (pt1 != tris[j].p2 && pt2 != tris[j].p2) pt3 = tris[j].p2;
-        if (pt1 != tris[j].p3 && pt2 != tris[j].p3) pt3 = tris[j].p3;
-        MathExtra::sub3(points[pt3].x, points[pt1].x, line3);
+        if (pt1 != 0 && pt2 != 0) pt3 = 0;
+        if (pt1 != 3 && pt2 != 3) pt3 = 3;
+        if (pt1 != 6 && pt2 != 6) pt3 = 6;
+        MathExtra::sub3(&corners[tri[j]][pt3], &corners[tri[j]][pt1], line3);
         dot = MathExtra::dot3(line3, n_plane);
         if (dot > 0) MathExtra::negate3(n_plane);
 

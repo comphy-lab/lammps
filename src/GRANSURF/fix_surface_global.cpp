@@ -3778,8 +3778,10 @@ void FixSurfaceGlobal::adjust_exposed_corner_ext(int j, int k, int n, int m)
     return;
   }
 
+  double *xcontact = points[pt].x;
+
   double jline[3];
-  MathExtra::sub3(points[ptj].x, points[pt].x, jline);
+  MathExtra::sub3(points[ptj].x, xcontact, jline);
   MathExtra::norm3(jline);
 
   // If k is an edge, check if its edge-in-contact connects to j's corner
@@ -3813,7 +3815,7 @@ void FixSurfaceGlobal::adjust_exposed_corner_ext(int j, int k, int n, int m)
   // Calculate k's edge vector
 
   double kline[3];
-  MathExtra::sub3(points[ptk].x, points[pt].x, kline);
+  MathExtra::sub3(points[ptk].x, xcontact, kline);
   MathExtra::norm3(kline);
 
   // Determine if two vectors are concave or convex
@@ -3832,14 +3834,14 @@ void FixSurfaceGlobal::adjust_exposed_corner_ext(int j, int k, int n, int m)
   if (pt != tris[j].p1 && ptj != tris[j].p1) pt3 = tris[j].p1;
   if (pt != tris[j].p2 && ptj != tris[j].p2) pt3 = tris[j].p2;
   if (pt != tris[j].p3 && ptj != tris[j].p3) pt3 = tris[j].p3;
-  MathExtra::sub3(points[pt3].x, points[pt].x, line3);
+  MathExtra::sub3(points[pt3].x, xcontact, line3);
   dot = MathExtra::dot3(line3, jnorm);
   if (dot > 0) MathExtra::negate3(jnorm);
 
   if (pt != tris[k].p1 && ptk != tris[k].p1) pt3 = tris[k].p1;
   if (pt != tris[k].p2 && ptk != tris[k].p2) pt3 = tris[k].p2;
   if (pt != tris[k].p3 && ptk != tris[k].p3) pt3 = tris[k].p3;
-  MathExtra::sub3(points[pt3].x, points[pt].x, line3);
+  MathExtra::sub3(points[pt3].x, xcontact, line3);
   dot = MathExtra::dot3(line3, knorm);
   if (dot > 0) MathExtra::negate3(knorm);
 
