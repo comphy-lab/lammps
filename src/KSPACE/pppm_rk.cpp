@@ -24,16 +24,16 @@
    Author: Brian Dandurand (Queen's University Belfast)
    This class PPPM_RK is needed to implement the enhanced baseline of:
       Brian Dandurand, Hans Vandierendonck, and Bronis de Supinski.
-      "Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era".      
+      "Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era".
       in Proceedings of the IPDPS Conference. 2025.
    The enhanced baseline in turn was inspired by the earlier contribution of
       D. F. Richards, J. N. Glosli, B. Chan, M. R. Dorr, E. W. Draeger, J.-
       L. Fattebert, W. D. Krauss, T. Spelce, F. H. Streitz, M. P. Surh, and
-      J. A. Gunnels, 
-      "Beyond homogeneous decomposition: scaling long-range forces 
-      on massively parallel systems," 
-      in Proceedings of the Conference on High Performance Computing Networking, 
-      Storage and Analysis, ser. SC ’09. New York, NY, USA: 
+      J. A. Gunnels,
+      "Beyond homogeneous decomposition: scaling long-range forces
+      on massively parallel systems,"
+      in Proceedings of the Conference on High Performance Computing Networking,
+      Storage and Analysis, ser. SC ’09. New York, NY, USA:
       Association for Computing Machinery, 2009.
 ------------------------------------------------------------------------- */
 
@@ -56,7 +56,7 @@ using namespace MathConst;
 /* ---------------------------------------------------------------------- */
 
 PPPM_RK::PPPM_RK(LAMMPS *lmp) : PPPM(lmp),
-  density_brick_buf(nullptr), vdx_brick_buf(nullptr), vdy_brick_buf(nullptr), vdz_brick_buf(nullptr),u_brick_buf(nullptr), 
+  density_brick_buf(nullptr), vdx_brick_buf(nullptr), vdy_brick_buf(nullptr), vdz_brick_buf(nullptr),u_brick_buf(nullptr),
   density_sizes(nullptr),density_disps(nullptr),partitionInfoK(nullptr),block_size(0)
 {
   rk_flag = 1;
@@ -69,7 +69,7 @@ void PPPM_RK::init()
   memory->create3d_offset(density_brick_buf,
     nzlo_in,nzhi_in,nylo_in,nyhi_in,
     nxlo_in,nxhi_in,"pppm_split:density_brick_buf");
-      
+
   if (differentiation_flag == 1) {
     memory->create3d_offset(u_brick_buf,
       nzlo_in,nzhi_in,nylo_in,nyhi_in,
@@ -244,7 +244,7 @@ void PPPM_RK::setupRKBlock()
 
   density_sizes = new int[block_size];
   density_disps = new int[block_size];
-  
+
   memory->create(partitionInfoK,block_size,7,"pppm:partitionInfoK");
 
   int partitionInfo[7];
@@ -293,7 +293,7 @@ PPPM_RK::~PPPM_RK()
 
   delete [] density_sizes;
   delete [] density_disps;
-  
+
   memory->destroy(partitionInfoK);
 }
 
@@ -324,7 +324,7 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
       memcpy(domain_boxbuf+3,domain->boxhi,3*sizeof(double));
         MPI_Isend(domain_boxbuf,6,MPI_DOUBLE,0,TAG_BOX,block,&mpi_requests_domain_box);
       }
-    } 
+    }
 
     //Posting R-process recv communications
     if (eflag) MPI_Ibcast(&energy_buf,1,MPI_DOUBLE,0,block_energy,&mpi_requests_energy);
@@ -394,7 +394,7 @@ void PPPM_RK::k2r_comm(int eflag, int vflag)
     //R-side waits on its send of flags, domain_box, and charge densities
     if (me_block==1){
       MPI_Wait(&mpi_requests_flags,MPI_STATUS_IGNORE);
-      if (domain->box_change) 
+      if (domain->box_change)
         MPI_Wait(&mpi_requests_domain_box,MPI_STATUS_IGNORE);
     }
     MPI_Wait(&mpi_requests_density,MPI_STATUS_IGNORE);

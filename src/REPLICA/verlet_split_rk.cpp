@@ -14,20 +14,20 @@
 
 /* ----------------------------------------------------------------------
    Author: Brian Dandurand (Queen's University Belfast)
-   Based on VerletSplit as originally developed by: 
+   Based on VerletSplit as originally developed by:
         Yuxing Peng and Chris Knight (U Chicago)
    This class VerletSplitRK corresponds to the enhanced baseline of:
         Brian Dandurand, Hans Vandierendonck, and Bronis de Supinski.
-        "Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era".        
+        "Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era".
         in Proceedings of the IPDPS Conference. 2025.
    The enhanced baseline in turn was inspired by the earlier contribution of
            D. F. Richards, J. N. Glosli, B. Chan, M. R. Dorr, E. W. Draeger, J.-
         L. Fattebert, W. D. Krauss, T. Spelce, F. H. Streitz, M. P. Surh, and
-        J. A. Gunnels, 
-        “Beyond homogeneous decomposition: scaling long-range forces 
-        on massively parallel systems,” 
-        in Proceedings of the Conference on High Performance Computing Networking, 
-        Storage and Analysis, ser. SC ’09. New York, NY, USA: 
+        J. A. Gunnels,
+        “Beyond homogeneous decomposition: scaling long-range forces
+        on massively parallel systems,”
+        in Proceedings of the Conference on High Performance Computing Networking,
+        Storage and Analysis, ser. SC ’09. New York, NY, USA:
         Association for Computing Machinery, 2009.
 ------------------------------------------------------------------------- */
 
@@ -122,11 +122,11 @@ void VerletSplitRK::setup(int flag)
   rproc = (universe->iworld == 0) ? 1 : 0;
   if (rproc) {
     update->setupflag = 1;
-  
+
     // setup domain, communication and neighboring
     // acquire ghosts
     // build neighbor lists
-  
+
     atom->setup();
     modify->setup_pre_exchange();
     if (triclinic) domain->x2lamda(atom->nlocal);
@@ -144,18 +144,18 @@ void VerletSplitRK::setup(int flag)
     neighbor->build(1);
     modify->setup_post_neighbor();
     neighbor->ncalls = 0;
-  
+
     // compute all forces
-  
+
     force->setup();
     ev_set(update->ntimestep);
     force_clear();
     modify->setup_pre_force(vflag);
   }//rproc
 
-  if (force->kspace){ 
+  if (force->kspace){
     force->kspace->setup();
-    if (kspace_compute_flag) 
+    if (kspace_compute_flag)
             force->kspace->r2k_comm(eflag,vflag);
   }
   if (rproc) {
@@ -202,11 +202,11 @@ void VerletSplitRK::setup_minimal(int flag)
   rproc = (universe->iworld == 0) ? 1 : 0;
   if (rproc) {
     update->setupflag = 1;
-  
+
     // setup domain, communication and neighboring
     // acquire ghosts
     // build neighbor lists
-  
+
     if (flag) {
       modify->setup_pre_exchange();
       if (triclinic) domain->x2lamda(atom->nlocal);
@@ -224,24 +224,24 @@ void VerletSplitRK::setup_minimal(int flag)
       modify->setup_post_neighbor();
       neighbor->ncalls = 0;
     }
-  
+
     // compute all forces
-  
+
     ev_set(update->ntimestep);
     force_clear();
     modify->setup_pre_force(vflag);
   }//rproc
 
-  if (force->kspace) { 
+  if (force->kspace) {
     force->kspace->setup();
-    if (kspace_compute_flag) 
+    if (kspace_compute_flag)
             force->kspace->r2k_comm(eflag,vflag);
   }
 
   if (rproc) {
     if (pair_compute_flag) force->pair->compute(eflag,vflag);
     else if (force->pair) force->pair->compute_dummy(eflag,vflag);
-  
+
     if (atom->molecular != Atom::ATOMIC) {
       if (force->bond) force->bond->compute(eflag,vflag);
       if (force->angle) force->angle->compute(eflag,vflag);

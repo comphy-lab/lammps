@@ -53,31 +53,31 @@ class PPPM_RK : public PPPM {
   MPI_Comm block;                        // communicator within one block
 
   MPI_Comm block_density_brick;      // communicator within one block
-  MPI_Comm block_kforce_x;                      
-  MPI_Comm block_kforce_y;                      
-  MPI_Comm block_kforce_z;                     
-  MPI_Comm block_kforce_u;                    
-  MPI_Comm block_energy;                     
-  MPI_Comm block_virial;                    
+  MPI_Comm block_kforce_x;
+  MPI_Comm block_kforce_y;
+  MPI_Comm block_kforce_z;
+  MPI_Comm block_kforce_u;
+  MPI_Comm block_energy;
+  MPI_Comm block_virial;
 
   MPI_Request mpi_requests_density;  //Requests for asynchronous communications
-  MPI_Request mpi_requests_grid_x;  
-  MPI_Request mpi_requests_grid_y;  
-  MPI_Request mpi_requests_grid_z;  
-  MPI_Request mpi_requests_grid_u;  
-  MPI_Request mpi_requests_energy;  
-  MPI_Request mpi_requests_virial;  
+  MPI_Request mpi_requests_grid_x;
+  MPI_Request mpi_requests_grid_y;
+  MPI_Request mpi_requests_grid_z;
+  MPI_Request mpi_requests_grid_u;
+  MPI_Request mpi_requests_energy;
+  MPI_Request mpi_requests_virial;
   MPI_Request mpi_requests_flags;
   MPI_Request mpi_requests_domain_box;
   // Tags for communication within MPI_Comm block
-  enum MPI_Block_Tags {TAG_FLAGS=1,TAG_BOX,N_MPI_TAGS}; 
+  enum MPI_Block_Tags {TAG_FLAGS=1,TAG_BOX,N_MPI_TAGS};
 
   int *density_sizes, *density_disps;    // MPI gather/scatter params for block comm
   int **partitionInfoK;
   int block_size;
 
   void setupRKBlock();
-  
+
   void prepareXYZBrickScatterBufs()
   {
     FFT_SCALAR *x_buf_loc = &vdx_brick_buf[nzlo_in][nylo_in][nxlo_in];
@@ -130,7 +130,7 @@ class PPPM_RK : public PPPM {
   {
     if(eflag) MPI_Wait(&mpi_requests_energy,MPI_STATUS_IGNORE);
     if(vflag) MPI_Wait(&mpi_requests_virial,MPI_STATUS_IGNORE);
-  
+
     if (differentiation_flag == 1) {
       MPI_Wait(&mpi_requests_grid_u,MPI_STATUS_IGNORE);
     }
@@ -158,12 +158,12 @@ class PPPM_RK : public PPPM {
   }
   void post_sending_scatter_grid_potentials_ev(int eflag, int vflag)
   {
-        //energy_buf and virial_mpi_buf are filled at the end of 
+        //energy_buf and virial_mpi_buf are filled at the end of
                 //PPPM_RK::compute_grid_potentials(int eflag, int vflag)
-    if (eflag){ 
+    if (eflag){
       MPI_Ibcast(&energy_buf,1,MPI_DOUBLE,0,block_energy,&mpi_requests_energy);
     }
-    if (vflag){ 
+    if (vflag){
       MPI_Ibcast(virial_mpi_buf,6,MPI_DOUBLE,0,block_virial,&mpi_requests_virial);
     }
     if (differentiation_flag == 1) {
