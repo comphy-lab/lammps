@@ -68,7 +68,8 @@ Syntax
                            bound(group,dir,region), gyration(group,region), ke(group,reigon),
                            angmom(group,dim,region), torque(group,dim,region),
                            inertia(group,dimdim,region), omega(group,dim,region)
-         special functions = sum(x), min(x), max(x), ave(x), trap(x), slope(x), sort(x), rsort(x), \                                  gmask(x), rmask(x), grmask(x,y), next(x), is_file(name), is_os(name),
+         special functions = sum(x), min(x), max(x), ave(x), trap(x), slope(x), sort(x), rsort(x),
+                             gmask(x), rmask(x), grmask(x,y), next(x), is_file(name), is_os(name),
                              extract_setting(name), label2type(kind,label),
                              is_typelabel(kind,label), is_timeout()
          feature functions = is_available(category,feature), is_active(category,feature),
@@ -1252,10 +1253,10 @@ the atoms it owns.
 When invoked for the Ith atom, the value of the *arg* internal-style
 variable, defined by the *python* command, is set to the x-coord of
 the Ith atom.  The call via python-style variable *foo* to the Python
-*truncate()* function passes the value of the *arg* variable as its
-first (and only) argument.  Likewise, the return value of the Python
-function becomes is stored by the python-style variable *foo* and used
-in the *xtrunc* atom-style variable formula for the Ith atom.
+*truncate()* function passes the value of the *arg* variable as the
+function's first (and only) argument.  Likewise, the return value of
+the Python function is stored by the python-style variable *foo* and
+used in the *xtrunc* atom-style variable formula for the Ith atom.
 
 The resulting per-atom vector for *xtrunc* will thus contain the
 truncated x-coord of every atom in the system.  The dump command
