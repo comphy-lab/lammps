@@ -32,13 +32,11 @@ class VerletSplitRK : public Verlet {
   void setup(int) override;
   void setup_minimal(int) override;
   void run(int) override;
+
  private:
   int rproc;
-
 };
-
 }    // namespace LAMMPS_NS
-
 
 #endif
 #endif

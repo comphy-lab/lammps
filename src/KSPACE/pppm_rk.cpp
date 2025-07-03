@@ -55,9 +55,10 @@ using namespace MathConst;
 
 /* ---------------------------------------------------------------------- */
 
-PPPM_RK::PPPM_RK(LAMMPS *lmp) : PPPM(lmp),
-  density_brick_buf(nullptr), vdx_brick_buf(nullptr), vdy_brick_buf(nullptr), vdz_brick_buf(nullptr),u_brick_buf(nullptr),
-  density_sizes(nullptr),density_disps(nullptr),partitionInfoK(nullptr),block_size(0)
+PPPM_RK::PPPM_RK(LAMMPS *lmp) :
+    PPPM(lmp), density_brick_buf(nullptr), vdx_brick_buf(nullptr), vdy_brick_buf(nullptr),
+    vdz_brick_buf(nullptr), u_brick_buf(nullptr), density_sizes(nullptr), density_disps(nullptr),
+    partitionInfoK(nullptr), block_size(0)
 {
   rk_flag = 1;
 }
@@ -67,24 +68,23 @@ void PPPM_RK::init()
   PPPM::init();
   if (me == 0) utils::logmesg(lmp,"PPPM_RK initialization ...\n");
   memory->create3d_offset(density_brick_buf,
-    nzlo_in,nzhi_in,nylo_in,nyhi_in,
-    nxlo_in,nxhi_in,"pppm_split:density_brick_buf");
+                          nzlo_in,nzhi_in,nylo_in,nyhi_in,
+                          nxlo_in,nxhi_in,"pppm_split:density_brick_buf");
 
   if (differentiation_flag == 1) {
     memory->create3d_offset(u_brick_buf,
-      nzlo_in,nzhi_in,nylo_in,nyhi_in,
-      nxlo_in,nxhi_in,"pppm_split:u_brick_buf");
-  }
-  else{
+                            nzlo_in,nzhi_in,nylo_in,nyhi_in,
+                            nxlo_in,nxhi_in,"pppm_split:u_brick_buf");
+  } else {
     memory->create3d_offset(vdx_brick_buf,
-      nzlo_in,nzhi_in,nylo_in,nyhi_in,
-      nxlo_in,nxhi_in,"pppm_split:vdx_brick_buf");
+                            nzlo_in,nzhi_in,nylo_in,nyhi_in,
+                            nxlo_in,nxhi_in,"pppm_split:vdx_brick_buf");
     memory->create3d_offset(vdy_brick_buf,
-      nzlo_in,nzhi_in,nylo_in,nyhi_in,
-      nxlo_in,nxhi_in,"pppm_split:vdy_brick_buf");
+                            nzlo_in,nzhi_in,nylo_in,nyhi_in,
+                            nxlo_in,nxhi_in,"pppm_split:vdy_brick_buf");
     memory->create3d_offset(vdz_brick_buf,
-      nzlo_in,nzhi_in,nylo_in,nyhi_in,
-      nxlo_in,nxhi_in,"pppm_split:vdz_brick_buf");
+                            nzlo_in,nzhi_in,nylo_in,nyhi_in,
+                            nxlo_in,nxhi_in,"pppm_split:vdz_brick_buf");
   }
   setupRKBlock();
 }
@@ -134,8 +134,8 @@ void PPPM_RK::setupRKBlock()
           kspace_grid2proc[i][j][k] = comm->grid2proc[i][j][k];
   }
   MPI_Bcast(&kspace_grid2proc[0][0][0],
-    kspace_procgrid[0]*kspace_procgrid[1]*kspace_procgrid[2],MPI_INT,
-    universe->root_proc[1],universe->uworld);
+            kspace_procgrid[0]*kspace_procgrid[1]*kspace_procgrid[2],MPI_INT,
+            universe->root_proc[1],universe->uworld);
 
   // Rspace partition must be multiple of Kspace partition in each dim
   // so atoms of one Kspace proc coincide with atoms of several Rspace procs
@@ -147,8 +147,8 @@ void PPPM_RK::setupRKBlock()
     if (comm->procgrid[2] % kspace_procgrid[2]) flag = 1;
     if (flag)
       error->one(FLERR,
-        "pppm/rk requires Rspace partition layout be "
-        "multiple of Kspace partition layout in each dim");
+                 "pppm/rk requires Rspace partition layout be "
+                 "multiple of Kspace partition layout in each dim");
   }
 
   // block = 1 Kspace proc with set of Rspace procs it overlays
@@ -186,7 +186,7 @@ void PPPM_RK::setupRKBlock()
   if (universe->me == 0) {
     if (universe->uscreen) {
       fprintf(universe->uscreen,
-        "Per-block Rspace/Kspace proc IDs (original proc IDs):\n");
+              "Per-block Rspace/Kspace proc IDs (original proc IDs):\n");
       int m = 0;
       for (int i = 0; i < universe->nprocs/(ratio+1); i++) {
         fprintf(universe->uscreen,"  block %d:",i);
@@ -199,7 +199,7 @@ void PPPM_RK::setupRKBlock()
           if (j == 1) fprintf(universe->uscreen," (");
           else fprintf(universe->uscreen," ");
           fprintf(universe->uscreen,"%d",
-            universe->uni2orig[bmapall[m+j]]);
+                  universe->uni2orig[bmapall[m+j]]);
         }
         fprintf(universe->uscreen," %d)\n",universe->uni2orig[kspace_proc]);
         m += ratio + 1;
@@ -207,7 +207,7 @@ void PPPM_RK::setupRKBlock()
     }
     if (universe->ulogfile) {
       fprintf(universe->ulogfile,
-        "Per-block Rspace/Kspace proc IDs (original proc IDs):\n");
+              "Per-block Rspace/Kspace proc IDs (original proc IDs):\n");
       int m = 0;
       for (int i = 0; i < universe->nprocs/(ratio+1); i++) {
         fprintf(universe->ulogfile,"  block %d:",i);
@@ -221,7 +221,7 @@ void PPPM_RK::setupRKBlock()
           if (j == 1) fprintf(universe->ulogfile," (");
           else fprintf(universe->ulogfile," ");
           fprintf(universe->ulogfile,"%d",
-            universe->uni2orig[bmapall[m+j]]);
+                  universe->uni2orig[bmapall[m+j]]);
         }
         fprintf(universe->ulogfile," %d)\n",universe->uni2orig[kspace_proc]);
         m += ratio + 1;
@@ -230,8 +230,8 @@ void PPPM_RK::setupRKBlock()
   }
 
   memory->destroy(kspace_grid2proc);
-  delete [] bmap;
-  delete [] bmapall;
+  delete[] bmap;
+  delete[] bmapall;
 
   /*Copy communicators, assign structures helpful for inter-RK communication*/
   MPI_Comm_dup(block, &block_density_brick);
@@ -274,9 +274,8 @@ PPPM_RK::~PPPM_RK()
 {
   memory->destroy3d_offset(density_brick_buf,nzlo_in,nylo_in,nxlo_in);
   if (differentiation_flag == 1) {
-      memory->destroy3d_offset(u_brick_buf,nzlo_in,nylo_in,nxlo_in);
-  }
-  else{
+    memory->destroy3d_offset(u_brick_buf,nzlo_in,nylo_in,nxlo_in);
+  } else {
     memory->destroy3d_offset(vdx_brick_buf,nzlo_in,nylo_in,nxlo_in);
     memory->destroy3d_offset(vdy_brick_buf,nzlo_in,nylo_in,nxlo_in);
     memory->destroy3d_offset(vdz_brick_buf,nzlo_in,nylo_in,nxlo_in);
@@ -291,8 +290,8 @@ PPPM_RK::~PPPM_RK()
   MPI_Comm_free(&block_energy);
   MPI_Comm_free(&block_virial);
 
-  delete [] density_sizes;
-  delete [] density_disps;
+  delete[] density_sizes;
+  delete[] density_disps;
 
   memory->destroy(partitionInfoK);
 }
@@ -304,15 +303,15 @@ PPPM_RK::~PPPM_RK()
 ------------------------------------------------------------------------- */
 void PPPM_RK::r2k_comm(int &eflag, int &vflag)
 {
-  if (rproc){
+  if (rproc) {
     compute_charge_densities(eflag,vflag);
     //Post sending of density brick gathering
     for (int k = nzlo_in; k <= nzhi_in; k++)
-    for (int j = nylo_in; j <= nyhi_in; j++)
-      memcpy( &density_brick_buf[k][j][nxlo_in] , &density_brick[k][j][nxlo_in], (nxhi_in-nxlo_in+1)*sizeof(FFT_SCALAR));
+      for (int j = nylo_in; j <= nyhi_in; j++)
+        memcpy(&density_brick_buf[k][j][nxlo_in],&density_brick[k][j][nxlo_in],(nxhi_in-nxlo_in+1)*sizeof(FFT_SCALAR));
 
     MPI_Igatherv(&density_brick_buf[nzlo_in][nylo_in][nxlo_in],nfft_brick,MPI_DOUBLE,
-      NULL,NULL,NULL, MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
+                 nullptr,nullptr,nullptr,MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
 
     // Rspace sends eflag,vflag (and possibly domain box_change) to Kspace
     if (me_block == 1) {
@@ -320,8 +319,8 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
       MPI_Isend(flags_buf,2,MPI_INT,0,TAG_FLAGS,block,&mpi_requests_flags);
       // send box bounds from Rspace to Kspace if simulation box is dynamic
       if (domain->box_change) {
-      memcpy(domain_boxbuf,domain->boxlo,3*sizeof(double));
-      memcpy(domain_boxbuf+3,domain->boxhi,3*sizeof(double));
+        memcpy(domain_boxbuf,domain->boxlo,3*sizeof(double));
+        memcpy(domain_boxbuf+3,domain->boxhi,3*sizeof(double));
         MPI_Isend(domain_boxbuf,6,MPI_DOUBLE,0,TAG_BOX,block,&mpi_requests_domain_box);
       }
     }
@@ -333,22 +332,20 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
     int buf_len = (nzhi_in - nzlo_in + 1)*(nyhi_in - nylo_in + 1)*(nxhi_in - nxlo_in + 1);
     if (differentiation_flag == 1) {
       FFT_SCALAR *usrc = &u_brick_buf[nzlo_in][nylo_in][nxlo_in];
-      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-        usrc,buf_len,MPI_DOUBLE,0,block_kforce_u,&mpi_requests_grid_u);
-    }
-    else{
+      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_DOUBLE,
+                    usrc,buf_len,MPI_DOUBLE,0,block_kforce_u,&mpi_requests_grid_u);
+    } else {
       FFT_SCALAR *xsrc = &vdx_brick_buf[nzlo_in][nylo_in][nxlo_in];
       FFT_SCALAR *ysrc = &vdy_brick_buf[nzlo_in][nylo_in][nxlo_in];
       FFT_SCALAR *zsrc = &vdz_brick_buf[nzlo_in][nylo_in][nxlo_in];
-      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-        xsrc,buf_len,MPI_DOUBLE,0,block_kforce_x,&mpi_requests_grid_x);
-      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-        ysrc,buf_len,MPI_DOUBLE,0,block_kforce_y,&mpi_requests_grid_y);
-      MPI_Iscatterv(NULL,NULL,NULL,MPI_DOUBLE,
-        zsrc,buf_len,MPI_DOUBLE,0,block_kforce_z,&mpi_requests_grid_z);
+      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_DOUBLE,
+                    xsrc,buf_len,MPI_DOUBLE,0,block_kforce_x,&mpi_requests_grid_x);
+      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_DOUBLE,
+                    ysrc,buf_len,MPI_DOUBLE,0,block_kforce_y,&mpi_requests_grid_y);
+      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_DOUBLE,
+                    zsrc,buf_len,MPI_DOUBLE,0,block_kforce_z,&mpi_requests_grid_z);
     }
-  } //rproc
-  else{ //kproc
+  } else { //kproc
     // Kspace receives eflag,vflag from Rspace
     MPI_Recv(flags_buf,2,MPI_INT,1,TAG_FLAGS,block,MPI_STATUS_IGNORE);
     eflag = flags_buf[0]; vflag = flags_buf[1];
@@ -362,8 +359,8 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
       force->kspace->setup();
     }
     //K-processes to receive brick charge densities
-    MPI_Igatherv(NULL,0,MPI_DOUBLE,&density_brick_buf[nzlo_in][nylo_in][nxlo_in],
-      density_sizes,density_disps, MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
+    MPI_Igatherv(nullptr,0,MPI_DOUBLE,&density_brick_buf[nzlo_in][nylo_in][nxlo_in],
+                 density_sizes,density_disps, MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
     MPI_Wait(&mpi_requests_density,MPI_STATUS_IGNORE);
 
     FFT_SCALAR *buf_loc = &density_brick_buf[nzlo_in][nylo_in][nxlo_in];
@@ -381,8 +378,7 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
           for(int xx=xlo; xx<=xhi; xx++)
             density_brick[zz][yy][xx] = buf_loc[idx++];
     }
-  }//else kproc
-
+  }
 }
 
 /* ----------------------------------------------------------------------
@@ -392,7 +388,7 @@ void PPPM_RK::k2r_comm(int eflag, int vflag)
 {
   if (rproc) {
     //R-side waits on its send of flags, domain_box, and charge densities
-    if (me_block==1){
+    if (me_block==1) {
       MPI_Wait(&mpi_requests_flags,MPI_STATUS_IGNORE);
       if (domain->box_change)
         MPI_Wait(&mpi_requests_domain_box,MPI_STATUS_IGNORE);
@@ -457,7 +453,7 @@ void PPPM_RK::compute_charge_densities(int eflag, int vflag)
   // all procs communicate density values from their ghost cells
   //   to fully sum contribution in their 3d bricks
   gc->reverse_comm(Grid3d::KSPACE,this,REVERSE_RHO,1,sizeof(FFT_SCALAR),
-    gc_buf1,gc_buf2,MPI_FFT_SCALAR);
+                   gc_buf1,gc_buf2,MPI_FFT_SCALAR);
 
 }
 
@@ -495,7 +491,7 @@ void PPPM_RK::compute_grid_potentials(int eflag, int vflag)
 
 /*Given updated grid potentials, finish computing the long-range forces
   from the R-space processes*/
-void PPPM_RK::compute_interpolate_forces(int eflag, int vflag)
+void PPPM_RK::compute_interpolate_forces(int /*eflag*/, int /*vflag*/)
 {
   int i,j;
   // all procs communicate E-field values
@@ -503,20 +499,20 @@ void PPPM_RK::compute_interpolate_forces(int eflag, int vflag)
 
   if (differentiation_flag == 1)
     gc->forward_comm(Grid3d::KSPACE,this,FORWARD_AD,1,sizeof(FFT_SCALAR),
-      gc_buf1,gc_buf2,MPI_FFT_SCALAR);
+                     gc_buf1,gc_buf2,MPI_FFT_SCALAR);
   else
     gc->forward_comm(Grid3d::KSPACE,this,FORWARD_IK,3,sizeof(FFT_SCALAR),
-      gc_buf1,gc_buf2,MPI_FFT_SCALAR);
+                     gc_buf1,gc_buf2,MPI_FFT_SCALAR);
 
   // extra per-atom energy/virial communication
 
   if (evflag_atom) {
     if (differentiation_flag == 1 && vflag_atom)
       gc->forward_comm(Grid3d::KSPACE,this,FORWARD_AD_PERATOM,6,sizeof(FFT_SCALAR),
-        gc_buf1,gc_buf2,MPI_FFT_SCALAR);
+                       gc_buf1,gc_buf2,MPI_FFT_SCALAR);
     else if (differentiation_flag == 0)
       gc->forward_comm(Grid3d::KSPACE,this,FORWARD_IK_PERATOM,7,sizeof(FFT_SCALAR),
-        gc_buf1,gc_buf2,MPI_FFT_SCALAR);
+                       gc_buf1,gc_buf2,MPI_FFT_SCALAR);
   }
 
   // calculate the force on my particles

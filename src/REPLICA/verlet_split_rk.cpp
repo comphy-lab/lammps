@@ -109,9 +109,9 @@ void VerletSplitRK::setup(int flag)
     fputs("Setting up Verlet/split/rk run ...\n",screen);
     if (flag) {
       utils::print(screen,"  Unit style    : {}\n"
-                        "  Current step  : {}\n"
-                        "  Time step     : {}\n",
-                 update->unit_style,update->ntimestep,update->dt);
+                   "  Current step  : {}\n"
+                   "  Time step     : {}\n",
+                   update->unit_style,update->ntimestep,update->dt);
       timer->print_timeout(screen);
     }
   }
@@ -153,10 +153,10 @@ void VerletSplitRK::setup(int flag)
     modify->setup_pre_force(vflag);
   }//rproc
 
-  if (force->kspace){
+  if (force->kspace) {
     force->kspace->setup();
     if (kspace_compute_flag)
-            force->kspace->r2k_comm(eflag,vflag);
+      force->kspace->r2k_comm(eflag,vflag);
   }
   if (rproc) {
     if (pair_compute_flag) force->pair->compute(eflag,vflag);
@@ -171,14 +171,12 @@ void VerletSplitRK::setup(int flag)
   }//rproc
 
   if (force->kspace) {
-    if (kspace_compute_flag){
-        if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
-
-            force->kspace->k2r_comm(eflag,vflag);
+    if (kspace_compute_flag) {
+      if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
+      force->kspace->k2r_comm(eflag,vflag);
     }
     else force->kspace->compute_dummy(eflag,vflag);
   }
-
 
   if (rproc) {
     modify->setup_pre_reverse(eflag,vflag);
@@ -235,7 +233,7 @@ void VerletSplitRK::setup_minimal(int flag)
   if (force->kspace) {
     force->kspace->setup();
     if (kspace_compute_flag)
-            force->kspace->r2k_comm(eflag,vflag);
+      force->kspace->r2k_comm(eflag,vflag);
   }
 
   if (rproc) {
@@ -251,9 +249,9 @@ void VerletSplitRK::setup_minimal(int flag)
   }//rproc
 
   if (force->kspace) {
-    if (kspace_compute_flag){
-        if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
-        force->kspace->k2r_comm(eflag,vflag);
+    if (kspace_compute_flag) {
+      if(!rproc) force->kspace->compute_grid_potentials(eflag,vflag);
+      force->kspace->k2r_comm(eflag,vflag);
     }
     else force->kspace->compute_dummy(eflag,vflag);
   }
@@ -288,13 +286,6 @@ void VerletSplitRK::run(int n)
 
   // setup initial Rspace <-> Kspace comm params
   //rk_setup();
-
-  // check if OpenMP support fix defined
-
-  Fix *fix_omp;
-  int ifix = modify->find_fix("package_omp");
-  if (ifix < 0) fix_omp = nullptr;
-  else fix_omp = modify->fix[ifix];
 
   // flags for timestepping iterations
 
@@ -393,9 +384,9 @@ void VerletSplitRK::run(int n)
     timer->stamp();
     force->kspace->k2r_comm(eflag,vflag);
     timer->stamp(Timer::KSPACE);
-    if(rproc){
+    if(rproc) {
       /*pre_reverse and reverse_comm only need to be addressed for R-processes
-   	after kspace forces have been accumulated.*/
+        after kspace forces have been accumulated.*/
       if (n_pre_reverse) {
         modify->pre_reverse(eflag,vflag);
         timer->stamp(Timer::MODIFY);
@@ -404,8 +395,8 @@ void VerletSplitRK::run(int n)
         comm->reverse_comm();
         timer->stamp(Timer::COMM);
       }
-    // force modifications, final time integration, diagnostics
-    // all output
+      // force modifications, final time integration, diagnostics
+      // all output
       timer->stamp();
       if (n_post_force) modify->post_force(vflag);
       modify->final_integrate();
