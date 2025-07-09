@@ -26,8 +26,11 @@ Syntax
       *self* values = val
        val = yes or no based on if you want to include the self term in the LD calculation.
       *potential* values = type args
+       type = quadratic, linear, constant, mdpd, table/spline, table/lin, table/gradlin, table/gradspline, noforce
+       potential/gradient args are specific to the type, see each ldd_potential doc page
       *gradient* values = type args
-       potential and gradient args are specific to the type, see its doc page
+       type = quadratic, linear, constant, table/spline, table/lin, table/gradlin, table/gradspline
+       potential/gradient args are specific to the type, see each ldd_potential doc page
       *ignore* values = none
 
 Examples
@@ -62,10 +65,40 @@ The optional gradient keyword implements the gradient expansion of the local den
    U_{\nabla}(\mathbf{r}) = \sum_{i} u_{\nabla}(\rho_{i}) (\nabla_{i} \rho_{i})^{2}
 
 
+The (req.) *potential* keyword defines the form for :math:`U_{\rho}`. See each ldd_potential doc page for details.
+The (opt.) *gradient* keyword defines the form for :math:`U{\nabla}`. See each ldd_potential doc page for details.
+The (req.) *indicator* keyword defines the form for :math:`w(r)`. See each ldd_indicator doc page for details.
 
 The *ignore* keyword is used in simulations with mutliple particle types where only some of the type pairs have local density potentials acting between them, as in the example above.
 
-See individual files for the different forms of the available indicator functions and potentials.
+The *self* argument indicates whether the particle i=j term is included in the local densities and gradients calculated. 
+Note that for heterogenous LD types [e.g. type A surrounded by B] the self term is automatically excluded. 
+This is automatically enforced by the ldd package 
+and a warning will be issued to the user to note that a requested self term in this case has been turned off.
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: indicator options
+   
+   ldd_indicator_lucy
+   ldd_indicator_dpd
+   ldd_indicator_sphere
+   ldd_indicator_smooth
+   ldd_indicator_shell
+
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: potential and gradient keywords
+
+   ldd_potential_noforce
+   ldd_potential_constant
+   ldd_potential_linear
+   ldd_potential_quadratic
+   ldd_potential_table
+   ldd_potential_mdpd
 
 Mixing, shift, table, tail correction, restart, rRESPA info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -80,23 +113,32 @@ Therefore, you must re-specify the pair_style and pair_coeff commands in an inpu
 Restrictions
 """"""""""""
 
-This pair style must be used with the atom_style ldd. This atom style requires an argument of ntypes, which is the number of particle types you will use in the simulation.
+This pair style must be used with the atom_style ldd or atom_style hybrid ldd etc. 
+This atom style requires an argument of ntypes, which is the number of particle types you will use in the simulation.
 
 To save the properties associated with the local density, use dump style ldd.
 
 The *indicator*, *self*, and *potential* keywords are mandatory, unless the *ignore* keyword is provided. The *gradient* keyword is optional.
 
-Any value that can follow the *potential* keyword can also follow the *gradient* keyword, with the same arguments to that value. However, not all of the available styles should follow *potential*. For example, a constant ld potential will not change the simulation behavior. Simiarly, not all of the available styles should follow *gradient*. For example, the potential noforce style is used to calculate the local densities of particles in a simulation without actually applying a force. Since the gradient keyword is optional, you should just omit it instead of specifying gradient noforce.
+For all :math:`2^{n_{\text{types}}}` possible local density interactions that are initialized when atom_style ldd is used, the user must specify what kind of/if a local density interaction should be 
+defined for each pair of types. 
+The *ignore* keyword is used for not setting a local density interaction/not calculating local densities or gradients for that kind of interaction. 
+Once the *ignore* keyword is specified, the pair will be ignored regardless of future pair_coeff commands, so use with care.
+Conversely the *noforce* keyword will set up a potential with a constant 0 force, which will calculate local densities and gradients for that kind of interaction but not change statistics of the simulation. 
+
+Note, not all of the available potential styles should follow *gradient*. 
+For example, the potential noforce style is used to calculate the local densities/square gradients of particles in a simulation without actually applying a force. 
+Since the gradient keyword is optional, you should just omit it instead of specifying gradient noforce.
 
 Related commands
 """"""""""""""""
 
-:doc:`pair_ldd_indcator_dpd <pair_ldd_indicator_dpd>`, :doc:`pair_ldd_indicator_lucy <pair_ldd_indicator_lucy>`, 
-:doc:`pair_ldd_indicator_shell <pair_ldd_indicator_shell>`, :doc:`pair_ldd_indicator_smooth <pair_ldd_indicator_smooth>`, 
-:doc:`pair_ldd_indicator_sphere <pair_ldd_indicator_sphere>`, 
-:doc:`pair_ldd_potential_noforce <pair_ldd_potential_noforce>`, :doc:`pair_ldd_potential_constant <pair_ldd_potential_constant>`, 
-:doc:`pair_ldd_potential_linear <pair_ldd_potential_linear>`, :doc:`pair_ldd_potential_quadratic <pair_ldd_potential_quadratic>`, 
-:doc:`pair_ldd_potential_mdpd <pair_ldd_potential_mdpd>`, :doc:`pair_ldd_potential_table <pair_ldd_potential_table>`
+:doc:`ldd_indicator_dpd <ldd_indicator_dpd>`, :doc:`ldd_indicator_lucy <ldd_indicator_lucy>`, 
+:doc:`ldd_indicator_shell <ldd_indicator_shell>`, :doc:`ldd_indicator_smooth <ldd_indicator_smooth>`, 
+:doc:`ldd_indicator_sphere <ldd_indicator_sphere>`, 
+:doc:`ldd_potential_noforce <ldd_potential_noforce>`, :doc:`ldd_potential_constant <ldd_potential_constant>`, 
+:doc:`ldd_potential_linear <ldd_potential_linear>`, :doc:`ldd_potential_quadratic <ldd_potential_quadratic>`, 
+:doc:`ldd_potential_mdpd <ldd_potential_mdpd>`, :doc:`ldd_potential_table <ldd_potential_table>`
 
 
 ----------
@@ -107,4 +149,4 @@ Related commands
 
 .. _DeLyser:
 
-**(DeLyser)** M.R. DeLyser, W.G. Noid. "Corase-grained models for local density gradients." J. Chem. Phys., ???, ??? (2022).
+**(DeLyser)** M.R. DeLyser, W.G. Noid. "Corase-grained models for local density gradients." J. Chem. Phys., 156, 034106 (2021).

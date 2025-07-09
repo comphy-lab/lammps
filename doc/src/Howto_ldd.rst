@@ -1,516 +1,321 @@
-Body particles
-==============
+Local Density Dependent Potentials
+==================================
 
 **Overview:**
 
-In LAMMPS, body particles are generalized finite-size particles.
-Individual body particles can represent complex entities, such as
-surface meshes of discrete points, collections of sub-particles,
-deformable objects, etc.  Note that other kinds of finite-size
-spherical and aspherical particles are also supported by LAMMPS, such
-as spheres, ellipsoids, line segments, and triangles, but they are
-simpler entities than body particles.  See the :doc:`Howto spherical
-<Howto_spherical>` page for a general overview of all these
-particle types.
-
-Body particles are used via the :doc:`atom_style body <atom_style>`
-command.  It takes a body style as an argument.  The current body
-styles supported by LAMMPS are as follows.  The name in the first
-column is used as the *bstyle* argument for the :doc:`atom_style body
-<atom_style>` command.
-
-+----------------------+---------------------------------------------------+
-| *nparticle*          | rigid body with N sub-particles                   |
-+----------------------+---------------------------------------------------+
-| *rounded/polygon*    | 2d polygons with N vertices                       |
-+----------------------+---------------------------------------------------+
-| *rounded/polyhedron* | 3d polyhedra with N vertices, E edges and F faces |
-+----------------------+---------------------------------------------------+
-
-The body style determines what attributes are stored for each body and
-thus how they can be used to compute pairwise body/body or
-bond/non-body (point particle) interactions.  More details of each
-style are described below.
-
-More styles may be added in the future.  See the
-:doc:`page on creating new body styles <Modify_body>` for details on
-how to add a new body style to the code.
-
-----------
-
-**When to use body particles:**
-
-You should not use body particles to model a rigid body made of
-simpler particles (e.g. point, sphere, ellipsoid, line segment,
-triangular particles), if the interaction between pairs of rigid
-bodies is just the summation of pairwise interactions between the
-simpler particles.  LAMMPS already supports this kind of model via the
-:doc:`fix rigid <fix_rigid>` command.  Any of the numerous pair styles
-that compute interactions between simpler particles can be used.  The
-:doc:`fix rigid <fix_rigid>` command time integrates the motion of the
-rigid bodies.  All of the standard LAMMPS commands for thermostatting,
-adding constraints, performing output, etc will operate as expected on
-the simple particles.
-
-By contrast, when body particles are used, LAMMPS treats an entire
-body as a single particle for purposes of computing pairwise
-interactions, building neighbor lists, migrating particles between
-processors, output of particles to a dump file, etc.  This means that
-interactions between pairs of bodies or between a body and non-body
-(point) particle need to be encoded in an appropriate pair style.  If
-such a pair style were to mimic the :doc:`fix rigid <fix_rigid>`
-model, it would need to loop over the entire collection of
-interactions between pairs of simple particles within the two bodies,
-each time a single body/body interaction was computed.
-
-Thus it only makes sense to use body particles and develop such a pair
-style, when particle/particle interactions are more complex than what
-the :doc:`fix rigid <fix_rigid>` command can already calculate.  For
-example, consider particles with one or more of the following
-attributes:
-
-* represented by a surface mesh
-* represented by a collection of geometric entities (e.g. planes + spheres)
-* deformable
-* internal stress that induces fragmentation
-
-For these models, the interaction between pairs of particles is likely
-to be more complex than the summation of simple pairwise interactions.
-An example is contact or frictional forces between particles with
-planar surfaces that inter-penetrate.  Likewise, the body particle may
-store internal state, such as a stress tensor used to compute a
-fracture criterion.
-
-These are additional LAMMPS commands that can be used with body
-particles of different styles
-
-+------------------------------------------------+-----------------------------------------------------+
-| :doc:`fix nve/body <fix_nve_body>`             | integrate motion of a body particle in NVE ensemble |
-+------------------------------------------------+-----------------------------------------------------+
-| :doc:`fix nvt/body <fix_nvt_body>`             | ditto for NVT ensemble                              |
-+------------------------------------------------+-----------------------------------------------------+
-| :doc:`fix npt/body <fix_npt_body>`             | ditto for NPT ensemble                              |
-+------------------------------------------------+-----------------------------------------------------+
-| :doc:`fix nph/body <fix_nph_body>`             | ditto for NPH ensemble                              |
-+------------------------------------------------+-----------------------------------------------------+
-| :doc:`compute body/local <compute_body_local>` | store sub-particle attributes of a body particle    |
-+------------------------------------------------+-----------------------------------------------------+
-| :doc:`compute temp/body <compute_temp_body>`   | compute temperature of body particles               |
-+------------------------------------------------+-----------------------------------------------------+
-| :doc:`dump local <dump>`                       | output sub-particle attributes of a body particle   |
-+------------------------------------------------+-----------------------------------------------------+
-| :doc:`dump image <dump_image>`                 | output body particle attributes as an image         |
-+------------------------------------------------+-----------------------------------------------------+
-
-The pair styles currently defined for use with specific body styles
-are listed in the sections below.
-
-Note that for all the body styles, if the data file defines a general
-triclinic box, then the orientation of the body particle and its
-corresponding 6 moments of inertia and other orientation-dependent
-values should reflect the fact the body is defined withing a general
-triclinic box with edge vectors **A**,**B**,**C**.  LAMMPS will rotate
-the box to convert it to a restricted triclinic box.  This operation
-will also rotate the orientation of the body particles.  See the
-:doc:`Howto triclinic <Howto_triclinic>` doc page for more details.
-The sections below highlight the orientation-dependent values specific
-to each body style.
+The LDD package offers local density dependent potentials that are either 
+a function of the local density (LD) around a central particle
+or a function of the square gradient (SG) of the local density around a central particle.
+Such potentials are useful for coarse graining and can be constructed from trajectory data using
+`BOCS version 5 and higher <https://github.com/noid-group/BOCS>`_.
 
-----------
-
-**Specifics of body style nparticle:**
-
-The *nparticle* body style represents body particles as a rigid body
-with a variable number N of sub-particles.  It is provided as a
-vanilla, prototypical example of a body particle, although as
-mentioned above, the :doc:`fix rigid <fix_rigid>` command already
-duplicates its functionality.
-
-The atom_style body command for this body style takes two additional
-arguments:
-
-.. parsed-literal::
-
-   atom_style body nparticle Nmin Nmax
-   Nmin = minimum # of sub-particles in any body in the system
-   Nmax = maximum # of sub-particles in any body in the system
-
-The Nmin and Nmax arguments are used to bound the size of data
-structures used internally by each particle.
-
-When the :doc:`read_data <read_data>` command reads a data file for this
-body style, the following information must be provided for each entry
-in the *Bodies* section of the data file:
-
-.. parsed-literal::
-
-   atom-ID 1 M
-   N
-   ixx iyy izz ixy ixz iyz
-   x1 y1 z1
-   ...
-   xN yN zN
-
-where M = 6 + 3\*N, and N is the number of sub-particles in the body
-particle.
-
-The integer line has a single value N.  The floating point line(s)
-list 6 moments of inertia followed by the coordinates of the N
-sub-particles (x1 to zN) as 3N values.  These values can be listed on
-as many lines as you wish; see the :doc:`read_data <read_data>` command
-for more details.
-
-The 6 moments of inertia (ixx,iyy,izz,ixy,ixz,iyz) should be the
-values consistent with the current orientation of the rigid body
-around its center of mass.  The values are with respect to the
-simulation box XYZ axes, not with respect to the principal axes of the
-rigid body itself.  LAMMPS performs the latter calculation internally.
-
-The coordinates of each sub-particle are specified as its x,y,z
-displacement from the center-of-mass of the body particle.  The
-center-of-mass position of the particle is specified by the x,y,z
-values in the *Atoms* section of the data file, as is the total mass
-of the body particle.
-
-Note that if the data file defines a general triclinic simulation box,
-these sub-particle displacements are orientation-dependent and, as
-mentioned above, should reflect the body particle's orientation within
-the general triclinic box.
-
-The :doc:`pair_style body/nparticle <pair_body_nparticle>` command can be used
-with this body style to compute body/body and body/non-body interactions.
-
-----------
-
-**Specifics of body style rounded/polygon:**
-
-The *rounded/polygon* body style represents body particles as a 2d
-polygon with a variable number of N vertices.  This style can only be
-used for 2d models; see the :doc:`boundary <boundary>` command.  See the
-:doc:`pair_style body/rounded/polygon <pair_body_rounded_polygon>` page for
-a diagram of two squares with rounded circles at the vertices.  Special cases
-for N = 1 (circle) and N = 2 (rod with rounded ends) can also be specified.
-
-One use of this body style is for 2d discrete element models, as
-described in :ref:`Fraige <body-Fraige>`.
-
-Similar to body style *nparticle*, the atom_style body command for
-this body style takes two additional arguments:
-
-.. parsed-literal::
-
-   atom_style body rounded/polygon Nmin Nmax
-   Nmin = minimum # of vertices in any body in the system
-   Nmax = maximum # of vertices in any body in the system
-
-The Nmin and Nmax arguments are used to bound the size of data
-structures used internally by each particle.
-
-When the :doc:`read_data <read_data>` command reads a data file for this
-body style, the following information must be provided for each body
-in the *Bodies* section of the data file:
-
-.. parsed-literal::
-
-   atom-ID 1 M
-   N
-   ixx iyy izz ixy ixz iyz
-   x1 y1 z1
-   ...
-   xN yN zN
-   diameter
-
-where M = 6 + 3\*N + 1, and N is the number of vertices in the body
-particle.
-
-The integer line has a single value N.  The floating point line(s)
-list 6 moments of inertia, followed by the coordinates of the N
-vertices (x1 to zN) as 3N values (with z = 0.0 for each), followed by
-a diameter value = the rounded diameter of the circle that surrounds
-each vertex. The diameter value can be different for each body
-particle. These floating-point values can be listed on as many lines
-as you wish; see the :doc:`read_data <read_data>` command for more
-details.
-
-.. note::
-
-  It is important that the vertices for each polygonal body particle be
-  listed in order around its perimeter, so that edges can be inferred.
-  LAMMPS does not check that this is the case.
-
-The 6 moments of inertia (ixx,iyy,izz,ixy,ixz,iyz) should be the
-values consistent with the current orientation of the rigid body
-around its center of mass.  The values are with respect to the
-simulation box XYZ axes, not with respect to the principal axes of the
-rigid body itself.  LAMMPS performs the latter calculation internally.
-
-The coordinates of each vertex are specified as its x,y,z displacement
-from the center-of-mass of the body particle.  The center-of-mass
-position of the particle is specified by the x,y,z values in the
-*Atoms* section of the data file.
-
-For example, the following information would specify a square particle
-whose edge length is sqrt(2) and rounded diameter is 1.0.  The
-orientation of the square is aligned with the xy coordinate axes which
-is consistent with the 6 moments of inertia: ixx iyy izz ixy ixz iyz =
-1 1 4 0 0 0. Note that only Izz matters in 2D simulations.
-
-.. parsed-literal::
-
-   3 1 19
-   4
-   1 1 4 0 0 0
-   -0.7071 -0.7071 0
-   -0.7071 0.7071 0
-   0.7071 0.7071 0
-   0.7071 -0.7071 0
-   1.0
-
-A rod in 2D, whose length is 4.0, mass 1.0, rounded at two ends
-by circles of diameter 0.5, is specified as follows:
-
-.. parsed-literal::
-
-   1 1 13
-   2
-   1 1 1.33333 0 0 0
-   -2 0 0
-   2 0 0
-   0.5
-
-A disk, whose diameter is 3.0, mass 1.0, is specified as follows:
-
-.. parsed-literal::
-
-   1 1 10
-   1
-   1 1 4.5 0 0 0
-   0 0 0
-   3.0
-
-Note that if the data file defines a general triclinic simulation box,
-these polygon vertex displacements are orientation-dependent and, as
-mentioned above, should reflect the body particle's orientation within
-the general triclinic box.
-
-The :doc:`pair_style body/rounded/polygon <pair_body_rounded_polygon>`
-command can be used with this body style to compute body/body
-interactions.  The :doc:`fix wall/body/polygon <fix_wall_body_polygon>`
-command can be used with this body style to compute the interaction of
-body particles with a wall.
-
-----------
-
-**Specifics of body style rounded/polyhedron:**
-
-The *rounded/polyhedron* body style represents body particles as a 3d
-polyhedron with a variable number of N vertices, E edges and F faces.
-This style can only be used for 3d models; see the
-:doc:`boundary <boundary>` command.  See the "pair_style
-body/rounded/polygon" page for a diagram of a two 2d squares with
-rounded circles at the vertices.  A 3d cube with rounded spheres at
-the 8 vertices and 12 rounded edges would be similar.  Special cases
-for N = 1 (sphere) and N = 2 (rod with rounded ends) can also be
-specified.
-
-This body style is for 3d discrete element models, as described in
-:ref:`Wang <body-Wang>`.
-
-Similar to body style *rounded/polygon*, the atom_style body command
-for this body style takes two additional arguments:
-
-.. parsed-literal::
-
-   atom_style body rounded/polyhedron Nmin Nmax
-   Nmin = minimum # of vertices in any body in the system
-   Nmax = maximum # of vertices in any body in the system
-
-The Nmin and Nmax arguments are used to bound the size of data
-structures used internally by each particle.
-
-When the :doc:`read_data <read_data>` command reads a data file for this
-body style, the following information must be provided for each entry
-in the *Bodies* section of the data file:
-
-.. parsed-literal::
-
-   atom-ID 3 M
-   N E F
-   ixx iyy izz ixy ixz iyz
-   x1 y1 z1
-   ...
-   xN yN zN
-   0 1
-   1 2
-   2 3
-   ...
-   0 1 2 -1
-   0 2 3 -1
-   ...
-   1 2 3 4
-   diameter
-
-where M = 6 + 3\*N + 2\*E + 4\*F + 1, and N is the number of vertices
-in the body particle, E = number of edges, F = number of faces.  For N
-= 1 or 2, the format is simpler.  E and F are ignored and no edges or
-faces are listed, so that M = 6 + 3\*N + 1.
-
-The integer line has three values: number of vertices (N), number of
-edges (E) and number of faces (F). The floating point line(s) list 6
-moments of inertia followed by the coordinates of the N vertices (x1
-to zN) as 3N values, followed by 2E vertex indices corresponding to
-the end points of the E edges, then 4\*F vertex indices defining F
-faces.  The last value is the diameter value = the rounded diameter of
-the sphere that surrounds each vertex. The diameter value can be
-different for each body particle. These floating-point values can be
-listed on as many lines as you wish; see the :doc:`read_data
-<read_data>` command for more details.
-
-Note that vertices are numbered from 0 to N-1 inclusive.  The order of
-the 2 vertices in each edge does not matter.  Faces can be triangles
-or quadrilaterals.  In both cases 4 vertices must be specified.  For a
-triangle the 4th vertex is -1.  The 4 vertices within each triangle or
-quadrilateral face should be ordered by the right-hand rule so that
-the normal vector of the face points outwards from the center of mass.
-For polyhedron with faces with more than 4 vertices, you should split
-the complex face into multiple simple faces, each of which is a
-triangle or quadrilateral.
-
-.. note::
-
-  If a face is a quadrilateral then its 4 vertices must be co-planar.
-  LAMMPS does not check that this is the case.  If you have a quad-face
-  of a polyhedron that is not planar (e.g. a cube whose vertices have
-  been randomly displaced), then you should represent the single quad
-  face as two triangle faces instead.
-
-The 6 moments of inertia (ixx,iyy,izz,ixy,ixz,iyz) should be the
-values consistent with the current orientation of the rigid body
-around its center of mass.  The values are with respect to the
-simulation box XYZ axes, not with respect to the principal axes of the
-rigid body itself.  LAMMPS performs the latter calculation internally.
-
-The coordinates of each vertex are specified as its x,y,z displacement
-from the center-of-mass of the body particle.  The center-of-mass
-position of the particle is specified by the x,y,z values in the
-*Atoms* section of the data file.
-
-For example, the following information would specify a cubic particle
-whose edge length is 2.0 and rounded diameter is 0.5.
-The orientation of the cube is aligned with the xyz coordinate axes
-which is consistent with the 6 moments of inertia: ixx iyy izz ixy ixz
-iyz = 0.667 0.667 0.667 0 0 0.
-
-.. parsed-literal::
-
-   1 3 79
-   8 12 6
-   0.667 0.667 0.667 0 0 0
-   1 1 1
-   1 -1 1
-   -1 -1 1
-   -1 1 1
-   1 1 -1
-   1 -1 -1
-   -1 -1 -1
-   -1 1 -1
-   0 1
-   1 2
-   2 3
-   3 0
-   4 5
-   5 6
-   6 7
-   7 4
-   0 4
-   1 5
-   2 6
-   3 7
-   0 1 2 3
-   4 5 6 7
-   0 1 5 4
-   1 2 6 5
-   2 3 7 6
-   3 0 4 7
-   0.5
-
-A rod in 3D, whose length is 4.0, mass 1.0 and rounded at two ends
-by circles of diameter 0.5, is specified as follows:
-
-.. parsed-literal::
-
-   1 3 13
-   2 1 1
-   0 1.33333 1.33333 0 0 0
-   -2 0 0
-   2 0 0
-   0.5
-
-A sphere whose diameter is 3.0 and mass 1.0, is specified as follows:
-
-.. parsed-literal::
-
-   1 3 10
-   1 1 1
-   0.9 0.9 0.9 0 0 0
-   0 0 0
-   3.0
-
-The number of edges and faces for a rod or sphere must be listed,
-but is ignored.
-
-Note that if the data file defines a general triclinic simulation box,
-these polyhedron vertex displacements are orientation-dependent and,
-as mentioned above, should reflect the body particle's orientation
-within the general triclinic box.
-
-The :doc:`pair_style body/rounded/polhedron
-<pair_body_rounded_polyhedron>` command can be used with this body
-style to compute body/body interactions.  The :doc:`fix
-wall/body/polyhedron <fix_wall_body_polygon>` command can be used with
-this body style to compute the interaction of body particles with a
-wall.
-
-----------
-
-**Output specifics for all body styles:**
-
-For the :doc:`compute body/local <compute_body_local>` and :doc:`dump
-local <dump>` commands, all 3 of the body styles described on his page
-produces one datum for each of the N vertices (of sub-particles) in a
-body particle.  The datum has 3 values:
-
-.. parsed-literal::
-
-   1 = x position of vertex (or sub-particle)
-   2 = y position of vertex
-   3 = z position of vertex
-
-These values are the current position of the vertex within the
-simulation domain, not a displacement from the center-of-mass (COM) of
-the body particle itself.  These values are calculated using the
-current COM and orientation of the body particle.
-
-The :doc:`dump image <dump_image>` command and its *body* keyword can
-be used to render body particles.
-
-For the *nparticle* body style, each body is drawn as a
-collection of spheres, one for each sub-particle.  The size of each
-sphere is determined by the *bflag1* parameter for the *body* keyword.
-The *bflag2* argument is ignored.
-
-For the *rounded/polygon* body style, each body is drawn as a polygon
-with N line segments.  For the *rounded/polyhedron* body style, each
-face of each body is drawn as a polygon with N line segments.  The
-drawn diameter of each line segment is determined by the *bflag1*
-parameter for the *body* keyword.  The *bflag2* argument is ignored.
-
-Note that for both the *rounded/polygon* and *rounded/polyhedron*
-styles, line segments are drawn between the pairs of vertices.
-Depending on the diameters of the line segments this may be slightly
-different than the physical extent of the body as calculated by the
-:doc:`pair_style rounded/polygon <pair_body_rounded_polygon>` or
-:doc:`pair_style rounded/polyhedron <pair_body_rounded_polyhedron>`
-commands.  Conceptually, the pair styles define the surface of a 2d or
-3d body by lines or planes that are tangent to the finite-size spheres
-of specified diameter which are placed on each vertex position.
+**Local Density Definitions**
+
+The local density, :math:`\rho_{\beta|I}` of site types :math:`\beta` around a central particle of type :math:`t_I = \alpha` is defined:
+
+.. math::
+
+   \rho_{\beta|I} = \sum_{J\in S_{\beta|I}} \bar{w}_{\beta|\alpha}(r_{IJ})
+ 
+where :math:`S_{\beta|I}` is the set of particles of type :math:`\beta` not excluded in pairwise interactions involving site I. 
+:math:`\bar{w}_{\beta|\alpha}(r_{IJ})` is a normalized indicator function that determines the weight of each particle of type :math:`\beta` that contributes to the :math:`beta` LD around particular particle I of type :math:`t_I = \alpha`.
+It is defined by dividing a continuous/differentiably nonincreasing function :math:`w(r)` by its spatial integral.
+
+.. math::
+
+   \bar{w}_{\beta|\alpha}(r_{IJ}) = \frac{w(r)}{\int_{0}^{r_{c}} {w(r)}}
+
+
+where in the above :math:`w(r=0) = 1` and :math:`w(r=r_c) = 0`.
+The local density of particles of type :math:`\beta` surrounding a given particle I is then the sum of particles of type :math:`\beta` that are within (inclusive of) the cutoff :math:`r_c`.
+If particle I is of type :math:`t_I = \beta`, it's contribution to the local density can be included or excluded from the sum without changing the net force on a pair of particles. 
+Practically, the only difference is a horizontal shift in the LD potential :math:`u_rho`
+
+For molecular systems, particles included in the local density around a given particle I will be based on the exclusion list for the intramolecular nb interactions. 
+For example, consider a 5 beaded chain simulated with standard 1-4 exclusions: 
+
+:math:`A_{1}-B_{2}-C_{3}-D_{4}-E_{5}` 
+
+The local density of particles of type E surrounding site 1, :math:`\rho_{E|1}` will include 
+the contribution from the end chain particle :math:`\bar{w}_{E|A}(r_{15})`. 
+Conversely, the local density of particles of type B surrounding site 1, :math:`\rho_{B|1}` will only include intermolecular contributions to the local density.
+The local density of particles of Type A surrounding site 1, :math:`\rho_{A|1}` will include the *self* intramolecular contribution :math:`\bar{w}_{A|A}(0)` based on whether *self yes* or *self no* is listed by the user in the ldd pair_coeff command. 
+
+The choice of LD definition used for a particular set of types :math:`\beta|\alpha` (not nec eq to :math:`\alpha|\beta` ) interaction is set by the user in via the ldd pair_coeff command.
+
+**Local Density/ Square Gradient Potentials**
+
+The LDD package implements forces from two kinds of local density dependent potentials. 
+
+LD potentials defined by:
+
+.. math::
+   
+   U_{\rho}(\mathbf{R}) = \sum_{I} \sum_{\beta} u_{\beta|t_I}(\rho_{\beta|I})
+
+where the first sum is over all sites, I, and the second sum is over all site types, :math:`\beta`.
+The form of :math:`u_{\beta|\alpha}` is set by the user in the ldd pair_coeff command using the *potential* keyword. 
+
+SG potentials are defined by:
+
+.. math::
+
+   U_{SG}(\mathbf{R}) = \sum_{I} \sum_{\beta} u_{\nabla; \beta|t_I} (\rho_{\beta|I}) \left | \nabla_{I} \rho_{\beta|I} \right|^2
+
+where the first sum is over all sites, I, the second sum is over all site types, :math:`\beta` and the gradient :math:`\nabla_{I} = \frac{d}{d\mathbf{R_I}}` is with respect to the position of particle I. 
+The form of :math:`u_{\nabla; \beta|t_I}` is specified by the user in the ldd pair_coeff command using the (optional) *gradient* keyword. 
+
+
+For any given site I, once the local densities :math:`\rho_{\beta|I}` and the gradients of the local density :math:`\nabla_{I} \rho_{\beta|I}` have been determined, the corresponding forces are pairwise decomposable with pair forces analagous to those stated in `Delyser 2021 <https://pubs.aip.org/aip/jcp/article/156/3/034106/2839866/Coarse-grained-models-for-local-density-gradients>`_. 
+
+Because of this, the LDD package must be used with its own custom :doc:`atom_style <atom_style>`, *ldd*, where a list of all local densities and gradients of local densities are added as a per_atom data field to the most basic atomic atom_style. 
+Also because of this, interactions may be specified in a pair-typewise manner using the regular pair_coeff commands, where in this instance e.g. pair_coeff 1 2 is treated distinctly from pair_coeff 2 1. 
+
+
+**Putting it all together, input Overview**
+
+Examples
+"""""""""
+
+A simple atomic input example using only tabulated LDD potentials
+
+.. code-block:: LAMMPS
+ 
+   ## Init system/units
+   units real
+   dimension 3
+   atom_style ldd 2  # The total number of particle types
+
+   newton on
+   timestep 1
+
+   read_data my_mix.data # System initialization, must pre-ceed pair style init
+   velocity        all create 300.0 22345 dist gaussian
+    
+   ## pair_style ldd, must be used with atomstyle ldd
+
+   pair_style ldd 6.5 # Longest cutoff of all LD interactions
+
+   pair_coeff 1 1 indicator dpd 0.0 6.5 self yes potential table/lin LD_table.1.1.dat # type 1 surrounded by type 1
+
+   pair_coeff 1 2 ignore # type 1 surrounded by type 2 
+   # n.b. All 2^ntypes interactions must be specified even if its to ignore them see keyword ignore for details in pair_style doc
+   pair_coeff 2 1 indicator dpd 0.0 5.5 self no potential table/lin LD_table.2.1..dat # type 2 surrounded by type 1
+
+   pair_coeff 2 2 indicator dpd 0.0 5.5 self yes potential table/line LD_table.2.2.dat # type 2 surrounded by type 2
+
+   ## Run / Output
+   run_style verlet
+   neighbor 15.0 bin
+   thermo 500
+
+   fix 1 all nvt temp 300.0 300.0 100.0 
+   dump 1 all ldd 500 dump.txt #A lammps trajectory file with LD info
+
+   run 10000
+
+Note in the above example, only pair types 12, 11 and 22 will interact according to LD potentials. 
+
+
+Molecular input example that layers tabulated pair, LD and SG interactions via pair_style hybrid
+
+.. code-block:: LAMMPS
+
+   ## Init system /units
+
+   units real
+   dimension 3
+   atom_style hybrid full ldd 2 # Molecular topology accessible through hybrid atom_style
+
+   newton on
+   timestep 1
+
+   bond_style harmonic 
+
+   region my_box block 0 40 0 40 0 40
+   create_box 2 my_box bond/types 1 # System init, must pre-ceed pair style ldd
+
+   mass 1 59.044
+   mass 2 59.044
+
+   pair_style hybrid/overlay ldd 6.5 table spline 3000
+
+   molecule DI DIMER.mol 
+   create_atoms 0 random 250 885401 my_box mol DI 454353
+
+   include ff_bonded_params.lammps
+   velocity all create 300.0 22345 dist gaussian
+
+   ## Pair styles
+
+   pair_coeff * * table lammps_nb_ALL.table nb_All 15.0 # Pair interaction cutoff is independent of LDD package cutoffs
+
+   pair_coeff 1 1 ldd indicator lucy 0.0 6.5 self no potential table/spline LD.1.1.dat gradient table/gradspline SG.1.1.dat
+   
+   pair_coeff 1 2 ldd indicator lucy 0.0 6.5 self no potential table/spline LD.1.2.dat
+   pair_coeff 2 1 ldd indicator lucy 0.0 6.5 self no potential table/spline LD.2.1.dat
+
+   pair_coeff 2 2 ldd indicator lucy 0.0 6.5 self no potential table/spline LD.2.2.dat gradient table/gradspline SG.2.2.dat
+
+   ## Run / Output
+
+   run_style verlet
+   neighbor 15.0 bin
+   thermo 500
+
+   fix 1 all nvt temp 300.0 300.0 100.0 
+   dump 1 all ldd 500 dump.txt #A lammps trajectory file with LD info
+
+   run 10000
+ 
+Note in the above example LD cross interactions are both specified, but not necessarily symetric.  
+Also cross interactions opt not to use the optional gradient keyword. 
+Conversely homo-interactions (e.g. 11 22) layer SG potentials on top of the already defined LD and pair interactions. 
+
+See :doc:`pair_style ldd <pair_ldd>` for all pair_coeff *args* options that exist, all restrictions, and more examples.
+
+
+**atom_style ldd read_data input file format**
+
+Atom style ldd is a basic atomic atom_style with per-atom fields added for local densities, gradients of local densities, LD energy contributions and SG energy contributions. 
+These can be reported using :doc:`dump ldd <dump_ldd>`, but are not required for starting simulations. 
+read_data input therefore can follow usual atomic read_data input formats, and when hybridized with other atom styles, the .data follw is the same as atomic hybridized with those styles.
+
+The following is an example for when the atom_style ldd is used by itself
+
+.. code-block:: LAMMPS
+
+   Topology of CG water translated from gromacs input
+
+   5000 atoms
+   0 bonds
+   0 angles
+   0 dihedrals
+   0 impropers
+
+   1 atom types
+   0 bond types
+   0 angle types
+   0 dihedral types
+   0 improper types
+
+   0.000000 53.222800 xlo xhi
+   0.000000 53.222800 ylo yhi
+   0.000000 53.222800 zlo zhi
+
+   Masses
+
+   1 18.0154 # SOL
+
+   Atoms
+
+   1 1 46.050000 19.400000 9.760000 #atidx typeidx x y z
+   2 1 7.860000 36.680000 8.090000
+   3 1 42.340000 39.600000 8.310000
+   4 1 22.950000 37.630000 5.880000
+
+   .
+   .
+   .
+   .
+   4998 1 15.120000 8.330000 19.900000
+   4999 1 5.300000 42.540000 30.500000
+   5000 1 44.600000 18.310000 51.990000
+
+
+The following is an example for the Atoms section of the read_data file when the atom_style ldd is hybridized with full. Bonds/Angles/Dihedral syntax are standard as listed in :doc:`read_data <read_data>`. 
+
+.. code-block:: LAMMPS
+
+   LAMMPS data file via write_data, version 12 Jun 2025, timestep = 985, units = real
+
+   500 atoms
+   4 atom types
+   375 bonds
+   1 bond types
+   250 angles
+   1 angle types
+   125 dihedrals
+   1 dihedral types
+
+   0 40 xlo xhi
+   0 40 ylo yhi
+   0 40 zlo zhi
+
+   Masses
+
+   1 59.0448
+   2 59.0448
+   3 59.0448
+   4 59.0448
+
+   Atoms # hybrid
+
+   19 3 6.337397372531347 1.5408419900080126 7.155488269009223 5 0 0 0 0 #id type x y z molid q nx ny nz
+   20 4 4.504049144010551 1.3471156110429994 9.244879846603403 5 0 0 0 0
+   129 1 6.919214369251321 4.484508069873466 10.334931011393717 33 0 0 0 0
+   130 2 4.485538449090976 5.13320081653011 11.674419677953514 33 0 0 0 0
+   131 3 4.2382325348268 7.693584581555052 10.175944460105603 33 0 0 0 0
+   132 4 2.4530920970231946 8.798676084329882 12.317895781012147 33 0 0 0 0
+
+   .
+   .
+   .
+
+
+
+**dump ldd output**
+
+Full LD/SG simulation statistics for each pair of types where an LDD type interaction can be calculated/dumped in the ldd dump command, which is essentially a custom lammps dump trajectory output with local density information. 
+
+See :doc:`dump ldd <dump_ldd>` for details.
+
+This trajectory type is natively compatible with the `Bottom-up Open-source Coarse-graining Software <https://github.com/noid-group/BOCS>`_ which can be used to construct LD/SG potentials from atomistic data, as well as to convert lammps trajectories to .trr files for analysis with gromacs(2019.6) tools.
+
+
+**When to use LD/SG potentials:**
+
+This package has been primarily developed in the context of constructing/simulating 
+bottom up coarse grained models. 
+We have found that LD/SG potentials are particularly useful for simulating CG models in the NPT 
+and in different interfacial environments. 
+SG potentials are slower to simulate than LD potentials alone, so where applicable for coarse graining we recommend trying to construct/simulate LD potentials first and then [if necessary] adding SG potentials to refine further. 
+A number of works have been published using this package in its dev stage for different CG studies. 
+
+**References**
+
+.. _DeLyser1:
+
+**Michael R. DeLyser, W. G. Noid. "Extending Pressure-Matching to Inhomogenous Systems via Local-Density Potentials." The Journal of Chemical Physics, 147, no. 13: 134111 (2017)**
+
+
+.. _DeLyser2:
+
+**Michael R. DeLyser, W. G. Noid. "Analysis of local density potentials." The Journal of Chemical Physics, 151, no. 22:224106 (2019)**
+
+.. _DeLyser3:
+   
+**Michael R. DeLyser, W. G. Noid "Bottom-up coarse-grained models for external fields and interfaces" The Journal of Chemical Physics 153, 224103 (2020)**
+
+.. _DeLyser4:
+
+**Michael R. DeLyser, W. G. Noid "Coarse-grained models for local density gradients" The Journal of Chemical Physics 156, 034106 (2021)**
+
+
+.. _Szukalo:
+
+**Ryan K/ Szukalo, W.G. Noid "A temperature-dependent length-scale for transferable local density potentials". The Journal of Chemical Physics, 159, 074104 (2023)**
+
+.. _Lesniewski1:
+
+**Maria C. Lesniewski, R. C. Remsing, W. G. Noid "Coarse Graining the Hydrophobic Effect." The Journal of Chemical Physics, X, X (2025)**
+
+.. _Dutta:
+
+**Sayan Dutta, Muhammad Nawaz Qaisrani, Maria C. Lesniewski, W. G. Noid, Denis Andrienko, Arash Nikoubashman "Many body effect and optimized mapping scheme for systematic coarse-graining". X, X, X, (2025)**
+
+.. _Lesniewski2:
+
+**Maria C. Lesniewski, Michael R. DeLyser, Nicholas J. H. Dunn, Joseph R. Rudzinski, Ryan J. Szukalo, W. G. Noid "BOCS version 5: Bottom Up Coarse Graining with Local Densities" X, X, X (2025)**
+
+

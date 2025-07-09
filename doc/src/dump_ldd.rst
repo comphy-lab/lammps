@@ -8,50 +8,82 @@ Syntax
 
 .. code-block:: LAMMPS
 
-   dump ID group-ID vtk N file args
+   dump ID group-ID ldd filename
 
 * ID = user-assigned name for the dump
 * group-ID = ID of the group of atoms to be dumped
-* vtk = style of dump command (other styles such as *atom* or *cfg* or *dcd* or *xtc* or *xyz* or *local* or *custom* are discussed on the :doc:`dump <dump>` doc page)
+* ldd = style of dump command (other styles such as *atom* or *cfg* or *dcd* or *xtc* or *xyz* or *local* or *custom* are discussed on the :doc:`dump <dump>` doc page)
 * N = dump every this many timesteps
 * file = name of file to write dump info to
-* args = same as arguments for :doc:`dump_style custom <dump>`
+* args = none`
 
 Examples
 """"""""
 
 .. code-block:: LAMMPS
 
-   dump dmpvtk all vtk 100 dump*.myforce.vtk id type vx fx
-   dump dmpvtp flow vtk 100 dump*.%.displace.vtp id type c_myD[1] c_myD[2] c_myD[3] v_ke
+   dump 4 all ldd 500 dump.txt
 
 Description
 """""""""""
 
-Dump a snapshot of atom quantities to one or more files every :math:`N`
-timesteps in a format readable by the `VTK visualization toolkit
-<https://www.vtk.org>`_ or other visualization tools that use it, such
-as `ParaView <https://www.paraview.org>`_.  The time steps on which dump
-output is written can also be controlled by a variable; see the
-:doc:`dump_modify every <dump_modify>` command for details.
+An optional dump style for when :doc:`atom_style ldd <atom_style>` is used in the :ref:`LDD <PKG-LDD>` package.
+Dump a snapshot of atom quantities to a file every :math:`N`
+timesteps in a text format readable by the `Bottom Up Open Source Coarse Graining Package (BOCS)
+<https://github.com/noid-group/BOCS>`_  for constructing CG models and translating trajectories to other file formats. 
 
-This dump style is similar to :doc:`dump_style custom <dump>` but uses
-the VTK library to write data to VTK simple legacy or XML format,
-depending on the filename extension specified for the dump file.  This
-can be either *\*.vtk* for the legacy format or *\*.vtp* and *\*.vtu*,
-respectively, for XML format; see the `VTK homepage
-<https://www.vtk.org/VTK/img/file-formats.pdf>`_ for a detailed
-description of these formats.  Since this naming convention conflicts
-with the way binary output is usually specified (see below), the
-:doc:`dump_modify binary <dump_modify>` command allows setting of a
-binary option for this dump style explicitly.
+The output of this dump style is similar to a :doc:`dump_style custom <dump>` but 
+it includes per atom local density and gradient of the local density/ ldd energy information for each type of particle for each particle in the system. 
+Each frame of the ldd dumped text file contains 4 ITEM sections: the timestep, the number of atoms, the box dimensions, and the ATOMS sections. 
+The first three sections are 1-3 lines containing the time, total number of atoms in the system and box bounds respectively.
 
-Only information for atoms in the specified group is dumped.  The
-:doc:`dump_modify thresh and region <dump_modify>` commands can also
-alter what atoms are included; see details below.
+Each line in the atoms section contains per atom data fields in an order which is labeled by a headereach frame.
 
-As described below, special characters ("\*", "%") in the filename
-determine the kind of output.
+below is a table of ldd header field labels, definitions in the order they appear
+
+
++------------+-----------------------------------------------------------------+
+| **label**  |  **Definition**                                                 |
++============+=================================================================+
+| id         | The atom index, :math:`I`                                       |
++------------+-----------------------------------------------------------------+
+| mol        | The molecule index (only appears is atom_style ldd is listed    |
+|            | an atom_style hybrid list with a molecular atom_style)          |
++------------+-----------------------------------------------------------------+
+| type       | The atom type index, :math:`t_I \in` {1 ... n_types}            |
++------------+-----------------------------------------------------------------+
+| x y z      | The x y and z components of the atom's position                 |
++------------+-----------------------------------------------------------------+
+| vx vy vz   | The x y and z components of the atom's velocity                 |
++------------+-----------------------------------------------------------------+
+| fx fy fz   | The x y and z components of the atom's net force                |
++------------+-----------------------------------------------------------------+
+| lddensn    | n = {1 ... ntypes}, the local density of particle type n around | 
+|            | the atom,  :math:`\rho_{n|I}`                                   |
++------------+-----------------------------------------------------------------+
+| ldnrgn     | n = {1 ... ntypes}, the energy contribution of the local        |
+|            |  density of type n around this particle to the total energy     |
+|            | :math:`u_{n|t_I}(\rho_{n|I})`                                   |
++------------+-----------------------------------------------------------------+
+| gradxn     | n = {1 ... ntypes), the x y and z components of the gradient of |
+| gradyn     | the local density of type n surrounding the particle.           |
+| gradzn     | :math:`\nabla_{I} \rho_{n|I}`                                   |
++------------+-----------------------------------------------------------------+
+| gradnrgn   | n = {1 ... ntypes}, the energy contribution of this particle    |
+|            |  surrounded by type n to the square gradient potential.         |
+|            | :math:`u_{\nabla; n|t_I}(\rho_{n|I})|\nabla_{I}\rho_{n|I}|^2`   |
++------------+-----------------------------------------------------------------+
+| lddttlnrg  | The total energy contribution of this particle to LD and SG     |
+|            | potentials.                                                     |
+|            | :math:`sum_{\text{n}_{\text{types}}} \text{gradnrgn + ldnrgn}`  |
++------------+-----------------------------------------------------------------+
+
+
+If local densities and square gradient potentials are not defined with :doc:`pair_style ldd <pair_ldd>` 
+then the relevant LD and SG fields will be zeroed out in the output.
+
+
+Only information for atoms in the specified group is dumped.
 
 .. warning::
 
@@ -72,41 +104,8 @@ determine the kind of output.
    a single snapshot is collected from multiple processors, each of
    which owns a subset of the atoms.
 
-For the *vtk* style, sorting is off by default. See the
+For the *ldd* style, sorting is off by default. See the
 :doc:`dump_modify <dump_modify>` page for details.
-
-----------
-
-The dimensions of the simulation box are written to a separate file
-for each snapshot (either in legacy VTK or XML format depending on the
-format of the main dump file) with the suffix *_boundingBox* appended
-to the given dump filename.
-
-For an orthogonal simulation box this information is saved as a
-rectilinear grid (legacy .vtk or .vtr XML format).
-
-Triclinic simulation boxes (non-orthogonal) are saved as
-hexahedrons in either legacy .vtk or .vtu XML format.
-
-Style *vtk* allows you to specify a list of atom attributes to be
-written to the dump file for each atom.  The list of possible attributes
-is the same as for the :doc:`dump_style custom <dump>` command; see its
-documentation page for a listing and an explanation of each attribute.
-
-.. note::
-
-   Since position data is required to write VTK files the atom
-   attributes "x y z" do not have to be specified explicitly; they will
-   be included in the dump file regardless.  Also, in contrast to the
-   *custom* style, the specified *vtk* attributes are rearranged to
-   ensure correct ordering of vector components (except for computes and
-   fixes - these have to be given in the right order) and duplicate
-   entries are removed.
-
-The VTK format uses a single snapshot of the system per file, thus
-a wildcard "\*" must be included in the filename, as discussed below.
-Otherwise the dump files will get overwritten with the new snapshot
-each time.
 
 ----------
 
@@ -128,8 +127,8 @@ first timestep of a run will also not be written unless the
 Dump filenames can contain two wildcard characters.  If a "\*"
 character appears in the filename, then one file per snapshot is
 written and the "\*" character is replaced with the timestep value.
-For example, tmp.dump\*.vtk becomes tmp.dump0.vtk, tmp.dump10000.vtk,
-tmp.dump20000.vtk, etc.  Note that the :doc:`dump_modify pad <dump_modify>`
+For example, tmp.dump\*.txt becomes tmp.dump0.txt, tmp.dump10000.txt,
+tmp.dump20000.txt, etc.  Note that the :doc:`dump_modify pad <dump_modify>`
 command can be used to ensure all timestep numbers are the same length
 (e.g. 00010), which can make it easier to read a series of dump files
 in order with some post-processing tools.
@@ -137,8 +136,8 @@ in order with some post-processing tools.
 If a "%" character appears in the filename, then each of P processors
 writes a portion of the dump file, and the "%" character is replaced
 with the processor ID from 0 to P-1 preceded by an underscore character.
-For example, tmp.dump%.vtp becomes tmp.dump_0.vtp, tmp.dump_1.vtp, ...
-tmp.dump_P-1.vtp, etc.  This creates smaller files and can be a fast
+For example, tmp.dump%.txt becomes tmp.dump_0.txt, tmp.dump_1.txt, ...
+tmp.dump_P-1.txt, etc.  This creates smaller files and can be a fast
 mode of output on parallel machines that support parallel I/O for output.
 
 By default, P = the number of processors meaning one file per
@@ -147,42 +146,30 @@ processor, but P can be set to a smaller value via the *nfile* or
 These options can be the most efficient way of writing out dump files
 when running on large numbers of processors.
 
-For the legacy VTK format "%" is ignored and P = 1, i.e., only
-processor 0 does write files.
-
 Note that using the "\*" and "%" characters together can produce a
 large number of small dump files!
-
-If *dump_modify binary* is used, the dump file (or files, if "\*" or
-"%" is also used) is written in binary format.  A binary dump file
-will be about the same size as a text version, but will typically
-write out much faster.
 
 ----------
 
 Restrictions
 """"""""""""
 
-The *vtk* style does not support writing of gzipped dump files.
 
-The *vtk* dump style is part of the VTK package. It is only
+The *ldd* dump style is part of the LDD package. It is only
 enabled if LAMMPS was built with that package. See the :doc:`Build package <Build_package>` page for more info.
 
-To use this dump style, you also must link to the VTK library.  See
-the info in lib/vtk/README and ensure the Makefile.lammps file in that
-directory is appropriate for your machine.
+The *ldd* dump style is only supported when the atom_style ldd is used. See :doc:`Howto_ldd <Howto_ldd>` for more details. 
 
-The *vtk* dump style supports neither buffering or custom format
+The *ldd* dump style supports neither buffering or custom format
 strings.
 
 Related commands
 """"""""""""""""
 
-:doc:`dump <dump>`, :doc:`dump image <dump_image>`,
+:doc:`dump <dump>`, :doc:`LDD <Howto_ldd>`, :doc:`pair_style ldd <pair_ldd>`, 
 :doc:`dump_modify <dump_modify>`, :doc:`undump <undump>`
 
 Default
 """""""
 
-By default, files are written in ASCII format. If the file extension
-is not one of .vtk, .vtp or .vtu, the legacy VTK file format is used.
+By default, files are written in ASCII format.

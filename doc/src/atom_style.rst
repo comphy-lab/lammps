@@ -10,7 +10,7 @@ Syntax
 
    atom_style style args
 
-* style = *amoeba* or *angle* or *apip* or *atomic* or *body* or *bond* or *charge* or *dielectric* or *dipole* or  *dpd* or *edpd* or *electron* or *ellipsoid* or *full* or *line* or *mdpd* or *molecular* or *oxdna* or *peri* or *smd* or *sph* or *sphere* or *bpm/sphere* or *spin* or *tdpd* or *tri* or *template* or *wavepacket* or *hybrid*
+* style = *amoeba* or *angle* or *apip* or *atomic* or *body* or *bond* or *charge* or *dielectric* or *dipole* or  *dpd* or *edpd* or *electron* or *ellipsoid* or *full* or *ldd* or *line* or *mdpd* or *molecular* or *oxdna* or *peri* or *smd* or *sph* or *sphere* or *bpm/sphere* or *spin* or *tdpd* or *tri* or *template* or *wavepacket* or *hybrid*
 
   .. parsed-literal::
 
@@ -22,6 +22,9 @@ Syntax
                          page for details
          *sphere* arg = 0/1 (optional) for static/dynamic particle radii
          *bpm/sphere* arg = 0/1 (optional) for static/dynamic particle radii
+         *ldd* arg = Ntypes
+                     see the :doc:`Howto ldd <Howto_ldd> doc page
+                     for details
          *tdpd* arg = Nspecies
            Nspecies = # of chemical species
          *template* arg = template-ID
@@ -45,6 +48,7 @@ Examples
    atom_style template myMols
    atom_style hybrid template twomols charge
    atom_style tdpd 2
+   atom_style ldd 3
 
 Description
 """""""""""
@@ -174,7 +178,7 @@ the Additional Information section below.
      -
      - 2-d rigid body particles
    * - *ldd*
-     - *atom* + local densities + gradients of local densities
+     - *atom* + local densities + gradients of local densities + ldd energies
      - :ref:`LDD <PKG-LDD>`
      -
    * - *mdpd*
@@ -358,8 +362,10 @@ point particle (0).
 For the *ldd* style, particles are represented as in the basic atomic style,
 but per_atom local density and gradients of local density information is available
 for all types of particles surrounding a given particle i in the system. 
-local densities and gradients are defined via the pair_style ldd/associated 
-pair_coeff commands and zero otherwise. When hybridized with a molecular style,
+local densities and gradients are defined via the pair_style ldd and associated 
+pair_coeff commands. Undefined local densities will be reported as zero and not
+considered in force calculations. 
+When hybridized with a molecular style,
 local density definitions will inherit the bonded exclusions of other 
 nb pair interactions. See the :doc:``Howto ldd <Howto_ldd>`` doc for details.
 

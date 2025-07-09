@@ -1448,7 +1448,7 @@ LDD package
 
 An atom_style and pair_style that flexibly define interactions as function
 of the local density and/or gradient of the local density around a central site.
-A dump style natively compatible with BOCS, an external coarse-graining 
+A dump style natively compatible with BOCS, which is an external coarse-graining 
 package that can be used to define such potentials from atomistic simulation data.
 `https://github.com/noid-group/BOCS <https://github.com/noid-group/BOCS>`_
 
