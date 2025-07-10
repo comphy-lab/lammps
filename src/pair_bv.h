@@ -48,7 +48,7 @@ class PairBV : public Pair {
 
  protected:
   double cut_global;
-  int nmax;  
+  int nmax;
   double power_global;
   double **cut;
   double **r0,**alpha,**sparam,**v0;

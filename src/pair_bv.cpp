@@ -74,7 +74,7 @@ void PairBV::compute(int eflag, int vflag)
   double s,ss;
   double Aij,r,recip,psip;
   evdwl = 0.0;
-    
+
   if (eflag || vflag) ev_setup(eflag,vflag);
   else evflag = vflag_fdotr = eflag_global = eflag_atom = 0;
 
@@ -98,7 +98,7 @@ void PairBV::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // zero out BVS                                                               
+  // zero out BVS
     if (newton_pair) {
     for (i = 0; i < nall; i++) s0[i] = 0.0;
     } else for (i = 0; i < nlocal; i++) s0[i] = 0.0;
@@ -146,7 +146,7 @@ void PairBV::compute(int eflag, int vflag)
     fp[i] = sparam[itype][itype]*power_global*s;
     if (eflag) {
       phi = sparam[itype][itype]*ss+energy0[itype];
-      if (eflag_global) eng_vdwl += phi;     
+      if (eflag_global) eng_vdwl += phi;
       if (eflag_atom) eatom[i] += phi;
     }
   }
@@ -200,7 +200,7 @@ void PairBV::compute(int eflag, int vflag)
       } /*1*/
     }
   }
-  
+
   if (vflag_fdotr) virial_fdotr_compute();
 }
 
@@ -302,14 +302,14 @@ void PairBV::init_style()
 double PairBV::init_one(int i, int j)
 {
   if (setflag[i][j] == 0) error->all(FLERR,"All pair coeffs are not set");
-    
+
   offset[i][j] = 0.0;
   alpha[j][i] = alpha[i][j];
   r0[j][i] = r0[i][j];
   sparam[j][i] = sparam[i][j];
   v0[j][i] = v0[i][j];
   offset[j][i] = offset[i][j];
-    
+
   if(i == j){
     energy0[i]=0.0;
   }

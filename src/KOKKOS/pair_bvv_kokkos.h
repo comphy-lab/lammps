@@ -112,7 +112,7 @@ class PairBVVKokkos : public PairBVV, public KokkosBase {
   int pack_forward_comm_kokkos(int, DAT::tdual_int_1d, DAT::tdual_xfloat_1d&,
                        int, int *) override;
   void unpack_forward_comm_kokkos(int, int, DAT::tdual_xfloat_1d&) override;
-  
+
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
   int pack_reverse_comm(int, int, double *) override;
@@ -131,9 +131,9 @@ class PairBVVKokkos : public PairBVV, public KokkosBase {
   Kokkos::DualView<params_bvv**,Kokkos::LayoutRight,DeviceType> k_params;
   //params is the unmanaged/device view of the dual view
   typename Kokkos::DualView<params_bvv**,Kokkos::LayoutRight,DeviceType>::t_dev_const_um params;
-  //m_params is an instance of params_bv stucture 
-  params_bvv m_params[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];  
-  
+  //m_params is an instance of params_bv stucture
+  params_bvv m_params[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
+
   F_FLOAT m_cutsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
   typename AT::tdual_ffloat_2d k_cutsq;
   typename AT::t_ffloat_2d d_cutsq;
@@ -161,7 +161,7 @@ class PairBVVKokkos : public PairBVV, public KokkosBase {
   DupScatterView<F_FLOAT*[3], typename DAT::t_f_array::array_layout> dup_f;
   DupScatterView<E_FLOAT*, typename DAT::t_efloat_1d::array_layout> dup_eatom;
   DupScatterView<F_FLOAT*[6], typename DAT::t_virial_array::array_layout> dup_vatom;
-  
+
   NonDupScatterView<F_FLOAT*[3], typename DAT::t_f_array::array_layout> ndup_s0;
   NonDupScatterView<F_FLOAT*[3], typename DAT::t_f_array::array_layout> ndup_f;
   NonDupScatterView<E_FLOAT*, typename DAT::t_efloat_1d::array_layout> ndup_eatom;
@@ -169,7 +169,7 @@ class PairBVVKokkos : public PairBVV, public KokkosBase {
 
   DAT::tdual_f_array k_s0;
   DAT::tdual_f_array k_Di;
-  
+
   typename AT::t_f_array d_s0;
   typename AT::t_f_array d_Di;
 

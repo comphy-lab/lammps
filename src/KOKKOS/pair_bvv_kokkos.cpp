@@ -62,7 +62,7 @@ PairBVVKokkos<DeviceType>::~PairBVVKokkos()
       memoryKK->destroy_kokkos(k_vatom,vatom);
       memoryKK->destroy_kokkos(k_cutsq,cutsq);
   }
-  
+
 }
 
 /* ---------------------------------------------------------------------- */
@@ -93,7 +93,7 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   atomKK->sync(execution_space,datamask_read);
   k_cutsq.template sync<DeviceType>();
   k_params.template sync<DeviceType>();
-    
+
   if (eflag || vflag) atomKK->modified(execution_space,datamask_modify);
   else atomKK->modified(execution_space,F_MASK);
 
@@ -119,7 +119,7 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   d_neighbors = k_list->d_neighbors;
   d_ilist = k_list->d_ilist;
   inum = list->inum;
-    
+
   need_dup = lmp->kokkos->need_dup<DeviceType>();
   if (need_dup) {
     dup_s0   = Kokkos::Experimental::create_scatter_view<Kokkos::Experimental::ScatterSum, Kokkos::Experimental::ScatterDuplicated>(d_s0);
@@ -174,7 +174,7 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
       comm->reverse_comm(this);
       k_s0.template sync<DeviceType>();
     }
-      
+
     // compute kernel B
 
     if (eflag)
@@ -326,7 +326,7 @@ void PairBVVKokkos<DeviceType>::allocate()
   memory->destroy(cutsq);
   memoryKK->create_kokkos(k_cutsq,cutsq,n+1,n+1,"pair:cutsq");
   d_cutsq = k_cutsq.template view<DeviceType>();
-    
+
   k_params = Kokkos::DualView<params_bvv**,Kokkos::LayoutRight,DeviceType>("PairBVV::params",n+1,n+1);
   params = k_params.template view<DeviceType>();
 
@@ -388,7 +388,7 @@ double PairBVVKokkos<DeviceType>::init_one(int i, int j)
   k_cutsq.h_view(i,j) = k_cutsq.h_view(j,i) = cutone*cutone;
   k_cutsq.template modify<LMPHostType>();
   k_params.template modify<LMPHostType>();
-    
+
   return cutone;
 }
 
@@ -558,17 +558,17 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelA<NEIGHFLAG,NEWTON_PA
     const X_FLOAT delz = ztmp - x(j,2);
     const int jtype = type(j);
     const F_FLOAT rsq = delx*delx + dely*dely + delz*delz;
-    
+
 
     if (rsq < (d_cutsq(itype,jtype))) {
         F_FLOAT recip = 1.0/sqrt(rsq);
-        
+
         s0xtmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
-        
+
         s0ytmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
-        
+
         s0ztmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
-        
+
         if (NEWTON_PAIR || j < nlocal) {
         a_s0(j,0) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
         a_s0(j,1) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
@@ -601,7 +601,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelB<EFLAG>, const int &
   d_Di(i,1) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,1)*s;
   d_Di(i,2) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,2)*s;
   printf("i: %d, d_Di(i,0): %f, d_Di(i,1): %f, d_Di(i,2): %f\n", i, d_Di(i,0), d_Di(i,1), d_Di(i,2));
-  
+
   if (EFLAG) {
     F_FLOAT phi = (params(itype,itype).bvvsparam)*ss;
     printf("i: %d, phi: %f", i, phi);
@@ -650,14 +650,14 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelAB<EFLAG>, const int 
     const X_FLOAT delz = ztmp - x(j,2);
     const int jtype = type(j);
     const F_FLOAT rsq = delx*delx + dely*dely + delz*delz;
-    
+
     if (rsq < (d_cutsq(itype,jtype))) {
         F_FLOAT recip = 1.0/sqrt(rsq);
-        
+
         s0xtmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
-        
+
         s0ytmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
-        
+
         s0ztmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
     }
   }
@@ -670,7 +670,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelAB<EFLAG>, const int 
   d_Di(i,0) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,0)*s;
   d_Di(i,1) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,1)*s;
   d_Di(i,2) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,2)*s;
-  
+
   if (EFLAG) {
     F_FLOAT phi = (params(itype,itype).bvvsparam)*ss;
     if (eflag_global) ev.evdwl += phi;
@@ -720,7 +720,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelC<NEIGHFLAG,NEWTON_PA
     const X_FLOAT delz = ztmp - x(j,2);
     const int jtype = type(j);
     const F_FLOAT rsq = delx*delx + dely*dely + delz*delz;
-    
+
 
     if (rsq < (d_cutsq(itype,jtype))) {
         const F_FLOAT r = sqrt(rsq);
@@ -728,26 +728,26 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelC<NEIGHFLAG,NEWTON_PA
         const F_FLOAT recip2 = recip*recip;
         const F_FLOAT Aij = pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip;
         const F_FLOAT Eij = ((params(itype,jtype).alpha)+1.0)*recip2;
-        
+
         F_FLOAT fx = (d_Di(j,0)-d_Di(i,0))*Aij
              + (d_Di(i,0)-d_Di(j,0))*Eij*delx*delx*Aij
              + (d_Di(i,1)-d_Di(j,1))*Eij*delx*dely*Aij
              + (d_Di(i,2)-d_Di(j,2))*Eij*delx*delz*Aij;
 
         fxtmp += fx;
-        
+
         F_FLOAT fy = (d_Di(j,1)-d_Di(i,1))*Aij
              + (d_Di(i,1)-d_Di(j,1))*Eij*dely*dely*Aij
              + (d_Di(i,2)-d_Di(j,2))*Eij*dely*delz*Aij
              + (d_Di(i,0)-d_Di(j,0))*Eij*dely*delx*Aij;
-             
+
         fytmp += fy;
-        
+
         F_FLOAT fz = (d_Di(j,2)-d_Di(i,2))*Aij
              + (d_Di(i,2)-d_Di(j,2))*Eij*delz*delz*Aij
              + (d_Di(i,0)-d_Di(j,0))*Eij*delz*delx*Aij
              + (d_Di(i,1)-d_Di(j,1))*Eij*delz*dely*Aij;
-             
+
         fztmp += fz;
 
         if ((NEIGHFLAG==HALF || NEIGHFLAG==HALFTHREAD) && (NEWTON_PAIR || j < nlocal)) {
@@ -765,7 +765,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelC<NEIGHFLAG,NEWTON_PA
           }
 
         }
-        
+
   }
 
   a_f(i,0) += fxtmp;

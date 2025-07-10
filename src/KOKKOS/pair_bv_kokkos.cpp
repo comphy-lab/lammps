@@ -61,7 +61,7 @@ PairBVKokkos<DeviceType>::~PairBVKokkos()
       memoryKK->destroy_kokkos(k_vatom,vatom);
       memoryKK->destroy_kokkos(k_cutsq,cutsq);
   }
-  
+
 }
 
 /* ---------------------------------------------------------------------- */
@@ -91,7 +91,7 @@ void PairBVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   k_cutsq.template sync<DeviceType>();
   k_params.template sync<DeviceType>();
   k_energy0.template sync<DeviceType>();
-    
+
   if (eflag || vflag) atomKK->modified(execution_space,datamask_modify);
   else atomKK->modified(execution_space,F_MASK);
 
@@ -324,10 +324,10 @@ void PairBVKokkos<DeviceType>::allocate()
   memory->destroy(cutsq);
   memoryKK->create_kokkos(k_cutsq,cutsq,n+1,n+1,"pair:cutsq");
   d_cutsq = k_cutsq.template view<DeviceType>();
-    
+
   k_params = Kokkos::DualView<params_bv**,Kokkos::LayoutRight,DeviceType>("PairBV::params",n+1,n+1);
   params = k_params.template view<DeviceType>();
-    
+
   k_energy0 = DAT::tdual_ffloat_1d("pair:energy0",n+1);
   d_energy0 = k_energy0.template view<DeviceType>();
 
@@ -538,7 +538,7 @@ void PairBVKokkos<DeviceType>::operator()(TagPairBVKernelA<NEIGHFLAG,NEWTON_PAIR
     const X_FLOAT delz = ztmp - x(j,2);
     const int jtype = type(j);
     const F_FLOAT rsq = delx*delx + dely*dely + delz*delz;
-    
+
     if((params(itype,jtype).alpha)!=0.0){
         if (rsq < (d_cutsq(itype,jtype))) {
           F_FLOAT recip = 1.0/sqrt(rsq);
@@ -624,7 +624,7 @@ void PairBVKokkos<DeviceType>::operator()(TagPairBVKernelAB<EFLAG>, const int &i
           }
     }
   }
-  
+
   d_s0[i] += s0tmp;
 
   // fp = derivative of embedding energy at each atom
@@ -682,7 +682,7 @@ void PairBVKokkos<DeviceType>::operator()(TagPairBVKernelC<NEIGHFLAG,NEWTON_PAIR
     const X_FLOAT delz = ztmp - x(j,2);
     const int jtype = type(j);
     const F_FLOAT rsq = delx*delx + dely*dely + delz*delz;
-    
+
     if((params(itype,jtype).alpha)!=0.0){
         if (rsq < (d_cutsq(itype,jtype))) {
           const F_FLOAT r = sqrt(rsq);

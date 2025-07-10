@@ -121,18 +121,18 @@ void PairBVV::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // zero out BVVS                                                                                                                                          
+  // zero out BVVS
   if (newton_pair) {
-    for (i = 0; i < nall; i++) 
+    for (i = 0; i < nall; i++)
     { s0x[i] = 0.0;
       s0y[i] = 0.0;
-      s0z[i] = 0.0; 
+      s0z[i] = 0.0;
     }
   } else for (i = 0; i < nlocal; i++)
     {
       s0x[i] = 0.0;
       s0y[i] = 0.0;
-      s0z[i] = 0.0; 
+      s0z[i] = 0.0;
     }
   // BVVS
 
@@ -173,7 +173,7 @@ void PairBVV::compute(int eflag, int vflag)
   }
 
    if (newton_pair) comm->reverse_comm(this);
-    
+
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
     itype = type[i];
@@ -217,7 +217,7 @@ void PairBVV::compute(int eflag, int vflag)
         recip2 = recip*recip;
         Aij=pow(r0[itype][jtype]*recip,alpha[itype][jtype])*recip;
         Eij=(alpha[itype][jtype]+1.0)*recip2;
-      
+
         fx = (Dix[j]-Dix[i])*Aij
              + (Dix[i]-Dix[j])*Eij*delx*delx*Aij
              + (Diy[i]-Diy[j])*Eij*delx*dely*Aij
@@ -249,7 +249,7 @@ void PairBVV::compute(int eflag, int vflag)
       } /*1*/
     }/*sum over j*/
   }/*loop over i*/
-    
+
   if (vflag_fdotr) virial_fdotr_compute();
 } /*end compute*/
 
@@ -262,7 +262,7 @@ void PairBVV::allocate()
 {
   allocated = 1;
   int n = atom->ntypes;
-    
+
   memory->create(setflag,n+1,n+1,"pair:setflag");
   for (int i = 1; i <= n; i++)
     for (int j = i; j <= n; j++)
@@ -477,7 +477,7 @@ int PairBVV::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int 
     buf[m++] = Diz[j];
    }
 
- return m; 
+ return m;
  }
 
 /* ---------------------------------------------------------------------- */
@@ -493,7 +493,7 @@ void PairBVV::unpack_forward_comm(int n, int first, double *buf)
   for (i = first; i < last; i++){
     Dix[i] = buf[m++];
     Diy[i] = buf[m++];
-    Diz[i] = buf[m++];  
+    Diz[i] = buf[m++];
   }
 }
 

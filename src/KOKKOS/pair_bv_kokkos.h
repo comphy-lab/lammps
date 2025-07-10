@@ -127,13 +127,13 @@ class PairBVKokkos : public PairBV, public KokkosBase {
   Kokkos::DualView<params_bv**,Kokkos::LayoutRight,DeviceType> k_params;
   //params is the unmanaged/device view of the dual view
   typename Kokkos::DualView<params_bv**,Kokkos::LayoutRight,DeviceType>::t_dev_const_um params;
-  //m_params is an instance of params_bv stucture 
-  params_bv m_params[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];  
-  
+  //m_params is an instance of params_bv stucture
+  params_bv m_params[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
+
   DAT::tdual_ffloat_1d k_energy0;
   typename AT::t_ffloat_1d d_energy0;
   F_FLOAT m_energy0[MAX_TYPES_STACKPARAMS+1];
-  
+
   F_FLOAT m_cutsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
   typename AT::tdual_ffloat_2d k_cutsq;
   typename AT::t_ffloat_2d d_cutsq;
@@ -172,7 +172,7 @@ class PairBVKokkos : public PairBV, public KokkosBase {
   typename AT::t_ffloat_1d d_fp;
   HAT::t_ffloat_1d h_s0;
   HAT::t_ffloat_1d h_fp;
-  
+
   template<class TAG>
   struct policyInstance;
 
