@@ -93,9 +93,10 @@ class FixSurface : public Fix {
   // struct for storing contact data
 
   struct ContactSurf {
-    int index, neigh_index, type, flag, nside, norm_def, exposed;
-    double overlap, dist, int_overlap, ext_overlap, smooth_ext;
-    double contact[3], dr[3], surf_norm[3], force_norm[3], cor_int[3], cor_ext[3];
+    int index, neigh_index, type, flag, nside, exposed, concave_contact;
+    double overlap, overlap_ext, overlap_force
+    double weight_ext, weight_convex, weight_overlap, weight_contribution;
+    double contact[3], dr[3], surf_norm[3], force_norm[3], dr_ext[3];
   };
 
   FixSurface(class LAMMPS *, int, char **);
