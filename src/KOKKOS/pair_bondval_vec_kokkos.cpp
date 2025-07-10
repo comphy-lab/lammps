@@ -16,7 +16,7 @@
    Contributing authors: Peter Chun Pang Li (peterchunpang@gmail.com)
 ------------------------------------------------------------------------- */
 
-#include "pair_bondvalvec_kokkos.h"
+#include "pair_bondval_vec_kokkos.h"
 #include "atom_kokkos.h"
 #include "atom_masks.h"
 #include "comm.h"

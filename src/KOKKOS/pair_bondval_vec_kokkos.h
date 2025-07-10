@@ -13,19 +13,19 @@
 
 #ifdef PAIR_CLASS
 // clang-format off
-PairStyle(bondvalvec/kk,PairBondValVecKokkos<LMPDeviceType>);
-PairStyle(bondvalvec/kk/device,PairBondValVecKokkos<LMPDeviceType>);
-PairStyle(bondvalvec/kk/host,PairBondValVecKokkos<LMPHostType>);
+PairStyle(bondval/vec/kk,PairBondValVecKokkos<LMPDeviceType>);
+PairStyle(bondval/vec/kk/device,PairBondValVecKokkos<LMPDeviceType>);
+PairStyle(bondval/vec/kk/host,PairBondValVecKokkos<LMPHostType>);
 // clang-format on
 #else
 
 // clang-format off
-#ifndef LMP_PAIR_BONDVALVEC_KOKKOS_H
-#define LMP_PAIR_BONDVALVEC_KOKKOS_H
+#ifndef LMP_PAIR_BONDVAL_VEC_KOKKOS_H
+#define LMP_PAIR_BONDVAL_VEC_KOKKOS_H
 
 #include "kokkos_base.h"
 #include "pair_kokkos.h"
-#include "pair_bondvalvec.h"
+#include "pair_bondval_vec.h"
 #include "neigh_list_kokkos.h"
 
 namespace LAMMPS_NS {

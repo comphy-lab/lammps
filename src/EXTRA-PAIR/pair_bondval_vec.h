@@ -13,12 +13,12 @@
 
 #ifdef PAIR_CLASS
 
-PairStyle(bondvalvec,PairBondValVec)
+PairStyle(bondval/vec,PairBondValVec)
 
 #else
 
-#ifndef LMP_PAIR_BONDVALVEC_H
-#define LMP_PAIR_BONDVALVEC_H
+#ifndef LMP_PAIR_BONDVAL_VEC_H
+#define LMP_PAIR_BONDVAL_VEC_H
 
 #include "pair.h"
 

@@ -312,8 +312,8 @@ action pair_adp_kokkos.h pair_adp.h
 
 action pair_bondval_kokkos.cpp pair_bondval.cpp
 action pair_bondval_kokkos.h pair_bondval.h
-action pair_bondvalvec_kokkos.cpp pair_bondvalvec.cpp
-action pair_bondvalvec_kokkos.h pair_bondvalvec.h
+action pair_bondval_vec_kokkos.cpp pair_bondval_vec.cpp
+action pair_bondval_vec_kokkos.h pair_bondval_vec.h
 
 action pair_brownian_kokkos.cpp pair_brownian.cpp
 action pair_brownian_kokkos.h pair_brownian.h

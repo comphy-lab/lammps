@@ -1841,6 +1841,6 @@
 /pair_lj_pirani.h
 /pair_bondval.cpp
 /pair_bondval.h
-/pair_bondvalvec.cpp
-/pair_bondvalvec.h
+/pair_bondval_vec.cpp
+/pair_bondval_vec.h
 
