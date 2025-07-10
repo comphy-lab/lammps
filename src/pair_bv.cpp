@@ -125,7 +125,7 @@ void PairBV::compute(int eflag, int vflag)
       if (alpha[itype][jtype]!=0.0) { /*1*/
         if (rsq < cutsq[itype][jtype]) {/*2*/
           recip = 1.0/sqrt(rsq);
-	      r=sqrt(rsq);
+              r=sqrt(rsq);
           s0[i] += pow(r0[itype][jtype]/r,alpha[itype][jtype]);
           if (newton_pair || j < nlocal) {
             s0[j] += pow(r0[jtype][itype]/r,alpha[jtype][itype]);
@@ -192,11 +192,11 @@ void PairBV::compute(int eflag, int vflag)
           } /*3*/
 
          if (eflag){ /*4*/
-	       evdwl = 0.0;
-	     }/*4*/
+               evdwl = 0.0;
+             }/*4*/
          if (evflag) ev_tally(i,j,nlocal,newton_pair,
                              evdwl,0.0,fpair,delx,dely,delz);
-	   }/*2*/
+           }/*2*/
       } /*1*/
     }
   }

@@ -168,7 +168,7 @@ void PairBVV::compute(int eflag, int vflag)
         s0z[j] -= pow(r0[jtype][itype]*recip,alpha[jtype][itype])*recip*(delz);
         }
 //
-	}
+        }
     }
   }
 
@@ -182,11 +182,11 @@ void PairBVV::compute(int eflag, int vflag)
         Dix[i] = bvvsparam[itype][itype]*power_global*2.0*s0x[i]*s;
         Diy[i] = bvvsparam[itype][itype]*power_global*2.0*s0y[i]*s;
         Diz[i] = bvvsparam[itype][itype]*power_global*2.0*s0z[i]*s;
-	    if (eflag) {
-	      phi = bvvsparam[itype][itype]*ss;
-	      if (eflag_global)eng_vdwl += phi;
-	      if (eflag_atom) eatom[i] += phi;
-	    }
+            if (eflag) {
+              phi = bvvsparam[itype][itype]*ss;
+              if (eflag_global)eng_vdwl += phi;
+              if (eflag_atom) eatom[i] += phi;
+            }
   }
 
      comm->forward_comm(this);
@@ -244,7 +244,7 @@ void PairBVV::compute(int eflag, int vflag)
         }
         if (eflag)   evdwl = 0.0;
         if (evflag) ev_tally_xyz(i,j,nlocal,newton_pair,
-			     evdwl,0.0,fx,fy,fz,delx,dely,delz);
+                             evdwl,0.0,fx,fy,fz,delx,dely,delz);
 
       } /*1*/
     }/*sum over j*/
