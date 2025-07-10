@@ -23,7 +23,7 @@ Syntax
          *sphere* arg = 0/1 (optional) for static/dynamic particle radii
          *bpm/sphere* arg = 0/1 (optional) for static/dynamic particle radii
          *ldd* arg = Ntypes
-                     see the :doc:`Howto ldd <Howto_ldd> doc page
+                     see the :doc:`Howto ldd <Howto_ldd>` doc page
                      for details
          *tdpd* arg = Nspecies
            Nspecies = # of chemical species
@@ -361,9 +361,9 @@ point particle (0).
 
 For the *ldd* style, particles are represented as in the basic atomic style,
 but per_atom local density and gradients of local density information is available
-for all types of particles surrounding a given particle i in the system. 
-local densities and gradients are defined via the pair_style ldd and associated 
-pair_coeff commands. Undefined local densities will be reported as zero and not
+for all types of particles surrounding a given particle :math:`I` in the system. 
+local densities and gradients are defined via the :doc:`pair_style ldd <pair_ldd>` and associated 
+pair_coeff commands. Undefined (*ignored*) local densities will be reported as zero and not
 considered in force calculations. 
 When hybridized with a molecular style,
 local density definitions will inherit the bonded exclusions of other 

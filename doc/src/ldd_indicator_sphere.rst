@@ -23,7 +23,7 @@ Examples
 Description
 """""""""""
 
-The *sphere* indicator style employs a smoothed heaviside indicator function. If you consider a large sphere of radius X and a small sphere of radius x, with :math:`r_{0} = X - x` and :math:`r_{c} = X + x`, then :math:`w(r)` is the fraction of the small sphere contained in the large sphere when they are separated by a distace :math:`r`.
+The *sphere* indicator style employs a smoothed heaviside indicator function. If you consider a large sphere of radius :math:`X` and a small sphere of radius :math:`x`, with :math:`r_{0} = X - x` and :math:`r_{c} = X + x`, then :math:`w(r)` is the fraction of the small sphere contained in the large sphere when they are separated by a distance :math:`r`.
 
 .. math::
    w(r) =

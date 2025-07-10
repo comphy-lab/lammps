@@ -51,7 +51,11 @@ Examples
 Description
 """""""""""
 
-Style *ldd* implements the local density potential as first described by Pagonabarraga and Frenkel :ref:`(Pagonabarraga)<Pagonabarraga>`. Given an indicator function :math:`w(r)` such that :math:`w(0)=1`, :math:`w(r_{c})=0`, and :math:`w(r)` continuously and differentiably transitions from 1 to 0 across :math:`0 \leq r \leq r_{c}`, we define :math:`[w]` as the spatial integral of :math:`w(r)` and the normalized indicator function as :math:`\bar{w}(r) = w(r)/[w]`. We then define the local density around a given particle as :math:`\rho_{i} = \sum_{j} \bar{w}(r_{ij})`, where the sum over :math:`j` can either include or exclude :math:`i`, depending on whether the argument following the self keyword is yes or no. Practically, the only difference is a horizontal shift in the potential by :math:`1/[w]`. The local density potential and corresponding pair forces are given by:
+Style *ldd* implements the local density potential as first described by Pagonabarraga and Frenkel :ref:`(Pagonabarraga)<Pagonabarraga>`. 
+Style *ldd* implements this for several mixtures of atom types and thereby local densities, (See :doc:`Howto_ldd <Howto_ldd>`) for details). 
+Here for notational simplicity we outline the theory for style *ldd* potentials with just 1 type of particle. 
+
+Given an indicator function :math:`w(r)` such that :math:`w(0)=1`, :math:`w(r_{c})=0`, and :math:`w(r)` continuously and differentiably transitions from 1 to 0 across :math:`0 \leq r \leq r_{c}`, we define :math:`[w]` as the spatial integral of :math:`w(r)` and the normalized indicator function as :math:`\bar{w}(r) = w(r)/[w]`. We then define the local density around a given particle as :math:`\rho_{i} = \sum_{j} \bar{w}(r_{ij})`, where the sum over :math:`j` can either include or exclude :math:`i`, depending on whether the argument following the self keyword is yes or no. Practically, the only difference is a horizontal shift in the potential by :math:`1/[w]`. The local density potential and corresponding pair forces are given by:
 
 .. math::
    U_{\rho}(\mathbf{r}) &= \sum_{i} u_{\rho}(\rho_{i}) \\
@@ -65,18 +69,18 @@ The optional gradient keyword implements the gradient expansion of the local den
    U_{\nabla}(\mathbf{r}) = \sum_{i} u_{\nabla}(\rho_{i}) (\nabla_{i} \rho_{i})^{2}
 
 
-The (req.) *potential* keyword defines the form for :math:`U_{\rho}`. See each ldd_potential doc page for details.
-The (opt.) *gradient* keyword defines the form for :math:`U{\nabla}`. See each ldd_potential doc page for details.
-The (req.) *indicator* keyword defines the form for :math:`w(r)`. See each ldd_indicator doc page for details.
+The (req.) *potential* keyword defines the form for :math:`u_{\rho}`. See each :ref:`ldd_potential <ldd_potential>` doc page for details.
+The (opt.) *gradient* keyword defines the form for :math:`u_{\nabla}`. See each :ref:`ldd_potential <ldd_potential>` doc page for details.
+The (req.) *indicator* keyword defines the form for :math:`w(r)`. See each :ref:`ldd_indicator <ldd_indicator>` doc page for details.
 
 The *ignore* keyword is used in simulations with mutliple particle types where only some of the type pairs have local density potentials acting between them, as in the example above.
 
 The *self* argument indicates whether the particle i=j term is included in the local densities and gradients calculated. 
-Note that for heterogenous LD types [e.g. type A surrounded by B] the self term is automatically excluded. 
+Note that for heterogenous LD types [e.g. type A surrounded by particles of type B] the self term is automatically excluded. 
 This is automatically enforced by the ldd package 
 and a warning will be issued to the user to note that a requested self term in this case has been turned off.
 
-
+.. _ldd_indicator:
 .. toctree::
    :maxdepth: 1
    :caption: indicator options
@@ -88,7 +92,7 @@ and a warning will be issued to the user to note that a requested self term in t
    ldd_indicator_shell
 
 
-
+.. _ldd_potential:
 .. toctree::
    :maxdepth: 1
    :caption: potential and gradient keywords
@@ -112,11 +116,12 @@ Therefore, you must re-specify the pair_style and pair_coeff commands in an inpu
 
 Restrictions
 """"""""""""
+This pair style is only available when LAMMPS is compiled with :ref:`PKG-LDD <PKG-LDD>`.
 
-This pair style must be used with the atom_style ldd or atom_style hybrid ldd etc. 
+This pair style must be used with the :doc:`atom_style ldd <atom_style>` or :doc:`atom_style hybrid <atom_style>` with ldd listed as an arg. 
 This atom style requires an argument of ntypes, which is the number of particle types you will use in the simulation.
 
-To save the properties associated with the local density, use dump style ldd.
+To save the properties associated with the local density, use :doc:`dump style ldd <dump_ldd>`.
 
 The *indicator*, *self*, and *potential* keywords are mandatory, unless the *ignore* keyword is provided. The *gradient* keyword is optional.
 
@@ -133,12 +138,7 @@ Since the gradient keyword is optional, you should just omit it instead of speci
 Related commands
 """"""""""""""""
 
-:doc:`ldd_indicator_dpd <ldd_indicator_dpd>`, :doc:`ldd_indicator_lucy <ldd_indicator_lucy>`, 
-:doc:`ldd_indicator_shell <ldd_indicator_shell>`, :doc:`ldd_indicator_smooth <ldd_indicator_smooth>`, 
-:doc:`ldd_indicator_sphere <ldd_indicator_sphere>`, 
-:doc:`ldd_potential_noforce <ldd_potential_noforce>`, :doc:`ldd_potential_constant <ldd_potential_constant>`, 
-:doc:`ldd_potential_linear <ldd_potential_linear>`, :doc:`ldd_potential_quadratic <ldd_potential_quadratic>`, 
-:doc:`ldd_potential_mdpd <ldd_potential_mdpd>`, :doc:`ldd_potential_table <ldd_potential_table>`
+:doc:`atom_style ldd <atom_style>`, :doc:`dump ldd <dump_ldd>`, :doc:`Howto_ldd <Howto_ldd>`
 
 
 ----------
@@ -149,4 +149,4 @@ Related commands
 
 .. _DeLyser:
 
-**(DeLyser)** M.R. DeLyser, W.G. Noid. "Corase-grained models for local density gradients." J. Chem. Phys., 156, 034106 (2021).
+**(DeLyser)** M.R. DeLyser, W.G. Noid. "Coarse-grained models for local density gradients." J. Chem. Phys., 156, 034106 (2021).

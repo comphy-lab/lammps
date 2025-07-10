@@ -33,13 +33,13 @@ timesteps in a text format readable by the `Bottom Up Open Source Coarse Grainin
 <https://github.com/noid-group/BOCS>`_  for constructing CG models and translating trajectories to other file formats. 
 
 The output of this dump style is similar to a :doc:`dump_style custom <dump>` but 
-it includes per atom local density and gradient of the local density/ ldd energy information for each type of particle for each particle in the system. 
+it includes per atom local density and gradient of the local density/ ldd energetic information for each type of particle for each particle in the system. 
 Each frame of the ldd dumped text file contains 4 ITEM sections: the timestep, the number of atoms, the box dimensions, and the ATOMS sections. 
 The first three sections are 1-3 lines containing the time, total number of atoms in the system and box bounds respectively.
 
-Each line in the atoms section contains per atom data fields in an order which is labeled by a headereach frame.
+Each line in the atoms section contains per atom data fields in a column order which is labeled by a header each frame.
 
-below is a table of ldd header field labels, definitions in the order they appear
+below is a table of ldd header field labels and definitions in the order they appear
 
 
 +------------+-----------------------------------------------------------------+
@@ -47,7 +47,8 @@ below is a table of ldd header field labels, definitions in the order they appea
 +============+=================================================================+
 | id         | The atom index, :math:`I`                                       |
 +------------+-----------------------------------------------------------------+
-| mol        | The molecule index (only appears is atom_style ldd is listed    |
+| mol        | The molecule index (only appears if                             |
+|            | :doc:`atom_style ldd <atom_style>` is listed in                 |
 |            | an atom_style hybrid list with a molecular atom_style)          |
 +------------+-----------------------------------------------------------------+
 | type       | The atom type index, :math:`t_I \in` {1 ... n_types}            |
@@ -59,10 +60,10 @@ below is a table of ldd header field labels, definitions in the order they appea
 | fx fy fz   | The x y and z components of the atom's net force                |
 +------------+-----------------------------------------------------------------+
 | lddensn    | n = {1 ... ntypes}, the local density of particle type n around | 
-|            | the atom,  :math:`\rho_{n|I}`                                   |
+|            | around the atom,  :math:`\rho_{n|I}`                            |
 +------------+-----------------------------------------------------------------+
 | ldnrgn     | n = {1 ... ntypes}, the energy contribution of the local        |
-|            |  density of type n around this particle to the total energy     |
+|            | density of type n around this particle to the total energy      |
 |            | :math:`u_{n|t_I}(\rho_{n|I})`                                   |
 +------------+-----------------------------------------------------------------+
 | gradxn     | n = {1 ... ntypes), the x y and z components of the gradient of |
@@ -70,12 +71,12 @@ below is a table of ldd header field labels, definitions in the order they appea
 | gradzn     | :math:`\nabla_{I} \rho_{n|I}`                                   |
 +------------+-----------------------------------------------------------------+
 | gradnrgn   | n = {1 ... ntypes}, the energy contribution of this particle    |
-|            |  surrounded by type n to the square gradient potential.         |
+|            | surrounded by type n to the square gradient potential.          |
 |            | :math:`u_{\nabla; n|t_I}(\rho_{n|I})|\nabla_{I}\rho_{n|I}|^2`   |
 +------------+-----------------------------------------------------------------+
 | lddttlnrg  | The total energy contribution of this particle to LD and SG     |
 |            | potentials.                                                     |
-|            | :math:`sum_{\text{n}_{\text{types}}} \text{gradnrgn + ldnrgn}`  |
+|            | :math:`\sum_{\text{n}_{\text{types}}} \text{gradnrgn + ldnrgn}` |
 +------------+-----------------------------------------------------------------+
 
 
@@ -167,7 +168,7 @@ Related commands
 """"""""""""""""
 
 :doc:`dump <dump>`, :doc:`LDD <Howto_ldd>`, :doc:`pair_style ldd <pair_ldd>`, 
-:doc:`dump_modify <dump_modify>`, :doc:`undump <undump>`
+:doc:`dump_modify <dump_modify>`, :doc:`undump <undump>`, :doc:`atom_style ldd <atom_style>`
 
 Default
 """""""

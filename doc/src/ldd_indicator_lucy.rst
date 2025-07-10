@@ -23,7 +23,7 @@ Examples
 Description
 """""""""""
 
-The *lucy* indicator style employs the Lucy function popularized from smoothed particle hydrodnamics as :math:`w(r)`:
+The *lucy* indicator style employs the Lucy function popularized from smoothed particle hydrodynamics as :math:`w(r)`:
 
 .. math::
    w(r) &= (1-r/r_{c})^{3}(1+3r/r_{c}) \\
