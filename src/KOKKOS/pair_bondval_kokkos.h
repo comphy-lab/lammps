@@ -13,41 +13,41 @@
 
 #ifdef PAIR_CLASS
 // clang-format off
-PairStyle(bv/kk,PairBVKokkos<LMPDeviceType>);
-PairStyle(bv/kk/device,PairBVKokkos<LMPDeviceType>);
-PairStyle(bv/kk/host,PairBVKokkos<LMPHostType>);
+PairStyle(bondval/kk,PairBondValKokkos<LMPDeviceType>);
+PairStyle(bondval/kk/device,PairBondValKokkos<LMPDeviceType>);
+PairStyle(bondval/kk/host,PairBondValKokkos<LMPHostType>);
 // clang-format on
 #else
 
 // clang-format off
-#ifndef LMP_PAIR_BV_KOKKOS_H
-#define LMP_PAIR_BV_KOKKOS_H
+#ifndef LMP_PAIR_BONDVAL_KOKKOS_H
+#define LMP_PAIR_BONDVAL_KOKKOS_H
 
 #include "kokkos_base.h"
 #include "pair_kokkos.h"
-#include "pair_bv.h"
+#include "pair_bondval.h"
 #include "neigh_list_kokkos.h"
 
 namespace LAMMPS_NS {
 
-struct TagPairBVPackForwardComm{};
-struct TagPairBVUnpackForwardComm{};
-struct TagPairBVInitialize{};
+struct TagPairBondValPackForwardComm{};
+struct TagPairBondValUnpackForwardComm{};
+struct TagPairBondValInitialize{};
 
 template<int NEIGHFLAG, int NEWTON_PAIR>
-struct TagPairBVKernelA{};
+struct TagPairBondValKernelA{};
 
 template<int EFLAG>
-struct TagPairBVKernelB{};
+struct TagPairBondValKernelB{};
 
 template<int EFLAG>
-struct TagPairBVKernelAB{};
+struct TagPairBondValKernelAB{};
 
 template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG>
-struct TagPairBVKernelC{};
+struct TagPairBondValKernelC{};
 
 template<class DeviceType>
-class PairBVKokkos : public PairBV, public KokkosBase {
+class PairBondValKokkos : public PairBondVal, public KokkosBase {
  public:
   enum {EnabledNeighFlags=FULL|HALFTHREAD|HALF};
   enum {COUL_FLAG=0};
@@ -55,8 +55,8 @@ class PairBVKokkos : public PairBV, public KokkosBase {
   typedef ArrayTypes<DeviceType> AT;
   typedef EV_FLOAT value_type;
 
-  PairBVKokkos(class LAMMPS *);
-  ~PairBVKokkos() override;
+  PairBondValKokkos(class LAMMPS *);
+  ~PairBondValKokkos() override;
   void compute(int, int) override;
   void allocate() override;
   void settings(int, char **) override;
@@ -65,41 +65,41 @@ class PairBVKokkos : public PairBV, public KokkosBase {
 
 
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVPackForwardComm, const int&) const;
+  void operator()(TagPairBondValPackForwardComm, const int&) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVUnpackForwardComm, const int&) const;
+  void operator()(TagPairBondValUnpackForwardComm, const int&) const;
 
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVInitialize, const int&) const;
+  void operator()(TagPairBondValInitialize, const int&) const;
 
   template<int NEIGHFLAG, int NEWTON_PAIR>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVKernelA<NEIGHFLAG,NEWTON_PAIR>, const int&) const;
+  void operator()(TagPairBondValKernelA<NEIGHFLAG,NEWTON_PAIR>, const int&) const;
 
   template<int EFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVKernelB<EFLAG>, const int&, EV_FLOAT&) const;
+  void operator()(TagPairBondValKernelB<EFLAG>, const int&, EV_FLOAT&) const;
 
   template<int EFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVKernelB<EFLAG>, const int&) const;
+  void operator()(TagPairBondValKernelB<EFLAG>, const int&) const;
 
   template<int EFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVKernelAB<EFLAG>, const int&, EV_FLOAT&) const;
+  void operator()(TagPairBondValKernelAB<EFLAG>, const int&, EV_FLOAT&) const;
 
   template<int EFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVKernelAB<EFLAG>, const int&) const;
+  void operator()(TagPairBondValKernelAB<EFLAG>, const int&) const;
 
   template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>, const int&, EV_FLOAT&) const;
+  void operator()(TagPairBondValKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>, const int&, EV_FLOAT&) const;
 
   template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagPairBVKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>, const int&) const;
+  void operator()(TagPairBondValKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>, const int&) const;
 
   template<int NEIGHFLAG, int NEWTON_PAIR>
   KOKKOS_INLINE_FUNCTION
@@ -187,7 +187,7 @@ class PairBVKokkos : public PairBV, public KokkosBase {
   int neighflag,newton_pair;
   int nlocal,nall,eflag,vflag;
 
-  friend void pair_virial_fdotr_compute<PairBVKokkos>(PairBVKokkos*);
+  friend void pair_virial_fdotr_compute<PairBondValKokkos>(PairBondValKokkos*);
 };
 
 }

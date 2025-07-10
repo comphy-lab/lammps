@@ -16,7 +16,7 @@
    Contributing authors: Peter Chun Pang Li (peterchunpang@gmail.com)
 ------------------------------------------------------------------------- */
 
-#include "pair_bvv_kokkos.h"
+#include "pair_bondvalvec_kokkos.h"
 #include "atom_kokkos.h"
 #include "atom_masks.h"
 #include "comm.h"
@@ -37,7 +37,7 @@ using namespace LAMMPS_NS;
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-PairBVVKokkos<DeviceType>::PairBVVKokkos(LAMMPS *lmp) : PairBVV(lmp)
+PairBondValVecKokkos<DeviceType>::PairBondValVecKokkos(LAMMPS *lmp) : PairBondValVec(lmp)
 {
   respa_enable = 0;
   single_enable = 0;
@@ -53,7 +53,7 @@ PairBVVKokkos<DeviceType>::PairBVVKokkos(LAMMPS *lmp) : PairBVV(lmp)
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-PairBVVKokkos<DeviceType>::~PairBVVKokkos()
+PairBondValVecKokkos<DeviceType>::~PairBondValVecKokkos()
 {
   if (copymode) return;
 
@@ -68,7 +68,7 @@ PairBVVKokkos<DeviceType>::~PairBVVKokkos()
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
+void PairBondValVecKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 {
   eflag = eflag_in;
   vflag = vflag_in;
@@ -138,9 +138,9 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   // zero out s0
 
   if (newton_pair)
-    Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVInitialize>(0,nall),*this);
+    Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecInitialize>(0,nall),*this);
   else
-    Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVInitialize>(0,nlocal),*this);
+    Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecInitialize>(0,nlocal),*this);
 
   // loop over neighbors of my atoms
 
@@ -152,15 +152,15 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
     if (neighflag == HALF) {
       if (newton_pair) {
-        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVKernelA<HALF,1>>(0,inum),*this);
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecKernelA<HALF,1>>(0,inum),*this);
       } else {
-        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVKernelA<HALF,0>>(0,inum),*this);
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecKernelA<HALF,0>>(0,inum),*this);
       }
     } else if (neighflag == HALFTHREAD) {
       if (newton_pair) {
-        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVKernelA<HALFTHREAD,1>>(0,inum),*this);
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecKernelA<HALFTHREAD,1>>(0,inum),*this);
       } else {
-        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVKernelA<HALFTHREAD,0>>(0,inum),*this);
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecKernelA<HALFTHREAD,0>>(0,inum),*this);
       }
     }
 
@@ -178,9 +178,9 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
     // compute kernel B
 
     if (eflag)
-      Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagPairBVVKernelB<1>>(0,inum),*this,ev);
+      Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagPairBondValVecKernelB<1>>(0,inum),*this,ev);
     else
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVKernelB<0>>(0,inum),*this);
+      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecKernelB<0>>(0,inum),*this);
 
   } else if (neighflag == FULL) {
 
@@ -188,11 +188,11 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
     if (eflag)
       Kokkos::parallel_reduce(
-             Kokkos::RangePolicy<DeviceType,TagPairBVVKernelAB<1>>(0,inum),
+             Kokkos::RangePolicy<DeviceType,TagPairBondValVecKernelAB<1>>(0,inum),
              *this,ev);
     else
       Kokkos::parallel_for(
-            policyInstance<TagPairBVVKernelAB<0>>::get(inum),
+            policyInstance<TagPairBondValVecKernelAB<0>>::get(inum),
             *this);
   }
 
@@ -213,31 +213,31 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
     if (neighflag == HALF) {
       if (newton_pair) {
         Kokkos::parallel_reduce(
-              Kokkos::RangePolicy<DeviceType,TagPairBVVKernelC<HALF,1,1>>(0,inum),
+              Kokkos::RangePolicy<DeviceType,TagPairBondValVecKernelC<HALF,1,1>>(0,inum),
               *this,ev);
       } else {
         Kokkos::parallel_reduce(
-              Kokkos::RangePolicy<DeviceType,TagPairBVVKernelC<HALF,0,1>>(0,inum),
+              Kokkos::RangePolicy<DeviceType,TagPairBondValVecKernelC<HALF,0,1>>(0,inum),
               *this,ev);
       }
     } else if (neighflag == HALFTHREAD) {
       if (newton_pair) {
         Kokkos::parallel_reduce(
-              Kokkos::RangePolicy<DeviceType,TagPairBVVKernelC<HALFTHREAD,1,1>>(0,inum),
+              Kokkos::RangePolicy<DeviceType,TagPairBondValVecKernelC<HALFTHREAD,1,1>>(0,inum),
               *this,ev);
       } else {
         Kokkos::parallel_reduce(
-              Kokkos::RangePolicy<DeviceType,TagPairBVVKernelC<HALFTHREAD,0,1>>(0,inum),
+              Kokkos::RangePolicy<DeviceType,TagPairBondValVecKernelC<HALFTHREAD,0,1>>(0,inum),
               *this,ev);
       }
     } else if (neighflag == FULL) {
       if (newton_pair) {
         Kokkos::parallel_reduce(
-              Kokkos::RangePolicy<DeviceType,TagPairBVVKernelC<FULL,1,1>>(0,inum),
+              Kokkos::RangePolicy<DeviceType,TagPairBondValVecKernelC<FULL,1,1>>(0,inum),
               *this,ev);
       } else {
         Kokkos::parallel_reduce(
-              Kokkos::RangePolicy<DeviceType,TagPairBVVKernelC<FULL,0,1>>(0,inum),
+              Kokkos::RangePolicy<DeviceType,TagPairBondValVecKernelC<FULL,0,1>>(0,inum),
               *this,ev);
       }
     }
@@ -245,31 +245,31 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
     if (neighflag == HALF) {
       if (newton_pair) {
         Kokkos::parallel_for(
-              policyInstance<TagPairBVVKernelC<HALF,1,0>>::get(inum),
+              policyInstance<TagPairBondValVecKernelC<HALF,1,0>>::get(inum),
               *this);
       } else {
         Kokkos::parallel_for(
-              policyInstance<TagPairBVVKernelC<HALF,0,0>>::get(inum),
+              policyInstance<TagPairBondValVecKernelC<HALF,0,0>>::get(inum),
               *this);
       }
     } else if (neighflag == HALFTHREAD) {
       if (newton_pair) {
         Kokkos::parallel_for(
-              policyInstance<TagPairBVVKernelC<HALFTHREAD,1,0>>::get(inum),
+              policyInstance<TagPairBondValVecKernelC<HALFTHREAD,1,0>>::get(inum),
               *this);
       } else {
         Kokkos::parallel_for(
-              policyInstance<TagPairBVVKernelC<HALFTHREAD,0,0>>::get(inum),
+              policyInstance<TagPairBondValVecKernelC<HALFTHREAD,0,0>>::get(inum),
               *this);
       }
     } else if (neighflag == FULL) {
       if (newton_pair) {
         Kokkos::parallel_for(
-              policyInstance<TagPairBVVKernelC<FULL,1,0>>::get(inum),
+              policyInstance<TagPairBondValVecKernelC<FULL,1,0>>::get(inum),
               *this);
       } else {
         Kokkos::parallel_for(
-              policyInstance<TagPairBVVKernelC<FULL,0,0>>::get(inum),
+              policyInstance<TagPairBondValVecKernelC<FULL,0,0>>::get(inum),
               *this);
       }
     }
@@ -319,15 +319,15 @@ void PairBVVKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 ------------------------------------------------------------------------- */
 
 template<class DeviceType>
-void PairBVVKokkos<DeviceType>::allocate()
+void PairBondValVecKokkos<DeviceType>::allocate()
 {
-  PairBVV::allocate();
+  PairBondValVec::allocate();
   int n = atom->ntypes;
   memory->destroy(cutsq);
   memoryKK->create_kokkos(k_cutsq,cutsq,n+1,n+1,"pair:cutsq");
   d_cutsq = k_cutsq.template view<DeviceType>();
 
-  k_params = Kokkos::DualView<params_bvv**,Kokkos::LayoutRight,DeviceType>("PairBVV::params",n+1,n+1);
+  k_params = Kokkos::DualView<params_bvv**,Kokkos::LayoutRight,DeviceType>("PairBondValVec::params",n+1,n+1);
   params = k_params.template view<DeviceType>();
 
 }
@@ -337,11 +337,11 @@ void PairBVVKokkos<DeviceType>::allocate()
 ------------------------------------------------------------------------- */
 
 template<class DeviceType>
-void PairBVVKokkos<DeviceType>::settings(int narg, char **arg)
+void PairBondValVecKokkos<DeviceType>::settings(int narg, char **arg)
 {
   if (narg > 3) error->all(FLERR,"Illegal pair_style command");
 
-  PairBVV::settings(2,arg);
+  PairBondValVec::settings(2,arg);
 }
 
 
@@ -351,9 +351,9 @@ void PairBVVKokkos<DeviceType>::settings(int narg, char **arg)
 
 
 template<class DeviceType>
-void PairBVVKokkos<DeviceType>::init_style()
+void PairBondValVecKokkos<DeviceType>::init_style()
 {
-  PairBVV::init_style();
+  PairBondValVec::init_style();
 
   // adjust neighbor list request for KOKKOS
   neighflag = lmp->kokkos->neighflag;
@@ -369,9 +369,9 @@ void PairBVVKokkos<DeviceType>::init_style()
 ------------------------------------------------------------------------- */
 
 template<class DeviceType>
-double PairBVVKokkos<DeviceType>::init_one(int i, int j)
+double PairBondValVecKokkos<DeviceType>::init_one(int i, int j)
 {
-  double cutone = PairBVV::init_one(i,j);
+  double cutone = PairBondValVec::init_one(i,j);
 
   k_params.h_view(i,j).r0 = r0[i][j];
   k_params.h_view(i,j).alpha = alpha[i][j];
@@ -395,7 +395,7 @@ double PairBVVKokkos<DeviceType>::init_one(int i, int j)
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-int PairBVVKokkos<DeviceType>::pack_forward_comm_kokkos(int n, DAT::tdual_int_1d k_sendlist,
+int PairBondValVecKokkos<DeviceType>::pack_forward_comm_kokkos(int n, DAT::tdual_int_1d k_sendlist,
                                                         DAT::tdual_xfloat_1d &buf,
                                                         int /*pbc_flag*/, int * /*pbc*/)
 {
@@ -405,13 +405,13 @@ int PairBVVKokkos<DeviceType>::pack_forward_comm_kokkos(int n, DAT::tdual_int_1d
   if (buf.extent(0) < buffer_size){
       buf.resize(buffer_size);
   }
-  Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVPackForwardComm>(0,n),*this);
+  Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecPackForwardComm>(0,n),*this);
   return buffer_size;
 }
 
 template<class DeviceType>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVPackForwardComm, const int &i) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecPackForwardComm, const int &i) const {
   int j = d_sendlist(i);
   v_buf[i*3+0] = d_Di(j,0);
   v_buf[i*3+1] = d_Di(j,1);
@@ -421,16 +421,16 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVPackForwardComm, const int 
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-void PairBVVKokkos<DeviceType>::unpack_forward_comm_kokkos(int n, int first_in, DAT::tdual_xfloat_1d &buf)
+void PairBondValVecKokkos<DeviceType>::unpack_forward_comm_kokkos(int n, int first_in, DAT::tdual_xfloat_1d &buf)
 {
   first = first_in;
   v_buf = buf.view<DeviceType>();
-  Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBVVUnpackForwardComm>(0,n),*this);
+  Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairBondValVecUnpackForwardComm>(0,n),*this);
 }
 
 template<class DeviceType>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVUnpackForwardComm, const int &i) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecUnpackForwardComm, const int &i) const {
   d_Di(i + first,0) = v_buf[i*3+0];
   d_Di(i + first,1) = v_buf[i*3+1];
   d_Di(i + first,2) = v_buf[i*3+2];
@@ -439,7 +439,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVUnpackForwardComm, const in
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-int PairBVVKokkos<DeviceType>::pack_forward_comm(int n, int *list, double *buf,
+int PairBondValVecKokkos<DeviceType>::pack_forward_comm(int n, int *list, double *buf,
                                                  int /*pbc_flag*/, int * /*pbc*/)
 {
   k_Di.sync_host();
@@ -460,7 +460,7 @@ int PairBVVKokkos<DeviceType>::pack_forward_comm(int n, int *list, double *buf,
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-void PairBVVKokkos<DeviceType>::unpack_forward_comm(int n, int first, double *buf)
+void PairBondValVecKokkos<DeviceType>::unpack_forward_comm(int n, int first, double *buf)
 {
   k_Di.sync_host();
   int m = 0;
@@ -476,7 +476,7 @@ void PairBVVKokkos<DeviceType>::unpack_forward_comm(int n, int first, double *bu
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-int PairBVVKokkos<DeviceType>::pack_reverse_comm(int n, int first, double *buf)
+int PairBondValVecKokkos<DeviceType>::pack_reverse_comm(int n, int first, double *buf)
 {
   k_s0.sync_host();
 
@@ -495,7 +495,7 @@ int PairBVVKokkos<DeviceType>::pack_reverse_comm(int n, int first, double *buf)
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-void PairBVVKokkos<DeviceType>::unpack_reverse_comm(int n, int *list, double *buf)
+void PairBondValVecKokkos<DeviceType>::unpack_reverse_comm(int n, int *list, double *buf)
 {
   k_s0.sync_host();
 
@@ -516,7 +516,7 @@ void PairBVVKokkos<DeviceType>::unpack_reverse_comm(int n, int *list, double *bu
 
 template<class DeviceType>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVInitialize, const int &i) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecInitialize, const int &i) const {
   d_s0(i,0) = 0.0;
   d_s0(i,1) = 0.0;
   d_s0(i,2) = 0.0;
@@ -528,7 +528,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVInitialize, const int &i) c
 template<class DeviceType>
 template<int NEIGHFLAG, int NEWTON_PAIR>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelA<NEIGHFLAG,NEWTON_PAIR>, const int &ii) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelA<NEIGHFLAG,NEWTON_PAIR>, const int &ii) const {
 
   // s0 = bond valence vectors at each atom
   // loop over neighbors of my atoms
@@ -587,7 +587,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelA<NEIGHFLAG,NEWTON_PA
 template<class DeviceType>
 template<int EFLAG>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelB<EFLAG>, const int &ii, EV_FLOAT& ev) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelB<EFLAG>, const int &ii, EV_FLOAT& ev) const {
 
   // Di = derivative of embedding energy at each atom
   // phi = embedding energy at each atom
@@ -613,9 +613,9 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelB<EFLAG>, const int &
 template<class DeviceType>
 template<int EFLAG>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelB<EFLAG>, const int &ii) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelB<EFLAG>, const int &ii) const {
   EV_FLOAT ev;
-  this->template operator()<EFLAG>(TagPairBVVKernelB<EFLAG>(), ii, ev);
+  this->template operator()<EFLAG>(TagPairBondValVecKernelB<EFLAG>(), ii, ev);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -624,7 +624,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelB<EFLAG>, const int &
 template<class DeviceType>
 template<int EFLAG>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelAB<EFLAG>, const int &ii, EV_FLOAT& ev) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelAB<EFLAG>, const int &ii, EV_FLOAT& ev) const {
 
   // s0 = bond valence vectors at each atom
   // loop over neighbors of my atoms
@@ -682,9 +682,9 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelAB<EFLAG>, const int 
 template<class DeviceType>
 template<int EFLAG>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelAB<EFLAG>, const int &ii) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelAB<EFLAG>, const int &ii) const {
   EV_FLOAT ev;
-  this->template operator()<EFLAG>(TagPairBVVKernelAB<EFLAG>(), ii, ev);
+  this->template operator()<EFLAG>(TagPairBondValVecKernelAB<EFLAG>(), ii, ev);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -693,7 +693,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelAB<EFLAG>, const int 
 template<class DeviceType>
 template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>, const int &ii, EV_FLOAT& ev) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>, const int &ii, EV_FLOAT& ev) const {
 
   // The f array is duplicated for OpenMP, atomic for GPU, and neither for Serial
 
@@ -776,9 +776,9 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelC<NEIGHFLAG,NEWTON_PA
 template<class DeviceType>
 template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>, const int &ii) const {
+void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>, const int &ii) const {
   EV_FLOAT ev;
-  this->template operator()<NEIGHFLAG,NEWTON_PAIR,EVFLAG>(TagPairBVVKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>(), ii, ev);
+  this->template operator()<NEIGHFLAG,NEWTON_PAIR,EVFLAG>(TagPairBondValVecKernelC<NEIGHFLAG,NEWTON_PAIR,EVFLAG>(), ii, ev);
 }
 
 
@@ -787,7 +787,7 @@ void PairBVVKokkos<DeviceType>::operator()(TagPairBVVKernelC<NEIGHFLAG,NEWTON_PA
 template<class DeviceType>
 template<int NEIGHFLAG, int NEWTON_PAIR>
 KOKKOS_INLINE_FUNCTION
-void PairBVVKokkos<DeviceType>::ev_tally(EV_FLOAT &ev, const int &i, const int &j,
+void PairBondValVecKokkos<DeviceType>::ev_tally(EV_FLOAT &ev, const int &i, const int &j,
       const F_FLOAT &epair, const F_FLOAT &fx, const F_FLOAT &fy , const F_FLOAT &fz, const F_FLOAT &delx,
                 const F_FLOAT &dely, const F_FLOAT &delz) const
 {
@@ -884,7 +884,7 @@ void PairBVVKokkos<DeviceType>::ev_tally(EV_FLOAT &ev, const int &i, const int &
 
 template<typename DeviceType>
 template<class TAG>
-struct PairBVVKokkos<DeviceType>::policyInstance {
+struct PairBondValVecKokkos<DeviceType>::policyInstance {
 
   static auto get(int inum) {
     auto policy = Kokkos::RangePolicy<DeviceType, TAG>(0,inum);
@@ -895,8 +895,8 @@ struct PairBVVKokkos<DeviceType>::policyInstance {
 /* ---------------------------------------------------------------------- */
 
 namespace LAMMPS_NS {
-template class PairBVVKokkos<LMPDeviceType>;
+template class PairBondValVecKokkos<LMPDeviceType>;
 #ifdef LMP_KOKKOS_GPU
-template class PairBVVKokkos<LMPHostType>;
+template class PairBondValVecKokkos<LMPHostType>;
 #endif
 }

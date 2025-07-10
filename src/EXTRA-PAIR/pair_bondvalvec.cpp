@@ -12,14 +12,13 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing author: Chuanfu Luo (luochuanfu@gmail.com)
+   Contributing author: Shi Liu (liushi@sas.upenn.edu)
 ------------------------------------------------------------------------- */
-
 #include "math.h"
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "pair_bv.h"
+#include "pair_bondvalvec.h"
 #include "atom.h"
 #include "comm.h"
 #include "force.h"
@@ -33,57 +32,81 @@ using namespace LAMMPS_NS;
 
 /* ---------------------------------------------------------------------- */
 
-PairBV::PairBV(LAMMPS *lmp) : Pair(lmp)
+PairBondValVec::PairBondValVec(LAMMPS *lmp) : Pair(lmp)
 {
   restartinfo = 0;
-  nmax = 0;
-  s0 = nullptr;
-  fp = nullptr;
-  comm_forward = 1;
-  comm_reverse = 1;
+  nmax=0;
+  s0x=nullptr;
+  s0y=nullptr;
+  s0z=nullptr;
+  Dix=nullptr;
+  Diy=nullptr;
+  Diz=nullptr;
+  comm_forward = 3;
+  comm_reverse = 3;
   single_enable = 0;
 }
 
 /* ---------------------------------------------------------------------- */
 
-PairBV::~PairBV()
+PairBondValVec::~PairBondValVec()
 {
-    if (copymode) return;
-    memory->destroy(s0);
-    memory->destroy(fp);
-    if (allocated) {
-        memory->destroy(setflag);
-        memory->destroy(cutsq);
-        memory->destroy(cut);
-        memory->destroy(alpha);
-        memory->destroy(sparam);
-        memory->destroy(v0);
-        memory->destroy(offset);
-    }
+    if(copymode) return;
+    memory->destroy(s0x);
+    memory->destroy(s0y);
+    memory->destroy(s0z);
+    memory->destroy(Dix);
+    memory->destroy(Diy);
+    memory->destroy(Diz);
+  if (allocated) {
+    memory->destroy(setflag);
+    memory->destroy(cutsq);
+    memory->destroy(cut);
+    memory->destroy(alpha);
+    memory->destroy(bvvsparam);
+    memory->destroy(bvvv0);
+    memory->destroy(offset);
+  }
 }
 
 /* ---------------------------------------------------------------------- */
 
-void PairBV::compute(int eflag, int vflag)
+void PairBondValVec::compute(int eflag, int vflag)
 {
   int i,j,m,ii,jj,inum,jnum,itype,jtype;
-  double xtmp,ytmp,ztmp,delx,dely,delz,evdwl,fpair;
-  double rsq,r2inv,r3inv,r6inv;
+  double xtmp,ytmp,ztmp,delx,dely,delz,evdwl;
+  double rsq;
   int *ilist,*jlist,*numneigh,**firstneigh;
-  double rinv,phi;
+/* BVs */
+  double phi;
   double s,ss;
-  double Aij,r,recip,psip;
+  double Aij,r,recip;
+/* BVe */
+/* BVVs */
+  double recip2,Eij;
+  double fx,fy,fz;
+/* BVVe */
   evdwl = 0.0;
-
   if (eflag || vflag) ev_setup(eflag,vflag);
-  else evflag = vflag_fdotr = eflag_global = eflag_atom = 0;
+  else evflag = vflag_fdotr = 0;
 
   if (atom->nmax > nmax) {
-    memory->destroy(s0);
-    memory->destroy(fp);
+    memory->destroy(s0x);
+    memory->destroy(s0y);
+    memory->destroy(s0z);
+
+    memory->destroy(Dix);
+    memory->destroy(Diy);
+    memory->destroy(Diz);
+
+
     nmax = atom->nmax;
-    memory->create(s0,nmax,"pair:s0");
-    memory->create(fp,nmax,"pair:fp");
+    memory->create(s0x,nmax,"pair:s0x");
+    memory->create(s0y,nmax,"pair:s0y");
+    memory->create(s0z,nmax,"pair:s0z");
+    memory->create(Dix,nmax,"pair:Dix");
+    memory->create(Diy,nmax,"pair:Diy");
+    memory->create(Diz,nmax,"pair:Diz");
   }
 
   double **x = atom->x;
@@ -98,10 +121,20 @@ void PairBV::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // zero out BVS
-    if (newton_pair) {
-    for (i = 0; i < nall; i++) s0[i] = 0.0;
-    } else for (i = 0; i < nlocal; i++) s0[i] = 0.0;
+  // zero out BVVS
+  if (newton_pair) {
+    for (i = 0; i < nall; i++)
+    { s0x[i] = 0.0;
+      s0y[i] = 0.0;
+      s0z[i] = 0.0;
+    }
+  } else for (i = 0; i < nlocal; i++)
+    {
+      s0x[i] = 0.0;
+      s0y[i] = 0.0;
+      s0z[i] = 0.0;
+    }
+  // BVVS
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
@@ -116,43 +149,47 @@ void PairBV::compute(int eflag, int vflag)
       j = jlist[jj];
       j &= NEIGHMASK;
 
-      jtype = type[j];
       delx = xtmp - x[j][0];
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
       rsq = delx*delx + dely*dely + delz*delz;
 
-      if (alpha[itype][jtype]!=0.0) { /*1*/
-        if (rsq < cutsq[itype][jtype]) {/*2*/
-          recip = 1.0/sqrt(rsq);
-              r=sqrt(rsq);
-          s0[i] += pow(r0[itype][jtype]/r,alpha[itype][jtype]);
-          if (newton_pair || j < nlocal) {
-            s0[j] += pow(r0[jtype][itype]/r,alpha[jtype][itype]);
-           }
-         }/*2*/
-      }/*1*/
-     }
+      jtype=type[j];
+      if (rsq < cutsq[itype][jtype]) {
+        recip = 1.0/sqrt(rsq);
+// pow must be switched by array calculated in bv
+        s0x[i] += pow(r0[itype][jtype]*recip,alpha[itype][jtype])*recip*(delx);
+        s0y[i] += pow(r0[itype][jtype]*recip,alpha[itype][jtype])*recip*(dely);
+        s0z[i] += pow(r0[itype][jtype]*recip,alpha[itype][jtype])*recip*(delz);
+
+        if (newton_pair || j < nlocal) {
+        s0x[j] -= pow(r0[jtype][itype]*recip,alpha[jtype][itype])*recip*(delx);
+        s0y[j] -= pow(r0[jtype][itype]*recip,alpha[jtype][itype])*recip*(dely);
+        s0z[j] -= pow(r0[jtype][itype]*recip,alpha[jtype][itype])*recip*(delz);
+        }
+//
+        }
+    }
   }
 
-  if (newton_pair) comm->reverse_comm(this);
-
+   if (newton_pair) comm->reverse_comm(this);
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
     itype = type[i];
-    s=s0[i]-v0[itype][itype];
+    s=s0x[i]*s0x[i]+s0y[i]*s0y[i]+s0z[i]*s0z[i]-bvvv0[itype][itype]*bvvv0[itype][itype];
     ss=s*s;
-    fp[i] = sparam[itype][itype]*power_global*s;
-    if (eflag) {
-      phi = sparam[itype][itype]*ss+energy0[itype];
-      if (eflag_global) eng_vdwl += phi;
-      if (eflag_atom) eatom[i] += phi;
-    }
+        Dix[i] = bvvsparam[itype][itype]*power_global*2.0*s0x[i]*s;
+        Diy[i] = bvvsparam[itype][itype]*power_global*2.0*s0y[i]*s;
+        Diz[i] = bvvsparam[itype][itype]*power_global*2.0*s0z[i]*s;
+            if (eflag) {
+              phi = bvvsparam[itype][itype]*ss;
+              if (eflag_global)eng_vdwl += phi;
+              if (eflag_atom) eatom[i] += phi;
+            }
   }
 
-  comm->forward_comm(this);
-
+     comm->forward_comm(this);
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
@@ -171,74 +208,86 @@ void PairBV::compute(int eflag, int vflag)
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
       rsq = delx*delx + dely*dely + delz*delz;
-
       jtype = type[j];
-      if (alpha[itype][jtype]!=0.0) { /*1*/
-        if (rsq < cutsq[itype][jtype]) { /*2*/
-          r = sqrt(rsq);
-          recip = 1.0/sqrt(rsq);
-          Aij=alpha[itype][jtype]*pow(r0[itype][jtype]*recip,alpha[itype][jtype])*recip;
-          psip = (fp[i]+fp[j])*Aij;
-          fpair = psip*recip;
 
-          f[i][0] += delx*fpair;
-          f[i][1] += dely*fpair;
-          f[i][2] += delz*fpair;
 
-          if (newton_pair || j < nlocal) { /*3*/
-            f[j][0] -= delx*fpair;
-            f[j][1] -= dely*fpair;
-            f[j][2] -= delz*fpair;
-          } /*3*/
+      if (rsq < cutsq[itype][jtype]) {/*1*/
+        r = sqrt(rsq);
+        recip = 1.0/r;
+        recip2 = recip*recip;
+        Aij=pow(r0[itype][jtype]*recip,alpha[itype][jtype])*recip;
+        Eij=(alpha[itype][jtype]+1.0)*recip2;
 
-         if (eflag){ /*4*/
-               evdwl = 0.0;
-             }/*4*/
-         if (evflag) ev_tally(i,j,nlocal,newton_pair,
-                             evdwl,0.0,fpair,delx,dely,delz);
-           }/*2*/
+        fx = (Dix[j]-Dix[i])*Aij
+             + (Dix[i]-Dix[j])*Eij*delx*delx*Aij
+             + (Diy[i]-Diy[j])*Eij*delx*dely*Aij
+             + (Diz[i]-Diz[j])*Eij*delx*delz*Aij;
+        f[i][0] += fx;
+
+        fy = (Diy[j]-Diy[i])*Aij
+             + (Diy[i]-Diy[j])*Eij*dely*dely*Aij
+             + (Diz[i]-Diz[j])*Eij*dely*delz*Aij
+             + (Dix[i]-Dix[j])*Eij*dely*delx*Aij;
+
+        f[i][1] += fy;
+
+        fz = (Diz[j]-Diz[i])*Aij
+             + (Diz[i]-Diz[j])*Eij*delz*delz*Aij
+             + (Dix[i]-Dix[j])*Eij*delz*delx*Aij
+             + (Diy[i]-Diy[j])*Eij*delz*dely*Aij;
+        f[i][2] += fz;
+
+        if (newton_pair || j < nlocal) {
+          f[j][0] -= fx;
+          f[j][1] -= fy;
+          f[j][2] -= fz;
+        }
+        if (eflag)   evdwl = 0.0;
+        if (evflag) ev_tally_xyz(i,j,nlocal,newton_pair,
+                             evdwl,0.0,fx,fy,fz,delx,dely,delz);
+
       } /*1*/
-    }
-  }
+    }/*sum over j*/
+  }/*loop over i*/
 
   if (vflag_fdotr) virial_fdotr_compute();
-}
+} /*end compute*/
 
 
 /* ----------------------------------------------------------------------
    allocate all arrays
 ------------------------------------------------------------------------- */
 
-void PairBV::allocate()
+void PairBondValVec::allocate()
 {
   allocated = 1;
-  int n = atom->ntypes+1;
+  int n = atom->ntypes;
 
-
-  memory->create(setflag,n,n,"pair:setflag");
-  for (int i = 1; i < n; i++)
-    for (int j = i; j < n; j++)
+  memory->create(setflag,n+1,n+1,"pair:setflag");
+  for (int i = 1; i <= n; i++)
+    for (int j = i; j <= n; j++)
       setflag[i][j] = 0;
 
-  memory->create(cutsq,n,n,"pair:cutsq");
-  memory->create(cut,n,n,"pair:cut");
-  memory->create(r0,n,n,"pair:r0");
-  memory->create(alpha,n,n,"pair:alpha");
-  memory->create(sparam,n,n,"pair:sparam");
-  memory->create(v0,n,n,"pair:v0");
-  memory->create(energy0,n,"pair:energy0");
-  memory->create(offset,n,n,"pair:offset");
+  memory->create(cutsq,n+1,n+1,"pair:cutsq");
+  memory->create(cut,n+1,n+1,"pair:cut");
+  memory->create(r0,n+1,n+1,"pair:r0");
+  memory->create(bvvsparam,n+1,n+1,"pair:bvvsparam");
+  memory->create(alpha,n+1,n+1,"pair:alpha");
+  memory->create(bvvv0,n+1,n+1,"pair:bvvv0");
+  memory->create(offset,n+1,n+1,"pair:offset");
 }
 
 /* ----------------------------------------------------------------------
    global settings
 ------------------------------------------------------------------------- */
 
-void PairBV::settings(int narg, char **arg)
+void PairBondValVec::settings(int narg, char **arg)
 {
   if (narg != 2) error->all(FLERR,"Illegal pair_style command");
+
   power_global = utils::numeric(FLERR, arg[0], false, lmp);
   cut_global = utils::numeric(FLERR, arg[1], false, lmp);
+  // reset cutoffs that have been explicitly set
 
   if (allocated) {
     int i,j;
@@ -251,7 +300,8 @@ void PairBV::settings(int narg, char **arg)
 /* ----------------------------------------------------------------------
    set coeffs for one or more type pairs
 ------------------------------------------------------------------------- */
-void PairBV::coeff(int narg, char **arg)
+
+void PairBondValVec::coeff(int narg, char **arg)
 {
   if (narg < 4 || narg > 7)
     error->all(FLERR,"Incorrect args for pair coefficients");
@@ -261,24 +311,27 @@ void PairBV::coeff(int narg, char **arg)
   utils::bounds(FLERR, arg[0], 1, atom->ntypes, ilo, ihi, error);
   utils::bounds(FLERR, arg[1], 1, atom->ntypes, jlo, jhi, error);
 
+/*  double epsilon_one = atof(arg[2]);*/
   double r0_one = utils::numeric(FLERR, arg[2], false, lmp);
   double alpha_one = utils::numeric(FLERR, arg[3], false, lmp);
-  double s_one = utils::numeric(FLERR, arg[4], false, lmp);
-  double v0_one = utils::numeric(FLERR, arg[5], false, lmp);
-
+  double bvvs_one = utils::numeric(FLERR, arg[4], false, lmp);
+  double bvvv0_one = utils::numeric(FLERR, arg[5], false, lmp);
   double cut_one = cut_global;
-  if (narg == 7) double cut_one = utils::numeric(FLERR, arg[6], false, lmp);
 
+  if (narg == 7) double cut_one = utils::numeric(FLERR, arg[4], false, lmp);
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
     for (int j = MAX(jlo,i); j <= jhi; j++) {
       cut[i][j] = cut_one;
+/* BVVs */
       r0[i][j]=r0_one;
       alpha[i][j]=alpha_one;
-      sparam[i][j]=s_one;
-      v0[i][j]=v0_one;
+      bvvsparam[i][j]=bvvs_one;
+      bvvv0[i][j]=bvvv0_one;
+/* BVVs */
       setflag[i][j] = 1;
       count++;
+
     }
   }
 
@@ -288,7 +341,7 @@ void PairBV::coeff(int narg, char **arg)
    init specific to this pair style
 ------------------------------------------------------------------------- */
 
-void PairBV::init_style()
+void PairBondValVec::init_style()
 {
 
   neighbor->add_request(this);
@@ -296,33 +349,31 @@ void PairBV::init_style()
 }
 
 /* ----------------------------------------------------------------------
-   init for one type pair i,j and corresponding j,i
-------------------------------------------------------------------------- */
-/* BVs */
-double PairBV::init_one(int i, int j)
+   ----------------------------------------------------------------------*/
+
+
+double PairBondValVec::init_one(int i, int j)
 {
   if (setflag[i][j] == 0) error->all(FLERR,"All pair coeffs are not set");
+
 
   offset[i][j] = 0.0;
   alpha[j][i] = alpha[i][j];
   r0[j][i] = r0[i][j];
-  sparam[j][i] = sparam[i][j];
-  v0[j][i] = v0[i][j];
+  bvvsparam[j][i] = bvvsparam[i][j];
+  bvvv0[j][i] = bvvv0[i][j];
   offset[j][i] = offset[i][j];
-
-  if(i == j){
-    energy0[i]=0.0;
-  }
 
   return cut[i][j];
 }
+
 /* BVs */
 
 /* ----------------------------------------------------------------------
    proc 0 writes to restart file
 ------------------------------------------------------------------------- */
 
-void PairBV::write_restart(FILE *fp)
+void PairBondValVec::write_restart(FILE *fp)
 {
   write_restart_settings(fp);
 
@@ -331,12 +382,12 @@ void PairBV::write_restart(FILE *fp)
     for (j = i; j <= atom->ntypes; j++) {
       fwrite(&setflag[i][j],sizeof(int),1,fp);
       if (setflag[i][j]) {
-/* BVs */
+/* BVVs */
         fwrite(&r0[i][j],sizeof(double),1,fp);
         fwrite(&alpha[i][j],sizeof(double),1,fp);
-        fwrite(&sparam[i][j],sizeof(double),1,fp);
-        fwrite(&v0[i][j],sizeof(double),1,fp);
-/* BVs */
+        fwrite(&bvvsparam[i][j],sizeof(double),1,fp);
+        fwrite(&bvvv0[i][j],sizeof(double),1,fp);
+/* BVVs */
         fwrite(&cut[i][j],sizeof(double),1,fp);
       }
     }
@@ -346,7 +397,7 @@ void PairBV::write_restart(FILE *fp)
    proc 0 reads from restart file, bcasts
 ------------------------------------------------------------------------- */
 
-void PairBV::read_restart(FILE *fp)
+void PairBondValVec::read_restart(FILE *fp)
 {
   read_restart_settings(fp);
   allocate();
@@ -359,18 +410,22 @@ void PairBV::read_restart(FILE *fp)
       MPI_Bcast(&setflag[i][j],1,MPI_INT,0,world);
       if (setflag[i][j]) {
         if (me == 0) {
+/*          fread(&epsilon[i][j],sizeof(double),1,fp);
+          fread(&sigma[i][j],sizeof(double),1,fp);*/
           utils::sfread(FLERR, &r0[i][j], sizeof(double), 1, fp, nullptr, error);
           utils::sfread(FLERR, &alpha[i][j], sizeof(double), 1, fp, nullptr, error);
-          utils::sfread(FLERR, &sparam[i][j], sizeof(double), 1, fp, nullptr, error);
-          utils::sfread(FLERR, &v0[i][j], sizeof(double), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &bvvsparam[i][j], sizeof(double), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &bvvv0[i][j], sizeof(double), 1, fp, nullptr, error);
           utils::sfread(FLERR, &cut[i][j], sizeof(double), 1, fp, nullptr, error);
         }
-/* BVs */
+/*        MPI_Bcast(&epsilon[i][j],1,MPI_DOUBLE,0,world);
+        MPI_Bcast(&sigma[i][j],1,MPI_DOUBLE,0,world);*/
+/* BVVs */
         MPI_Bcast(&r0[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&alpha[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&sparam[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&v0[i][j],1,MPI_DOUBLE,0,world);
-/* BVs */
+        MPI_Bcast(&bvvsparam[i][j],1,MPI_DOUBLE,0,world);
+        MPI_Bcast(&bvvv0[i][j],1,MPI_DOUBLE,0,world);
+/* BVVs */
         MPI_Bcast(&cut[i][j],1,MPI_DOUBLE,0,world);
       }
     }
@@ -380,7 +435,7 @@ void PairBV::read_restart(FILE *fp)
    proc 0 writes to restart file
 ------------------------------------------------------------------------- */
 
-void PairBV::write_restart_settings(FILE *fp)
+void PairBondValVec::write_restart_settings(FILE *fp)
 {
   fwrite(&cut_global,sizeof(double),1,fp);
   fwrite(&power_global,sizeof(double),1,fp);
@@ -392,7 +447,7 @@ void PairBV::write_restart_settings(FILE *fp)
    proc 0 reads from restart file, bcasts
 ------------------------------------------------------------------------- */
 
-void PairBV::read_restart_settings(FILE *fp)
+void PairBondValVec::read_restart_settings(FILE *fp)
 {
   int me = comm->me;
   if (me == 0) {
@@ -409,51 +464,65 @@ void PairBV::read_restart_settings(FILE *fp)
 
 /* ---------------------------------------------------------------------- */
 
-int PairBV::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, int */*pbc*/)
+int PairBondValVec::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int *pbc)
 {
   int i,j,m;
 
-  m = 0;
+    m = 0;
+
   for (i = 0; i < n; i++) {
     j = list[i];
-    buf[m++] = fp[j];
-  }
-  return m;
-}
+    buf[m++] = Dix[j];
+    buf[m++] = Diy[j];
+    buf[m++] = Diz[j];
+   }
+
+ return m;
+ }
 
 /* ---------------------------------------------------------------------- */
 
-void PairBV::unpack_forward_comm(int n, int first, double *buf)
+void PairBondValVec::unpack_forward_comm(int n, int first, double *buf)
 {
   int i,m,last;
 
   m = 0;
   last = first + n;
-  for (i = first; i < last; i++) fp[i] = buf[m++];
+  //  for (i = first; i < last; i++) fp[i] = buf[m++];
+
+  for (i = first; i < last; i++){
+    Dix[i] = buf[m++];
+    Diy[i] = buf[m++];
+    Diz[i] = buf[m++];
+  }
 }
 
 /* ---------------------------------------------------------------------- */
 
-int PairBV::pack_reverse_comm(int n, int first, double *buf)
+int PairBondValVec::pack_reverse_comm(int n, int first, double *buf)
 {
   int i,m,last;
-
-  m = 0;
-  last = first + n;
-  for (i = first; i < last; i++) buf[m++] = s0[i];
-  return m;
+   m = 0;
+   last = first + n;
+  for (i = first; i < last; i++){
+      buf[m++] = s0x[i];
+      buf[m++] = s0y[i];
+      buf[m++] = s0z[i];
+  }
+return m;
 }
 
 /* ---------------------------------------------------------------------- */
 
-void PairBV::unpack_reverse_comm(int n, int *list, double *buf)
+void PairBondValVec::unpack_reverse_comm(int n, int *list, double *buf)
 {
   int i,j,m;
-
   m = 0;
-  for (i = 0; i < n; i++) {
-    j = list[i];
-    s0[j] += buf[m++];
-  }
+     for (i = 0; i < n; i++) {
+       j = list[i];
+       s0x[j] += buf[m++];
+       s0y[j] += buf[m++];
+       s0z[j] += buf[m++];
+    }
 }
 

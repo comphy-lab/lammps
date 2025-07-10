@@ -13,21 +13,21 @@
 
 #ifdef PAIR_CLASS
 
-PairStyle(bv,PairBV)
+PairStyle(bondval,PairBondVal)
 
 #else
 
-#ifndef LMP_PAIR_BV_H
-#define LMP_PAIR_BV_H
+#ifndef LMP_PAIR_BONDVAL_H
+#define LMP_PAIR_BONDVAL_H
 
 #include "pair.h"
 
 namespace LAMMPS_NS {
 
-class PairBV : public Pair {
+class PairBondVal : public Pair {
  public:
-  PairBV(class LAMMPS *);
-  virtual ~PairBV() override;
+  PairBondVal(class LAMMPS *);
+  virtual ~PairBondVal() override;
 
   virtual void compute(int, int) override;
   void settings(int, char **) override;
