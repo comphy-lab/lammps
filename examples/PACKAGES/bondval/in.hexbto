@@ -55,6 +55,16 @@ thermo_style custom step temp c_pairEnergy1 c_pairEnergy2 c_pairEnergy3 eangle e
 
 thermo_modify line one format float %12.5f
 
+#compute disp all displace/atom
+
 #to equilibrate the system at a constant temperature using the NVT ensemble
 fix 1 all nvt temp 300.0 300.0 1.0
 run 500
+#unfix 1
+#to equilibrate the system at constant temperature and pressure using the NPT ensemble
+#fix 2 all nvt temp 300.0 300.0 1.0
+#dump 2 all custom 100 dumpbcubic15.xyz id type x y z c_disp[1] c_disp[2] c_disp[3] c_disp[4] 
+#dump_modify 2 sort id
+#run 50000
+#unfix 2 
+
