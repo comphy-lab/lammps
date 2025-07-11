@@ -600,11 +600,11 @@ void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelB<EFLAG
   d_Di(i,0) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,0)*s;
   d_Di(i,1) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,1)*s;
   d_Di(i,2) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,2)*s;
-  printf("i: %d, d_Di(i,0): %f, d_Di(i,1): %f, d_Di(i,2): %f\n", i, d_Di(i,0), d_Di(i,1), d_Di(i,2));
+  //printf("i: %d, d_Di(i,0): %f, d_Di(i,1): %f, d_Di(i,2): %f\n", i, d_Di(i,0), d_Di(i,1), d_Di(i,2));
 
   if (EFLAG) {
     F_FLOAT phi = (params(itype,itype).bvvsparam)*ss;
-    printf("i: %d, phi: %f", i, phi);
+    //printf("i: %d, phi: %f", i, phi);
     if (eflag_global) ev.evdwl += phi;
     if (eflag_atom) d_eatom[i] += phi;
   }
