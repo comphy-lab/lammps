@@ -1061,7 +1061,6 @@ void FixSurfaceGlobal::post_force(int vflag)
       MathExtra::copy3(contact, contact_surfs[n_contact_surfs].contact);
       MathExtra::zero3(contact_surfs[n_contact_surfs].dr_ext);
 
-
       // Ensure interior contacts always win in a tie, needed for convex flat structures
       //   that calculate distance to the corner to smooth turning
       if (jflag == 1)
@@ -1121,6 +1120,7 @@ void FixSurfaceGlobal::post_force(int vflag)
     processed_contacts->clear();
     convex_contacts->clear();
     concave_contacts->clear();
+
     for (n = 0; n < n_contact_surfs; n++) {
 
       j = contact_surfs[n].index;
@@ -3622,7 +3622,6 @@ void FixSurfaceGlobal::walk_connections3d(int n, std::vector<int> *composite_sur
   }
 }
 
-
 /* ----------------------------------------------------------------------
    Calculate forces
 ------------------------------------------------------------------------- */
@@ -3967,10 +3966,6 @@ void FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs, st
 
 void FixSurfaceGlobal::adjust_external_corner(int j, int k, int n, int m)
 {
-  // Skip if smoothed to nothing
-  if (contact_surfs[n].weight_ext == 0)
-    return;
-
   // Already adjusted by closer surf
   if (contact_surfs[n].overlap_ext >= contact_surfs[m].overlap)
     return;

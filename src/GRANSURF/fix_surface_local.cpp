@@ -431,6 +431,9 @@ void FixSurfaceLocal::grow_arrays(int nmax)
 
 void FixSurfaceLocal::setup_pre_neighbor()
 {
+  if (atom->map_style == Atom::MAP_NONE)
+    error->all(FLERR,"Fix surface/local requires an atom map");
+
   // one-time calculation of remaining fields in Connect2d/3d
   // cannot do until now, b/c need ghost connection info via border comm
   // then re-communicate new owned-particle connectivity to ghost particles

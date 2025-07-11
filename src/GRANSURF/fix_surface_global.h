@@ -215,6 +215,9 @@ class FixSurfaceGlobal : public FixSurface {
   void stats3d();
 
   void surface_attributes();
+  void surface_connectivity_attributes();
+
+  // contact processing and force calculation
 
   void prewalk_connections2d(int, int, std::unordered_set<int> *, std::map<int, int> *);
   void prewalk_connections3d(int, int, std::vector<int> *, std::unordered_set<int> *, std::map<int, int> *);
@@ -224,10 +227,9 @@ class FixSurfaceGlobal : public FixSurface {
   void calculate_2d_forces(std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *);
   void calculate_3d_forces(std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *);
 
-  void surface_connectivity_attributes();
+  // surface movement
 
   int modify_param_move(Motion *, int, char **);
-
   void move_linear(int, int);
   void move_wiggle(int, int);
   void move_rotate(int, int);
