@@ -123,6 +123,9 @@ ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::ComputeSNAGridKokkos
   snaKK = SNAKokkos<DeviceType, real_type, vector_length>(*this);
   snaKK.grow_rij(0,0);
   snaKK.init();
+
+  if (quadraticflag)
+    error->all(FLERR, "Cannot (yet) use quadratic SNAP with compute sna/grid/kk");
 }
 
 // Destructor
@@ -133,7 +136,13 @@ ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::~ComputeSNAGridKokko
   if (copymode) return;
 
   memoryKK->destroy_kokkos(k_cutsq,cutsq);
-  memoryKK->destroy_kokkos(k_gridall, gridall);
+  memoryKK->destroy_kokkos(k_grid, grid);
+  memory->destroy(gridall);
+  if (gridlocal_allocated) {
+    gridlocal_allocated = 0;
+    memory->destroy4d_offset(gridlocal, nzlo, nylo, nxlo);
+  }
+  array = nullptr;
 }
 
 // Setup
@@ -148,15 +157,16 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::setup()
   ComputeGrid::set_grid_local();
 
   // allocate arrays
-  memoryKK->create_kokkos(k_gridall, gridall, size_array_rows, size_array_cols, "grid:gridall");
+  memoryKK->create_kokkos(k_grid, grid, size_array_rows, size_array_cols, "grid:grid");
+  memory->create(gridall, size_array_rows, size_array_cols, "grid:gridall");
+  if (nxlo <= nxhi && nylo <= nyhi && nzlo <= nzhi) {
+    gridlocal_allocated = 1;
+    memory->create4d_offset(gridlocal, size_array_cols, nzlo, nzhi, nylo, nyhi, nxlo, nxhi,
+                            "grid:gridlocal");
+  }
 
-  // do not use or allocate gridlocal for now
-
-  gridlocal_allocated = 0;
   array = gridall;
-
-  d_gridlocal = k_gridlocal.template view<DeviceType>();
-  d_gridall = k_gridall.template view<DeviceType>();
+  d_grid = k_grid.template view<DeviceType>();
 }
 
 // Compute
@@ -180,6 +190,8 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::compute_array()
   x = atomKK->k_x.view<DeviceType>();
   type = atomKK->k_type.view<DeviceType>();
   k_cutsq.template sync<DeviceType>();
+
+  Kokkos::deep_copy(d_grid,0.0);
 
   // max_neighs is defined here - think of more elaborate methods.
   max_neighs = 100;
@@ -314,11 +326,11 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::compute_array()
 
   copymode = 0;
 
-  k_gridlocal.template modify<DeviceType>();
-  k_gridlocal.template sync<LMPHostType>();
+  k_grid.template modify<DeviceType>();
+  k_grid.template sync<LMPHostType>();
 
-  k_gridall.template modify<DeviceType>();
-  k_gridall.template sync<LMPHostType>();
+  MPI_Allreduce(&grid[0][0], &gridall[0][0], size_array_rows * size_array_cols, MPI_DOUBLE, MPI_SUM,
+                world);
 }
 
 /* ----------------------------------------------------------------------
@@ -352,7 +364,7 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
   if (ii >= chunk_size) return;
 
   // extract grid index
-  int igrid = ii + chunk_offset;
+  int i = ii + chunk_offset;
 
   // get a pointer to scratch memory
   // This is used to cache whether or not an atom is within the cutoff.
@@ -365,8 +377,8 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
 
   // convert to grid indices
 
-  int iz = igrid/(xlen*ylen);
-  int i2 = igrid - (iz*xlen*ylen);
+  int iz = i/(xlen*ylen);
+  int i2 = i - (iz*xlen*ylen);
   int iy = i2/xlen;
   int ix = i2 % xlen;
   iz += nzlo;
@@ -375,12 +387,6 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
 
   double xgrid[3];
 
-  // index ii already captures the proper grid point
-  //int igrid = iz * (nx * ny) + iy * nx + ix;
-
-  // grid2x converts igrid to ix,iy,iz like we've done before
-  // multiply grid integers by grid spacing delx, dely, delz
-  //grid2x(igrid, xgrid);
   xgrid[0] = ix * delx;
   xgrid[1] = iy * dely;
   xgrid[2] = iz * delz;
@@ -664,12 +670,12 @@ KOKKOS_INLINE_FUNCTION
 void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (TagCSNAGridLocalFill, const int& ii) const {
 
   // extract grid index
-  int igrid = ii + chunk_offset;
+  int i = ii + chunk_offset;
 
   // convert to grid indices
 
-  int iz = igrid/(xlen*ylen);
-  int i2 = igrid - (iz*xlen*ylen);
+  int iz = i/(xlen*ylen);
+  int i2 = i - (iz*xlen*ylen);
   int iy = i2/xlen;
   int ix = i2 % xlen;
   iz += nzlo;
@@ -678,12 +684,8 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
 
   double xgrid[3];
 
-  // index ii already captures the proper grid point
-  // int igrid = iz * (nx * ny) + iy * nx + ix;
-  // printf("ii igrid: %d %d\n", ii, igrid);
+  int igrid = iz * (nx * ny) + iy * nx + ix;
 
-  // grid2x converts igrid to ix,iy,iz like we've done before
-  //grid2x(igrid, xgrid);
   xgrid[0] = ix * delx;
   xgrid[1] = iy * dely;
   xgrid[2] = iz * delz;
@@ -704,9 +706,9 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
   const F_FLOAT xtmp = xgrid[0];
   const F_FLOAT ytmp = xgrid[1];
   const F_FLOAT ztmp = xgrid[2];
-  d_gridall(igrid,0) = xtmp;
-  d_gridall(igrid,1) = ytmp;
-  d_gridall(igrid,2) = ztmp;
+  d_grid(igrid,0) = xtmp;
+  d_grid(igrid,1) = ytmp;
+  d_grid(igrid,2) = ztmp;
 
   const auto idxb_max = snaKK.idxb_max;
 
@@ -715,7 +717,7 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
   for (int icoeff = 0; icoeff < ncoeff; icoeff++) {
     const auto idxb = icoeff % idxb_max;
     const auto idx_chem = icoeff / idxb_max;
-    d_gridall(igrid,icoeff+3) = snaKK.blist(ii,idx_chem,idxb);
+    d_grid(igrid,icoeff+3) = snaKK.blist(ii,idx_chem,idxb);
   }
 
 }
