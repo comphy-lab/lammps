@@ -1,5 +1,5 @@
-# MBX support for MBX package
-# Based off of MBX.cmake
+# MBX v1.3.0+ support for MBX package
+# Based off of PLUMED.cmake
 
 # set policy to silence warnings about timestamps of downloaded files. review occasionally if it may be set to NEW
 if(POLICY CMP0135)
