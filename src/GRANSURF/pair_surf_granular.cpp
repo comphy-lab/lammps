@@ -368,7 +368,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
         // Closest distance from sphere to surface
         distance_from_surf = BIG;
-        if (contact_surfs[0].exposed == INTERNAL) {
+        if (contact_surfs[0].exposed != EXTERNAL) {
           // If the closest point is internal, then the contact is internal
           distance_from_surf = 0.0;
         } else {

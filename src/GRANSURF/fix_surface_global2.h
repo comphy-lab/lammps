@@ -13,12 +13,12 @@
 
 #ifdef FIX_CLASS
 // clang-format off
-FixStyle(surface/global,FixSurfaceGlobal)
+FixStyle(surface/global2,FixSurfaceGlobal2)
 // clang-format on
 #else
 
-#ifndef LMP_FIX_SURFACE_GLOBAL_H
-#define LMP_FIX_SURFACE_GLOBAL_H
+#ifndef LMP_FIX_SURFACE_GLOBAL2_H
+#define LMP_FIX_SURFACE_GLOBAL2_H
 
 #include <stdio.h>
 #include "fix_surface.h"
@@ -32,7 +32,7 @@ namespace Granular_NS {
   class GranularModel;
 }
 
-class FixSurfaceGlobal : public FixSurface {
+class FixSurfaceGlobal2 : public FixSurface {
  public:
 
   // neighbor lists for spheres with surfs and shear history
@@ -41,8 +41,8 @@ class FixSurfaceGlobal : public FixSurface {
   class NeighList *list;
   class NeighList *listhistory;
 
-  FixSurfaceGlobal(class LAMMPS *, int, char **);
-  ~FixSurfaceGlobal();
+  FixSurfaceGlobal2(class LAMMPS *, int, char **);
+  ~FixSurfaceGlobal2();
   int setmask();
   void post_constructor();
 
@@ -220,14 +220,12 @@ class FixSurfaceGlobal : public FixSurface {
   // contact processing and force calculation
 
   void prewalk_connections2d(int, int, std::unordered_set<int> *, std::map<int, int> *);
-  void prewalk_connections3d(int, int, std::unordered_set<int> *, std::map<int, int> *);
-  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *,  std::map<int, int> *);
-  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  void adjust_exposed_pt_2d(int, int, int, int);
-  void adjust_exposed_edge_3d(int, int, int, int);
-  void adjust_exposed_pt_3d(int, int, int, int);
-  void calculate_2d_forces(std::vector<int> *, double);
-  void calculate_3d_forces(std::vector<int> *, double);
+  void prewalk_connections3d(int, int, std::vector<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
+  void adjust_external_corner(int, int, int, int);
+  void calculate_2d_forces(std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *);
+  void calculate_3d_forces(std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *);
 
   // surface movement
 
