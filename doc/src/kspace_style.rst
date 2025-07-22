@@ -26,6 +26,7 @@
 .. index:: kspace_style pppm/tip4p/omp
 .. index:: kspace_style pppm/electrode
 .. index:: kspace_style pppm/electrode/intel
+.. index:: kspace_style pppm/rk
 .. index:: kspace_style msm
 .. index:: kspace_style msm/omp
 .. index:: kspace_style msm/cg
@@ -44,7 +45,7 @@ Syntax
 
    kspace_style style value
 
-* style = *none* or *ewald* or *ewald/dipole* or *ewald/dipole/spin* or *ewald/disp* or *ewald/disp/dipole* or *ewald/omp* or *ewald/electrode* or *pppm* or *pppm/cg* or *pppm/disp* or *pppm/tip4p* or *pppm/stagger* or *pppm/disp/tip4p* or *pppm/gpu* or *pppm/intel* or *pppm/disp/intel* or *pppm/kk* or *pppm/omp* or *pppm/cg/omp* or *pppm/disp/tip4p/omp* or *pppm/tip4p/omp* or *pppm/dielectic* or *pppm/disp/dielectric* or *pppm/electrode* or *pppm/electrode/intel* or *msm* or *msm/cg* or *msm/omp* or *msm/cg/omp* or *msm/dielectric* or *scafacos* or *zero*
+* style = *none* or *ewald* or *ewald/dipole* or *ewald/dipole/spin* or *ewald/disp* or *ewald/disp/dipole* or *ewald/omp* or *ewald/electrode* or *pppm* or *pppm/cg* or *pppm/disp* or *pppm/tip4p* or *pppm/stagger* or *pppm/disp/tip4p* or *pppm/gpu* or *pppm/intel* or *pppm/disp/intel* or *pppm/kk* or *pppm/omp* or *pppm/cg/omp* or *pppm/disp/tip4p/omp* or *pppm/tip4p/omp* or *pppm/dielectic* or *pppm/disp/dielectric* or *pppm/electrode* or *pppm/electrode/intel* or *pppm/rk* or *msm* or *msm/cg* or *msm/omp* or *msm/cg/omp* or *msm/dielectric* or *scafacos* or *zero*
 
   .. parsed-literal::
 
@@ -106,6 +107,8 @@ Syntax
        *pppm/electrode* value = accuracy
          accuracy = desired relative error in forces
        *pppm/electrode/intel* value = accuracy
+         accuracy = desired relative error in forces
+       *pppm/rk* value = accuracy
          accuracy = desired relative error in forces
        *msm* value = accuracy
          accuracy = desired relative error in forces
@@ -269,6 +272,23 @@ with an error message. Further information on the influence of the
 parameters and how to choose them is described in
 :ref:`(Isele-Holder) <Isele-Holder2012>`,
 :ref:`(Isele-Holder2) <Isele-Holder2013>` and the :doc:`Howto dispersion <Howto_dispersion>` doc page.
+
+----------
+
+The *pppm/rk* style is a variant of *pppm* designed for a heterogeneous multicore pppm computation
+of long-range forces.
+The heterogeneity is in the sense that the MPI communicator is partitioned into two classes of 
+MPI processes. Thus, the use of *pppm/rk* requires the use of the command line `-partition` option. 
+E.g., 
+```mpirun -n 100 ~/lammps/build/lmp -partition 96 4 -in in.somescript```
+The R-process class primarily computes the short-range forces and atom-wise updates.
+The latter updates include the accumulation of charge densities.
+In the above command-line example, there would be 96 R-processes and 4 K-processes.
+The K-process class is mainly responsible for solving the Poisson equations with FFT.
+The number of K-processes divides the number of R-processes, 
+and the total number of processes is furthermore partitioned orthogonally into inter-RK blocks
+(as seen also in the `VerletSplit` class).
+Each inter-RK block communicator has one representative K process, with the rest of the processes being R processes. 
 
 ----------
 
