@@ -29,7 +29,7 @@ class PairBondVal : public Pair {
   PairBondVal(class LAMMPS *);
   virtual ~PairBondVal() override;
 
-  virtual void compute(int, int) override;
+  void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
   void init_style() override;
@@ -39,8 +39,8 @@ class PairBondVal : public Pair {
   void write_restart_settings(FILE *) override;
   void read_restart_settings(FILE *) override;
 
-  virtual int pack_forward_comm(int, int *, double *, int, int *) override;
-  virtual void unpack_forward_comm(int, int, double *) override;
+  int pack_forward_comm(int, int *, double *, int, int *) override;
+  void unpack_forward_comm(int, int, double *) override;
 
   int pack_reverse_comm(int, int, double *) override;
   void unpack_reverse_comm(int, int *, double *) override;

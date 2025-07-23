@@ -27,9 +27,9 @@ namespace LAMMPS_NS {
 class PairBondValVec : public Pair {
  public:
   PairBondValVec(class LAMMPS *);
-  virtual ~PairBondValVec() override;
+  ~PairBondValVec() override;
 
-  virtual void compute(int, int) override;
+  void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
   void init_style() override;
