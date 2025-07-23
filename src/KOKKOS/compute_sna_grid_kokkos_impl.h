@@ -121,8 +121,11 @@ ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::ComputeSNAGridKokkos
   Kokkos::deep_copy(d_test,h_test);
 
   snaKK = SNAKokkos<DeviceType, real_type, vector_length>(*this);
-  snaKK.grow_rij(0,0);
+  snaKK.grow_rij(0,0,padding_factor);
   snaKK.init();
+
+  if (quadraticflag)
+    error->all(FLERR, "Cannot (yet) use quadratic SNAP with compute sna/grid/kk");
 }
 
 // Destructor
@@ -188,10 +191,10 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::compute_array()
   type = atomKK->k_type.view<DeviceType>();
   k_cutsq.template sync<DeviceType>();
 
+  Kokkos::deep_copy(d_grid,0.0);
+
   // max_neighs is defined here - think of more elaborate methods.
   max_neighs = 100;
-
-  nprocs = comm->nprocs;
 
   // Pair snap/kk uses grow_ij with some max number of neighs but compute sna/grid uses total
   // number of atoms.
@@ -204,7 +207,7 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::compute_array()
   // `total_range` is the number of grid points which may be larger than chunk size.
   chunk_size = MIN(chunksize, total_range);
   chunk_offset = 0;
-  snaKK.grow_rij(chunk_size, max_neighs);
+  snaKK.grow_rij(chunk_size, max_neighs, padding_factor);
 
   // Pre-compute ceil(chunk_size / vector_length) for code cleanliness
   const int chunk_size_div = (chunk_size + vector_length - 1) / vector_length;
@@ -266,10 +269,17 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::compute_array()
         const int n_teams = chunk_size_div * max_neighs * (twojmax + 1);
         const int n_teams_div = (n_teams + team_size_compute_ui - 1) / team_size_compute_ui;
 
-        SnapAoSoATeamPolicy<DeviceType, team_size_compute_ui, TagCSNAGridComputeUiSmall>
-          policy_ui(n_teams_div, team_size_compute_ui, vector_length);
-        policy_ui = policy_ui.set_scratch_size(0, Kokkos::PerTeam(scratch_size));
-        Kokkos::parallel_for("ComputeUiSmall", policy_ui, *this);
+        if (nelements > 1) {
+          SnapAoSoATeamPolicy<DeviceType, team_size_compute_ui, TagCSNAGridComputeUiSmall<true>>
+            policy_ui(n_teams_div, team_size_compute_ui, vector_length);
+          policy_ui = policy_ui.set_scratch_size(0, Kokkos::PerTeam(scratch_size));
+          Kokkos::parallel_for("ComputeUiSmallChemsnap", policy_ui, *this);
+        } else {
+          SnapAoSoATeamPolicy<DeviceType, team_size_compute_ui, TagCSNAGridComputeUiSmall<false>>
+            policy_ui(n_teams_div, team_size_compute_ui, vector_length);
+          policy_ui = policy_ui.set_scratch_size(0, Kokkos::PerTeam(scratch_size));
+          Kokkos::parallel_for("ComputeUiSmall", policy_ui, *this);
+        }
       } else {
         // Version w/out parallelism over j_bend
 
@@ -277,10 +287,17 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::compute_array()
         const int n_teams = chunk_size_div * max_neighs;
         const int n_teams_div = (n_teams + team_size_compute_ui - 1) / team_size_compute_ui;
 
-        SnapAoSoATeamPolicy<DeviceType, team_size_compute_ui, TagCSNAGridComputeUiLarge>
-          policy_ui(n_teams_div, team_size_compute_ui, vector_length);
-        policy_ui = policy_ui.set_scratch_size(0, Kokkos::PerTeam(scratch_size));
-        Kokkos::parallel_for("ComputeUiLarge", policy_ui, *this);
+        if (nelements > 1) {
+          SnapAoSoATeamPolicy<DeviceType, team_size_compute_ui, TagCSNAGridComputeUiLarge<true>>
+            policy_ui(n_teams_div, team_size_compute_ui, vector_length);
+          policy_ui = policy_ui.set_scratch_size(0, Kokkos::PerTeam(scratch_size));
+          Kokkos::parallel_for("ComputeUiLargeChemsnap", policy_ui, *this);
+        } else {
+          SnapAoSoATeamPolicy<DeviceType, team_size_compute_ui, TagCSNAGridComputeUiLarge<false>>
+            policy_ui(n_teams_div, team_size_compute_ui, vector_length);
+          policy_ui = policy_ui.set_scratch_size(0, Kokkos::PerTeam(scratch_size));
+          Kokkos::parallel_for("ComputeUiLarge", policy_ui, *this);
+        }
       }
     }
 
@@ -361,7 +378,7 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
   if (ii >= chunk_size) return;
 
   // extract grid index
-  int igrid = ii + chunk_offset;
+  int i = ii + chunk_offset;
 
   // get a pointer to scratch memory
   // This is used to cache whether or not an atom is within the cutoff.
@@ -374,8 +391,8 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
 
   // convert to grid indices
 
-  int iz = igrid/(xlen*ylen);
-  int i2 = igrid - (iz*xlen*ylen);
+  int iz = i/(xlen*ylen);
+  int i2 = i - (iz*xlen*ylen);
   int iy = i2/xlen;
   int ix = i2 % xlen;
   iz += nzlo;
@@ -384,12 +401,6 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
 
   double xgrid[3];
 
-  // index ii already captures the proper grid point
-  //int igrid = iz * (nx * ny) + iy * nx + ix;
-
-  // grid2x converts igrid to ix,iy,iz like we've done before
-  // multiply grid integers by grid spacing delx, dely, delz
-  //grid2x(igrid, xgrid);
   xgrid[0] = ix * delx;
   xgrid[1] = iy * dely;
   xgrid[2] = iz * delz;
@@ -534,8 +545,9 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
 }
 
 template<class DeviceType, typename real_type, int vector_length>
-KOKKOS_INLINE_FUNCTION
-void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (TagCSNAGridComputeUiSmall,const typename Kokkos::TeamPolicy<DeviceType,TagCSNAGridComputeUiSmall>::member_type& team) const {
+template <bool chemsnap> KOKKOS_INLINE_FUNCTION
+void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (TagCSNAGridComputeUiSmall<chemsnap>,
+  const typename Kokkos::TeamPolicy<DeviceType,TagCSNAGridComputeUiSmall<chemsnap>>::member_type& team) const {
 
   // extract flattened atom_div / neighbor number / bend location
   int flattened_idx = team.team_rank() + team.league_rank() * team_size_compute_ui;
@@ -554,14 +566,15 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
     const int ninside = d_ninside(ii);
     if (jj >= ninside) return;
 
-    snaKK.compute_ui_small(team, iatom_mod, jbend, jj, iatom_div);
+    snaKK.template compute_ui_small<chemsnap>(team, iatom_mod, jbend, jj, ninside, iatom_div);
   });
 
 }
 
 template<class DeviceType, typename real_type, int vector_length>
-KOKKOS_INLINE_FUNCTION
-void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (TagCSNAGridComputeUiLarge,const typename Kokkos::TeamPolicy<DeviceType,TagCSNAGridComputeUiLarge>::member_type& team) const {
+template <bool chemsnap> KOKKOS_INLINE_FUNCTION
+void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (TagCSNAGridComputeUiLarge<chemsnap>,
+  const typename Kokkos::TeamPolicy<DeviceType,TagCSNAGridComputeUiLarge<chemsnap>>::member_type& team) const {
 
   // extract flattened atom_div / neighbor number / bend location
   int flattened_idx = team.team_rank() + team.league_rank() * team_size_compute_ui;
@@ -578,7 +591,7 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
     const int ninside = d_ninside(ii);
     if (jj >= ninside) return;
 
-    snaKK.compute_ui_large(team,iatom_mod, jj, iatom_div);
+    snaKK.template compute_ui_large<chemsnap>(team,iatom_mod, jj, ninside, iatom_div);
   });
 }
 
@@ -673,12 +686,12 @@ KOKKOS_INLINE_FUNCTION
 void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (TagCSNAGridLocalFill, const int& ii) const {
 
   // extract grid index
-  int igrid = ii + chunk_offset;
+  int i = ii + chunk_offset;
 
   // convert to grid indices
 
-  int iz = igrid/(xlen*ylen);
-  int i2 = igrid - (iz*xlen*ylen);
+  int iz = i/(xlen*ylen);
+  int i2 = i - (iz*xlen*ylen);
   int iy = i2/xlen;
   int ix = i2 % xlen;
   iz += nzlo;
@@ -687,12 +700,8 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
 
   double xgrid[3];
 
-  // index ii already captures the proper grid point
-  // int igrid = iz * (nx * ny) + iy * nx + ix;
-  // printf("ii igrid: %d %d\n", ii, igrid);
+  int igrid = iz * (nx * ny) + iy * nx + ix;
 
-  // grid2x converts igrid to ix,iy,iz like we've done before
-  //grid2x(igrid, xgrid);
   xgrid[0] = ix * delx;
   xgrid[1] = iy * dely;
   xgrid[2] = iz * delz;
@@ -713,9 +722,9 @@ void ComputeSNAGridKokkos<DeviceType, real_type, vector_length>::operator() (Tag
   const F_FLOAT xtmp = xgrid[0];
   const F_FLOAT ytmp = xgrid[1];
   const F_FLOAT ztmp = xgrid[2];
-  d_grid(igrid,0) = xtmp/nprocs;
-  d_grid(igrid,1) = ytmp/nprocs;
-  d_grid(igrid,2) = ztmp/nprocs;
+  d_grid(igrid,0) = xtmp;
+  d_grid(igrid,1) = ytmp;
+  d_grid(igrid,2) = ztmp;
 
   const auto idxb_max = snaKK.idxb_max;
 
