@@ -12,9 +12,9 @@
 ------------------------------------------------------------------------- */
 
 #ifdef PAIR_CLASS
-
+// clang-format off
 PairStyle(bondval,PairBondVal)
-
+// clang-format on
 #else
 
 #ifndef LMP_PAIR_BONDVAL_H
@@ -45,22 +45,20 @@ class PairBondVal : public Pair {
   int pack_reverse_comm(int, int, double *) override;
   void unpack_reverse_comm(int, int *, double *) override;
 
-
  protected:
   double cut_global;
   int nmax;
   double power_global;
   double **cut;
-  double **r0,**alpha,**sparam,**v0;
-  double *s0,*fp,*energy0;
+  double **r0, **alpha, **sparam, **v0;
+  double *s0, *fp, *energy0;
   double **offset;
   double *cut_respa;
 
   virtual void allocate();
 };
 
-}
+}    // namespace LAMMPS_NS
 
 #endif
 #endif
-
