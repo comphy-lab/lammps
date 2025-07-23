@@ -16,17 +16,16 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_bondval.h"
+
 #include "atom.h"
 #include "comm.h"
 #include "error.h"
 #include "force.h"
-#include "math.h"
 #include "memory.h"
 #include "neigh_list.h"
 #include "neighbor.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+
+#include <cmath>
 
 using namespace LAMMPS_NS;
 
