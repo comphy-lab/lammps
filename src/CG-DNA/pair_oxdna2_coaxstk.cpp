@@ -245,7 +245,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       f4f6t1 = F4(theta1, a_cxst1[atype][btype], theta_cxst1_0[atype][btype],
                   dtheta_cxst1_ast[atype][btype], b_cxst1[atype][btype],
                   dtheta_cxst1_c[atype][btype]) +
-        F6(theta1, AA_cxst1[atype][btype], BB_cxst1[atype][btype]);
+               F6(theta1, AA_cxst1[atype][btype], BB_cxst1[atype][btype]);
 
       // early rejection criterium
       if (f4f6t1 != 0.0) {
@@ -302,8 +302,9 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
         if (cosphi3 < -1.0) cosphi3 = -1.0;
 
         f2 = F2(r_stkstk, k_cxst[atype][btype], cut_cxst_0[atype][btype],
-             cut_cxst_lc[atype][btype], cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype], cut_cxst_hi[atype][btype],
-             b_cxst_lo[atype][btype], b_cxst_hi[atype][btype], cut_cxst_c[atype][btype]);
+                cut_cxst_lc[atype][btype], cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype],
+                cut_cxst_hi[atype][btype], b_cxst_lo[atype][btype], b_cxst_hi[atype][btype],
+                cut_cxst_c[atype][btype]);
 
         evdwl = f2 * f4f6t1 * f4t4 * f4t5 * f4t6 * factor_lj;
 
@@ -318,7 +319,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
         df4f6t1 = DF4(theta1, a_cxst1[atype][btype], theta_cxst1_0[atype][btype],
                       dtheta_cxst1_ast[atype][btype], b_cxst1[atype][btype],
                       dtheta_cxst1_c[atype][btype])*rsint +
-          DF6(theta1, AA_cxst1[atype][btype], BB_cxst1[atype][btype])*rsint;
+                  DF6(theta1, AA_cxst1[atype][btype], BB_cxst1[atype][btype])*rsint;
 
         df4t4 = DF4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype],
                     dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
@@ -328,9 +329,9 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
         df4t5 = DF4(theta5, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
                     dtheta_cxst5_ast[atype][btype],
                     b_cxst5[atype][btype], dtheta_cxst5_c[atype][btype])*rsint -
-          DF4(theta5p, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
-              dtheta_cxst5_ast[atype][btype],
-              b_cxst5[atype][btype], dtheta_cxst5_c[atype][btype])*rsint;
+                DF4(theta5p, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
+                    dtheta_cxst5_ast[atype][btype], b_cxst5[atype][btype],
+                    dtheta_cxst5_c[atype][btype])*rsint;
 
         rsint = 1.0/sin(theta6);
         df4t6 = DF4(theta6, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
@@ -493,6 +494,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
           torque[b][2] -= deltb[2];
 
         }
+
       }
       }
       }
