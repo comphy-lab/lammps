@@ -5376,6 +5376,102 @@ TEST_F(AtomStyleTest, oxdna)
     END_HIDE_OUTPUT();
 }
 
+// LDD PACKAGE 
+
+TEST_F(AtomStyleTest, atomic_ldd_basic)
+{
+    if (!LAMMPS::is_installed_pkg("LDD")) GTEST_SKIP();
+
+    BEGIN_HIDE_OUTPUT();
+    command("atom_style ldd 2");
+    END_HIDE_OUTPUT();
+    //Basic atomic setup sanity
+    AtomState expected;
+    expected.atom_style     = "ldd";
+    expected.molecular      = Atom::ATOMIC;
+    expected.tag_enable     = 1;
+    expected.molecule_flag  = 0;
+    expected.ellipsoid_flag = 0;
+    expected.rmass_flag     = 0;
+    expected.torque_flag    = 0;
+    expected.angmom_flag    = 0;
+    expected.has_type       = true;
+    expected.has_mask       = true;
+    expected.has_image      = true;
+    expected.has_x          = true;
+    expected.has_v          = true;
+    expected.has_f          = true;
+
+    ASSERT_ATOM_STATE_EQ(lmp->atom, expected);
+
+ // Checking ldd field vectors are setup
+    ASSERT_EQ(lmp->atom->ldd_ntypes, 2);
+    ASSERT_EQ(lmp->atom->ldd_big_flag, 1);
+
+    BEGIN_HIDE_OUTPUT();
+    command("create_box 2 box");
+    command("create_atoms 1 single -2.0  2.0  0.1");
+    command("create_atoms 1 single -2.0 -2.0 -0.1");
+    command("create_atoms 2 single  2.0  2.0 -0.1");
+    command("create_atoms 2 single  2.0 -2.0  0.1");
+    END_HIDE_OUTPUT();
+
+    ASSERT_NE(&(lmp->atom->ldd_local_density[0][1]), &(lmp->atom->ldd_local_density[1][0]));
+    ASSERT_NE(&(lmp->atom->ldd_grad_density[0][1]), &(lmp->atom->ldd_grad_density[1][0]));
+
+}
+
+TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
+{
+ if (!LAMMPS::is_installed_pkg("LDD")) GTEST_SKIP();
+ 
+ BEGIN_HIDE_OUTPUT();
+ command("atom_style ldd 2");
+ command("region my_box block 0 9 0 9 0 9");
+ command("create_box 2 my_box");
+ command("mass  * 59.0448");
+ command("pair_style ldd 4.0");
+ command("create_atoms 1 single 1       0.1       0.75");
+ command("create_atoms 2 single 1       0.1     0.65");
+ command("create_atoms 1 single 1       0.1     0.1");
+ command("create_atoms 2 single 1       0.54    0.65");
+ command("create_atoms 2 single 1       8.9     0.65");
+ command("pair_coeff  1 1  indicator lucy    0.0 0.65 self yes potential noforce");
+ command("pair_coeff  1 2  indicator dpd     0.0 0.65 self no  potential noforce");
+ command("pair_coeff  2 1  indicator sphere  0.0 0.55 self no potential noforce");
+ command("pair_coeff  2 2  indicator lucy    0.0 0.65 self no potential noforce");
+ command("neighbor 4.0 bin");
+ command("fix 1 all nve");
+ command("run 0");
+ END_HIDE_OUTPUT();
+
+/* fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[0][1]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[0][2]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[1][1]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[1][2]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[2][1]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[2][2]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[3][1]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[3][2]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[4][1]);
+ fprintf(stderr, "%f\n", lmp->atom->ldd_local_density[4][2]);
+*/
+
+ //Atoms 0 -> n-1, types 1 - ntypes
+ ASSERT_NEAR(lmp->atom->ldd_local_density[0][1],7.606403744, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[0][2],10.77780578, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[1][1],8.383039619, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[1][2],5.631116274, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[2][1],7.606403744, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[2][2],0.29205516, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[3][1],0.522157906, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[3][2],0.777519395, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[4][1],4.864480249, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[4][2],4.853815902, 1e-9);
+
+}
+
+
 } // namespace LAMMPS_NS
 
 int main(int argc, char **argv)
