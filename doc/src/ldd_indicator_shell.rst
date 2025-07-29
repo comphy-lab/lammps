@@ -33,7 +33,7 @@ The *shell* indicator style employs a smoothed heaviside indicator function orig
    \end{cases}
 
 .. math::
-   [w] = 4 \pi ( r_{0}^{3} &+ c_{0} / 3 * (r_{c}^{3}-r_{0}^{3}) \\
+   [w] = 4 \pi ( r_{0}^{3}/3 &+ c_{0} / 3 * (r_{c}^{3}-r_{0}^{3}) \\
                            &+ c_{2} / 5 * (r_{c}^{5}-r_{0}^{5}) \\
                            &+ c_{4} / 7 * (r_{c}^{7}-r_{0}^{7}) \\
                            &+ c_{6} / 9 * (r_{c}^{9}-r_{0}^{9}) )

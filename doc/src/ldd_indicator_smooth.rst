@@ -34,7 +34,7 @@ The *smooth* indicator style employs a smoothed heaviside indicator function. It
    \end{cases}
 
 .. math::
-   [w] &= 4 \pi ( r_{0}^{3} + \sum_{i=0}^{5} c_{i} / (i+3) * (r_{c}^{i+3}-r_{0}^{i+3})) \\
+   [w] &= 4 \pi ( r_{0}^{3}/3 + \sum_{i=0}^{5} c_{i} / (i+3) * (r_{c}^{i+3}-r_{0}^{i+3})) \\
    d &= (r_{0}^{5} - r_{c}^{5})/120 - (r_{0}^{3} - r_{c}^{3})r_{0}r_{c}/24 + (r_{0}-r_{c})r_{0}^{2}r_{c}^{2}/12 \\
    c_{0} &= (-r_{c}^{5}/120 + r_{0} r_{c}^{4}/24 - r_{0}^{2}r_{c}^{3}/12)/d \\
    c_{1} &= (r_{0}^{2} r_{c}^{2}) / (4d) \\

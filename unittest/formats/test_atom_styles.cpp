@@ -5496,6 +5496,81 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
 
 }
 
+TEST_F(AtomStyleTest, atomic_ldd_indicators_set2)
+{
+ if (!LAMMPS::is_installed_pkg("LDD")) GTEST_SKIP();
+
+ BEGIN_HIDE_OUTPUT();
+ command("atom_style ldd 2");
+ command("region my_box block 0 9 0 9 0 9");
+ command("create_box 2 my_box");
+ command("mass  * 59.0448");
+ command("pair_style ldd 4.0");
+ command("create_atoms 1 single 1       0.1       0.75");
+ command("create_atoms 2 single 1       0.1     0.65");
+ command("create_atoms 1 single 1       0.1     0.1");
+ command("create_atoms 2 single 1       0.54    0.65");
+ command("create_atoms 2 single 1       8.9     0.65");
+ command("pair_coeff  1 1  indicator dpd      0.0 0.66 self yes potential noforce");
+ command("pair_coeff  1 2  indicator shell    0.2 0.65 self no  potential noforce");
+ command("pair_coeff  2 1  indicator smooth   0.1 0.55 self no potential noforce");
+ command("pair_coeff  2 2  indicator shell    0.0 0.65 self yes potential noforce");
+ command("neighbor 4.0 bin");
+ command("fix 1 all nve");
+ command("run 0");
+ END_HIDE_OUTPUT();
+
+ // LD Check
+ //Atoms 0 -> n-1, LDs types 1 - ntypes
+ ASSERT_NEAR(lmp->atom->ldd_local_density[0][1],8.305757995, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[0][2],5.315429893, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[1][1],5.769345224, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[1][2],5.789973884, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[2][1],8.305757995, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[2][2],0.706739152, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[3][1],0.426940062, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[3][2],3.571792315, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[4][1],5.012182094, 1e-9);
+ ASSERT_NEAR(lmp->atom->ldd_local_density[4][2],4.512606624, 1e-9);
+ 
+ // LD_grad Check
+ // Atoms 0->n_atoms-1, grads, 3->3ntypes+3
+ // atom i|type1
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[0][3], 0.0000, 1e-8);//x
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[0][4], 0.0000, 1e-8);//y
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[0][5], -0.381260408, 1e-8);//z
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[1][3], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[1][4], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[1][5], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[2][3], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[2][4], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[2][5], 0.381260408, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[3][3], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[3][4],-11.00884964, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[3][5], 2.502011282, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[4][3], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[4][4], 13.65517051, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[4][5], 6.827585254, 1e-8);
+
+ //atom i|type2
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[0][6], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[0][7], 6.566811514, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[0][8], -1.729464046, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[1][6], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[1][7], 5.968525141, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[1][8], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[2][6], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[2][7], -2.117155453, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[2][8], 13.40063167, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[3][6], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[3][7], -8.307358994, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[3][8], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[4][6], 0.0000, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[4][7], 2.338833853, 1e-8);
+ ASSERT_NEAR(lmp->atom->ldd_grad_density[4][8], 0.0000, 1e-8);
+
+}
+
 
 } // namespace LAMMPS_NS
 
