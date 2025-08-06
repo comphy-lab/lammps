@@ -60,6 +60,7 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   writedata = 1;
 
   restartinfo = 0;
+  single_enable = 0; // MCL 07.30.25, while we have a single routine to compute the pair contribution given info about the LD, but I do not know how to add a unit test for it since the base pair google test will set up a non-ldd atom_style for testing so for now I am disabling it. 
 
 // We pass the local densities & 3 components of the gradients for each type
   comm_forward = 4 * atom->ntypes;
@@ -688,6 +689,7 @@ double PairLdd::init_one(int i, int j) // perform initializaion for one i,j type
 
 void PairLdd::init_style() //initialization specific to this pair style
 {
+  if (force->newton_pair == 0) error->all(FLERR, "Pair style ldd requires newton pair on");
   neighbor->request(this,instance_me);
 }
 

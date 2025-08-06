@@ -2,11 +2,12 @@ Local Density Dependent Potentials via PKG-LDD
 ===============================================
 **Overview:**
 
-The LDD package offers local density dependent potentials that are either 
-a function of the local density (LD) around a central particle
-or a function of the square gradient (SG) of the local density around a central particle.
-Such potentials are useful for coarse graining and can be constructed from trajectory data using
-`BOCS version 5 and higher <https://github.com/noid-group/BOCS>`_.
+The LDD package offers potentials that are a function of the local density, :math:`\rho_{\beta|I}` of type :math:`\beta` particles around a central particle, :math:`I`.
+There are two types of local density dependent potentials implemented. 
+There are Local Density (LD) potentials :math:`U_{LD}` , which are direct functions of :math:`\rho_{\beta|I}`. 
+There are also Square Gradient (SG) potentials :math:`U_{SG}`, which use a direction function :math:`\rho_{\beta|I}` as a coefficient function that stabilizes the square gradient, :math:`|\frac{d\rho_{\beta|I}}{dR_I}|^2` of a particular local density. 
+Such potentials are useful for coarse grained models and can be parameterized from trajectory data using
+`BOCS version 5 and higher. <https://github.com/noid-group/BOCS>`_
 
 **Local Density Definitions**
 
@@ -16,10 +17,10 @@ The local density, :math:`\rho_{\beta|I}` of site types :math:`\beta` around a c
 
    \rho_{\beta|I} = \sum_{J\in S_{\beta|I}} \bar{w}_{\beta|\alpha}(r_{IJ})
  
-where :math:`S_{\beta|I}` is the set of particles of type :math:`\beta` not excluded in pairwise interactions involving site :math:`I`. 
-:math:`\bar{w}_{\beta|\alpha}(r_{IJ})` is a normalized indicator function, it determines the pair weighted contribution of each particle :math:`J | t_J = \beta` to the :math:`\beta` LD around a central particle :math:`I` of type :math:`t_I = \alpha`.
+where :math:`S_{\beta|I}` is the set of particles of type :math:`\beta` that are not excluded from pairwise interactions involving site :math:`I`. 
+:math:`\bar{w}_{\beta|\alpha}(r_{IJ})` is a normalized indicator function, it determines the pair weighted contribution from each particle :math:`J`, of type :math:`t_J = \beta` to the :math:`\beta` LD around a central particle :math:`I` of type :math:`t_I = \alpha`.
 
-The normalized indicator function is defined by dividing a continuous/differentiably nonincreasing indicator function :math:`w(r)` by its spatial integral :math:`[w]`.
+The normalized indicator function is defined by dividing a continuous/differentiably non-negative non-increasing indicator function :math:`w(r)` by its spatial integral :math:`[w]`.
 
 .. math::
 

@@ -121,6 +121,8 @@ This pair style is only available when LAMMPS is compiled with :ref:`PKG-LDD <PK
 This pair style must be used with the :doc:`atom_style ldd <atom_style>` or :doc:`atom_style hybrid <atom_style>` with ldd listed as an arg. 
 This atom style requires an argument of ntypes, which is the number of particle types you will use in the simulation.
 
+Because gradient forces are non-radial, this pair style does not support the :doc:`pair_modify <pair_modify>` nofdtr.
+
 To save the properties associated with the local density, use :doc:`dump style ldd <dump_ldd>`.
 
 The *indicator*, *self*, and *potential* keywords are mandatory, unless the *ignore* keyword is provided. The *gradient* keyword is optional.
