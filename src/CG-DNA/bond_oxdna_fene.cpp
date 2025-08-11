@@ -445,9 +445,23 @@ double BondOxdnaFene::equilibrium_distance(int i)
 
 void BondOxdnaFene::write_restart(FILE *fp)
 {
+  int n = atom->ntypes;
+
+  fwrite(&k[0], sizeof(double), 1, fp);
   fwrite(&k[1], sizeof(double), atom->nbondtypes, fp);
-  fwrite(&Delta[1][0][0][0][0], sizeof(double), atom->nbondtypes, fp);
-  fwrite(&r0[1][0][0][0][0], sizeof(double), atom->nbondtypes, fp);
+  for (int i = 1; i <= n; i++) {
+    for (int j = 1; j <= n; j++) {
+      for (int k = 1; k <= n; k++) {
+        for (int l = 1; l <= n; l++) {
+          fwrite(&Delta[0][i][j][j][l], sizeof(double), 1, fp);
+          fwrite(&Delta[1][i][j][j][l], sizeof(double), atom->nbondtypes, fp);
+          fwrite(&r0[0][i][j][k][l], sizeof(double), 1, fp);
+          fwrite(&r0[1][i][j][k][l], sizeof(double), atom->nbondtypes, fp);
+        }
+      }
+    }
+  }
+
 }
 
 /* ----------------------------------------------------------------------
@@ -456,16 +470,40 @@ void BondOxdnaFene::write_restart(FILE *fp)
 
 void BondOxdnaFene::read_restart(FILE *fp)
 {
+  int n = atom->ntypes;
   allocate();
 
   if (comm->me == 0) {
+    utils::sfread(FLERR, &k[0], sizeof(double), 1, fp, nullptr, error);
     utils::sfread(FLERR, &k[1], sizeof(double), atom->nbondtypes, fp, nullptr, error);
-    utils::sfread(FLERR, &Delta[1], sizeof(double), atom->nbondtypes, fp, nullptr, error);
-    utils::sfread(FLERR, &r0[1][0][0][0][0], sizeof(double), atom->nbondtypes, fp, nullptr, error);
+    for (int i = 1; i <= n; i++) {
+      for (int j = 1; j <= n; j++) {
+        for (int k = 1; k <= n; k++) {
+          for (int l = 1; l <= n; l++) {
+            utils::sfread(FLERR, &Delta[0][i][j][k][l], sizeof(double), 1, fp, nullptr, error);
+            utils::sfread(FLERR, &Delta[1][i][j][k][l], sizeof(double), atom->nbondtypes, fp, nullptr, error);
+            utils::sfread(FLERR, &r0[0][i][j][k][l], sizeof(double), 1, fp, nullptr, error);
+            utils::sfread(FLERR, &r0[1][i][j][k][l], sizeof(double), atom->nbondtypes, fp, nullptr, error);
+          }
+        }
+      }
+    }
   }
+
+  MPI_Bcast(&k[0], 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&k[1], atom->nbondtypes, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&Delta[1][0][0][0][0], atom->nbondtypes, MPI_DOUBLE, 0, world);
-  MPI_Bcast(&r0[1][0][0][0][0], atom->nbondtypes, MPI_DOUBLE, 0, world);
+  for (int i = 1; i <= n; i++) {
+    for (int j = 1; j <= n; j++) {
+      for (int k = 1; k <= n; k++) {
+        for (int l = 1; l <= n; l++) {
+          MPI_Bcast(&Delta[0][i][j][k][l], 1, MPI_DOUBLE, 0, world);
+          MPI_Bcast(&Delta[1][i][j][k][l], atom->nbondtypes, MPI_DOUBLE, 0, world);
+          MPI_Bcast(&r0[0][i][j][k][l], 1, MPI_DOUBLE, 0, world);
+          MPI_Bcast(&r0[1][i][j][k][l], atom->nbondtypes, MPI_DOUBLE, 0, world);
+        }
+      }
+    }
+  }
 
   for (int i = 1; i <= atom->nbondtypes; i++) setflag[i] = 1;
 }
