@@ -28,6 +28,8 @@ class BondOxdna3Fene : public BondOxdna2Fene {
  public:
   BondOxdna3Fene(class LAMMPS *lmp) : BondOxdna2Fene(lmp) {}
   void coeff(int, char **) override;
+  void write_restart(FILE *) override;
+  void read_restart(FILE *) override;
 };
 
 }    // namespace LAMMPS_NS
