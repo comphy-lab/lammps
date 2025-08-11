@@ -638,22 +638,27 @@ void PairLdd::coeff(int narg, char **arg)
       sprintf(errmsg,"We never found required keyword %s\n",KEY_LDD_POTL);
       error->all(FLERR,errmsg);
     }
-        
-    self_interaction[ilo][jlo] = false;   
+ for (i = ilo; i <= ihi; ++i)
+ {
+   for (j = jlo; j <= jhi; ++j)
+   { 
+    self_interaction[i][j] = false;   
     if (bSelf)
     {
-      if (ilo == jlo) { self_interaction[ilo][jlo] = true; }
+      if (i == j) { self_interaction[i][j] = true; }
       else
       {
         char *warnmsg = (char *) calloc(200,sizeof(char));
         sprintf(warnmsg,"WARNING: you said to include the self interaction "
-                        "for i: %d j: %d\nHOWEVER, you can only include the "
+                        "for itype: %d jtype: %d\nHOWEVER, you can only include the "
                         "self interaction for i == j\nAccordingly, we are "
-                        "turning this off\n",ilo,jlo);
+                        "turning this off\n",i,j);
         error->warning(FLERR,warnmsg);
         free(warnmsg);
       }
     }
+   }
+  }
   }
    
 
