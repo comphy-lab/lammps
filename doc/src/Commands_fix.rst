@@ -104,6 +104,7 @@ OPT.
    * :doc:`lb/viscous <fix_lb_viscous>`
    * :doc:`lineforce <fix_lineforce>`
    * :doc:`manifoldforce <fix_manifoldforce>`
+   * :doc:`mbx <fix_mbx>`
    * :doc:`mdi/qm <fix_mdi_qm>`
    * :doc:`mdi/qmmm <fix_mdi_qmmm>`
    * :doc:`meso/move <fix_meso_move>`
