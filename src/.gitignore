@@ -115,6 +115,8 @@
 /atom_vec_apip_la.h
 /fix_lambda_apip.cpp
 /fix_lambda_apip.h
+/fix_lambda_la_csp_apip.cpp
+/fix_lambda_la_csp_apip.h
 /fix_lambda_thermostat_apip.cpp
 /fix_lambda_thermostat_apip.h
 /pair_lambda_input_apip.cpp
@@ -133,6 +135,8 @@
 /pair_pace_precise_apip.h
 /pair_pace_fast_apip.cpp
 /pair_pace_fast_apip.h
+/pair_la_csp_apip.cpp
+/pair_la_csp_apip.h
 /fix_atom_weight_apip.cpp
 /fix_atom_weight_apip.h
 

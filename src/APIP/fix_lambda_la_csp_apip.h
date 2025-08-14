@@ -1,0 +1,118 @@
+/* -*- c++ -*- ----------------------------------------------------------
+   LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
+   https://www.lammps.org/, Sandia National Laboratories
+   LAMMPS development team: developers@lammps.org
+
+   Copyright (2003) Sandia Corporation.  Under the terms of Contract
+   DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
+   certain rights in this software.  This software is distributed under
+   the GNU General Public License.
+
+   See the README file in the top-level LAMMPS directory.
+------------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------
+   Contributing author: David Immel (d.immel@fz-juelich.de, FZJ, Germany)
+------------------------------------------------------------------------- */
+
+#ifdef FIX_CLASS
+// clang-format off
+FixStyle(lambda/la/csp/apip,FixLambdaLACSPAPIP);
+// clang-format on
+#else
+
+#ifndef LMP_FIX_LAMBDA_LA_CSP_H
+#define LMP_FIX_LAMBDA_LA_CSP_H
+
+#include "fix.h"
+
+namespace LAMMPS_NS {
+
+class CSPpairAPIP {
+
+ public:
+  CSPpairAPIP() { tag_smaller = tag_larger = 0; };
+  CSPpairAPIP(int, int);
+
+  int tag_smaller;
+  int tag_larger;
+
+};
+
+inline bool operator==(const CSPpairAPIP & pl, const CSPpairAPIP & pr) {
+  return (pl.tag_smaller == pr.tag_smaller && pl.tag_larger == pr.tag_larger ? true : false);
+}
+
+inline bool operator!=(const CSPpairAPIP & pl, const CSPpairAPIP & pr) { return !(pl==pr); }
+
+inline bool operator<(const CSPpairAPIP & pl, const CSPpairAPIP & pr) {
+  return ((pl.tag_smaller < pr.tag_smaller) || ((pl.tag_smaller == pr.tag_smaller) && (pl.tag_larger < pr.tag_larger)) ? true : false);
+}
+
+inline bool operator>(const CSPpairAPIP & pl, const CSPpairAPIP & pr) { return pr < pl; }
+
+
+class FixLambdaLACSPAPIP : public Fix {
+ public:
+  friend class PairLACSPAPIP;
+
+  FixLambdaLACSPAPIP(class LAMMPS *, int, char **);
+  ~FixLambdaLACSPAPIP() override;
+  void init() override;
+  void init_list(int, NeighList *);
+  void post_constructor() override;
+  int setmask() override;
+  void setup_pre_force(int) override;
+  void pre_force(int) override;
+  void *extract(const char *, int &) override;
+  int pack_reverse_comm(int, int, double *) override;
+  void unpack_reverse_comm(int, int *, double *) override;
+  int pack_forward_comm(int, int *, double *, int, int *) override;
+  void unpack_forward_comm(int, int, double *) override;
+  double compute_scalar();
+
+ private:
+
+  double cut_lo;    ///< distance at which the cutoff function of the transition zone decays from 1
+  double cut_hi;    ///< distance at which the cutoff function of the transition zone is 0
+  double cut_width;           ///< cut_hi - cut_lo
+  double cut_hi_sq;           ///< cut_hi_sq * cut_hi_sq
+  double threshold_lo;        ///< threshold above which the fast potential starts to be turned off
+  double threshold_hi;        ///< threshold above which the fast potential is turned off completely
+  double threshold_width;     ///< threshold_hi - threshold_lo
+  int nnn;                    ///< number of nearest neighbors used for the CSP calculation
+  double csp_cutsq;             ///< cutof in which neighbors are considered for the CSP calculation
+  double lambda_non_group;    ///< lambda for atoms that are not in the group of this fix
+  double cutsq_combined;        ///< max of cut_hi_sq and csp_cutsq
+
+  int **ngh_pairs;      ///< used neighbor pairs of local atoms
+  int ngh_pairs_size;   ///< number of allocated neighbor pairs
+
+  double ** f_lambda; ///< force due to nabla lambda on atoms
+  int size_f_lambda;
+
+  int maxneigh;
+  double *distsq;   ///< squared distance to nearest neighbors
+  int *nearest;     ///< index of nearest neighbors
+
+  class NeighList *list;
+
+  class FixStoreAtom *fixstore;    ///< ptr to stored neighbour pairs of last timestep
+  bool tags_stored;
+  int counter_changed_csp_nghs;
+  bool const_ngh_flag;
+
+  void store_f_lambda_before();
+  void store_f_lambda_after();
+  void pre_force_const_pairs();
+  void pre_force_dyn_pairs();
+  double switching_function_poly(double);
+  double der_switching_function_poly(double);
+  double weighting_function_poly(double);
+  double der_weighting_function_poly(double);
+  void select2(int, int, double *, int *);
+};
+
+}    // namespace LAMMPS_NS
+
+#endif
+#endif
