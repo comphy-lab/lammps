@@ -247,26 +247,29 @@ void PairMBX::compute(int eflag, int vflag)
     pvector[5] = mbx_buck;
     pvector[6] = mbx_ele;
     pvector[7] = mbx_total_energy;
+    pvector[8] = ptr_mbx_local->GetPermanentElectrostaticEnergy();
+    pvector[9] = ptr_mbx_local->GetInducedElectrostaticEnergy();
 
-    // for debugging
+    
+    // // for debugging
 
-    pvector[8] = mbx_e2b_local;
-    pvector[9] = mbx_e2b_ghost;
-    pvector[10] = mbx_e3b_local;
-    pvector[11] = mbx_e3b_ghost;
-    pvector[12] = mbx_e4b_local;
-    pvector[13] = mbx_e4b_ghost;
-    pvector[14] = mbx_disp_real;
-    pvector[15] = mbx_disp_pme;
+    // pvector[8] = mbx_e2b_local;
+    // pvector[9] = mbx_e2b_ghost;
+    // pvector[10] = mbx_e3b_local;
+    // pvector[11] = mbx_e3b_ghost;
+    // pvector[12] = mbx_e4b_local;
+    // pvector[13] = mbx_e4b_ghost;
+    // pvector[14] = mbx_disp_real;
+    // pvector[15] = mbx_disp_pme;
 
-    // for comparison with MBX
+    // // for comparison with MBX
 
-    pvector[16] = mbx_virial[0];
-    pvector[17] = mbx_virial[1];
-    pvector[18] = mbx_virial[2];
-    pvector[19] = mbx_virial[3];
-    pvector[20] = mbx_virial[4];
-    pvector[21] = mbx_virial[5];
+    // pvector[16] = mbx_virial[0];
+    // pvector[17] = mbx_virial[1];
+    // pvector[18] = mbx_virial[2];
+    // pvector[19] = mbx_virial[3];
+    // pvector[20] = mbx_virial[4];
+    // pvector[21] = mbx_virial[5];
   }
 }
 
