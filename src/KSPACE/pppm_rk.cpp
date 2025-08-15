@@ -61,6 +61,7 @@ PPPM_RK::PPPM_RK(LAMMPS *lmp) :
     partitionInfoK(nullptr), block_size(0)
 {
   rk_flag = 1;
+  group_group_enable = 0;
 }
 
 void PPPM_RK::init()
