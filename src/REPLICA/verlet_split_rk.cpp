@@ -59,7 +59,7 @@ using namespace LAMMPS_NS;
 VerletSplitRK::VerletSplitRK(LAMMPS *lmp, int narg, char **arg) :
   Verlet(lmp, narg, arg)
 {
-  ;
+  rk_flag = 1;
 }
 
 /* ---------------------------------------------------------------------- */

@@ -30,6 +30,7 @@ using namespace LAMMPS_NS;
 Integrate::Integrate(LAMMPS *lmp, int /*narg*/, char ** /*arg*/) : Pointers(lmp)
 {
   external_force_clear = 0;
+  rk_flag = 0;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -45,6 +46,10 @@ void Integrate::init()
   else pair_compute_flag = 0;
   if (force->kspace && force->kspace->compute_flag) kspace_compute_flag = 1;
   else kspace_compute_flag = 0;
+  if (kspace_compute_flag && force->kspace->rk_flag && !rk_flag)
+    error->all(FLERR,"Integrate must support rk decomposition to be compatible with style {}", force->kspace_style);
+  if (kspace_compute_flag && !force->kspace->rk_flag && rk_flag)
+    error->all(FLERR,"This Integrate requires a kspace_style that supports rk decomposition: {} does not.", force->kspace_style);
 
   // should add checks:
   // for any acceleration package that has its own integrate/minimize
