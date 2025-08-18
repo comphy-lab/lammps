@@ -60,6 +60,8 @@ class FixLambdaLACSPAPIP : public Fix {
   void init() override;
   void init_list(int, NeighList *);
   void post_constructor() override;
+  void setup_post_neighbor() override;
+  void post_neighbor() override;
   int setmask() override;
   void setup_pre_force(int) override;
   void pre_force(int) override;

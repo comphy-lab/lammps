@@ -163,6 +163,7 @@ int FixLambdaLACSPAPIP::setmask()
 {
   int mask = 0;
   mask |= PRE_FORCE;
+  mask |= POST_NEIGHBOR;
   return mask;
 }
 
@@ -206,15 +207,35 @@ void FixLambdaLACSPAPIP::init_list(int /*id*/, NeighList *ptr)
 }
 
 /**
-  *  Compute lambda, csp, csp_avg, csp_norm for all local atoms.
+  *  Build atom map if required.
   */
 
-void FixLambdaLACSPAPIP::setup_pre_force(int vflag)
+void FixLambdaLACSPAPIP::setup_post_neighbor()
 {
   if (const_ngh_flag && atom->map_style == Atom::MAP_NONE) {
     atom->map_init();
     atom->map_set();
   }
+}
+
+/**
+  *  Rebuild atom map if required.
+  */
+
+void FixLambdaLACSPAPIP::post_neighbor()
+{
+  if (atom->map_style != Atom::MAP_NONE) {
+    atom->map_init();
+    atom->map_set();
+  }
+}
+
+/**
+  *  Compute lambda, csp, csp_avg, csp_norm for all local atoms.
+  */
+
+void FixLambdaLACSPAPIP::setup_pre_force(int vflag)
+{
 
   if (!const_ngh_flag || (const_ngh_flag && !tags_stored)) pre_force_dyn_pairs();
   else pre_force_const_pairs();
@@ -487,6 +508,7 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
     for (j = 0; j < nhalf; j++) {
 
       jj = atom->map((tagint) stored_tags[i][j]);
+      if (jj == -1) error->one(FLERR, "atom ID {} csp neighbour with ID {} not present", atom->tag[i], stored_tags[i][j]);
       while (jj >= 0) {
         // calculate distance to jj
         delx_j = x[jj][0] - xtmp;
@@ -501,10 +523,20 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
           jj = atom->sametag[jj];
         }
       }
-      if (jj == -1) error->one(FLERR, "atom ID {} csp neighbour with ID {} not present", atom->tag[i], stored_tags[i][j]);
+      if (jj == -1) {
+        printf("own atom i % x %f %f %f\n", i, xtmp, ytmp, ztmp);
+        printf("nlocal %i nghost %i nall %i\n", atom->nlocal, atom->nghost, atom->nlocal + atom->nghost);
+        for (jj = atom->map((tagint) stored_tags[i][j]); jj >= 0; jj = atom->sametag[jj])
+          printf("possible pair ngh jj %i x %f %f %f\n", jj, x[jj][0], x[jj][1], x[jj][2]);
+        for(jj = atom->nlocal; jj < atom->nlocal+atom->nghost; jj++) {
+          if (atom->tag[jj] == stored_tags[i][j]) printf("atom with same tag jj %i x %f %f %f\n", jj, x[jj][0], x[jj][1], x[jj][2]);
+        }
+        error->one(FLERR, "atom ID {} no correct image of csp neighbour with ID {} found", atom->tag[i], stored_tags[i][j]);
+      }
       ngh_pairs[i][j] = jj;
 
       kk = atom->map((tagint) stored_tags[i][j + nhalf]);
+      if (kk == -1) error->one(FLERR, "atom ID {} csp neighbour with ID {} not present", atom->tag[i], stored_tags[i][j + nhalf]);
       while (kk >= 0) {
         // calculate distance to kk
         delx_k = x[kk][0] - xtmp;
@@ -519,7 +551,16 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
           kk = atom->sametag[kk];
         }
       }
-      if (kk == -1) error->one(FLERR, "atom ID {} csp neighbour with ID {} not present", atom->tag[i], stored_tags[i][j + nhalf]);
+      if (kk == -1) {
+        printf("own atom i %i x %f %f %f\n", i, xtmp, ytmp, ztmp);
+        printf("nlocal %i nghost %i nall %i\n", atom->nlocal, atom->nghost, atom->nlocal + atom->nghost);
+        for(kk = atom->map((tagint) stored_tags[i][j + nhalf]); kk >= 0; kk = atom->sametag[kk])
+          printf("possible pair ngh kk %i x %f %f %f\n", kk, x[kk][0], x[kk][1], x[kk][2]);
+        for(kk = atom->nlocal; kk < atom->nlocal+atom->nghost; kk++) {
+          if (atom->tag[kk] == stored_tags[i][j + nhalf]) printf("atom with same tag kk %i x %f %f %f\n", kk, x[kk][0], x[kk][1], x[kk][2]);
+        }
+        error->one(FLERR, "atom ID {} no correct image of csp neighbour with ID {} found", atom->tag[i], stored_tags[i][j + nhalf]);
+      }
       ngh_pairs[i][j + nhalf] = kk;
 
       delx = delx_j + delx_k;
