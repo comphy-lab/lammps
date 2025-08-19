@@ -277,18 +277,18 @@ parameters and how to choose them is described in
 
 The *pppm/rk* kspace style is a variant of *pppm* designed for a heterogeneous multicore pppm computation
 of long-range forces.
-The heterogeneity is in the sense that the MPI communicator is partitioned into two classes of 
-MPI processes. Thus, the use of *pppm/rk* requires the use of the command line `-partition` option. 
-E.g., 
+The heterogeneity is in the sense that the MPI communicator is partitioned into two classes of
+MPI processes. Thus, the use of *pppm/rk* requires the use of the command line `-partition` option.
+E.g.,
 ```mpirun -n 100 path/to/lammps/binary/lmp -partition 96 4 -in in.somescript```
 The R-process class of processes primarily computes the short-range forces and atom-wise updates,
 the latter of which includes the accumulation of charge densities.
 In the above command-line example, there would be 96 R-processes and 4 K-processes.
 The K-process class is mainly responsible for solving the Poisson equations with 3d FFT.
-The number of K-processes divides the number of R-processes, 
+The number of K-processes divides the number of R-processes,
 and the total number of processes is furthermore partitioned orthogonally into inter-RK blocks
 (as seen also in the `VerletSplit` class).
-Each inter-RK block communicator has one representative K process, with the rest of the processes being R processes. 
+Each inter-RK block communicator has one representative K process, with the rest of the processes being R processes.
 
 The *pppm/rk* kspace style must be paired with an analogous *rk* type run style, e.g., *verlet/split/rk*.
 An error is generated otherwise. Also, *pppm/rk* does not currently support group/group computation (`group_group_enable==0`).
@@ -550,7 +550,7 @@ Default
 ----------
 .. _Dandurand:
 
-**(Dandurand)** Dandurand, Vandierendonck, de Supinski, 39th IEEE IPDPS, 
+**(Dandurand)** Dandurand, Vandierendonck, de Supinski, 39th IEEE IPDPS,
 June 3-7, (2025).
 
 .. _Darden:
