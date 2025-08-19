@@ -83,13 +83,14 @@ void VerletSplitRK::init()
   // error for as-yet unsupported verlet/split KSpace options
 
   int errflag = 0;
-  if (!force->kspace->rk_flag) errflag = 1; //Currently requires the use of pppm/rk
+  if (!force->kspace->rk_flag) //Currently requires the use of pppm/rk
+    error->all(FLERR,"The kspace style {} does not support an rk decomposition. Verlet/split/rk requires a kspace style (such as pppm/rk) that supports an rk decomposition.", force->kspace_style);
   if (force->kspace->tip4pflag) errflag = 1;
   if (force->kspace->dipoleflag) errflag = 1;
   if (force->kspace->spinflag) errflag = 1;
 
   if (errflag)
-    error->all(FLERR,"Verlet/split/rk cannot (yet) be used with kpace style {}", force->kspace_style);
+    error->all(FLERR,"Verlet/split/rk cannot (yet) be used with kspace style {}", force->kspace_style);
 
 
   // invoke parent Verlet init
