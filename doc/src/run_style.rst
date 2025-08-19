@@ -10,12 +10,13 @@ Syntax
 
    run_style style args
 
-* style = *verlet* or *verlet/split* or *respa* or *respa/omp*
+* style = *verlet* or *verlet/split* or *verlet/split/rk* or *respa* or *respa/omp*
 
   .. parsed-literal::
 
        *verlet* args = none
        *verlet/split* args = none
+       *verlet/split/rk* args = none
        *respa* args = N n1 n2 ... keyword values ...
          N = # of levels of rRESPA
          n1, n2, ... = loop factors between rRESPA levels (N-1 values)
@@ -57,6 +58,8 @@ Examples
 .. code-block:: LAMMPS
 
    run_style verlet
+   run_style verlet/split
+   run_style verlet/split/rk
    run_style respa 4 2 2 2 bond 1 dihedral 2 pair 3 kspace 4
    run_style respa 4 2 2 2 bond 1 dihedral 2 inner 3 5.0 6.0 outer 4 kspace 4
    run_style respa 3 4 2 bond 1 hybrid 2 2 1 kspace 3
@@ -148,6 +151,34 @@ logical processors in the 2 partitions to the physical cores of a
 parallel machine.  The :doc:`processors <processors>` command has
 options to support this, and strategies are discussed in :doc:`Section
 5 <Speed>` of the manual.
+
+----------
+
+The rationale and requirements for the run style *verlet/split/rk* is
+similar to that of *verlet/split*, and much of what was written above
+about the latter applies to the former, including the partition requirements.
+
+The main difference is that for *verlet/split/rk*, the work of the P2 processes
+is restricted more specifically to the computation of 3d FFTs in solving
+the Poisson equations for computing the long-range forces via pppm.
+Conversely, the P1 processes carry out the other long-range force computations
+that the P2 processes would have done above for *verlet/split*. There are two
+rationales: 1) The main bottleneck to parallel scalability is really in the
+3d FFTs in solving the Poisson equation. The other steps (such as accumulating
+the charge densities and interpolating the long-range forces) scale well,
+and so their reallocation to the P1 processes usually results in improved parallel speedup.
+2) The approach *verlet/split/rk* avoids having to communicate atom-specific
+information between P1 and P2 processes.  Thus, re-neighboring, for example,
+stays confined to the P1 processes and does not require inter-P1/P2 communication,
+and so the communication overhead is reduced.
+
+The impementation of *verlet/split/rk* requires the parallel partitioning to occur in
+the computation of the long-range forces. Consequently, the use of *verlet/split/rk*
+requires the use of an *rk* type kspace style, e.g., *pppm/rk*.
+
+The contribution of run style *verlet/split/rk* coupled with kspace style *pppm/rk*
+suports the enhanced baseline described in `(Dandurand) <Dandurand2025>` and
+other works cited within.
 
 ----------
 
@@ -363,6 +394,11 @@ to rRESPA levels is as follows:
 * inner, middle, outer forces = no default
 
 ----------
+
+.. _Dandurand:
+
+**(Dandurand)** Dandurand, Vandierendonck, de Supinski, 39th IEEE IPDPS,
+June 3-7, (2025).
 
 .. _Tuckerman3:
 
