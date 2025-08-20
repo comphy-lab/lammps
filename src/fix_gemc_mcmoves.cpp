@@ -501,11 +501,11 @@ void FixGEMC::attempt_atomic_translation_full()
 
   xtmp[0] = xtmp[1] = xtmp[2] = 0.0;
 
-  tagint tmptag = -1;
+  tagint tmptag = 0;
 
+  double rx,ry,rz,rsq;
+  rx = ry = rz = 0.0;
   if (iatom >= 0) {
-    double rx,ry,rz,rsq;
-    double coord[3];
     while(1) {
       rsq = 1.1;
       rx = ry = rz = 0.0;
@@ -516,6 +516,7 @@ void FixGEMC::attempt_atomic_translation_full()
         rsq = rx*rx + ry*ry + rz*rz;
       }
 
+      double coord[3];
       coord[0] = x[iatom][0] + displace*rx;
       coord[1] = x[iatom][1] + displace*ry;
       coord[2] = x[iatom][2] + displace*rz;
@@ -524,12 +525,12 @@ void FixGEMC::attempt_atomic_translation_full()
           coord[2]>zlo and coord[2]<zhi) break;
     }
 
-    xtmp[0] = x[iatom][0];
-    xtmp[1] = x[iatom][1];
-    xtmp[2] = x[iatom][2];
-    x[iatom][0] = coord[0];
-    x[iatom][1] = coord[1];
-    x[iatom][2] = coord[2];
+    //xtmp[0] = x[iatom][0];
+    //xtmp[1] = x[iatom][1];
+    //xtmp[2] = x[iatom][2];
+    x[iatom][0] += displace*rx;
+    x[iatom][1] += displace*ry;
+    x[iatom][2] += displace*rz;
 
     tmptag = atom->tag[iatom];
   }
@@ -541,14 +542,13 @@ void FixGEMC::attempt_atomic_translation_full()
   comm->borders();
   if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
   double energy_after = energy_full();
-  //printf("after: %g\n", energy_before);
+  //printf("after: %g\n", energy_after);
 
   double prob = MIN(1.0,exp(beta*(energy_before - energy_after)));
   int success = 0;
   if (energy_after < MAXENERGYTEST && random_world->uniform() < prob)
     success = 1;
 
-  // TODO : More thorough testing that successes and fails sync'd
   if (success) {
     energy_stored = energy_after;
     ntranslation_successes++;
@@ -557,27 +557,39 @@ void FixGEMC::attempt_atomic_translation_full()
     tagint tmptag_all;
     MPI_Allreduce(&tmptag,&tmptag_all,1,MPI_LMP_TAGINT,MPI_MAX,world);
 
-    double xtmp_all[3];
-    MPI_Allreduce(&xtmp,&xtmp_all,3,MPI_DOUBLE,MPI_SUM,world);
+    double rx_all, ry_all, rz_all;
+    MPI_Allreduce(&rx,&rx_all,1,MPI_DOUBLE,MPI_SUM,world);
+    MPI_Allreduce(&ry,&ry_all,1,MPI_DOUBLE,MPI_SUM,world);
+    MPI_Allreduce(&rz,&rz_all,1,MPI_DOUBLE,MPI_SUM,world);
 
     if (iatom >= 0) {
-      x[iatom][0] = xtmp[0];
-      x[iatom][1] = xtmp[1];
-      x[iatom][2] = xtmp[2];
+      x[iatom][0] -= displace*rx_all;
+      x[iatom][1] -= displace*ry_all;
+      x[iatom][2] -= displace*rz_all;
     }
 
     // revert
-    /*for (int j = 0; j < atom->nlocal; j++) {
-      if (tmptag == atom->tag[j]) {
-        x[j][0] = xtmp[0];
-        x[j][1] = xtmp[1];
-        x[j][2] = xtmp[2];
+    /*for (int i = 0; i < atom->natoms; i++) {
+      if (tmptag_all == atom->tag[i]) {
+        x[i][0] -= displace*rx_all;
+        x[i][1] -= displace*ry_all;
+        x[i][2] -= displace*rz_all;
       }
     }*/
+
     energy_stored = energy_before;
   }
+
+  if (triclinic_flag) domain->x2lamda(atom->nlocal);
+  domain->pbc();
+  comm->exchange();
+  atom->nghost = 0;
+  comm->borders();
+  if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
+
   //printf("after after: %g\n", energy_full());
   update_gas_atoms_list();
+  //error->one(FLERR,"ck");
 }
 
 /* ----------------------------------------------------------------------
