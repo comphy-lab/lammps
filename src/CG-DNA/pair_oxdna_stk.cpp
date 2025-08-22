@@ -361,7 +361,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     delr_bkbk_norm[1] = delr_bkbk[1] * rinv_bkbk;
     delr_bkbk_norm[2] = delr_bkbk[2] * rinv_bkbk;
 
-    f1 = F1(r_stkstk, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype],
+    f1 = F1(r_stkstk, epsilon_st[a3ptype][atype][btype][b5ptype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype],
         cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype],
         cut_st_lo[a3ptype][atype][btype][b5ptype], cut_st_hi[a3ptype][atype][btype][b5ptype],
         b_st_lo[atype][btype], b_st_hi[atype][btype], shift_st[a3ptype][atype][btype][b5ptype]);
@@ -435,7 +435,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     // early rejection criterium
     if (evdwl != 0.0) {
 
-    df1 = DF1(r_stkstk, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype],
+    df1 = DF1(r_stkstk, epsilon_st[a3ptype][atype][btype][b5ptype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype],
         cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype], cut_st_lo[a3ptype][atype][btype][b5ptype], 
         cut_st_hi[a3ptype][atype][btype][b5ptype], b_st_lo[atype][btype], b_st_hi[atype][btype]);
 
@@ -733,7 +733,7 @@ void PairOxdnaStk::allocate()
 
   memory->create(cutsq,n+1,n+1,"pair:cutsq");
 
-  memory->create(epsilon_st,n+1,n+1,"pair:epsilon_st");
+  memory->create(epsilon_st,n+1,n+1,n+1,n+1,"pair:epsilon_st");
   memory->create(a_st,n+1,n+1,"pair:a_st");
   memory->create(cut_st_0,n+1,n+1,n+1,n+1,"pair:cut_st_0");
   memory->create(cut_st_c,n+1,n+1,n+1,n+1,"pair:cut_st_c");
@@ -809,7 +809,7 @@ void PairOxdnaStk::coeff(int narg, char **arg)
   if (narg != 7 && narg != 24) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/stk" + utils::errorurl(21));
   if (!allocated) allocate();
 
-  int ilo,ihi,jlo,jhi,nlo,nhi,imod4,jmod4,kmod4;
+  int ilo,ihi,jlo,jhi,nlo,nhi,jmod4,kmod4;
   utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
   utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
 
@@ -977,15 +977,7 @@ void PairOxdnaStk::coeff(int narg, char **arg)
 
   // parameters, uniform or depending on base step
   for (int i = nlo; i <= nhi; i++) {
-    imod4 = i%4;
-    if (imod4 == 0) imod4 = 4;
-
     for (int j = nlo; j <= nhi; j++) {
-      jmod4 = j%4;
-      if (jmod4 == 0) jmod4 = 4;
-
-      epsilon_st[i][j] = epsilon_st_one;
-      if (seqdepflag) epsilon_st[i][j] *= eta_st[imod4-1][jmod4-1];
 
       a_st[i][j] = a_st_one;
       b_st_lo[i][j] = b_st_lo_one;
@@ -1036,8 +1028,10 @@ void PairOxdnaStk::coeff(int narg, char **arg)
           cut_st_lc[i][j][k][l] = cut_st_lc_one;
           cut_st_hc[i][j][k][l] = cut_st_hc_one;
           cutsq_st_hc[i][j][k][l] = cut_st_hc[i][j][k][l]*cut_st_hc[i][j][k][l];
+          epsilon_st[i][j][k][l] = epsilon_st_one;
           shift_st[i][j][k][l] = shift_st_one;
           if (seqdepflag) {
+            epsilon_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
             shift_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
           }
           a_st4[i][j][k][l] = a_st4_one;

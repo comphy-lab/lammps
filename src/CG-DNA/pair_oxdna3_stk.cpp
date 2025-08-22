@@ -76,7 +76,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   if (narg != 4) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/stk, use potential file" + utils::errorurl(21));
   if (!allocated) allocate();
 
-  int ilo,ihi,jlo,jhi,nlo,nhi,imod4,jmod4,kmod4;
+  int ilo,ihi,jlo,jhi,nlo,nhi,jmod4,kmod4;
   utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
   utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
 
@@ -321,15 +321,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
   // parameters, uniform or depending on base step
   for (int i = nlo; i <= nhi; i++) {
-    imod4 = i%4;
-    if (imod4 == 0) imod4 = 4;
-
     for (int j = nlo; j <= nhi; j++) {
-      jmod4 = j%4;
-      if (jmod4 == 0) jmod4 = 4;
-
-      epsilon_st[i][j] = epsilon_st_one;
-      if (seqdepflag) epsilon_st[i][j] *= eta_st[imod4-1][jmod4-1];
 
       a_st[i][j] = a_st_one;
       b_st_lo[i][j] = b_st_lo_one;
@@ -384,9 +376,13 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
           cutsq_st_hc[i][j][k][l] = cut_st_hc[i][j][k][l]*cut_st_hc[i][j][k][l];
 
+          epsilon_st[i][j][k][l] = epsilon_st_one;
+
           tmp = 1 - exp(-(cut_st_c[i][j][k][l]-cut_st_0[i][j][k][l]) * a_st_one);
           shift_st[i][j][k][l] = epsilon_st_one * tmp * tmp;
+
           if (seqdepflag) {
+            epsilon_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
             shift_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
           }
 
