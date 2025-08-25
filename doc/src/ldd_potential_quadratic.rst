@@ -1,7 +1,7 @@
 .. index:: pair_coeff ldd potential quadratic
 
-ldd potential quadratic command
-===============================
+ldd potential/gradient quadratic command
+=========================================
 
 Syntax
 """"""
@@ -30,12 +30,16 @@ where :math:`a`, :math:`b`, and  :math:`c` are the three coefficients in a quadr
 
 Description
 """""""""""
+This option can follow the *gradient* or *potential* keywords in the ldd pair_coeff command.
+Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho}`
+Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla}`.
+For generality we note each case with a dummy :math:`X` below.
 
 Style *quadratic* applies a quadratic potential: 
 
 .. math::
-   u_{\rho}(\rho) &= a\rho^{2} + b\rho + c \\
-   f_{\rho}(\rho) &= -2a\rho - b
+   U_{X}(\rho) &= a\rho^{2} + b\rho + c \\
+   F_{X}(\rho) &= -2a\rho - b
 
 Related commands
 """"""""""""""""

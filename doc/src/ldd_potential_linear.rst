@@ -1,7 +1,7 @@
 .. index:: pair_coeff ldd potential linear
 
-ldd potential linear command
-============================
+ldd potential/gradient linear command
+======================================
 
 Syntax
 """"""
@@ -30,12 +30,16 @@ where :math:`m` and :math:`b` are the slope and intercept of the LD potential.
 
 Description
 """""""""""
+This option can follow the *gradient* or *potential* keywords in the ldd pair_coeff command.
+Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho}`
+Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla}`.
+For generality we note each case with a dummy :math:`X` below.
 
-Style *linear* applies a linear potential: 
+Style *linear* applies the form: 
 
 .. math::
-   u_{\rho}(\rho) &= m\rho + b \\
-   f_{\rho}(\rho) &= -m
+   U_{X}(\rho) &= m\rho + b \\
+   F_{X}(\rho) &= -m
 
 
 Related commands

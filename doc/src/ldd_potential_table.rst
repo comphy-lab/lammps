@@ -1,7 +1,7 @@
 .. index:: pair_coeff ldd potential table/lin
 .. index:: pair_coeff ldd potential table/spline
 
-ldd potential/gradient table command
+ldd potential/gradient table/X command
 ====================================
 
 Syntax
@@ -35,6 +35,9 @@ Example tables are used for *potential table/x* and *gradient table/gradx* in th
 
 Description
 """""""""""
+This family of arguments can follow the *gradient* or *potential* keywords in the ldd pair_coeff command. 
+Following the *potential* keyword, these options control the functional form for :math:`U_{\rho}` and :math:`F_{\rho}`
+Following the *gradient* keyword, these options control the function form for :math:`U_{\nabla}` and :math:`F_{\nabla}`.
 
 Args *table/lin* and *table/spline* read in a file containing three columns: :math:`\rho`, :math:`U`, :math:`F`. 
 E.g. For a LD potential these three columns should be :math:`\rho` :math:`U_{\rho}(\rho)` :math:`F_{\rho}(\rho)` where the columns are separated by whitespace and :math:`F(\rho) = -dU(\rho)/d\rho`. 

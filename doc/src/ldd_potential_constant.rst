@@ -1,7 +1,7 @@
 .. index:: pair_coeff ldd potential constant
 
-ldd potential constant command
-===============================
+ldd potential/gradient constant command
+=====================---------==========
 
 Syntax
 """"""
@@ -30,12 +30,19 @@ where :math:`c` is the value of the potential at all values of the local density
 
 Description
 """""""""""
+This option can follow the *gradient* or *potential* keywords in the ldd pair_coeff command.
+Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho}`
+Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla}`.
+For generality we note each case with a dummy :math:`X` below.
 
-Style *constant* applies a constant value as the potential. Using the constant type for the LD potential won't actually change the behavior of the system. However, using the constant type for the gradient potential will change the behavior of the system.
+
+Style *constant* applies a constant value as the potential. 
+Note that using the constant type for the LD potential won't actually change the behavior of the system. 
+However, using the constant type for the gradient potential will change the behavior of the system.
 
 .. math::
-   u_{\rho}(\rho) &= c \\
-   f_{\rho}(\rho) &= 0
+   U_{X}(\rho) &= c \\
+   F_{X}(\rho) &= 0
 
 
 Related commands
