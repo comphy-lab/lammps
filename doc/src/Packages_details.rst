@@ -1446,14 +1446,17 @@ LDD package
 
 **Contents:**
 
-An atom_style and pair_style that flexibly define interactions as function
+The package includes an atom_style and pair_style that flexibly define interactions as function
 of the local density and/or gradient of the local density around a central site.
-A dump style natively compatible with BOCS, which is an external coarse-graining 
-package that can be used to define such potentials from atomistic simulation data.
+It also includes a dump style that is natively compatible with the Bottom-up Open-source Coarse-graining Software (BOCS), which is an external coarse-graining 
+package that can be used to parameterize such potentials from atomistic simulation data.
 `https://github.com/noid-group/BOCS <https://github.com/noid-group/BOCS>`_
 
+The package is compatible with molecular topologies, and allows the user to specify the length-scale and weighting function for multiple types of local density and distinguishes asymmetric local density potentials. 
+(e.g. distinct potentials can govern 1. solute around solvent and 2. solvent around solute)
+
 The local density potentials implemented define "local density" flexibly with different choices of indicator weighting functions and asymetry in interactions as generically described in:
-Michael R. DeLyser and W. G. Noid (2019). “Analysis of local density potentials” The Journal of Chemical Physics 151,  no. 22: 224106
+Michael R. DeLyser and W. G. Noid (2019). “Analysis of local density potentials” The Journal of Chemical Physics 151, : 224106
 DOI: 10.1063/1.512866
 
 
@@ -1462,7 +1465,7 @@ Michael R. DeLyser and W. G. Noid (2021) “Coarse-grained models for local dens
 DOI: 10.1063/5.0075291
 
 
-**Authors:** Michael Delyser, Maria Lesniewski and Will Noid (The Pennyslvania State University)
+**Authors:** Michael DeLyser, Maria Lesniewski and Will Noid (The Pennyslvania State University)
 
 
 **Supporting info:**
