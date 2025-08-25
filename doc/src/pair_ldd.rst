@@ -24,7 +24,7 @@ Syntax
        r0 = start of indicator function's decay to 0. must be 0.0 for dpd and lucy.
        rc = range of indicator function.
       *self* values = val
-       val = yes or no based on if you want to include the self term in the LD calculation.
+       val = yes or no specifies whether to include the self term in the local density calculation.
       *potential* values = type args
        type = quadratic, linear, constant, mdpd, table/spline, table/lin, table/gradlin, table/gradspline, noforce
        potential/gradient args are specific to the type, see each ldd_potential doc page
@@ -37,72 +37,90 @@ Examples
 """"""""
 
 .. code-block:: LAMMPS
-   
+  ######### Example 1 : 1 type
+  #atom_style ldd ntypes
   atom_style ldd 1
+  
+  #pair_style ldd maxcut
   pair_style ldd 7.2
+  
+  #pair_coeff x surroundd by y indicator type r0 rC self args potential type args
   pair_coeff 1 1 indicator lucy 0.0 7.2 self yes potential table_spline ldtable.1.1.dat
 
+  #########  Example 2 : 2 types
+
+  #atom_style ldd ntypes
   atom_style ldd 2
+  #pair_style ldd maxcut
   pair_style ldd 1.0
+
+  #pair_coeff x surroundd by y indicator type r0 rC self args potential type args
   pair_coeff 1 1 indicator dpd 0.0 1.0 self no potential mdpd 25.0
   pair_coeff 1 2 indicator dpd 0.0 1.0 self no potential table_spline ldtable.1.2.dat gradient table_spline gradtable.1.2.dat
+  pair_coeff 2 1 indicator lucy 0.0 7.2 self no potential linear 1 1
   pair_coeff 2 2 ignore
 
 Description
 """""""""""
 
-Style *ldd* implements the local density potential as first described by Pagonabarraga and Frenkel :ref:`(Pagonabarraga)<Pagonabarraga>`. 
-Style *ldd* implements this for several mixtures of atom types and thereby local densities, (See :doc:`Howto_ldd <Howto_ldd>`) for details). 
-Here for notational simplicity we outline the theory for style *ldd* potentials with just 1 type of particle. 
+Style *ldd* implements the local density potential as first described by Pagonabarraga and Frenkel :ref:`(Pagonabarraga)<Pagonabarraga>` and additionally the square gradient of local densities first implemented by `(DeLyser)<DeLyser>`. 
+The pair_style *ldd* is compatible with a variet of molecular and atomic topologies, (See :doc:`Howto_ldd <Howto_ldd>`) for details) and offers a variety of options for how to define the local density. 
 
-Given an indicator function :math:`w(r)` such that :math:`w(0)=1`, :math:`w(r_{c})=0`, and :math:`w(r)` continuously and differentiably transitions from 1 to 0 across :math:`0 \leq r \leq r_{c}`, we define :math:`[w]` as the spatial integral of :math:`w(r)` and the normalized indicator function as :math:`\bar{w}(r) = w(r)/[w]`. We then define the local density around a given particle as :math:`\rho_{i} = \sum_{j} \bar{w}(r_{ij})`, where the sum over :math:`j` can either include or exclude :math:`i`, depending on whether the argument following the self keyword is yes or no. Practically, the only difference is a horizontal shift in the potential by :math:`1/[w]`. The local density potential and corresponding pair forces are given by:
+Here for notational simplicity we outline the theory for style *ldd* potentials with just 1 type of particle. :doc:`Howto_ldd <Howto_ldd>` explains the more general :math:`n_{\text{type}}` case.
+
+Consider an indicator function of pair distance, :math:`w(r)`, where :math:`w(0)=1`, :math:`w(r_{c})=0`, and :math:`w(r)` is continuous/differentiable from across :math:`0 \leq r \leq r_{c}`.
+We define :math:`[w]` as the spatial integral of :math:`w(r)` and the normalized indicator function as :math:`\bar{w}(r) = w(r)/[w]`. 
+The local density around a given particle is then defined as :math:`\rho_{I} = \sum_{J} \bar{w}(r_{IJ})`, where the sum over :math:`J` can either include or exclude :math:`I`, depending on whether the argument following the self keyword is yes or no. Practically, the only difference is a horizontal shift in the argument of the potential by :math:`1/[w]`. The local density potential and corresponding pair forces are given by:
 
 .. math::
-   U_{\rho}(\mathbf{r}) &= \sum_{i} u_{\rho}(\rho_{i}) \\
-   F_{ij;\rho}(\mathbf{r}) &= (f_{\rho}(\rho_{i}) + f_{\rho}(\rho_{j}))\bar{w}'(r_{ij}) \mathbf{e}_{ij}
+   U_{LD}(\mathbf{R}) &= \sum_{I} U_{\rho}(\rho_{I}) \\
+   F_{IJ;\rho}(\mathbf{R}) &= (F_{\rho}(\rho_{I}) + F_{\rho}(\rho_{J}))\bar{w}'(r_{IJ}) \mathbf{e}_{IJ}
    
-where :math:`f_{\rho}(x) = -du_{\rho}(x)/dx`.
+where :math:`F_{\rho}(x) = -dU_{\rho}(x)/dx`.
 
-The optional gradient keyword implements the gradient expansion of the local density potential as described in :ref:`(DeLyser)<DeLyser>`. These simulations add an extra term to the overall potential:
+The optional *gradient* keyword implements a potential that is a function of the square gradient of the local density as described in :ref:`(DeLyser)<DeLyser>`. 
+This keyword adds an extra square gradient (SG) term to the overall potential:
 
 .. math::
-   U_{\nabla}(\mathbf{r}) = \sum_{i} u_{\nabla}(\rho_{i}) (\nabla_{i} \rho_{i})^{2}
+   U_{SG}(\mathbf{R}) = \sum_{I} U_{\nabla}(\rho_{I}) \| \nabla_{I} \rho_{I} \|^{2}
+
+The (req.) *potential* keyword defines the form for :math:`U_{\rho}`. See each :ref:`ldd_potential <ldd_potential>` doc page for details.
+The (opt.) *gradient* keyword defines the form for :math:`U_{\nabla}`. See each :ref:`ldd_potential <ldd_potential>` doc page for details.
+The LDD package offers a library of functional forms :math:`g(\rho)` that may be implemented to define either :math:`U_{\rho}` or :math:`U_{\nabla}` for LD and SG potentials.
+These functional forms are specified by the *args* that follow each respective *keyword*.
 
 
-The (req.) *potential* keyword defines the form for :math:`u_{\rho}`. See each :ref:`ldd_potential <ldd_potential>` doc page for details.
-The (opt.) *gradient* keyword defines the form for :math:`u_{\nabla}`. See each :ref:`ldd_potential <ldd_potential>` doc page for details.
 The (req.) *indicator* keyword defines the form for :math:`w(r)`. See each :ref:`ldd_indicator <ldd_indicator>` doc page for details.
 
 The *ignore* keyword is used in simulations with mutliple particle types where only some of the type pairs have local density potentials acting between them, as in the example above.
 
-The *self* argument indicates whether the particle i=j term is included in the local densities and gradients calculated. 
-Note that for heterogenous LD types [e.g. type A surrounded by particles of type B] the self term is automatically excluded. 
-This is automatically enforced by the ldd package 
-and a warning will be issued to the user to note that a requested self term in this case has been turned off.
+The *self* argument indicates whether the particle :math:`I=J` term is included in the local densities and gradients calculated. 
+Note that if site :math:`I` is of type :math:`\alpha`, then it cannot contribute to the local density of :math:`\Beta` sites around :math:`I` when :math:`\beta!=\alpha`.
+Thus in this case the self term is automatically excludeed and a warning will be issued to the user to note that a requested self term in this case has been turned off.
 
 .. _ldd_indicator:
 .. toctree::
    :maxdepth: 1
    :caption: indicator options
    
-   ldd_indicator_lucy
-   ldd_indicator_dpd
-   ldd_indicator_sphere
-   ldd_indicator_smooth
-   ldd_indicator_shell
+   lucy <ldd_indicator_lucy>
+   dpd <ldd_indicator_dpd>
+   sphere <ldd_indicator_sphere>
+   smooth <ldd_indicator_smooth>
+   shell <ldd_indicator_shell>
 
 
 .. _ldd_potential:
 .. toctree::
    :maxdepth: 1
-   :caption: potential and gradient keywords
+   :caption: potential and gradient keywords for functional forms
 
-   ldd_potential_noforce
-   ldd_potential_constant
-   ldd_potential_linear
-   ldd_potential_quadratic
-   ldd_potential_table
-   ldd_potential_mdpd
+   noforce <ldd_potential_noforce>
+   constant <ldd_potential_constant>
+   linear <ldd_potential_linear>
+   quadratic <ldd_potential_quadratic>
+   tabulated <ldd_potential_table>
+   mdpd <ldd_potential_mdpd>
 
 Mixing, shift, table, tail correction, restart, rRESPA info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -131,7 +149,7 @@ For all :math:`2^{n_{\text{types}}}` possible local density interactions that ar
 defined for each pair of types. 
 The *ignore* keyword is used for not setting a local density interaction/not calculating local densities or gradients for that kind of interaction. 
 Once the *ignore* keyword is specified, the pair will be ignored regardless of future pair_coeff commands, so use with care.
-Conversely the *noforce* keyword will set up a potential with a constant 0 force, which will calculate local densities and gradients for that kind of interaction but not change statistics of the simulation. 
+Conversely the *noforce* keyword will set up a potential with a constant 0 force, which will calculate local densities and gradients for that kind of interaction but not change statistics of the simulation. See :doc:`noforce <ldd_potential_noforce>` for details.  
 
 Note, not all of the available potential styles should follow *gradient*. 
 For example, the potential noforce style is used to calculate the local densities/square gradients of particles in a simulation without actually applying a force. 

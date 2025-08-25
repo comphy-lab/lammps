@@ -1,8 +1,8 @@
 .. index:: pair_coeff ldd potential table/lin
 .. index:: pair_coeff ldd potential table/spline
 
-ldd potential table command
-============================
+ldd potential/gradient table command
+====================================
 
 Syntax
 """"""
@@ -29,22 +29,35 @@ Examples
       *potental* value = table/XXX args
         *table/XXX* args = filename
 
+
 The only argument following *table/lin* or *table/spline* or *table/gradlin* or *table/gradspline* is the filename for the table.
 Example tables are used for *potential table/x* and *gradient table/gradx* in the ``examples/PACKAGES/ldd`` system.
 
 Description
 """""""""""
 
-Styles *table/lin* and *table/spline* read in a file containing three columns: :math:`\rho` :math:`u_{\rho}(\rho)` :math:`f_{\rho}(\rho)` where the columns are separated by whitespace and :math:`f(\rho) = -du(\rho)/d\rho`. Note, the table spacing must be uniform. If the simulation ever encounters a particle with a local density outside the domain of values provided in the table, the simulation will crash and produce an error. Accordingly, we advise providing values starting at a much lower/higher :math:`\rho` value than you expect to sample.
+Args *table/lin* and *table/spline* read in a file containing three columns: :math:`\rho`, :math:`U`, :math:`F`. 
+E.g. For a LD potential these three columns should be :math:`\rho` :math:`U_{\rho}(\rho)` :math:`F_{\rho}(\rho)` where the columns are separated by whitespace and :math:`F(\rho) = -dU(\rho)/d\rho`. 
+Note, the grid domain for the table spacing must be uniform. 
+If the simulation ever encounters a particle with a local density outside the domain of values provided in the table, the simulation will exit with an error. 
+Accordingly, we advise providing values starting at a much lower/higher :math:`\rho` value than you expect to sample.
 
-Styles *table/gradlin* and *table/gradspline* read in a file containing two columns :math:`\rho` :math:`u_{\nabla}(\rho)` where the columns are seperated by whitespace. If a table formatted for *table/lin* or *table/spline* is passed under this command, only the first two columns will affect the simulation. 
-As above, the table spacing must be uniform. If the simulation ever encounters a particle with a local density outside the domain of values provided in the table, the simulation will crash and produce an error. 
+Args *table/gradlin* and *table/gradspline* read in a file containing two columns.
+E.g. for a SG potential, these two columns should be :math:`\rho` :math:`U_{\nabla}(\rho)` where the columns are seperated by whitespace. 
+If a table formatted for *table/lin* or *table/spline* is passed under this command, only the first two columns will affect the simulation. 
+As above, the table spacing must be uniform. 
+If the simulation ever encounters a particle with a local density outside the domain of values provided in the table, the simulation will exit with an error. 
 Accordingly, we advise providing values starting at a much lower/higher domain than you expect to sample. 
 
-Style *table/lin* interpolates the potential and force between grid points linearly. Style *table/spline* constructs a cubic spline for interpolation between grid points.
+Arg *table/lin*  interpolates between entries in the the :math:`U` and :math:`F` columns linearly. 
+Similarly arg *table/spline* constructs a cubic spline for interpolation between grid points in each column.
 
-Style *table/lin* interpolates between the :math:`u_{\nabla}` values linearly, and constructs :math:`f_{\nabla}(\rho) = -du_{\nabla}/d\rho` with the analogous delta extrapolation. 
-Style *table/gradlin* constructs a cubic spline for interpolation between :math:`u_{\nabla}` and the corresponding quadratically interpolated :math:`f_{\nabla}(\rho) = -du_{\nabla}/d\rho`. 
+Arg *table/gradlin* interpolates between the :math:`U` column values linearly, and constructs a :math:`F(\rho) = -dU/d\rho` with the corresponding delta interpolation. 
+Similarly, Arg *table/gradlin* constructs a cubic spline for interpolating between entries in the :math:`U` column provided, and then constructs a quadratic interpolation for the corresponding :math:`F(\rho) = -dU/d\rho`. 
+
+Note that for SG potentials, the expression for the pair additive force contains both the coefficient :math:`U_{\nabla}(\rho)` and its derivative :math:`F_{\nabla}(\rho)`.
+Thus using arg *table/lin* and *table/spline* after the *gradient* keyword will not calculate the forces consistently with (DeLyser 2021). 
+Thus, while e.g. *table/lin* and *table/gradlin* can be used somewhat interchangably to generate forces following the *potential* keyword, the *gradient* keyword should only be used with the *table/gradlin* and *table/gradspline* keywords. 
 
 Related commands
 """"""""""""""""
