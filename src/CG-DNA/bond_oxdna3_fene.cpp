@@ -38,8 +38,16 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
 
   int n = atom->ntypes;
 
-  Delta[ilo][0][0][0][0] = 0.0;
-  r0[ilo][0][0][0][0] = 0.0;
+  for (int i = 0; i <= n; i++) {
+    for (int j = 0; j <= n; j++) {
+      for (int k = 0; k <= n; k++) {
+        for (int l = 0; l <= n; l++) {
+          Delta[ilo][i][j][k][l] = 0.0;
+          r0[ilo][i][j][k][l] = 0.0;
+        }
+      }
+    }
+  }
 
   if (comm->me == 0) { // read values from potential file
     PotentialFileReader reader(lmp, arg[1], "oxdna3 potential", " (fene)");
@@ -59,7 +67,9 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
               for (int k = 1; k <= n; k++) {
                 for (int l = 1; l <= n; l++) {
                 Delta[ilo][i][j][k][l] = values.next_double();
-                Delta[ilo][0][0][0][0] += Delta[ilo][i][j][k][l];
+                Delta[ilo][i][j][k][0] += Delta[ilo][i][j][k][l];
+                Delta[ilo][0][j][k][l] += Delta[ilo][i][j][k][l];
+                Delta[ilo][0][j][k][0] += Delta[ilo][i][j][k][l];
                 }
               }
             }
@@ -69,7 +79,9 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
               for (int k = 1; k <= n; k++) {
                 for (int l = 1; l <= n; l++) {
                   r0[ilo][i][j][k][l] = values.next_double();
-                  r0[ilo][0][0][0][0] += r0[ilo][i][j][k][l];
+                  r0[ilo][i][j][k][0] += r0[ilo][i][j][k][l];
+                  r0[ilo][0][j][k][l] += r0[ilo][i][j][k][l];
+                  r0[ilo][0][j][k][0] += r0[ilo][i][j][k][l];
                 }
               }
             }
@@ -84,26 +96,27 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
       error->one(FLERR, "No corresponding fene potential found in file {} for bond type {}",
                  arg[1], arg[0]);
 
-    // calculate sequence-averaged parameters 
-    Delta[ilo][0][0][0][0] /= pow(n,4); 
-    r0[ilo][0][0][0][0] /= pow(n,4); 
-
-    // assign sequence-averaged parameters to terminal bases j
-    for (int j = 1; j <= n; j++) {
-      for (int k = 1; k <= n; k++) {
-        for (int l = 0; l <= n; l++) {
-          Delta[ilo][0][j][k][l] = Delta[ilo][0][0][0][0]; 
-          r0[ilo][0][j][k][l] = r0[ilo][0][0][0][0]; 
+    // calculate sequence-averaged parameters for terminal base step j-k
+    for (int i = 1; i <= n; i++) {
+      for (int j = 1; j <= n; j++) {
+        for (int k = 1; k <= n; k++) {
+          Delta[ilo][i][j][k][0] /= n;
+          r0[ilo][i][j][k][0] /= n;
         }
       }
     }
-    // assign sequence-averaged parameters to terminal bases k
-    for (int i = 0; i <= n; i++) {
-      for (int j = 1; j <= n; j++) {
-        for (int k = 1; k <= n; k++) {
-          Delta[ilo][i][j][k][0] = Delta[ilo][0][0][0][0]; 
-          r0[ilo][i][j][k][0] = r0[ilo][0][0][0][0]; 
+    for (int j = 1; j <= n; j++) {
+      for (int k = 1; k <= n; k++) {
+        for (int l = 1; l <= n; l++) {
+          Delta[ilo][0][j][k][l] /= n;
+          r0[ilo][0][j][k][l] /= n;
         }
+      }
+    }
+    for (int j = 1; j <= n; j++) {
+      for (int k = 1; k <= n; k++) {
+        Delta[ilo][0][j][k][0] /= pow(n,2);
+        r0[ilo][0][j][k][0] /= pow(n,2);
       }
     }
 
