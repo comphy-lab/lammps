@@ -37,6 +37,7 @@ Examples
 """"""""
 
 .. code-block:: LAMMPS
+
   ######### Example 1 : 1 type
   #atom_style ldd ntypes
   atom_style ldd 1

@@ -69,7 +69,7 @@ LD (Local Density) potentials defined by:
 where the first sum is over all sites, :math:`I` , and the second sum is over all site types, :math:`\beta`.
 The form of :math:`U_{\beta|\alpha}` is set by the user in the :doc:`ldd pair_coeff <pair_ldd>` command using the *potential* keyword. 
 For instance, :math:`U_{\beta|\alpha}(\rho_{\beta|I})` can be :doc:`tabulated <ldd_potential_table>`, :doc:`quadratic <ldd_potential_quadratic>`, :doc:`linear <ldd_potential_linear>`, :doc:`constant <ldd_potential_constant>`, or :doc:`zero <ldd_potential_noforce>`.
-Additionally the potential option :doc:`mdpd <ldd_potential_mdpd` is a quadratic function in local density that can be combined with the dpd pair_style to simulate pairwise mdpd interactions in the LD framework.
+Additionally the potential option :doc:`mdpd <ldd_potential_mdpd>` is a quadratic function in local density that can be combined with the dpd pair_style to simulate pairwise mdpd interactions in the LD framework.
 
 SG (Square Gradient) potentials are defined by:
 
@@ -82,6 +82,7 @@ The form of the coefficient, :math:`U_{\nabla; \beta|t_I}`, is specified by the 
 Many of the available functional forms for the LD potential are also available for the SG coefficients, see :doc:`pair_ldd <pair_ldd>` for details.
 
 -----------------------------------------------------------------------------------------------------------------------------------------
+
 For any given site :math:`I`, once the local densities :math:`\rho_{\beta|I}` and the gradients of the local density :math:`\nabla_{I} \rho_{\beta|I}` have been determined, the corresponding forces are pairwise decomposable with pair forces analagous to those stated in `Delyser 2021 <https://pubs.aip.org/aip/jcp/article/156/3/034106/2839866/Coarse-grained-models-for-local-density-gradients>`_ and `Delyser 2019 <https://pubs.aip.org/aip/jcp/article/151/22/224106/198468/Analysis-of-local-density-potentials>`_.
 
 Because of this, the LDD package must be used with its own custom :doc:`atom_style ldd <atom_style>`, which is basically the *atomic* atom_style, with extra fields for all local densities and local density gradients. 
@@ -344,10 +345,8 @@ A number of works have been published using this package (with `BOCS <https://gi
 
 .. _Dutta:
 
-**(Dutta)** Dutta, Qaisrani, Lesniewski, Noid, Andrienko, Nikoubashman. "Many body effect and optimized mapping scheme for systematic coarse-graining". X, X, X, (2025)
+**(Dutta)** Dutta, Lesniewski, Qaisrani, Noid, Andrienko, Nikoubashman. "Accurate coarse-graining of inhomogenous molecular systems using density-dependent potentials". X, X, X, (2025)
 
 .. _Lesniewski2:
 
 **(Lesniewski)** Lesniewski, DeLyser, Dunn, Rudzinski, Szukalo, W. G. Noid "A better BOCS for modeling local densities" X, X, X (2025)
-
-

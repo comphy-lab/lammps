@@ -2,7 +2,7 @@
 .. index:: pair_coeff ldd potential table/spline
 
 ldd potential/gradient table/X command
-====================================
+========================================
 
 Syntax
 """"""

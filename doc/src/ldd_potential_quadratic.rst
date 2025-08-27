@@ -46,4 +46,12 @@ Related commands
 
 :doc:`pair_ldd <pair_ldd>`
    
+------------
 
+.. _DeLyser:
+
+**(DeLyser)** M.R. DeLyser, W.G. Noid, "Coarse-grained models for local density gradients." J. Chem. Phys., 156, 034106 (2021).
+
+.. _Warren:
+
+**(Warren)** P. B. Warren, "Vapor-liquid coexistence in many-body dissipative particle dynamics." Phys. Rev. E., 68, 066702 (2003). 
