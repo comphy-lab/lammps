@@ -40,29 +40,9 @@ using namespace MFOxdna;
 
 PairOxdna3Stk::PairOxdna3Stk(LAMMPS *lmp) : PairOxdnaStk(lmp)
 {
-  // sequence-specific stacking strength
-  // A:0 C:1 G:2 T:3, 3'- [i][j] -5'
-
-  eta_st[0][0] = 1.0227941724360874;
-  eta_st[1][0] = 1.0842007228784680;
-  eta_st[2][0] = 0.9108059216458568;
-  eta_st[3][0] = 1.0280543774734380;
-
-  eta_st[0][1] = 0.9606488536265920;
-  eta_st[1][1] = 0.9104663871513519;
-  eta_st[2][1] = 0.9242711984623542;
-  eta_st[3][1] = 0.9255424203161666;
-
-  eta_st[0][2] = 1.0937706497793123;
-  eta_st[1][2] = 1.0588039315598938;
-  eta_st[2][2] = 0.9919972586730905;
-  eta_st[3][2] = 1.1103321115392364;
-
-  eta_st[0][3] = 0.9225701575742983;
-  eta_st[1][3] = 1.0040233335569662;
-  eta_st[2][3] = 0.9403493412105425;
-  eta_st[3][3] = 0.9109921004070870;
-
+  single_enable = 0;
+  writedata = 0;
+  trim_flag = 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -76,13 +56,15 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   if (narg != 4) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/stk, use potential file" + utils::errorurl(21));
   if (!allocated) allocate();
 
-  int ilo,ihi,jlo,jhi,nlo,nhi,jmod4,kmod4;
+  int ilo,ihi,jlo,jhi,nlo,nhi;
   utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
   utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
 
   assert((ilo == jlo) & (ihi == jhi));
   nlo = ilo;
   nhi = ihi;
+
+  if (nhi > 4) error->all(FLERR, "pair oxdna3/stk does not support more than 4 atom types for A, C, G and T");
 
   // stacking interaction
   count = 0;
@@ -103,16 +85,23 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   double a_st1_one, cosphi_st1_ast_one, b_st1_one, cosphi_st1_c_one;
   double a_st2_one, cosphi_st2_ast_one, b_st2_one, cosphi_st2_c_one;
 
-  seqdepflag = 1; // default sequence-dependent stacking strength in oxDNA3
-
   T = utils::numeric(FLERR,arg[2],false,lmp);
 
-  cut_st_0[0][0][0][0] = 0.0;
-  cut_st_c[0][0][0][0] = 0.0;
-  cut_st_lo[0][0][0][0] = 0.0;
-  cut_st_hi[0][0][0][0] = 0.0;
-  a_st4[0][0][0][0] = 0.0;
-  dtheta_st4_ast[0][0][0][0] = 0.0; 
+  for (int i = 0; i <= nhi; i++) {
+    for (int j = 0; j <= nhi; j++) {
+      for (int k = 0; k <= nhi; k++) {
+        for (int l = 0; l <= nhi; l++) {
+          eta_st[i][j][k][l] = 0.0;
+          cut_st_0[i][j][k][l] = 0.0;
+          cut_st_c[i][j][k][l] = 0.0;
+          cut_st_lo[i][j][k][l] = 0.0;
+          cut_st_hi[i][j][k][l] = 0.0;
+          a_st4[i][j][k][l] = 0.0;
+          dtheta_st4_ast[i][j][k][l] = 0.0; 
+        }
+      }
+    }
+  }
 
   if (comm->me == 0) {
     PotentialFileReader reader(lmp, arg[3], "oxdna3 potential", " (stk)");
@@ -130,6 +119,20 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
           xi_st_one = values.next_double(); 
           kappa_st_one = values.next_double();
+
+          for (int i = nlo; i <= nhi; i++) {
+            for (int j = nlo; j <= nhi; j++) {
+              for (int k = nlo; k <= nhi; k++) {
+                for (int l = nlo; l <= nhi; l++) {
+                  eta_st[i][j][k][l] = values.next_double();
+                  eta_st[i][j][k][0] += eta_st[i][j][k][l];
+                  eta_st[0][j][k][l] += eta_st[i][j][k][l];
+                  eta_st[0][j][k][0] += eta_st[i][j][k][l];
+                }
+              }
+            }
+          }
+
           a_st_one = values.next_double();
 
           for (int i = nlo; i <= nhi; i++) {
@@ -137,7 +140,9 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
               for (int k = nlo; k <= nhi; k++) {
                 for (int l = nlo; l <= nhi; l++) {
                   cut_st_0[i][j][k][l] = values.next_double();
-                  cut_st_0[0][0][0][0] += cut_st_0[i][j][k][l];
+                  cut_st_0[i][j][k][0] += cut_st_0[i][j][k][l];
+                  cut_st_0[0][j][k][l] += cut_st_0[i][j][k][l];
+                  cut_st_0[0][j][k][0] += cut_st_0[i][j][k][l];
                 }
               }
             }
@@ -147,7 +152,9 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
               for (int k = nlo; k <= nhi; k++) {
                 for (int l = nlo; l <= nhi; l++) {
                   cut_st_c[i][j][k][l] = values.next_double();
-                  cut_st_c[0][0][0][0] += cut_st_c[i][j][k][l];
+                  cut_st_c[i][j][k][0] += cut_st_c[i][j][k][l];
+                  cut_st_c[0][j][k][l] += cut_st_c[i][j][k][l];
+                  cut_st_c[0][j][k][0] += cut_st_c[i][j][k][l];
                 }
               }
             }
@@ -157,7 +164,9 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
               for (int k = nlo; k <= nhi; k++) {
                 for (int l = nlo; l <= nhi; l++) {
                   cut_st_lo[i][j][k][l] = values.next_double();
-                  cut_st_lo[0][0][0][0] += cut_st_lo[i][j][k][l];
+                  cut_st_lo[i][j][k][0] += cut_st_lo[i][j][k][l];
+                  cut_st_lo[0][j][k][l] += cut_st_lo[i][j][k][l];
+                  cut_st_lo[0][j][k][0] += cut_st_lo[i][j][k][l];
                 }
               }
             }
@@ -167,7 +176,9 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
               for (int k = nlo; k <= nhi; k++) {
                 for (int l = nlo; l <= nhi; l++) {
                   cut_st_hi[i][j][k][l] = values.next_double();
-                  cut_st_hi[0][0][0][0] += cut_st_hi[i][j][k][l];
+                  cut_st_hi[i][j][k][0] += cut_st_hi[i][j][k][l];
+                  cut_st_hi[0][j][k][l] += cut_st_hi[i][j][k][l];
+                  cut_st_hi[0][j][k][0] += cut_st_hi[i][j][k][l];
                 }
               }
             }
@@ -177,7 +188,9 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
               for (int k = nlo; k <= nhi; k++) {
                 for (int l = nlo; l <= nhi; l++) {
                   a_st4[i][j][k][l] = values.next_double();
-                  a_st4[0][0][0][0] += a_st4[i][j][k][l]; 
+                  a_st4[i][j][k][0] += a_st4[i][j][k][l]; 
+                  a_st4[0][j][k][l] += a_st4[i][j][k][l]; 
+                  a_st4[0][j][k][0] += a_st4[i][j][k][l]; 
                 }
               }
             }
@@ -190,7 +203,9 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
               for (int k = nlo; k <= nhi; k++) {
                 for (int l = nlo; l <= nhi; l++) {
                   dtheta_st4_ast[i][j][k][l] = values.next_double();
-                  dtheta_st4_ast[0][0][0][0] += dtheta_st4_ast[i][j][k][l];
+                  dtheta_st4_ast[i][j][k][0] += dtheta_st4_ast[i][j][k][l];
+                  dtheta_st4_ast[0][j][k][l] += dtheta_st4_ast[i][j][k][l];
+                  dtheta_st4_ast[0][j][k][0] += dtheta_st4_ast[i][j][k][l];
                 }
               }
             }
@@ -219,46 +234,51 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
     epsilon_st_one = stacking_strength(xi_st_one, kappa_st_one, T);
 
-    // calculate sequence-averaged parameters 
-    cut_st_0[0][0][0][0] /= pow(nhi,4);
-    cut_st_c[0][0][0][0] /= pow(nhi,4);
-    cut_st_lo[0][0][0][0] /= pow(nhi,4);
-    cut_st_hi[0][0][0][0] /= pow(nhi,4);
-    a_st4[0][0][0][0] /= pow(nhi,4); 
-    dtheta_st4_ast[0][0][0][0] /= pow(nhi,4);
-
-    // assign sequence-averaged parameters to terminal bases j
-    for (int j = 1; j <= nhi; j++) {
-      for (int k = 1; k <= nhi; k++) {
-        for (int l = 0; l <= nhi; l++) {
-          cut_st_0[0][j][k][l] = cut_st_0[0][0][0][0];
-          cut_st_c[0][j][k][l] = cut_st_c[0][0][0][0];
-          cut_st_lo[0][j][k][l] = cut_st_lo[0][0][0][0];
-          cut_st_hi[0][j][k][l] = cut_st_hi[0][0][0][0];
-          a_st4[0][j][k][l] = a_st4[0][0][0][0]; 
-          dtheta_st4_ast[0][j][k][l] = dtheta_st4_ast[0][0][0][0];
+    // calculate sequence-averaged parameters for terminal base step j-k
+    for (int i = nlo; i <= nhi; i++) {
+      for (int j = nlo; j <= nhi; j++) {
+        for (int k = nlo; k <= nhi; k++) {
+          eta_st[i][j][k][0] /= nhi;
+          cut_st_0[i][j][k][0] /= nhi;
+          cut_st_c[i][j][k][0] /= nhi;
+          cut_st_lo[i][j][k][0] /= nhi;
+          cut_st_hi[i][j][k][0] /= nhi;
+          a_st4[i][j][k][0] /= nhi; 
+          dtheta_st4_ast[i][j][k][0] /= nhi;
         }
       }
     }
-    // assign sequence-averaged parameters to terminal bases k
-    for (int i = 0; i <= nhi; i++) {
-      for (int j = 1; j <= nhi; j++) {
-        for (int k = 1; k <= nhi; k++) {
-          cut_st_0[i][j][k][0] = cut_st_0[0][0][0][0];
-          cut_st_c[i][j][k][0] = cut_st_c[0][0][0][0];
-          cut_st_lo[i][j][k][0] = cut_st_lo[0][0][0][0];
-          cut_st_hi[i][j][k][0] = cut_st_hi[0][0][0][0];
-          a_st4[i][j][k][0] = a_st4[0][0][0][0]; 
-          dtheta_st4_ast[i][j][k][0] = dtheta_st4_ast[0][0][0][0];
+    for (int j = nlo; j <= nhi; j++) {
+      for (int k = nlo; k <= nhi; k++) {
+        for (int l = nlo; l <= nhi; l++) {
+          eta_st[0][j][k][l] /= nhi;
+          cut_st_0[0][j][k][l] /= nhi;
+          cut_st_c[0][j][k][l] /= nhi;
+          cut_st_lo[0][j][k][l] /= nhi;
+          cut_st_hi[0][j][k][l] /= nhi;
+          a_st4[0][j][k][l] /= nhi; 
+          dtheta_st4_ast[0][j][k][l] /= nhi;
         }
+      } 
+    } 
+    for (int j = nlo; j <= nhi; j++) {
+      for (int k = nlo; k <= nhi; k++) {
+        eta_st[0][j][k][0] /= pow(nhi,2);
+        cut_st_0[0][j][k][0] /= pow(nhi,2);
+        cut_st_c[0][j][k][0] /= pow(nhi,2);
+        cut_st_lo[0][j][k][0] /= pow(nhi,2);
+        cut_st_hi[0][j][k][0] /= pow(nhi,2);
+        a_st4[0][j][k][0] /= pow(nhi,2); 
+        dtheta_st4_ast[0][j][k][0] /= pow(nhi,2);
       }
-    }
+    } 
 
   }
 
   MPI_Bcast(&epsilon_st_one, 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&a_st_one, 1, MPI_DOUBLE, 0, world);
 
+  MPI_Bcast(&eta_st[0][0][0][0], 625, MPI_DOUBLE, 0, world);
   MPI_Bcast(&cut_st_0[0][0][0][0], 625, MPI_DOUBLE, 0, world);
   MPI_Bcast(&cut_st_c[0][0][0][0], 625, MPI_DOUBLE, 0, world);
   MPI_Bcast(&cut_st_lo[0][0][0][0], 625, MPI_DOUBLE, 0, world);
@@ -357,13 +377,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   // parameters depending on tetramer
   for (int i = 0; i <= nhi; i++) {
     for (int j = nlo; j <= nhi; j++) {
-      jmod4 = j%4;
-      if (jmod4 == 0) jmod4 = 4;
-
       for (int k = nlo; k <= nhi; k++) {
-        kmod4 = k%4;
-        if (kmod4 == 0) kmod4 = 4;
-
         for (int l = 0; l <= nhi; l++) {
 
           cut_st_lc[i][j][k][l] = cut_st_lo[i][j][k][l] 
@@ -381,10 +395,8 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
           tmp = 1 - exp(-(cut_st_c[i][j][k][l]-cut_st_0[i][j][k][l]) * a_st_one);
           shift_st[i][j][k][l] = epsilon_st_one * tmp * tmp;
 
-          if (seqdepflag) {
-            epsilon_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
-            shift_st[i][j][k][l] *= eta_st[jmod4-1][kmod4-1];
-          }
+          epsilon_st[i][j][k][l] *= eta_st[0][j][k][0];
+          shift_st[i][j][k][l] *= eta_st[0][j][k][0];
 
           b_st4[i][j][k][l] = a_st4[i][j][k][l]*a_st4[i][j][k][l]*dtheta_st4_ast[i][j][k][l]*
                 dtheta_st4_ast[i][j][k][l]/(1-a_st4[i][j][k][l]*dtheta_st4_ast[i][j][k][l]*dtheta_st4_ast[i][j][k][l]);
