@@ -37,6 +37,7 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
   utils::bounds(FLERR, arg[0], 1, atom->nbondtypes, ilo, ihi, error);
 
   int n = atom->ntypes;
+  if (n > 4) error->all(FLERR, "bond oxdna3/fene does not support more than 4 atom types for A, C, G and T");
 
   for (int i = 0; i <= n; i++) {
     for (int j = 0; j <= n; j++) {

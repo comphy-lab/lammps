@@ -30,6 +30,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <cassert>
 
 using namespace LAMMPS_NS;
 using namespace MFOxdna;
@@ -73,9 +74,15 @@ void PairOxdna3Hbond::coeff(int narg, char **arg)
   if (narg != 3) error->all(FLERR,"Incorrect args for pair coefficients in oxdna3/hbond, use potential file" + utils::errorurl(21));
   if (!allocated) allocate();
 
-  int ilo,ihi,jlo,jhi,imod4,jmod4;
+  int ilo,ihi,jlo,jhi,nlo,nhi,imod4,jmod4;
   utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
   utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
+
+  assert((ilo == jlo) & (ihi == jhi));
+  nlo = ilo;
+  nhi = ihi;
+
+  if (nhi > 4) error->all(FLERR, "pair oxdna3/hbond does not support more than 4 atom types for A, C, G and T");
 
   // h-bonding interaction
   count = 0;

@@ -47,6 +47,8 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
   nlo = ilo;
   nhi = ihi;
 
+  if (nhi > 4) error->all(FLERR, "pair oxdna3/excv does not support more than 4 atom types for A, C, G and T");
+
   double epsilon_bkbk_one, sigma_bkbk_one;
   double cut_bkbk_ast_one, cut_bkbk_c_one, b_bkbk_one;
 

@@ -742,6 +742,8 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
   nlo = ilo;
   nhi = ihi;
 
+  if (nhi > 4) error->all(FLERR, "pair oxdna3/xstk does not support more than 4 atom types for A, C, G and T");
+
   // cross-stacking interaction
   count = 0;
 
