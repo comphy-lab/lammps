@@ -109,7 +109,6 @@ pair_modify     tail yes
 
 
 ## MOF pair coefficients ##
-
 pair_coeff      3      3        lj/cut      0.086000      3.399670
 pair_coeff      3      4        lj/cut      0.086000      3.399670
 pair_coeff      3      5        lj/cut      0.086000      3.399670
