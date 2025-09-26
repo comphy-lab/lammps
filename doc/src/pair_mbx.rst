@@ -138,7 +138,7 @@ For a complete list of available monomers in MBX, please see the
     the Partridge and Schwenke charges used in MB-pol water.
 
     Therefore, one should never use a coulombic pair style in LAMMPS
-    such as `coul/cut` or `coul/long` when also using MBX. This mistake 
+    such as `coul/cut` or `coul/long` when also using MBX. This mistake
     would result in double counting of electrostatic interactions.
 
     When performing a hybrid simulation using dp1,
@@ -183,7 +183,7 @@ LAMMPS such as using `coul/cut` or `coul/long` when also using MBX.
 See the warning above for more details.
 
 MBX is primarily tested to work with `units real`. If you encounter
-issues with other unit styles, please contact the developers.
+issues with other unit styles, please contact the MBX developers.
 
 Related commands
 """"""""""""""""
