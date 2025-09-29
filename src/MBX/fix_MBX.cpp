@@ -907,6 +907,11 @@ void FixMBX::post_neighbor()
   if (mbx_aspc_enabled) aspc_step++;
 }
 
+void FixMBX::min_post_neighbor()
+{
+  post_neighbor();
+}
+
 /* ---------------------------------------------------------------------- */
 
 void FixMBX::setup(int vflag)
@@ -918,7 +923,7 @@ void FixMBX::setup(int vflag)
 
 void FixMBX::min_setup(int vflag)
 {
-  mbx_get_dipoles_local();
+  setup(vflag);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -941,7 +946,7 @@ void FixMBX::init_storage() {}
 
 /* ---------------------------------------------------------------------- */
 
-void FixMBX::pre_force(int /*vflag*/)
+void FixMBX::pre_force(int vflag)
 {
   // update coordinates in MBX objects
 
@@ -1050,6 +1055,11 @@ void FixMBX::post_force(int vflag)
   if (!print_dipoles) return;
 
   mbx_get_dipoles_local();
+}
+
+void FixMBX::min_post_force(int vflag)
+{
+  post_force(vflag);
 }
 
 /* ---------------------------------------------------------------------- */

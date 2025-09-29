@@ -96,6 +96,7 @@ class FixMBX : public Fix {
   void min_setup(int);
   virtual void setup_post_neighbor();
   virtual void post_neighbor();
+  void min_post_neighbor();
   void setup_pre_force(int);
   virtual void pre_force(int);
 
@@ -106,6 +107,7 @@ class FixMBX : public Fix {
   void pre_exchange();
 
   void post_force(int);
+  void min_post_force(int);
 
  protected:
   class PairMBX *pair_mbx;    // pointer to MBX pair_style
