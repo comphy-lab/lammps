@@ -1,0 +1,37 @@
+---
+lammps_version: 22 Dec 2022
+date_generated: Wed July 30 12:05:00 2025
+epsilon: 5e-14
+prerequisites: ! |
+  atom hybrid 
+  atom full 
+  atom ldd
+  pair ldd
+pre_commands: ! ""
+post_commands: ! ""
+input_file: in.ldd
+pair_style: ldd 4.0
+pair_coeff: ! |
+    1 1  indicator lucy    0.0 0.65 self yes potential quadratic 0 0 0
+    1 2  indicator dpd     0.0 0.65 self no  potential quadratic 0 0 0
+    2 1  indicator sphere  0.0 0.55 self no potential quadratic 0 0 0
+    2 2  indicator lucy    0.0 0.65 self no potential quadratic 0 0 0
+extract: ! ""
+natoms: 5
+init_vdwl: 0
+init_coul: 0
+init_forces: ! |2
+    1 0  0  0
+    2 0  0  0
+    3 0  0  0
+    4 0  0  0
+    5 0  0  0
+run_vdwl: 0
+run_coul: 0
+run_forces: ! |2
+    1 0  0  0
+    2 0  0  0
+    3 0  0  0
+    4 0  0  0
+    5 0  0  0
+...

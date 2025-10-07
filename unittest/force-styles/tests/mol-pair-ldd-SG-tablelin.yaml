@@ -1,0 +1,43 @@
+---
+lammps_version: 12 Jun 2025
+tags: generated
+date_generated: Tue Oct  7 12:31:59 2025
+epsilon: 5e-12
+skip_tests:
+prerequisites: ! |
+  atom hybrid
+  atom full
+  atom ldd
+  pair ldd
+pre_commands: ! ""
+post_commands: ! ""
+input_file: in.ldd
+pair_style: ldd 4.0
+pair_coeff: ! |
+  1 1  indicator lucy    0.0 1.65 self yes potential linear 0 0 gradient table/gradlin ${input_dir}/LD_SG_table.txt
+  1 2  indicator dpd     0.0 1.65 self no  potential linear 0 0 gradient table/gradlin ${input_dir}/LD_SG_table.txt
+  2 1  indicator sphere  0.0 1.55 self no potential linear  0 0 gradient table/gradlin ${input_dir}/LD_SG_table.txt
+  2 2  indicator lucy    0.0 1.65 self no potential linear  0 0 gradient table/gradlin ${input_dir}/LD_SG_table.txt
+extract: ! ""
+natoms: 5
+init_vdwl: 25.506439531568283
+init_coul: 0
+init_stress: ! |2-
+   0.0000000000000000e+00  1.6336935749357480e+01  1.2697159041378187e+01  0.0000000000000000e+00  0.0000000000000000e+00  2.3018130203374341e+00
+init_forces: ! |2
+    1  0.0000000000000000e+00  5.3068785496779149e+00 -1.6983717976828366e+01
+    2  0.0000000000000000e+00 -2.0583764874353778e+00 -2.5870729457773827e+00
+    3  0.0000000000000000e+00 -3.2202275733993213e+00 -2.6173692434656402e+01
+    4  0.0000000000000000e+00  2.5517626330607605e+01  1.7891733893421602e+01
+    5  0.0000000000000000e+00 -2.5545900819450821e+01  2.7852749463840553e+01
+run_vdwl: 25.504499343513135
+run_coul: 0
+run_stress: ! |2-
+   0.0000000000000000e+00  1.6336431342636686e+01  1.2697704652060272e+01  0.0000000000000000e+00  0.0000000000000000e+00  2.3012114538352644e+00
+run_forces: ! |2
+    1  0.0000000000000000e+00  5.3022119934429739e+00 -1.6985573397006952e+01
+    2  0.0000000000000000e+00 -2.0560024778419450e+00 -2.5854642410869002e+00
+    3  0.0000000000000000e+00 -3.2202454690168087e+00 -2.6172881951588522e+01
+    4  0.0000000000000000e+00  2.5516367667483806e+01  1.7890844093122301e+01
+    5  0.0000000000000000e+00 -2.5542331714068027e+01  2.7853075496560070e+01
+...
