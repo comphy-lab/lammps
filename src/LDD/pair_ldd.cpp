@@ -94,8 +94,8 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
 
   potential_style = new char[n];
   strcpy(potential_style,str);
-
-  LDD_factory();
+  
+  LDD_factory(); 
 }
 
 // analogous to void _noopt Force::create_factories()
@@ -203,8 +203,10 @@ void PairLdd::compute(int eflag, int vflag)
   double fpair_LD; 
 
   evdwl = 0.0;
-  if (eflag || vflag) ev_setup(eflag,vflag);
-  else evflag = vflag_fdotr = 0;
+  ev_init(eflag,vflag); // MCL 09.24.25, this lets per atom energies be set up so we can talk to them
+  // OLD MRD way
+  //if (eflag || vflag) ev_setup(eflag,vflag);
+  //else evflag = vflag_fdotr = 0;
 
   const double * const * const x = atom->x;
   double * const * const f = atom->f;
@@ -378,13 +380,20 @@ void PairLdd::compute(int eflag, int vflag)
 // If there's no gradient term, call ev_tally like normal.
             else
             {
-              if (evflag) ev_tally(i,j,nlocal,newton_pair,0.0,0.0,fpair,delx,dely,delz);
+              if (evflag) 
+	      {
+		      ev_tally(i,j,nlocal,newton_pair,0.0,0.0,fpair,delx,dely,delz);
+	      }
             }
           }
         }
       }
 // Increment van der Waals' energy with ld potl energy for this atom
       evdwl = LD_ttl_nrg[i];
+      if (eflag_atom)//(eatom != NULL) // We need to talk to the per atom energy like we would've in ev_tally so that compute peratom pe works
+      {
+      eatom[i] += LD_ttl_nrg[i];
+      }
       if (evflag) eng_vdwl += evdwl;
     }
   }
