@@ -36,16 +36,13 @@
 #include "group.h"
 #include "improper.h"
 #include "kspace.h"
-#include "math_extra.h"
 #include "memory.h"
 #include "modify.h"
-#include "neighbor.h"
-#include "output.h"
 #include "pair.h"
 #include "random_park.h"
 #include "update.h"
 
-#include <cstdlib>
+#include <cmath>
 #include <cstring>
 
 using namespace LAMMPS_NS;
@@ -58,7 +55,7 @@ static constexpr auto SIX = sizeof(double) * 6;
 /* ---------------------------------------------------------------------- */
 
 FixHMC::FixHMC(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), id_rigid(nullptr), buf_store(nullptr), fix_rigid(nullptr), random(nullptr),
+    Fix(lmp, narg, arg), buf_store(nullptr), id_rigid(nullptr), fix_rigid(nullptr), random(nullptr),
     random_equal(nullptr), eglobal(nullptr), eglobalptr(nullptr), vglobal(nullptr),
     vglobalptr(nullptr), pe(nullptr), ke(nullptr), peatom(nullptr), press(nullptr),
     pressatom(nullptr)

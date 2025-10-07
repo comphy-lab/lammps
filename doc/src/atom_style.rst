@@ -1,6 +1,5 @@
 .. index:: atom_style
 
-atom_style command
 ==================
 
 Syntax
@@ -10,7 +9,7 @@ Syntax
 
    atom_style style args
 
-* style = *amoeba* or *angle* or *apip* or *atomic* or *body* or *bond* or *charge* or *dielectric* or *dipole* or  *dpd* or *edpd* or *electron* or *ellipsoid* or *full* or *ldd* or *line* or *mdpd* or *molecular* or *oxdna* or *peri* or *smd* or *sph* or *sphere* or *bpm/sphere* or *spin* or *tdpd* or *tri* or *template* or *wavepacket* or *hybrid*
+* style = *amoeba* or *angle* or *apip* or *atomic* or *body* or *bond* or *charge* or *dielectric* or *dipole* or  *dpd* or *edpd* or *electron* or *ellipsoid* or *full* or *ldd* or *line* or *mdpd* or *molecular* or *oxdna* or *peri* or *smd* or *sph* or *sphere* or *bpm/sphere* or *spin* or *tdpd* or *tri* or *template*  or *hybrid*
 
   .. parsed-literal::
 
@@ -233,10 +232,6 @@ the Additional Information section below.
      - *sphere* + molecule, angmom, tri
      -
      - 3-d triangulated rigid body LJ particles
-   * - *wavepacket*
-     - *charge* + "wavepacket data"
-     - :ref:`AWPMD <PKG-AWPMD>`
-     - Antisymmetrized wave packet MD
 
 .. note::
 
