@@ -5358,7 +5358,7 @@ TEST_F(AtomStyleTest, oxdna)
 
 TEST_F(AtomStyleTest, atomic_ldd_basic)
 {
-    if (!LAMMPS::is_installed_pkg("LDD")) GTEST_SKIP();
+    if (!Info::has_package("LDD")) GTEST_SKIP();
 
     BEGIN_HIDE_OUTPUT();
     command("atom_style ldd 2");
@@ -5401,7 +5401,7 @@ TEST_F(AtomStyleTest, atomic_ldd_basic)
 
 TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
 {
- if (!LAMMPS::is_installed_pkg("LDD")) GTEST_SKIP();
+ if (!Info::has_package("LDD")) GTEST_SKIP();
  
  BEGIN_HIDE_OUTPUT();
  command("atom_style ldd 2");
@@ -5476,7 +5476,7 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
 
 TEST_F(AtomStyleTest, atomic_ldd_indicators_set2)
 {
- if (!LAMMPS::is_installed_pkg("LDD")) GTEST_SKIP();
+ if (!Info::has_package("LDD")) GTEST_SKIP();
 
  BEGIN_HIDE_OUTPUT();
  command("atom_style ldd 2");
