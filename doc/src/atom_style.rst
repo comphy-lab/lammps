@@ -179,7 +179,7 @@ the Additional Information section below.
    * - *ldd*
      - *atom* + local densities + gradients of local densities + ldd energies
      - :ref:`LDD <PKG-LDD>`
-     -
+     - coarse graining interfaces
    * - *mdpd*
      - *atomic* + rho, drho, vest
      - :ref:`DPD-MESO <PKG-DPD-MESO>`

@@ -1394,7 +1394,7 @@ package that can be used to parameterize such potentials from atomistic simulati
 The package is compatible with molecular topologies, and allows the user to specify the length-scale and weighting function for multiple types of local density and distinguishes asymmetric local density potentials. 
 (e.g. distinct potentials can govern 1. solute around solvent and 2. solvent around solute)
 
-The local density potentials implemented define "local density" flexibly with different choices of indicator weighting functions and asymetry in interactions as generically described in:
+The local density potentials implemented define "local density" flexibly with different choices of indicator weighting functions and asymmetry in interactions as generically described in:
 Michael R. DeLyser and W. G. Noid (2019). “Analysis of local density potentials” The Journal of Chemical Physics 151, : 224106
 DOI: 10.1063/1.512866
 
@@ -1404,7 +1404,7 @@ Michael R. DeLyser and W. G. Noid (2021) “Coarse-grained models for local dens
 DOI: 10.1063/5.0075291
 
 
-**Authors:** Michael DeLyser, Maria Lesniewski and Will Noid (The Pennyslvania State University)
+**Authors:** Michael DeLyser, Maria Lesniewski and Will Noid (The Pennsylvania State University)
 
 
 **Supporting info:**

@@ -23,7 +23,8 @@ Examples
 Description
 """""""""""
 
-The *smooth* indicator style employs a smoothed heaviside indicator function. Its main feature over the other smoothed heaviside functions is that its second derivative is continuous:
+The *smooth* indicator style employs a smoothed Heaviside indicator function. 
+While other indicators available feature smoothed Heaviside functions, this particular function has a second derivative that is continuous:
 
 .. math::
    w(r) =

@@ -22,7 +22,7 @@ Examples
 Description
 """""""""""
 
-The *shell* indicator style employs a smoothed heaviside indicator function originally parameterized in :ref:`(Sanyal)<Sanyal>`:
+The *shell* indicator style employs a smoothed Heaviside indicator function originally parameterized in :ref:`(Sanyal)<Sanyal>`:
 
 .. math::
    w(r) =

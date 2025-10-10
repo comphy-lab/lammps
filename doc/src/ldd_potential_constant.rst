@@ -46,7 +46,7 @@ However, using the constant type for the gradient potential will change the beha
 
 
 Note that when :math:`U_{X}(\rho) = U_{\rho}(\rho)`, this constant form will not exert a force on the system and the configurational distribution will be unaffected. 
-Conversely, when :math:`U_{X}(\rho) = U_{\nabla}(\rho)`, a force will be exerted and perturb any previously defined equillibrium distribution.
+Conversely, when :math:`U_{X}(\rho) = U_{\nabla}(\rho)`, a force will be exerted and perturb any previously defined equilibrium distribution.
 
 Related commands
 """"""""""""""""
@@ -55,7 +55,9 @@ Related commands
    
 ------------
 
-.. _DeLyser:
+.. .. _DeLyser:
+
+.. see :ref:`DeLyser` for more 
 
 **(DeLyser)** M.R. DeLyser, W.G. Noid, "Coarse-grained models for local density gradients." J. Chem. Phys., 156, 034106 (2021).
 

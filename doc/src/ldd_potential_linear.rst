@@ -49,7 +49,9 @@ Related commands
    
 ------------
 
-.. _DeLyser:
+.. .. _DeLyser:
+
+.. see :ref:`DeLyser` for more
 
 **(DeLyser)** M.R. DeLyser, W.G. Noid, "Coarse-grained models for local density gradients." J. Chem. Phys., 156, 034106 (2021).
 

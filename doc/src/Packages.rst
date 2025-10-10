@@ -268,6 +268,11 @@ whether an extra library is needed to build and use the package:
      - :doc:`fix lb/fluid <fix_lb_fluid>`
      - ``PACKAGES/latboltz``
      - no
+   * - :ref:`LDD <PKG-LDD>`
+     - Local Density Dependent potentials
+     - :doc:`pair_ldd <pair_ldd>`, :doc:`LDD Howto <Howto_ldd>`
+     - ``PACKAGES/ldd``
+     - no
    * - :ref:`LEPTON <PKG-LEPTON>`
      - evaluate strings as potential function
      - :doc:`pair_style lepton <pair_lepton>`

@@ -46,7 +46,7 @@ If the simulation ever encounters a particle with a local density outside the do
 Accordingly, we advise providing values starting at a much lower/higher :math:`\rho` value than you expect to sample.
 
 Args *table/gradlin* and *table/gradspline* read in a file containing two columns.
-E.g. for a SG potential, these two columns should be :math:`\rho` :math:`U_{\nabla}(\rho)` where the columns are seperated by whitespace. 
+E.g. for a SG potential, these two columns should be :math:`\rho` :math:`U_{\nabla}(\rho)` where the columns are separated by whitespace. 
 If a table formatted for *table/lin* or *table/spline* is passed under this command, only the first two columns will affect the simulation. 
 As above, the table spacing must be uniform. 
 If the simulation ever encounters a particle with a local density outside the domain of values provided in the table, the simulation will exit with an error. 
@@ -60,7 +60,7 @@ Similarly, Arg *table/gradlin* constructs a cubic spline for interpolating betwe
 
 Note that for SG potentials, the expression for the pair additive force contains both the coefficient :math:`U_{\nabla}(\rho)` and its derivative :math:`F_{\nabla}(\rho)`.
 Thus using arg *table/lin* and *table/spline* after the *gradient* keyword will not calculate the forces consistently with (DeLyser 2021). 
-Thus, while e.g. *table/lin* and *table/gradlin* can be used somewhat interchangably to generate forces following the *potential* keyword, the *gradient* keyword should only be used with the *table/gradlin* and *table/gradspline* keywords. 
+Thus, while e.g. *table/lin* and *table/gradlin* can be used somewhat interchangeably to generate forces following the *potential* keyword, the *gradient* keyword should only be used with the *table/gradlin* and *table/gradspline* keywords. 
 
 Related commands
 """"""""""""""""
