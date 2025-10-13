@@ -32,11 +32,11 @@ class LddIndicatorLucy : public LddIndicator {
   public:
   
     LddIndicatorLucy(class LAMMPS *);
-    ~LddIndicatorLucy();
-    virtual void init_coeffs(double, double, int);
-    virtual double w(double );
-    virtual double wp(double );
-    virtual double wp2(double );
+    ~LddIndicatorLucy() override;
+    void init_coeffs(double, double, int) override;
+    double w(double ) override;
+    double wp(double ) override;
+    double wp2(double ) override;
 
   protected:
     virtual void allocate();
