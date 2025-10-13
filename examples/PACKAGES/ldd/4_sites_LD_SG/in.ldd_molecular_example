@@ -1,0 +1,68 @@
+units		real
+dimension	3
+boundary	p p p
+# Use the hybrid atom style if you want systems that aren't simple atomic + ld info
+atom_style	hybrid full ldd 4
+
+newton		on
+timestep	0.5
+
+bond_style harmonic
+angle_style harmonic
+dihedral_style harmonic
+improper_style none
+
+
+region my_box block 0 40 0 40 0 40
+create_box 4 my_box bond/types 1 angle/types 1 dihedral/types 1 extra/bond/per/atom 12 extra/angle/per/atom 12 extra/dihedral/per/atom 8 extra/special/per/atom 30
+
+mass  * 59.0448 
+
+# Use pair_style hybrid to incorporate the LDD interactions with other forces
+pair_style hybrid/overlay ldd 6.5 table spline 3000
+
+molecule CHAIN ABCD.mol
+create_atoms 0 random 60 885401 my_box mol CHAIN 454756
+
+include ff_bonded_params.lammps
+
+velocity	all create 300.0 22345 dist gaussian
+
+pair_coeff	* * table nb_interaction_tables/lammps_nb_ACA_ACA.table nb_ACA_ACA 15.0
+
+# In this example, for simplicity, we opt to set interactions by central site. You can have 2^4 different settings. 
+pair_coeff      1 * ldd indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.11.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.1.1.noself.dat
+pair_coeff	2 * ldd indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.22.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.2.2.noself.dat
+pair_coeff	3 * ldd indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.33.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.3.3.noself.dat
+pair_coeff      4 * ldd indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.44.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.4.4.noself.dat
+
+neigh_modify	delay 0 every 1 check yes one 10000
+neighbor	15.0 bin
+thermo          500
+thermo_style    custom step temp ke pe evdwl etotal press vol
+
+# converting real lammps units to gromacs/bocs units for easy reporting
+# variable STEP equal step
+# variable TEMP equal temp
+# variable VOL equal vol/1000.0
+# variable PRESS equal press*1.01325
+
+
+minimize 1.0e-8 1.0e-10 1000 10000
+
+#Set fixes
+fix             1  all      nvt        temp       300.0  300.0 100.0  
+
+run_style       verlet
+# Print statements for the above variables, uncomment both if want sim stats
+#fix             print_temp all print 500 "${STEP} ${TEMP}" file temp.dat screen no
+#fix             print_vol all print 500 "${STEP} ${VOL}" file vol.dat screen no
+#fix             print_press all print 500 "${STEP} ${PRESS}" file press.dat screen no
+
+## Prints ldd file that can be used with BOCS 
+# Uncomment if want a trajectory 
+# dump            4 all ldd 500 bocs_traj.lmp
+# dump_modify	4 sort id
+
+## Run for this many steps
+run 10000 # production run for 4 ns.

@@ -1,0 +1,54 @@
+units		real
+dimension	3
+boundary	p p p
+atom_style	ldd 1
+#		ldd ntypes
+newton		on
+timestep	1.0
+
+region my_box block  0.000000 53.2587274361 0.000000 53.2587274361 0.000000 480
+create_box 1 my_box
+
+create_atoms 1 random 968 13427890 my_box overlap 2
+
+mass 1 32.042   
+
+velocity	all create 270 22345 dist gaussian
+
+pair_style     hybrid/overlay ldd 5.26850 lj/cut 14.0 
+#pair_style     hybrid/overlay ldd rc table spline N
+
+pair_coeff	1 1 lj/cut 1 1
+pair_coeff      1 1 ldd indicator lucy 0.0 5.26850 self yes potential quadratic 1 1 1
+
+neigh_modify	delay 0 every 1 check yes one 10000
+neighbor	15 bin
+thermo          500
+
+# Converting lammps real units to gmx/bocs units
+# Uncomment if want to use the print statements below
+# variable STEP equal step
+# variable TEMP equal temp
+# variable VOL equal vol/1000.0
+# variable PRESS equal press*1.01325
+
+## Set various fixes
+fix             1  all      npt        temp       270  270 100.0 iso 0.986 0.986 1000.0
+
+run_style       verlet
+
+# Printing various stats in gmx/bocs units
+# fix             print_temp all print 500 "${STEP} ${TEMP}" file temp.dat screen no
+# fix             print_vol all print 500 "${STEP} ${VOL}" file vol.dat screen no
+# fix             print_press all print 500 "${STEP} ${PRESS}" file press.dat screen no
+# fix		print_pv  all print 500 "${VOL} ${PRESS}" file PV.dat screen no
+
+## Prints a ldd file format, for use in BOCS / to view ldd qtys. 
+# dump            2 all ldd 1000 bocs_traj.lmp
+# dump_modify	2 sort id
+
+# Write restart files to continue simulations
+# restart 100000 state1.restart state2.restart
+
+## Run for this many steps
+run 10000 
