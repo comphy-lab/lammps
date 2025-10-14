@@ -13,6 +13,7 @@
 /* ------------------------------------------------------
    This file is part of the USER-LDD package for LAMMPS.
    Contributed by Michael R. DeLyser, mrd5285@psu.edu
+   and Maria C. Lesniewski, mjl6766@psu.edu
    The Pennsylvania State University
    ------------------------------------------------------ */
 
@@ -33,14 +34,14 @@ class AtomVecLdd : public AtomVec {
  public:
   AtomVecLdd(class LAMMPS *);
 
-  void grow_pointers();
-  void process_args(int, char**);
+  void grow_pointers() override;
+  void process_args(int, char**) override;
  private:
-  double **ldd_local_density;
-  double **ldd_energy;
-  double **ldd_grad_density;
-  double **ldd_grad_energy;
-  double *ldd_total_energy;
+  double **ldd_local_density; // n_atom x n_atomtype matrix for LD info
+  double **ldd_energy; // n_atom x n_atomtype matrix for u_{b|t_I}(rho_I)
+  double **ldd_grad_density; // n_atom x 3 * n_atomtype matrix for LD grad info
+  double **ldd_grad_energy; // n_atom x n_atomtype matrix for u_{\nabla b|t_I}(rho_I)
+  double *ldd_total_energy; // n_atom vector, stores the sum (across all surrounding types) of u_x(rho_I) terms 
 };
 
 }    // namespace LAMMPS_NS
