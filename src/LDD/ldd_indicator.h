@@ -13,6 +13,7 @@
 /* ------------------------------------------------------
     This file is part of the USER-LDD package for LAMMPS.
     Contributed by Michael R. DeLyser, mrd5285@psu.edu
+    and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University
    ------------------------------------------------------ */
 #ifndef LDD_INDICATOR_H

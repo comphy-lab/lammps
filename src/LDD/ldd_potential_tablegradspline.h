@@ -35,9 +35,9 @@ class LddPotentialTableGradSpline : public LddPotential {
     LddPotentialTableGradSpline(class LAMMPS *);
     ~LddPotentialTableGradSpline(); 
 
-    virtual void setup_potl(int, int, char **);
-    virtual double u(double ); 
-    virtual double f(double ); 
+    void setup_potl(int, int, char **) override;
+    double u(double ) override; 
+    double f(double ) override; 
     double splint(double , double , double , double , double , 
                   double , double , double , double , double );
     double dsplint(double , double , double , double , double ,

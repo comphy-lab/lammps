@@ -34,9 +34,9 @@ class LddPotentialQuadratic : public LddPotential {
     LddPotentialQuadratic(class LAMMPS *);
     ~LddPotentialQuadratic(); 
 
-    virtual void setup_potl(int, int, char **);
-    virtual double u(double ); 
-    virtual double f(double ); 
+    void setup_potl(int, int, char **) override;
+    double u(double ) override; 
+    double f(double ) override; 
 
   protected:
     virtual void allocate();
