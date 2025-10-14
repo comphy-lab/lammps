@@ -35,6 +35,7 @@
 #include "neigh_list.h"
 #include "update.h"
 #include "utils.h"
+#include "citeme.h"
 
 #include "ldd_indicator.h"
 #include "ldd_potential.h"
@@ -53,10 +54,37 @@ using namespace LAMMPS_NS;
 #define DOT_PROD_GRAD(a,ta,b,tb) (a[3*ta] * b[3*tb] + a[3*ta+1] * b[3*tb+1] + a[3*ta+2] * b[3*tb+2])
 #define GRADTYPE(a) (3*a)
 
+static const char cite_pair_ldd1_c[] =
+  "pair ldd command: doi:10.1063/1.512866\n\n"
+  "@Article{DeLyser1,\n"
+  " author = {Michael R. DeLyser and W. G. Noid},\n"
+  " title = {Analysis of local density potentials},\n"
+  " journal = {The journal of chemical physics},\n"
+  " year =    2019,\n"
+  " volume =  151,\n"
+  " pages =   {22:224106}\n"
+  "}\n\n";
+
+  static const char cite_pair_ldd2_c[] =
+  "pair ldd command gradient keyword: doi:10.1063/5.0075291\n\n"
+  "@Article{DeLyser2,\n"
+  " author = {Michael R. DeLyser and W. G. Noid},\n"
+  " title = {Coarse-grained models for local density gradients},\n"
+  " journal = {The Journal of Chemical Physics},\n"
+  " year =    2021,\n"
+  " volume =  156,\n"
+  " pages =   {034106}\n"
+  "}\n\n";
+
+
+
 /* ---------------------------------------------------------------------- */
 
 PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
 {
+  if (lmp->citeme) lmp->citeme->add(cite_pair_ldd1_c);
+  if (lmp->citeme) lmp->citeme->add(cite_pair_ldd2_c);
+
   writedata = 1;
 
   restartinfo = 0;

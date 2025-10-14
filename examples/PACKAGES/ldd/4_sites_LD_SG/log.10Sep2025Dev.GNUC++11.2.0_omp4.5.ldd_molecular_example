@@ -1,4 +1,4 @@
-LAMMPS (10 Sep 2025 - Development - c4a1badd97-modified)
+LAMMPS (10 Sep 2025 - Development - 4474d45d9f-modified)
 OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
   using 1 OpenMP thread(s) per MPI task
 units		real
@@ -40,7 +40,7 @@ Read molecule template CHAIN:
 create_atoms 0 random 60 885401 my_box mol CHAIN 454756
 Created 240 atoms
   using lattice units in orthogonal box = (0 0 0) to (40 40 40)
-  create_atoms CPU = 0.002 seconds
+  create_atoms CPU = 0.001 seconds
 
 include ff_bonded_params.lammps
 bond_coeff 1 4 3.0 # < this is v2 and v3
@@ -74,6 +74,35 @@ thermo_style    custom step temp ke pe evdwl etotal press vol
 
 
 minimize 1.0e-8 1.0e-10 1000 10000
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- pair ldd command: doi:10.1063/1.512866
+
+@Article{DeLyser1,
+ author = {Michael R. DeLyser and W. G. Noid},
+ title = {Analysis of local density potentials},
+ journal = {The journal of chemical physics},
+ year =    2019,
+ volume =  151,
+ pages =   {22:224106}
+}
+
+- pair ldd command gradient keyword: doi:10.1063/5.0075291
+
+@Article{DeLyser2,
+ author = {Michael R. DeLyser and W. G. Noid},
+ title = {Coarse-grained models for local density gradients},
+ journal = {},
+ year =    2013,
+ volume =  21,
+ pages =   {055020}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
 Generated 0 of 6 mixed pair_coeff terms from geometric mixing rule
 Neighbor list info ...
   update: every = 1 steps, delay = 0 steps, check = yes
@@ -97,9 +126,9 @@ Per MPI rank memory allocation (min/avg/max) = 21.53 | 21.53 | 21.53 Mbytes
          0   300            213.72408      15980.509      15980.509      16194.233      19402.689      64000        
        500   300            213.72408     -1397.7498     -1511.7056     -1184.0257      49.892913      64000        
       1000   300            213.72408     -1740.0034     -1956.2984     -1526.2793      129.5729       64000        
-Loop time of 3.30327 on 1 procs for 1000 steps with 240 atoms
+Loop time of 3.26306 on 1 procs for 1000 steps with 240 atoms
 
-97.8% CPU use with 1 MPI tasks x 1 OpenMP threads
+99.7% CPU use with 1 MPI tasks x 1 OpenMP threads
 
 Minimization stats:
   Stopping criterion = max iterations
@@ -113,13 +142,13 @@ Minimization stats:
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 3.2399     | 3.2399     | 3.2399     |   0.0 | 98.08
-Bond    | 0.022556   | 0.022556   | 0.022556   |   0.0 |  0.68
-Neigh   | 0.0094834  | 0.0094834  | 0.0094834  |   0.0 |  0.29
-Comm    | 0.022406   | 0.022406   | 0.022406   |   0.0 |  0.68
-Output  | 0.00010301 | 0.00010301 | 0.00010301 |   0.0 |  0.00
+Pair    | 3.2013     | 3.2013     | 3.2013     |   0.0 | 98.11
+Bond    | 0.020475   | 0.020475   | 0.020475   |   0.0 |  0.63
+Neigh   | 0.0091106  | 0.0091106  | 0.0091106  |   0.0 |  0.28
+Comm    | 0.022371   | 0.022371   | 0.022371   |   0.0 |  0.69
+Output  | 6.8218e-05 | 6.8218e-05 | 6.8218e-05 |   0.0 |  0.00
 Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 0.008834   |            |       |  0.27
+Other   |            | 0.0097     |            |       |  0.30
 
 Nlocal:            240 ave         240 max         240 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
@@ -174,21 +203,21 @@ Per MPI rank memory allocation (min/avg/max) = 20.41 | 20.41 | 20.41 Mbytes
      10000   323.8359       230.7051      -1717.6757     -2082.7483     -1486.9706      177.47928      64000        
      10500   312.40865      222.56417     -1740.6178     -2076.0167     -1518.0536      131.72434      64000        
      11000   294.91734      210.10312     -1747.2388     -2117.6178     -1537.1357      189.57042      64000        
-Loop time of 16.3638 on 1 procs for 10000 steps with 240 atoms
+Loop time of 16.1732 on 1 procs for 10000 steps with 240 atoms
 
-Performance: 26.400 ns/day, 0.909 hours/ns, 611.106 timesteps/s, 146.665 katom-step/s
-97.8% CPU use with 1 MPI tasks x 1 OpenMP threads
+Performance: 26.711 ns/day, 0.899 hours/ns, 618.308 timesteps/s, 148.394 katom-step/s
+99.7% CPU use with 1 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 16.119     | 16.119     | 16.119     |   0.0 | 98.51
-Bond    | 0.089254   | 0.089254   | 0.089254   |   0.0 |  0.55
-Neigh   | 0.0022238  | 0.0022238  | 0.0022238  |   0.0 |  0.01
-Comm    | 0.1036     | 0.1036     | 0.1036     |   0.0 |  0.63
-Output  | 0.00038199 | 0.00038199 | 0.00038199 |   0.0 |  0.00
-Modify  | 0.033427   | 0.033427   | 0.033427   |   0.0 |  0.20
-Other   |            | 0.01567    |            |       |  0.10
+Pair    | 15.933     | 15.933     | 15.933     |   0.0 | 98.51
+Bond    | 0.085978   | 0.085978   | 0.085978   |   0.0 |  0.53
+Neigh   | 0.0021037  | 0.0021037  | 0.0021037  |   0.0 |  0.01
+Comm    | 0.10424    | 0.10424    | 0.10424    |   0.0 |  0.64
+Output  | 0.00025325 | 0.00025325 | 0.00025325 |   0.0 |  0.00
+Modify  | 0.032454   | 0.032454   | 0.032454   |   0.0 |  0.20
+Other   |            | 0.01525    |            |       |  0.09
 
 Nlocal:            240 ave         240 max         240 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
@@ -202,4 +231,4 @@ Ave neighs/atom = 177.15
 Ave special neighs/atom = 3
 Neighbor list builds = 1
 Dangerous builds = 0
-Total wall time: 0:00:20
+Total wall time: 0:00:19

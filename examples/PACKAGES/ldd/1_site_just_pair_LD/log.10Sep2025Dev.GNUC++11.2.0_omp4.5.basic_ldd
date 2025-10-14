@@ -1,4 +1,4 @@
-LAMMPS (10 Sep 2025 - Development - c4a1badd97-modified)
+LAMMPS (10 Sep 2025 - Development - 4474d45d9f-modified)
 OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
   using 1 OpenMP thread(s) per MPI task
 units		real
@@ -60,6 +60,35 @@ run_style       verlet
 
 ## Run for this many steps
 run 10000
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- pair ldd command: doi:10.1063/1.512866
+
+@Article{DeLyser1,
+ author = {Michael R. DeLyser and W. G. Noid},
+ title = {Analysis of local density potentials},
+ journal = {The journal of chemical physics},
+ year =    2019,
+ volume =  151,
+ pages =   {22:224106}
+}
+
+- pair ldd command gradient keyword: doi:10.1063/5.0075291
+
+@Article{DeLyser2,
+ author = {Michael R. DeLyser and W. G. Noid},
+ title = {Coarse-grained models for local density gradients},
+ journal = {},
+ year =    2013,
+ volume =  21,
+ pages =   {055020}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
 Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
 Neighbor list info ...
   update: every = 1 steps, delay = 0 steps, check = yes
@@ -101,20 +130,20 @@ Per MPI rank memory allocation (min/avg/max) = 6.055 | 6.055 | 6.055 Mbytes
       9000   265.04639      981.99587      0              1745.9771      2.3122965      15100492     
       9500   263.78215      981.91241      0              1742.2495      2.0867623      16645501     
      10000   283.85638      981.5244       0              1799.7243      2.0438752      18268162     
-Loop time of 2.3188 on 1 procs for 10000 steps with 968 atoms
+Loop time of 2.26878 on 1 procs for 10000 steps with 968 atoms
 
-Performance: 372.606 ns/day, 0.064 hours/ns, 4312.566 timesteps/s, 4.175 Matom-step/s
-97.9% CPU use with 1 MPI tasks x 1 OpenMP threads
+Performance: 380.821 ns/day, 0.063 hours/ns, 4407.648 timesteps/s, 4.267 Matom-step/s
+99.7% CPU use with 1 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 1.8421     | 1.8421     | 1.8421     |   0.0 | 79.44
-Neigh   | 0.11126    | 0.11126    | 0.11126    |   0.0 |  4.80
-Comm    | 0.070477   | 0.070477   | 0.070477   |   0.0 |  3.04
-Output  | 0.0003061  | 0.0003061  | 0.0003061  |   0.0 |  0.01
-Modify  | 0.27136    | 0.27136    | 0.27136    |   0.0 | 11.70
-Other   |            | 0.02325    |            |       |  1.00
+Pair    | 1.8009     | 1.8009     | 1.8009     |   0.0 | 79.38
+Neigh   | 0.10852    | 0.10852    | 0.10852    |   0.0 |  4.78
+Comm    | 0.069906   | 0.069906   | 0.069906   |   0.0 |  3.08
+Output  | 0.00025471 | 0.00025471 | 0.00025471 |   0.0 |  0.01
+Modify  | 0.26629    | 0.26629    | 0.26629    |   0.0 | 11.74
+Other   |            | 0.02293    |            |       |  1.01
 
 Nlocal:            968 ave         968 max         968 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
