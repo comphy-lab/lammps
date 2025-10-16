@@ -39,12 +39,12 @@ class DumpLdd : public Dump {
 
   char *columns;             // column labels
 
-  void init_style();
-  int modify_param(int, char **);
-  void write_header(bigint);
-  void pack(tagint *);
-  int convert_string(int, double *);
-  void write_data(int, double *);
+  void init_style() override;
+  int modify_param(int, char **) override;
+  void write_header(bigint) override;
+  void pack(tagint *) override;
+  int convert_string(int, double *) override;
+  void write_data(int, double *) override;
 
   typedef void (DumpLdd::*FnPtrHeader)(bigint);
   FnPtrHeader header_choice;           // ptr to write header functions
