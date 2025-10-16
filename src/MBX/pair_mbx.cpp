@@ -397,27 +397,6 @@ double PairMBX::init_one(int i, int j)
   return cut[i][j];
 }
 
-/* ----------------------------------------------------------------------
-   proc 0 writes to data file
-------------------------------------------------------------------------- */
-
-void PairMBX::write_data(FILE *fp) {}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes all pairs to data file
-------------------------------------------------------------------------- */
-
-void PairMBX::write_data_all(FILE *fp) {}
-
-/* ---------------------------------------------------------------------- */
-
-void *PairMBX::extract(const char *str, int &dim)
-{
-  dim = 2;
-  // if (strcmp(str,"epsilon") == 0) return (void *) epsilon;
-  // if (strcmp(str,"sigma") == 0) return (void *) sigma;
-  return NULL;
-}
 
 /* ----------------------------------------------------------------------
    update forces with MBX contribution

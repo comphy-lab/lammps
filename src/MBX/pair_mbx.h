@@ -44,9 +44,6 @@ class PairMBX : public Pair {
   void coeff(int, char **);
   void init_style();
   double init_one(int, int);
-  void write_data(FILE *);
-  void write_data_all(FILE *);
-  void *extract(const char *, int &);
 
  protected:
   double cut_global;
