@@ -237,6 +237,8 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
     iarg++;
   }
 
+  vsize = values.size();
+
   // optional args
 
   comflag = 0;
@@ -350,9 +352,8 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
   //   also saves the per-atom vec/array in the restart file
   // if historyflag = 1:
   //   this fix produces neither a per-atom vector or array
-  //   provides access via extract() to its saved history frames
-  //     only on multiples of nevery (now same as nevery_history)
-  //     NOTE: maybe should not use peratom_freq to store nevery ?
+  //   instead provides access via extract() to its saved history frames
+  //     only on steps compatible with nevery_history and nfreq_history
   //   saves nothing to restart file
 
   if (!historyflag) {
@@ -361,8 +362,6 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
     peratom_freq = 1;
     if (values.size() == 1) size_peratom_cols = 0;
     else size_peratom_cols = values.size();
-  } else {
-    peratom_freq = nevery;
   }
 
   // for historyflag, create avalues_history
@@ -372,8 +371,8 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
                                                   "store/state:avalues_history");
     for (int i = 0; i < nrepeat_history; i++) avalues_history[i] = nullptr;
     
-    most_history_step = -1;
-    most_history_index = -1;
+    most_recent_step = -1;
+    most_recent_index = -1;
     count_history = 0;
   }
 
@@ -623,18 +622,18 @@ void FixStoreState::end_of_step()
     modify->addstep_compute(nextstep);
   }
 
-  // if historyflag, copy avalues single snapshot into avalues_history at most_history_index
+  // if historyflag, copy avalues single snapshot into avalues_history at most_recent_index
 
   if (historyflag) {
-    if (update->ntimestep - most_history_step > nevery) count_history = 0;
-    most_history_step = update->ntimestep;
+    if (update->ntimestep - most_recent_step > nevery) count_history = 0;
+    most_recent_step = update->ntimestep;
     if (count_history < nrepeat_history) count_history++;
-    most_history_index++;
-    if (most_history_index == nrepeat_history) most_history_index = 0;
+    most_recent_index++;
+    if (most_recent_index == nrepeat_history) most_recent_index = 0;
  
     int nlocal = atom->nlocal;
     if (avalues)
-      memcpy(&avalues_history[most_history_index][0][0],&avalues[0][0],
+      memcpy(&avalues_history[most_recent_index][0][0],&avalues[0][0],
              nlocal*values.size()*sizeof(double));
   }
 
@@ -647,7 +646,7 @@ void FixStoreState::end_of_step()
       if (!(atom->mask[i] & groupbit)) continue;
       printf("ATOM %d proc %d",atom->tag[i],comm->me);
       int step = update->ntimestep;
-      int k = most_history_index;
+      int k = most_recent_index;
       for (int n = 0; n < count_history; n++) {
         printf(" STEP %d %g %g %g",step,
                avalues_history[k][i][0],avalues_history[k][i][1],avalues_history[k][i][2]);
@@ -701,7 +700,7 @@ void FixStoreState::copy_arrays(int i, int j, int /*delflag*/)
   for (std::size_t m = 0; m < values.size(); m++) avalues[j][m] = avalues[i][m];
 
   if (historyflag) {
-    int k = most_history_index;
+    int k = most_recent_index;
     for (int n = 0; n < count_history; n++) {
       for (std::size_t m = 0; m < values.size(); m++)
         avalues_history[k][j][m] = avalues_history[k][i][m];
@@ -720,12 +719,11 @@ int FixStoreState::pack_exchange(int i, double *buf)
   for (std::size_t m = 0; m < values.size(); m++) buf[m] = avalues[i][m];
 
   if (historyflag) {
-    int size = values.size();
-    int m = size;
-    int k = most_history_index;
+    int m = vsize;
+    int k = most_recent_index;
     for (int n = 0; n < count_history; n++) {
-      memcpy(&buf[m],avalues_history[k][i],size*sizeof(double));
-      m += size;
+      memcpy(&buf[m],avalues_history[k][i],vsize*sizeof(double));
+      m += vsize;
       k--;
       if (k < 0) k += nrepeat_history;
     }
@@ -744,12 +742,11 @@ int FixStoreState::unpack_exchange(int nlocal, double *buf)
   for (std::size_t m = 0; m < values.size(); m++) avalues[nlocal][m] = buf[m];
 
   if (historyflag) {
-    int size = values.size();
-    int m = size;
-    int k = most_history_index;
+    int m = vsize;
+    int k = most_recent_index;
     for (int n = 0; n < count_history; n++) {
-      memcpy(avalues_history[k][nlocal],&buf[m],size*sizeof(double));
-      m += size;
+      memcpy(avalues_history[k][nlocal],&buf[m],vsize*sizeof(double));
+      m += vsize;
       k--;
       if (k < 0) k += nrepeat_history;
     }
@@ -809,6 +806,56 @@ int FixStoreState::maxsize_restart()
 int FixStoreState::size_restart(int /*nlocal*/)
 {
   return values.size() + 1;
+}
+
+/* ----------------------------------------------------------------------
+   extract info about stored history frames
+------------------------------------------------------------------------- */
+
+void *FixStoreState::extract(const char *str, int &dim)
+{
+  if (!historyflag) return nullptr;
+
+  // only allow extraction on steps compatible with nevery_history and nfreq_history
+  
+  if (nfreq_history == 0 && update->ntimestep % nevery_history) return nullptr;
+  if (nfreq_history && update->ntimestep % nfreq_history) return nullptr;
+
+  // various history params which can be used by caller
+  
+  if (strcmp(str, "size") == 0) {
+    dim = 0;
+    return &vsize;
+  }
+  if (strcmp(str, "nevery_history") == 0) {
+    dim = 0;
+    return &nevery_history;
+  }
+  if (strcmp(str, "nrepeat_history") == 0) {
+    dim = 0;
+    return &nrepeat_history;
+  }
+  if (strcmp(str, "nfreq_history") == 0) {
+    dim = 0;
+    return &nfreq_history;
+  }
+  if (strcmp(str, "count_history") == 0) {
+    dim = 0;
+    return &count_history;
+  }
+  if (strcmp(str, "most_recent_index") == 0) {
+    dim = 0;
+    return &most_recent_index;
+  }
+
+  // extract the 3d history tensor
+  
+  if (strcmp(str, "history") == 0) {
+    dim = 3;
+    return avalues_history;
+  }
+
+  return nullptr;
 }
 
 /* ----------------------------------------------------------------------

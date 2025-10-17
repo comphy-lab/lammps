@@ -42,6 +42,7 @@ class FixStoreState : public Fix {
   void unpack_restart(int, int) override;
   int size_restart(int) override;
   int maxsize_restart() override;
+  void *extract(const char *, int &) override;
 
  private:
   struct value_t {
@@ -69,8 +70,9 @@ class FixStoreState : public Fix {
   int nrepeat_history;     // # of history frames to store
   int nfreq_history;       // enable output of stored history on these steps
   int count_history;       // number of currently stored history frames
-  int most_history_step;   // timestep for most recent history frame
-  int most_history_index;  // index of most recent frame in avalues_history
+  int most_recent_step;    // timestep for most recent history frame
+  int most_recent_index;   // index of most recent frame in avalues_history
+  int vsize;               // number of values (needed for extract())
   
   double ***avalues_history;  // storage for up to Nrepeat history frames
 
