@@ -42,42 +42,40 @@ Each line in the atoms section contains per atom data fields in a column order w
 below is a table of ldd header field labels and definitions in the order they appear
 
 
-+------------+-----------------------------------------------------------------+
-| **label**  |  **Definition**                                                 |
-+============+=================================================================+
-| id         | The atom index, :math:`I`                                       |
-+------------+-----------------------------------------------------------------+
-| mol        | The molecule index (only appears if                             |
-|            | :doc:`atom_style ldd <atom_style>` is listed in                 |
-|            | an atom_style hybrid list with a molecular atom_style)          |
-+------------+-----------------------------------------------------------------+
-| type       | The atom type index, :math:`t_I \in` {1 ... n_types}            |
-+------------+-----------------------------------------------------------------+
-| x y z      | The x y and z components of the atom's position                 |
-+------------+-----------------------------------------------------------------+
-| vx vy vz   | The x y and z components of the atom's velocity                 |
-+------------+-----------------------------------------------------------------+
-| fx fy fz   | The x y and z components of the atom's net force                |
-+------------+-----------------------------------------------------------------+
-| lddensn    | n = {1 ... ntypes}, the local density of particle type n around | 
-|            | around the atom,  :math:`\rho_{n|I}`                            |
-+------------+-----------------------------------------------------------------+
-| ldnrgn     | n = {1 ... ntypes}, the energy contribution of the local        |
-|            | density of type n around this particle to the total energy      |
-|            | :math:`u_{n|t_I}(\rho_{n|I})`                                   |
-+------------+-----------------------------------------------------------------+
-| gradxn     | n = {1 ... ntypes), the x y and z components of the gradient of |
-| gradyn     | the local density of type n surrounding the particle.           |
-| gradzn     | :math:`\nabla_{I} \rho_{n|I}`                                   |
-+------------+-----------------------------------------------------------------+
-| gradnrgn   | n = {1 ... ntypes}, the energy contribution of this particle    |
-|            | surrounded by type n to the square gradient potential.          |
-|            | :math:`u_{\nabla; n|t_I}(\rho_{n|I})|\nabla_{I}\rho_{n|I}|^2`   |
-+------------+-----------------------------------------------------------------+
-| lddttlnrg  | The total energy contribution of this particle to LD and SG     |
-|            | potentials.                                                     |
-|            | :math:`\sum_{\text{n}_{\text{types}}} \text{gradnrgn + ldnrgn}` |
-+------------+-----------------------------------------------------------------+
++---------------------------+---------------------------------------------------------------------------------------+
+| **label**                 |  **Definition**                                                                       |
++===========================+=======================================================================================+
+| id                        | The atom index, :math:`I`                                                             |
++---------------------------+---------------------------------------------------------------------------------------+
+| mol                       | The molecule index (only appears if :doc:`atom_style ldd <atom_style>` is listed in   |
+|                           | an atom_style hybrid list with a molecular atom_style)                                |
++---------------------------+---------------------------------------------------------------------------------------+
+| type                      | The atom type index, :math:`t_I \in` {1 ... n_types}                                  |
++---------------------------+---------------------------------------------------------------------------------------+
+| x y z                     | The x y and z components of the atom's position                                       |
++---------------------------+---------------------------------------------------------------------------------------+
+| vx vy vz                  | The x y and z components of the atom's velocity                                       |
++---------------------------+---------------------------------------------------------------------------------------+
+| fx fy fz                  | The x y and z components of the atom's net force                                      |
++---------------------------+---------------------------------------------------------------------------------------+
+| lddens :math:`\alpha`     | :math:`\alpha \in` {1 ... ntypes}, the local density of :math:`\alpha`                | 
+|                           | particles around the atom,  :math:`\rho_{\alpha|I}`                                   |
++---------------------------+---------------------------------------------------------------------------------------+
+| ldnrg  :math:`\alpha`     | :math:`\alpha \in` {1 ... ntypes}, the energy contribution of the local               |
+|                           | density of type :math:`\alpha` around this particle to the total energy               |
+|                           | :math:`U_{\alpha|t_I}(\rho_{\alpha|I})`                                               |
++---------------------------+---------------------------------------------------------------------------------------+
+| gradx :math:`\alpha`      | :math:`\alpha \in` {1 ... ntypes), the x y and z components of the gradient           |
+| grady :math:`\alpha`      | of the local density of type :math:`\alpha` surrounding the particle.                 |
+| gradz :math:`\alpha`      | :math:`\nabla_{I} \rho_{\alpha|I}`                                                    |
++---------------------------+---------------------------------------------------------------------------------------+
+| gradnrg :math:`\alpha`    | :math:`\alpha \in` {1 ... ntypes}, the energy contribution of this particle           |
+|                           | surrounded by type :math:`\alpha` to the square gradient potential.                   |
+|                           | :math:`U_{\nabla; \alpha|t_I}(\rho_{\alpha|I})|\nabla_{I}\rho_{\alpha|I}|^2`          |
++---------------------------+---------------------------------------------------------------------------------------+
+| lddttlnrg                 | The total energy contribution of this particle to LD and SG  potentials               |
+|                           | :math:`\sum_{\alpha}                U_{\nabla;\alpha|t_I} + U_{\alpha|t_I}`           |
++---------------------------+---------------------------------------------------------------------------------------+
 
 
 If local densities and square gradient potentials are not defined with :doc:`pair_style ldd <pair_ldd>` 

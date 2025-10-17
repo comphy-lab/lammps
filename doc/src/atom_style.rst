@@ -179,7 +179,7 @@ the Additional Information section below.
    * - *ldd*
      - *atom* + local densities + gradients of local densities + ldd energies
      - :ref:`LDD <PKG-LDD>`
-     - coarse graining interfaces
+     - Local Density / Gradient Dependent Potentials
    * - *mdpd*
      - *atomic* + rho, drho, vest
      - :ref:`DPD-MESO <PKG-DPD-MESO>`
@@ -355,14 +355,14 @@ line vector which indicates whether it is a line segment (1) or a
 point particle (0).
 
 For the *ldd* style, particles are represented as in the basic atomic style,
-but per_atom local density and gradients of local density information is available
-for all types of particles surrounding a given particle :math:`I` in the system. 
-local densities and gradients are defined via the :doc:`pair_style ldd <pair_ldd>` and associated 
+but for each particle :math:`I`, the local density :math:`\rho_{\alpha|I}` and 
+its gradient :math:`\nabla_I \rho_{\alpha|I}` are computed for each surrounding particle type :math:`\alpha`. 
+Local densities and gradients are defined via the :doc:`pair_style ldd <pair_ldd>` and associated 
 pair_coeff commands. Undefined (*ignored*) local densities will be reported as zero and not
 considered in force calculations. 
 When hybridized with a molecular style,
 local density definitions will inherit the bonded exclusions of other 
-nb pair interactions. See the :doc:``Howto ldd <Howto_ldd>`` doc for details.
+nb pair interactions. See the :doc:`Howto ldd <Howto_ldd>` page for details.
 
 The *mdpd* style is for many-body dissipative particle dynamics (mDPD)
 particles which store a density (rho) for considering density-dependent

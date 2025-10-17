@@ -23,8 +23,8 @@ Examples
 Description
 """""""""""
 
-The *smooth* indicator style employs a smoothed Heaviside indicator function. 
-While other indicators available feature smoothed Heaviside functions, this particular function has a second derivative that is continuous:
+The *smooth* indicator style employs a smoothed Heaviside function that is one for :math:`r \leq r_0`, zero for :math:`r \geq r_c`, and smoothly interpolates between zero and one in the interval :math:`r_0 \leq r \leq r_c`. 
+This function is similar to the indicator function introduced by Sanyal and Shell, but has a continuous second derivative.
 
 .. math::
    w(r) =
@@ -53,4 +53,7 @@ Related commands
 :doc:`pair_ldd <pair_ldd>`
 
 
+**(Sanyal & Shell)** Tanmoy Sanyal, M. Scott Shell "Coarse-grained models using local-density potentials optimized with the relative entropy: Application to implicit solvation.", J Chem Phys, 145, 034109 (2016).
+
+**(DeLyser)** Michael R. DeLyser, W. G. Noid "Extending pressure-matching to inhomogeneous systems via local-density potentials" J Chem Phys, 147, 134111 (2017)
 

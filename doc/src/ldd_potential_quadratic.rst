@@ -31,15 +31,15 @@ where :math:`a`, :math:`b`, and  :math:`c` are the three coefficients in a quadr
 Description
 """""""""""
 This option can follow the *gradient* or *potential* keywords in the ldd pair_coeff command.
-Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho}`
-Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla}`.
+Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho} = -\frac{dU_{\rho}}{d\rho}`
+Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla} = -\frac{dU_{\nabla}}{d\rho}`.
 For generality we note each case with a dummy :math:`X` below.
 
 Style *quadratic* applies a quadratic potential: 
 
 .. math::
    U_{X}(\rho) &= a\rho^{2} + b\rho + c \\
-   F_{X}(\rho) &= -2a\rho - b
+   F_{X}(\rho) &= -2a\rho - b,  \text{ where } X=\rho \text{ or } X=\nabla. \\
 
 Related commands
 """"""""""""""""

@@ -23,6 +23,9 @@ Description
 """""""""""
 
 The *shell* indicator style employs a smoothed Heaviside indicator function originally parameterized in :ref:`(Sanyal)<Sanyal>`:
+This indicator is one for :math:`r \leq r_0`, zero for :math:`r \geq r_c`, and smoothly interpolates between zero and one in the interval :math:`r_0 \leq r \leq r_c`.
+This function has a continuous first derivative, but a discontinuous second derivative at :math:`r_0` and :math:`r_c`.
+
 
 .. math::
    w(r) =

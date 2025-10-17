@@ -36,7 +36,7 @@ For generality we note each case with a dummy :math:`X` below.
 
 .. math::
    U_{X}(\rho) = B \pi r_{c}^{4} \rho^{2} / 30 \\
-   F_{X}(\rho) = - B \pi r_{c}^{4} \rho / 15 \\
+   F_{X}(\rho) = - B \pi r_{c}^{4} \rho / 15 \text{ where } X=\rho \text{ or } X=\nabla.\\
 
 Note that when used after the *potential* keyword, style *mdpd* applies a quadratic local density potential used in many MDPD studies, e.g. :ref:`(Warren)<Warren>` or :ref:`(Ghoufi)<Ghoufi>`. 
 It is traditionally used to supplement the standard dpd pair force. 

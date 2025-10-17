@@ -24,7 +24,7 @@ Syntax
        r0 = start of indicator function's decay to 0. must be 0.0 for dpd and lucy.
        rc = range of indicator function.
       *self* values = val
-       val = yes or no specifies whether to include the self term in the local density calculation.
+       val = yes or no specifies whether to include the self term in defining the local density.
       *potential* values = type args
        type = quadratic, linear, constant, mdpd, table/spline, table/lin, table/gradlin, table/gradspline, noforce
        potential/gradient args are specific to the type, see each ldd_potential doc page
@@ -45,8 +45,8 @@ Examples
   #pair_style ldd maxcut
   pair_style ldd 7.2
   
-  #pair_coeff x surroundd by y indicator type r0 rC self args potential type args
-  pair_coeff 1 1 indicator lucy 0.0 7.2 self yes potential table_spline ldtable.1.1.dat
+  #pair_coeff x surrounded by y indicator type r0 rC self args potential type args
+  pair_coeff 1 1 indicator lucy 0.0 7.2 self yes potential table_spline ldtable.1.1.dat # 1|1
 
   #########  Example 2 : 2 types
 
@@ -55,21 +55,21 @@ Examples
   #pair_style ldd maxcut
   pair_style ldd 7.2
 
-  #pair_coeff x surroundd by y indicator type r0 rC self args potential type args
-  pair_coeff 1 1 indicator dpd 0.0 1.0 self no potential mdpd 25.0
-  pair_coeff 1 2 indicator dpd 0.0 1.0 self no potential table_spline ldtable.1.2.dat gradient table_spline gradtable.1.2.dat
-  pair_coeff 2 1 indicator lucy 0.0 7.2 self no potential linear 1 1
-  pair_coeff 2 2 ignore
+  #pair_coeff x surrounded by y indicator type r0 rC self args potential type args
+  pair_coeff 1 1 indicator dpd 0.0 1.0 self no potential mdpd 25.0 # 1|1
+  pair_coeff 1 2 indicator dpd 0.0 1.0 self no potential table_spline ldtable.1.2.dat gradient table_spline gradtable.1.2.dat # 2|1
+  pair_coeff 2 1 indicator lucy 0.0 7.2 self no potential linear 1 1 # 1|2
+  pair_coeff 2 2 ignore # 2|2
 
 Description
 """""""""""
 
-Style *ldd* implements the local density potential as first described by Pagonabarraga and Frenkel :ref:`(Pagonabarraga)<Pagonabarraga>` and additionally the square gradient of local densities first implemented by :ref:`(DeLyser)<DeLyser>`. 
+Style *ldd* implements the local density potential as first described by Pagonabarraga and Frenkel :ref:`(Pagonabarraga)<Pagonabarraga>` and additionally the square gradient of local densities first introduced by :ref:`(DeLyser)<DeLyser>`. 
 The pair_style *ldd* is compatible with a variety of molecular and atomic topologies, (See :doc:`Howto_ldd <Howto_ldd>`) for details) and offers a variety of options for how to define the local density. 
 
 Here for notational simplicity we outline the theory for style *ldd* potentials with just 1 type of particle. :doc:`Howto_ldd <Howto_ldd>` explains the more general :math:`n_{\text{type}}` case.
 
-Consider an indicator function of pair distance, :math:`w(r)`, where :math:`w(0)=1`, :math:`w(r_{c})=0`, and :math:`w(r)` is continuous/differentiable from across :math:`0 \leq r \leq r_{c}`.
+Consider an indicator function of pair distance, :math:`w(r)`, where :math:`w(0)=1`, :math:`w(r_{c})=0`, and :math:`w(r)` is continuous/differentiable for :math:`0 \leq r \leq r_{c}`.
 We define :math:`[w]` as the spatial integral of :math:`w(r)` and the normalized indicator function as :math:`\bar{w}(r) = w(r)/[w]`. 
 The local density around a given particle is then defined as :math:`\rho_{I} = \sum_{J} \bar{w}(r_{IJ})`, where the sum over :math:`J` can either include or exclude :math:`I`, depending on whether the argument following the *self* keyword is yes or no. 
 Practically, the only difference is a horizontal shift in the argument of the potential by :math:`1/[w]`. The local density potential and corresponding pair forces are given by:
@@ -153,9 +153,9 @@ Conversely the *noforce* keyword will set up a potential with a constant 0 force
 This option turns local density interactions off, but allows local densities and gradients to be calculated during the simulation without changing the statistics of the simulation. 
 See :doc:`noforce <ldd_potential_noforce>` for details.  
 
-Note, not all of the available potential styles should follow *gradient*. 
+Note, that not all of the available potential styles should follow *gradient*. 
 For example, the potential *noforce* arg is used to calculate the local densities/square gradients of particles in a simulation without actually applying a force. 
-Since the gradient keyword is optional, you should just omit it instead of specifying gradient noforce.
+Since the gradient keyword is optional, and gradients are calculated at the same time as local densities, you should just omit the gradient keyword instead of specifying gradient noforce if you want LD/SG stats without changing the forces in the simulation.
 
 Related commands
 """"""""""""""""

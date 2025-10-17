@@ -1415,8 +1415,11 @@ gpus
 gradgradflag
 gradnrgn
 gradV
+gradx
 gradxn
+grady
 gradyn
+gradz
 gradzn
 GradVidottan
 graining
@@ -2000,6 +2003,7 @@ lcbop
 ld
 lda
 ldd
+lddens
 lddensn
 lddttlnrg
 ldfftw

@@ -2,45 +2,48 @@ Local Density Dependent Potentials via PKG-LDD
 ===============================================
 **Overview:**
 
-The LDD package offers potentials that are a function of the local density, :math:`\rho_{\beta|I}` of type :math:`\beta` particles around a central particle, :math:`I`.
+The LDD package implements potentials that are a function of the local density, :math:`\rho_{\beta|I}`, of type :math:`\beta` particles around a central particle, :math:`I`.
 There are two types of local density dependent potentials implemented. 
 There are Local Density (LD) potentials :math:`U_{LD}` , which are direct functions of :math:`\rho_{\beta|I}`. 
 There are also Square Gradient (SG) potentials :math:`U_{SG}`. 
-SG potentials use a direct function of the local density, :math:`u_\nabla(\rho_{\beta|I})`, as a coefficient function that stabilizes the square gradient, :math:`|\frac{d\rho_{\beta|I}}{dR_I}|^2` of a particular local density. 
+SG potentials use a direct function of the local density, :math:`U_\nabla(\rho_{\beta|I})`, as a coefficient of the square gradient, :math:`|\frac{\partial \rho_{\beta|I}}{\partial R_I}|^2` of a particular local density. 
 Such potentials are useful for coarse grained models and can be parameterized from trajectory data using
 `BOCS version 5 and higher. <https://github.com/noid-group/BOCS>`_
 
 **Local Density Definitions**
 
-The local density, :math:`\rho_{\beta|I}` of site types :math:`\beta` around a central particle, :math:`I`, of type :math:`t_I = \alpha` is defined:
+Each site (atom) in a molecular dynamics simulation :math:`I` is assigned a type :math:`t_I`.
+These site types may be labeled e.g. :math:`\alpha`, :math:`\beta`, ..., etc. 
+The local density, :math:`\rho_{\beta|I}`, of :math:`\beta` particles around a central particle, :math:`I`, of type :math:`t_I = \alpha` is defined:
 
 .. math::
 
    \rho_{\beta|I} = \sum_{J\in S_{\beta|I}} \bar{w}_{\beta|\alpha}(r_{IJ})
  
 where :math:`S_{\beta|I}` is the set of particles of type :math:`\beta` that are not excluded from pairwise interactions involving site :math:`I`. 
-:math:`\bar{w}_{\beta|\alpha}(r_{IJ})` is a normalized indicator function, it determines the pair weighted contribution from each particle :math:`J`, of type :math:`t_J = \beta` to the :math:`\beta` LD around a central particle :math:`I` of type :math:`t_I = \alpha`.
+:math:`\bar{w}_{\beta|\alpha}(r_{IJ})` is a normalized indicator function, it determines the pair weighted contribution from each particle :math:`J`, of type :math:`t_J = \beta` to the :math:`\beta` local density around a central particle :math:`I` of type :math:`t_I = \alpha`.
 
 The normalized indicator function is defined by dividing a continuous/differentiable non-negative non-increasing indicator function :math:`w(r)` by its spatial integral :math:`[w]`.
 Therefore, :math:`\bar{w}(r)` is defined for each :math:`\beta|\alpha` pair as:
 
 .. math::
 
-   \bar{w}(r_{IJ}) = \frac{w(r_{IJ})}{[w]} \theta(r_{IJ} - r_c) \\
+   \bar{w}(r) = \frac{w(r)}{[w]} \theta(r - r_c) \\
    [w] = \int_{0}^{r_{c}} {4\pi r^2 w(r)} dr
 
 
-where :math:`\theta` is the Heaviside function, such that :math:`\bar{w}(r) = 0,  \forall r > r_c`.
+where :math:`\theta` is the Heaviside function, :math:`r_c` is the local density length-scale, and :math:`\bar{w}(r)` is defined such that :math:`\bar{w}(r) = 0`, if  :math:`r > r_c`.
 The local density of :math:`\beta` particles that surround a given particle :math:`I` is defined by the sum of contributions from :math:`\beta`  particles that are within (<=) the cutoff :math:`r_c`.
-The choice of indicator function is determined by the user in the *indicator* argument of the :doc:`ldd pair_coeff <pair_ldd>` command. Different options are listed under different pages indexed on the :doc:`pair ldd <pair_ldd>` page.
+The choice of indicator function is specified by the user in the *indicator* argument of the :doc:`ldd pair_coeff <pair_ldd>` command. Different options are listed under different pages indexed on the :doc:`pair ldd <pair_ldd>` page.
+Note that the weighting function and its length-scale can be defined independently for each pair of site types. 
 
 If particle :math:`I` is of type :math:`t_I = \beta`, its contribution to the local density :math:`\rho_{t_I|I}` can be included or excluded from the sum without changing the net force on a pair of particles. 
-Practically, the only difference is a horizontal shift in the argument of the LD potential function :math:`u_{\beta|\beta} (\rho)`. 
+Practically, the only difference is a horizontal shift in the argument of the LD potential function :math:`U_{\beta|\beta} (\rho)`. 
 Whether or not to include this contribution is set by the user in the :doc:`ldd pair_coeff <pair_ldd>` command via the *self yes* or *self no* arguments. 
 
 
 For molecular systems, particles included in the local density around a given particle :math:`I` are identified by the neighbor list for the non-bonded interactions.
-That is, a particle excluded by the neighbor list for a central particle will also be excluded in the sum defining its local density.
+That is, a particle excluded by the neighbor list for a central particle will also be excluded from the sum defining its local density.
 
 For example, consider a 5 bead chain that is simulated with default 1-2, 1-3, and 1-4 non-bonded exclusions: 
 
@@ -51,34 +54,35 @@ the contribution from the end chain particle :math:`\bar{w}_{E|A}(r_{15})`.
 Conversely, the local density of particles of type B surrounding site 1, :math:`\rho_{B|1}` will only include intermolecular contributions to the local density.
 Whether or not the local density of A particles surrounding site 1, :math:`\rho_{A|1}`, will include the *self* intramolecular contribution :math:`\bar{w}_{A|A}(0)` is determined by whether *self yes* or *self no* is listed as an argument by the user in the :doc:`ldd pair_coeff <pair_ldd>` command. 
 
-The choice of LD definition used for a particular interaction between types, :math:`\beta|\alpha` is set by the user via the :doc:`ldd pair_coeff <pair_ldd>` command with the different available options for indicator functions.
-Note, that the :math:`\beta` local densities surrounding an :math:`\alpha` particle, :math:`\rho_{\beta=2|\alpha=1}` need not be defined with the same indicator as the :math:`\alpha` local densities surrounding a :math:`\beta` particle, :math:`\rho_{\alpha=1|\beta=2}`. 
-Practically, this means that the respective pair coeff commands "pair_coeff 1 2" and "pair_coeff 2 1" will set up the system interactions differently.
+The choice of local density definition used for a particular interaction between types, :math:`\beta|\alpha` is set by the user via the :doc:`ldd pair_coeff <pair_ldd>` command with the different available options for indicator functions.
+Note, that the weighting function, :math:`\bar{w}_{\beta|\alpha}`, and local density potential, :math:`U_{\beta|\alpha}` are not symmetric with respect to :math:`\alpha` and :math:`\beta`. 
+For instance, if :math:`\alpha = v` corresponds to solvents and :math:`\beta = u` corresponds to solutes, then the package allows the user to specify distinct weighting functions, :math:`\bar{w}_{v|u} \neq \bar{w}_{u|v}` and distinct LD potentials :math:`U_{v|u} \neq U_{u|v}`, for treating solvent around solute and solute around solvent respectively.
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
 **Local Density/ Square Gradient Potentials**
 
-The LDD package implements forces from two kinds of local density dependent potentials. 
+The LDD package implements forces for two kinds of local density dependent potentials. 
 
-LD (Local Density) potentials defined by:
+LD (Local Density) potentials are defined:
 
 .. math::
    
-   U_{LD}(\mathbf{R}) = \sum_{I} \sum_{\beta} U_{\beta|t_I}(\rho_{\beta|I})
+   U_{LD}(\mathbf{R}) = \sum_{I} \sum_{\beta} U_{\beta|t_I}(\rho_{\beta|I}),
 
 where the first sum is over all sites, :math:`I` , and the second sum is over all site types, :math:`\beta`.
-The form of :math:`U_{\beta|\alpha}` is set by the user in the :doc:`ldd pair_coeff <pair_ldd>` command using the *potential* keyword. 
-For instance, :math:`U_{\beta|\alpha}(\rho_{\beta|I})` can be :doc:`tabulated <ldd_potential_table>`, :doc:`quadratic <ldd_potential_quadratic>`, :doc:`linear <ldd_potential_linear>`, :doc:`constant <ldd_potential_constant>`, or :doc:`zero <ldd_potential_noforce>`.
+The form of :math:`U_{\beta|\alpha}` is specified by the user in the :doc:`ldd pair_coeff <pair_ldd>` command using the *potential* keyword. 
+For instance, :math:`U_{\beta|\alpha}(\rho_{\beta|I})` can be defined as :doc:`zero <ldd_potential_noforce>` or as a :doc:`constant <ldd_potential_constant>`, :doc:`linear <ldd_potential_linear>`, :doc:`quadratic <ldd_potential_quadratic>` function of the local density. 
+Alternatively, :math:`U_{\beta|\alpha}(\rho_{\beta|I})` can be specified by a table of values using the :doc:`tabulated <ldd_potential_table>` keywords. 
 Additionally the *potential* arg :doc:`mdpd <ldd_potential_mdpd>` is a quadratic function in local density that can be combined with the dpd pair_style to simulate pairwise mdpd interactions in the LD framework.
 
-SG (Square Gradient) potentials are defined by:
+SG (Square Gradient) potentials are defined:
 
 .. math::
 
    U_{SG}(\mathbf{R}) = \sum_{I} \sum_{\beta} U_{\nabla; \beta|t_I} (\rho_{\beta|I}) \left | \nabla_{I} \rho_{\beta|I} \right|^2
 
-where the first sum is over all sites, :math:`I`, the second sum is over all site types, :math:`\beta` and the gradient :math:`\nabla_{I} = \frac{d}{d\mathbf{R_I}}` is with respect to the position of particle :math:`I`. 
+where the first sum is over all sites, :math:`I`, the second sum is over all site types, :math:`\beta` and the gradient :math:`\nabla_{I} = \frac{\partial}{\partial\mathbf{R_I}}` is evaluated with respect to the position of particle :math:`I`. 
 The form of the coefficient, :math:`U_{\nabla; \beta|t_I}`, is specified by the user in the :doc:`ldd pair_coeff <pair_ldd>` command using the (optional) *gradient* keyword. 
 Many of the available functional forms for the LD potential are also available for the SG coefficients, see :doc:`pair_ldd <pair_ldd>` for details.
 
@@ -89,7 +93,7 @@ For any given site :math:`I`, once the local densities :math:`\rho_{\beta|I}` an
 Because of this, the LDD package must be used with its own custom :doc:`atom_style ldd <atom_style>`, which is basically the *atomic* atom_style, with extra fields for all local densities and local density gradients. 
 
 This implementation allows interactions to be specified in a pairtypewise manner using the typical pair_coeff commands for each of :math:`2^{\text{n}_{\text{types}}}` interactions.
-Where e.g. pair_coeff 1 2 is the interaction for atoms of type 1 surrounded by atoms of type 2, and is distinct from pair_coeff 2 1, the interaction for atoms of type 2 surrounded by atoms of type 1.
+In particular, pair_coeff 1 2 specifies the interaction for atoms of type 1 surrounded by atoms of type 2, and is distinct from pair_coeff 2 1, which corresponds to the interaction for atoms of type 2 surrounded by atoms of type 1.
 Note that the pair_coeff input (e.g. pair_coeff 1 2) uses a "surrounded by" convention. This describes the local densities for particles type 1 "surrounded by" type 2.
 Conversely, often in published works and equations for local densities we tend to use a "given" convention to describe the local density. 
 In this convention the equivalent interaction is denoted as 2|1, or type 2 given a central particle of type 1. 
@@ -111,7 +115,7 @@ Example 1) A simple atomic input example using only tabulated LD potentials
    newton on
    timestep 1
 
-   read_data my_mix.data # System initialization, must preceed pair style init
+   read_data my_mix.data # System initialization, must preceed pair style init or ldd will exit with a warning
    velocity all create 300.0 22345 dist gaussian
     
    ## pair_style ldd, must be used with atomstyle ldd
@@ -119,13 +123,13 @@ Example 1) A simple atomic input example using only tabulated LD potentials
    pair_style ldd 6.5 # Longest cutoff of all LD interactions
 
    # pair_coeff x y indicator keyword r0 rc self arg potential keyword args
-   pair_coeff 1 1 indicator dpd 0.0 6.5 self yes potential table/lin LD_table.1.1.dat # type 1 surrounded by type 1
+   pair_coeff 1 1 indicator dpd 0.0 6.5 self yes potential table/lin LD_table.1.1.dat # type 1 surrounded by type 1, 1|1
 
-   pair_coeff 1 2 ignore # type 1 surrounded by type 2 
+   pair_coeff 1 2 ignore # type 1 surrounded by type 2 , 2|1
    # n.b. As the above line shows, all 2^ntypes interactions must be specified even if its to note that no LD interaction should be used for this type, see keyword ignore for details in pair_style doc
-   pair_coeff 2 1 indicator dpd 0.0 5.5 self no potential table/lin LD_table.2.1..dat # type 2 surrounded by type 1
+   pair_coeff 2 1 indicator dpd 0.0 5.5 self no potential table/lin LD_table.2.1..dat # type 2 surrounded by type 1, 1|2
 
-   pair_coeff 2 2 indicator dpd 0.0 5.5 self yes potential table/line LD_table.2.2.dat # type 2 surrounded by type 2
+   pair_coeff 2 2 indicator dpd 0.0 5.5 self yes potential table/line LD_table.2.2.dat # type 2 surrounded by type 2, 2|2
 
    ## Run / Output
    run_style verlet
@@ -197,8 +201,7 @@ Conversely homo-interactions (e.g. 1|1 2|2) layer SG potentials on top of the al
 
 See ``examples/PACKAGES/ldd`` for full input files for a 4-site chain example (topology like A-B-C-D).
 
-Note that in all examples the ldd package is called in the following order: 1) Define the ldd atom style 2) Put particles in the system 3) Call the ldd pair style 4) Call the coeffs for 
-all types of particles 5) define output 6) run. 
+Note that in all input examples the ldd package is used in the following order: 1) Define the ldd atom style 2) Define the number of atom types in the simulation 3) Call the ldd pair style 4) Call the coeffs for  all types of particles 5) define output 6) run. 
 If the simulation box is not defined with the same number of atom types that atom_style ldd is defined with, the LDD package will throw an error and close the program.
 
 
@@ -210,7 +213,7 @@ read_data file format examples
 """""""""""""""""""""""""""""""
 
 Atom style ldd is a basic atomic atom_style with per-atom fields added for local densities, gradients of local densities, LD energy contributions and SG energy contributions. 
-These can be reported using :doc:`dump ldd <dump_ldd>`, but are not required for starting simulations. 
+These can be reported using :doc:`dump ldd <dump_ldd>`, but this information is calculated just based on configurational data, and thus is not used for starting simulations. 
 read_data input therefore can follow usual atomic read_data input formats, and when hybridized with other atom styles, the .data file is the same as atomic hybridized with those styles.
 
 Example 1) for when the :doc:`atom_style ldd <atom_style>` is used by itself (read_data is atomic)
@@ -300,12 +303,13 @@ Example 2) for the .data file up to the "Atoms" section of the read_data file wh
 
 **dump ldd output**
 
-Full LD/SG simulation statistics for each pair of types where an LDD type interaction can be calculated/dumped in the ldd dump command.
+For each central particle :math:`I` and each particle type :math:`\beta`, there is a local density of :math:`\beta` particles that surround :math:`I` :math:`\rho_{\beta|I}`, and a corresponding gradient of that local density, :math:`\frac{\partial \rho_{\beta|I}}{\partial \boldsymbol{R}_I}`. 
+If for example :math:`t_I = \alpha`, and an LDD interaction has been defined for the :math:`\beta|\alpha` local densities, then the :doc:`dump ldd <dump_ldd>` command will report :math:`\rho_{\beta|I}` and :math:`\frac{\partial \rho_{\beta|I}}{\partial \boldsymbol{R}_I}` in addition to the simulation x, v, and f information.
 :doc:`dump ldd <dump_ldd>` is essentially a custom lammps dump trajectory output with local density information. 
 
 See :doc:`dump ldd <dump_ldd>` for details.
 
-This trajectory type is natively compatible with the `Bottom-up Open-source Coarse-graining Software <https://github.com/noid-group/BOCS>`_ which can be used to parameterize LD/SG potentials from atomistic data, as well as to convert these lammps trajectories to .trr files for analysis with `gromacs(2019.6) <https://www.gromacs.org/>`_ tools.
+This trajectory type is natively compatible with the `Bottom-up Open-source Coarse-graining Software <https://github.com/noid-group/BOCS>`_ which can be used to parameterize LD/SG potentials from atomistic data, as well as to convert these lammps trajectories to .trr files for analysis with `gromacs <https://www.gromacs.org/>`_ tools.
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -313,7 +317,7 @@ This trajectory type is natively compatible with the `Bottom-up Open-source Coar
 
 This package has been primarily developed in the context of parameterizing/simulating 
 bottom up coarse grained models. 
-We have found that LD/SG potentials are particularly useful as an add on for pair potentials when simulating CG models in the NPT ensemble
+We have found that LD/SG potentials are particularly useful for supplementing pair potentials when simulating CG models in the NPT ensemble
 and in different interfacial environments. 
 In particular, such potentials dramatically improve CG descriptions of the pressure-density equation of state, interfacial profiles, liquid-vapor coexistence, and transferability between bulk and interfacial systems. 
 SG potentials are slower to simulate than LD potentials alone, so where applicable for coarse graining we recommend trying to construct/simulate LD potentials first and then [if necessary] adding SG potentials to refine further. 
@@ -344,12 +348,12 @@ A number of works have been published using this package (with `BOCS <https://gi
 
 .. _Lesniewski1:
 
-**(Lesniewski)** Lesniewski, Remsing, Noid "Coarse Graining the Hydrophobic Effect." The Journal of Chemical Physics, X, X (2025)
+**(Lesniewski)** Lesniewski, Remsing, Noid "Coarse Graining the Hydrophobic Effect." The Journal of Chemical Physics, In Prep 2025
 
 .. _Dutta:
 
-**(Dutta)** Dutta, Lesniewski, Qaisrani, Noid, Andrienko, Nikoubashman. "Accurate coarse-graining of small organic molecules in melts and thin films using density-dependent potentials". X, X, X, (2025)
+**(Dutta)** Dutta, Lesniewski, Qaisrani, Noid, Andrienko, Nikoubashman. "Accurate coarse-graining of small organic molecules in melts and thin films using density-dependent potentials". In Prep 2025
 
 .. _Lesniewski2:
 
-**(Lesniewski)** Lesniewski, DeLyser, W. G. Noid "Progress toward a better BOCS: systematic coarse-graining with local density potentials" X, X, X (2025)
+**(Lesniewski)** Lesniewski, DeLyser, W. G. Noid "Progress toward a better BOCS: systematic coarse-graining with local density potentials" In Prep 2025

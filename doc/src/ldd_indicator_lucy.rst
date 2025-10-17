@@ -28,8 +28,9 @@ The *lucy* indicator style employs the Lucy function popularized from smoothed p
 .. math::
    w(r) &= (1-r/r_{c})^{3}(1+3r/r_{c}) \\
    [w] &= 16 \pi r_{c}^{3} / 105 \\
-   \bar{w}(r) &= 105 (1-r/r_{c})^{3}(1+3r/r_{c})/(16 \pi r_{c}^{3})
+   \bar{w}(r) &= 105 (1-r/r_{c})^{3}(1+3r/r_{c}) \theta(r_c - r)/(16 \pi r_{c}^{3})
  
+Where :math:`\theta(x)` is the Heaviside function, with :math:`\theta(x)=1` if :math:`x \geq 0` and :math:`\theta(x)=0` otherwise.
 Following the *lucy* argument after the indicator keyword, you must specify the values for :math:`r_{0}` and :math:`r_{c}`. For the *lucy* indicator type, you must set :math:`r_{0}=0.0`. 
 
 Related commands
@@ -37,4 +38,4 @@ Related commands
 
 :doc:`pair_ldd <pair_ldd>`
 
-
+**(Lucy)** L. B. Lucy, "A numerical approach to the testing of the fission hypothesis.", Astronomical Journal, 82, 1013-1024 (1977).

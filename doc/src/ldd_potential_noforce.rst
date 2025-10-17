@@ -37,7 +37,7 @@ Examples
 Description
 """""""""""
 This option can follow the *potential* keyword in the ldd pair_coeff command.
-Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho}`.
+Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho} = -\frac{dU_{\rho}}{d\rho}`.
 
 Operationally, *noforce* is meant to be used to calculate local densities and gradients of the local density without applying a potential to your system. 
 This could alternatively be calculated by post-processing the simulation with tools like `BOCS <https://github.com/noid-group/BOCS>`_.

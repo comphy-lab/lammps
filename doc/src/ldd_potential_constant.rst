@@ -31,22 +31,19 @@ where :math:`c` is the value of the potential at all values of the local density
 Description
 """""""""""
 This option can follow the *gradient* or *potential* keywords in the ldd pair_coeff command.
-Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho}`
-Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla}`.
+Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho} = -\frac{dU_{\rho}}{d\rho}`
+Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla} = -\frac{dU_{\nabla}}{d\rho}`.
 For generality we note each case with a dummy :math:`X` below.
 
 
-Style *constant* applies a constant value as the potential. 
+The style *constant* defines the relevant potential or coefficient function by a constant. 
 Note that using the constant type for the LD potential won't actually change the behavior of the system. 
 However, using the constant type for the gradient potential will change the behavior of the system.
 
 .. math::
    U_{X}(\rho) &= c \\
-   F_{X}(\rho) &= 0
+   F_{X}(\rho) &= 0, \text{where } X=\rho \text{ or } X=\nabla.\\
 
-
-Note that when :math:`U_{X}(\rho) = U_{\rho}(\rho)`, this constant form will not exert a force on the system and the configurational distribution will be unaffected. 
-Conversely, when :math:`U_{X}(\rho) = U_{\nabla}(\rho)`, a force will be exerted and perturb any previously defined equilibrium distribution.
 
 Related commands
 """"""""""""""""
