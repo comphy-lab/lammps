@@ -62,6 +62,20 @@ class FixStoreState : public Fix {
   double **avalues;    // archived atom properties
   double *vbuf;        // 1d ptr to values
 
+  // history of archived atom properties (Nrepeat frames)
+
+  int historyflag;         // 1 if history frames are stored
+  int nevery_history;      // store a history frame once every Nevery steps
+  int nrepeat_history;     // # of history frames to store
+  int nfreq_history;       // enable output of stored history on these steps
+  int count_history;       // number of currently stored history frames
+  int most_history_step;   // timestep for most recent history frame
+  int most_history_index;  // index of most recent frame in avalues_history
+  
+  double ***avalues_history;  // storage for up to Nrepeat history frames
+
+  // COM info
+  
   int comflag;
   double cm[3];    // center of mass
 
