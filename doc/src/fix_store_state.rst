@@ -66,7 +66,7 @@ Syntax
          Nevery = accumulate atom attributes once every this many steps
          Nrepeat = # of times to accumulate atom attributes
          Nfreq = make stored atom attributes (history) available every this many steps
-	 
+
 Examples
 """"""""
 
