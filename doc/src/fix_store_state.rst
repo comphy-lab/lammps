@@ -63,9 +63,9 @@ Syntax
 
        *com* value = *yes* or *no*
        *history* values = Nevery Nrepeat Nfreq
-         Nevery = store atom attributes every this many steps
-	 Nrepeat = # of times to store atom attributes
-	 Nfreq = make stored atom attributes available every this many steps
+         Nevery = accumulate atom attributes once every this many steps
+	 Nrepeat = # of times to accumulate atom attributes
+	 Nfreq = make stored atom attributes (history) available every this many steps
 	 
 Examples
 """"""""
@@ -82,8 +82,8 @@ Description
 """""""""""
 
 Define a fix that stores attributes for each atom in the group either
-once or for multiple recent history timesteps by use of the optional
-*history* keyword.
+once or for multiple recent timesteps by use of the optional *history*
+keyword.
 
 If the optional keyword *history* is not used, then atom attributes are
 stored once.  If *N* > 0, then the stored attributes will be updated
