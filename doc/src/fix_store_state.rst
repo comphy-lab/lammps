@@ -57,7 +57,7 @@ Syntax
            *d2_name[I]* = Ith column of custom floating-point array with name
 
 * zero or more keyword/value pairs may be appended
-* keyword = *com*
+* keyword = *com* or *history*
 
   .. parsed-literal::
 
