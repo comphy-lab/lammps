@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
-   http://lammps.sandia.gov, Sandia National Laboratories
-   Steve Plimpton, sjplimp@sandia.gov
+   https://www.lammps.org/, Sandia National Laboratories
+   LAMMPS development team: developers@lammps.org
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
@@ -11,7 +11,7 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 /* ------------------------------------------------------
-    This file is part of the USER-LDD package for LAMMPS.
+    This file is part of the LDD package for LAMMPS.
     Contributed by Michael R. DeLyser, mrd5285@psu.edu
     and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University

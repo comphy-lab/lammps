@@ -1,7 +1,7 @@
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
-   http://lammps.sandia.gov, Sandia National Laboratories
-   Steve Plimpton, sjplimp@sandia.gov
+   https://www.lammps.org/, Sandia National Laboratories
+   LAMMPS development team: developers@lammps.org
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
@@ -11,8 +11,9 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 /* ------------------------------------------------------
-    This file is part of the USER-LDD package for LAMMPS.
+    This file is part of the LDD package for LAMMPS.
     Contributed by Michael R. DeLyser, mrd5285@psu.edu
+    and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University
    ------------------------------------------------------ */
 #include "pair_ldd.h"
@@ -88,7 +89,7 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   writedata = 1;
 
   restartinfo = 0;
-  single_enable = 0; // MCL 07.30.25, while we have a single routine to compute the pair contribution given info about the LD, but I do not know how to add a unit test for it since the base pair google test will set up a non-ldd atom_style for testing so for now I am disabling it. 
+  single_enable = 0; // MCL 07.30.25, while we have a single routine to compute the pair contribution given info about the LD, we have no way to set up the LD info without compute at present. So I disabled this.
 
 // We pass the local densities & 3 components of the gradients for each type
   comm_forward = 4 * atom->ntypes;
