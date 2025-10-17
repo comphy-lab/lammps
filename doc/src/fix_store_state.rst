@@ -166,24 +166,33 @@ group.
 Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-This fix writes the per-atom values it stores to :doc:`binary restart
-files <restart>`, so that the values can be restored when a simulation
-is restarted.  See the :doc:`read_restart <read_restart>` command for
-info on how to re-specify a fix in an input script that reads a
-restart file, so that the operation of the fix continues in an
-uninterrupted fashion.
+If the optional *history* keyword is not used, this fix writes the
+per-atom values it stores to :doc:`binary restart files <restart>`, so
+that the values can be restored when a simulation is restarted.  See
+the :doc:`read_restart <read_restart>` command for info on how to
+re-specify a fix in an input script that reads a restart file, so that
+the operation of the fix continues in an uninterrupted fashion.
 
 .. warning::
 
-   When reading data from a restart file, this fix command has to be specified
-   **exactly** the same way as before. LAMMPS will only check whether a
-   fix is of the same style and has the same fix ID and in case of a match
-   will then try to initialize the fix with the data stored in the binary
-   restart file.  If the fix store/state command does not match exactly,
-   data can be corrupted or LAMMPS may crash.
+   To enable the stored per-atom info to be restored from the restart
+   file, this fix command has to be specified **exactly** the same way
+   as before. LAMMPS will only check whether a fix is of the same
+   style and has the same fix ID and in case of a match will then try
+   to initialize the fix with the data stored in the binary restart
+   file.  If the fix store/state command does not match exactly (for
+   example, if the list of values does not match), data can be
+   corrupted or LAMMPS may crash.  If the new fix uses the optional
+   *history* keyword, the data stored in the restart file will be
+   discarded.
 
-None of the :doc:`fix_modify <fix_modify>` options are relevant to this
-fix.
+If the *history* keyword is used, no information about this fix is
+written to :doc:`binary restart files <restart>`.  Instead, you should
+simply specify a new fix in the restarted run to begin new
+accumulation of per-atom history.
+
+None of the :doc:`fix_modify <fix_modify>` options are relevant to
+this fix.
 
 If the optional *history* keyword is not used, this fix produces a
 per-atom vector if a single input is specified.  Or a per-atom array
@@ -192,17 +201,12 @@ atom is the number of inputs.  These can be accessed by various
 :doc:`output commands <Howto_output>`.  These per-atom values can be
 accessed on any timestep (see the discussion of Noutput below).
 
-THe same per-atom vector or per-atom array output is also produced if
-the optional *history* keyword is used.  In this case the values will
-always be for the most recent timestep on which history was stored.
+If the *history* keyword is used, no per-atom vector or array is
+produced.  Instead, the fix provides access to its mulitiple timesteps
+of stored per-atom history via its *extract()* method.
 
-If the optional *history* keyword is specified, then this fix also
-provides access to mulitple snapshots via its *extract()* method.
-
-For example, it can be called by a compute (see the code for the
-compute vacf/recent command).
-
-Explain the syntax for extract() calls.
+NOTE: need more explanation of how to use extract() here.
+Possibly also document that compute property/atom can access the history.
 
 No parameter of this fix can be used with the *start/stop* keywords of
 the :doc:`run <run>` command.  This fix is not invoked during

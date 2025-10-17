@@ -43,8 +43,6 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
 {
   if (narg < 5) utils::missing_cmd_args(FLERR,"fix store/state", error);
 
-  restart_peratom = 1;
-
   nevery = utils::inumeric(FLERR,arg[3],false,lmp);
   if (nevery < 0) error->all(FLERR,"Invalid fix store/state N value {}", nevery);
 
@@ -349,11 +347,16 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
 
   // if historyflag = 0:
   //   this fix produces either a per-atom vector or array, always available
+  //   also saves the per-atom vec/array in the restart file
   // if historyflag = 1:
-  //   this fix produces either a list of per-atom vectors or arrays
-  //   only available on multiples of nevery (now same as nevery_history)
+  //   this fix produces neither a per-atom vector or array
+  //   provides access via extract() to its saved history frames
+  //     only on multiples of nevery (now same as nevery_history)
+  //     NOTE: maybe should not use peratom_freq to store nevery ?
+  //   saves nothing to restart file
 
   if (!historyflag) {
+    restart_peratom = 1;
     peratom_flag = 1;
     peratom_freq = 1;
     if (values.size() == 1) size_peratom_cols = 0;
@@ -664,7 +667,9 @@ void FixStoreState::end_of_step()
 
 double FixStoreState::memory_usage()
 {
-  double bytes = (double)atom->nmax*values.size() * sizeof(double);
+  double bytes;
+  if (!historyflag) bytes = (double)atom->nmax*values.size() * sizeof(double);
+  else bytes = (double)(count_history+1)*atom->nmax*values.size() * sizeof(double);
   return bytes;
 }
 
@@ -756,6 +761,7 @@ int FixStoreState::unpack_exchange(int nlocal, double *buf)
 
 /* ----------------------------------------------------------------------
    pack values in local atom-based arrays for restart file
+   only called when historyflag = 0
 ------------------------------------------------------------------------- */
 
 int FixStoreState::pack_restart(int i, double *buf)
@@ -768,6 +774,7 @@ int FixStoreState::pack_restart(int i, double *buf)
 
 /* ----------------------------------------------------------------------
    unpack values from atom->extra array to restart the fix
+   only called when historyflag = 0 in new fix
 ------------------------------------------------------------------------- */
 
 void FixStoreState::unpack_restart(int nlocal, int nth)
@@ -786,22 +793,22 @@ void FixStoreState::unpack_restart(int nlocal, int nth)
 
 /* ----------------------------------------------------------------------
    maxsize of any atom's restart data
+   only called when historyflag = 0
 ------------------------------------------------------------------------- */
 
 int FixStoreState::maxsize_restart()
 {
-  if (!historyflag) return values.size() + 1;
-  return (count_history+1)*values.size() + 1;
+  return values.size() + 1;
 }
 
 /* ----------------------------------------------------------------------
    size of atom nlocal's restart data
+   only called when historyflag = 0
 ------------------------------------------------------------------------- */
 
 int FixStoreState::size_restart(int /*nlocal*/)
 {
-  if (!historyflag) return values.size() + 1;
-  return (count_history+1)*values.size() + 1;
+  return values.size() + 1;
 }
 
 /* ----------------------------------------------------------------------
