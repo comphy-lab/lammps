@@ -243,7 +243,7 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
 
   comflag = 0;
   historyflag = 0;
-  
+
   while (iarg < narg) {
     if (strcmp(arg[iarg],"com") == 0) {
       if (iarg+2 > narg) utils::missing_cmd_args(FLERR,"fix store/state com", error);
@@ -261,7 +261,7 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
 
   // error checks on use of N and history keyword args
   // then override nevery with nevery_history
-  
+
   if (historyflag) {
     if (nevery) error->all(FLERR,"Fix store/state N = 0 required with history keyword");
     if (nevery_history <= 0)
@@ -370,7 +370,7 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
     avalues_history = (double ***) memory->smalloc(nrepeat_history*sizeof(double **),
                                                   "store/state:avalues_history");
     for (int i = 0; i < nrepeat_history; i++) avalues_history[i] = nullptr;
-    
+
     most_recent_step = -1;
     most_recent_index = -1;
     count_history = 0;
@@ -414,7 +414,7 @@ FixStoreState::~FixStoreState()
   atom->delete_callback(id,Atom::RESTART);
 
   memory->destroy(avalues);
-  
+
   if (historyflag) {
     for (int i = 0; i < nrepeat_history; i++) memory->destroy(avalues_history[i]);
     memory->sfree(avalues_history);
@@ -478,7 +478,7 @@ void FixStoreState::setup(int /*vflag*/)
   // for historyflag = 0: store current values for only compute, fix, variable
   // for historyflag = 1: store all current values if timestep is multiple of nevery
   //   eox() will skip if this step is not not needed
-  
+
   if (firstflag) {
     if (!historyflag) {
       kflag = 0;
@@ -507,13 +507,13 @@ void FixStoreState::end_of_step()
   // for historyflag = 1, nevery is > 0:
   //   eos() called on every step which is multiple of nevery, including from setup()
   //   logic here will skip this step if not needed in history
-  
+
   if (historyflag && nfreq_history > nevery*nrepeat_history && update->ntimestep % nfreq_history) {
     int nfreq_next = (update->ntimestep/nfreq_history)*nfreq_history + nfreq_history;
     int nprevious = (nfreq_next-update->ntimestep) / nevery;
-    if (nprevious >= nrepeat_history) return; 
+    if (nprevious >= nrepeat_history) return;
   }
-  
+
   // compute center-of-mass if comflag set
 
   if (comflag) {
@@ -523,7 +523,7 @@ void FixStoreState::end_of_step()
 
   // if any compute/fix/variable is needed on future step, wrap with clear/add
   // not the case if nevery = 0
-  
+
   if (cfv_any && nevery) modify->clearstep_compute();
 
   // fill vector or array with per-atom values
@@ -612,7 +612,7 @@ void FixStoreState::end_of_step()
   // if any compute/fix/variable is needed on future step, add nextstep when needed
   // not the case if nevery = 0
   // for historyflag with large enough nfreq_history to skip steps, calculate nextstep
-  
+
   if (cfv_any && nevery) {
     bigint nextstep;
     if (historyflag && nfreq_history > nevery*nrepeat_history && update->ntimestep % nfreq_history)
@@ -630,7 +630,7 @@ void FixStoreState::end_of_step()
     if (count_history < nrepeat_history) count_history++;
     most_recent_index++;
     if (most_recent_index == nrepeat_history) most_recent_index = 0;
- 
+
     int nlocal = atom->nlocal;
     if (avalues)
       memcpy(&avalues_history[most_recent_index][0][0],&avalues[0][0],
@@ -684,7 +684,7 @@ void FixStoreState::grow_arrays(int nmax)
     for (int i = 0; i < nrepeat_history; i++)
       memory->grow(avalues_history[i],nmax,values.size(),"store/state:avalues_history");
   }
-  
+
   if (values.size() == 1) {
     if (nmax) vector_atom = &avalues[0][0];
     else vector_atom = nullptr;
@@ -728,7 +728,7 @@ int FixStoreState::pack_exchange(int i, double *buf)
       if (k < 0) k += nrepeat_history;
     }
   }
-  
+
   if (!historyflag) return values.size();
   return (count_history+1)*values.size();
 }
@@ -817,12 +817,12 @@ void *FixStoreState::extract(const char *str, int &dim)
   if (!historyflag) return nullptr;
 
   // only allow extraction on steps compatible with nevery_history and nfreq_history
-  
+
   if (nfreq_history == 0 && update->ntimestep % nevery_history) return nullptr;
   if (nfreq_history && update->ntimestep % nfreq_history) return nullptr;
 
   // various history params which can be used by caller
-  
+
   if (strcmp(str, "size") == 0) {
     dim = 0;
     return &vsize;
@@ -849,7 +849,7 @@ void *FixStoreState::extract(const char *str, int &dim)
   }
 
   // extract the 3d history tensor
-  
+
   if (strcmp(str, "history") == 0) {
     dim = 3;
     return avalues_history;

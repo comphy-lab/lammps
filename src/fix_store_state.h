@@ -73,11 +73,11 @@ class FixStoreState : public Fix {
   int most_recent_step;    // timestep for most recent history frame
   int most_recent_index;   // index of most recent frame in avalues_history
   int vsize;               // number of values (needed for extract())
-  
+
   double ***avalues_history;  // storage for up to Nrepeat history frames
 
   // COM info
-  
+
   int comflag;
   double cm[3];    // center of mass
 
