@@ -38,7 +38,7 @@ The *sphere* indicator style employs a smoothed Heaviside indicator function. If
    c_{-1} &= -3 (X^{4}+x^{4})/(16x^{3}) + 3X^{2}/(8x) \\
    c_{0} &= (X^{3}+x^{3})/(2x^{3}) \\
    c_{1} &= -3(X^{2}+x^{2})/(8x^{3}) \\
-   c_{3} &= (16x^{3})^{-1} 
+   c_{3} &= (16x^{3})^{-1}
 
 Following *sphere*, you must provide values for :math:`r_{0}` and :math:`r_{c}`
 

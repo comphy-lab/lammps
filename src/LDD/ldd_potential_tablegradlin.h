@@ -27,17 +27,17 @@ LddPotentialStyle(table/gradlin,LddPotentialTableGradLin);
 
 #include "ldd_potential.h"
 
-namespace LAMMPS_NS { 
+namespace LAMMPS_NS {
 
 class LddPotentialTableGradLin : public LddPotential {
   public:
- 
+
     LddPotentialTableGradLin(class LAMMPS *);
-    ~LddPotentialTableGradLin(); 
+    ~LddPotentialTableGradLin();
 
     void setup_potl(int, int, char **) override;
-    double u(double ) override; 
-    double f(double ) override; 
+    double u(double ) override;
+    double f(double ) override;
 
   protected:
     virtual void allocate();
@@ -45,5 +45,5 @@ class LddPotentialTableGradLin : public LddPotential {
 };
 }
 
-#endif 
+#endif
 #endif

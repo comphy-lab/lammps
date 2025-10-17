@@ -1387,11 +1387,11 @@ LDD package
 
 The package includes an atom_style and pair_style that flexibly define interactions as function
 of the local density and/or gradient of the local density around a central particle.
-It also includes a dump style that is natively compatible with the Bottom-up Open-source Coarse-graining Software (BOCS), which is an external coarse-graining 
+It also includes a dump style that is natively compatible with the Bottom-up Open-source Coarse-graining Software (BOCS), which is an external coarse-graining
 package that can be used to parameterize such potentials from atomistic simulation data.
 `https://github.com/noid-group/BOCS <https://github.com/noid-group/BOCS>`_
 
-The package is compatible with molecular topologies, allows the user to specify the length-scale and weighting functions for multiple types of local densities, and distinguishes asymmetric local density potentials. 
+The package is compatible with molecular topologies, allows the user to specify the length-scale and weighting functions for multiple types of local densities, and distinguishes asymmetric local density potentials.
 (e.g. distinct potentials can govern 1.) solute density around solvent molecules and 2.) solvent density around solute molecules)
 
 The local density potentials implemented define "local density" flexibly with different choices of indicator weighting functions and asymmetry in interactions as generically described in:

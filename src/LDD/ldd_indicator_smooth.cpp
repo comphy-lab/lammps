@@ -97,18 +97,18 @@ void LddIndicatorSmooth::init_coeffs(double a, double b, int dim)
             coeffs[0] / 3.0 * (pow(rc,3)-pow(r0,3)));
     break;
   }
-  invnorm = 1.0 / norm;               
+  invnorm = 1.0 / norm;
 }
 
 double LddIndicatorSmooth::w(double r)
 {
   if (r < r0) { return invnorm; }
   if (r > rc) { return 0.0; }
-  return ((coeffs[0] + 
-           coeffs[1] * r + 
-           coeffs[2] * pow(r,2) + 
-           coeffs[3] * pow(r,3) + 
-           coeffs[4] * pow(r,4) + 
+  return ((coeffs[0] +
+           coeffs[1] * r +
+           coeffs[2] * pow(r,2) +
+           coeffs[3] * pow(r,3) +
+           coeffs[4] * pow(r,4) +
            coeffs[5] * pow(r,5)) /* coeffs[6]*/) * invnorm;
 }
 
@@ -116,9 +116,9 @@ double LddIndicatorSmooth::wp(double r)
 {
   if (r < r0) { return 0.0; }
   if (r > rc) { return 0.0; }
-  return ((      coeffs[1] + 
+  return ((      coeffs[1] +
            2.0 * coeffs[2] * r +
-           3.0 * coeffs[3] * pow(r,2) + 
+           3.0 * coeffs[3] * pow(r,2) +
            4.0 * coeffs[4] * pow(r,3) +
            5.0 * coeffs[5] * pow(r,4)) /* coeffs[6]*/) * invnorm;
 }
@@ -127,8 +127,8 @@ double LddIndicatorSmooth::wp2(double r)
 {
   if (r < r0) { return 0.0; }
   if (r > rc) { return 0.0; }
-  return (( 2.0 * coeffs[2] + 
+  return (( 2.0 * coeffs[2] +
             6.0 * coeffs[3] * r +
-           12.0 * coeffs[4] * pow(r,2) + 
+           12.0 * coeffs[4] * pow(r,2) +
            20.0 * coeffs[5] * pow(r,3)) /* coeffs[6]*/ ) * invnorm;
 }

@@ -27,18 +27,18 @@ LddPotentialStyle(table/gradspline,LddPotentialTableGradSpline);
 
 #include "ldd_potential.h"
 
-namespace LAMMPS_NS { 
+namespace LAMMPS_NS {
 
 class LddPotentialTableGradSpline : public LddPotential {
   public:
- 
+
     LddPotentialTableGradSpline(class LAMMPS *);
-    ~LddPotentialTableGradSpline(); 
+    ~LddPotentialTableGradSpline();
 
     void setup_potl(int, int, char **) override;
-    double u(double ) override; 
-    double f(double ) override; 
-    double splint(double , double , double , double , double , 
+    double u(double ) override;
+    double f(double ) override;
+    double splint(double , double , double , double , double ,
                   double , double , double , double , double );
     double dsplint(double , double , double , double , double ,
                   double , double , double , double , double );
@@ -51,5 +51,5 @@ class LddPotentialTableGradSpline : public LddPotential {
 };
 }
 
-#endif 
+#endif
 #endif

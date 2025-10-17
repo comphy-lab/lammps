@@ -588,8 +588,8 @@ void Atom::peratom_create()
   add_peratom("apip_f_const_lambda",&apip_f_const_lambda,DOUBLE,3,1);
   add_peratom("apip_f_dyn_lambda",&apip_f_dyn_lambda,DOUBLE,3,1);
 
-  // LDD package 
-  
+  // LDD package
+
   int t_ntypes = ldd_ntypes;
   add_peratom("ldd_local_density",&ldd_local_density,DOUBLE,t_ntypes+1);
   add_peratom("ldd_energy",&ldd_energy,DOUBLE,t_ntypes+1);
@@ -3212,7 +3212,7 @@ void *Atom::extract(const char *name)
   if (strcmp(name,"apip_lambda_const") == 0) return (void *) apip_lambda_const;
 
   // LDD package
-  
+
   if (strcmp(name,"ldd_local_density") == 0) return (void *) ldd_local_density;
   if (strcmp(name,"ldd_energy") == 0) return (void *) ldd_energy;
   if (strcmp(name,"ldd_grad_density") == 0) return (void *) ldd_grad_density;
@@ -3382,9 +3382,9 @@ int Atom::extract_datatype(const char *name)
   if (strcmp(name,"apip_lambda_const") == 0) return LAMMPS_DOUBLE;
   if (strcmp(name,"apip_f_const_lambda") == 0) return LAMMPS_DOUBLE_2D;
   if (strcmp(name,"apip_f_dyn_lambda") == 0) return LAMMPS_DOUBLE_2D;
-  
+
   // LDD package
-  
+
   if (strcmp(name,"ldd_local_density") == 0) return LAMMPS_DOUBLE_2D;
   if (strcmp(name,"ldd_energy") == 0) return LAMMPS_DOUBLE_2D;
   if (strcmp(name,"ldd_grad_density") == 0) return LAMMPS_DOUBLE_2D;

@@ -17,7 +17,7 @@
     The Pennsylvania State University
    ------------------------------------------------------ */
 /*
- * 
+ *
  * This LD potential type is the one employed in many MDPD papers, such as
  * Warren. Phys. Rev. E. 2003. 68, 066702.
  * Ghoufi, Malfreyt. Phys. Rev. E. 2011. 83, 051601.
@@ -77,7 +77,7 @@ void LddPotentialMdpd::setup_potl(int ipt, int narg, char **arg)
   if (!allocated) allocate();
 
   coeffs[0] = utils::numeric(FLERR,arg[ipt+2],false,lmp); // B
-  sprintf(ptype,"mdpd");  
+  sprintf(ptype,"mdpd");
   double rc = -1.0;
   int i;
   // The potential normalization depends on the indicator function
@@ -95,7 +95,7 @@ void LddPotentialMdpd::setup_potl(int ipt, int narg, char **arg)
   if (rc == -1.0) // Unable to find rc
   {
     error->all(FLERR,"Unable to find rc in LDD pair coeff line.");
-  } 
+  }
   coeffs[1] = MY_PI * coeffs[0] * pow(rc,4) / 30.0;
 }
 

@@ -23,7 +23,7 @@ Examples
 Description
 """""""""""
 
-The *smooth* indicator style employs a smoothed Heaviside function that is one for :math:`r \leq r_0`, zero for :math:`r \geq r_c`, and smoothly interpolates between zero and one in the interval :math:`r_0 \leq r \leq r_c`. 
+The *smooth* indicator style employs a smoothed Heaviside function that is one for :math:`r \leq r_0`, zero for :math:`r \geq r_c`, and smoothly interpolates between zero and one in the interval :math:`r_0 \leq r \leq r_c`.
 This function is similar to the indicator function introduced by Sanyal and Shell, but has a continuous second derivative.
 
 .. math::

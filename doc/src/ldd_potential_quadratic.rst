@@ -22,7 +22,7 @@ Examples
 
 .. parsed-literal::
 
-    keyword = *potential* 
+    keyword = *potential*
       *potental* value = quadratic args
         *quadratic* args = a b c
 
@@ -35,7 +35,7 @@ Following the *potential* keyword, it controls the functional form for :math:`U_
 Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla} = -\frac{dU_{\nabla}}{d\rho}`.
 For generality we note each case with a dummy :math:`X` below.
 
-Style *quadratic* applies a quadratic potential: 
+Style *quadratic* applies a quadratic potential:
 
 .. math::
    U_{X}(\rho) &= a\rho^{2} + b\rho + c \\
@@ -45,14 +45,14 @@ Related commands
 """"""""""""""""
 
 :doc:`pair_ldd <pair_ldd>`
-   
+
 ------------
 
 .. .. _DeLyser:
-.. see :ref:`DeLyser` and :ref:`Warren` for more. 
+.. see :ref:`DeLyser` and :ref:`Warren` for more.
 
 **(DeLyser)** M.R. DeLyser, W.G. Noid, "Coarse-grained models for local density gradients." J. Chem. Phys., 156, 034106 (2021).
 
 .. .. _Warren:
 
-**(Warren)** P. B. Warren, "Vapor-liquid coexistence in many-body dissipative particle dynamics." Phys. Rev. E., 68, 066702 (2003). 
+**(Warren)** P. B. Warren, "Vapor-liquid coexistence in many-body dissipative particle dynamics." Phys. Rev. E., 68, 066702 (2003).

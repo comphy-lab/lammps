@@ -26,12 +26,12 @@ namespace LAMMPS_NS {
 class LddPotential : protected Pointers {
  public:
   int allocated; // 0 or 1, tracks whether the potential type has been allocated
-  int n_coeffs; // length of coeffs 
+  int n_coeffs; // length of coeffs
   double *coeffs; // coefficients involved in defining u_LD or u_SG (e.g. a b c in ax^2 + bx +c)
   int ptype_len; // length of ptype entry (num chars for map keyword)
   char *ptype; // The map keyword for the potential type
   char *table_fnm; // filename for tabulated interactions, max 100 char
-  
+
   struct t_table {
     int n_pts; // number of table entries
     double dr; // domain spacing between table entries
@@ -42,11 +42,11 @@ class LddPotential : protected Pointers {
     double *f2; // The second derivatives calculated from f (inferred)
   }; // structure to hold tabulated table info
 
-  t_table potl_table; // field for the table info 
+  t_table potl_table; // field for the table info
 
   LddPotential(class LAMMPS *);
   virtual ~LddPotential();
-  
+
   virtual void setup_potl(int, int, char **) {} // fnc to define U_x, must be overriden
   virtual double u(double ) { return 0; } // fn that returns value of U_x(rho), must be overriden
   virtual double f(double ) { return 0; } // fn that returns f_x(rho), must be overriden
@@ -57,6 +57,6 @@ class LddPotential : protected Pointers {
 
 };
 
-}  
+}
 
 #endif

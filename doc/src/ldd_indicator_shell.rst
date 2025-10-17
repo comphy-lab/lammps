@@ -41,7 +41,7 @@ This function has a continuous first derivative, but a discontinuous second deri
                            &+ c_{4} / 7 * (r_{c}^{7}-r_{0}^{7}) \\
                            &+ c_{6} / 9 * (r_{c}^{9}-r_{0}^{9}) )
 
-.. math:: 
+.. math::
    d &= (1 - r_{0}^{2}/r_{c}^{2})^{3} \\
    c_{0} &= (1 - 3 r_{0}^{2}/r_{c}^{2})/d \\
    c_{2} &= 6 r_{0}^{2} / r_{c}^{4} / d \\

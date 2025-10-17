@@ -104,7 +104,7 @@ void LddPotential::read_table_file(char *fnm, bool bspline)
     potl_table.r[i] = (double) rt;
     potl_table.u[i] = (double) ut;
     potl_table.f[i] = (double) ft;
-  } 
+  }
   fclose(fp);
   potl_table.dr = potl_table.r[1] - potl_table.r[0];
   for (int i = 0; i < potl_table.n_pts - 1; ++i)

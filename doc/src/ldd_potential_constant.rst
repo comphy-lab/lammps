@@ -22,9 +22,9 @@ Examples
 
 .. parsed-literal::
 
-    keyword = *gradient* 
+    keyword = *gradient*
       *gradient* value = constant args
-        *constant* args = c 
+        *constant* args = c
 
 where :math:`c` is the value of the potential at all values of the local density
 
@@ -36,8 +36,8 @@ Following the *gradient* keyword, it controls the function form for :math:`U_{\n
 For generality we note each case with a dummy :math:`X` below.
 
 
-The style *constant* defines the relevant potential or coefficient function by a constant. 
-Note that using the constant type for the LD potential won't actually change the behavior of the system. 
+The style *constant* defines the relevant potential or coefficient function by a constant.
+Note that using the constant type for the LD potential won't actually change the behavior of the system.
 However, using the constant type for the gradient potential will change the behavior of the system.
 
 .. math::
@@ -49,12 +49,12 @@ Related commands
 """"""""""""""""
 
 :doc:`pair_ldd <pair_ldd>`
-   
+
 ------------
 
 .. .. _DeLyser:
 
-.. see :ref:`DeLyser` for more 
+.. see :ref:`DeLyser` for more
 
 **(DeLyser)** M.R. DeLyser, W.G. Noid, "Coarse-grained models for local density gradients." J. Chem. Phys., 156, 034106 (2021).
 

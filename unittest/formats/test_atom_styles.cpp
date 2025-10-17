@@ -5354,7 +5354,7 @@ TEST_F(AtomStyleTest, oxdna)
     END_HIDE_OUTPUT();
 }
 
-// LDD PACKAGE 
+// LDD PACKAGE
 
 TEST_F(AtomStyleTest, atomic_ldd_basic)
 {
@@ -5402,7 +5402,7 @@ TEST_F(AtomStyleTest, atomic_ldd_basic)
 TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
 {
  if (!Info::has_package("LDD")) GTEST_SKIP();
- 
+
  BEGIN_HIDE_OUTPUT();
  command("atom_style ldd 2");
  command("region my_box block 0 9 0 9 0 9");
@@ -5436,7 +5436,7 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
  ASSERT_NEAR(lmp->atom->ldd_local_density[4][1],4.864480249, 1e-9);
  ASSERT_NEAR(lmp->atom->ldd_local_density[4][2],4.853815902, 1e-9);
 
- // LD_grad Check 
+ // LD_grad Check
  // Atoms 0->n_atoms-1, grads, 3->3ntypes+3
  // atom i|type1
  ASSERT_NEAR(lmp->atom->ldd_grad_density[0][3], 0.0000, 1e-8);//x
@@ -5510,7 +5510,7 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set2)
  ASSERT_NEAR(lmp->atom->ldd_local_density[3][2],3.571792315, 1e-9);
  ASSERT_NEAR(lmp->atom->ldd_local_density[4][1],5.012182094, 1e-9);
  ASSERT_NEAR(lmp->atom->ldd_local_density[4][2],4.512606624, 1e-9);
- 
+
  // LD_grad Check
  // Atoms 0->n_atoms-1, grads, 3->3ntypes+3
  // atom i|type1

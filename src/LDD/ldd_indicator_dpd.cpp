@@ -16,7 +16,7 @@
     and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University
    ------------------------------------------------------ */
-#include "ldd_indicator_dpd.h"  
+#include "ldd_indicator_dpd.h"
 
 #include <cmath>
 #include <cstring>
@@ -84,7 +84,7 @@ void LddIndicatorDpd::init_coeffs(double a, double b, int dim)
 double LddIndicatorDpd::w(double r)
 {
   if (r > rc) { return 0.0; }
-  return (coeffs[0] + coeffs[1] * r + 
+  return (coeffs[0] + coeffs[1] * r +
           coeffs[2] * pow(r,2)) * invnorm;
 }
 

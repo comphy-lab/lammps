@@ -41,7 +41,7 @@ class AtomVecLdd : public AtomVec {
   double **ldd_energy; // n_atom x n_atomtype matrix for u_{b|t_I}(rho_I)
   double **ldd_grad_density; // n_atom x 3 * n_atomtype matrix for LD grad info
   double **ldd_grad_energy; // n_atom x n_atomtype matrix for u_{\nabla b|t_I}(rho_I)
-  double *ldd_total_energy; // n_atom vector, stores the sum (across all surrounding types) of u_x(rho_I) terms 
+  double *ldd_total_energy; // n_atom vector, stores the sum (across all surrounding types) of u_x(rho_I) terms
 };
 
 }    // namespace LAMMPS_NS

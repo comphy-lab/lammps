@@ -27,17 +27,17 @@ LddPotentialStyle(noforce,LddPotentialNoForce);
 
 #include "ldd_potential.h"
 
-namespace LAMMPS_NS { 
+namespace LAMMPS_NS {
 
 class LddPotentialNoForce : public LddPotential {
   public:
- 
+
     LddPotentialNoForce(class LAMMPS *);
-    ~LddPotentialNoForce(); 
+    ~LddPotentialNoForce();
 
     void setup_potl(int, int, char **) override;
-    double u(double ) override; 
-    double f(double ) override; 
+    double u(double ) override;
+    double f(double ) override;
 
   protected:
     virtual void allocate();
@@ -45,5 +45,5 @@ class LddPotentialNoForce : public LddPotential {
 };
 }
 
-#endif 
+#endif
 #endif

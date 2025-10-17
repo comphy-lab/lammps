@@ -69,10 +69,10 @@ void LddIndicatorSphere::init_coeffs(double a, double b, int dim)
   rs = (b-a) / 2.0;
   rb = (b+a) / 2.0;
   // If only C++ could use negative indices like python...
-  coeffs[2] = -3.0 * (pow(rb,4) + pow(rs,4))/(16.0 * pow(rs,3)) 
-              + 3.0 * pow(rb,2) / (8.0 * rs); 
+  coeffs[2] = -3.0 * (pow(rb,4) + pow(rs,4))/(16.0 * pow(rs,3))
+              + 3.0 * pow(rb,2) / (8.0 * rs);
   coeffs[0] = (pow(rb,3) + pow(rs,3))/(2.0 * pow(rs,3));
-  coeffs[1] = -3.0*(rb*rb + rs*rs)/(8.0*pow(rs,3)); 
+  coeffs[1] = -3.0*(rb*rb + rs*rs)/(8.0*pow(rs,3));
   coeffs[3] = 1.0 / (16.0 * pow(rs,3));
   switch (dim)
   {
@@ -99,8 +99,8 @@ double LddIndicatorSphere::w(double r)
   if (r < r0) { return invnorm; }
   if (r > rc) { return 0.0; }
   return (coeffs[2] / r +
-          coeffs[0] + 
-          coeffs[1] * r + 
+          coeffs[0] +
+          coeffs[1] * r +
           coeffs[3] * pow(r,3)) * invnorm;
 }
 
@@ -109,7 +109,7 @@ double LddIndicatorSphere::wp(double r)
   if (r < r0) { return 0.0; }
   if (r > rc) { return 0.0; }
   return (      -coeffs[2] / pow(r,2) +
-                 coeffs[1] + 
+                 coeffs[1] +
            3.0 * coeffs[3] * pow(r,2)) * invnorm;
 }
 

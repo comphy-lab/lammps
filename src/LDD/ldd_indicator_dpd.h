@@ -31,7 +31,7 @@ namespace LAMMPS_NS {
 
 class LddIndicatorDpd : public LddIndicator {
   public:
-  
+
     LddIndicatorDpd(class LAMMPS *);
     ~LddIndicatorDpd();
     void init_coeffs(double, double, int) override;
@@ -43,7 +43,7 @@ class LddIndicatorDpd : public LddIndicator {
     virtual void allocate();
 };
 
-} 
+}
 
 #endif
 #endif

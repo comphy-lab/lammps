@@ -31,19 +31,19 @@ namespace LAMMPS_NS {
 
 class LddIndicatorSmooth : public LddIndicator {
   public:
-  
+
     LddIndicatorSmooth(class LAMMPS *);
     ~LddIndicatorSmooth();
     void init_coeffs(double, double, int) override;
     double w(double ) override;
     double wp(double ) override;
     double wp2(double ) override;
-  
+
   protected:
     virtual void allocate();
 };
 
-} 
+}
 
 #endif
 #endif

@@ -76,7 +76,7 @@ void LddPotentialTableGradLin::setup_potl(int ipt, int narg, char **arg)
   {
     error->all(FLERR,"ERROR: unable to read filename following table_lin");
     exit(EXIT_FAILURE);
-  }   
+  }
   read_table_file(arg[ipt+2],false);
   strcpy(table_fnm,arg[ipt+2]);
   sprintf(ptype,"table/lin");
@@ -86,23 +86,23 @@ void LddPotentialTableGradLin::setup_potl(int ipt, int narg, char **arg)
 double LddPotentialTableGradLin::u(double rho)
 {
   // Handle this case separately
-  if (rho == potl_table.r[potl_table.n_pts-1]) 
-  { 
-    return potl_table.u[potl_table.n_pts-1]; 
+  if (rho == potl_table.r[potl_table.n_pts-1])
+  {
+    return potl_table.u[potl_table.n_pts-1];
   }
   int idx = get_table_index(rho);
   double A = calc_A_table(rho, idx);
   double B = 1.0 - A;
-  // If we didn't handle the first case separately, we'd try to access 
+  // If we didn't handle the first case separately, we'd try to access
   // potl_table.u[idx+1] here and it wouldn't work
   return (A * potl_table.u[idx] + B * potl_table.u[idx+1]);
 }
 
 double LddPotentialTableGradLin::f(double rho)
 {
-  if (rho == potl_table.r[potl_table.n_pts-1]) 
-  { 
-    return 1/potl_table.dr * potl_table.u[potl_table.n_pts-1]; // potl_table.f[potl_table.n_pts-1]; 
+  if (rho == potl_table.r[potl_table.n_pts-1])
+  {
+    return 1/potl_table.dr * potl_table.u[potl_table.n_pts-1]; // potl_table.f[potl_table.n_pts-1];
   }
   int idx = get_table_index(rho);
 //  double A = calc_A_table(rho, idx);

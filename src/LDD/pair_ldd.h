@@ -81,19 +81,19 @@ class PairLdd: public Pair {
   double **cut; // cutoffs passed in pair_coeff ldd commands. dim n_types x n_types
   bool **self_interaction; // Self interaction settings from pair_coeff. dim n_types x n_types
   bool **ignore_pair; // Ignored Potential list. dim n_types x n_types
-  bool *ignore_me;  // Totally ignored central type list. dim_ntypes 
+  bool *ignore_me;  // Totally ignored central type list. dim_ntypes
   bool **bGradient; // List of pair types a surrounded by b that also have a gradient interaction. dim n_types x n_types
 
-  LddIndicator ***Inds; //The address of an n_type x n_type structure, holding all a|b indicator info 
+  LddIndicator ***Inds; //The address of an n_type x n_type structure, holding all a|b indicator info
   LddPotential ***Potls; //The address of an n_type x n_type structure, holding all a|b U_rho info
   LddPotential ***GradPotls; //The address of an n_type x n_type structure, holding all a|b U_{\nabla} info
- 
+
   void allocate();
   void ErrorDoubleKeyword(const char *);
   void ErrorNumKeywordArgs(const char *, const char *);
 
   private:
-  // Again, the same as done in force.h 
+  // Again, the same as done in force.h
     void LDD_factory();
     template <typename T> static LddIndicator *indicator_creator(LAMMPS *);
     template <typename T> static LddPotential *potential_creator(LAMMPS *);
@@ -105,7 +105,7 @@ class PairLdd: public Pair {
 #endif
 #endif
 
-/* ERROR/WARNING messages: 
+/* ERROR/WARNING messages:
 E: Illegal ... command
 
 Self-Explanatory. Check the input script syntax and compare to the documentationf or the command. You can use -echo screen as a command line option when running LAMMPS to see the offending line

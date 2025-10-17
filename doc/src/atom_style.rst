@@ -355,13 +355,13 @@ line vector which indicates whether it is a line segment (1) or a
 point particle (0).
 
 For the *ldd* style, particles are represented as in the basic atomic style,
-but for each particle :math:`I`, the local density :math:`\rho_{\alpha|I}` and 
-its gradient :math:`\nabla_I \rho_{\alpha|I}` are computed for each surrounding particle type :math:`\alpha`. 
-Local densities and gradients are defined via the :doc:`pair_style ldd <pair_ldd>` and associated 
+but for each particle :math:`I`, the local density :math:`\rho_{\alpha|I}` and
+its gradient :math:`\nabla_I \rho_{\alpha|I}` are computed for each surrounding particle type :math:`\alpha`.
+Local densities and gradients are defined via the :doc:`pair_style ldd <pair_ldd>` and associated
 pair_coeff commands. Undefined (*ignored*) local densities will be reported as zero and not
-considered in force calculations. 
+considered in force calculations.
 When hybridized with a molecular style,
-local density definitions will inherit the bonded exclusions of other 
+local density definitions will inherit the bonded exclusions of other
 nb pair interactions. See the :doc:`Howto ldd <Howto_ldd>` page for details.
 
 The *mdpd* style is for many-body dissipative particle dynamics (mDPD)

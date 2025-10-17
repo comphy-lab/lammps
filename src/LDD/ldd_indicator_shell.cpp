@@ -85,7 +85,7 @@ void LddIndicatorShell::init_coeffs(double a, double b, int dim)
                     coeffs[0] / 3.0 * (pow(rc,3)-pow(r0,3)) +
                     coeffs[2] / 5.0 * (pow(rc,5)-pow(r0,5)) +
                     coeffs[4] / 7.0 * (pow(rc,7)-pow(r0,7)) +
-                    coeffs[6] / 9.0 * (pow(rc,9)-pow(r0,9))); 
+                    coeffs[6] / 9.0 * (pow(rc,9)-pow(r0,9)));
       break;
   }
   invnorm = 1.0 / norm;
@@ -95,9 +95,9 @@ double LddIndicatorShell::w(double r)
 {
   if (r < r0) { return invnorm; }
   if (r > rc) { return 0.0; }
-  return (coeffs[0] + 
-          coeffs[2] * pow(r,2) + 
-          coeffs[4] * pow(r,4) + 
+  return (coeffs[0] +
+          coeffs[2] * pow(r,2) +
+          coeffs[4] * pow(r,4) +
           coeffs[6] * pow(r,6)) * invnorm ;
 }
 
@@ -105,16 +105,16 @@ double LddIndicatorShell::wp(double r)
 {
   if (r < r0) { return 0.0; }
   if (r > rc) { return 0.0; }
-  return (2.0 * coeffs[2] * r + 
+  return (2.0 * coeffs[2] * r +
           4.0 * coeffs[4] * pow(r,3) +
-          6.0 * coeffs[6] * pow(r,5)) * invnorm; 
+          6.0 * coeffs[6] * pow(r,5)) * invnorm;
 }
 
 double LddIndicatorShell::wp2(double r)
 {
   if (r < r0) { return 0.0; }
   if (r > rc) { return 0.0; }
-  return ( 2.0 * coeffs[2] + 
+  return ( 2.0 * coeffs[2] +
           12.0 * coeffs[4] * pow(r,2) +
           30.0 * coeffs[6] * pow(r,4)) * invnorm;
 }

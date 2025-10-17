@@ -80,7 +80,7 @@ void AtomVecLdd::process_args(int narg, char **arg)
   // delay setting up of fields until now
   setup_fields();
 }
-                 
+
 
 /* ----------------------------------------------------------------------
    set local copies of all grow ptrs used by this class, except defaults

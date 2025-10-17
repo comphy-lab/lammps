@@ -239,7 +239,7 @@ class Atom : protected Pointers {
   int apip_lambda_flag, apip_e_fast_flag, apip_e_precise_flag, apip_lambda_input_flag, apip_lambda_input_ta_flag, apip_lambda_required_flag, apip_f_const_lambda_flag, apip_f_dyn_lambda_flag, apip_lambda_const_flag;
 
   // LDD package
- 
+
   int ldd_big_flag;
   // end of customization section
   // --------------------------------------------------------------------

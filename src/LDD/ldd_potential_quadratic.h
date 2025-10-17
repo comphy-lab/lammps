@@ -27,17 +27,17 @@ LddPotentialStyle(quadratic,LddPotentialQuadratic);
 
 #include "ldd_potential.h"
 
-namespace LAMMPS_NS { 
+namespace LAMMPS_NS {
 
 class LddPotentialQuadratic : public LddPotential {
   public:
- 
+
     LddPotentialQuadratic(class LAMMPS *);
-    ~LddPotentialQuadratic(); 
+    ~LddPotentialQuadratic();
 
     void setup_potl(int, int, char **) override;
-    double u(double ) override; 
-    double f(double ) override; 
+    double u(double ) override;
+    double f(double ) override;
 
   protected:
     virtual void allocate();
@@ -45,5 +45,5 @@ class LddPotentialQuadratic : public LddPotential {
 };
 }
 
-#endif 
+#endif
 #endif

@@ -77,7 +77,7 @@ void LddIndicatorLucy::init_coeffs(double a, double b, int dim)
       norm = 0.2 * MY_PI * pow(rc,2);
       break;
     case 3:
-      norm = 16.0 * MY_PI / 105.0 * pow(rc,3); 
+      norm = 16.0 * MY_PI / 105.0 * pow(rc,3);
       break;
   }
   invnorm = 1.0 / norm;
@@ -86,9 +86,9 @@ void LddIndicatorLucy::init_coeffs(double a, double b, int dim)
 double LddIndicatorLucy::w(double r)
 {
   if (r >= rc) { return 0.0; }
-  double w = (coeffs[0] + 
-              coeffs[2] * pow(r,2) + 
-              coeffs[3] * pow(r,3) + 
+  double w = (coeffs[0] +
+              coeffs[2] * pow(r,2) +
+              coeffs[3] * pow(r,3) +
               coeffs[4] * pow(r,4)) * invnorm;
 /* MRD 5.10.2021
  * I was running into an issue where rc = 3.6,
@@ -105,7 +105,7 @@ double LddIndicatorLucy::w(double r)
 double LddIndicatorLucy::wp(double r)
 {
   if (r >= rc) { return 0.0; }
-  return (  2.0 * coeffs[2] * r 
+  return (  2.0 * coeffs[2] * r
           + 3.0 * coeffs[3] * pow(r,2)
           + 4.0 * coeffs[4] * pow(r,3)) * invnorm;
 }
@@ -113,7 +113,7 @@ double LddIndicatorLucy::wp(double r)
 double LddIndicatorLucy::wp2(double r)
 {
   if (r > rc) { return 0.0; }
-  return (  2.0 * coeffs[2] + 
+  return (  2.0 * coeffs[2] +
             6.0 * coeffs[3] * r +
            12.0 * coeffs[4] * pow(r,2)) * invnorm;
 }

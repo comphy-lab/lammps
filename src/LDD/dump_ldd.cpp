@@ -55,7 +55,7 @@ void DumpLdd::init_style()
 int chkidx = 0;
   // id type x y z vx vy vz fx fy fz ldds ldnrgs grads gradnrgs ldttlnrg
   int ntypes = atom->ntypes;
-  size_one = 12 + 2 * ntypes + 4 * ntypes;   
+  size_one = 12 + 2 * ntypes + 4 * ntypes;
  // 12 = id type x y z vx vy vz fx fy fz ldttlnrg
   // 2 * ntypes = ldds ldnrgs
   // 4 * ntypes = gradx grady gradz gradnrg
@@ -64,7 +64,7 @@ int chkidx = 0;
    if (atom->molecule_flag == 1) { size_one++; }
   delete [] format;
 
-  // 3 chars per value: the % sign, a 'd' or a 'g', and a space  
+  // 3 chars per value: the % sign, a 'd' or a 'g', and a space
   // we have 12 + 6 * ntypes values = 36 + 18 * ntypes characters.
   // 200 chars works for up to 9 atom types (36 + 18 * 9 = 162 + 36 = 198)
   char *str, str0[200];
@@ -72,32 +72,32 @@ int chkidx = 0;
   if (ntypes <= 8) { str = &(str0[0]); str_length = 200; }
   else { memory->create(str,40+18*ntypes,"DumpLDD:str"); str_length = 40+18*ntypes; }
   char * tmpstr;
-  memory->create(tmpstr, str_length, "DumpLDD:tmpstr"); //MCL 05.22.25 - Gotta create seperate addresses for src/dest for better defined bhvr 
-  for (int i = 0; i < str_length; i++) 
-  { 
-	  str[i] = '\0'; 
-	  tmpstr[i] = '\0';
+  memory->create(tmpstr, str_length, "DumpLDD:tmpstr"); //MCL 05.22.25 - Gotta create seperate addresses for src/dest for better defined bhvr
+  for (int i = 0; i < str_length; i++)
+  {
+          str[i] = '\0';
+          tmpstr[i] = '\0';
   }
 
 // start with spots for id, (mol,) type, x, y, z, vx, vy, vz, fx, fy, fz
   if (atom->molecule_flag == 1) { sprintf(str,"%s","%d %d %d %g %g %g %g %g %g %g %g %g"); }
   else { sprintf(str,"%s","%d %d %d %g %g %g %g %g %g %g %g %g");}
-// for each type, add spots for ldd and ldnrg 
-  for (int i = 1; i <= ntypes; i++) 
-  { 
-	  sprintf(tmpstr,"%s %s",str,"%g %g"); 
-	  strcpy(str,tmpstr);
-  } 
-// for each type, add spots for gradx, grady, gradz, and gradnrg 
-  for (int i = 1; i <= ntypes; i++) 
-  { 
-	  sprintf(tmpstr,"%s %s",str,"%g %g %g %g");
-	  strcpy(str,tmpstr);
+// for each type, add spots for ldd and ldnrg
+  for (int i = 1; i <= ntypes; i++)
+  {
+          sprintf(tmpstr,"%s %s",str,"%g %g");
+          strcpy(str,tmpstr);
+  }
+// for each type, add spots for gradx, grady, gradz, and gradnrg
+  for (int i = 1; i <= ntypes; i++)
+  {
+          sprintf(tmpstr,"%s %s",str,"%g %g %g %g");
+          strcpy(str,tmpstr);
   }
 //lastly, add spot for total energy
   sprintf(tmpstr,"%s %s",str,"%g\n");
   strcpy(str,tmpstr);
-  
+
   format = new char[strlen(str) + 1];
   strcpy(format,str);
   // setup boundary string
@@ -109,7 +109,7 @@ int chkidx = 0;
   // columns = (char *) "id type x y z fx fy fz ";
   // 32 characters for "id type x y z vx vy vz fx fy fz "
   // 9 more for "lddttlnrg"
-  // for each type, we need 45 for: 
+  // for each type, we need 45 for:
   // "lddens# ldnrg# gradx# grady# gradz# gradnrg# "
   // and that's if each # is 1 digit each.
   // let's make it 57 chars, which is enough for each # to be 3 digits.
@@ -117,7 +117,7 @@ int chkidx = 0;
   int collength = 41 + 57 * ntypes;
 
   if (atom->molecule_flag == 1) { collength += 4; }
-  
+
   char *cols;
   char *tmpcols;
   memory->create(cols,collength,"DumpLDD:cols");
@@ -125,15 +125,15 @@ int chkidx = 0;
   char ncol[60];
   for (int i=0; i<60; ++i) { ncol[i] = '\0'; }
   for (int i=0; i<collength; ++i) { cols[i] = '\0'; tmpcols[i] = '\0';}
-  if (atom->molecule_flag == 1) 
-  { 
-	  sprintf(cols,"%s","id mol type x y z vx vy vz fx fy fz");
-	  sprintf(tmpcols,"%s", "id mol type x y z vx vy vz fx fy fz");
+  if (atom->molecule_flag == 1)
+  {
+          sprintf(cols,"%s","id mol type x y z vx vy vz fx fy fz");
+          sprintf(tmpcols,"%s", "id mol type x y z vx vy vz fx fy fz");
   }
-  else 
-  { 
-	  sprintf(cols,"%s","id type x y z vx vy vz fx fy fz"); 
-	  sprintf(tmpcols,"%s","id type x y z vx vy vz fx fy fz");
+  else
+  {
+          sprintf(cols,"%s","id type x y z vx vy vz fx fy fz");
+          sprintf(tmpcols,"%s","id type x y z vx vy vz fx fy fz");
   }
   for (int i=1; i<=ntypes; i++)
   {
@@ -467,17 +467,17 @@ void DumpLdd::pack_noscale_noimage(tagint *ids)
       buf[m++] = f[i][0];
       buf[m++] = f[i][1];
       buf[m++] = f[i][2];
-      for (int j = 1; j <=ntypes; j++) 
-      { 
-	buf[m++] = LDs[i][j]; 
-	buf[m++] = LDEs[i][j];
+      for (int j = 1; j <=ntypes; j++)
+      {
+        buf[m++] = LDs[i][j];
+        buf[m++] = LDEs[i][j];
       }
-      for (int j = 1; j <=ntypes; ++j) 
-      { 
-	buf[m++] = LDGrads[i][3*j];
-	buf[m++] = LDGrads[i][3*j+1];
-	buf[m++] = LDGrads[i][3*j+2];
-	buf[m++] = LDGradEs[i][j];
+      for (int j = 1; j <=ntypes; ++j)
+      {
+        buf[m++] = LDGrads[i][3*j];
+        buf[m++] = LDGrads[i][3*j+1];
+        buf[m++] = LDGrads[i][3*j+2];
+        buf[m++] = LDGradEs[i][j];
       }
       buf[m++] = LDTE[i];
       if (ids) ids[n++] = tag[i];
@@ -527,7 +527,7 @@ int DumpLdd::convert_noimage(int n, double *mybuf)
   // 16 characters for id/type/(mol) if we allow 3 digs and spaces
   // 30 characters for xyz positions up to 999.999999 with spaces between (9+1)
   // 36x2=72 characters for v/f entries to allow negatives and spaces in sets of three
-  // 
+  //
   // 39xntypes for gradxyz entries to allow negatives spaces and scientific notations
   // 24xntypes for lddensn/lddensenergy
   // 13xntypes for gradnrgn
@@ -547,42 +547,42 @@ int DumpLdd::convert_noimage(int n, double *mybuf)
       maxsbuf += DELTA;
       memory->grow(sbuf,maxsbuf,"dump:sbuf");
     }
-    if (atom->molecule_flag == 1) 
-    { 
-	    sprintf(str,
-	            "%d %d %d %g %g %g %g %g %g %g %g %g",
-		    static_cast<tagint> (mybuf[m]),
-		    static_cast<int> (mybuf[m+1]), 
-		    static_cast<int> (mybuf[m+2]),
-		    mybuf[m+3],
-		    mybuf[m+4],
-		    mybuf[m+5],
-		    mybuf[m+6],
-		    mybuf[m+7],
-		    mybuf[m+8],
-		    mybuf[m+9],
-		    mybuf[m+10],
-		    mybuf[m+11]); 
-	    m += 11;
-	    strcpy(tmpstr, str);
-    }
-    else 
+    if (atom->molecule_flag == 1)
     {
-	    sprintf(str,
-		    "%d %d %g %g %g %g %g %g %g %g %g",
-		    static_cast<tagint> (mybuf[m]),
-		    static_cast<int> (mybuf[m+1]),
-		    mybuf[m+2],
-		    mybuf[m+3],
-		    mybuf[m+4],
-		    mybuf[m+5],
-		    mybuf[m+6],
-		    mybuf[m+7],
-		    mybuf[m+8],
-		    mybuf[m+9],
-		    mybuf[m+10]); 
-	    m += 10; 
-	    strcpy(tmpstr,str);
+            sprintf(str,
+                    "%d %d %d %g %g %g %g %g %g %g %g %g",
+                    static_cast<tagint> (mybuf[m]),
+                    static_cast<int> (mybuf[m+1]),
+                    static_cast<int> (mybuf[m+2]),
+                    mybuf[m+3],
+                    mybuf[m+4],
+                    mybuf[m+5],
+                    mybuf[m+6],
+                    mybuf[m+7],
+                    mybuf[m+8],
+                    mybuf[m+9],
+                    mybuf[m+10],
+                    mybuf[m+11]);
+            m += 11;
+            strcpy(tmpstr, str);
+    }
+    else
+    {
+            sprintf(str,
+                    "%d %d %g %g %g %g %g %g %g %g %g",
+                    static_cast<tagint> (mybuf[m]),
+                    static_cast<int> (mybuf[m+1]),
+                    mybuf[m+2],
+                    mybuf[m+3],
+                    mybuf[m+4],
+                    mybuf[m+5],
+                    mybuf[m+6],
+                    mybuf[m+7],
+                    mybuf[m+8],
+                    mybuf[m+9],
+                    mybuf[m+10]);
+            m += 10;
+            strcpy(tmpstr,str);
     }
     for (int j = 1; j <= 2*ntypes; j+=2) // LDs and LDnrgs
     {

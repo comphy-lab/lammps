@@ -26,18 +26,18 @@ LddPotentialStyle(table/spline,LddPotentialTableSpline);
 
 #include "ldd_potential.h"
 
-namespace LAMMPS_NS { 
+namespace LAMMPS_NS {
 
 class LddPotentialTableSpline : public LddPotential {
   public:
- 
+
     LddPotentialTableSpline(class LAMMPS *);
-    ~LddPotentialTableSpline(); 
+    ~LddPotentialTableSpline();
 
     void setup_potl(int, int, char **) override;
-    double u(double ) override; 
-    double f(double ) override; 
-    double splint(double , double , double , double , double , 
+    double u(double ) override;
+    double f(double ) override;
+    double splint(double , double , double , double , double ,
                   double , double , double , double , double );
 
     void spline(double *, double *, int , double , double , double *);
@@ -48,5 +48,5 @@ class LddPotentialTableSpline : public LddPotential {
 };
 }
 
-#endif 
+#endif
 #endif

@@ -27,17 +27,17 @@ LddPotentialStyle(constant,LddPotentialConstant);
 
 #include "ldd_potential.h"
 
-namespace LAMMPS_NS { 
+namespace LAMMPS_NS {
 
 class LddPotentialConstant : public LddPotential {
   public:
- 
+
     LddPotentialConstant(class LAMMPS *);
-    ~LddPotentialConstant(); 
+    ~LddPotentialConstant();
 
     void setup_potl(int, int, char **) override;
-    double u(double ) override; 
-    double f(double ) override; 
+    double u(double ) override;
+    double f(double ) override;
 
   protected:
     virtual void allocate();
@@ -45,5 +45,5 @@ class LddPotentialConstant : public LddPotential {
 };
 }
 
-#endif 
+#endif
 #endif

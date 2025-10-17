@@ -71,15 +71,15 @@ void LddPotentialTableGradSpline::allocate()
 }
 
 /*******************************
-Calculates second derivatives at knot points. stores them in y2[]. pass in 
-knot points x[] and y[]. pass in the number of knot points n. pass in first 
-derivative you want for the end points in yp1 and ypn. if yp1 and/or ypn 
-are > 0.99e30, then second derivative is set to zero for that boundary. 
+Calculates second derivatives at knot points. stores them in y2[]. pass in
+knot points x[] and y[]. pass in the number of knot points n. pass in first
+derivative you want for the end points in yp1 and ypn. if yp1 and/or ypn
+are > 0.99e30, then second derivative is set to zero for that boundary.
 Copied from "Numerical Recipes in C" second edition.
 *******************************/
 void LddPotentialTableGradSpline::spline(double x[], double y[], int n, double yp1, double ypn, double y2[])
 {
-  int i, j; 
+  int i, j;
   double p, qn, sig, un, u[n];
   if (yp1 > 0.99e30) y2[0] = u[0] = 0.0;
   else { y2[0] = -0.5; u[0] = (3.0/(x[1]-x[0])) * ((y[1]-y[0])/(x[1]-x[0]) - yp1); }
@@ -95,9 +95,9 @@ void LddPotentialTableGradSpline::spline(double x[], double y[], int n, double y
 
   if (ypn > 0.99e30) qn = un = 0.0;
   else { qn = 0.5; un = (3.0/(x[n-1]-x[n-2])) * (ypn-(y[n-1]-y[n-2])/(x[n-1]-x[n-2])); }
-  
+
   y2[n-1] = (un - qn * u[n-2])/(qn * y2[n-2] + 1.0);
-  
+
   for (j=n-2; j>1;j--) { y2[j] = y2[j] * y2[j+1] + u[j]; }
 }
 
@@ -109,7 +109,7 @@ void LddPotentialTableGradSpline::setup_potl(int ipt, int narg, char **arg)
   {
     error->all(FLERR,"ERROR: unable to read filename following table_lin");
     exit(EXIT_FAILURE);
-  }   
+  }
   strcpy(table_fnm,arg[ipt+2]);
   read_table_file(arg[ipt+2],true);
 
@@ -117,15 +117,15 @@ void LddPotentialTableGradSpline::setup_potl(int ipt, int narg, char **arg)
   sprintf(ptype,"table/spline");
 
 
-  spline (&(potl_table.r[0]), &(potl_table.u[0]), potl_table.n_pts, 0.999e30, 
+  spline (&(potl_table.r[0]), &(potl_table.u[0]), potl_table.n_pts, 0.999e30,
                                                0.999e30, &(potl_table.u2[0]));
-  spline (&(potl_table.r[0]), &(potl_table.f[0]), potl_table.n_pts, 0.999e30, 
+  spline (&(potl_table.r[0]), &(potl_table.f[0]), potl_table.n_pts, 0.999e30,
                                                0.999e30, &(potl_table.f2[0]));
 }
 
 /* Evaluate cubic spline. Modified from "Numerical Recipes in C" Second Edition */
-double LddPotentialTableGradSpline::splint(double x0, double x1, double y0, 
-                          double y1, double y20, double y21, 
+double LddPotentialTableGradSpline::splint(double x0, double x1, double y0,
+                          double y1, double y20, double y21,
                           double dr, double x, double a, double b)
 {
   if (fabs(x - x0) <= 1e-8) { return y0; }
@@ -147,9 +147,9 @@ double LddPotentialTableGradSpline::dsplint(double x0, double x1, double y0,
 double LddPotentialTableGradSpline::u(double rho)
 {
   // Handle this case separately
-  if (rho == potl_table.r[potl_table.n_pts-1]) 
-  { 
-    return potl_table.u[potl_table.n_pts-1]; 
+  if (rho == potl_table.r[potl_table.n_pts-1])
+  {
+    return potl_table.u[potl_table.n_pts-1];
   }
   int idx = get_table_index(rho);
   double A = calc_A_table(rho, idx);
@@ -162,9 +162,9 @@ double LddPotentialTableGradSpline::u(double rho)
 
 double LddPotentialTableGradSpline::f(double rho)
 {
-  if (rho == potl_table.r[potl_table.n_pts-1]) 
-  { 
-    return potl_table.f[potl_table.n_pts-1]; 
+  if (rho == potl_table.r[potl_table.n_pts-1])
+  {
+    return potl_table.f[potl_table.n_pts-1];
   }
   int idx = get_table_index(rho);
   double A = calc_A_table(rho, idx);

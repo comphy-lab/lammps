@@ -23,7 +23,7 @@ Examples
 
 .. parsed-literal::
 
-    keyword = *potential* 
+    keyword = *potential*
       *potental* value = mdpd args
         *mdpd* args = B
 
@@ -38,8 +38,8 @@ For generality we note each case with a dummy :math:`X` below.
    U_{X}(\rho) = B \pi r_{c}^{4} \rho^{2} / 30 \\
    F_{X}(\rho) = - B \pi r_{c}^{4} \rho / 15 \text{ where } X=\rho \text{ or } X=\nabla.\\
 
-Note that when used after the *potential* keyword, style *mdpd* applies a quadratic local density potential used in many MDPD studies, e.g. :ref:`(Warren)<Warren>` or :ref:`(Ghoufi)<Ghoufi>`. 
-It is traditionally used to supplement the standard dpd pair force. 
+Note that when used after the *potential* keyword, style *mdpd* applies a quadratic local density potential used in many MDPD studies, e.g. :ref:`(Warren)<Warren>` or :ref:`(Ghoufi)<Ghoufi>`.
+It is traditionally used to supplement the standard dpd pair force.
 As described by :ref:`(Ghoufi)<Ghoufi>`, the desired conservative force is given by:
 
 .. math::
@@ -56,18 +56,18 @@ In practice, to obtain the desired force with the LDD package, we use the :doc:`
    F(\rho) &= - B \pi r_{c}^{4} \rho / 15 \\
    \mathbf{F}_{ij} &= (f(\rho_{i}) + F(\rho_{j}))\bar{w}'(r_{ij}) \mathbf{e}_{ij} \\
    &= B(\rho_{i} + \rho_{j})(1-r/r_{c})\mathbf{e}_{ij}
-   
+
 
 Restrictions
 """"""""""""
 
-The mdpd potential style is only equivalent to the traditional MDPD force above when hybridized with the :doc:`pair_style dpd <pair_dpd>` and used with the :doc:`dpd indicator style <ldd_indicator_dpd>`. 
+The mdpd potential style is only equivalent to the traditional MDPD force above when hybridized with the :doc:`pair_style dpd <pair_dpd>` and used with the :doc:`dpd indicator style <ldd_indicator_dpd>`.
 The basic pair style required is part of the DPD-BASIC package, while the ldd potential/gradient style is part of the pair style ldd implemented in the LDD package.
 They are both only enabled if LAMMPS was built with each package.
 See the :doc:`Build package
 <Build_package>` page for more info.
 
-   
+
 
 Related commands
 """"""""""""""""

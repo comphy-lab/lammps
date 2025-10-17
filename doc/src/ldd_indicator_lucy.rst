@@ -29,9 +29,9 @@ The *lucy* indicator style employs the Lucy function popularized from smoothed p
    w(r) &= (1-r/r_{c})^{3}(1+3r/r_{c}) \\
    [w] &= 16 \pi r_{c}^{3} / 105 \\
    \bar{w}(r) &= 105 (1-r/r_{c})^{3}(1+3r/r_{c}) \theta(r_c - r)/(16 \pi r_{c}^{3})
- 
+
 Where :math:`\theta(x)` is the Heaviside function, with :math:`\theta(x)=1` if :math:`x \geq 0` and :math:`\theta(x)=0` otherwise.
-Following the *lucy* argument after the indicator keyword, you must specify the values for :math:`r_{0}` and :math:`r_{c}`. For the *lucy* indicator type, you must set :math:`r_{0}=0.0`. 
+Following the *lucy* argument after the indicator keyword, you must specify the values for :math:`r_{0}` and :math:`r_{c}`. For the *lucy* indicator type, you must set :math:`r_{0}=0.0`.
 
 Related commands
 """"""""""""""""

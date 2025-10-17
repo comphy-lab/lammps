@@ -25,7 +25,7 @@ Examples
 
 .. parsed-literal::
 
-    keyword = *potential* 
+    keyword = *potential*
       *potental* value = table/XXX args
         *table/XXX* args = filename
 
@@ -35,7 +35,7 @@ Example tables are used for *potential table/x* and *gradient table/gradx* in th
 
 Description
 """""""""""
-This family of arguments can follow the *gradient* or *potential* keywords in the ldd pair_coeff command. 
+This family of arguments can follow the *gradient* or *potential* keywords in the ldd pair_coeff command.
 Following the *potential* keyword, these options control the functional form for :math:`U_{\rho}` and :math:`F_{\rho} = -\frac{dU_{\rho}}{d\rho}`
 Following the *gradient* keyword, these options control the functional form for :math:`U_{\nabla}` and :math:`F_{\nabla} = -\frac{dU_{\nabla}}{d\rho}`.
 
@@ -43,19 +43,19 @@ All table commands use either a 4th order (*table/spline* and *table/gradspline*
 
 In principle, if :math:`U_X` is an :math:`n^{\text{th}}` order polynmomial in :math:`\rho`, then :math:`F_{X} = -\frac{dU_{X}}{d\rho}` should be an :math:`n - 1` order polynomial.
 
-In the case of LD potentials :math:`U_X = U_{\rho}`, :math:`U_{\rho}` does not appear in the pair additive force expression (See DeLyser 2019), and therefore does not influence the forces or sampling. 
-Consequently, it does not influence sampling if :math:`U_\rho` and :math:`F_\rho` are described by polynomials of the same order. (args *table/lin* and *table/spline* do this.) 
+In the case of LD potentials :math:`U_X = U_{\rho}`, :math:`U_{\rho}` does not appear in the pair additive force expression (See DeLyser 2019), and therefore does not influence the forces or sampling.
+Consequently, it does not influence sampling if :math:`U_\rho` and :math:`F_\rho` are described by polynomials of the same order. (args *table/lin* and *table/spline* do this.)
 
-However, in the case of SG potentials, both :math:`U_{\nabla}` and :math:`F_{\nabla} = -\frac{dU_{\nabla}}{d\rho}` directly contribute to the forces (See DeLyser 2021). 
-Consequently it is necessary that :math:`F_{\nabla}` is represented with a lower order polynomial than :math:`U_{\nabla}` in order to sample the correct equilibrium distribution. 
+However, in the case of SG potentials, both :math:`U_{\nabla}` and :math:`F_{\nabla} = -\frac{dU_{\nabla}}{d\rho}` directly contribute to the forces (See DeLyser 2021).
+Consequently it is necessary that :math:`F_{\nabla}` is represented with a lower order polynomial than :math:`U_{\nabla}` in order to sample the correct equilibrium distribution.
 (args *table/gradlin* and *table/gradspline* do this.)
 
 
 Thus, while e.g. *table/lin* and *table/gradlin* can be used somewhat interchangeably to generate forces following the *potential* keyword, the *gradient* keyword should only be used with the *table/gradlin* and *table/gradspline* keywords.
 
 
-Args *table/lin* and *table/spline* read in a file containing three columns: :math:`\rho`, :math:`U`, :math:`F`. 
-E.g. For a LD potential these three columns should be :math:`\rho` :math:`U_{\rho}(\rho)` :math:`F_{\rho}(\rho)` where the columns are separated by whitespace and :math:`F(\rho) = -dU(\rho)/d\rho`. 
+Args *table/lin* and *table/spline* read in a file containing three columns: :math:`\rho`, :math:`U`, :math:`F`.
+E.g. For a LD potential these three columns should be :math:`\rho` :math:`U_{\rho}(\rho)` :math:`F_{\rho}(\rho)` where the columns are separated by whitespace and :math:`F(\rho) = -dU(\rho)/d\rho`.
 Arg *table/lin*  interpolates between entries in the the :math:`U` and :math:`F` columns linearly.
 Similarly arg *table/spline* constructs a cubic spline for interpolation between grid points in each column.
 
@@ -65,8 +65,8 @@ Arg *table/gradlin* interpolates between the :math:`U` column values linearly, a
 Similarly, Arg *table/gradlin* constructs a cubic spline for interpolating between entries in the :math:`U` column provided, and then constructs a quadratic interpolation for the corresponding :math:`F(\rho) = -dU/d\rho`.
 If a table formatted for *table/lin* or *table/spline* is passed under this command, only the first two columns will affect the simulation.
 
-Note that in all tables the grid domain for the table spacing must be uniform. 
-Also for all tables, if the simulation ever encounters a particle with a local density outside the domain of values provided in the table, the simulation will exit with an error. 
+Note that in all tables the grid domain for the table spacing must be uniform.
+Also for all tables, if the simulation ever encounters a particle with a local density outside the domain of values provided in the table, the simulation will exit with an error.
 Accordingly, we advise providing values starting at a much lower/higher :math:`\rho` value than you expect to sample.
 
 Related commands

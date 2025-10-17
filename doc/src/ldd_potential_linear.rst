@@ -22,7 +22,7 @@ Examples
 
 .. parsed-literal::
 
-    keyword = *potential* 
+    keyword = *potential*
       *potental* value = linear args
         *linear* args = m b
 
@@ -35,7 +35,7 @@ Following the *potential* keyword, it controls the functional form for :math:`U_
 Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla}  = -\frac{dU_{\nabla}}{d\rho}`.
 For generality we note each case with a dummy :math:`X` below.
 
-Style *linear* applies the form: 
+Style *linear* applies the form:
 
 .. math::
    U_{X}(\rho) &= m\rho + b \\
@@ -46,7 +46,7 @@ Related commands
 """"""""""""""""
 
 :doc:`pair_ldd <pair_ldd>`
-   
+
 ------------
 
 .. .. _DeLyser:

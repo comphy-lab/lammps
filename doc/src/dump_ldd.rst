@@ -30,11 +30,11 @@ Description
 An optional dump style for when :doc:`atom_style ldd <atom_style>` is used in the :ref:`LDD <PKG-LDD>` package.
 Dump a snapshot of atom quantities to a file every :math:`N`
 timesteps in a text format readable by the `Bottom Up Open Source Coarse Graining Package (BOCS)
-<https://github.com/noid-group/BOCS>`_  for constructing CG models and translating trajectories to other file formats. 
+<https://github.com/noid-group/BOCS>`_  for constructing CG models and translating trajectories to other file formats.
 
-The output of this dump style is similar to a :doc:`dump_style custom <dump>` but 
-it includes per atom local density and gradient of the local density/ ldd energetic information for each type of particle for each particle in the system. 
-Each frame of the ldd dumped text file contains 4 ITEM sections: the timestep, the number of atoms, the box dimensions, and the ATOMS sections. 
+The output of this dump style is similar to a :doc:`dump_style custom <dump>` but
+it includes per atom local density and gradient of the local density/ ldd energetic information for each type of particle for each particle in the system.
+Each frame of the ldd dumped text file contains 4 ITEM sections: the timestep, the number of atoms, the box dimensions, and the ATOMS sections.
 The first three sections are 1-3 lines containing the time, total number of atoms in the system and box bounds respectively.
 
 Each line in the atoms section contains per atom data fields in a column order which is labeled by a header each frame.
@@ -58,7 +58,7 @@ below is a table of ldd header field labels and definitions in the order they ap
 +---------------------------+---------------------------------------------------------------------------------------+
 | fx fy fz                  | The x y and z components of the atom's net force                                      |
 +---------------------------+---------------------------------------------------------------------------------------+
-| lddens :math:`\alpha`     | :math:`\alpha \in` {1 ... ntypes}, the local density of :math:`\alpha`                | 
+| lddens :math:`\alpha`     | :math:`\alpha \in` {1 ... ntypes}, the local density of :math:`\alpha`                |
 |                           | particles around the atom,  :math:`\rho_{\alpha|I}`                                   |
 +---------------------------+---------------------------------------------------------------------------------------+
 | ldnrg  :math:`\alpha`     | :math:`\alpha \in` {1 ... ntypes}, the energy contribution of the local               |
@@ -78,7 +78,7 @@ below is a table of ldd header field labels and definitions in the order they ap
 +---------------------------+---------------------------------------------------------------------------------------+
 
 
-If local densities and square gradient potentials are not defined with :doc:`pair_style ldd <pair_ldd>` 
+If local densities and square gradient potentials are not defined with :doc:`pair_style ldd <pair_ldd>`
 then the relevant LD and SG fields will be zeroed out in the output.
 
 
@@ -157,7 +157,7 @@ Restrictions
 The *ldd* dump style is part of the LDD package. It is only
 enabled if LAMMPS was built with that package. See the :doc:`Build package <Build_package>` page for more info.
 
-The *ldd* dump style is only supported when the atom_style ldd is used. See :doc:`Howto_ldd <Howto_ldd>` for more details. 
+The *ldd* dump style is only supported when the atom_style ldd is used. See :doc:`Howto_ldd <Howto_ldd>` for more details.
 
 The *ldd* dump style supports neither buffering or custom format
 strings.
@@ -165,7 +165,7 @@ strings.
 Related commands
 """"""""""""""""
 
-:doc:`dump <dump>`, :doc:`LDD <Howto_ldd>`, :doc:`pair_style ldd <pair_ldd>`, 
+:doc:`dump <dump>`, :doc:`LDD <Howto_ldd>`, :doc:`pair_style ldd <pair_ldd>`,
 :doc:`dump_modify <dump_modify>`, :doc:`undump <undump>`, :doc:`atom_style ldd <atom_style>`
 
 Default
