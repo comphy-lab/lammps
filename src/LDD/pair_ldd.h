@@ -104,17 +104,3 @@ class PairLdd: public Pair {
 
 #endif
 #endif
-
-/* ERROR/WARNING messages:
-E: Illegal ... command
-
-Self-Explanatory. Check the input script syntax and compare to the documentationf or the command. You can use -echo screen as a command line option when running LAMMPS to see the offending line
-
-E: Incorrect args for pair coefficients
-
-Self-Explanatory. Check the input script of data file.
-
-E: ??
-
-??
-*/

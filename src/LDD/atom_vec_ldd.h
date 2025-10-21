@@ -48,8 +48,3 @@ class AtomVecLdd : public AtomVec {
 
 #endif
 #endif
-
-/* ERROR/WARNING messages:
-
-
-*/
