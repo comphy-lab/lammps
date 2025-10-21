@@ -125,7 +125,7 @@ class FixMBX : public Fix {
   char *json_file;
   std::string json_settings;
 
-  int print_settings;
+  int print_verbose;
 
   int num_mol_types;    // # of unique molecule types
   int num_molecules;    // total # of molecules
