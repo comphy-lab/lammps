@@ -42,8 +42,6 @@ void PairHybridOverlay::coeff(int narg, char **arg)
   // 4th arg = pair sub-style index if name used multiple times
   // allow for "none" as valid sub-style name
 
-  // package LDD
-  int bLDD = 1 - strcmp(arg[2],"ldd");
   int multflag = 0;
   int m;
 
@@ -92,10 +90,7 @@ void PairHybridOverlay::coeff(int narg, char **arg)
 
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
-    // LDD package
-    int jstart = MAX(jlo,i);
-    if (bLDD == 1) { jstart = jlo; } // LDD ij != LDD ji
-    for (int j = jstart; j <= jhi; j++) {
+    for (int j = MAX(jlo,i); j <= jhi; j++) {
       if (none) {
         setflag[i][j] = 1;
         nmap[i][j] = 0;
