@@ -49,6 +49,7 @@ class PairLdd: public Pair {
   void write_restart_settings(FILE *) override;
   void read_restart_settings(FILE *) override;
   double single(int, int, int, int, double, double, double, double &) override;
+  void coeff_ldd(int narg, char **arg);
 
   /* I do this the same way it's done in force.h */
 
@@ -91,6 +92,8 @@ class PairLdd: public Pair {
   void allocate();
   void ErrorDoubleKeyword(const char *);
   void ErrorNumKeywordArgs(const char *, const char *);
+  void read_file(char * filename);
+
 
   private:
   // Again, the same as done in force.h
