@@ -54,21 +54,21 @@ FixQEqSlater::FixQEqSlater(LAMMPS *lmp, int narg, char **arg) : FixQEq(lmp, narg
       alpha = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
       iarg += 2;
       if (iarg < narg) {
-	if (strcmp(arg[iarg],"wolf") == 0) { // type of potential (0=erfc(r)/r, 1=Wolf, 2=Fennell & Gezelter)
-	  vtype = 1;
-	  iarg++;
-	  if (iarg < narg) {
-	    drtap = utils::numeric(FLERR, arg[iarg], false, lmp);
-	    iarg++;
-	  }
-	} else if (strcmp(arg[iarg],"dsf") == 0) {
-	  vtype = 2;
-	  iarg++;
-	  if (iarg < narg) {
-	    drtap = utils::numeric(FLERR, arg[iarg], false, lmp);
-	    iarg++;
-	  }
-	}
+        if (strcmp(arg[iarg],"wolf") == 0) { // type of potential (0=erfc(r)/r, 1=Wolf, 2=Fennell & Gezelter)
+          vtype = 1;
+          iarg++;
+          if (iarg < narg) {
+            drtap = utils::numeric(FLERR, arg[iarg], false, lmp);
+            iarg++;
+          }
+        } else if (strcmp(arg[iarg],"dsf") == 0) {
+          vtype = 2;
+          iarg++;
+          if (iarg < narg) {
+            drtap = utils::numeric(FLERR, arg[iarg], false, lmp);
+            iarg++;
+          }
+        }
       }
     } else if (strcmp(arg[iarg], "warn") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix qeq/slater warn", error);
@@ -214,11 +214,11 @@ void FixQEqSlater::compute_H()
       r = sqrt(rsq);
       H.jlist[m_fill] = j;
       if (vtype == 0)
-	H.val[m_fill] = calculate_H(zei, zej, zj, r, zjtmp);
+        H.val[m_fill] = calculate_H(zei, zej, zj, r, zjtmp);
       else if (vtype == 1)
-	H.val[m_fill] = calculate_H_wolf(zei, zej, zj, r, zjtmp);
+        H.val[m_fill] = calculate_H_wolf(zei, zej, zj, r, zjtmp);
       else if (vtype == 2)
-	H.val[m_fill] = calculate_H_dsf(zei, zej, zj, r, zjtmp);
+        H.val[m_fill] = calculate_H_dsf(zei, zej, zj, r, zjtmp);
       m_fill++;
     }
     H.numnbrs[i] = m_fill - H.firstnbr[i];
@@ -236,7 +236,7 @@ double FixQEqSlater::calculate_H(double zei, double zej, double zj,
                 double r, double &zjtmp)
 {
   double rinv = 1.0/r;
-  double rc = cutoff;  
+  double rc = cutoff;
 
   double exp2zir = exp(-2.0*zei*r);
   double zei2 = zei*zei;
@@ -317,7 +317,7 @@ double FixQEqSlater::calculate_H_wolf(double zei, double zej, double zj,
 
   double eshift, fshift, ci_jfi, ci_fifj;
   double etmp1, etmp2, etmp3;
-  double ftap, dftap;  
+  double ftap, dftap;
 
   double a = alpha;
   double erfcr = erfc(a*r);
