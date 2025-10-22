@@ -125,6 +125,7 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
 
   potential_style = new char[n];
   strcpy(potential_style,str);
+  map = new int[atom->ntypes + 1];
 
   LDD_factory();
 }
@@ -1112,14 +1113,21 @@ void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
 
 void PairLdd::coeff(int narg, char **arg)
 {
-   // We're gonna parse syntax in a different file from the main to get around messing with the main-line of lammps
-   //  map_element2type(narg-3, arg+3); <-- We'll deal with this after getting the file reader down
     if (!allocated) allocate();
-  read_file(arg[2]);	// This will call the ldd_coeff command for each interaction found [We use the allocate function in the ldd_coeff command]
+    if (narg > 3) // then the command probably looked like pair_coeff * * ele1 ele2 etc. 
+    {
+    map_element2type(narg-3, arg+3);
+    if (nelements != atom->ntypes)
+    {
+    error->one(FLERR, "Need unique element map for all atom types in system. nelements: {} ntypes: {}", nelements, atom->ntypes);
+    }
+    }
+    read_file(arg[2], nelements); // parse pair ij != ji syntax in a different file to get around messing with the main-line of lammps
+
 
 }
 
-void PairLdd::read_file(char * filename)
+void PairLdd::read_file(char * filename, int nelements)
 {
   if (comm->me == 0)
   {
@@ -1147,6 +1155,21 @@ void PairLdd::read_file(char * filename)
 		{ 
 			error->warning(FLERR, "ldd input file {} only accepts lines leading with pair_coeff commands not: {} accordingly this line: {} in {} is ignored", filename, ldd_arg_string[0].c_str(), s, filename);
 			continue;
+		}
+
+		if (nelements > 0) // Then we need to send the type into coeff_ldd
+		{
+		for (int k=0; k < nelements; k++)
+		{
+		if (utils::strsame(ldd_arg_string[1], elements[k]))
+		{
+			ldd_arg_string[1] = std::to_string(k+1);
+		}
+		 if (utils::strsame(ldd_arg_string[2], elements[k])) 
+		 {
+			 ldd_arg_string[2] = std::to_string(k+1);
+		 }
+		}
 		}
 		char** c_args = new char*[ldd_arg_string.size() -1];
 		for(int i=1; i < ldd_arg_string.size(); i++)

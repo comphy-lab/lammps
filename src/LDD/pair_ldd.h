@@ -92,7 +92,7 @@ class PairLdd: public Pair {
   void allocate();
   void ErrorDoubleKeyword(const char *);
   void ErrorNumKeywordArgs(const char *, const char *);
-  void read_file(char * filename);
+  void read_file(char * filename, int nelements); // reads ldd inp file, executes coeff_ldd
 
 
   private:
