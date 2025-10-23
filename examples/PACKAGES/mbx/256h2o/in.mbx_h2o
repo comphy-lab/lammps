@@ -10,10 +10,11 @@ read_data       initial.data
 pair_style      mbx 9.0
 pair_modify     mix arithmetic
 
-bond_style      none
-angle_style     none
-dihedral_style  none
-improper_style  none
+# Define bonds and angles to use if using SHAKE constraints
+bond_style      zero
+angle_style     zero
+bond_coeff      1 0.98823 # from PIMD
+angle_coeff     1 105.50896 # from PIMD
 
 pair_coeff      * * 1 h2o 1 2 2 json mbx.json
 
@@ -34,6 +35,7 @@ variable        eind      equal c_mbx[8]
 variable        eele      equal c_mbx[9]
 variable        etot      equal c_mbx[10]
 
+#fix             RIGID all shake 0.0001 20 0 b 1 a 1
 fix             1 all npt temp 298 298 100 iso 1.0 1.0 1000
 
 velocity        all create 298 428459 rot yes dist gaussian
