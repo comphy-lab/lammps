@@ -376,6 +376,61 @@ bool LabelMap::is_complete(int mode) const
 }
 
 /* ----------------------------------------------------------------------
+   infer bond type from two atom types
+   input/output is numeric types, uses type labels internally
+   assumes bond types are of the form '[a][b]' for atom types 'a' and 'b'
+------------------------------------------------------------------------- */
+
+int LabelMap::infer_bondtype(int type1, int type2)
+{
+  std::vector<std::string> mytypes(2);
+  mytypes[0] = typelabel[type1-1];
+  mytypes[1] = typelabel[type2-1];
+  if (mytypes[0].empty() || mytypes[1].empty()) return -1;
+
+  return infer_bondtype(mytypes);
+}
+
+/* ----------------------------------------------------------------------
+   infer numeric type from two atom type labels
+   assumes bond types are of the form '[a][b]' for atom types 'a' and 'b'
+------------------------------------------------------------------------- */
+
+int LabelMap::infer_bondtype(std::vector<std::string> mytypes)
+{
+  // search for matching bond type label with symmetry considerations
+
+  std::vector<std::string> btypes(2);
+  for (int i = 0; i < nbondtypes; i++) {
+    int status = parse_brackets(2, btypelabel[i], btypes);
+    if (status != -1)
+      if ((mytypes[0] == btypes[0] && mytypes[1] == btypes[1]) ||
+          (mytypes[0] == btypes[1] && mytypes[1] == btypes[0])) return i+1;
+  }
+  return -1;
+}
+
+/* ----------------------------------------------------------------------
+   return 'ntypes' number of strings between brackets
+------------------------------------------------------------------------- */
+
+int LabelMap::parse_brackets(int ntypes, std::string label, std::vector<std::string> &types)
+{
+  int lbrac,rbrac,len;
+  size_t npos = std::string::npos;
+
+  for (int i = 0; i < ntypes; i++) {
+    lbrac = label.find("[");
+    rbrac = label.find("]");
+    if (lbrac == npos || rbrac == npos) return -1;
+    len = rbrac - lbrac - 1;
+    types[i] = label.substr(lbrac+1,len);
+    label = label.substr(rbrac+1);
+  }
+  return 1;
+}
+
+/* ----------------------------------------------------------------------
    proc 0 writes to data file
 ------------------------------------------------------------------------- */
 
