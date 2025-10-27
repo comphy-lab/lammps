@@ -28,6 +28,7 @@ Contributing Author: Jacob Gissinger (jgissing@stevens.edu)
 #include "force.h"
 #include "group.h"
 #include "input.h"
+#include "label_map.h"
 #include "math_const.h"
 #include "math_extra.h"
 #include "memory.h"
@@ -3238,40 +3239,40 @@ void FixBondReact::update_everything()
       // let's first delete all bond info about landlocked atoms
       for (int j = 0; j < rxn.product->natoms; j++) {
         int jj = rxn.atoms[j].amap[1]-1;
-        if (atom->map(update_mega_glove[jj+1][i]) < nlocal && atom->map(update_mega_glove[jj+1][i]) >= 0) {
+        int jjlocal = atom->map(update_mega_glove[jj+1][i]);
+        if (jjlocal < nlocal && jjlocal >= 0) {
           if (rxn.atoms[j].landlocked == 1) {
-            delta_bonds -= num_bond[atom->map(update_mega_glove[jj+1][i])];
+            delta_bonds -= num_bond[jjlocal];
             // If deleting all bonds, first cache then remove all histories
             if (n_histories > 0)
               for (auto &ihistory: histories) {
-                for (int n = 0; n < num_bond[atom->map(update_mega_glove[jj+1][i])]; n++)
-                  dynamic_cast<FixBondHistory *>(ihistory)->cache_history(atom->map(update_mega_glove[jj+1][i]), n);
-                for (int n = 0; n < num_bond[atom->map(update_mega_glove[jj+1][i])]; n++)
-                  dynamic_cast<FixBondHistory *>(ihistory)->delete_history(atom->map(update_mega_glove[jj+1][i]), 0);
+                for (int n = 0; n < num_bond[jjlocal]; n++)
+                  dynamic_cast<FixBondHistory *>(ihistory)->cache_history(jjlocal, n);
+                for (int n = 0; n < num_bond[jjlocal]; n++)
+                  dynamic_cast<FixBondHistory *>(ihistory)->delete_history(jjlocal, 0);
               }
-            num_bond[atom->map(update_mega_glove[jj+1][i])] = 0;
+            num_bond[jjlocal] = 0;
           }
           if (rxn.atoms[j].landlocked == 0) {
-            for (int p = num_bond[atom->map(update_mega_glove[jj+1][i])]-1; p > -1 ; p--) {
+            for (int p = num_bond[jjlocal]-1; p > -1 ; p--) {
               for (int n = 0; n < rxn.product->natoms; n++) {
                 int nn = rxn.atoms[n].amap[1]-1;
-                if (n!=j && bond_atom[atom->map(update_mega_glove[jj+1][i])][p] == update_mega_glove[nn+1][i] && rxn.atoms[n].landlocked == 1) {
+                if (n!=j && bond_atom[jjlocal][p] == update_mega_glove[nn+1][i] && rxn.atoms[n].landlocked == 1) {
                   // Cache history information, shift history, then delete final element
                   if (n_histories > 0)
                     for (auto &ihistory: histories)
-                      dynamic_cast<FixBondHistory *>(ihistory)->cache_history(atom->map(update_mega_glove[jj+1][i]), p);
-                  for (int m = p; m < num_bond[atom->map(update_mega_glove[jj+1][i])]-1; m++) {
-                    bond_type[atom->map(update_mega_glove[jj+1][i])][m] = bond_type[atom->map(update_mega_glove[jj+1][i])][m+1];
-                    bond_atom[atom->map(update_mega_glove[jj+1][i])][m] = bond_atom[atom->map(update_mega_glove[jj+1][i])][m+1];
+                      dynamic_cast<FixBondHistory *>(ihistory)->cache_history(jjlocal, p);
+                  for (int m = p; m < num_bond[jjlocal]-1; m++) {
+                    bond_type[jjlocal][m] = bond_type[jjlocal][m+1];
+                    bond_atom[jjlocal][m] = bond_atom[jjlocal][m+1];
                     if (n_histories > 0)
                       for (auto &ihistory: histories)
-                        dynamic_cast<FixBondHistory *>(ihistory)->shift_history(atom->map(update_mega_glove[jj+1][i]),m,m+1);
+                        dynamic_cast<FixBondHistory *>(ihistory)->shift_history(jjlocal,m,m+1);
                   }
                   if (n_histories > 0)
                     for (auto &ihistory: histories)
-                      dynamic_cast<FixBondHistory *>(ihistory)->delete_history(atom->map(update_mega_glove[jj+1][i]),
-                                                                 num_bond[atom->map(update_mega_glove[jj+1][i])]-1);
-                  num_bond[atom->map(update_mega_glove[jj+1][i])]--;
+                      dynamic_cast<FixBondHistory *>(ihistory)->delete_history(jjlocal, num_bond[jjlocal]-1);
+                  num_bond[jjlocal]--;
                   delta_bonds--;
                 }
               }
@@ -3282,31 +3283,54 @@ void FixBondReact::update_everything()
       // now let's add the new bond info.
       for (int j = 0; j < rxn.product->natoms; j++) {
         int jj = rxn.atoms[j].amap[1]-1;
-        if (atom->map(update_mega_glove[jj+1][i]) < nlocal && atom->map(update_mega_glove[jj+1][i]) >= 0) {
+        int jjlocal = atom->map(update_mega_glove[jj+1][i]);
+        if (jjlocal < nlocal && jjlocal >= 0) {
           if (rxn.atoms[j].landlocked == 1)  {
-            num_bond[atom->map(update_mega_glove[jj+1][i])] = rxn.product->num_bond[j];
+            num_bond[jjlocal] = rxn.product->num_bond[j];
             delta_bonds += rxn.product->num_bond[j];
             for (int p = 0; p < rxn.product->num_bond[j]; p++) {
-              bond_type[atom->map(update_mega_glove[jj+1][i])][p] = rxn.product->bond_type[j][p];
-              bond_atom[atom->map(update_mega_glove[jj+1][i])][p] = update_mega_glove[rxn.atoms[rxn.product->bond_atom[j][p]-1].amap[1]][i];
+              int batom = rxn.product->bond_atom[j][p];
+              int ibatom = rxn.atoms[batom-1].amap[1]-1;
+              int btag = update_mega_glove[ibatom+1][i];
+              if (rxn.atoms[jj].wildcard == 1 || rxn.atoms[ibatom].wildcard == 1) {
+                int blocal = atom->map(btag);
+                if (blocal < 0) error->all(FLERR,"Bond/react: Fix bond/react needs ghost atoms from further away");
+                int btype = atom->lmap->infer_bondtype(type[jjlocal],type[blocal]);
+                if (btype == -1) error->all(FLERR,"Bond/react: Unable to infer bond type from wildcard atoms");
+                bond_type[jjlocal][p] = btype;
+              } else {
+                bond_type[jjlocal][p] = rxn.product->bond_type[j][p];
+              }
+              bond_atom[jjlocal][p] = btag;
               // Check cached history data to see if bond regenerated
               if (n_histories > 0)
                 for (auto &ihistory: histories)
-                  dynamic_cast<FixBondHistory *>(ihistory)->check_cache(atom->map(update_mega_glove[jj+1][i]), p);
+                  dynamic_cast<FixBondHistory *>(ihistory)->check_cache(jjlocal, p);
             }
           }
           if (rxn.atoms[j].landlocked == 0) {
             for (int p = 0; p < rxn.product->num_bond[j]; p++) {
-              if (rxn.atoms[rxn.product->bond_atom[j][p]-1].landlocked == 1) {
-                insert_num = num_bond[atom->map(update_mega_glove[jj+1][i])];
-                bond_type[atom->map(update_mega_glove[jj+1][i])][insert_num] = rxn.product->bond_type[j][p];
-                bond_atom[atom->map(update_mega_glove[jj+1][i])][insert_num] = update_mega_glove[rxn.atoms[rxn.product->bond_atom[j][p]-1].amap[1]][i];
+              int batom = rxn.product->bond_atom[j][p];
+              if (rxn.atoms[batom-1].landlocked == 1) {
+                int ibatom = rxn.atoms[batom-1].amap[1]-1;
+                int btag = update_mega_glove[ibatom+1][i];
+                insert_num = num_bond[jjlocal];
+                if (rxn.atoms[jj].wildcard == 1 || rxn.atoms[ibatom].wildcard == 1) {
+                  int blocal = atom->map(btag);
+                  if (blocal < 0) error->all(FLERR,"Bond/react: Fix bond/react needs ghost atoms from further away");
+                  int btype = atom->lmap->infer_bondtype(type[jjlocal],type[blocal]);
+                  if (btype == -1) error->all(FLERR,"Bond/react: Unable to infer bond type from wildcard atoms");
+                  bond_type[jjlocal][insert_num] = btype;
+                } else {
+                  bond_type[jjlocal][insert_num] = rxn.product->bond_type[j][p];
+                }
+                bond_atom[jjlocal][insert_num] = btag;
                 // Check cached history data to see if bond regenerated
                 if (n_histories > 0)
                   for (auto &ihistory: histories)
-                    dynamic_cast<FixBondHistory *>(ihistory)->check_cache(atom->map(update_mega_glove[jj+1][i]), insert_num);
-                num_bond[atom->map(update_mega_glove[jj+1][i])]++;
-                if (num_bond[atom->map(update_mega_glove[jj+1][i])] > atom->bond_per_atom)
+                    dynamic_cast<FixBondHistory *>(ihistory)->check_cache(jjlocal, insert_num);
+                num_bond[jjlocal]++;
+                if (num_bond[jjlocal] > atom->bond_per_atom)
                   error->one(FLERR,"Fix bond/react topology/atom exceed system topology/atom");
                 delta_bonds++;
               }
