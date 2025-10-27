@@ -3170,7 +3170,7 @@ void FixBondReact::update_everything()
           if (stabilization_flag == 1) i_statted_tags[ilocal] = 0;
           i_react_tags[ilocal] = rxn.ID;
 
-          if (rxn.atoms[j].landlocked == 1)
+          if (rxn.atoms[j].landlocked == 1 && rxn.atoms[j].wildcard == 0)
             type[ilocal] = rxn.product->type[j];
           if (rxn.product->qflag && atom->q_flag && rxn.atoms[jj].recharged == 1) {
             double *q = atom->q;
