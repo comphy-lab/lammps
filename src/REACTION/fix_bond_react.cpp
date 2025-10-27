@@ -3481,28 +3481,29 @@ void FixBondReact::update_everything()
         auto &rxn = rxns[(int) update_mega_glove[0][i]];
         for (int j = 0; j < rxn.product->natoms; j++) {
           int jj = rxn.atoms[j].amap[1]-1;
-          if (atom->map(update_mega_glove[jj+1][i]) < nlocal && atom->map(update_mega_glove[jj+1][i]) >= 0) {
+          int jjlocal = atom->map(update_mega_glove[jj+1][i]);
+          if (jjlocal < nlocal && jjlocal >= 0) {
             if (rxn.atoms[j].landlocked == 1) {
-              delta_dihed -= num_dihedral[atom->map(update_mega_glove[jj+1][i])];
-              num_dihedral[atom->map(update_mega_glove[jj+1][i])] = 0;
+              delta_dihed -= num_dihedral[jjlocal];
+              num_dihedral[jjlocal] = 0;
             }
             if (rxn.atoms[j].landlocked == 0) {
-              for (int p = num_dihedral[atom->map(update_mega_glove[jj+1][i])]-1; p > -1; p--) {
+              for (int p = num_dihedral[jjlocal]-1; p > -1; p--) {
                 for (int n = 0; n < rxn.product->natoms; n++) {
                   int nn = rxn.atoms[n].amap[1]-1;
                   if (n!=j && rxn.atoms[n].landlocked == 1 &&
-                      (dihedral_atom1[atom->map(update_mega_glove[jj+1][i])][p] == update_mega_glove[nn+1][i] ||
-                       dihedral_atom2[atom->map(update_mega_glove[jj+1][i])][p] == update_mega_glove[nn+1][i] ||
-                       dihedral_atom3[atom->map(update_mega_glove[jj+1][i])][p] == update_mega_glove[nn+1][i] ||
-                       dihedral_atom4[atom->map(update_mega_glove[jj+1][i])][p] == update_mega_glove[nn+1][i])) {
-                    for (int m = p; m < num_dihedral[atom->map(update_mega_glove[jj+1][i])]-1; m++) {
-                      dihedral_type[atom->map(update_mega_glove[jj+1][i])][m] = dihedral_type[atom->map(update_mega_glove[jj+1][i])][m+1];
-                      dihedral_atom1[atom->map(update_mega_glove[jj+1][i])][m] = dihedral_atom1[atom->map(update_mega_glove[jj+1][i])][m+1];
-                      dihedral_atom2[atom->map(update_mega_glove[jj+1][i])][m] = dihedral_atom2[atom->map(update_mega_glove[jj+1][i])][m+1];
-                      dihedral_atom3[atom->map(update_mega_glove[jj+1][i])][m] = dihedral_atom3[atom->map(update_mega_glove[jj+1][i])][m+1];
-                      dihedral_atom4[atom->map(update_mega_glove[jj+1][i])][m] = dihedral_atom4[atom->map(update_mega_glove[jj+1][i])][m+1];
+                      (dihedral_atom1[jjlocal][p] == update_mega_glove[nn+1][i] ||
+                       dihedral_atom2[jjlocal][p] == update_mega_glove[nn+1][i] ||
+                       dihedral_atom3[jjlocal][p] == update_mega_glove[nn+1][i] ||
+                       dihedral_atom4[jjlocal][p] == update_mega_glove[nn+1][i])) {
+                    for (int m = p; m < num_dihedral[jjlocal]-1; m++) {
+                      dihedral_type[jjlocal][m] = dihedral_type[jjlocal][m+1];
+                      dihedral_atom1[jjlocal][m] = dihedral_atom1[jjlocal][m+1];
+                      dihedral_atom2[jjlocal][m] = dihedral_atom2[jjlocal][m+1];
+                      dihedral_atom3[jjlocal][m] = dihedral_atom3[jjlocal][m+1];
+                      dihedral_atom4[jjlocal][m] = dihedral_atom4[jjlocal][m+1];
                     }
-                    num_dihedral[atom->map(update_mega_glove[jj+1][i])]--;
+                    num_dihedral[jjlocal]--;
                     delta_dihed--;
                     break;
                   }
@@ -3515,32 +3516,87 @@ void FixBondReact::update_everything()
         if (rxn.product->dihedralflag) {
           for (int j = 0; j < rxn.product->natoms; j++) {
             int jj = rxn.atoms[j].amap[1]-1;
-            if (atom->map(update_mega_glove[jj+1][i]) < nlocal && atom->map(update_mega_glove[jj+1][i]) >= 0) {
+            int jjlocal = atom->map(update_mega_glove[jj+1][i]);
+            if (jjlocal < nlocal && jjlocal >= 0) {
               if (rxn.atoms[j].landlocked == 1) {
-                num_dihedral[atom->map(update_mega_glove[jj+1][i])] = rxn.product->num_dihedral[j];
+                num_dihedral[jjlocal] = rxn.product->num_dihedral[j];
                 delta_dihed += rxn.product->num_dihedral[j];
                 for (int p = 0; p < rxn.product->num_dihedral[j]; p++) {
-                  dihedral_type[atom->map(update_mega_glove[jj+1][i])][p] = rxn.product->dihedral_type[j][p];
-                  dihedral_atom1[atom->map(update_mega_glove[jj+1][i])][p] = update_mega_glove[rxn.atoms[rxn.product->dihedral_atom1[j][p]-1].amap[1]][i];
-                  dihedral_atom2[atom->map(update_mega_glove[jj+1][i])][p] = update_mega_glove[rxn.atoms[rxn.product->dihedral_atom2[j][p]-1].amap[1]][i];
-                  dihedral_atom3[atom->map(update_mega_glove[jj+1][i])][p] = update_mega_glove[rxn.atoms[rxn.product->dihedral_atom3[j][p]-1].amap[1]][i];
-                  dihedral_atom4[atom->map(update_mega_glove[jj+1][i])][p] = update_mega_glove[rxn.atoms[rxn.product->dihedral_atom4[j][p]-1].amap[1]][i];
+                  int atom1 = rxn.product->dihedral_atom1[j][p];
+                  int atom2 = rxn.product->dihedral_atom2[j][p];
+                  int atom3 = rxn.product->dihedral_atom3[j][p];
+                  int atom4 = rxn.product->dihedral_atom4[j][p];
+                  int iatom1 = rxn.atoms[atom1-1].amap[1]-1;
+                  int iatom2 = rxn.atoms[atom2-1].amap[1]-1;
+                  int iatom3 = rxn.atoms[atom3-1].amap[1]-1;
+                  int iatom4 = rxn.atoms[atom4-1].amap[1]-1;
+                  int tag1 = update_mega_glove[iatom1+1][i];
+                  int tag2 = update_mega_glove[iatom2+1][i];
+                  int tag3 = update_mega_glove[iatom3+1][i];
+                  int tag4 = update_mega_glove[iatom4+1][i];
+                  if (rxn.atoms[iatom1].wildcard == 1 ||
+                      rxn.atoms[iatom2].wildcard == 1 ||
+                      rxn.atoms[iatom3].wildcard == 1 ||
+                      rxn.atoms[iatom4].wildcard == 1) {
+                    int local1 = atom->map(tag1);
+                    int local2 = atom->map(tag2);
+                    int local3 = atom->map(tag3);
+                    int local4 = atom->map(tag4);
+                    if (local1 < 0 || local2 < 0 || local3 < 0 || local4 < 0)
+                      error->all(FLERR,"Bond/react: Fix bond/react needs ghost atoms from further away");
+                    int dtype = atom->lmap->infer_dihedraltype(type[local1],type[local2],type[local3],type[local4]);
+                    if (dtype == -1) error->all(FLERR,"Bond/react: Unable to infer dihedral type from wildcard atoms");
+                    dihedral_type[jjlocal][p] = dtype;
+                  } else {
+                    dihedral_type[jjlocal][p] = rxn.product->dihedral_type[j][p];
+                  }
+                  dihedral_atom1[jjlocal][p] = tag1;
+                  dihedral_atom2[jjlocal][p] = tag2;
+                  dihedral_atom3[jjlocal][p] = tag3;
+                  dihedral_atom4[jjlocal][p] = tag4;
                 }
               }
               if (rxn.atoms[j].landlocked == 0) {
                 for (int p = 0; p < rxn.product->num_dihedral[j]; p++) {
-                  if (rxn.atoms[rxn.product->dihedral_atom1[j][p]-1].landlocked == 1 ||
-                      rxn.atoms[rxn.product->dihedral_atom2[j][p]-1].landlocked == 1 ||
-                      rxn.atoms[rxn.product->dihedral_atom3[j][p]-1].landlocked == 1 ||
-                      rxn.atoms[rxn.product->dihedral_atom4[j][p]-1].landlocked == 1) {
-                    insert_num = num_dihedral[atom->map(update_mega_glove[jj+1][i])];
-                    dihedral_type[atom->map(update_mega_glove[jj+1][i])][insert_num] = rxn.product->dihedral_type[j][p];
-                    dihedral_atom1[atom->map(update_mega_glove[jj+1][i])][insert_num] = update_mega_glove[rxn.atoms[rxn.product->dihedral_atom1[j][p]-1].amap[1]][i];
-                    dihedral_atom2[atom->map(update_mega_glove[jj+1][i])][insert_num] = update_mega_glove[rxn.atoms[rxn.product->dihedral_atom2[j][p]-1].amap[1]][i];
-                    dihedral_atom3[atom->map(update_mega_glove[jj+1][i])][insert_num] = update_mega_glove[rxn.atoms[rxn.product->dihedral_atom3[j][p]-1].amap[1]][i];
-                    dihedral_atom4[atom->map(update_mega_glove[jj+1][i])][insert_num] = update_mega_glove[rxn.atoms[rxn.product->dihedral_atom4[j][p]-1].amap[1]][i];
-                    num_dihedral[atom->map(update_mega_glove[jj+1][i])]++;
-                    if (num_dihedral[atom->map(update_mega_glove[jj+1][i])] > atom->dihedral_per_atom)
+                  int atom1 = rxn.product->dihedral_atom1[j][p];
+                  int atom2 = rxn.product->dihedral_atom2[j][p];
+                  int atom3 = rxn.product->dihedral_atom3[j][p];
+                  int atom4 = rxn.product->dihedral_atom4[j][p];
+                  if (rxn.atoms[atom1-1].landlocked == 1 ||
+                      rxn.atoms[atom2-1].landlocked == 1 ||
+                      rxn.atoms[atom3-1].landlocked == 1 ||
+                      rxn.atoms[atom4-1].landlocked == 1) {
+                    int iatom1 = rxn.atoms[atom1-1].amap[1]-1;
+                    int iatom2 = rxn.atoms[atom2-1].amap[1]-1;
+                    int iatom3 = rxn.atoms[atom3-1].amap[1]-1;
+                    int iatom4 = rxn.atoms[atom4-1].amap[1]-1;
+                    int tag1 = update_mega_glove[iatom1+1][i];
+                    int tag2 = update_mega_glove[iatom2+1][i];
+                    int tag3 = update_mega_glove[iatom3+1][i];
+                    int tag4 = update_mega_glove[iatom4+1][i];
+                    insert_num = num_dihedral[jjlocal];
+                    if (rxn.atoms[iatom1].wildcard == 1 ||
+                        rxn.atoms[iatom2].wildcard == 1 ||
+                        rxn.atoms[iatom3].wildcard == 1 ||
+                        rxn.atoms[iatom4].wildcard == 1) {
+                      int local1 = atom->map(tag1);
+                      int local2 = atom->map(tag2);
+                      int local3 = atom->map(tag3);
+                      int local4 = atom->map(tag4);
+                      if (local1 < 0 || local2 < 0 || local3 < 0 || local4 < 0)
+                        error->all(FLERR,"Bond/react: Fix bond/react needs ghost atoms from further away");
+                      int dtype = atom->lmap->infer_dihedraltype(type[local1],type[local2],type[local3],type[local4]);
+                      if (dtype == -1) error->all(FLERR,"Bond/react: Unable to infer dihedral type from wildcard atoms");
+                      dihedral_type[jjlocal][insert_num] = dtype;
+                    } else {
+                      dihedral_type[jjlocal][insert_num] = rxn.product->dihedral_type[j][p];
+                    }
+                    dihedral_atom1[jjlocal][insert_num] = tag1;
+                    dihedral_atom2[jjlocal][insert_num] = tag2;
+                    dihedral_atom3[jjlocal][insert_num] = tag3;
+                    dihedral_atom4[jjlocal][insert_num] = tag4;
+                    num_dihedral[jjlocal]++;
+                    if (num_dihedral[jjlocal] > atom->dihedral_per_atom)
                       error->one(FLERR,"Fix bond/react topology/atom exceed system topology/atom");
                     delta_dihed++;
                   }
