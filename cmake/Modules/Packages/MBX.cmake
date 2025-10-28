@@ -10,33 +10,22 @@ endif()
 set(MBX_SUFFIX "" CACHE STRING "Suffix for MBX library")
 mark_as_advanced(MBX_SUFFIX)
 
+set(MBX_CONFIG_CC  ${CMAKE_C_COMPILER})
+set(MBX_CONFIG_CXX  ${CMAKE_CXX_COMPILER})
 if(BUILD_MPI)
   set(MBX_CONFIG_MPI "--enable-mpi")
-  set(MBX_CONFIG_CC  ${CMAKE_C_COMPILER})
-  set(MBX_CONFIG_CXX  ${CMAKE_CXX_COMPILER})
-  # set(MBX_CONFIG_CPPFLAGS "-I ${MPI_CXX_INCLUDE_PATH}")
-  # set(MBX_CONFIG_LIB "${MPI_CXX_LIBRARIES}")
-  # set(MBX_CONFIG_DEP "")
 else()
   set(MBX_CONFIG_MPI "--disable-mpi")
-  set(MBX_CONFIG_CC  ${CMAKE_C_COMPILER})
-  set(MBX_CONFIG_CXX  ${CMAKE_CXX_COMPILER})
-  # set(MBX_CONFIG_CPPFLAGS "")
-  # set(MBX_CONFIG_LIB "")
-  # set(MBX_CONFIG_DEP "")
-
-
-
 endif()
 
 
+# TODO: change to static release tarball
 set(MBX_URL "https://github.com/paesanilab/MBX/archive/refs/tags/v1.3.0.tar.gz"
   CACHE STRING "URL for MBX tarball")
 set(MBX_MD5 "7cfbf221f9c249c364c7f47769d0d768" CACHE STRING "MD5 checksum of MBX tarball")
 
 mark_as_advanced(MBX_URL)
 mark_as_advanced(MBX_MD5)
-GetFallbackURL(MBX_URL MBX_FALLBACK)
 
 
 
@@ -76,15 +65,13 @@ if(DOWNLOAD_MBX)
 
   include(ExternalProject)
   ExternalProject_Add(mbx_build
-    URL     ${MBX_URL} ${MBX_FALLBACK}
+    URL     ${MBX_URL}
     URL_MD5 ${MBX_MD5}
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND autoreconf -fi && <SOURCE_DIR>/configure
-                                            --prefix=<INSTALL_DIR>
-                                            ${MBX_CONFIG_MPI}
-                                            CXX=${MBX_CONFIG_CXX}
-                                            CC=${MBX_CONFIG_CC}
-                                            # CPPFLAGS=${MBX_CONFIG_CPPFLAGS}
+    CONFIGURE_COMMAND --prefix=<INSTALL_DIR>
+                      ${MBX_CONFIG_MPI}
+                      CXX=${MBX_CONFIG_CXX}
+                      CC=${MBX_CONFIG_CC}
+                      # CPPFLAGS=${MBX_CONFIG_CPPFLAGS}
     BUILD_BYPRODUCTS ${MBX_BUILD_BYPRODUCTS}
   )
   ExternalProject_get_property(mbx_build INSTALL_DIR)
