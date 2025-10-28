@@ -33,7 +33,19 @@ using namespace LAMMPS_NS;
 using namespace MathConst;
 
 /* ---------------------------------------------------------------------- */
+namespace {
+// With this structure I have now imposed a max of <100k dif ldd atom types that can be used in compute_property_atom
+// I hope this is practically beyond the limits of what one might want to simulate.
+  enum Ldd_compute_types : int {
+          LDD_LOCAL_DENSITY = 100000, // Planning for back 5 digits to tell me the ldd type
+          LDD_ENERGY = 200000, // while the 10^6 place tells me the kind of data
+          LDD_GRAD_DENSITYX = 300000,
+          LDD_GRAD_DENSITYY = 400000,
+          LDD_GRAD_DENSITYZ = 500000,
+          LDD_GRAD_ENERGY=  600000,
+          LDD_TOTAL_ENERGY = 700000}; // Here I'll only take 700k since its not a per_atom_vec
 
+} // End anon NS - Added to hide constants for compute_property_atom / property_atom recognition
 AtomVecLdd::AtomVecLdd(LAMMPS *lmp) : AtomVec(lmp)
 {
   mass_type = PER_TYPE;
@@ -96,3 +108,119 @@ void AtomVecLdd::grow_pointers()
   ldd_total_energy = atom->ldd_total_energy;
 }
 
+
+/* Need to make properties available for computes */
+
+/* property_atom gives us index for packing atom style later
+ *  The index returned is a big number (see enum at top) so that we can use
+ *  certain digits to extract column info in our per_atom vectors*/
+int AtomVecLdd::property_atom(const std::string &name)
+{
+
+ int typecol; // desired per atom vector column
+ int compute_type; // stores the determined Ldd_compute_type
+ std::string key; // Holds the root keyword without column wanted
+
+ // first I determine the ldd member wanted
+ if (utils::strmatch(name, "ldd_total_energy"))
+         return LDD_TOTAL_ENERGY; // scalar per atom, so no added work
+ else if (utils::strmatch(name, "ldd_local_density")){
+         key = "ldd_local_density"; // for vectors we find colidx wanted
+         compute_type = Ldd_compute_types::LDD_LOCAL_DENSITY;
+ }
+ else if (utils::strmatch(name, "ldd_energy")){
+         key = "ldd_energy";
+         compute_type = Ldd_compute_types::LDD_ENERGY;
+ }
+ else if (utils::strmatch(name, "ldd_grad_densityx")){
+         key = "ldd_grad_densityx";
+         compute_type = Ldd_compute_types::LDD_GRAD_DENSITYX;
+ }
+ else if (utils::strmatch(name, "ldd_grad_densityy")){
+         key = "ldd_grad_densityy";
+         compute_type = Ldd_compute_types::LDD_GRAD_DENSITYY;
+ }
+ else if (utils::strmatch(name, "ldd_grad_densityz")){
+         key = "ldd_grad_densityz";
+         compute_type = Ldd_compute_types::LDD_GRAD_DENSITYZ;
+ }
+ else if (utils::strmatch(name, "ldd_gradnrg")){
+         key = "ldd_gradnrg";
+         compute_type = Ldd_compute_types::LDD_GRAD_ENERGY;
+ }
+ else {return -1;}
+
+ // Then if its a vector we get the column wanted and pack it into the index
+ if (utils::strmatch(name, key)){
+         std::string lddid = utils::trim(name.substr(key.size()));
+         try {
+                 typecol = utils::inumeric(FLERR, lddid, true, lmp);
+         }
+         catch (...) {
+                 error->one(FLERR, "ldd type id {} not valid in property/atom", lddid);
+         }
+         if (typecol > atom->ldd_ntypes || typecol < 1) {
+                 error->one(FLERR, "ldd type id {} not valid in property/atom", typecol);
+         }
+   return compute_type + typecol;
+ }
+ return -1;
+}
+
+/* pack_property_atom infers the ldd type to pack/(if applicable)the column to pack based on the big
+ * index returned by pack_per_atom */
+void AtomVecLdd::pack_property_atom(int index, double *buf, int nvalues, int groupbit)
+{
+  int *mask =  atom->mask;
+  int nlocal = atom->nlocal;
+  int n = 0;
+  double **ldd_vec_variable; // all of them are n_atom x n_type or n_atom x 3 n_type
+  int ldd_type_col;
+  int ldd_gradxyz_col;
+
+  // Check variable types by greatest to least constant vals
+  if (index == LDD_TOTAL_ENERGY) {
+          double* total_energy = ldd_total_energy;
+          for (int i = 0; i < nlocal; i++){
+                  if (mask[i] & groupbit) {
+                          buf[n] = total_energy[i];}
+                  else {
+                          buf[n] = 0.0;}
+                  n += nvalues;
+          }
+          return; // done unpacking in this case
+  }
+  else if (index > LDD_GRAD_ENERGY) {
+          ldd_vec_variable = ldd_grad_energy;
+          ldd_type_col = index - LDD_GRAD_ENERGY;
+  }
+  else if (index > LDD_GRAD_DENSITYZ){
+          ldd_vec_variable = ldd_grad_density;
+          ldd_type_col = 3*(index - LDD_GRAD_DENSITYZ) + 2;
+  }
+  else if (index > LDD_GRAD_DENSITYY){
+          ldd_vec_variable = ldd_grad_density;
+          ldd_type_col = 3*(index - LDD_GRAD_DENSITYY) + 1;
+  }
+  else if (index > LDD_GRAD_DENSITYX) {
+          ldd_vec_variable = ldd_grad_density;
+          ldd_type_col = 3*(index - LDD_GRAD_DENSITYX);
+  }
+  else if (index > LDD_ENERGY){
+          ldd_vec_variable = ldd_energy;
+          ldd_type_col = index - LDD_ENERGY;
+  }
+  else if (index > LDD_LOCAL_DENSITY){
+          ldd_vec_variable = ldd_local_density;
+          ldd_type_col = index - LDD_LOCAL_DENSITY;
+  }
+
+  // if it was one of the vectors unpack the column info req.
+  for (int i = 0; i < nlocal; i++) {
+          if (mask[i] & groupbit){
+                  buf[n] = ldd_vec_variable[i][ldd_type_col];}
+          else{
+                  buf[n] = 0.0;}
+            n+=nvalues;
+          }
+}

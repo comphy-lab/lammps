@@ -92,7 +92,7 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
 
   restartinfo = 0;
   single_enable = 0; // MCL 07.30.25, while we have a single routine to compute the pair contribution given info about the LD, we have no way to set up the LD info without compute at present. So I disabled this.
-  one_coeff = 1; 
+  one_coeff = 1;
 // We pass the local densities & 3 components of the gradients for each type
   comm_forward = 4 * atom->ntypes;
   comm_reverse = 4 * atom->ntypes;
@@ -528,7 +528,7 @@ void PairLdd::coeff_ldd(int narg, char **arg)
   int n = atom->ntypes;
   int i,j,ilo,ihi,jlo,jhi;
   int iarg = 0;
-  int ignore = 0; 
+  int ignore = 0;
 
   utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
   utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
@@ -1114,7 +1114,7 @@ void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
 void PairLdd::coeff(int narg, char **arg)
 {
     if (!allocated) allocate();
-    if (narg > 3) // then the command probably looked like pair_coeff * * ele1 ele2 etc. 
+    if (narg > 3) // then the command probably looked like pair_coeff * * ele1 ele2 etc.
     {
     map_element2type(narg-3, arg+3);
     if (nelements != atom->ntypes)
@@ -1131,57 +1131,57 @@ void PairLdd::read_file(char * filename, int nelements)
 {
   if (comm->me == 0)
   {
-	FILE *lddinp_fp = utils::open_potential(filename, lmp, 0);
-	if (lddinp_fp == nullptr) 
-	{
-	error->one(FLERR, "Cannot open ldd input file {}: {}", filename, utils::getsyserror());
-	}
-	char s[MAXLINE];
-	std::vector<std::string> ldd_arg_string;
-	char ** ldd_arg_chars;
-	int num_words;
-	while (true) // file reader loop
-	{	
-		utils::sfgets(FLERR, s, MAXLINE, lddinp_fp, filename, nullptr);
-		if (feof(lddinp_fp) == true) {break;} // Check if done and exit
-		
-		num_words = utils::trim_and_count_words(s, " ");
-		if (num_words-1 <= 0) { continue; } // skip blank or incomplete lines
-		
-		ldd_arg_string = utils::split_words(s); // break line into args
-	
-		//  If pair coeff command, change string vector into c_str
-		if (! utils::strsame(ldd_arg_string[0].c_str(), "pair_coeff"))
-		{ 
-			error->warning(FLERR, "ldd input file {} only accepts lines leading with pair_coeff commands not: {} accordingly this line: {} in {} is ignored", filename, ldd_arg_string[0].c_str(), s, filename);
-			continue;
-		}
+        FILE *lddinp_fp = utils::open_potential(filename, lmp, 0);
+        if (lddinp_fp == nullptr)
+        {
+        error->one(FLERR, "Cannot open ldd input file {}: {}", filename, utils::getsyserror());
+        }
+        char s[MAXLINE];
+        std::vector<std::string> ldd_arg_string;
+        char ** ldd_arg_chars;
+        int num_words;
+        while (true) // file reader loop
+        {
+                utils::sfgets(FLERR, s, MAXLINE, lddinp_fp, filename, nullptr);
+                if (feof(lddinp_fp) == true) {break;} // Check if done and exit
 
-		if (nelements > 0) // Then we need to send the type into coeff_ldd
-		{
-		for (int k=0; k < nelements; k++)
-		{
-		if (utils::strsame(ldd_arg_string[1], elements[k]))
-		{
-			ldd_arg_string[1] = std::to_string(k+1);
-		}
-		 if (utils::strsame(ldd_arg_string[2], elements[k])) 
-		 {
-			 ldd_arg_string[2] = std::to_string(k+1);
-		 }
-		}
-		}
-		char** c_args = new char*[ldd_arg_string.size() -1];
-		for(int i=1; i < ldd_arg_string.size(); i++)
-		{
-		c_args[i-1] = const_cast<char*>(ldd_arg_string[i].c_str());
-//		fprintf(stderr, "%s\n", c_args[i-1]);
-		}
-		coeff_ldd(ldd_arg_string.size()-1 , c_args);
+                num_words = utils::trim_and_count_words(s, " ");
+                if (num_words-1 <= 0) { continue; } // skip blank or incomplete lines
 
-		delete[] c_args;
+                ldd_arg_string = utils::split_words(s); // break line into args
 
-	}	
+                //  If pair coeff command, change string vector into c_str
+                if (! utils::strsame(ldd_arg_string[0].c_str(), "pair_coeff"))
+                {
+                        error->warning(FLERR, "ldd input file {} only accepts lines leading with pair_coeff commands not: {} accordingly this line: {} in {} is ignored", filename, ldd_arg_string[0].c_str(), s, filename);
+                        continue;
+                }
+
+                if (nelements > 0) // Then we need to send the type into coeff_ldd
+                {
+                for (int k=0; k < nelements; k++)
+                {
+                if (utils::strsame(ldd_arg_string[1], elements[k]))
+                {
+                        ldd_arg_string[1] = std::to_string(k+1);
+                }
+                 if (utils::strsame(ldd_arg_string[2], elements[k]))
+                 {
+                         ldd_arg_string[2] = std::to_string(k+1);
+                 }
+                }
+                }
+                char** c_args = new char*[ldd_arg_string.size() -1];
+                for(int i=1; i < ldd_arg_string.size(); i++)
+                {
+                c_args[i-1] = const_cast<char*>(ldd_arg_string[i].c_str());
+//              fprintf(stderr, "%s\n", c_args[i-1]);
+                }
+                coeff_ldd(ldd_arg_string.size()-1 , c_args);
+
+                delete[] c_args;
+
+        }
   }
 }
 
