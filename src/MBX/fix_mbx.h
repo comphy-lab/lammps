@@ -24,7 +24,6 @@ FixStyle(MBX, FixMBX)
 
 // MBX
 
-#include "bblock/system.h"
 
 enum {
   MBXT_INIT = 0,
@@ -72,11 +71,6 @@ enum {
   MBXT_NUM_TIMERS
 };
 
-struct MBXParseResult {
-  bool success;
-  std::string message;
-};
-
 namespace LAMMPS_NS {
 
 class FixMBX : public Fix {
@@ -107,10 +101,8 @@ class FixMBX : public Fix {
   void min_post_force(int);
 
  protected:
+  struct MBXImpl *mbx_impl;
   class PairMBX *pair_mbx;    // pointer to MBX pair_style
-
-  bblock::System *ptr_mbx;          // pointer to MBX object
-  bblock::System *ptr_mbx_local;    // pointer to MBX object for local atoms
 
   static std::string cite_pair_mbx;
   int me, nprocs;

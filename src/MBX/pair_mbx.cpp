@@ -35,12 +35,27 @@
 #include <cmath>
 #include <cstring>
 
+#include "bblock/system.h"
 
 #define TTMNRG
 
 // subject for removal
 // Systems::DispersionPME()
 // Systems::ElectrostaticsMPI()
+
+namespace LAMMPS_NS{
+//PImpl idiom to hide MBX implementation details
+struct MBXImpl {
+  MBXImpl() : ptr_mbx(nullptr), ptr_mbx_local(nullptr) {}
+  ~MBXImpl()
+  {
+    delete ptr_mbx;
+    delete ptr_mbx_local;
+  }
+  bblock::System *ptr_mbx;
+  bblock::System *ptr_mbx_local;
+};
+} // namespace LAMMPS_NS
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
@@ -85,9 +100,9 @@ void PairMBX::compute(int eflag, int vflag)
 
   // compute energy+gradients in parallel
 
-  bblock::System *ptr_mbx = fix_MBX->ptr_mbx;              // compute terms in parallel
+  bblock::System *ptr_mbx = fix_MBX->mbx_impl->ptr_mbx;              // compute terms in parallel
   bblock::System *ptr_mbx_local =
-      fix_MBX->ptr_mbx_local;    // compute PME terms in parallel w/ sub-domains
+      fix_MBX->mbx_impl->ptr_mbx_local;    // compute PME terms in parallel w/ sub-domains
 
   double mbx_e2b_local, mbx_e2b_ghost;
   double mbx_e3b_local, mbx_e3b_ghost;
@@ -314,7 +329,7 @@ void PairMBX::accumulate_f(bool include_ext)
 
   fix_MBX->mbxt_start(MBXT_ACCUMULATE_F);
 
-  bblock::System *ptr_mbx = fix_MBX->ptr_mbx;
+  bblock::System *ptr_mbx = fix_MBX->mbx_impl->ptr_mbx;
 
   const int nlocal = atom->nlocal;
   double **f = atom->f;
@@ -395,7 +410,7 @@ void PairMBX::accumulate_f_all(bool include_ext)
 
   fix_MBX->mbxt_start(MBXT_ACCUMULATE_F);
 
-  bblock::System *ptr_mbx = fix_MBX->ptr_mbx;
+  bblock::System *ptr_mbx = fix_MBX->mbx_impl->ptr_mbx;
 
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
@@ -476,7 +491,7 @@ void PairMBX::accumulate_f_local(bool include_ext)
 
   fix_MBX->mbxt_start(MBXT_ACCUMULATE_F_LOCAL);
 
-  bblock::System *ptr_mbx = fix_MBX->ptr_mbx_local;
+  bblock::System *ptr_mbx = fix_MBX->mbx_impl->ptr_mbx_local;
 
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;

@@ -23,12 +23,6 @@ PairStyle(mbx, PairMBX)
 #include "fix_mbx.h"
 #include "pair.h"
 
-// MBX
-
-#include "bblock/system.h"
-
-
-//TODO Re-enable this once MBX is properly versioned at >1.3.2
 
 namespace LAMMPS_NS {
 

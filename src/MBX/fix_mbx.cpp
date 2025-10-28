@@ -35,6 +35,8 @@
 #include <cstring>
 #include <mpi.h>
 
+#include "bblock/system.h"
+
 #define _MAX_SIZE_MOL_NAME 16
 // Subject to further increase _MAX_SIZE_MOL_NAME
 #define _MAX_ATOMS_PER_MONOMER 8
@@ -44,8 +46,23 @@
 
 //#define _DEBUG_EFIELD
 
+namespace LAMMPS_NS{
+//PImpl idiom to hide MBX implementation details
+struct MBXImpl {
+  MBXImpl() : ptr_mbx(nullptr), ptr_mbx_local(nullptr) {}
+  ~MBXImpl()
+  {
+    delete ptr_mbx;
+    delete ptr_mbx_local;
+  }
+  bblock::System *ptr_mbx;
+  bblock::System *ptr_mbx_local;
+};
+} // namespace LAMMPS_NS
+
 using namespace LAMMPS_NS;
 using namespace FixConst;
+
 
 std::string FixMBX::cite_pair_mbx = std::string(
     "pair mbx command:\n\n" \
@@ -288,6 +305,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   me = comm->me;
   nprocs = comm->nprocs;
+  mbx_impl = new MBXImpl; //PImpl idiom to hide MBX implementation details
 
   // // validate input arguments
   bool validation_result = validateMBXFixParameters(narg - 3, &arg[3]);
@@ -445,8 +463,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   pair_mbx = (PairMBX *) force->pair_match("^mbx", 0);
   if (!pair_mbx) error->all(FLERR, "[MBX] Pair mbx is missing");
 
-  ptr_mbx = NULL;
-
   array_atom = NULL;
   mbx_dip = NULL;
   mol_type = NULL;
@@ -468,7 +484,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   // instance of MBX with just local monomers
 
-  ptr_mbx_local = NULL;
   mbx_num_atoms_local = 0;
   mbx_num_ext_local = 0;
 
@@ -581,13 +596,11 @@ FixMBX::~FixMBX()
   memory->destroy(higher_atom_type_index_in_mol);
   memory->destroy(order_in_mol);
 
-  if (ptr_mbx) delete ptr_mbx;
-
-  if (ptr_mbx_local) {
+  if (mbx_impl->ptr_mbx_local) {
     // accumulate timing info from pme electrostatics
 
-    std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
-    std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
+    std::vector<size_t> tmpi = mbx_impl->ptr_mbx_local->GetInfoElectrostaticsCounts();
+    std::vector<double> tmpd = mbx_impl->ptr_mbx_local->GetInfoElectrostaticsTimings();
 
     for (int i = 0; i < tmpi.size(); ++i) {
       mbxt_count[MBXT_ELE_PERMDIP_REAL + i] += tmpi[i];
@@ -596,16 +609,16 @@ FixMBX::~FixMBX()
 
     // accumulate timing info from dispersion pme
 
-    std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
-    std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
+    std::vector<size_t> tmpi_d = mbx_impl->ptr_mbx_local->GetInfoDispersionCounts();
+    std::vector<double> tmpd_d = mbx_impl->ptr_mbx_local->GetInfoDispersionTimings();
 
     for (int i = 0; i < tmpi_d.size(); ++i) {
       mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
       mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
     }
 
-    delete ptr_mbx_local;
   }
+  delete mbx_impl;
 
   if (print_verbose)
       mbxt_write_summary();    // this and collecting times should be gated by 'timer full' request
@@ -789,13 +802,13 @@ void FixMBX::post_neighbor()
 
   // tear down existing MBX objects
 
-  if (ptr_mbx) delete ptr_mbx;
+  if (mbx_impl->ptr_mbx) delete mbx_impl->ptr_mbx;
 
-  if (ptr_mbx_local) {
+  if (mbx_impl->ptr_mbx_local) {
     // accumulate timing info from pme electrostatics
 
-    std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
-    std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
+    std::vector<size_t> tmpi = mbx_impl->ptr_mbx_local->GetInfoElectrostaticsCounts();
+    std::vector<double> tmpd = mbx_impl->ptr_mbx_local->GetInfoElectrostaticsTimings();
 
     for (int i = 0; i < tmpi.size(); ++i) {
       mbxt_count[MBXT_ELE_PERMDIP_REAL + i] += tmpi[i];
@@ -804,26 +817,26 @@ void FixMBX::post_neighbor()
 
     // accumulate timing info from dispersion pme
 
-    std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
-    std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
+    std::vector<size_t> tmpi_d = mbx_impl->ptr_mbx_local->GetInfoDispersionCounts();
+    std::vector<double> tmpd_d = mbx_impl->ptr_mbx_local->GetInfoDispersionTimings();
 
     for (int i = 0; i < tmpi_d.size(); ++i) {
       mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
       mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
     }
 
-    delete ptr_mbx_local;
+    delete mbx_impl->ptr_mbx_local;
   }
 
   // create main instance of MBX object
 
-  ptr_mbx = new bblock::System();
-  ptr_mbx_local = new bblock::System();
+  mbx_impl->ptr_mbx = new bblock::System();
+  mbx_impl->ptr_mbx_local = new bblock::System();
 
   // initialize all MBX instances
 
   if (aspc_step == aspc_step_reset) {
-    ptr_mbx_local->ResetDipoleHistory();
+    mbx_impl->ptr_mbx_local->ResetDipoleHistory();
     aspc_num_hist = 0;
     aspc_step = 0;
   }
@@ -904,7 +917,7 @@ void FixMBX::pre_exchange()
 
   // save copy of dipole history
 
-  aspc_num_hist = ptr_mbx_local->GetNumDipoleHistory();
+  aspc_num_hist = mbx_impl->ptr_mbx_local->GetNumDipoleHistory();
 
   //  printf("# of histories= %i\n",aspc_num_hist);
 
@@ -927,7 +940,7 @@ void FixMBX::pre_exchange()
   // following debug only works if all ranks contribute
 
   for (int h = 0; h < aspc_num_hist; ++h) {
-    std::vector<double> mbx_dip_history = ptr_mbx_local->GetDipoleHistory(h);
+    std::vector<double> mbx_dip_history = mbx_impl->ptr_mbx_local->GetDipoleHistory(h);
 
     // printf("\nh= %i  mbx_dip_history.size()= %lu\n",h,mbx_dip_history.size());
     // for(int i=0; i<mbx_num_atoms_local; ++i) {
@@ -1011,7 +1024,7 @@ void FixMBX::mbx_get_dipoles_local()
     std::vector<double> mu_ind;
     std::vector<double> mu_tot;
 
-    ptr_mbx_local->GetMolecularDipoles(mu_perm, mu_ind);
+    mbx_impl->ptr_mbx_local->GetMolecularDipoles(mu_perm, mu_ind);
 
     // printf("GetMolecularDipoles: sizes:: mu_perm= %lu  mu_ind= %lu\n",mu_perm.size(), mu_ind.size());
 
@@ -1263,8 +1276,8 @@ void FixMBX::mbx_init()
         molec.push_back(nm);
         nm++;
 
-        ptr_mbx->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
-        ptr_mbx->AddMolecule(molec);
+        mbx_impl->ptr_mbx->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
+        mbx_impl->ptr_mbx->AddMolecule(molec);
 
         mbx_num_atoms += na;
       }
@@ -1280,49 +1293,49 @@ void FixMBX::mbx_init()
   }
 
   int *pg = comm->procgrid;
-  ptr_mbx->SetMPI(world, pg[0], pg[1], pg[2]);
+  mbx_impl->ptr_mbx->SetMPI(world, pg[0], pg[1], pg[2]);
 
   // set MBX solvers
 
   if (use_json) {
-    ptr_mbx->SetUpFromJson(json_settings);
+    mbx_impl->ptr_mbx->SetUpFromJson(json_settings);
 
     // make sure cutoffs are consistent
 
-    double mbx_cut = ptr_mbx->GetRealspaceCutoff();
+    double mbx_cut = mbx_impl->ptr_mbx->GetRealspaceCutoff();
     double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
     if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
-    double mbx_2b_cut = ptr_mbx->Get2bCutoff();
+    double mbx_2b_cut = mbx_impl->ptr_mbx->Get2bCutoff();
     if (mbx_2b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 2-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
-    double mbx_3b_cut = ptr_mbx->Get3bCutoff();
+    double mbx_3b_cut = mbx_impl->ptr_mbx->Get3bCutoff();
     if (mbx_3b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 3-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
-    double mbx_4b_cut = ptr_mbx->Get4bCutoff();
+    double mbx_4b_cut = mbx_impl->ptr_mbx->Get4bCutoff();
     if (mbx_4b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 4-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
   } else {
-    ptr_mbx->SetRealspaceCutoff(pair_mbx->cut_global);
-    ptr_mbx->SetUpFromJson();
+    mbx_impl->ptr_mbx->SetRealspaceCutoff(pair_mbx->cut_global);
+    mbx_impl->ptr_mbx->SetUpFromJson();
   }
 
   // load external charged particles
 #ifndef _DEBUG_EFIELD
   if (mbx_num_ext > 0) {
-    ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
+    mbx_impl->ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
   }
 #endif
 
   // setup MBX solver(s); need to keep pbc turned off, which currently disables electrostatic solver
 
   std::vector<double> box;
-  ptr_mbx->SetPBC(box);
+  mbx_impl->ptr_mbx->SetPBC(box);
 
   Pair *pairstyles_coullong = force->pair_match(".*coul/long.*", 0);
   Pair *pairstyles_coulcut = force->pair_match(".*coul/cut.*", 0);
@@ -1484,8 +1497,8 @@ void FixMBX::mbx_init_local()
 
         molec.push_back(nm++);
 
-        ptr_mbx_local->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
-        ptr_mbx_local->AddMolecule(molec);
+        mbx_impl->ptr_mbx_local->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
+        mbx_impl->ptr_mbx_local->AddMolecule(molec);
 
         mbx_num_atoms_local += na;
       }
@@ -1497,42 +1510,42 @@ void FixMBX::mbx_init_local()
   // setup MPI in MBX solver
 
   int *pg = comm->procgrid;
-  ptr_mbx_local->SetMPI(world, pg[0], pg[1], pg[2]);
+  mbx_impl->ptr_mbx_local->SetMPI(world, pg[0], pg[1], pg[2]);
 
   // set MBX solvers
 
   if (use_json) {
-    ptr_mbx_local->SetUpFromJson(json_settings);
+    mbx_impl->ptr_mbx_local->SetUpFromJson(json_settings);
 
     // make sure cutoffs are consistent
 
-    double mbx_cut = ptr_mbx_local->GetRealspaceCutoff();
+    double mbx_cut = mbx_impl->ptr_mbx_local->GetRealspaceCutoff();
     double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
     if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
-    double mbx_2b_cut = ptr_mbx_local->Get2bCutoff();
+    double mbx_2b_cut = mbx_impl->ptr_mbx_local->Get2bCutoff();
     if (mbx_2b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 2-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
-    double mbx_3b_cut = ptr_mbx_local->Get3bCutoff();
+    double mbx_3b_cut = mbx_impl->ptr_mbx_local->Get3bCutoff();
     if (mbx_3b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 3-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
-    double mbx_4b_cut = ptr_mbx_local->Get4bCutoff();
+    double mbx_4b_cut = mbx_impl->ptr_mbx_local->Get4bCutoff();
     if (mbx_4b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 4-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
   } else {
-    ptr_mbx_local->SetRealspaceCutoff(pair_mbx->cut_global);
-    ptr_mbx_local->SetUpFromJson();
+    mbx_impl->ptr_mbx_local->SetRealspaceCutoff(pair_mbx->cut_global);
+    mbx_impl->ptr_mbx_local->SetUpFromJson();
   }
 
   // load external charged particles
 #ifndef _DEBUG_EFIELD
   if (mbx_num_ext_local > 0) {
-    ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
+    mbx_impl->ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
   }
 #endif
 
@@ -1545,8 +1558,8 @@ void FixMBX::mbx_init_local()
   double elec_alpha, elec_grid, disp_alpha, disp_grid;
   size_t elec_spline, disp_spline;
 
-  ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
-  ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
+  mbx_impl->ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
+  mbx_impl->ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
 
   if ((elec_alpha > 0.0) && (!domain->xperiodic && !domain->yperiodic && !domain->zperiodic))
     error->all(FLERR,
@@ -1571,17 +1584,17 @@ void FixMBX::mbx_init_local()
   box[7] = domain->yz;
   box[8] = domain->zprd;
 
-  ptr_mbx_local->SetPBC(box);
-  ptr_mbx_local->SetBoxPMElocal(box);
+  mbx_impl->ptr_mbx_local->SetPBC(box);
+  mbx_impl->ptr_mbx_local->SetBoxPMElocal(box);
 
-  ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
+  mbx_impl->ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
 
-  std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
+  std::vector<int> egrid = mbx_impl->ptr_mbx_local->GetFFTDimensionElectrostatics(1);
   std::vector<int> dgrid =
-      ptr_mbx_local->GetFFTDimensionDispersion(1);    // will return mesh even for gas-phase
+      mbx_impl->ptr_mbx_local->GetFFTDimensionDispersion(1);    // will return mesh even for gas-phase
 
   if (print_verbose && first_step  && comm->me == 0) {
-    std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
+    std::string mbx_settings_ = mbx_impl->ptr_mbx_local->GetCurrentSystemConfig();
     if (screen) {
       fprintf(screen, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());
       fprintf(screen, "[MBX] LOCAL electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1],
@@ -1599,7 +1612,7 @@ void FixMBX::mbx_init_local()
   // check if using cg or aspc integrator for MBX dipoles
 
   if (first_step) {
-    std::string dip_method = ptr_mbx->GetDipoleMethod();
+    std::string dip_method = mbx_impl->ptr_mbx->GetDipoleMethod();
 
     if (dip_method == "aspc") {
       mbx_aspc_enabled = true;
@@ -1707,10 +1720,10 @@ void FixMBX::mbx_update_xyz()
   }    // for(i<nall)
 
   if (xyz.size() != indx * 3) error->one(FLERR, "Inconsistent # of atoms");
-  ptr_mbx->SetRealXyz(xyz);
+  mbx_impl->ptr_mbx->SetRealXyz(xyz);
 
   if (xyz_ext.size() != indx_ext * 3) error->one(FLERR, "Inconsistent # of external charges");
-  if (mbx_num_ext > 0) { ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext); }
+  if (mbx_num_ext > 0) { mbx_impl->ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext); }
 
   mbxt_stop(MBXT_UPDATE_XYZ);
 }
@@ -1748,8 +1761,8 @@ void FixMBX::mbx_update_xyz_local()
     double elec_alpha, elec_grid, disp_alpha, disp_grid;
     size_t elec_spline, disp_spline;
 
-    ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
-    ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
+    mbx_impl->ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
+    mbx_impl->ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
 
     if ((elec_alpha > 0.0) && (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
       error->all(FLERR,
@@ -1763,8 +1776,8 @@ void FixMBX::mbx_update_xyz_local()
         (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
       error->warning(FLERR, "[MBX] System is periodic, but Ewald alpha parameters not set");
 
-    ptr_mbx_local->SetPBC(box);
-    ptr_mbx_local->SetBoxPMElocal(box);
+    mbx_impl->ptr_mbx_local->SetPBC(box);
+    mbx_impl->ptr_mbx_local->SetBoxPMElocal(box);
   }
 
   // update coordinates
@@ -1850,10 +1863,10 @@ void FixMBX::mbx_update_xyz_local()
   }    // for(i<nall)
 
   if (xyz.size() != indx * 3) error->one(FLERR, "Inconsistent # of atoms");
-  ptr_mbx_local->SetRealXyz(xyz);
+  mbx_impl->ptr_mbx_local->SetRealXyz(xyz);
 
   if (xyz_ext.size() != indx_ext * 3) error->one(FLERR, "Inconsistent # of external charges");
-  if (mbx_num_ext_local > 0) { ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext); }
+  if (mbx_num_ext_local > 0) { mbx_impl->ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext); }
 
   mbxt_stop(MBXT_UPDATE_XYZ_LOCAL);
 }
@@ -1891,7 +1904,7 @@ void FixMBX::mbx_init_dipole_history_local()
 
   double ximage[3];
 
-  ptr_mbx_local->SetNumDipoleHistory(aspc_num_hist);
+  mbx_impl->ptr_mbx_local->SetNumDipoleHistory(aspc_num_hist);
 
   std::vector<double> mbx_dip_history = std::vector<double>(mbx_num_atoms_local * 3);
 
@@ -1946,7 +1959,7 @@ void FixMBX::mbx_init_dipole_history_local()
 
     if (mbx_num_atoms_local * 3 != indx) error->one(FLERR, "Inconsistent # of atoms");
     //      printf("calling SetDipoleHistory");
-    ptr_mbx_local->SetDipoleHistory(h, mbx_dip_history);
+    mbx_impl->ptr_mbx_local->SetDipoleHistory(h, mbx_dip_history);
 
   }    // for(hist)
 
