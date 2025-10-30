@@ -1491,6 +1491,8 @@ hbond
 hcp
 hdnnp
 HDNNP
+runner
+RUNNER
 Hearn
 Heaviside
 heatconduction
