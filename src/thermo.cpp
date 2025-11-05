@@ -454,7 +454,7 @@ void Thermo::compute(int flag)
   // add each thermo value to line with its specific format
   if (update_field_data) {
     lock_cache();
-    if ((int)field_data.size() != nfield) field_data.resize(nfield);
+    if ((int) field_data.size() != nfield) field_data.resize(nfield);
   }
 
   for (ifield = 0; ifield < nfield; ifield++) {
@@ -509,7 +509,7 @@ bigint Thermo::lost_check()
     warnbefore = 1;
     if (comm->me == 0)
       utils::logmesg(
-          lmp, "WARNING: Too many warnings: {} vs {}. All future warnings willbe suppressed\n",
+          lmp, "WARNING: Too many warnings: {} vs {}. All future warnings will be suppressed\n",
           ntotal[1], maxwarn);
   }
   error->set_allwarn(MIN(MAXSMALLINT, ntotal[1]));
@@ -1103,7 +1103,7 @@ void Thermo::parse_fields(const std::string &str)
         auto *icompute = modify->get_compute_by_id(argi.get_name());
         if (!icompute)
           error->all(FLERR, nfield + 1, "Could not find thermo custom compute ID: {}",
-                     icompute->id);
+                     argi.get_name());
         if (argi.get_dim() == 0) {    // scalar
           if (icompute->scalar_flag == 0)
             error->all(FLERR, nfield + 1, "Thermo custom compute {} does not compute a scalar",
@@ -1143,7 +1143,7 @@ void Thermo::parse_fields(const std::string &str)
       } else if (argi.get_type() == ArgInfo::FIX) {
         auto *ifix = modify->get_fix_by_id(argi.get_name());
         if (!ifix)
-          error->all(FLERR, nfield + 1, "Could not find thermo custom fix ID: {}", ifix->id);
+          error->all(FLERR, nfield + 1, "Could not find thermo custom fix ID: {}", argi.get_name());
         if (argi.get_dim() == 0) {    // scalar
           if (ifix->scalar_flag == 0)
             error->all(FLERR, nfield + 1, "Thermo custom fix {} does not compute a scalar",
