@@ -12,12 +12,8 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-// Gen Questions:
-// 1) What is a tagint?
-// 2) What are all the nullptrs in the definition of a fix
-
 /* ----------------------------------------------------------------------
-   Contributing author: Paul Crozier, Aidan Thompson (SNL)
+   Contributing author: Andrew Hong (SNL)
 ------------------------------------------------------------------------- */
 
 #include "fix_gemc.h"
@@ -68,32 +64,30 @@ static constexpr double MAXENERGYSIGNAL = 1.0e100;
 static constexpr double MAXENERGYTEST = 1.0e50;
 
 static constexpr double BUFFACTOR = 1.2;
-
-// const std::vector<std::string> AtomVec::default_exchange = {"id",    "type", "mask",
-//                                                            "image", "x",    "v"};
-// bufextra
 static constexpr int BUFMIN = 1024;
 
 /* ---------------------------------------------------------------------- */
 
-// not sure what all these nullptrs are for
 FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 {
   buf = NULL;
 
   if (narg < 12) utils::missing_cmd_args(FLERR, "fix gemc", error);
+
   // must have only two boxes
 
-  if (universe->nworlds != 2) error->universe_all(FLERR, "Must use exactly two partitions");
+  if (universe->nworlds != 2) error->universe_all(FLERR, "Must use exactly two partitions with fix gemc");
 
-  if (molecule_flag) error->universe_all(FLERR, "GEMC w/ molecules currently not supported");
+  if (molecule_flag) error->universe_all(FLERR, "Using fix gemc with molecules not (yet) supported");
 
   // various fix flags (partial copy from gcmc)
+
   time_integrate = 0; // do not time integrate (use only MC moves)
-  global_freq = 1; // NOT SURE
-  time_depend = 1; // NOT SURE
+  global_freq = 1;
+  time_depend = 1;
 
   // box size changes with volume MC moves
+
   box_change |= BOX_CHANGE_X;
   box_change |= BOX_CHANGE_Y;
   box_change |= BOX_CHANGE_Z;
@@ -117,30 +111,24 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   seed = utils::inumeric(FLERR,       arg[11], false, lmp);
 
   if (max_rho <= 0.0)
-    error->universe_all(FLERR, "FixGEMC: Max density must be positive number");
-
-  // DEBUG : Test if inputs correct
-  //printf("arg: %i, %i, %i\n", nevery, ntranslate, nrotate);
-  //printf("arg: %i, %i, %g\n", nexchange, nvolume, box_temp);
-  //printf("arg: %g, %g, %i\n", displace, max_volume, seed);
+    error->universe_all(FLERR, "fix gemc max density must be positive number");
 
   // comm_replica = communicator between proc 0s across boxes
 
   int color = comm->me;
   MPI_Comm_split(universe->uworld, color, 0, &comm_replica);
 
-  // DEBUG : Test communication set up correct
-  //if (color == 0)
-  //  printf("myworld: %i\n", universe->iworld);
-  //else
-  //  printf("rest of us: %i\n", comm->me);
-
-  // same RNG for each replica for volume MC moves
+  // use same RNG for each replica for volume MC moves
   // unique to proc
+
   random_proc = new RanPark(lmp,seed+3.0*(universe->iworld+1)+7.0*(color+1));
+
   // sync between procs
+
   random_world = new RanPark(lmp,seed+13.0*(universe->iworld+1));
+
   // sync between universes
+
   random_universe = new RanPark(lmp,seed);
 
   // detect if any rigid fixes exist so rigid bodies move when box is remapped
@@ -151,10 +139,6 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   gemc_nmax = 0;
   local_gas_list = nullptr;
-
-  // read options from end of input line
-
-  //options(narg-12,&arg[12]);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -181,7 +165,6 @@ void FixGEMC::init()
 {
   progress = 0;
 
-  // for comm
   myworld = universe->iworld;
   mycomm = comm->me;
   nprocs = comm->nprocs;
@@ -190,9 +173,11 @@ void FixGEMC::init()
   // determine probability of each step during pre_exchange
 
   // set probabilities for MC moves
+
   if (!molecule_flag) nrotate = 0;
 
   // total moves is a double to avoid type casting later
+
   nmoves = nvolume + nexchange + ntranslate + nrotate;
 
   double d_nmoves = static_cast<double>(nmoves);
@@ -202,9 +187,11 @@ void FixGEMC::init()
   double p_rotate    = nrotate/d_nmoves;
 
   // normalize probabilities
+
   double p_total = p_exchange + p_volume + p_translate + p_rotate;
 
   // compute cummulative probabilites
+
   pc_exchange = p_exchange/p_total;
   pc_volume = (p_volume+p_exchange)/p_total;
   if (molecule_flag) {
@@ -216,18 +203,23 @@ void FixGEMC::init()
   }
 
   // for full energy
+
   c_pe = modify->compute[modify->find_compute("thermo_pe")];
 
   // check if atoms charged
+
   q_flag = atom->q_flag;
 
   // pre compute scaled temperature
+
   beta = 1.0/(force->boltz*box_temp);
 
   // get domain dim
+
   triclinic_flag = domain->triclinic;
 
   // get domain dims
+
   xlo = domain->boxlo[0];
   xhi = domain->boxhi[0];
   ylo = domain->boxlo[1];
@@ -236,6 +228,7 @@ void FixGEMC::init()
   zhi = domain->boxhi[2];
 
   // get subdomain
+
   if (triclinic_flag) {
     sublo = domain->sublo_lamda;
     subhi = domain->subhi_lamda;
@@ -248,6 +241,7 @@ void FixGEMC::init()
   // keeps temporarily deleted particles from being added in potential energy calc
 
   // id from fix
+
   auto group_id = std::string("FixGEMC:gemc_exclusion_group:") + id;
   group->assign(group_id + " subtract all all");
   exclusion_group = group->find(group_id);
@@ -284,6 +278,7 @@ void FixGEMC::pre_exchange()
   if (next_reneighbor != update->ntimestep) return;
 
   // get domain dims
+
   xlo = domain->boxlo[0];
   xhi = domain->boxhi[0];
   ylo = domain->boxlo[1];
@@ -292,6 +287,7 @@ void FixGEMC::pre_exchange()
   zhi = domain->boxhi[2];
 
   // get subdomain
+
   if (triclinic_flag) {
     sublo = domain->sublo_lamda;
     subhi = domain->subhi_lamda;
@@ -306,9 +302,11 @@ void FixGEMC::pre_exchange()
   // 3) change box volume + scale particle positions
 
   // update next time to call
+
   next_reneighbor = update->ntimestep + nevery;
 
   // translation seems to be fully working
+
   double imove;
   update_gas_atoms_list();
 
@@ -317,7 +315,6 @@ void FixGEMC::pre_exchange()
 
   if (energy_stored > 1E6)
     error->one(FLERR,"fix gemc: Energy of old configuration big");
-
 
   for (int i = 0; i < nmoves; i++) {
     imove = random_universe->uniform();
@@ -401,22 +398,15 @@ void FixGEMC::update_gas_atoms_list()
   int nlocal = atom->nlocal;
   int *mask = atom->mask;
 
-  /*if (atom->nmax > gemc_nmax) {
-    memory->sfree(local_gas_list);
-    gemc_nmax = atom->nmax;
-    local_gas_list = (int *) memory->smalloc(gemc_nmax*sizeof(int),
-     "GEMC:local_gas_list");
-  }*/
-
   natom_local = 0;
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) {
-      //local_gas_list[natom_local] = i;
       natom_local++;
     }
   }
 
   // ngas is total atoms in whole system
+
   MPI_Allreduce(&natom_local,&natom_total,1,MPI_INT,MPI_SUM,world);
   MPI_Scan(&natom_local,&natom_lower,1,MPI_INT,MPI_SUM,world);
   natom_lower -= natom_local;
@@ -438,31 +428,6 @@ double FixGEMC::energy_full()
   neighbor->build(1);
   int eflag = 1;
   int vflag = 0;
-
-  // check for overlaps
-
-  /*int overlaptestall;
-  int overlaptest = 0;
-  double delx,dely,delz,rsq;
-  double **x = atom->x;
-  tagint *molecule = atom->molecule;
-  int nall = atom->nlocal + atom->nghost;
-  for (int i = 0; i < atom->nlocal; i++) {
-    for (int j = i+1; j < nall; j++) {
-      delx = x[i][0] - x[j][0];
-      dely = x[i][1] - x[j][1];
-      delz = x[i][2] - x[j][2];
-      rsq = delx*delx + dely*dely + delz*delz;
-
-      if (rsq < 0.9) {
-        overlaptest = 1;
-        break;
-      }
-    }
-    if (overlaptest) break;
-  }
-  MPI_Allreduce(&overlaptest, &overlaptestall, 1, MPI_INT, MPI_MAX, world);
-  if (overlaptestall) return MAXENERGYSIGNAL;*/
 
   // clear forces so they don't accumulate over multiple
   // calls within fix gcmc timestep, e.g. for fix shake
