@@ -93,7 +93,7 @@ void FixGEMC::attempt_volume_change_full()
         dvolume = (random_proc->uniform()-0.5)*max_volume;
         i_rho = i_mass/(i_vol+dvolume);
         j_rho = j_mass/(j_vol-dvolume); // world 1 will swap sign
-        if (MAX(i_rho,j_rho) < max_rho and i_rho > 0 and j_rho > 0) break;
+        if (MAX(i_rho,j_rho) < max_rho && i_rho > 0 && j_rho > 0) break;
       }
     }
 
@@ -542,9 +542,9 @@ void FixGEMC::attempt_atomic_translation_full()
       coord[0] = x[iatom][0] + displace*rx;
       coord[1] = x[iatom][1] + displace*ry;
       coord[2] = x[iatom][2] + displace*rz;
-      if (coord[0]>xlo and coord[0]<xhi and
-          coord[1]>ylo and coord[1]<yhi and
-          coord[2]>zlo and coord[2]<zhi) break;
+      if (coord[0]>xlo && coord[0]<xhi and
+          coord[1]>ylo && coord[1]<yhi and
+          coord[2]>zlo && coord[2]<zhi) break;
     }
 
     x[iatom][0] += displace*rx;
