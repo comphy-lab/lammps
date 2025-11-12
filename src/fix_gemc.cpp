@@ -203,7 +203,7 @@ void FixGEMC::init()
 
   // normalize probabilities
   double p_total = p_exchange + p_volume + p_translate + p_rotate;
-  
+
   // compute cummulative probabilites
   pc_exchange = p_exchange/p_total;
   pc_volume = (p_volume+p_exchange)/p_total;

@@ -37,7 +37,7 @@ class FixGEMC : public Fix {
   // vars //
 
   // user provided inputs
-  
+
   int nevery; // frequency this fix is called
   int ntranslate; // number of translation each box performs each step
   int nrotate; // number of rotations each box performs each setp
@@ -52,7 +52,7 @@ class FixGEMC : public Fix {
   // for evaluating probability
 
   int overlap_flag; // check for overlap?
-  double overlap_cutoffsq; // check for max cutoff 
+  double overlap_cutoffsq; // check for max cutoff
   double beta; // 1 / (boltzmann * temperature)
   double energy_stored; // current potential energy
   class Compute *c_pe; // compute to get full potential energy

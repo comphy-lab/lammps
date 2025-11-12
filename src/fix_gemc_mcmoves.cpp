@@ -282,7 +282,7 @@ void FixGEMC::attempt_atomic_exchange_full()
       // save old coordinates
       old_coord[0] = atom->x[iatom][0];
       old_coord[1] = atom->x[iatom][1];
-      old_coord[2] = atom->x[iatom][2]; 
+      old_coord[2] = atom->x[iatom][2];
 
       // pack atom (only one atom sent per move)
       //printf("sender natoms: %i %i\n", atom->natoms, atom->nlocal);
