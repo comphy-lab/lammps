@@ -108,7 +108,7 @@ void FixGEMC::attempt_volume_change_full()
   // attempt to change volume
 
   double fvolume = (i_vol+dvolume)/i_vol;
-  if (fvolume < 0) error->one(FLERR,"Negative volume found in fix gemc");
+  if (fvolume < 0) error->universe_one(FLERR,"Negative volume found in fix gemc");
   double scale_length = pow(fvolume, 1.0/domain->dimension);
 
   // convert to lamda coords so they get scaled
@@ -234,7 +234,7 @@ void FixGEMC::attempt_volume_change_full()
   if (energy_stored > MAXENERGYTEST) {
     printf("[%i] volume - %g -> %g\n",
       myworld, energy_before, energy_after);
-    error->one(FLERR,"bad energy");
+    error->universe_one(FLERR,"bad energy");
   }
 }
 
@@ -377,7 +377,7 @@ void FixGEMC::attempt_atomic_exchange_full()
     } else {
       domain->remap(coord);
       if (!domain->inside(coord))
-        error->one(FLERR,"Fix gemc put atom outside box");
+        error->universe_one(FLERR,"Fix gemc put atom outside box");
       if (coord[0] >= sublo[0] && coord[0] < subhi[0] &&
           coord[1] >= sublo[1] && coord[1] < subhi[1] &&
           coord[2] >= sublo[2] && coord[2] < subhi[2]) proc_flag = 1;
@@ -453,7 +453,7 @@ void FixGEMC::attempt_atomic_exchange_full()
     printf("bad exchange\n");
     printf("%i -- %i\n", myworld, atom->natoms);
     printf("%g %g\n", energy_before, energy_after);
-    error->one(FLERR,"bad energy");
+    error->universe_one(FLERR,"bad energy");
   }
 
   // handle deletion/insertions or revert

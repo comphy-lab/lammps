@@ -246,7 +246,7 @@ void FixGEMC::init()
   group->assign(group_id + " subtract all all");
   exclusion_group = group->find(group_id);
   if (exclusion_group == -1)
-    error->all(FLERR,"Could not find fix gemc exclusion group ID");
+    error->universe_all(FLERR,"Could not find fix gemc exclusion group ID");
   exclusion_group_bit = group->bitmask[exclusion_group];
 
   // neighbor list exclusion setup
@@ -314,7 +314,7 @@ void FixGEMC::pre_exchange()
   int prev_step = 0;
 
   if (energy_stored > 1E6)
-    error->one(FLERR,"fix gemc: Energy of old configuration big");
+    error->universe_one(FLERR,"fix gemc: Energy of old configuration big");
 
   for (int i = 0; i < nmoves; i++) {
     imove = random_universe->uniform();
@@ -322,7 +322,7 @@ void FixGEMC::pre_exchange()
     if (fabs(energy_full()) > 1E8) {
       printf("step: %i; prev_step: %i\n", i, prev_step);
       printf("%i - %g\n", i, energy_stored);
-      error->one(FLERR,"bad energy before");
+      error->universe_one(FLERR,"bad energy before");
     }
 
     if (imove < pc_exchange) attempt_atomic_exchange_full();
@@ -337,7 +337,7 @@ void FixGEMC::pre_exchange()
       else printf("translate\n\n");
       printf("energy stored: %g; energy_now: %g\n",
         energy_stored, energy_check);
-      error->one(FLERR,"bad energy intermediate");
+      error->universe_one(FLERR,"bad energy intermediate");
     }
 
     if (triclinic_flag) domain->x2lamda(atom->nlocal);
@@ -355,7 +355,7 @@ void FixGEMC::pre_exchange()
       else printf("translate\n\n");
       printf("energy stored: %g; energy_now: %g\n",
         energy_stored, energy_check);
-      error->one(FLERR,"bad energy after");
+      error->universe_one(FLERR,"bad energy after");
     }
 
     if (imove < pc_exchange) prev_step = 0;
