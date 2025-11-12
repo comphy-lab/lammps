@@ -542,8 +542,8 @@ void FixGEMC::attempt_atomic_translation_full()
       coord[0] = x[iatom][0] + displace*rx;
       coord[1] = x[iatom][1] + displace*ry;
       coord[2] = x[iatom][2] + displace*rz;
-      if (coord[0]>xlo && coord[0]<xhi and
-          coord[1]>ylo && coord[1]<yhi and
+      if (coord[0]>xlo && coord[0]<xhi &&
+          coord[1]>ylo && coord[1]<yhi &&
           coord[2]>zlo && coord[2]<zhi) break;
     }
 
