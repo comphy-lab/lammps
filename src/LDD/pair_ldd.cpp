@@ -519,7 +519,7 @@ void PairLdd::coeff_ldd(int narg, char **arg)
  * gradient is optional.
  * potl_coeffs and grad_coeffs depend on the type of potential used
  */
-  int me; // Use lammps comm->me instead? 
+  int me; // Use lammps comm->me instead?
   MPI_Comm_rank(world,&me);
   if (narg < 2) error->all(FLERR,"You must list coefficients for the ldd pair interaction");
   //if (!allocated) allocate();
@@ -1141,38 +1141,38 @@ void PairLdd::read_file(char * filename, int nelements)
   bool bdone = false;
   while (!bdone) // file reader/arg parser loop
         {
-		utils::read_lines_from_file(lddinp_fp, 1, MAXLINE, line_buf, comm->me, world); // should broadcast to all
+                utils::read_lines_from_file(lddinp_fp, 1, MAXLINE, line_buf, comm->me, world); // should broadcast to all
 
-	        if (comm->me == 0) {if (feof(lddinp_fp) == true) { bdone = true; }} // But only 0 will know if done
-		MPI_Bcast(&bdone, 1, MPI_CXX_BOOL, 0, world);
-		MPI_Barrier(MPI_COMM_WORLD);
-		if (bdone) { continue; }
+                if (comm->me == 0) {if (feof(lddinp_fp) == true) { bdone = true; }} // But only 0 will know if done
+                MPI_Bcast(&bdone, 1, MPI_CXX_BOOL, 0, world);
+                MPI_Barrier(MPI_COMM_WORLD);
+                if (bdone) { continue; }
 
-		num_words = utils::trim_and_count_words(line_buf, " ");
-		if (num_words-1 <= 0) { MPI_Barrier(MPI_COMM_WORLD); continue; }
-		else {ldd_arg_string = utils::split_words(line_buf);} // break line into args
-		if (! utils::strsame(ldd_arg_string[0].c_str(), "pair_coeff"))
-		{
-		error->warning(FLERR, "ldd input file {} only accepts lines leading with pair_coeff commands not: {}\
-			       	accordingly this line: {} in {} is ignored", filename, ldd_arg_string[0].c_str(), line_buf, filename);
-		num_words=0;
-		}
-		if (nelements > 0) // then the user is probably passing e.g. pair_coeff A B instead of 1 2
-		{ // coeff_ldd likes 1 2 so we'll change it out before we pass into there. 
-		  for (int k=0; k < nelements; k++) 
-		  {
-		  if (utils::strsame(ldd_arg_string[1], elements[k])) {ldd_arg_string[1] = std::to_string(k+1); }
-		  if (utils::strsame(ldd_arg_string[2], elements[k])) {ldd_arg_string[2] = std::to_string(k+1); }
-		  }
-		}
-	     
+                num_words = utils::trim_and_count_words(line_buf, " ");
+                if (num_words-1 <= 0) { MPI_Barrier(MPI_COMM_WORLD); continue; }
+                else {ldd_arg_string = utils::split_words(line_buf);} // break line into args
+                if (! utils::strsame(ldd_arg_string[0].c_str(), "pair_coeff"))
+                {
+                error->warning(FLERR, "ldd input file {} only accepts lines leading with pair_coeff commands not: {}\
+                               	accordingly this line: {} in {} is ignored", filename, ldd_arg_string[0].c_str(), line_buf, filename);
+                num_words=0;
+                }
+                if (nelements > 0) // then the user is probably passing e.g. pair_coeff A B instead of 1 2
+                { // coeff_ldd likes 1 2 so we'll change it out before we pass into there.
+                  for (int k=0; k < nelements; k++)
+                  {
+                  if (utils::strsame(ldd_arg_string[1], elements[k])) {ldd_arg_string[1] = std::to_string(k+1); }
+                  if (utils::strsame(ldd_arg_string[2], elements[k])) {ldd_arg_string[2] = std::to_string(k+1); }
+                  }
+                }
+
                 ldd_arg_chars = new char*[ldd_arg_string.size() -1];
                 for(int i=1; i < ldd_arg_string.size(); i++)
                 {
                 ldd_arg_chars[i-1] = const_cast<char*>(ldd_arg_string[i].c_str());
-		std::strcpy(ldd_arg_chars[i-1], ldd_arg_string[i].c_str());
+                std::strcpy(ldd_arg_chars[i-1], ldd_arg_string[i].c_str());
                 }
-		MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(MPI_COMM_WORLD);
                 coeff_ldd(ldd_arg_string.size()-1 , ldd_arg_chars);
 
 
