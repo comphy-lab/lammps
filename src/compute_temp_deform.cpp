@@ -41,11 +41,10 @@ ComputeTempDeform::ComputeTempDeform(LAMMPS *lmp, int narg, char **arg) :
   for (int iarg = 3; iarg < narg; ++iarg) {
     if (strcmp(arg[iarg], "temp")==0) {
       ++iarg;
-      if (iarg >= narg)
-        error->all(FLERR, "Missing argument for name of temperature compute in compute temp/deform");
+      if (iarg >= narg) utils::missing_cmd_args(FLERR, fmt::format("compute {} temp", style), error);
       id_temp = utils::strdup(arg[iarg]);
       tcomputeflag = 0;
-    } else error->all(FLERR, "Illegal compute temp/deform command");
+    } else error->all(FLERR, "Unknown compute {} keyword: {}", style, arg[iarg]);
   }
 
   scalar_flag = vector_flag = 1;

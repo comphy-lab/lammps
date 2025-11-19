@@ -58,15 +58,15 @@ FixNVTSllod::FixNVTSllod(LAMMPS *lmp, int narg, char **arg) :
 
   while (iarg < narg) {
     if (strcmp(arg[iarg],"psllod") == 0) {
-      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix nvt/sllod psllod", error);
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, fmt::format("fix {} psllod", style), error);
       psllod_flag = utils::logical(FLERR,arg[iarg+1],false,lmp);
       iarg += 2;
     } else if (strcmp(arg[iarg],"peculiar") == 0) {
-      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix nvt/sllod peculiar", error);
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, fmt::format("fix {} peculiar", style), error);
       peculiar_flag = utils::logical(FLERR,arg[iarg+1],false,lmp);
       iarg += 2;
     } else if (strcmp(arg[iarg],"kick") == 0) {
-      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix nvt/sllod kick", error);
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, fmt::format("fix {} kick", style), error);
       kick_flag = utils::logical(FLERR,arg[iarg+1],false,lmp);
       user_kick = true;
       iarg += 2;
