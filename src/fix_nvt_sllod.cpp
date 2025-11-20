@@ -165,7 +165,7 @@ void FixNVTSllod::init()
         //  - elongation of y or z with yz shear
         //  - elongation of x with possible xy or xz tilt
         //  - elongation of y with possible yz tilt
-        if (!f->couple_directions) {
+        if (!f->couple_erate) {
           if (xy_shear_yz_tilt)
             error->warning(FLERR,"fix {} requires fix {} to use the couple yes option "
                            "when xy is shearing with yz tilt or shear", style, f->style);

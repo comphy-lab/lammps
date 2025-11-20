@@ -53,7 +53,7 @@ class FixDeform : public Fix {
   int end_flag;                  // 1 = box update at end of step, 0 = post integrate
   int need_flip_change;          // 1 if box needs to be flipped
   int allow_flip_change;         // 1 if box flip is allowed (prevent flip mid respa step)
-  int couple_directions;         // 1 if effects of x/y/z TRATE and xy/xz/yz ERATE on each other should be handled
+  int couple_erate;              // 1 if coupling effects between x/y/z TRATE and xy/xz/yz ERATE should be handled
   std::vector<Fix *> rfix;       // pointers to rigid fixes
   class Irregular *irregular;    // for migrating atoms after box flips
 
