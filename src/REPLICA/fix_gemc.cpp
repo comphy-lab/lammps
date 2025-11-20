@@ -280,6 +280,10 @@ void FixGEMC::init()
   memory->create(buf,maxbuf,"fix_gemc:buf");
 
   groupbitall = 1 | groupbit;
+
+  ntranslation_attempts = ntranslation_successes = 0;
+  nvolume_attempts = nvolume_successes = 0;
+  nexchange_attempts = nexchange_successes = 0;  
 }
 
 /* ----------------------------------------------------------------------
@@ -334,15 +338,7 @@ void FixGEMC::pre_exchange()
   int prev_step = 0;
 
   if (energy_stored > 1E6)
-<<<<<<< HEAD:src/MC/fix_gemc.cpp
-    error->one(FLERR,"fix gemc: Energy of old configuration big");
-
-  ntranslation_attempts = ntranslation_successes = 0;
-  nvolume_attempts = nvolume_successes = 0;
-  nexchange_attempts = nexchange_successes = 0;
-=======
     error->universe_one(FLERR,"fix gemc: Energy of old configuration big");
->>>>>>> e00cee5690cea466ecc101fb4b453a485b9b2a38:src/REPLICA/fix_gemc.cpp
 
   for (int i = 0; i < nmoves; i++) {
     imove = random_universe->uniform();
