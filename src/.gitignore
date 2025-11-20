@@ -1695,6 +1695,9 @@
 /fix_drude.h
 /fix_drude_transform.cpp
 /fix_drude_transform.h
+/fix_gemc.cpp
+/fix_gemc_mcmoves.cpp
+/fix_gemc.h
 /fix_langevin_drude.cpp
 /fix_langevin_drude.h
 /fix_mol_swap.cpp
