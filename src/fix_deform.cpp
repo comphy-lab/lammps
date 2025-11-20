@@ -271,14 +271,14 @@ irregular(nullptr), set(nullptr)
   if (set[5].style && (domain->boundary[1][0] >= 2 || domain->boundary[1][1] >= 2))
     error->all(FLERR, "Cannot use fix {} tilt on a shrink-wrapped 2nd dim", style);
 
-  // warn about couple=yes when x/y/z is not TRATE or xy/xz/yz is not ERATE
+  // warn about couple/erate=yes when x/y/z is not TRATE or xy/xz/yz is not ERATE
 
   if (couple_erate && comm->me == 0) {
     bool warn = false;
     int i = 0;
     for (; i < 3 && !warn; i++)
       warn = !(set[i].style == TRATE || set[i].style == NONE);
-    for (; i < 6 && !warn; i++) 
+    for (; i < 6 && !warn; i++)
       warn = !(set[i].style == ERATE || set[i].style == NONE);
     if (warn)
       error->warning(FLERR, "fix {} couple yes only handles coupling between "

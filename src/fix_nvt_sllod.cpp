@@ -134,7 +134,7 @@ void FixNVTSllod::init()
       if (comm->me == 0) {
 
         // warn about flows which may produce a non-constant flow tensor
-        
+
         for (int j = 0; j < 3; ++j) {
           if (f->set[j].style && f->set[j].style != FixDeform::TRATE)
             error->warning(FLERR,"Using non-constant strain rate with fix {}. "
@@ -179,7 +179,7 @@ void FixNVTSllod::init()
             error->warning(FLERR,"fix {} requires fix {} to use the couple yes option "
                            "under y elongation with xz or yz shear", style, f->style);
         }
-        
+
         if (f->end_flag)
           error->warning(FLERR,"fix {} requires box deformation to occur with "
               "position updates to be strictly correct. Set the N parameter of "
