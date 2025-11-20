@@ -17,7 +17,7 @@
 // 2) What are all the nullptrs in the definition of a fix
 
 /* ----------------------------------------------------------------------
-   Contributing author: Paul Crozier, Aidan Thompson (SNL)
+   Contributing author: Andrew Hong, Aidan Thompson (SNL)
 ------------------------------------------------------------------------- */
 
 #include "fix_gemc.h"
@@ -81,11 +81,12 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 {
   buf = NULL;
 
-  if (narg < 12) utils::missing_cmd_args(FLERR, "fix gemc", error);
+  if (narg != 12) utils::missing_cmd_args(FLERR, "fix gemc", error);
   // must have only two boxes
 
   if (universe->nworlds != 2) error->universe_all(FLERR, "Must use exactly two partitions");
 
+  molecule_flag = atom->molecule_flag;
   if (molecule_flag) error->universe_all(FLERR, "GEMC w/ molecules currently not supported");
 
   // various fix flags (partial copy from gcmc)
@@ -120,20 +121,25 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
     error->universe_all(FLERR, "FixGEMC: Max density must be positive number");
 
   // DEBUG : Test if inputs correct
-  //printf("arg: %i, %i, %i\n", nevery, ntranslate, nrotate);
-  //printf("arg: %i, %i, %g\n", nexchange, nvolume, box_temp);
-  //printf("arg: %g, %g, %i\n", displace, max_volume, seed);
+  // printf("arg: %i, %i, %i\n", nevery, ntranslate, nrotate);
+  // printf("arg: %i, %i, %g\n", nexchange, nvolume, box_temp);
+  // printf("arg: %g, %g, %i\n", displace, max_volume, seed);
 
   // comm_replica = communicator between proc 0s across boxes
 
-  int color = comm->me;
+  MPI_Comm_rank(world,&me);
+  MPI_Comm_size(world,&nprocs);
+
+  int color = me;
+  //  printf("color1: %d %p %d %p\n",universe->me,&(universe->uworld), color, &comm_replica);
   MPI_Comm_split(universe->uworld, color, 0, &comm_replica);
+  //  printf("color2: %d %p %d %p\n",universe->me,&(universe->uworld), color, &comm_replica);
 
   // DEBUG : Test communication set up correct
-  //if (color == 0)
-  //  printf("myworld: %i\n", universe->iworld);
-  //else
-  //  printf("rest of us: %i\n", comm->me);
+  // if (color == 0)
+  //   printf("myworld: %i\n", universe->iworld);
+  // else
+  //   printf("rest of us: %i\n", comm->me);
 
   // same RNG for each replica for volume MC moves
   // unique to proc
@@ -155,6 +161,9 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   // read options from end of input line
 
   //options(narg-12,&arg[12]);
+
+  //  printf("exit FixGEMC(): %i\n", universe->me);
+  
 }
 
 /* ---------------------------------------------------------------------- */
@@ -318,6 +327,9 @@ void FixGEMC::pre_exchange()
   if (energy_stored > 1E6)
     error->one(FLERR,"fix gemc: Energy of old configuration big");
 
+  ntranslation_attempts = ntranslation_successes = 0;
+  nvolume_attempts = nvolume_successes = 0;
+  nexchange_attempts = nexchange_successes = 0;
 
   for (int i = 0; i < nmoves; i++) {
     imove = random_universe->uniform();

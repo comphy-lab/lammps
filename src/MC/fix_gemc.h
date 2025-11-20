@@ -107,7 +107,7 @@ class FixGEMC : public Fix {
 
   int myworld;
   int mycomm; // rank in my world
-  int nprocs;
+  int me, nprocs;
   int myrank_replica; // rand between boxes
 
   double *commbuf;
