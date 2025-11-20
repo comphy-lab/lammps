@@ -548,10 +548,10 @@ void FixGEMC::attempt_atomic_exchange_full()
 void FixGEMC::attempt_atomic_translation_full()
 {
   // DEBUG : Test communication set up correct
-  if (me == 0)
-    printf("In translation() myworld: %i\n", myworld);
-  else
-    printf("In translation() rest of us: %i\n", me);
+  // if (me == 0)
+  //   printf("In translation() myworld: %i\n", myworld);
+  // else
+  //   printf("In translation() rest of us: %i\n", me);
 
   ntranslation_attempts++;
 

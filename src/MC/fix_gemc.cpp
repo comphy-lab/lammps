@@ -157,7 +157,7 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   gemc_nmax = 0;
   local_gas_list = nullptr;
 
-  printf("exit FixGEMC(): %i\n", universe->me);
+  //  printf("exit FixGEMC(): %i\n", universe->me);
   
 }
 
