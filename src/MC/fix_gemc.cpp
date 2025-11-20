@@ -123,22 +123,22 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   MPI_Comm_rank(world,&me);
   MPI_Comm_size(world,&nprocs);
-
-  int color = me;
-  //  printf("color1: %d %p %d %p\n",universe->me,&(universe->uworld), color, &comm_replica);
-  MPI_Comm_split(universe->uworld, color, 0, &comm_replica);
-  //  printf("color2: %d %p %d %p\n",universe->me,&(universe->uworld), color, &comm_replica);
+  myworld = universe->iworld;
+  
+  //  printf("color1: %d %p %d %p\n",universe->me,&(universe->uworld), me, &comm_replica);
+  MPI_Comm_split(universe->uworld, me, 0, &comm_replica);
+  //  printf("color2: %d %p %d %p\n",universe->me,&(universe->uworld), me, &comm_replica);
 
   // DEBUG : Test communication set up correct
-  // if (color == 0)
-  //   printf("myworld: %i\n", universe->iworld);
+  // if (me == 0)
+  //   printf("myworld: %i\n", myworld);
   // else
-  //   printf("rest of us: %i\n", comm->me);
+  //   printf("rest of us: %i\n", me);
 
   // use same RNG for each replica for volume MC moves
   // unique to proc
 
-  random_proc = new RanPark(lmp,seed+3.0*(universe->iworld+1)+7.0*(color+1));
+  random_proc = new RanPark(lmp,seed+3.0*(universe->iworld+1)+7.0*(me+1));
 
   // sync between procs
 
@@ -157,7 +157,7 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   gemc_nmax = 0;
   local_gas_list = nullptr;
 
-  //  printf("exit FixGEMC(): %i\n", universe->me);
+  printf("exit FixGEMC(): %i\n", universe->me);
   
 }
 
@@ -183,12 +183,13 @@ int FixGEMC::setmask()
 
 void FixGEMC::init()
 {
-  progress = 0;
+  // DEBUG : Test communication set up correct
+  // if (me == 0)
+  //   printf("In init() myworld: %i\n", myworld);
+  // else
+  //   printf("In init() rest of us: %i\n", me);
 
-  myworld = universe->iworld;
-  mycomm = comm->me;
-  nprocs = comm->nprocs;
-  if (mycomm == 0) MPI_Comm_rank(comm_replica, &myrank_replica);
+  progress = 0;
 
   // determine probability of each step during pre_exchange
 
@@ -296,6 +297,12 @@ void FixGEMC::init()
 
 void FixGEMC::pre_exchange()
 {
+
+  // DEBUG : Test communication set up correct
+  // if (me == 0)
+  //   printf("In pre_exchange() myworld: %i\n", myworld);
+  // else
+  //   printf("In pre_exchange() rest of us: %i\n", me);
 
   // just return if should not be called on this timestep
 

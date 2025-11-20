@@ -50,6 +50,12 @@ static constexpr int NO_TAG = 0;
 ------------------------------------------------------------------------- */
 void FixGEMC::attempt_volume_change_full()
 {
+  // DEBUG : Test communication set up correct
+  // if (me == 0)
+  //   printf("In volume() myworld: %i\n", myworld);
+  // else
+  //   printf("In volume() rest of us: %i\n", me);
+
   nvolume_attempts++;
 
   // current volume
@@ -60,28 +66,23 @@ void FixGEMC::attempt_volume_change_full()
   double i_vol = Lx*Ly*Lz;
   double i_mass = group->mass(0);
 
-
   // sample volume change from world 0 comm 0
   double dvolume;
-  if (mycomm == 0) {
+  if (me == 0) {
     // each needs to sample volume which doesn't cause other to have
     // ... too large of density (only need max_mass)
     // have world 1 send current vol and mass to world 0
 
     double j_vol, j_mass;
 
-    // replace with below after updating mpi
-    //MPI_Sendrecv(&i_mass, 1, MPI_DOUBLE, 0, NO_TAG,
-    //             &j_mass, 1, MPI_DOUBLE, 1, NO_TAG, comm_replica, NULL);
-    //MPI_Sendrecv(&i_vol, 1, MPI_DOUBLE, 0, NO_TAG,
-    //             &j_vol, 1, MPI_DOUBLE, 1, NO_TAG, comm_replica, NULL);
-
     if (myworld == 1) {
-      MPI_Send(&i_mass, 1, MPI_DOUBLE, 0, NO_TAG, comm_replica);
-      MPI_Send(&i_vol, 1, MPI_DOUBLE, 0, NO_TAG, comm_replica);
+      buf[0] = i_mass;
+      buf[1] = i_vol;
+      MPI_Send(&buf[0], 2, MPI_DOUBLE, 0, NO_TAG, comm_replica);
     } else {
-      MPI_Recv(&j_mass, 1, MPI_DOUBLE, 1, NO_TAG, comm_replica, NULL);
-      MPI_Recv(&j_vol, 1, MPI_DOUBLE, 1, NO_TAG, comm_replica, NULL);
+      MPI_Recv(&buf[0], 2, MPI_DOUBLE, 1, NO_TAG, comm_replica, NULL);
+      j_mass = buf[0] ;
+      j_vol = buf[1];
     }
 
     // just have world 0 sample all the volume changes
@@ -97,14 +98,31 @@ void FixGEMC::attempt_volume_change_full()
       }
     }
 
+    // DEBUG : Test interworld comm
+    //    printf("Before Bcast myworld: %i\n", myworld);
+    
     MPI_Bcast(&dvolume, 1, MPI_DOUBLE, 0, comm_replica);
     if (myworld == 1) dvolume *= -1.0;
+    // DEBUG : Test interworld comm
+    //    printf("After Bcast myworld: %i\n", myworld);
   }
 
-  // broadcast volume change to all worlds
+  // DEBUG : Test communication set up correct
+  // if (me == 0)
+  //   printf("Before dvolume myworld: %i\n", myworld);
+  // else
+  //   printf("Before dvolume rest of us: %i\n", me);
+  
+  // broadcast volume change to rest of my world
 
   MPI_Bcast(&dvolume, 1, MPI_DOUBLE, 0, world);
 
+  // DEBUG : Test communication set up correct
+  // if (me == 0)
+  //   printf("After dvolume myworld: %i\n", myworld);
+  // else
+  //   printf("After dvolume rest of us: %i\n", me);
+  
   // attempt to change volume
 
   double fvolume = (i_vol+dvolume)/i_vol;
@@ -161,14 +179,14 @@ void FixGEMC::attempt_volume_change_full()
   // get total energy from each partition
 
   double dU;
-  if (mycomm == 0) {
+  if (me == 0) {
     //printf("energy: %g -> %g\n", energy_before, energy_after);
     double idU = energy_after-energy_before-dU_volume;
     // sum change in full energy across each box
     MPI_Allreduce(&idU, &dU, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
   }
 
-  // bcast potential change to rest of world
+  // bcast potential change to rest of my world
 
   MPI_Bcast(&dU, 1, MPI_DOUBLE, 0, world);
 
@@ -236,6 +254,13 @@ void FixGEMC::attempt_volume_change_full()
       myworld, energy_before, energy_after);
     error->universe_one(FLERR,"bad energy");
   }
+
+  // DEBUG : Test communication set up correct
+  // if (me == 0)
+  //   printf("exited volume() myworld: %i\n", myworld);
+  // else
+  //   printf("exited volume() rest of us: %i\n", me);
+  
 }
 
 /* ----------------------------------------------------------------------
@@ -245,12 +270,18 @@ void FixGEMC::attempt_volume_change_full()
 // TODO: do we need the force->kspace and force->pair->tail_flag?
 void FixGEMC::attempt_atomic_exchange_full()
 {
+  // DEBUG : Test communication set up correct
+  // if (me == 0)
+  //   printf("In exchange() myworld: %i\n", myworld);
+  // else
+  //   printf("In exchange() rest of us: %i\n", me);
+
   nexchange_attempts++;
 
   // Choose sender and receiver
 
   int sender;
-  if (mycomm == 0) {
+  if (me == 0) {
     double drand = random_proc->uniform();
     double dmean;
     MPI_Allreduce(&drand, &dmean, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
@@ -315,9 +346,9 @@ void FixGEMC::attempt_atomic_exchange_full()
     // don't need mpi_barrier
     // exclude case where comm 0 already has the information
 
-    if (iatom >= 0 && mycomm != 0) {
+    if (iatom >= 0 && me != 0) {
       MPI_Send(&buf[0], maxbuf, MPI_DOUBLE, 0, 0, world);
-    } else if (iatom < 0 && mycomm == 0) {
+    } else if (iatom < 0 && me == 0) {
       MPI_Recv(&buf[0], maxbuf, MPI_DOUBLE, MPI_ANY_SOURCE,
                0, world, MPI_STATUS_IGNORE);
     }
@@ -325,12 +356,12 @@ void FixGEMC::attempt_atomic_exchange_full()
 
   // send over atom thru comm 0's
 
-  if (mycomm == 0) {
+  if (me == 0) {
     // send buffer from sender to receiver
     // there's only two procs in comm_replica, so other is always 1-myrank
 
     if (sender) MPI_Send(&buf[0], maxbuf, MPI_DOUBLE,
-                         1-myrank_replica, 0, comm_replica);
+                         1-myworld, 0, comm_replica);
     else MPI_Recv(&buf[0], maxbuf, MPI_DOUBLE,
                   MPI_ANY_SOURCE, 0, comm_replica, MPI_STATUS_IGNORE);
   }
@@ -347,7 +378,7 @@ void FixGEMC::attempt_atomic_exchange_full()
     // sample random point in box
 
     double lamda[3], coord[3];
-    if (mycomm == 0) {
+    if (me == 0) {
       if (triclinic_flag) {
         lamda[0] = random_proc->uniform();
         lamda[1] = random_proc->uniform();
@@ -365,7 +396,7 @@ void FixGEMC::attempt_atomic_exchange_full()
         coord[1] = ylo + random_proc->uniform() * (yhi-ylo);
         coord[2] = zlo + random_proc->uniform() * (zhi-zlo);
       }
-    } // END mycomm
+    } // END me
 
     // find proc that contains coordinate
 
@@ -424,7 +455,7 @@ void FixGEMC::attempt_atomic_exchange_full()
   double energy_after = energy_full();
 
   int success;
-  if (mycomm == 0) {
+  if (me == 0) {
     double all_dU;
     double idU = energy_after-energy_before;
     MPI_Allreduce(&idU,&all_dU,1,MPI_DOUBLE,MPI_SUM,comm_replica);
@@ -503,6 +534,12 @@ void FixGEMC::attempt_atomic_exchange_full()
   // update counts
 
   update_gas_atoms_list();
+
+  // DEBUG : Test communication set up correct
+  // if (me == 0)
+  //   printf("exited exchange() myworld: %i\n", myworld);
+  // else
+  //   printf("exited exchange() rest of us: %i\n", me);
 }
 
 /* ----------------------------------------------------------------------
@@ -510,6 +547,12 @@ void FixGEMC::attempt_atomic_exchange_full()
 
 void FixGEMC::attempt_atomic_translation_full()
 {
+  // DEBUG : Test communication set up correct
+  if (me == 0)
+    printf("In translation() myworld: %i\n", myworld);
+  else
+    printf("In translation() rest of us: %i\n", me);
+
   ntranslation_attempts++;
 
   if (natom_total == 0) return;

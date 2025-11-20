@@ -103,13 +103,11 @@ class FixGEMC : public Fix {
 
   // for communication
 
-  int myworld;
-  int mycomm; // rank in my world
-  int me, nprocs;
-  int myrank_replica; // rand between boxes
+  int me, nprocs; // rank and nprocs in my world
+  int myworld;    // rank of my world
 
   double *commbuf;
-  MPI_Comm comm_replica; // for communication between partitions
+  MPI_Comm comm_replica; // for communication between replicas
 
   class RanPark *random_universe; // sync'd RNG for all worlds
   class RanPark *random_world; // sync'd RNG for one world
