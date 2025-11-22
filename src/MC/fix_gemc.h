@@ -66,14 +66,14 @@ class FixGEMC : public Fix {
 
   // for tracking how many attempts/successes
 
-  int ntranslation_attempts;
-  int ntranslation_successes;
-  int nrotation_attempts;
-  int nrotation_successes;
-  int nexchange_attempts;
-  int nexchange_successes;
-  int nvolume_attempts;
-  int nvolume_successes;
+  double ntranslation_attempts;
+  double ntranslation_successes;
+  double nrotation_attempts;
+  double nrotation_successes;
+  double nexchange_attempts;
+  double nexchange_successes;
+  double nvolume_attempts;
+  double nvolume_successes;
 
   // particle - related props
 

@@ -62,6 +62,7 @@ static constexpr double MAXENERGYSIGNAL = 1.0e100;
 // energy contributions are added to MAXENERGYSIGNAL
 
 static constexpr double MAXENERGYTEST = 1.0e50;
+static constexpr double BADENERGYTEST = 1.0e3;
 
 static constexpr double BUFFACTOR = 1.2;
 static constexpr int BUFMIN = 1024;
@@ -282,9 +283,9 @@ void FixGEMC::init()
 
   groupbitall = 1 | groupbit;
 
-  ntranslation_attempts = ntranslation_successes = 0;
-  nvolume_attempts = nvolume_successes = 0;
-  nexchange_attempts = nexchange_successes = 0;  
+  ntranslation_attempts = ntranslation_successes = 0.0;
+  nvolume_attempts = nvolume_successes = 0.0;
+  nexchange_attempts = nexchange_successes = 0.0;  
 }
 
 /* ----------------------------------------------------------------------
@@ -344,13 +345,16 @@ void FixGEMC::pre_exchange()
   energy_stored = energy_full();
   int prev_step = 0;
 
-  if (energy_stored > 1E6)
+  if (energy_stored > BADENERGYTEST) {
+    printf("fix gemc: Energy of old configuration big %g\n", energy_stored);
     error->universe_one(FLERR,"fix gemc: Energy of old configuration big");
+  }
 
+  
   for (int i = 0; i < nmoves; i++) {
     imove = random_universe->uniform();
 
-    if (fabs(energy_full()) > 1E8) {
+    if (fabs(energy_full()) > BADENERGYTEST) {
       printf("step: %i; prev_step: %i\n", i, prev_step);
       printf("%i - %g\n", i, energy_stored);
       error->universe_one(FLERR,"bad energy before");
@@ -361,7 +365,7 @@ void FixGEMC::pre_exchange()
     else attempt_atomic_translation_full();
 
     double energy_check = energy_full();
-    if (fabs(energy_check) > 1E8) {
+    if (fabs(energy_check) > BADENERGYTEST) {
       printf("step: %i; prev_step: %i\n", i, prev_step);
       if (imove < pc_exchange) printf("swap\n\n");
       else if (imove < pc_volume) printf("volume\n\n");
@@ -379,7 +383,7 @@ void FixGEMC::pre_exchange()
     if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
 
     energy_check = energy_full();
-    if (fabs(energy_check) > 1E8) {
+    if (fabs(energy_check) > BADENERGYTEST) {
       printf("step: %i; prev_step: %i\n", i, prev_step);
       if (imove < pc_exchange) printf("swap\n\n");
       else if (imove < pc_volume) printf("volume\n\n");
@@ -404,17 +408,17 @@ void FixGEMC::pre_exchange()
     if (status > progress) {
       progress = status;
       auto msg = fmt::format(
-          " GEMC run progress: {:>3d}% \n  Trans: {:d}/{:d}\n"
-          "  Vol: {:d}/{:d}\n  Ex: {:d}/{:d}\n",
+          " GEMC run progress: {:>3d}% \n  Trans: {:g}/{:g}\n"
+          "  Vol: {:g}/{:g}\n  Ex: {:g}/{:g}\n",
           progress,
           ntranslation_successes, ntranslation_attempts,
           nvolume_successes, nvolume_attempts,
           nexchange_successes, nexchange_attempts);
       if (universe->uscreen) utils::print(universe->uscreen, msg);
       if (universe->ulogfile) utils::print(universe->ulogfile, msg);
-      ntranslation_attempts = ntranslation_successes = 0;
-      nvolume_attempts = nvolume_successes = 0;
-      nexchange_attempts = nexchange_successes = 0;
+      ntranslation_attempts = ntranslation_successes = 0.0;
+      nvolume_attempts = nvolume_successes = 0.0;
+      nexchange_attempts = nexchange_successes = 0.0;
     }
   }
 }

@@ -226,7 +226,7 @@ void FixGEMC::attempt_volume_change_full()
   // acccept volume change
 
   } else {
-    nvolume_successes++;
+    nvolume_successes += 1.0;
 
     // store new energy
 
@@ -482,7 +482,7 @@ void FixGEMC::attempt_atomic_exchange_full()
 
   if (success && energy_after > MAXENERGYTEST) {
     printf("bad exchange\n");
-    printf("%i -- %i\n", myworld, atom->natoms);
+    printf("%i -- %lld\n", myworld, atom->natoms);
     printf("%g %g\n", energy_before, energy_after);
     error->universe_one(FLERR,"bad energy");
   }
@@ -493,7 +493,8 @@ void FixGEMC::attempt_atomic_exchange_full()
     // delete iatom
 
     if (success) {
-      nexchange_successes++;
+      if (me == 0 && iatom >= 0) printf("Exchange Success! %d %d %g %g %g %g %g %d %d %g\n", myworld, sender, nexchange_successes, energy_stored, energy_after, atom->x[iatom][0], atom->x[atom->nlocal-1][0], iatom, atom->nlocal-1, atom->x[59][0]);
+      nexchange_successes += 1.0;
       if (iatom >= 0) {
         // overwrite iatom with last atom details
 
@@ -506,6 +507,7 @@ void FixGEMC::attempt_atomic_exchange_full()
 
     // packing does not delete atom, just need to revert mask
     } else {
+      if (me == 0 && iatom >= 0) printf("Exchange Failure! %d %d %g %g %g %g %d %g\n", myworld, sender, nexchange_successes, energy_stored, energy_after, atom->x[iatom][0], iatom, atom->x[59][0]);
       // revert mask and charge if deletion rejected
 
       if (iatom >= 0) {
@@ -516,14 +518,18 @@ void FixGEMC::attempt_atomic_exchange_full()
       if (force->pair->tail_flag) force->pair->reinit();
     }
   } else {
+
+    // ***** This seems wrong if nprocs > 1, because only one proc can accept/reject the atom *******
     // accept newly inserted iatom there
 
     if (success) {
-      nexchange_successes++;
+      if (me == 0) printf("Exchange Success! %d %d %g %g %g %g %d %g\n", myworld, sender, nexchange_successes, energy_stored, energy_after, atom->x[atom->nlocal-1][0], atom->nlocal-1, atom->x[59][0]);
+      nexchange_successes += 1.0;
       energy_stored = energy_after;
 
     // remove newly inserted iatom (it was added to end)
     } else {
+      if (me == 0) printf("Exchange Failure! %d %d %g %g %g %g %d %g\n", myworld, sender, nexchange_successes, energy_stored, energy_after, atom->x[atom->nlocal-1][0], atom->nlocal-1, atom->x[59][0]);
       atom->natoms--;
       if (proc_flag) atom->nlocal--;
       if (force->kspace) force->kspace->qsum_qsq();
@@ -545,100 +551,177 @@ void FixGEMC::attempt_atomic_exchange_full()
 /* ----------------------------------------------------------------------
 ------------------------------------------------------------------------- */
 
+// void FixGEMC::attempt_atomic_translation_full()
+// {
+//   // DEBUG : Test communication set up correct
+//   // if (me == 0)
+//   //   printf("In translation() myworld: %i\n", myworld);
+//   // else
+//   //   printf("In translation() rest of us: %i\n", me);
+
+//   ntranslation_attempts++;
+
+//   if (natom_total == 0) return;
+
+//   double energy_before = energy_stored;
+
+//   int iatom = pick_random_gas_atom();
+
+//   double **x = atom->x;
+//   double xtmp[3];
+
+//   xtmp[0] = xtmp[1] = xtmp[2] = 0.0;
+
+//   tagint tmptag = -1;
+
+//   double rx,ry,rz,rsq;
+//   rx = ry = rz = 0.0;
+//   if (iatom >= 0) {
+//     while(1) {
+//       rsq = 1.1;
+//       rx = ry = rz = 0.0;
+//       while (rsq > 1.0) {
+//         rx = 2*random_proc->uniform() - 1.0;
+//         ry = 2*random_proc->uniform() - 1.0;
+//         rz = 2*random_proc->uniform() - 1.0;
+//         rsq = rx*rx + ry*ry + rz*rz;
+//       }
+
+//       double coord[3];
+//       coord[0] = x[iatom][0] + displace*rx;
+//       coord[1] = x[iatom][1] + displace*ry;
+//       coord[2] = x[iatom][2] + displace*rz;
+//       if (coord[0]>xlo && coord[0]<xhi &&
+//           coord[1]>ylo && coord[1]<yhi &&
+//           coord[2]>zlo && coord[2]<zhi) break;
+//     }
+
+//     x[iatom][0] += displace*rx;
+//     x[iatom][1] += displace*ry;
+//     x[iatom][2] += displace*rz;
+
+//     tmptag = atom->tag[iatom];
+//   }
+
+//   // if (triclinic_flag) domain->x2lamda(atom->nlocal);
+//   // domain->pbc();
+//   // comm->exchange();
+//   // atom->nghost = 0;
+//   // comm->borders();
+//   // if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
+//   double energy_after = energy_full();
+
+//   double prob = MIN(1.0,exp(beta*(energy_before - energy_after)));
+//   int success = 0;
+//   if (energy_after < MAXENERGYTEST && random_world->uniform() < prob)
+//     success = 1;
+
+//   if (success) {
+//     energy_stored = energy_after;
+//     ntranslation_successes += 1.0;
+//   } else {
+
+//     tagint tmptag_all;
+//     MPI_Allreduce(&tmptag,&tmptag_all,1,MPI_LMP_TAGINT,MPI_MAX,world);
+
+//     double xtmp_all[3];
+//     MPI_Allreduce(&xtmp,&xtmp_all,3,MPI_DOUBLE,MPI_SUM,world);
+
+//     for (int i = 0; i < atom->nlocal; i++) {
+//       if (tmptag_all == atom->tag[i]) {
+//         x[i][0] = xtmp_all[0];
+//         x[i][1] = xtmp_all[1];
+//         x[i][2] = xtmp_all[2];
+//       }
+//     }
+//     energy_stored = energy_before;
+//   }
+
+//   if (triclinic_flag) domain->x2lamda(atom->nlocal);
+//   domain->pbc();
+//   comm->exchange();
+//   atom->nghost = 0;
+//   comm->borders();
+//   if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
+
+//   update_gas_atoms_list();
+// }
+
+/* ----------------------------------------------------------------------
+   copied directly from fix_gcmc.cpp
+------------------------------------------------------------------------- */
+
 void FixGEMC::attempt_atomic_translation_full()
 {
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("In translation() myworld: %i\n", myworld);
-  // else
-  //   printf("In translation() rest of us: %i\n", me);
-
-  ntranslation_attempts++;
+  ntranslation_attempts += 1.0;
 
   if (natom_total == 0) return;
 
   double energy_before = energy_stored;
 
-  int iatom = pick_random_gas_atom();
+  int i = pick_random_gas_atom();
 
   double **x = atom->x;
   double xtmp[3];
 
   xtmp[0] = xtmp[1] = xtmp[2] = 0.0;
 
-  tagint tmptag = 0;
+  tagint tmptag = -1;
 
-  double rx,ry,rz,rsq;
-  rx = ry = rz = 0.0;
-  if (iatom >= 0) {
-    while(1) {
-      rsq = 1.1;
-      rx = ry = rz = 0.0;
-      while (rsq > 1.0) {
-        rx = 2*random_proc->uniform() - 1.0;
-        ry = 2*random_proc->uniform() - 1.0;
-        rz = 2*random_proc->uniform() - 1.0;
-        rsq = rx*rx + ry*ry + rz*rz;
-      }
+  if (i >= 0) {
 
-      double coord[3];
-      coord[0] = x[iatom][0] + displace*rx;
-      coord[1] = x[iatom][1] + displace*ry;
-      coord[2] = x[iatom][2] + displace*rz;
-      if (coord[0]>xlo && coord[0]<xhi &&
-          coord[1]>ylo && coord[1]<yhi &&
-          coord[2]>zlo && coord[2]<zhi) break;
+    double rsq = 1.1;
+    double rx,ry,rz;
+    rx = ry = rz = 0.0;
+    double coord[3];
+    while (rsq > 1.0) {
+      rx = 2*random_proc->uniform() - 1.0;
+      ry = 2*random_proc->uniform() - 1.0;
+      rz = 2*random_proc->uniform() - 1.0;
+      rsq = rx*rx + ry*ry + rz*rz;
     }
+    coord[0] = x[i][0] + displace*rx;
+    coord[1] = x[i][1] + displace*ry;
+    coord[2] = x[i][2] + displace*rz;
 
-    x[iatom][0] += displace*rx;
-    x[iatom][1] += displace*ry;
-    x[iatom][2] += displace*rz;
+    if (!domain->inside_nonperiodic(coord))
+      error->one(FLERR,"Fix gcmc put atom outside box");
+    xtmp[0] = x[i][0];
+    xtmp[1] = x[i][1];
+    xtmp[2] = x[i][2];
+    x[i][0] = coord[0];
+    x[i][1] = coord[1];
+    x[i][2] = coord[2];
 
-    tmptag = atom->tag[iatom];
+    tmptag = atom->tag[i];
   }
 
-  if (triclinic_flag) domain->x2lamda(atom->nlocal);
-  domain->pbc();
-  comm->exchange();
-  atom->nghost = 0;
-  comm->borders();
-  if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
   double energy_after = energy_full();
 
-  double prob = MIN(1.0,exp(beta*(energy_before - energy_after)));
-  int success = 0;
-  if (energy_after < MAXENERGYTEST && random_world->uniform() < prob)
-    success = 1;
-
-  if (success) {
+  if (energy_after < MAXENERGYTEST &&
+      random_world->uniform() <
+      exp(beta*(energy_before - energy_after))) {
+    if (me == 0) printf("Translation Success! %d %g %g %g %g\n",myworld, ntranslation_successes, energy_stored, energy_after, atom->x[59][0]);
     energy_stored = energy_after;
-    ntranslation_successes++;
+    ntranslation_successes += 1.0;
   } else {
+    if (me == 0) printf("Translation Failure! %d %g %g %g %g\n",myworld, ntranslation_successes, energy_stored, energy_after, atom->x[59][0]);
 
     tagint tmptag_all;
     MPI_Allreduce(&tmptag,&tmptag_all,1,MPI_LMP_TAGINT,MPI_MAX,world);
 
-    double rx_all, ry_all, rz_all;
-    MPI_Allreduce(&rx,&rx_all,1,MPI_DOUBLE,MPI_SUM,world);
-    MPI_Allreduce(&ry,&ry_all,1,MPI_DOUBLE,MPI_SUM,world);
-    MPI_Allreduce(&rz,&rz_all,1,MPI_DOUBLE,MPI_SUM,world);
+    double xtmp_all[3];
+    MPI_Allreduce(&xtmp,&xtmp_all,3,MPI_DOUBLE,MPI_SUM,world);
 
-    if (iatom >= 0) {
-      x[iatom][0] -= displace*rx_all;
-      x[iatom][1] -= displace*ry_all;
-      x[iatom][2] -= displace*rz_all;
+    for (int i = 0; i < atom->nlocal; i++) {
+      if (tmptag_all == atom->tag[i]) {
+        x[i][0] = xtmp_all[0];
+        x[i][1] = xtmp_all[1];
+        x[i][2] = xtmp_all[2];
+      }
     }
-
     energy_stored = energy_before;
   }
-
-  if (triclinic_flag) domain->x2lamda(atom->nlocal);
-  domain->pbc();
-  comm->exchange();
-  atom->nghost = 0;
-  comm->borders();
-  if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
-
   update_gas_atoms_list();
 }
 
