@@ -49,9 +49,6 @@
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
-// Notes:
-// 1) full flag always on
-
 // large energy value used to signal overlap
 
 static constexpr double MAXENERGYSIGNAL = 1.0e100;
@@ -62,18 +59,15 @@ static constexpr double MAXENERGYSIGNAL = 1.0e100;
 // energy contributions are added to MAXENERGYSIGNAL
 
 static constexpr double MAXENERGYTEST = 1.0e50;
-static constexpr double BADENERGYTEST = 1.0e3;
 
-static constexpr double BUFFACTOR = 1.2;
-static constexpr int BUFMIN = 1024;
+static constexpr double COMMBUFFACTOR = 1.2;
+static constexpr int COMMBUFMIN = 1024;
 
 /* ---------------------------------------------------------------------- */
 
 FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 {
-  buf = NULL;
-
-  if (narg != 12) utils::missing_cmd_args(FLERR, "fix gemc", error);
+  if (narg != 11) utils::missing_cmd_args(FLERR, "fix gemc", error);
 
   // must have only two boxes
 
@@ -109,33 +103,16 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   box_temp = utils::numeric(FLERR,    arg[7], false, lmp);
   displace = utils::numeric(FLERR,    arg[8], false, lmp);
   max_volume = utils::numeric(FLERR,  arg[9], false, lmp);
-  max_rho = utils::numeric(FLERR,     arg[10], false, lmp);
-  seed = utils::inumeric(FLERR,       arg[11], false, lmp);
+  seed = utils::inumeric(FLERR,       arg[10], false, lmp);
 
-  if (max_rho <= 0.0)
-    error->universe_all(FLERR, "fix gemc max density must be positive number");
-
-  // DEBUG : Test if inputs correct
-  // printf("arg: %i, %i, %i\n", nevery, ntranslate, nrotate);
-  // printf("arg: %i, %i, %g\n", nexchange, nvolume, box_temp);
-  // printf("arg: %g, %g, %i\n", displace, max_volume, seed);
-
-  // comm_replica = communicator between proc 0s across boxes
+  // set up comm_replica = communicator between proc 0s across boxes
 
   MPI_Comm_rank(world,&me);
   MPI_Comm_size(world,&nprocs);
   myworld = universe->iworld;
   
-  //  printf("color1: %d %p %d %p\n",universe->me,&(universe->uworld), me, &comm_replica);
   MPI_Comm_split(universe->uworld, me, 0, &comm_replica);
-  //  printf("color2: %d %p %d %p\n",universe->me,&(universe->uworld), me, &comm_replica);
-
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("myworld: %i\n", myworld);
-  // else
-  //   printf("rest of us: %i\n", me);
-
+  
   // use same RNG for each replica for volume MC moves
   // unique to proc
 
@@ -157,8 +134,8 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   gemc_nmax = 0;
   local_gas_list = nullptr;
-
-  //  printf("exit FixGEMC(): %i\n", universe->me);
+  commbuf = nullptr;
+  maxcommbuf = 0;
   
 }
 
@@ -168,7 +145,7 @@ FixGEMC::~FixGEMC()
 {
   memory->destroy(local_gas_list);
   MPI_Comm_free(&comm_replica);
-  memory->destroy(buf);
+  memory->destroy(commbuf);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -184,12 +161,6 @@ int FixGEMC::setmask()
 
 void FixGEMC::init()
 {
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("In init() myworld: %i\n", myworld);
-  // else
-  //   printf("In init() rest of us: %i\n", me);
-
   progress = 0;
 
   // determine probability of each step during pre_exchange
@@ -212,7 +183,7 @@ void FixGEMC::init()
 
   double p_total = p_exchange + p_volume + p_translate + p_rotate;
 
-  // compute cummulative probabilites
+  // compute cumulative probabilities
 
   pc_exchange = p_exchange/p_total;
   pc_volume = (p_volume+p_exchange)/p_total;
@@ -276,10 +247,9 @@ void FixGEMC::init()
 
   neighbor->modify_params(fmt::format("exclude group {} all",group_id));
 
-  // for exchange
+  // allocate communication buffer for exchange moves
 
-  maxbuf = (init_exchange() + BUFMIN) * BUFFACTOR;
-  memory->create(buf,maxbuf,"fix_gemc:buf");
+  grow_commbuf();
 
   groupbitall = 1 | groupbit;
 
@@ -298,13 +268,6 @@ void FixGEMC::init()
 
 void FixGEMC::pre_exchange()
 {
-
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("In pre_exchange() myworld: %i\n", myworld);
-  // else
-  //   printf("In pre_exchange() rest of us: %i\n", me);
-
   // just return if should not be called on this timestep
 
   if (next_reneighbor != update->ntimestep) return;
@@ -337,65 +300,19 @@ void FixGEMC::pre_exchange()
 
   next_reneighbor = update->ntimestep + nevery;
 
-  // translation seems to be fully working
-
   double imove;
   update_gas_atoms_list();
 
   energy_stored = energy_full();
   int prev_step = 0;
 
-  if (energy_stored > BADENERGYTEST) {
-    printf("fix gemc: Energy of old configuration big %g\n", energy_stored);
-    error->universe_one(FLERR,"fix gemc: Energy of old configuration big");
-  }
-
-  
-  for (int i = 0; i < nmoves; i++) {
+   for (int i = 0; i < nmoves; i++) {
     imove = random_universe->uniform();
-
-    if (fabs(energy_full()) > BADENERGYTEST) {
-      printf("step: %i; prev_step: %i\n", i, prev_step);
-      printf("%i - %g\n", i, energy_stored);
-      error->universe_one(FLERR,"bad energy before");
-    }
 
     if (imove < pc_exchange) attempt_atomic_exchange_full();
     else if (imove < pc_volume) attempt_volume_change_full();
     else attempt_atomic_translation_full();
 
-    double energy_check = energy_full();
-    if (fabs(energy_check) > BADENERGYTEST) {
-      printf("step: %i; prev_step: %i\n", i, prev_step);
-      if (imove < pc_exchange) printf("swap\n\n");
-      else if (imove < pc_volume) printf("volume\n\n");
-      else printf("translate\n\n");
-      printf("energy stored: %g; energy_now: %g\n",
-        energy_stored, energy_check);
-      error->universe_one(FLERR,"bad energy intermediate");
-    }
-
-    if (triclinic_flag) domain->x2lamda(atom->nlocal);
-    domain->pbc();
-    comm->exchange();
-    atom->nghost = 0;
-    comm->borders();
-    if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
-
-    energy_check = energy_full();
-    if (fabs(energy_check) > BADENERGYTEST) {
-      printf("step: %i; prev_step: %i\n", i, prev_step);
-      if (imove < pc_exchange) printf("swap\n\n");
-      else if (imove < pc_volume) printf("volume\n\n");
-      else printf("translate\n\n");
-      printf("energy stored: %g; energy_now: %g\n",
-        energy_stored, energy_check);
-      error->universe_one(FLERR,"bad energy after");
-    }
-
-    if (imove < pc_exchange) prev_step = 0;
-    else if (imove < pc_volume) prev_step = 1;
-    else prev_step = 2;
   }
 
   // print progress info to universe screen/logfile
@@ -500,15 +417,22 @@ double FixGEMC::energy_full()
    set bufextra based on AtomVec and fixes
    does not include base data to exchange
    similar to Comm::init_exchange()
+   *** this is formally an error, since base data is also packed ***
 ------------------------------------------------------------------------- */
 
-int FixGEMC::init_exchange()
+void FixGEMC::grow_commbuf()
 {
-  int maxexchange_fix = 0;
+  int ntmp = 0;
   for (auto &ifix : modify->get_fix_list())
-    maxexchange_fix = MAX(maxexchange_fix, ifix->maxexchange);
+    ntmp = MAX(ntmp, ifix->maxexchange);
+  ntmp += atom->avec->maxexchange;
+  ntmp += COMMBUFMIN;
+  ntmp *= COMMBUFFACTOR;
 
-  return atom->avec->maxexchange + maxexchange_fix;
+  if (maxcommbuf < ntmp) {
+    maxcommbuf = ntmp;
+    memory->grow(commbuf,maxcommbuf,"fix_gemc:commbuf");
+  }
 }
 
 

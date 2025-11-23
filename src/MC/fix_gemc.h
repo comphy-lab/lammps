@@ -36,24 +36,23 @@ class FixGEMC : public Fix {
 
   // user provided inputs
 
-  int nevery; // frequency this fix is called
-  int ntranslate; // number of translation each box performs each step
-  int nrotate; // number of rotations each box performs each setp
-  int nexchange; // number of particle exchanges between the boxes each step
-  int nvolume; // number of volume exchanges between the boxes each step
-  double box_temp; // temperature of each box (assumed equal)
-  double displace; // maximum displacement for traslations
-  double max_volume; // maximum volume change requested
-  double max_rho; // maximum box density
-  int seed; // RNG seed
+  int nevery;       // frequency this fix is called
+  int ntranslate;   // number of translation each box performs each step
+  int nrotate;      // number of rotations each box performs each setp
+  int nexchange;    // number of particle exchanges between the boxes each step
+  int nvolume;      // number of volume exchanges between the boxes each step
+  double box_temp;  // temperature of each box (assumed equal)
+  double displace;  // maximum displacement for traslations
+  double max_volume;// maximum volume change requested
+  int seed;         // RNG seed
 
   // for evaluating probability
 
-  int overlap_flag; // check for overlap
+  int overlap_flag;        // check for overlap
   double overlap_cutoffsq; // check for max cutoff
-  double beta; // 1 / (boltzmann * temperature)
-  double energy_stored; // current potential energy
-  class Compute *c_pe; // compute to get full potential energy
+  double beta;             // 1 / kT
+  double energy_stored;    // current potential energy
+  class Compute *c_pe;     // compute to get full potential energy
 
   // for determining which move to make
 
@@ -84,8 +83,8 @@ class FixGEMC : public Fix {
   int *local_gas_list;
 
   int molecule_flag; // 0 for atom; 1 for molecule
-  int full_flag; // compute full energy
-  int q_flag; // particles charged?
+  int full_flag;     // compute full energy
+  int q_flag;        // particles charged?
 
   // MC exchange
 
@@ -106,7 +105,6 @@ class FixGEMC : public Fix {
   int me, nprocs; // rank and nprocs in my world
   int myworld;    // rank of my world
 
-  double *commbuf;
   MPI_Comm comm_replica; // for communication between replicas
 
   class RanPark *random_universe; // sync'd RNG for all worlds
@@ -115,10 +113,11 @@ class FixGEMC : public Fix {
 
   // additional comm (mostly for exchange)
 
-  int maxbuf;           // size of buf send/recv in # of doubles
-  double *buf;    // bufs used in migrate_atoms
+  int maxcommbuf;     // size of buffer for exchange moves
+  double *commbuf;    // buf used for exchange moves
 
   // misc
+  
   int progress; // tracks remaining simulation time
 
   // optional args that user can provide
@@ -142,8 +141,7 @@ class FixGEMC : public Fix {
   void attempt_atomic_exchange_full();
   void attempt_molecule_exchange_full();
 
-  int init_exchange();
-  void grow_sendrecv();
+  void grow_commbuf();
 
   // misc functions for all MC moves
 

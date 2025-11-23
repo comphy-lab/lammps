@@ -38,11 +38,6 @@ using namespace LAMMPS_NS;
 
 static constexpr double MAXENERGYTEST = 1.0e50;
 
-static constexpr double BUFFACTOR = 1.2;
-static constexpr int BUFMIN = 1024;
-
-static constexpr int NO_TAG = 0;
-
 // translation boxes
 
 /* ----------------------------------------------------------------------
@@ -50,11 +45,6 @@ static constexpr int NO_TAG = 0;
 ------------------------------------------------------------------------- */
 void FixGEMC::attempt_volume_change_full()
 {
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("In volume() myworld: %i\n", myworld);
-  // else
-  //   printf("In volume() rest of us: %i\n", me);
 
   nvolume_attempts++;
 
@@ -67,71 +57,49 @@ void FixGEMC::attempt_volume_change_full()
   double i_mass = group->mass(0);
 
   // sample volume change from world 0 comm 0
+
   double dvolume;
   if (me == 0) {
-    // each needs to sample volume which doesn't cause other to have
-    // ... too large of density (only need max_mass)
-    // have world 1 send current vol and mass to world 0
-
+    // sample volume change which doesn't cause other to have
+    // negative volume
+    // have world 1 send current vol to world 0
+    // also send mass, but not used
+    
     double j_vol, j_mass;
 
     if (myworld == 1) {
-      buf[0] = i_mass;
-      buf[1] = i_vol;
-      MPI_Send(&buf[0], 2, MPI_DOUBLE, 0, NO_TAG, comm_replica);
+      commbuf[0] = i_mass;
+      commbuf[1] = i_vol;
+      MPI_Send(&commbuf[0], 2, MPI_DOUBLE, 0, 0, comm_replica);
     } else {
-      MPI_Recv(&buf[0], 2, MPI_DOUBLE, 1, NO_TAG, comm_replica, NULL);
-      j_mass = buf[0] ;
-      j_vol = buf[1];
+      MPI_Recv(&commbuf[0], 2, MPI_DOUBLE, 1, 0, comm_replica, NULL);
+      j_mass = commbuf[0] ;
+      j_vol = commbuf[1];
     }
 
     // just have world 0 sample all the volume changes
     // make sure volume change less than available volume
+    // for both boxes
 
     if (myworld == 0) {
-      double i_rho, j_rho;
       while (1) {
         dvolume = (random_proc->uniform()-0.5)*max_volume;
-        i_rho = i_mass/(i_vol+dvolume);
-        j_rho = j_mass/(j_vol-dvolume); // world 1 will swap sign
-        if (MAX(i_rho,j_rho) < max_rho && i_rho > 0 && j_rho > 0) break;
+        if (MIN(i_vol+dvolume,j_vol-dvolume) > 0) break;
       }
+      MPI_Send(&dvolume, 1, MPI_DOUBLE, 1, 0, comm_replica);
+    } else {
+      MPI_Recv(&dvolume, 1, MPI_DOUBLE, 0, 0, comm_replica, NULL);
+      dvolume *= -1.0;
     }
-
-    // DEBUG : Test interworld comm
-    //    printf("Before Bcast myworld: %i\n", myworld);
-    
-    MPI_Bcast(&dvolume, 1, MPI_DOUBLE, 0, comm_replica);
-    if (myworld == 1) dvolume *= -1.0;
-    // DEBUG : Test interworld comm
-    //    printf("After Bcast myworld: %i\n", myworld);
   }
 
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("Before dvolume myworld: %i\n", myworld);
-  // else
-  //   printf("Before dvolume rest of us: %i\n", me);
-  
-  // broadcast volume change to rest of my world
-
   MPI_Bcast(&dvolume, 1, MPI_DOUBLE, 0, world);
-
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("After dvolume myworld: %i\n", myworld);
-  // else
-  //   printf("After dvolume rest of us: %i\n", me);
-  
-  // attempt to change volume
 
   double fvolume = (i_vol+dvolume)/i_vol;
   if (fvolume < 0) error->universe_one(FLERR,"Negative volume found in fix gemc");
   double scale_length = pow(fvolume, 1.0/domain->dimension);
 
   // convert to lamda coords so they get scaled
-  // TODO : If this is only natom_local, then there is huge spike in energy
-  // .... but not with natom_total. So ghost atoms also need to be shifted?
 
   domain->x2lamda(natom_total);
   for (auto &ifix : rfix) ifix->deform(0);
@@ -180,7 +148,6 @@ void FixGEMC::attempt_volume_change_full()
 
   double dU;
   if (me == 0) {
-    //printf("energy: %g -> %g\n", energy_before, energy_after);
     double idU = energy_after-energy_before-dU_volume;
     // sum change in full energy across each box
     MPI_Allreduce(&idU, &dU, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
@@ -249,32 +216,14 @@ void FixGEMC::attempt_volume_change_full()
     }
   }
 
-  if (energy_stored > MAXENERGYTEST) {
-    printf("[%i] volume - %g -> %g\n",
-      myworld, energy_before, energy_after);
-    error->universe_one(FLERR,"bad energy");
-  }
-
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("exited volume() myworld: %i\n", myworld);
-  // else
-  //   printf("exited volume() rest of us: %i\n", me);
-  
 }
 
 /* ----------------------------------------------------------------------
   Attempt atom exchange
 ------------------------------------------------------------------------- */
 
-// TODO: do we need the force->kspace and force->pair->tail_flag?
 void FixGEMC::attempt_atomic_exchange_full()
 {
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("In exchange() myworld: %i\n", myworld);
-  // else
-  //   printf("In exchange() rest of us: %i\n", me);
 
   nexchange_attempts++;
 
@@ -291,14 +240,6 @@ void FixGEMC::attempt_atomic_exchange_full()
   }
   MPI_Bcast(&sender, 1, MPI_INT, 0, world);
 
-  // Setup buffer for atom exchange
-
-  int maxbuf_tmp = init_exchange() + BUFMIN;
-  if (maxbuf_tmp > maxbuf) {
-    maxbuf = maxbuf_tmp * BUFFACTOR;
-    memory->grow(buf,maxbuf,"fix_gemc:buf_send");
-  }
-
   // atom to delete/insert
 
   int iatom = -1;
@@ -308,7 +249,8 @@ void FixGEMC::attempt_atomic_exchange_full()
   // save old coordinates in case exchange rejected
 
   double old_coord[3];
-
+  int nbuf;
+  
   // pick atom to send
 
   if (sender) {
@@ -326,11 +268,12 @@ void FixGEMC::attempt_atomic_exchange_full()
 
       // pack atom (only one atom sent per move)
 
-      atom->avec->pack_exchange(iatom,&buf[0]);
+      nbuf = atom->avec->pack_exchange(iatom,&commbuf[0]);
 
       // temporarily set mask to exclusion for full energy later
 
       tmp_mask = atom->mask[iatom];
+      atom->mask[iatom] = exclusion_group_bit;
 
       // temporarily zero out charge for kspace later)
 
@@ -338,18 +281,15 @@ void FixGEMC::attempt_atomic_exchange_full()
         q_tmp = atom->q[iatom];
         atom->q[iatom] = 0.0;
       }
-      atom->mask[iatom] = exclusion_group_bit;
     }
 
-    // send buffer from to comm 0 with
-    // each exchange move will only have two procs send/recv per box
-    // don't need mpi_barrier
+    // send buffer from to owner proc to 0 with
     // exclude case where comm 0 already has the information
 
     if (iatom >= 0 && me != 0) {
-      MPI_Send(&buf[0], maxbuf, MPI_DOUBLE, 0, 0, world);
+      MPI_Send(&commbuf[0], nbuf, MPI_DOUBLE, 0, 0, world);
     } else if (iatom < 0 && me == 0) {
-      MPI_Recv(&buf[0], maxbuf, MPI_DOUBLE, MPI_ANY_SOURCE,
+      MPI_Recv(&commbuf[0], maxcommbuf, MPI_DOUBLE, MPI_ANY_SOURCE,
                0, world, MPI_STATUS_IGNORE);
     }
   }
@@ -360,15 +300,15 @@ void FixGEMC::attempt_atomic_exchange_full()
     // send buffer from sender to receiver
     // there's only two procs in comm_replica, so other is always 1-myrank
 
-    if (sender) MPI_Send(&buf[0], maxbuf, MPI_DOUBLE,
+    if (sender) MPI_Send(&commbuf[0], maxcommbuf, MPI_DOUBLE,
                          1-myworld, 0, comm_replica);
-    else MPI_Recv(&buf[0], maxbuf, MPI_DOUBLE,
+    else MPI_Recv(&commbuf[0], maxcommbuf, MPI_DOUBLE,
                   MPI_ANY_SOURCE, 0, comm_replica, MPI_STATUS_IGNORE);
   }
 
   // for now bcast buf to all procs
 
-  if (!sender) MPI_Bcast(&buf[0], maxbuf, MPI_DOUBLE, 0, world);
+  if (!sender) MPI_Bcast(&commbuf[0], maxcommbuf, MPI_DOUBLE, 0, world);
 
   // pick random proc to place atom in
 
@@ -396,7 +336,7 @@ void FixGEMC::attempt_atomic_exchange_full()
         coord[1] = ylo + random_proc->uniform() * (yhi-ylo);
         coord[2] = zlo + random_proc->uniform() * (zhi-zlo);
       }
-    } // END me
+    }
 
     // find proc that contains coordinate
 
@@ -412,15 +352,14 @@ void FixGEMC::attempt_atomic_exchange_full()
       if (coord[0] >= sublo[0] && coord[0] < subhi[0] &&
           coord[1] >= sublo[1] && coord[1] < subhi[1] &&
           coord[2] >= sublo[2] && coord[2] < subhi[2]) proc_flag = 1;
-    } // END if triclinic
+    }
 
     // unpack atom here (only one atom should be received per move)
     // this will also create an atom and add to list (only to nlocal)
 
     if (proc_flag) {
-      // confirmed that charge is stored in avec
 
-      atom->avec->unpack_exchange(&buf[0]);
+      atom->avec->unpack_exchange(&commbuf[0]);
 
       int m = atom->nlocal - 1;
 
@@ -429,6 +368,10 @@ void FixGEMC::attempt_atomic_exchange_full()
       atom->x[m][0] = coord[0];
       atom->x[m][1] = coord[1];
       atom->x[m][2] = coord[2];
+
+      // set tag to zero, can set it later optionally
+      
+      atom->tag[m] = 0;
     }
 
     atom->natoms++;
@@ -436,21 +379,12 @@ void FixGEMC::attempt_atomic_exchange_full()
       atom->tag_extend();
       if (atom->map_style != Atom::MAP_NONE) atom->map_init();
     }
-  } // END if sender
+  }
 
   update_gas_atoms_list();
 
-  // evalute probability for exchange
+  // evaluate probability for exchange
 
-  if (triclinic_flag) domain->x2lamda(atom->nlocal);
-  domain->pbc();
-  comm->exchange();
-  atom->nghost = 0;
-  comm->borders();
-  if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
-
-  if (force->kspace) force->kspace->qsum_qsq();
-  if (force->pair->tail_flag) force->pair->reinit();
   double energy_before = energy_stored;
   double energy_after = energy_full();
 
@@ -480,26 +414,19 @@ void FixGEMC::attempt_atomic_exchange_full()
   }
   MPI_Bcast(&success, 1, MPI_INT, 0, world);
 
-  if (success && energy_after > MAXENERGYTEST) {
-    printf("bad exchange\n");
-    printf("%i -- %lld\n", myworld, atom->natoms);
-    printf("%g %g\n", energy_before, energy_after);
-    error->universe_one(FLERR,"bad energy");
-  }
-
   // handle deletion/insertions or revert
 
   if (sender) {
     // delete iatom
 
     if (success) {
-      if (me == 0 && iatom >= 0) printf("Exchange Success! %d %d %g %g %g %g %g %d %d %g\n", myworld, sender, nexchange_successes, energy_stored, energy_after, atom->x[iatom][0], atom->x[atom->nlocal-1][0], iatom, atom->nlocal-1, atom->x[59][0]);
       nexchange_successes += 1.0;
       if (iatom >= 0) {
         // overwrite iatom with last atom details
 
         atom->avec->copy(atom->nlocal-1,iatom,1);
         atom->nlocal--;
+
       }
       atom->natoms--;
       if (atom->map_style != Atom::MAP_NONE) atom->map_init();
@@ -507,7 +434,6 @@ void FixGEMC::attempt_atomic_exchange_full()
 
     // packing does not delete atom, just need to revert mask
     } else {
-      if (me == 0 && iatom >= 0) printf("Exchange Failure! %d %d %g %g %g %g %d %g\n", myworld, sender, nexchange_successes, energy_stored, energy_after, atom->x[iatom][0], iatom, atom->x[59][0]);
       // revert mask and charge if deletion rejected
 
       if (iatom >= 0) {
@@ -519,17 +445,14 @@ void FixGEMC::attempt_atomic_exchange_full()
     }
   } else {
 
-    // ***** This seems wrong if nprocs > 1, because only one proc can accept/reject the atom *******
     // accept newly inserted iatom there
 
     if (success) {
-      if (me == 0) printf("Exchange Success! %d %d %g %g %g %g %d %g\n", myworld, sender, nexchange_successes, energy_stored, energy_after, atom->x[atom->nlocal-1][0], atom->nlocal-1, atom->x[59][0]);
       nexchange_successes += 1.0;
       energy_stored = energy_after;
 
     // remove newly inserted iatom (it was added to end)
     } else {
-      if (me == 0) printf("Exchange Failure! %d %d %g %g %g %g %d %g\n", myworld, sender, nexchange_successes, energy_stored, energy_after, atom->x[atom->nlocal-1][0], atom->nlocal-1, atom->x[59][0]);
       atom->natoms--;
       if (proc_flag) atom->nlocal--;
       if (force->kspace) force->kspace->qsum_qsq();
@@ -541,111 +464,7 @@ void FixGEMC::attempt_atomic_exchange_full()
 
   update_gas_atoms_list();
 
-  // DEBUG : Test communication set up correct
-  // if (me == 0)
-  //   printf("exited exchange() myworld: %i\n", myworld);
-  // else
-  //   printf("exited exchange() rest of us: %i\n", me);
 }
-
-/* ----------------------------------------------------------------------
-------------------------------------------------------------------------- */
-
-// void FixGEMC::attempt_atomic_translation_full()
-// {
-//   // DEBUG : Test communication set up correct
-//   // if (me == 0)
-//   //   printf("In translation() myworld: %i\n", myworld);
-//   // else
-//   //   printf("In translation() rest of us: %i\n", me);
-
-//   ntranslation_attempts++;
-
-//   if (natom_total == 0) return;
-
-//   double energy_before = energy_stored;
-
-//   int iatom = pick_random_gas_atom();
-
-//   double **x = atom->x;
-//   double xtmp[3];
-
-//   xtmp[0] = xtmp[1] = xtmp[2] = 0.0;
-
-//   tagint tmptag = -1;
-
-//   double rx,ry,rz,rsq;
-//   rx = ry = rz = 0.0;
-//   if (iatom >= 0) {
-//     while(1) {
-//       rsq = 1.1;
-//       rx = ry = rz = 0.0;
-//       while (rsq > 1.0) {
-//         rx = 2*random_proc->uniform() - 1.0;
-//         ry = 2*random_proc->uniform() - 1.0;
-//         rz = 2*random_proc->uniform() - 1.0;
-//         rsq = rx*rx + ry*ry + rz*rz;
-//       }
-
-//       double coord[3];
-//       coord[0] = x[iatom][0] + displace*rx;
-//       coord[1] = x[iatom][1] + displace*ry;
-//       coord[2] = x[iatom][2] + displace*rz;
-//       if (coord[0]>xlo && coord[0]<xhi &&
-//           coord[1]>ylo && coord[1]<yhi &&
-//           coord[2]>zlo && coord[2]<zhi) break;
-//     }
-
-//     x[iatom][0] += displace*rx;
-//     x[iatom][1] += displace*ry;
-//     x[iatom][2] += displace*rz;
-
-//     tmptag = atom->tag[iatom];
-//   }
-
-//   // if (triclinic_flag) domain->x2lamda(atom->nlocal);
-//   // domain->pbc();
-//   // comm->exchange();
-//   // atom->nghost = 0;
-//   // comm->borders();
-//   // if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
-//   double energy_after = energy_full();
-
-//   double prob = MIN(1.0,exp(beta*(energy_before - energy_after)));
-//   int success = 0;
-//   if (energy_after < MAXENERGYTEST && random_world->uniform() < prob)
-//     success = 1;
-
-//   if (success) {
-//     energy_stored = energy_after;
-//     ntranslation_successes += 1.0;
-//   } else {
-
-//     tagint tmptag_all;
-//     MPI_Allreduce(&tmptag,&tmptag_all,1,MPI_LMP_TAGINT,MPI_MAX,world);
-
-//     double xtmp_all[3];
-//     MPI_Allreduce(&xtmp,&xtmp_all,3,MPI_DOUBLE,MPI_SUM,world);
-
-//     for (int i = 0; i < atom->nlocal; i++) {
-//       if (tmptag_all == atom->tag[i]) {
-//         x[i][0] = xtmp_all[0];
-//         x[i][1] = xtmp_all[1];
-//         x[i][2] = xtmp_all[2];
-//       }
-//     }
-//     energy_stored = energy_before;
-//   }
-
-//   if (triclinic_flag) domain->x2lamda(atom->nlocal);
-//   domain->pbc();
-//   comm->exchange();
-//   atom->nghost = 0;
-//   comm->borders();
-//   if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
-
-//   update_gas_atoms_list();
-// }
 
 /* ----------------------------------------------------------------------
    copied directly from fix_gcmc.cpp
@@ -701,11 +520,10 @@ void FixGEMC::attempt_atomic_translation_full()
   if (energy_after < MAXENERGYTEST &&
       random_world->uniform() <
       exp(beta*(energy_before - energy_after))) {
-    if (me == 0) printf("Translation Success! %d %g %g %g %g\n",myworld, ntranslation_successes, energy_stored, energy_after, atom->x[59][0]);
+
     energy_stored = energy_after;
     ntranslation_successes += 1.0;
   } else {
-    if (me == 0) printf("Translation Failure! %d %g %g %g %g\n",myworld, ntranslation_successes, energy_stored, energy_after, atom->x[59][0]);
 
     tagint tmptag_all;
     MPI_Allreduce(&tmptag,&tmptag_all,1,MPI_LMP_TAGINT,MPI_MAX,world);
@@ -720,9 +538,15 @@ void FixGEMC::attempt_atomic_translation_full()
         x[i][2] = xtmp_all[2];
       }
     }
-    energy_stored = energy_before;
+    // this extra energy calculation should not be necessary, but it is,
+    // probably due to imperfect reversion of rejected moves
+    // can probably be eliminated with better bookkeeping
+    
+    energy_stored = energy_full();    
+    
   }
   update_gas_atoms_list();
+
 }
 
 /* ----------------------------------------------------------------------

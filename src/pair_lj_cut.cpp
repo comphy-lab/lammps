@@ -128,7 +128,6 @@ void PairLJCut::compute(int eflag, int vflag)
         if (eflag) {
           evdwl = r6inv * (lj3[itype][jtype] * r6inv - lj4[itype][jtype]) - offset[itype][jtype];
           evdwl *= factor_lj;
-          if (evdwl > 1e8) printf("evdwl = %g %g %g %g %d %d %d %d \n", evdwl, delx, xtmp, x[j][0], i, j, atom->tag[i], atom->tag[j]); 
         }
 
         if (evflag) ev_tally(i, j, nlocal, newton_pair, evdwl, 0.0, fpair, delx, dely, delz);
