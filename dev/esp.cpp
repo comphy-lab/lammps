@@ -14,8 +14,7 @@
  
 /* ----------------------------------------------------------------------
    Contributing authors: Jiuyang Liang, Libin Lu (Flatiron)
-     per-atom energy/virial & group/group energy/force are currently not added
-     analytic diff (2 FFT) option is available and highly recommended
+     analytic diff (2 FFT) option is set to default and highly recommended
 ------------------------------------------------------------------------- */
 
 #include "esp.h"
