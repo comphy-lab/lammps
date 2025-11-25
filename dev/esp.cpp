@@ -16,7 +16,6 @@
    Contributing authors: Jiuyang Liang, Libin Lu (Flatiron)
      per-atom energy/virial & group/group energy/force are currently not added
      analytic diff (2 FFT) option is available and highly recommended
-     triclinic is not available
 ------------------------------------------------------------------------- */
 
 #include "esp.h"
