@@ -36,35 +36,34 @@ class FixGEMC : public Fix {
   double compute_vector(int) override;
 
  private:
-
   // user provided inputs
 
-  int nevery;       // frequency this fix is called
-  int ntranslate;   // number of translation each box performs each step
-  int nrotate;      // number of rotations each box performs each setp
-  int nexchange;    // number of particle exchanges between the boxes each step
-  int nvolume;      // number of volume exchanges between the boxes each step
-  double box_temp;  // temperature of each box (assumed equal)
-  double displace;  // maximum displacement for traslations
-  double max_volume;// maximum volume change requested
-  int seed;         // RNG seed
+  int nevery;           // frequency this fix is called
+  int ntranslate;       // number of translation each box performs each step
+  int nrotate;          // number of rotations each box performs each step
+  int nexchange;        // number of particle exchanges between the boxes each step
+  int nvolume;          // number of volume exchanges between the boxes each step
+  double box_temp;      // temperature of each box (assumed equal)
+  double displace;      // maximum displacement for translations
+  double max_volume;    // maximum volume change requested
+  int seed;             // RNG seed
 
   // for evaluating probability
 
-  int overlap_flag;        // check for overlap
-  double overlap_cutoffsq; // check for max cutoff
-  double beta;             // 1 / kT
-  double energy_stored;    // current potential energy
-  class Compute *c_pe;     // compute to get full potential energy
+  int overlap_flag;           // check for overlap
+  double overlap_cutoffsq;    // check for max cutoff
+  double beta;                // 1 / kT
+  double energy_stored;       // current potential energy
+  class Compute *c_pe;        // compute to get full potential energy
 
   // for determining which move to make
 
-  int nmoves; // total MC moves (translate/rotate + exchange + volume)
+  int nmoves;    // total MC moves (translate/rotate + exchange + volume)
   // cummulative probabilites
-  double pc_exchange; // probability MC move is an exchange
-  double pc_volume; // probability MV move is a volume change
-  double pc_translate; // probability MC move is a translation
-  double pc_rotate; // probability MC move is a rotation
+  double pc_exchange;     // probability MC move is an exchange
+  double pc_volume;       // probability MV move is a volume change
+  double pc_translate;    // probability MC move is a translation
+  double pc_rotate;       // probability MC move is a rotation
 
   // for tracking how many attempts/successes
 
@@ -79,40 +78,40 @@ class FixGEMC : public Fix {
 
   // particle - related props
 
-  int natom_lower; // lower index for local atoms - same as before
-  int natom_local; // number of atoms in this proc - same as local
-  int natom_total; // total number of atoms in world I'm in - same as ngas
+  int natom_lower;    // lower index for local atoms - same as before
+  int natom_local;    // number of atoms in this proc - same as local
+  int natom_total;    // total number of atoms in world I'm in - same as ngas
   int gemc_nmax;
   int *local_gas_list;
 
-  int molecule_flag; // 0 for atom; 1 for molecule
-  int full_flag;     // compute full energy
-  int q_flag;        // particles charged?
+  int molecule_flag;    // 0 for atom; 1 for molecule
+  int full_flag;        // compute full energy
+  int q_flag;           // particles charged?
 
   // MC exchange
 
   int groupbitall;
-  int exclusion_group, exclusion_group_bit; // mask for excluding certain atoms
+  int exclusion_group, exclusion_group_bit;    // mask for excluding certain atoms
 
   // domain - related props
 
   int triclinic_flag;
-  double xlo, ylo, zlo; // lower domain bounds
-  double xhi, yhi, zhi; // upper domain bounds
-  double *sublo, *subhi; // sub domain bounds
-  double xhi_tmp, yhi_tmp, zhi_tmp; // temporary upper domain bounds
-  std::vector<Fix *> rfix;    // indices of rigid fixes
+  double xlo, ylo, zlo;                // lower domain bounds
+  double xhi, yhi, zhi;                // upper domain bounds
+  double *sublo, *subhi;               // sub domain bounds
+  double xhi_tmp, yhi_tmp, zhi_tmp;    // temporary upper domain bounds
+  std::vector<Fix *> rfix;             // indices of rigid fixes
 
   // for communication
 
-  int me, nprocs; // rank and nprocs in my world
-  int myworld;    // rank of my world
+  int me, nprocs;    // rank and nprocs in my world
+  int myworld;       // rank of my world
 
-  MPI_Comm comm_replica; // for communication between replicas
+  MPI_Comm comm_replica;    // for communication between replicas
 
-  class RanPark *random_universe; // sync'd RNG for all worlds
-  class RanPark *random_world; // sync'd RNG for one world
-  class RanPark *random_proc; // RNG for each proc (not sync'd)
+  class RanPark *random_universe;    // sync'd RNG for all worlds
+  class RanPark *random_world;       // sync'd RNG for one world
+  class RanPark *random_proc;        // RNG for each proc (not sync'd)
 
   // additional comm (mostly for exchange)
 
@@ -121,7 +120,7 @@ class FixGEMC : public Fix {
 
   // misc
 
-  int progress; // tracks remaining simulation time
+  int progress;    // tracks remaining simulation time
 
   // optional args that user can provide
 
@@ -148,11 +147,10 @@ class FixGEMC : public Fix {
 
   // misc functions for all MC moves
 
-  double energy_full(); // computes full potential energy
-  void update_gas_atoms_list(); // updates count for local number of atoms
-  int pick_random_gas_atom(); // picks random atom
-  tagint pick_random_gas_molecule(); // picks random atom
-
+  double energy_full();                 // computes full potential energy
+  void update_gas_atoms_list();         // updates count for local number of atoms
+  int pick_random_gas_atom();           // picks random atom
+  tagint pick_random_gas_molecule();    // picks random atom
 };
 
 }    // namespace LAMMPS_NS

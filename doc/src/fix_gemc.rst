@@ -35,16 +35,15 @@ Description
 .. versionadded:: TBD
 
 This fix performs Gibbs ensemble Monte Carlo (GEMC) exchanges of atoms
-and volume between two simulation cells at specified *T*, It also
+and volume between two simulation cells at specified *T*.  It also
 attempts Monte Carlo (MC) moves (atom translations) within the
 simulation cell.  This is usually used to establish thermodynamic
 equilibrium between bulk vapor and liquid phases, as discussed in
-:ref:`(Frenkel) <Frenkel3>`.  It also attempts Monte Carlo (MC) moves
-(atom translations) within the simulation cell or region.  If used with
-the :doc:`fix nvt <fix_nh>` command, hybrid MD/MC simulations in the
-Gibbs ensemble (equal pressure, equal chemical potential, constant total
-volume, and constant temperature) can be performed.  Specific uses
-include computing vapor-liquid coexistence curves.
+:ref:`(Frenkel) <Frenkel3>`.  If used with the :doc:`fix nvt <fix_nh>`
+command, hybrid MD/MC simulations in the Gibbs ensemble (equal pressure,
+equal chemical potential, constant total volume, and constant
+temperature) can be performed.  Specific uses include computing
+vapor-liquid coexistence curves.
 
 Every *N* timesteps the fix attempts GEMC atom exchanges, GEMC volume
 changes, and MC moves of atoms.  On those timesteps, the average number
@@ -170,17 +169,11 @@ This fix is part of the MC package.  It is only enabled if LAMMPS was
 built with that package.  See the :doc:`Build package <Build_package>`
 doc page for more info.
 
-Do not set "neigh_modify once yes" or else this fix will never be
-called.  Reneighboring is **required**.
+Do not set :doc:`neigh_modify once yes <neigh_modify>` or else this fix
+will never be called.  Reneighboring is **required**.
 
-When using *fix gemc* in combination with :doc:`fix shake <fix_shake>`
-or :doc:`fix rigid <fix_rigid>`, only GEMC exchange moves are supported,
-so the argument *M* must be zero.
-
-When using *fix gemc* in combination with :doc:`fix rigid <fix_rigid>`,
-deletion of the last remaining molecule is not allowed for technical
-reasons, and so the molecule count will never drop below 1, regardless
-of the specified chemical potential.
+*Fix gemc* currently **only** supports MC moves and exchanges on
+individual atoms.
 
 Use of multiple *fix gemc* commands in the same input script can be
 problematic.
