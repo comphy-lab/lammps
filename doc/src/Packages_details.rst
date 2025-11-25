@@ -1533,7 +1533,7 @@ or similar processes in conjunction with molecular dynamics (MD).
 * :doc:`fix charge/regulation <fix_charge_regulation>`
 * :doc:`fix gcmc <fix_gcmc>`
 * :doc:`fix gemc <fix_gemc>`
-* :doc:`fix hmc <fix_hmc>`    
+* :doc:`fix hmc <fix_hmc>`
 * :doc:`fix mol/swap <fix_mol_swap>`
 * :doc:`fix neighbor/swap <fix_neighbor_swap>`
 * :doc:`fix sgcmc <fix_sgcmc>`
