@@ -474,6 +474,8 @@ the user for each subsequent *fix gcmc* command.
 Related commands
 """"""""""""""""
 
+:doc:`fix gemc <fix_gemc>`,
+:doc:`fix widom <fix_widom>`,
 :doc:`fix atom/swap <fix_atom_swap>`,
 :doc:`fix nvt <fix_nh>`, :doc:`neighbor <neighbor>`,
 :doc:`fix deposit <fix_deposit>`, :doc:`fix evaporate <fix_evaporate>`,
