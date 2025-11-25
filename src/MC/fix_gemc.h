@@ -33,6 +33,7 @@ class FixGEMC : public Fix {
   void pre_exchange() override;
   void write_restart(FILE *) override;
   void restart(char *) override;
+  double compute_vector(int) override;
 
  private:
 

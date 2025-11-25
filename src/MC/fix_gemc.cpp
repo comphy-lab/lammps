@@ -498,3 +498,18 @@ void FixGEMC::restart(char *buf)
   if (ntimestep_restart != update->ntimestep)
     error->all(FLERR,"Must not reset timestep when restarting fix gemc");
 }
+
+/* ----------------------------------------------------------------------
+  return acceptance ratios
+------------------------------------------------------------------------- */
+
+double FixGEMC::compute_vector(int n)
+{
+  if (n == 0) return ntranslation_attempts;
+  if (n == 1) return ntranslation_successes;
+  if (n == 2) return nexchange_attempts;
+  if (n == 3) return nexchange_successes;
+  if (n == 4) return nvolume_attempts;
+  if (n == 5) return nvolume_successes;
+  return 0.0;
+}
