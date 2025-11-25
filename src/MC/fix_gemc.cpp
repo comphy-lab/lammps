@@ -81,6 +81,7 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   time_integrate = 0; // do not time integrate (use only MC moves)
   global_freq = 1;
   time_depend = 1;
+  restart_global = 1;
 
   // box size changes with volume MC moves
 
@@ -435,4 +436,65 @@ void FixGEMC::grow_commbuf()
   }
 }
 
+/* ----------------------------------------------------------------------
+   pack entire state of Fix into one write
+------------------------------------------------------------------------- */
 
+void FixGEMC::write_restart(FILE *fp)
+{
+  int n = 0;
+  double list[13];
+  list[n++] = random_proc->state();
+  list[n++] = random_world->state();
+  list[n++] = random_universe->state();
+  list[n++] = ubuf(next_reneighbor).d;
+  list[n++] = ntranslation_attempts;
+  list[n++] = ntranslation_successes;
+  list[n++] = nrotation_attempts;
+  list[n++] = nrotation_successes;
+  list[n++] = nexchange_attempts;
+  list[n++] = nexchange_successes;
+  list[n++] = nvolume_attempts;
+  list[n++] = nvolume_successes;
+  list[n++] = ubuf(update->ntimestep).d;
+
+  if (comm->me == 0) {
+    int size = n * sizeof(double);
+    fwrite(&size,sizeof(int),1,fp);
+    fwrite(list,sizeof(double),n,fp);
+  }
+}
+
+/* ----------------------------------------------------------------------
+   use state info from restart file to restart the Fix
+------------------------------------------------------------------------- */
+
+void FixGEMC::restart(char *buf)
+{
+  int n = 0;
+  auto *list = (double *) buf;
+
+  seed = static_cast<int> (list[n++]);
+  random_proc->reset(seed);
+
+  seed = static_cast<int> (list[n++]);
+  random_world->reset(seed);
+
+  seed = static_cast<int> (list[n++]);
+  random_universe->reset(seed);
+
+  next_reneighbor = (bigint) ubuf(list[n++]).i;
+
+  ntranslation_attempts  = list[n++];
+  ntranslation_successes = list[n++];
+  nrotation_attempts     = list[n++];
+  nrotation_successes    = list[n++];
+  nexchange_attempts     = list[n++];
+  nexchange_successes    = list[n++];
+  nvolume_attempts    = list[n++];
+  nvolume_successes   = list[n++];
+
+  bigint ntimestep_restart = (bigint) ubuf(list[n++]).i;
+  if (ntimestep_restart != update->ntimestep)
+    error->all(FLERR,"Must not reset timestep when restarting fix gemc");
+}

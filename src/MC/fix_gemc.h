@@ -31,6 +31,8 @@ class FixGEMC : public Fix {
   int setmask() override;
   void init() override;
   void pre_exchange() override;
+  void write_restart(FILE *) override;
+  void restart(char *) override;
 
  private:
 
