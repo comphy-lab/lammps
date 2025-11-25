@@ -110,9 +110,9 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   MPI_Comm_rank(world,&me);
   MPI_Comm_size(world,&nprocs);
   myworld = universe->iworld;
-  
+
   MPI_Comm_split(universe->uworld, me, 0, &comm_replica);
-  
+
   // use same RNG for each replica for volume MC moves
   // unique to proc
 
@@ -136,7 +136,7 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   local_gas_list = nullptr;
   commbuf = nullptr;
   maxcommbuf = 0;
-  
+
 }
 
 /* ---------------------------------------------------------------------- */
@@ -255,7 +255,7 @@ void FixGEMC::init()
 
   ntranslation_attempts = ntranslation_successes = 0.0;
   nvolume_attempts = nvolume_successes = 0.0;
-  nexchange_attempts = nexchange_successes = 0.0;  
+  nexchange_attempts = nexchange_successes = 0.0;
 }
 
 /* ----------------------------------------------------------------------

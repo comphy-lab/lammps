@@ -64,7 +64,7 @@ void FixGEMC::attempt_volume_change_full()
     // negative volume
     // have world 1 send current vol to world 0
     // also send mass, but not used
-    
+
     double j_vol, j_mass;
 
     if (myworld == 1) {
@@ -250,7 +250,7 @@ void FixGEMC::attempt_atomic_exchange_full()
 
   double old_coord[3];
   int nbuf;
-  
+
   // pick atom to send
 
   if (sender) {
@@ -370,7 +370,7 @@ void FixGEMC::attempt_atomic_exchange_full()
       atom->x[m][2] = coord[2];
 
       // set tag to zero, can set it later optionally
-      
+
       atom->tag[m] = 0;
     }
 
@@ -538,12 +538,21 @@ void FixGEMC::attempt_atomic_translation_full()
         x[i][2] = xtmp_all[2];
       }
     }
-    // this extra energy calculation should not be necessary, but it is,
-    // probably due to imperfect reversion of rejected moves
-    // can probably be eliminated with better bookkeeping
-    
-    energy_stored = energy_full();    
-    
+
+    energy_stored = energy_before;
+
+    // this remapping is necessary, but is not clear why
+    // also, not clear why it is *not* necessary in fix gcmc
+
+    if (triclinic_flag) domain->x2lamda(atom->nlocal);
+    domain->pbc();
+    comm->exchange();
+    atom->nghost = 0;
+    comm->borders();
+    if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
+    if (modify->n_pre_neighbor) modify->pre_neighbor();
+    neighbor->build(1);
+
   }
   update_gas_atoms_list();
 

@@ -117,7 +117,7 @@ class FixGEMC : public Fix {
   double *commbuf;    // buf used for exchange moves
 
   // misc
-  
+
   int progress; // tracks remaining simulation time
 
   // optional args that user can provide
