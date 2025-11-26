@@ -49,7 +49,7 @@ static constexpr double MAXENERGYTEST = 1.0e50;
 void FixGEMC::attempt_volume_change_full()
 {
   double dlogvolratio;
-  
+
   nvolume_attempts++;
 
   // sample change in logvolratio
@@ -67,7 +67,7 @@ void FixGEMC::attempt_volume_change_full()
   MPI_Bcast(&dlogvolratio, 1, MPI_DOUBLE, 0, world);
 
   // fvolume = vnew/vold
-  
+
   double fvolume = (1.0+exp(-logvolratio))/(1.0+exp(-(logvolratio+dlogvolratio)));
   double scale_length = pow(fvolume, 1.0/domain->dimension);
 
@@ -169,7 +169,7 @@ void FixGEMC::attempt_volume_change_full()
   } else {
     nvolume_successes += 1.0;
     logvolratio += dlogvolratio;
-    
+
     // store new energy
 
     energy_stored = energy_after;
