@@ -6,7 +6,7 @@ variable        ntranslate index 10
 variable        nexchange index 10 
 variable        nvolume index 10
 variable        displace index 0.5
-variable        max_volume index 100.0
+variable        max_dlogvolratio index 0.1
 variable        nsteps index 10000
 
 units           lj
@@ -43,9 +43,8 @@ unfix           1
 
 velocity        all create 0.0 87287 loop geom
 
-#   args: nevery ntranslate nexchange nvolume box_temp displace max_volume seed 
-
-fix              2 all gemc 1 ${ntranslate} ${nexchange} ${nvolume} ${temp} ${displace} ${max_volume} 29494
+#   args: nevery ntranslate nexchange nvolume box_temp displace max_dlogvolratio seed 
+fix              2 all gemc 1 ${ntranslate} ${nexchange} ${nvolume} ${temp} ${displace} ${max_dlogvolratio} 29494
 
 variable        mydensity equal density
 fix             3 all ave/time 1 50 50 v_mydensity ave window 20

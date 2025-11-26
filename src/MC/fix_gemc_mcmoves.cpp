@@ -38,65 +38,32 @@ using namespace LAMMPS_NS;
 
 static constexpr double MAXENERGYTEST = 1.0e50;
 
-// translation boxes
-
 /* ----------------------------------------------------------------------
   Shrink/expand boxes (always requires full energy)
 ------------------------------------------------------------------------- */
 void FixGEMC::attempt_volume_change_full()
 {
-
+  double dlogvolratio;
+  
   nvolume_attempts++;
 
-  // current volume
+  // sample change in logvolratio
+  // logvolratio = v_self/v_other
+  // v_self = v_total/(1+exp(-logvolratio))
+  // - equal and opposite on both replicas
+  // - never goes out of bounds, better sampling efficiency
+  // - no communication required
 
-  double Lx = xhi-xlo;
-  double Ly = yhi-ylo;
-  double Lz = zhi-zlo;
-  double i_vol = Lx*Ly*Lz;
-  double i_mass = group->mass(0);
-
-  // sample volume change from world 0 comm 0
-
-  double dvolume;
   if (me == 0) {
-    // sample volume change which doesn't cause other to have
-    // negative volume
-    // have world 1 send current vol to world 0
-    // also send mass, but not used
-
-    double j_vol, j_mass;
-
-    if (myworld == 1) {
-      commbuf[0] = i_mass;
-      commbuf[1] = i_vol;
-      MPI_Send(&commbuf[0], 2, MPI_DOUBLE, 0, 0, comm_replica);
-    } else {
-      MPI_Recv(&commbuf[0], 2, MPI_DOUBLE, 1, 0, comm_replica, NULL);
-      j_mass = commbuf[0] ;
-      j_vol = commbuf[1];
-    }
-
-    // just have world 0 sample all the volume changes
-    // make sure volume change less than available volume
-    // for both boxes
-
-    if (myworld == 0) {
-      while (1) {
-        dvolume = (random_proc->uniform()-0.5)*max_volume;
-        if (MIN(i_vol+dvolume,j_vol-dvolume) > 0) break;
-      }
-      MPI_Send(&dvolume, 1, MPI_DOUBLE, 1, 0, comm_replica);
-    } else {
-      MPI_Recv(&dvolume, 1, MPI_DOUBLE, 0, 0, comm_replica, NULL);
-      dvolume *= -1.0;
-    }
+    dlogvolratio = max_dlogvolratio*(2*random_proc->uniform() - 1.0);
+    if (myworld == 1) dlogvolratio *= -1.0;
   }
 
-  MPI_Bcast(&dvolume, 1, MPI_DOUBLE, 0, world);
+  MPI_Bcast(&dlogvolratio, 1, MPI_DOUBLE, 0, world);
 
-  double fvolume = (i_vol+dvolume)/i_vol;
-  if (fvolume < 0) error->universe_one(FLERR,"Negative volume found in fix gemc");
+  // fvolume = vnew/vold
+  
+  double fvolume = (1.0+exp(-logvolratio))/(1.0+exp(-(logvolratio+dlogvolratio)));
   double scale_length = pow(fvolume, 1.0/domain->dimension);
 
   // convert to lamda coords so they get scaled
@@ -106,11 +73,10 @@ void FixGEMC::attempt_volume_change_full()
 
   // shrink box toward lower corner
   // lower box coordinates always same
-  // find center point of box
 
-  xhi_tmp = xlo + Lx*scale_length;
-  yhi_tmp = ylo + Ly*scale_length;
-  zhi_tmp = zlo + Lz*scale_length;
+  xhi_tmp = xlo + (xhi-xlo)*scale_length;
+  yhi_tmp = ylo + (yhi-ylo)*scale_length;
+  zhi_tmp = zlo + (zhi-zlo)*scale_length;
 
   // set temporarily
 
@@ -132,9 +98,13 @@ void FixGEMC::attempt_volume_change_full()
 
   domain->remap_all();
 
+  // Frenkel & Smit, 3rd Ed. (2023), p. 221, Eq. (6.6.10)
+  // prob = ((V, self, new) / (V, self, old))^(N+1) *
+  //        ((V, other, new) / (V, other, old))^(N+1) * exp(-beta*dU)
+
   // change in potential due to volume change
 
-  double dU_volume = atom->natoms*force->boltz*box_temp*log(fvolume);
+  double dU_volume = (atom->natoms+1)*force->boltz*box_temp*log(fvolume);
 
   // current system energy
 
@@ -194,7 +164,8 @@ void FixGEMC::attempt_volume_change_full()
 
   } else {
     nvolume_successes += 1.0;
-
+    logvolratio += dlogvolratio;
+    
     // store new energy
 
     energy_stored = energy_after;
@@ -224,7 +195,6 @@ void FixGEMC::attempt_volume_change_full()
 
 void FixGEMC::attempt_atomic_exchange_full()
 {
-
   nexchange_attempts++;
 
   // Choose sender and receiver
@@ -390,19 +360,25 @@ void FixGEMC::attempt_atomic_exchange_full()
 
   int success;
   if (me == 0) {
+
+    // Frenkel & Smit, 3rd Ed. (2023), p. 221, Eq. (6.6.11)
+    // prob = (V/N, receiver, new) / (V/N, sender, old) *  exp(-beta*dU)
+    // natom_total = (N, sender, old)
+    // natom_total = (N, receiver, new)
+
     double all_dU;
     double idU = energy_after-energy_before;
     MPI_Allreduce(&idU,&all_dU,1,MPI_DOUBLE,MPI_SUM,comm_replica);
 
     double volume = (xhi-xlo)*(yhi-ylo)*(zhi-zlo);
-    double NV;
+    double logVN;
 
-    if (sender) NV = volume/(natom_total-1);
-    else NV = natom_total/volume;
-    double allNV;
-    MPI_Allreduce(&NV,&allNV,1,MPI_DOUBLE,MPI_PROD,comm_replica);
+    if (sender) logVN = -log(volume/natom_total);
+    else logVN = log(volume/natom_total);
+    double logallVN;
+    MPI_Allreduce(&logVN, &logallVN, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
 
-    all_dU += (box_temp*force->boltz*log(allNV));
+    all_dU += -box_temp*force->boltz*logallVN;
     double prob = MIN(exp(-beta*all_dU),1.0);
 
     if (prob > random_proc->uniform() && energy_after < MAXENERGYTEST)

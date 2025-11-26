@@ -46,7 +46,7 @@ class FixGEMC : public Fix {
   int nvolume;      // number of volume exchanges between the boxes each step
   double box_temp;  // temperature of each box (assumed equal)
   double displace;  // maximum displacement for traslations
-  double max_volume;// maximum volume change requested
+  double max_dlogvolratio; // maximum change in logvolratio
   int seed;         // RNG seed
 
   // for evaluating probability
@@ -76,6 +76,7 @@ class FixGEMC : public Fix {
   double nexchange_successes;
   double nvolume_attempts;
   double nvolume_successes;
+  double logvolratio;         // log(Vself/Vother) + const
 
   // particle - related props
 

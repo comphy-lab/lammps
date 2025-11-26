@@ -103,7 +103,7 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   nvolume = utils::inumeric(FLERR,    arg[6], false, lmp);
   box_temp = utils::numeric(FLERR,    arg[7], false, lmp);
   displace = utils::numeric(FLERR,    arg[8], false, lmp);
-  max_volume = utils::numeric(FLERR,  arg[9], false, lmp);
+  max_dlogvolratio = utils::numeric(FLERR,  arg[9], false, lmp);
   seed = utils::inumeric(FLERR,       arg[10], false, lmp);
 
   // set up comm_replica = communicator between proc 0s across boxes
@@ -257,6 +257,7 @@ void FixGEMC::init()
   ntranslation_attempts = ntranslation_successes = 0.0;
   nvolume_attempts = nvolume_successes = 0.0;
   nexchange_attempts = nexchange_successes = 0.0;
+  logvolratio = 0.0;
 }
 
 /* ----------------------------------------------------------------------
@@ -327,11 +328,13 @@ void FixGEMC::pre_exchange()
       progress = status;
       auto msg = fmt::format(
           " GEMC run progress: {:>3d}% \n  Trans: {:g}/{:g}\n"
-          "  Vol: {:g}/{:g}\n  Ex: {:g}/{:g}\n",
+          "  Vol: {:g}/{:g}\n  Ex: {:g}/{:g}\n"
+          "  LogVolRatio: {:g}\n",
           progress,
           ntranslation_successes, ntranslation_attempts,
           nvolume_successes, nvolume_attempts,
-          nexchange_successes, nexchange_attempts);
+          nexchange_successes, nexchange_attempts,
+          logvolratio);
       if (universe->uscreen) utils::print(universe->uscreen, msg);
       if (universe->ulogfile) utils::print(universe->ulogfile, msg);
       ntranslation_attempts = ntranslation_successes = 0.0;
@@ -358,7 +361,7 @@ void FixGEMC::update_gas_atoms_list()
     }
   }
 
-  // ngas is total atoms in whole system
+  // natom_total is total atoms in whole system
 
   MPI_Allreduce(&natom_local,&natom_total,1,MPI_INT,MPI_SUM,world);
   MPI_Scan(&natom_local,&natom_lower,1,MPI_INT,MPI_SUM,world);

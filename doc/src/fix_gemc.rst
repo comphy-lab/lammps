@@ -18,7 +18,7 @@ Syntax
 * V = average number of GEMC volume changes to attempt every N steps
 * T = temperature of the Gibbs ensemble (temperature units)
 * displace = maximum Monte Carlo translation distance (length units)
-* maxvol = maximum Monte Carlo volume change (length cubed units)
+* maxdlogvolratio = maximum change in ln(vol1/vol2) (unitless)
 * seed = random # seed (positive integer)
 * zero keyword/value pairs may be appended to args
 
