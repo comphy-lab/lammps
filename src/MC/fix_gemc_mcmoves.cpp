@@ -1,31 +1,36 @@
+/* ----------------------------------------------------------------------
+   LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
+   https://www.lammps.org/, Sandia National Laboratories
+   LAMMPS development team: developers@lammps.org
+
+   Copyright (2003) Sandia Corporation.  Under the terms of Contract
+   DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
+   certain rights in this software.  This software is distributed under
+   the GNU General Public License.
+
+   See the README file in the top-level LAMMPS directory.
+------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------
+   Contributing author: Andrew Hong, Aidan Thompson (SNL)
+------------------------------------------------------------------------- */
+
 #include "fix_gemc.h"
 
 #include "atom.h"
 #include "atom_vec.h"
 #include "comm.h"
-#include "compute.h"
 #include "domain.h"
 #include "error.h"
 #include "force.h"
 #include "group.h"
-#include "input.h"
-#include "irregular.h"
+#include "kspace.h"
 #include "memory.h"
 #include "modify.h"
-#include "molecule.h"
 #include "neighbor.h"
 #include "pair.h"
 #include "random_park.h"
 #include "universe.h"
-#include "update.h"
-#include "variable.h"
-
-// for molecule
-#include "angle.h"
-#include "bond.h"
-#include "dihedral.h"
-#include "improper.h"
-#include "kspace.h"
 
 #include <cstring>
 
@@ -87,7 +92,7 @@ void FixGEMC::attempt_volume_change_full()
   // reset box and subbox dimensions
 
   domain->set_global_box();
-  domain->set_local_box(); // reassigns sub domains
+  domain->set_local_box();    // reassigns sub domains
 
   // positions are scaled now
 
@@ -104,7 +109,7 @@ void FixGEMC::attempt_volume_change_full()
 
   // change in potential due to volume change
 
-  double dU_volume = (atom->natoms+1)*force->boltz*box_temp*log(fvolume);
+  double dU_volume = (atom->natoms+1) * force->boltz * box_temp * log(fvolume);
 
   // current system energy
 
@@ -118,7 +123,7 @@ void FixGEMC::attempt_volume_change_full()
 
   double dU;
   if (me == 0) {
-    double idU = energy_after-energy_before-dU_volume;
+    double idU = energy_after - energy_before - dU_volume;
     // sum change in full energy across each box
     MPI_Allreduce(&idU, &dU, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
   }
@@ -129,7 +134,7 @@ void FixGEMC::attempt_volume_change_full()
 
   // evaluate probability
 
-  double prob = MIN(exp(-beta*dU),1.0);
+  double prob = MIN(exp(-beta * dU), 1.0);
   double rf = random_universe->uniform();
 
   // volume change rejected -> revert atom positions
@@ -146,21 +151,20 @@ void FixGEMC::attempt_volume_change_full()
     // reset box and subbox dimensions
 
     domain->set_global_box();
-    domain->set_local_box(); // reassigns sub domains
-
-    //irregular->migrate_atoms();
+    domain->set_local_box();    // reassigns sub domains
 
     domain->lamda2x(natom_total);
     for (auto &ifix : rfix) ifix->deform(1);
 
     // remap call (may lose atoms if no remap)
 
-    domain->remap_all(); // maybe?
+    domain->remap_all();
 
-    // build neighbor
+    // build neighbor list
+
     neighbor->build(1);
 
-  // acccept volume change
+    // accept volume change
 
   } else {
     nvolume_successes += 1.0;
@@ -186,7 +190,6 @@ void FixGEMC::attempt_volume_change_full()
       subhi = domain->subhi;
     }
   }
-
 }
 
 /* ----------------------------------------------------------------------
@@ -205,8 +208,10 @@ void FixGEMC::attempt_atomic_exchange_full()
     double dmean;
     MPI_Allreduce(&drand, &dmean, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
     dmean *= 0.5;
-    if (drand > dmean) sender = 1;
-    else sender = 0;
+    if (drand > dmean)
+      sender = 1;
+    else
+      sender = 0;
   }
   MPI_Bcast(&sender, 1, MPI_INT, 0, world);
 
@@ -238,7 +243,7 @@ void FixGEMC::attempt_atomic_exchange_full()
 
       // pack atom (only one atom sent per move)
 
-      nbuf = atom->avec->pack_exchange(iatom,&commbuf[0]);
+      nbuf = atom->avec->pack_exchange(iatom, &commbuf[0]);
 
       // temporarily set mask to exclusion for full energy later
 
@@ -259,8 +264,7 @@ void FixGEMC::attempt_atomic_exchange_full()
     if (iatom >= 0 && me != 0) {
       MPI_Send(&commbuf[0], nbuf, MPI_DOUBLE, 0, 0, world);
     } else if (iatom < 0 && me == 0) {
-      MPI_Recv(&commbuf[0], maxcommbuf, MPI_DOUBLE, MPI_ANY_SOURCE,
-               0, world, MPI_STATUS_IGNORE);
+      MPI_Recv(&commbuf[0], maxcommbuf, MPI_DOUBLE, MPI_ANY_SOURCE, 0, world, MPI_STATUS_IGNORE);
     }
   }
 
@@ -270,10 +274,11 @@ void FixGEMC::attempt_atomic_exchange_full()
     // send buffer from sender to receiver
     // there's only two procs in comm_replica, so other is always 1-myrank
 
-    if (sender) MPI_Send(&commbuf[0], maxcommbuf, MPI_DOUBLE,
-                         1-myworld, 0, comm_replica);
-    else MPI_Recv(&commbuf[0], maxcommbuf, MPI_DOUBLE,
-                  MPI_ANY_SOURCE, 0, comm_replica, MPI_STATUS_IGNORE);
+    if (sender)
+      MPI_Send(&commbuf[0], maxcommbuf, MPI_DOUBLE, 1 - myworld, 0, comm_replica);
+    else
+      MPI_Recv(&commbuf[0], maxcommbuf, MPI_DOUBLE, MPI_ANY_SOURCE, 0, comm_replica,
+               MPI_STATUS_IGNORE);
   }
 
   // for now bcast buf to all procs
@@ -300,11 +305,11 @@ void FixGEMC::attempt_atomic_exchange_full()
         if (lamda[1] == 1.0) lamda[1] = 0.0;
         if (lamda[2] == 1.0) lamda[2] = 0.0;
 
-        domain->lamda2x(lamda,coord);
+        domain->lamda2x(lamda, coord);
       } else {
-        coord[0] = xlo + random_proc->uniform() * (xhi-xlo);
-        coord[1] = ylo + random_proc->uniform() * (yhi-ylo);
-        coord[2] = zlo + random_proc->uniform() * (zhi-zlo);
+        coord[0] = xlo + random_proc->uniform() * (xhi - xlo);
+        coord[1] = ylo + random_proc->uniform() * (yhi - ylo);
+        coord[2] = zlo + random_proc->uniform() * (zhi - zlo);
       }
     }
 
@@ -312,16 +317,15 @@ void FixGEMC::attempt_atomic_exchange_full()
 
     MPI_Bcast(&coord, 3, MPI_DOUBLE, 0, world);
     if (triclinic_flag) {
-      if (lamda[0] >= sublo[0] && lamda[0] < subhi[0] &&
-          lamda[1] >= sublo[1] && lamda[1] < subhi[1] &&
-          lamda[2] >= sublo[2] && lamda[2] < subhi[2]) proc_flag = 1;
+      if (lamda[0] >= sublo[0] && lamda[0] < subhi[0] && lamda[1] >= sublo[1] &&
+          lamda[1] < subhi[1] && lamda[2] >= sublo[2] && lamda[2] < subhi[2])
+        proc_flag = 1;
     } else {
       domain->remap(coord);
-      if (!domain->inside(coord))
-        error->universe_one(FLERR,"Fix gemc put atom outside box");
-      if (coord[0] >= sublo[0] && coord[0] < subhi[0] &&
-          coord[1] >= sublo[1] && coord[1] < subhi[1] &&
-          coord[2] >= sublo[2] && coord[2] < subhi[2]) proc_flag = 1;
+      if (!domain->inside(coord)) error->universe_one(FLERR, "Fix gemc put atom outside box");
+      if (coord[0] >= sublo[0] && coord[0] < subhi[0] && coord[1] >= sublo[1] &&
+          coord[1] < subhi[1] && coord[2] >= sublo[2] && coord[2] < subhi[2])
+        proc_flag = 1;
     }
 
     // unpack atom here (only one atom should be received per move)
@@ -367,19 +371,19 @@ void FixGEMC::attempt_atomic_exchange_full()
     // natom_total = (N, receiver, new)
 
     double all_dU;
-    double idU = energy_after-energy_before;
-    MPI_Allreduce(&idU,&all_dU,1,MPI_DOUBLE,MPI_SUM,comm_replica);
+    double idU = energy_after - energy_before;
+    MPI_Allreduce(&idU, &all_dU, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
 
-    double volume = (xhi-xlo)*(yhi-ylo)*(zhi-zlo);
+    double volume = (xhi - xlo) * (yhi - ylo) * (zhi - zlo);
     double logVN;
 
-    if (sender) logVN = -log(volume/natom_total);
-    else logVN = log(volume/natom_total);
+    if (sender) logVN = -log(volume / natom_total);
+    else logVN = log(volume / natom_total);
     double logallVN;
     MPI_Allreduce(&logVN, &logallVN, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
 
-    all_dU += -box_temp*force->boltz*logallVN;
-    double prob = MIN(exp(-beta*all_dU),1.0);
+    all_dU += -box_temp * force->boltz * logallVN;
+    double prob = MIN(exp(-beta * all_dU), 1.0);
 
     if (prob > random_proc->uniform() && energy_after < MAXENERGYTEST)
       success = 1;
@@ -400,15 +404,14 @@ void FixGEMC::attempt_atomic_exchange_full()
       if (iatom >= 0) {
         // overwrite iatom with last atom details
 
-        atom->avec->copy(atom->nlocal-1,iatom,1);
+        atom->avec->copy(atom->nlocal - 1, iatom, 1);
         atom->nlocal--;
-
       }
       atom->natoms--;
       if (atom->map_style != Atom::MAP_NONE) atom->map_init();
       energy_stored = energy_after;
 
-    // packing does not delete atom, just need to revert mask
+      // packing does not delete atom, just need to revert mask
     } else {
       // revert mask and charge if deletion rejected
 
@@ -427,7 +430,7 @@ void FixGEMC::attempt_atomic_exchange_full()
       nexchange_successes += 1.0;
       energy_stored = energy_after;
 
-    // remove newly inserted iatom (it was added to end)
+      // remove newly inserted iatom (it was added to end)
     } else {
       atom->natoms--;
       if (proc_flag) atom->nlocal--;
@@ -439,7 +442,6 @@ void FixGEMC::attempt_atomic_exchange_full()
   // update counts
 
   update_gas_atoms_list();
-
 }
 
 /* ----------------------------------------------------------------------
@@ -466,21 +468,20 @@ void FixGEMC::attempt_atomic_translation_full()
   if (i >= 0) {
 
     double rsq = 1.1;
-    double rx,ry,rz;
+    double rx, ry, rz;
     rx = ry = rz = 0.0;
     double coord[3];
     while (rsq > 1.0) {
-      rx = 2*random_proc->uniform() - 1.0;
-      ry = 2*random_proc->uniform() - 1.0;
-      rz = 2*random_proc->uniform() - 1.0;
-      rsq = rx*rx + ry*ry + rz*rz;
+      rx = 2 * random_proc->uniform() - 1.0;
+      ry = 2 * random_proc->uniform() - 1.0;
+      rz = 2 * random_proc->uniform() - 1.0;
+      rsq = rx * rx + ry * ry + rz * rz;
     }
-    coord[0] = x[i][0] + displace*rx;
-    coord[1] = x[i][1] + displace*ry;
-    coord[2] = x[i][2] + displace*rz;
+    coord[0] = x[i][0] + displace * rx;
+    coord[1] = x[i][1] + displace * ry;
+    coord[2] = x[i][2] + displace * rz;
 
-    if (!domain->inside_nonperiodic(coord))
-      error->one(FLERR,"Fix gcmc put atom outside box");
+    if (!domain->inside_nonperiodic(coord)) error->one(FLERR, "Fix gcmc put atom outside box");
     xtmp[0] = x[i][0];
     xtmp[1] = x[i][1];
     xtmp[2] = x[i][2];
@@ -494,18 +495,17 @@ void FixGEMC::attempt_atomic_translation_full()
   double energy_after = energy_full();
 
   if (energy_after < MAXENERGYTEST &&
-      random_world->uniform() <
-      exp(beta*(energy_before - energy_after))) {
+      random_world->uniform() < exp(beta * (energy_before - energy_after))) {
 
     energy_stored = energy_after;
     ntranslation_successes += 1.0;
   } else {
 
     tagint tmptag_all;
-    MPI_Allreduce(&tmptag,&tmptag_all,1,MPI_LMP_TAGINT,MPI_MAX,world);
+    MPI_Allreduce(&tmptag, &tmptag_all, 1, MPI_LMP_TAGINT, MPI_MAX, world);
 
     double xtmp_all[3];
-    MPI_Allreduce(&xtmp,&xtmp_all,3,MPI_DOUBLE,MPI_SUM,world);
+    MPI_Allreduce(&xtmp, &xtmp_all, 3, MPI_DOUBLE, MPI_SUM, world);
 
     for (int i = 0; i < atom->nlocal; i++) {
       if (tmptag_all == atom->tag[i]) {
@@ -525,13 +525,11 @@ void FixGEMC::attempt_atomic_translation_full()
     comm->exchange();
     atom->nghost = 0;
     comm->borders();
-    if (triclinic_flag) domain->lamda2x(atom->nlocal+atom->nghost);
+    if (triclinic_flag) domain->lamda2x(atom->nlocal + atom->nghost);
     if (modify->n_pre_neighbor) modify->pre_neighbor();
     neighbor->build(1);
-
   }
   update_gas_atoms_list();
-
 }
 
 /* ----------------------------------------------------------------------
@@ -540,9 +538,8 @@ void FixGEMC::attempt_atomic_translation_full()
 int FixGEMC::pick_random_gas_atom()
 {
   int i = -1;
-  int iwhichglobal = static_cast<int> (natom_total*random_world->uniform());
-  if ((iwhichglobal >= natom_lower) &&
-      (iwhichglobal < natom_lower + natom_local)) {
+  int iwhichglobal = static_cast<int>(natom_total * random_world->uniform());
+  if ((iwhichglobal >= natom_lower) && (iwhichglobal < natom_lower + natom_local)) {
     i = iwhichglobal - natom_lower;
   }
 
