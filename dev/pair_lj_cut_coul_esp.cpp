@@ -462,12 +462,19 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
         if (rsq < cut_coulsq) {
           if (!ncoultablebits || rsq <= tabinnersq) {
             r = sqrt(rsq);
-            grij = g_ewald * r;
-            expm2 = exp(-grij*grij);
-            t = 1.0 / (1.0 + EWALD_P*grij);
-            erfc = t * (A1+t*(A2+t*(A3+t*(A4+t*A5)))) * expm2;
+
+            // Polynomial approximation
+            double force_poly_appx = force_poly_coeff[0];
+            double force_poly_r = 1.0;
+            double r_scal = r / cut_coul;
+
+            for (int index = 1; index < num_of_force_poly; index++) {
+              force_poly_r *= r_scal;
+              force_poly_appx += force_poly_coeff[index] * force_poly_r;
+            }
+
             prefactor = qqrd2e * qtmp * q[j] / r;
-            forcecoul = prefactor * (erfc + EWALD_F*grij*expm2 - 1.0);
+            forcecoul = prefactor * (force_poly_appx-1.0);
 
             if (rsq > cut_in_off_sq) {
               if (rsq < cut_in_on_sq) {
@@ -482,21 +489,7 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
                   forcecoul -= (1.0-factor_coul)*prefactor;
               }
             }
-          } else {
-            union_int_float_t rsq_lookup;
-            rsq_lookup.f = rsq;
-            itable = rsq_lookup.i & ncoulmask;
-            itable >>= ncoulshiftbits;
-            fraction = (rsq_lookup.f - rtable[itable]) * drtable[itable];
-            table = ftable[itable] + fraction*dftable[itable];
-            forcecoul = qtmp*q[j] * table;
-            if (factor_coul < 1.0) {
-              table = ctable[itable] + fraction*dctable[itable];
-              prefactor = qtmp*q[j] * table;
-              forcecoul -= (1.0-factor_coul)*prefactor;
-            }
-          }
-        } else forcecoul = 0.0;
+          } else forcecoul = 0.0;
 
         if (rsq < cut_ljsq[itype][jtype] && rsq > cut_in_off_sq) {
           r6inv = r2inv*r2inv*r2inv;
