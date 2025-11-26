@@ -13,7 +13,7 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing author: Jiuyang Liang and Libin Lu (Flatiron)
+   Contributing author: Paul Crozier (SNL)
 ------------------------------------------------------------------------- */
 
 #include "pair_lj_cut_coul_esp.h"
@@ -489,7 +489,21 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
                   forcecoul -= (1.0-factor_coul)*prefactor;
               }
             }
-          } else forcecoul = 0.0;
+          } else {
+            union_int_float_t rsq_lookup;
+            rsq_lookup.f = rsq;
+            itable = rsq_lookup.i & ncoulmask;
+            itable >>= ncoulshiftbits;
+            fraction = ((double) rsq_lookup.f - rtable[itable]) * drtable[itable];
+            table = ftable[itable] + fraction*dftable[itable];
+            forcecoul = qtmp*q[j] * table;
+            if (factor_coul < 1.0) {
+              table = ctable[itable] + fraction*dctable[itable];
+              prefactor = qtmp*q[j] * table;
+              forcecoul -= (1.0-factor_coul)*prefactor;
+            }
+          }
+        } else forcecoul = 0.0;
 
         if (rsq < cut_ljsq[itype][jtype] && rsq > cut_in_off_sq) {
           r6inv = r2inv*r2inv*r2inv;
@@ -621,7 +635,7 @@ void PairLJCutCoulEsp::settings(int narg, char **arg)
 void PairLJCutCoulEsp::coeff(int narg, char **arg)
 {
   if (narg < 4 || narg > 5)
-    error->all(FLERR,"Incorrect args for pair coefficients");
+    error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi;
@@ -645,7 +659,7 @@ void PairLJCutCoulEsp::coeff(int narg, char **arg)
     }
   }
 
-  if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients");
+  if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
 }
 
 /* ----------------------------------------------------------------------
@@ -655,7 +669,7 @@ void PairLJCutCoulEsp::coeff(int narg, char **arg)
 void PairLJCutCoulEsp::init_style()
 {
   if (!atom->q_flag)
-    error->all(FLERR,"Pair style lj/cut/coul/long requires atom attribute q");
+    error->all(FLERR,"Pair style lj/cut/coul/esp requires atom attribute q");
 
   // request regular or rRESPA neighbor list
 
@@ -850,7 +864,6 @@ void PairLJCutCoulEsp::read_restart_settings(FILE *fp)
   MPI_Bcast(&tabinner,1,MPI_DOUBLE,0,world);
 }
 
-
 /* ----------------------------------------------------------------------
    proc 0 writes to data file
 ------------------------------------------------------------------------- */
@@ -887,19 +900,25 @@ double PairLJCutCoulEsp::single(int i, int j, int itype, int jtype,
   if (rsq < cut_coulsq) {
     if (!ncoultablebits || rsq <= tabinnersq) {
       r = sqrt(rsq);
-      grij = g_ewald * r;
-      expm2 = exp(-grij*grij);
-      t = 1.0 / (1.0 + EWALD_P*grij);
-      erfc = t * (A1+t*(A2+t*(A3+t*(A4+t*A5)))) * expm2;
+
+      // Polynomial approximation
+      double force_poly_appx = force_poly_coeff[0];
+      double force_poly_r = 1.0;
+      double r_scal = r / cut_coul;
+      for (int index = 1; index < num_of_force_poly; index++) {
+        force_poly_r *= r_scal;
+        force_poly_appx += force_poly_coeff[index] * force_poly_r;
+      }
       prefactor = force->qqrd2e * atom->q[i]*atom->q[j]/r;
-      forcecoul = prefactor * (erfc + EWALD_F*grij*expm2);
+      forcecoul = prefactor * force_poly_appx;
+
       if (factor_coul < 1.0) forcecoul -= (1.0-factor_coul)*prefactor;
     } else {
       union_int_float_t rsq_lookup_single;
       rsq_lookup_single.f = rsq;
       itable = rsq_lookup_single.i & ncoulmask;
       itable >>= ncoulshiftbits;
-      fraction = (rsq_lookup_single.f - rtable[itable]) * drtable[itable];
+      fraction = ((double) rsq_lookup_single.f - rtable[itable]) * drtable[itable];
       table = ftable[itable] + fraction*dftable[itable];
       forcecoul = atom->q[i]*atom->q[j] * table;
       if (factor_coul < 1.0) {
