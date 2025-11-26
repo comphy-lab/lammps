@@ -24,6 +24,7 @@
 #include "comm.h"
 #include "domain.h"
 #include "error.h"
+#include "fix.h"
 #include "math_extra.h"
 #include "memory.h"
 #include "update.h"
@@ -42,23 +43,25 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
   if (narg < 4)  utils::missing_cmd_args(FLERR, "compute property/atom", error);
 
   peratom_flag = 1;
-  nvalues = narg - 3;
-  if (nvalues == 1) size_peratom_cols = 0;
-  else size_peratom_cols = nvalues;
-
+  nvalues = narg - 3;    // may be reset below
+  
   // parse input values
   // customize a new keyword by adding to if statement
 
   pack_choice = new FnPtrPack[nvalues];
   index = new int[nvalues];
   colindex = new int[nvalues];
+  int historyflag = 0;
+  fixID = nullptr;
+  
   avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
   avec_body = dynamic_cast<AtomVecBody *>(atom->style_match("body"));
   avec_line = dynamic_cast<AtomVecLine *>(atom->style_match("line"));
   avec_tri = dynamic_cast<AtomVecTri *>(atom->style_match("tri"));
 
   int i;
-  for (int iarg = 3; iarg < narg; iarg++) {
+  int iarg = 3;
+  while (iarg < narg) {
     i = iarg-3;
 
     if (strcmp(arg[iarg],"id") == 0) {
@@ -331,25 +334,6 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
         error->all(FLERR,"Compute property/atom {} requires atom style tri", arg[iarg]);
       pack_choice[i] = &ComputePropertyAtom::pack_corner3z;
 
-    // APIP package
-
-    } else if (strcmp(arg[iarg],"apip_lambda") == 0) {
-      if (!atom->apip_lambda_flag)
-        error->all(FLERR,"Compute property/atom {} is not available", arg[iarg]);
-      pack_choice[i] = &ComputePropertyAtom::pack_apip_lambda;
-    } else if (strcmp(arg[iarg],"apip_lambda_input") == 0) {
-      if (!atom->apip_lambda_input_flag)
-        error->all(FLERR,"Compute property/atom {} is not available", arg[iarg]);
-      pack_choice[i] = &ComputePropertyAtom::pack_apip_lambda_input;
-    } else if (strcmp(arg[iarg],"apip_e_fast") == 0) {
-      if (!atom->apip_e_fast_flag)
-        error->all(FLERR,"Compute property/atom {} is not available", arg[iarg]);
-      pack_choice[i] = &ComputePropertyAtom::pack_apip_e_fast;
-    } else if (strcmp(arg[iarg],"apip_e_precise") == 0) {
-      if (!atom->apip_e_precise_flag)
-        error->all(FLERR,"Compute property/atom {} is not available", arg[iarg]);
-      pack_choice[i] = &ComputePropertyAtom::pack_apip_e_precise;
-
     // custom per-atom vector or array
 
     } else if (utils::strmatch(arg[iarg],"^[id]2?_")) {
@@ -361,7 +345,8 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
       if (index[i] < 0)
         error->all(FLERR,"Compute property/atom property {} does not exist", pname);
 
-      // handle vectors
+      // custom vectors
+      
       if ((cols == 0) && (arg[iarg][1] == '_')) {
         if (argi.get_dim() != 0)
           error->all(FLERR,"Compute property/atom custom vector {} is incorrectly indexed",pname);
@@ -378,7 +363,9 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
             error->all(FLERR,"Compute property/atom floating-point vector {} does not exist",pname);
         }
       }
-      // handle arrays
+      
+      // custom arrays
+      
       else if ((cols > 0) && (arg[iarg][1] == '2')) {
         if (argi.get_dim() != 1)
           error->all(FLERR,"Compute property/atom custom array {} is not indexed",pname);
@@ -397,15 +384,74 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
         }
       } else error->all(FLERR,"Inconsistent request for custom property {}", pname);
 
-    // anything else must be recognized by atom style
-
+    // history[i][j] values from fix store/state
+    // index[i] = I index of history[I][J] for history frame (1 to Nrepeat)
+    // colindex[i] = J index of history[I][J] for fix SS value (1 to Nattribute)
+      
+    } else if (utils::strmatch(arg[iarg],"^history\[\d+\]\[\d+\]$")) {
+      historyflag = 1;
+      pack_choice[i] = &ComputePropertyAtom::pack_history;
+      // NOTE for Axel: better way to parse 2 indices ??
+      char *ptrstart = strchr(arg[iarg],'[');
+      char *ptrstop = strchr(ptrstart,']');
+      *ptrstop = '\0';
+      index[i] = utils::inumeric(FLERR,ptrstart+1,true,lmp);
+      *ptrstop = ']';
+      ptrstart = ptrstop++;
+      ptrstop = strchr(ptrstart,']');
+      *ptrstop = '\0';
+      colindex[i] = utils::inumeric(FLERR,ptrstart+1,true,lmp);
+      *ptrstop = ']';
+      
+    // any other attribute could be recognized by atom style
+    // otherwise break for processing optional args
+      
     } else {
       index[i] = atom->avec->property_atom(arg[iarg]);
-      if (index[i] < 0)
-        error->all(FLERR,"Invalid keyword {} for atom style {} in compute property/atom command ",
-                   arg[iarg], atom->get_style());
+      if (index[i] < 0) break;
       pack_choice[i] = &ComputePropertyAtom::pack_atom_style;
     }
+
+    iarg++;
+  }
+
+  // reset nvalues in case there are optional args
+  
+  nvalues = iarg - 3;
+  if (nvalues == 1) size_peratom_cols = 0;
+  else size_peratom_cols = nvalues;
+
+  // optional arg required if history attribute used
+  // otherwise error for attribute not recognized by atom style
+  
+  while (iarg < narg) {
+    if (strcmp(arg[iarg],"history") == 0) {
+      if (iarg+2 > narg) error->all(FLERR,"Add error message");
+      if (historyflag == 0) error->all(FLERR,"Add error message");
+      historyflag == 2;
+      iarg += 2;
+    } else { 
+      error->all(FLERR,"Invalid keyword {} for atom style {} in compute property/atom command", arg[iarg], atom->get_style());
+    }
+  }
+
+  // check history attribute(s) and history optional arg used correctly
+
+  if (historyflag == 1) error->all(FLERR,"Add error message");
+  if (historyflag == 2) {
+    
+    // check that fixID is valid and style = store/state
+    // check that fix ss history is enabled
+    // check that ihistory is from 1 to Nrepeat for all attributes
+    // check that jhistory is from 1 to Nattribute for all attributes
+
+    // these extractions may not work - see fix SS, or only on certain steps
+    
+    int dim;
+    most_recent_index_ptr = (int *) fixhistory->extract("most_recent_index",dim);
+    nrepeat_history = *((int *) fixhistory->extract("nrepeat_history",dim));
+    history = (double ***) fixhistory->extract("history",dim);
+    if (dim != 3) error->all(FLERR,"Add error message");
   }
 
   nmax = 0;
@@ -418,6 +464,8 @@ ComputePropertyAtom::~ComputePropertyAtom()
   delete[] pack_choice;
   delete[] index;
   delete[] colindex;
+  delete[] fixID;
+  
   memory->destroy(vector_atom);
   memory->destroy(array_atom);
 }
@@ -1583,66 +1631,6 @@ void ComputePropertyAtom::pack_tqz(int n)
 
 /* ---------------------------------------------------------------------- */
 
-void ComputePropertyAtom::pack_apip_lambda(int n)
-{
-  double *lambda = atom->apip_lambda;
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-
-  for (int i = 0; i < nlocal; i++) {
-    if (mask[i] & groupbit) buf[n] = lambda[i];
-    else buf[n] = 0.0;
-    n += nvalues;
-  }
-}
-
-/* ---------------------------------------------------------------------- */
-
-void ComputePropertyAtom::pack_apip_lambda_input(int n)
-{
-  double *lambda_input = atom->apip_lambda_input;
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-
-  for (int i = 0; i < nlocal; i++) {
-    if (mask[i] & groupbit) buf[n] = lambda_input[i];
-    else buf[n] = 0.0;
-    n += nvalues;
-  }
-}
-
-/* ---------------------------------------------------------------------- */
-
-void ComputePropertyAtom::pack_apip_e_fast(int n)
-{
-  double *e_simple = atom->apip_e_fast;
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-
-  for (int i = 0; i < nlocal; i++) {
-    if (mask[i] & groupbit) buf[n] = e_simple[i];
-    else buf[n] = 0.0;
-    n += nvalues;
-  }
-}
-
-/* ---------------------------------------------------------------------- */
-
-void ComputePropertyAtom::pack_apip_e_precise(int n)
-{
-  double *e_complex = atom->apip_e_precise;
-  int *mask = atom->mask;
-  int nlocal = atom->nlocal;
-
-  for (int i = 0; i < nlocal; i++) {
-    if (mask[i] & groupbit) buf[n] = e_complex[i];
-    else buf[n] = 0.0;
-    n += nvalues;
-  }
-}
-
-/* ---------------------------------------------------------------------- */
-
 void ComputePropertyAtom::pack_end1x(int n)
 {
   AtomVecLine::Bonus *bonus = avec_line->bonus;
@@ -2004,6 +1992,32 @@ void ComputePropertyAtom::pack_d2name(int n)
 
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) buf[n] = darray[i][icol];
+    else buf[n] = 0.0;
+    n += nvalues;
+  }
+}
+
+/* ----------------------------------------------------------------------
+   access history values from fix store/state
+   index[n] = I index of history[I][J] for history frame (1 to Nrepeat)
+   colindex[n] = J index of history[I][J] for fix SS value (1 to Nattribute)
+   hframe = single frame of per-atom history
+---------------------------------------------------------------------- */
+
+void ComputePropertyAtom::pack_history(int n)
+{
+  int k = *most_recent_index_ptr;
+  k -= index[n] - 1;
+  if (k < 0) k += nrepeat_history;
+  double **hframe = history[k];
+  int icol = colindex[n] - 1;
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+
+  // will this give 0.0 when there is no history yet, or not enough frames?
+  
+  for (int i = 0; i < nlocal; i++) {
+    if (mask[i] & groupbit) buf[n] = hframe[i][icol];
     else buf[n] = 0.0;
     n += nvalues;
   }

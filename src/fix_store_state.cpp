@@ -821,7 +821,7 @@ void *FixStoreState::extract(const char *str, int &dim)
   if (nfreq_history == 0 && update->ntimestep % nevery_history) return nullptr;
   if (nfreq_history && update->ntimestep % nfreq_history) return nullptr;
 
-  // various history params which can be used by caller
+  // various scalar history params which can be used by caller
 
   if (strcmp(str, "size") == 0) {
     dim = 0;
