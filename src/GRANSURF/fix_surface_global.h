@@ -196,7 +196,8 @@ class FixSurfaceGlobal : public FixSurface {
   Connect3d *connect3d;       // 3d connection info
 
   class ContactSurf *contact_surfs;
-  int nmax_contact_surfs;
+  int n_contact_surfs, nmax_contact_surfs;
+  std::map<int, int> contacts_map;
 
   // data for DumpImage
 
@@ -210,7 +211,6 @@ class FixSurfaceGlobal : public FixSurface {
   void check3d();
   void connectivity2d_complete();
   void connectivity3d_complete();
-  int walk_corner_connectivity(int, int, int);
   void check_molecules();
   void stats2d();
   void stats3d();
@@ -220,13 +220,16 @@ class FixSurfaceGlobal : public FixSurface {
 
   // contact processing and force calculation
 
-  void prewalk_connections2d(int, int, std::unordered_set<int> *, std::map<int, int> *);
-  void prewalk_connections3d(int, int, std::unordered_set<int> *, std::map<int, int> *);
-  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *,  std::map<int, int> *);
-  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  void adjust_exposed_pt_2d(int, int, int, int);
-  void adjust_exposed_edge_3d(int, int, int, int);
-  void adjust_exposed_pt_3d(int, int, int, int);
+  void prewalk_connections2d();
+  void prewalk_connections3d();
+  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *);
+  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *);
+  void adjust_exposed_pt_flat_2d(int, int, int, int);
+  void adjust_exposed_pt_nonflat_2d(int, int, int, int);
+  void adjust_exposed_edge_flat_3d(int, int, int, int);
+  void adjust_exposed_edge_nonflat_3d(int, int, int, int);
+  void adjust_exposed_pt_flat_3d(int, int, int, int);
+  void adjust_exposed_pt_nonflat_3d(int, int, int, int);
   void calculate_2d_forces(std::vector<int> *, double);
   void calculate_3d_forces(std::vector<int> *, double);
 
