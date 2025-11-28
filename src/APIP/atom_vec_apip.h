@@ -29,9 +29,10 @@ class AtomVecApip : public AtomVec {
   AtomVecApip(class LAMMPS *);
 
   void grow_pointers() override;
-
   void force_clear(int, size_t) override;
   void data_atom_post(int) override;
+  int property_atom(const std::string &) override;
+  void pack_property_atom(int, double *, int, int) override;
 
  protected:
   double *apip_lambda, *apip_lambda_input, *apip_lambda_const, *apip_lambda_input_ta, *apip_e_fast,
