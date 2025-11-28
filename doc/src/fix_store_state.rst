@@ -136,7 +136,7 @@ command in the Examples section above:
    fix 2 all store/state 0 vx vy vz history 5 20 1000
 
 will store attibutes once every 5 timesteps repeated 20 times
-(including the current timestep), but only preceeding timesteps which
+(including the current timestep), but only preceding timesteps which
 are multiples of 1000.  On step 1000, each atom stores attributes for
 steps 905,910,915, ... 1000.  On step 2000, each atom stores
 attributes for steps 1905,1910,1915, ... 2000.  Between timesteps 1000
