@@ -158,20 +158,20 @@ keyword.  If this attribute is used, the optional *history* keyword
 must also be used to specify the *fixID* of the fix store/state
 command.
 
-The fix store/state command specifies *Nattribute* per-atom
-attributes, and its history keyword specifies *Nrepeat* and *Nfreq*.
-*Nfreq* determines which timesteps the history can be accessed, which
-must be compatible with each timestep this compute is invoked.
-*Nrepeat* sets the count of how many history values are stored for
-each attribute.  The first *I* index of attribute *history[I][J]* must
-be a value from 1 to *Nrepeat*, where 1 is the most recent history and
-*Nrepeat* is the oldest history.  If this compute is invoked before
-all *Nrepeat* history values have been stored (e.g. early in a run),
-then zeroes will be stored by this compute for not-yet-available
-history.  The second *J* index of attribute *history[I][J]* must be a
-value from 1 to *Nattribute* for the per-atom attribute to access.
-See the :doc:`fix store/state <fix_store_state>` doc page for more
-details.
+The associated :doc:`fix store/state <fix_store_state>` command
+specifies *Nattribute* per-atom attributes, and its history keyword
+specifies *Nrepeat* and *Nfreq*.  *Nfreq* determines which timesteps
+the history can be accessed, which must be compatible with each
+timestep this compute is invoked.  *Nrepeat* sets the count of how
+many history values are stored for each attribute.  The first *I*
+index of attribute *history[I][J]* must be a value from 1 to
+*Nrepeat*, where 1 is the most recent history and *Nrepeat* is the
+oldest history.  If this compute is invoked before all *Nrepeat*
+history values have been stored (e.g. early in a run), then zeroes
+will be stored by this compute for not-yet-available history.  The
+second *J* index of attribute *history[I][J]* must be a value from 1
+to *Nattribute* for the per-atom attribute to access.  See the
+:doc:`fix store/state <fix_store_state>` doc page for more details.
 
 The additional per-atom attributes only accessible via this command,
 and not directly via the :doc:`dump custom <dump>` command, are as

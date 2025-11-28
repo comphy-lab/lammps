@@ -27,6 +27,7 @@
 #include "fix.h"
 #include "math_extra.h"
 #include "memory.h"
+#include "modify.h"
 #include "update.h"
 
 #include <cmath>
@@ -51,8 +52,9 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
   pack_choice = new FnPtrPack[nvalues];
   index = new int[nvalues];
   colindex = new int[nvalues];
-  int historyflag = 0;
+  historyflag = 0;
   fixID = nullptr;
+  fixhistory = nullptr;
   
   avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
   avec_body = dynamic_cast<AtomVecBody *>(atom->style_match("body"));
@@ -387,8 +389,10 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
     // history[i][j] values from fix store/state
     // index[i] = I index of history[I][J] for history frame (1 to Nrepeat)
     // colindex[i] = J index of history[I][J] for fix SS value (1 to Nattribute)
+
+    // NOTE for Axel: correct way to write regex ?
       
-    } else if (utils::strmatch(arg[iarg],"^history\[\d+\]\[\d+\]$")) {
+    } else if (utils::strmatch(arg[iarg],"^history\\[\\d+\\]\\[\\d+\\]$")) {
       historyflag = 1;
       pack_choice[i] = &ComputePropertyAtom::pack_history;
       // NOTE for Axel: better way to parse 2 indices ??
@@ -397,7 +401,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
       *ptrstop = '\0';
       index[i] = utils::inumeric(FLERR,ptrstart+1,true,lmp);
       *ptrstop = ']';
-      ptrstart = ptrstop++;
+      ptrstart = ptrstop + 1;;
       ptrstop = strchr(ptrstart,']');
       *ptrstop = '\0';
       colindex[i] = utils::inumeric(FLERR,ptrstart+1,true,lmp);
@@ -426,34 +430,62 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
   
   while (iarg < narg) {
     if (strcmp(arg[iarg],"history") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Add error message");
-      if (historyflag == 0) error->all(FLERR,"Add error message");
-      historyflag == 2;
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "history fixID", error);
+      if (historyflag == 0) error->all(FLERR,"Compute property/atom history option cannot be used without history attribute", style);
+      if (historyflag == 2) error->all(FLERR,"Compute property/atom history option can only be used once");
+      historyflag = 2;
+      int n = strlen(arg[iarg+1]) + 1;
+      fixID = new char[n];
+      strcpy(fixID,arg[iarg+1]);
+      fixhistory = modify->get_fix_by_id(fixID);
+      if (!fixhistory) error->all(FLERR, iarg+1,
+				  "Could not find compute {} history fix ID: {}",
+				  style, arg[iarg+1]);
       iarg += 2;
     } else { 
       error->all(FLERR,"Invalid keyword {} for atom style {} in compute property/atom command", arg[iarg], atom->get_style());
     }
   }
 
-  // check history attribute(s) and history optional arg used correctly
+  // check that history attribute(s) and optional history arg are used correctly
 
-  if (historyflag == 1) error->all(FLERR,"Add error message");
+  if (historyflag == 1)
+    error->all(FLERR,"Compute property/atom history attribute requires history option");
   if (historyflag == 2) {
-    
-    // check that fixID is valid and style = store/state
-    // check that fix ss history is enabled
-    // check that ihistory is from 1 to Nrepeat for all attributes
-    // check that jhistory is from 1 to Nattribute for all attributes
+    if (strcmp(fixhistory->style,"store/state") != 0)
+      error->all(FLERR,"Compute {} history fix style is not store/state", style);
 
-    // these extractions may not work - see fix SS, or only on certain steps
-    
     int dim;
-    most_recent_index_ptr = (int *) fixhistory->extract("most_recent_index",dim);
-    nrepeat_history = *((int *) fixhistory->extract("nrepeat_history",dim));
-    history = (double ***) fixhistory->extract("history",dim);
-    if (dim != 3) error->all(FLERR,"Add error message");
-  }
+    int *flag_history_ptr = (int *) fixhistory->extract("flag_history",dim);
+    int flag_history = *((int *) fixhistory->extract("flag_history",dim));
+    if (!flag_history)
+      error->all(FLERR,"Compute {} history fix does not store history", style);
 
+    nattribute_history = *((int *) fixhistory->extract("nattribute_history",dim));
+    nevery_history = *((int *) fixhistory->extract("nevery_history",dim));
+    nrepeat_history = *((int *) fixhistory->extract("nrepeat_history",dim));
+    nfreq_history = *((int *) fixhistory->extract("nfreq_history",dim));
+    most_recent_index_ptr = (int *) fixhistory->extract("most_recent_index",dim);
+    history = (double ***) fixhistory->extract("history",dim);
+
+    // check all history attributes:
+    // ihistory = index[i] is from 1 to Nrepeat
+    // jhistory = colindex[i] is from 1 to Nattribute
+
+    for (int i = 0; i < nvalues; i++) {
+      if (pack_choice[i] == &ComputePropertyAtom::pack_history) {
+	if (index[i] < 1 || index[i] > nrepeat_history)
+	  error->all(FLERR,
+		     "Compute {} history references invalid history frame {} from fix store/state",
+		     style, index[i]);
+	if (colindex[i] < 1 || colindex[i] > nattribute_history)
+	  error->all(FLERR,
+		     "Compute {} history references invalid attribute {} from fix store/state",
+		     style, colindex[i]);
+      }
+    }
+  }
+  
   nmax = 0;
 }
 
@@ -467,7 +499,6 @@ ComputePropertyAtom::~ComputePropertyAtom()
   delete[] fixID;
   
   memory->destroy(vector_atom);
-  memory->destroy(array_atom);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -479,8 +510,10 @@ void ComputePropertyAtom::init()
   avec_tri = dynamic_cast<AtomVecTri *>(atom->style_match("tri"));
   avec_body = dynamic_cast<AtomVecBody *>(atom->style_match("body"));
 
-  // NOTE: could reset custom vector/array indices here, like dump custom does
-  //       in case have been deleted
+  // NOTE: need to reset custom vector/array indices here, like dump custom does
+  //       in case have been deleted ?
+
+  // NOTE: need to check that fix store state is still defined and valid ?
 }
 
 /* ---------------------------------------------------------------------- */
@@ -498,10 +531,22 @@ void ComputePropertyAtom::compute_peratom()
       memory->create(vector_atom,nmax,"property/atom:vector");
     } else {
       memory->destroy(array_atom);
-      memory->create(array_atom,nmax,nvalues,"property/atom:array");
+        memory->create(array_atom,nmax,nvalues,"property/atom:array");
     }
   }
 
+  // if one or more attributes are history from fix store/state,
+  // check this is a valid timestep to access history
+
+  if (historyflag) {
+    if (nfreq_history == 0 && update->ntimestep % nevery_history)
+      error->all(FLERR,"Compute {} not accessing history ot compatible times{}",
+		 style, utils::errorurl(7));
+    if (nfreq_history && update->ntimestep % nfreq_history)
+      error->all(FLERR,"Compute {} not accessing history ot compatible times{}",
+		 style, utils::errorurl(7));
+  }
+  
   // fill vector or array with per-atom values
 
   if (nvalues == 1) {
@@ -2014,8 +2059,6 @@ void ComputePropertyAtom::pack_history(int n)
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
 
-  // will this give 0.0 when there is no history yet, or not enough frames?
-  
   for (int i = 0; i < nlocal; i++) {
     if (mask[i] & groupbit) buf[n] = hframe[i][icol];
     else buf[n] = 0.0;

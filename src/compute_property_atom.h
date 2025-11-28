@@ -43,12 +43,17 @@ class ComputePropertyAtom : public Compute {
   class AtomVecTri *avec_tri;
   class AtomVecBody *avec_body;
 
+  // per-atom history accessed from fix store/state
+  
   char *fixID;
   class Fix *fixhistory;
 
+  int historyflag;
+  int nattribute_history, nevery_history, nrepeat_history, nfreq_history;
   int *most_recent_index_ptr;
-  int nrepeat_history;
   double ***history;
+
+  // function ptr for each attribute
   
   using FnPtrPack = void (ComputePropertyAtom::*)(int);
   FnPtrPack *pack_choice;    // ptrs to pack functions

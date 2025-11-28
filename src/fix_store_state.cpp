@@ -814,16 +814,13 @@ int FixStoreState::size_restart(int /*nlocal*/)
 
 void *FixStoreState::extract(const char *str, int &dim)
 {
-  if (!historyflag) return nullptr;
+  // scalar history params which can be used by caller
 
-  // only allow extraction on steps compatible with nevery_history and nfreq_history
-
-  if (nfreq_history == 0 && update->ntimestep % nevery_history) return nullptr;
-  if (nfreq_history && update->ntimestep % nfreq_history) return nullptr;
-
-  // various scalar history params which can be used by caller
-
-  if (strcmp(str, "size") == 0) {
+  if (strcmp(str, "flag_history") == 0) {
+    dim = 0;
+    return &historyflag;
+  }
+  if (strcmp(str, "nattribute_history") == 0) {
     dim = 0;
     return &vsize;
   }
@@ -849,6 +846,7 @@ void *FixStoreState::extract(const char *str, int &dim)
   }
 
   // extract the 3d history tensor
+  // up to caller to determine if accessing tensor on valid timestep
 
   if (strcmp(str, "history") == 0) {
     dim = 3;
