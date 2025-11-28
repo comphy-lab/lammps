@@ -20,8 +20,10 @@
 #include "comm.h"
 #include "constants_oxdna.h"
 #include "error.h"
+#include "fix.h"
 #include "force.h"
 #include "memory.h"
+#include "modify.h"
 #include "neighbor.h"
 #include "potential_file_reader.h"
 #include "update.h"
@@ -172,11 +174,11 @@ void BondOxdnaFene::compute(int eflag, int vflag)
   ebond = 0.0;
   ev_init(eflag, vflag);
 
-  // n(x/y/z)_xtrct = extracted local unit vectors in lab frame from oxdna_excv
+  // n(x/y/z)_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
   int dim;
-  nx_xtrct = (double **) force->pair->extract("nx", dim);
-  ny_xtrct = (double **) force->pair->extract("ny", dim);
-  nz_xtrct = (double **) force->pair->extract("nz", dim);
+  nx_xtrct = (double **) fix_lrf->extract("nx", dim);
+  ny_xtrct = (double **) fix_lrf->extract("ny", dim);
+  nz_xtrct = (double **) fix_lrf->extract("nz", dim);
 
   // loop over FENE bonds
 
@@ -388,6 +390,11 @@ void BondOxdnaFene::init_style()
     error->all(
         FLERR,
         "Must use 'special_bonds lj 0 1 1' with bond style oxdna/fene, oxdna2/fene or oxrna2/fene");
+  
+  fix_lrf = nullptr;
+  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
+  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  else fix_lrf = fixes[0];
 }
 
 /* ---------------------------------------------------------------------- */

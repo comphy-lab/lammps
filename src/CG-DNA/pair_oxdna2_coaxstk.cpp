@@ -21,12 +21,15 @@
 #include "comm.h"
 #include "constants_oxdna.h"
 #include "error.h"
+#include "fix.h"
 #include "force.h"
 #include "math_const.h"
 #include "math_extra.h"
 #include "memory.h"
 #include "mf_oxdna.h"
+#include "modify.h"
 #include "neigh_list.h"
+#include "neighbor.h"
 #include "potential_file_reader.h"
 
 #include <cmath>
@@ -149,10 +152,10 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // n(x/z)_xtrct = extracted local unit vectors from oxdna_excv
+  // n(x/z)_xtrct = extracted local unit vectors from fix oxdna/lrf
   int dim;
-  nx_xtrct = (double **) force->pair->extract("nx",dim);
-  nz_xtrct = (double **) force->pair->extract("nz",dim);
+  nx_xtrct = (double **) fix_lrf->extract("nx",dim);
+  nz_xtrct = (double **) fix_lrf->extract("nz",dim);
 
   // loop over pair interaction neighbors of my atoms
 
@@ -759,6 +762,19 @@ void PairOxdna2Coaxstk::coeff(int narg, char **arg)
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/coaxstk" + utils::errorurl(21));
 
+}
+
+/* ----------------------------------------------------------------------
+   init specific to this pair style
+------------------------------------------------------------------------- */
+void PairOxdna2Coaxstk::init_style()
+{
+  fix_lrf = nullptr;
+  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
+  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  else fix_lrf = fixes[0];
+
+  neighbor->add_request(this, NeighConst::REQ_DEFAULT);
 }
 
 /* ----------------------------------------------------------------------

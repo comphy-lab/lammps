@@ -22,11 +22,14 @@
 #include "comm.h"
 #include "constants_oxdna.h"
 #include "error.h"
+#include "fix_oxdna_lrf.h"
 #include "force.h"
 #include "math_extra.h"
 #include "memory.h"
 #include "mf_oxdna.h"
+#include "modify.h"
 #include "neigh_list.h"
+#include "neighbor.h"
 #include "potential_file_reader.h"
 
 #include <cmath>
@@ -38,13 +41,11 @@ using namespace MFOxdna;
 
 /* ---------------------------------------------------------------------- */
 
-PairOxdnaExcv::PairOxdnaExcv(LAMMPS *lmp) : Pair(lmp)
+PairOxdnaExcv::PairOxdnaExcv(LAMMPS *lmp) : Pair(lmp), fix_lrf(nullptr)
 {
   single_enable = 0;
   writedata = 1;
 
-  // set comm size needed by this Pair
-  comm_forward = 9;
   trim_flag = 0;
 }
 
@@ -52,11 +53,10 @@ PairOxdnaExcv::PairOxdnaExcv(LAMMPS *lmp) : Pair(lmp)
 
 PairOxdnaExcv::~PairOxdnaExcv()
 {
-  if (allocated) {
 
-    memory->destroy(nx);
-    memory->destroy(ny);
-    memory->destroy(nz);
+  if (fix_lrf) modify->delete_fix(fix_lrf->id);
+
+  if (allocated) {
 
     memory->destroy(setflag);
     memory->destroy(cutsq);
@@ -158,28 +158,11 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // loop over all local atoms, calculation of local reference frame
-  for (in = 0; in < atom->nlocal; in++) {
-
-    int n = alist[in];
-    double *qn,nx_temp[3],ny_temp[3],nz_temp[3]; // quaternion and Cartesian unit vectors in lab frame
-
-    qn=bonus[ellipsoid[n]].quat;
-    MathExtra::q_to_exyz(qn,nx_temp,ny_temp,nz_temp);
-
-    nx[n][0] = nx_temp[0];
-    nx[n][1] = nx_temp[1];
-    nx[n][2] = nx_temp[2];
-    ny[n][0] = ny_temp[0];
-    ny[n][1] = ny_temp[1];
-    ny[n][2] = ny_temp[2];
-    nz[n][0] = nz_temp[0];
-    nz[n][1] = nz_temp[1];
-    nz[n][2] = nz_temp[2];
-
-  }
-
-  comm->forward_comm(this);
+  // n(x/y/z)_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
+  int dim;
+  nx_xtrct = (double **) fix_lrf->extract("nx",dim);
+  ny_xtrct = (double **) fix_lrf->extract("ny",dim);
+  nz_xtrct = (double **) fix_lrf->extract("nz",dim);
 
   // loop over pair interaction neighbors of my atoms
 
@@ -188,15 +171,15 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
     a = alist[ia];
     atype = type[a];
 
-    ax[0] = nx[a][0];
-    ax[1] = nx[a][1];
-    ax[2] = nx[a][2];
-    ay[0] = ny[a][0];
-    ay[1] = ny[a][1];
-    ay[2] = ny[a][2];
-    az[0] = nz[a][0];
-    az[1] = nz[a][1];
-    az[2] = nz[a][2];
+    ax[0] = nx_xtrct[a][0];
+    ax[1] = nx_xtrct[a][1];
+    ax[2] = nx_xtrct[a][2];
+    ay[0] = ny_xtrct[a][0];
+    ay[1] = ny_xtrct[a][1];
+    ay[2] = ny_xtrct[a][2];
+    az[0] = nz_xtrct[a][0];
+    az[1] = nz_xtrct[a][1];
+    az[2] = nz_xtrct[a][2];
 
     // vector COM - backbone and base site a
     compute_interaction_sites(ax,ay,az,ra_cs,ra_cb);
@@ -220,15 +203,15 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
 
       btype = type[b];
 
-      bx[0] = nx[b][0];
-      bx[1] = nx[b][1];
-      bx[2] = nx[b][2];
-      by[0] = ny[b][0];
-      by[1] = ny[b][1];
-      by[2] = ny[b][2];
-      bz[0] = nz[b][0];
-      bz[1] = nz[b][1];
-      bz[2] = nz[b][2];
+      bx[0] = nx_xtrct[b][0];
+      bx[1] = nx_xtrct[b][1];
+      bx[2] = nx_xtrct[b][2];
+      by[0] = ny_xtrct[b][0];
+      by[1] = ny_xtrct[b][1];
+      by[2] = ny_xtrct[b][2];
+      bz[0] = nz_xtrct[b][0];
+      bz[1] = nz_xtrct[b][1];
+      bz[2] = nz_xtrct[b][2];
 
       // vector COM - backbone and base site b
       compute_interaction_sites(bx,by,bz,rb_cs,rb_cb);
@@ -448,10 +431,6 @@ void PairOxdnaExcv::allocate()
     for (int j = i; j <= n; j++)
       setflag[i][j] = 0;
 
-  memory->create(nx,atom->nmax,3,"pair:nx");
-  memory->create(ny,atom->nmax,3,"pair:ny");
-  memory->create(nz,atom->nmax,3,"pair:nz");
-
   memory->create(cutsq,n+1,n+1,"pair:cutsq");
 
   memory->create(epsilon_ss,n+1,n+1,"pair:epsilon_ss");
@@ -667,6 +646,18 @@ void PairOxdnaExcv::coeff(int narg, char **arg)
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/excv" + utils::errorurl(21));
 
+}
+
+/* ----------------------------------------------------------------------
+   init specific to this pair style
+------------------------------------------------------------------------- */
+void PairOxdnaExcv::init_style()
+{
+  // ensure fix oxdna/lrf is added for backward-compatability
+  if (!fix_lrf)
+    fix_lrf = dynamic_cast<FixOxdnaLRF *>(modify->add_fix("lrf all oxdna/lrf"));
+
+  neighbor->add_request(this, NeighConst::REQ_DEFAULT);
 }
 
 /* ----------------------------------------------------------------------
@@ -911,56 +902,9 @@ void PairOxdnaExcv::write_data_all(FILE *fp)
 
 /* ---------------------------------------------------------------------- */
 
-int PairOxdnaExcv::pack_forward_comm(int n, int *list, double *buf,
-                               int /*pbc_flag*/, int * /*pbc*/)
-{
-  int i,j,m;
-
-  m = 0;
-  for (i = 0; i < n; i++) {
-    j = list[i];
-    buf[m++] = nx[j][0];
-    buf[m++] = nx[j][1];
-    buf[m++] = nx[j][2];
-    buf[m++] = ny[j][0];
-    buf[m++] = ny[j][1];
-    buf[m++] = ny[j][2];
-    buf[m++] = nz[j][0];
-    buf[m++] = nz[j][1];
-    buf[m++] = nz[j][2];
-  }
-  return m;
-}
-
-/* ---------------------------------------------------------------------- */
-
-void PairOxdnaExcv::unpack_forward_comm(int n, int first, double *buf)
-{
-  int i,m,last;
-  m = 0;
-  last = first + n;
-  for (i = first; i < last; i++) {
-    nx[i][0] = buf[m++];
-    nx[i][1] = buf[m++];
-    nx[i][2] = buf[m++];
-    ny[i][0] = buf[m++];
-    ny[i][1] = buf[m++];
-    ny[i][2] = buf[m++];
-    nz[i][0] = buf[m++];
-    nz[i][1] = buf[m++];
-    nz[i][2] = buf[m++];
-  }
-}
-
-/* ---------------------------------------------------------------------- */
-
 void *PairOxdnaExcv::extract(const char *str, int &dim)
 {
   dim = 2;
-
-  if (strcmp(str,"nx") == 0) return (void *) nx;
-  if (strcmp(str,"ny") == 0) return (void *) ny;
-  if (strcmp(str,"nz") == 0) return (void *) nz;
 
   if (strcmp(str,"epsilon_ss") == 0) return (void *) epsilon_ss;
   if (strcmp(str,"sigma_ss") == 0) return (void *) sigma_ss;

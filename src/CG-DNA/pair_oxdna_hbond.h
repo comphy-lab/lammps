@@ -32,6 +32,7 @@ class PairOxdnaHbond : public Pair {
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
+  void init_style() override;
   void init_list(int, class NeighList *) override;
   double init_one(int, int) override;
   void write_restart(FILE *) override;
@@ -64,6 +65,8 @@ class PairOxdnaHbond : public Pair {
   int seqdepflag;
 
   virtual void allocate();
+
+  class Fix *fix_lrf;    // ptr to oxdna/lrf fix
 };
 
 }    // namespace LAMMPS_NS

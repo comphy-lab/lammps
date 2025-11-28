@@ -21,11 +21,13 @@
 #include "comm.h"
 #include "constants_oxdna.h"
 #include "error.h"
+#include "fix.h"
 #include "force.h"
 #include "math_const.h"
 #include "math_extra.h"
 #include "memory.h"
 #include "mf_oxdna.h"
+#include "modify.h"
 #include "neighbor.h"
 #include "potential_file_reader.h"
 
@@ -275,11 +277,11 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
   evdwl = 0.0;
   ev_init(eflag,vflag);
 
-  // n(x/y/z)_xtrct = extracted local unit vectors from oxdna_excv
+  // n(x/y/z)_xtrct = extracted local unit vectors from fix oxdna/lrf
   int dim;
-  nx_xtrct = (double **) force->pair->extract("nx",dim);
-  ny_xtrct = (double **) force->pair->extract("ny",dim);
-  nz_xtrct = (double **) force->pair->extract("nz",dim);
+  nx_xtrct = (double **) fix_lrf->extract("nx",dim);
+  ny_xtrct = (double **) fix_lrf->extract("ny",dim);
+  nz_xtrct = (double **) fix_lrf->extract("nz",dim);
 
   // loop over stacking interaction neighbors using bond topology
 
@@ -1101,6 +1103,11 @@ void PairOxrna2Stk::init_style()
   if (!atom->style_match("oxdna")) {
     error->all(FLERR,"Must use 'atom_style hybrid bond ellipsoid oxdna' with pair style oxdna/stk, oxdna2/stk or oxrna2/stk");
   }
+
+  fix_lrf = nullptr;
+  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
+  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  else fix_lrf = fixes[0];
 }
 
 /* ----------------------------------------------------------------------
