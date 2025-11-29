@@ -2486,7 +2486,7 @@ int AtomVecKokkos::pack_exchange_kokkos(const int &nsend,DAT::tdual_double_2d_lr
   }
 
   if (space == HostKK) {
-    if (size_exchange == 11) {
+    if (size_exchange == size_exchange_default) {
       AtomVecKokkos_PackExchangeFunctor<LMPHostType,1>
         f(atomKK,k_buf,k_sendlist,k_copylist,datamask_exchange);
       Kokkos::parallel_for(nsend,f);
@@ -2496,7 +2496,7 @@ int AtomVecKokkos::pack_exchange_kokkos(const int &nsend,DAT::tdual_double_2d_lr
       Kokkos::parallel_for(nsend,f);
     }
   } else {
-    if (size_exchange == 11) {
+    if (size_exchange == size_exchange_default) {
       AtomVecKokkos_PackExchangeFunctor<LMPDeviceType,1>
         f(atomKK,k_buf,k_sendlist,k_copylist,datamask_exchange);
       Kokkos::parallel_for(nsend,f);
@@ -2758,7 +2758,7 @@ int AtomVecKokkos::unpack_exchange_kokkos(DAT::tdual_double_2d_lr &k_buf, int nr
     k_count.view_host()(0) = nlocal;
 
     if (k_indices.view_host().data()) {
-      if (size_exchange == 11) {
+      if (size_exchange == size_exchange_default) {
         AtomVecKokkos_UnpackExchangeFunctor<LMPHostType,1,1>
           f(atomKK,k_buf,k_count,k_indices,dim,lo,hi,datamask_exchange);
         Kokkos::parallel_for(nrecv/size_exchange,f);
@@ -2768,7 +2768,7 @@ int AtomVecKokkos::unpack_exchange_kokkos(DAT::tdual_double_2d_lr &k_buf, int nr
         Kokkos::parallel_for(nrecv/size_exchange,f);
       }
     } else {
-      if (size_exchange == 11) {
+      if (size_exchange == size_exchange_default) {
         AtomVecKokkos_UnpackExchangeFunctor<LMPHostType,0,1>
           f(atomKK,k_buf,k_count,k_indices,dim,lo,hi,datamask_exchange);
         Kokkos::parallel_for(nrecv/size_exchange,f);
@@ -2784,7 +2784,7 @@ int AtomVecKokkos::unpack_exchange_kokkos(DAT::tdual_double_2d_lr &k_buf, int nr
     k_count.sync_device();
 
     if (k_indices.view_host().data()) {
-      if (size_exchange == 11) {
+      if (size_exchange == size_exchange_default) {
         AtomVecKokkos_UnpackExchangeFunctor<LMPDeviceType,1,1>
           f(atomKK,k_buf,k_count,k_indices,dim,lo,hi,datamask_exchange);
         Kokkos::parallel_for(nrecv/size_exchange,f);
@@ -2794,7 +2794,7 @@ int AtomVecKokkos::unpack_exchange_kokkos(DAT::tdual_double_2d_lr &k_buf, int nr
         Kokkos::parallel_for(nrecv/size_exchange,f);
       }
     } else {
-      if (size_exchange == 11) {
+      if (size_exchange == size_exchange_default) {
         AtomVecKokkos_UnpackExchangeFunctor<LMPDeviceType,0,1>
           f(atomKK,k_buf,k_count,k_indices,dim,lo,hi,datamask_exchange);
         Kokkos::parallel_for(nrecv/size_exchange,f);
@@ -2979,9 +2979,10 @@ void AtomVecKokkos::set_atom_masks()
 
 void AtomVecKokkos::set_size_exchange()
 {
-  size_exchange = 1; // 1 to store buffer length
+  size_exchange_default = 1; // 1 to store buffer length
   for (int i = 0; i < default_exchange.size(); i++)
-    size_exchange += field2size(default_exchange[i]);
+    size_exchange_default += field2size(default_exchange[i]);
+
   for (int i = 0; i < nexchange; i++)
-    size_exchange += field2size(fields_exchange[i]);
+    size_exchange = field2size(fields_exchange[i]) + size_exchange_default;
 }

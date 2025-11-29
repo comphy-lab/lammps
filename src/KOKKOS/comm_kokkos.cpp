@@ -138,7 +138,9 @@ void CommKokkos::forward_comm(int dummy)
     atomKK->sync(Host,atomKK->avecKK->datamask_comm_vel);
   else
     atomKK->sync(Host,atomKK->avecKK->datamask_comm);
+
   CommBrick::forward_comm(dummy);
+
   if (ghost_velocity)
     atomKK->modified(Host,atomKK->avecKK->datamask_comm_vel);
   else
@@ -475,6 +477,7 @@ void CommKokkos::forward_comm(Compute *compute, int size)
 
 void CommKokkos::forward_comm(Bond *bond, int size)
 {
+  k_sendlist.sync_host();
   CommBrick::forward_comm(bond, size);
 }
 
@@ -489,6 +492,7 @@ void CommKokkos::forward_comm(Bond *bond, int size)
 
 void CommKokkos::reverse_comm(Bond *bond, int size)
 {
+  k_sendlist.sync_host();
   CommBrick::reverse_comm(bond, size);
 }
 
