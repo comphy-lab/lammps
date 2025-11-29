@@ -38,10 +38,6 @@ using namespace MathConst;
 AtomVecEllipsoidKokkos::AtomVecEllipsoidKokkos(LAMMPS *lmp) : AtomVec(lmp),
 AtomVecKokkos(lmp), AtomVecEllipsoid(lmp)
 {
-  //no_border_vel_flag = 0;
-  //unpack_exchange_indices_flag = 1;
-  //size_border = 23;
-  //size_forward = 8;
   k_nghost_bonus = DAT::tdual_int_scalar("atomEllipKK:k_nghost_bonus");
   k_count_bonus = DAT::tdual_int_scalar("atomEllipKK:k_count_bonus");
 }
