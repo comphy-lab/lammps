@@ -35,6 +35,7 @@ class FixSurfaceLocal : public FixSurface {
   Connect2d *connect2d;         // 2d connection info
   Connect3d *connect3d;         // 3d connection info
   int nmax_connect;             // allocated size of connect2d/3d
+  int *atom2connect;            // per-atom index into connect 2d/3d vecs, -1 if none
 
   FixSurfaceLocal(class LAMMPS *, int, char **);
   virtual ~FixSurfaceLocal();
@@ -58,6 +59,7 @@ class FixSurfaceLocal : public FixSurface {
   void unpack_forward_comm(int, int, double *) override;
 
   double memory_usage() override;
+
 
  private:
   int dimension,mode;
@@ -101,7 +103,6 @@ class FixSurfaceLocal : public FixSurface {
   Pool2d *pool2d;               // pool indices of connect2d vectors
   Pool3d *pool3d;               // pool indices of connect3d vectors
 
-  int *atom2connect;       // per-atom index into connect 2d/3d vecs, -1 if none
   int *connect2atom;       // per-connect index into atoms
 
   // ragged 2d arrays for 2d connectivity for global case

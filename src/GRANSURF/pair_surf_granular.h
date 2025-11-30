@@ -62,7 +62,12 @@ class PairSurfGranular : public PairGranular {
   MyPoolChunk<int> *tcp;                   // allocator for connectivity info
 
   class FixSurface::ContactSurf *contact_surfs;
-  int nmax_contact_surfs;
+  int n_contact_surfs, nmax_contact_surfs;
+  std::map<int, int> contacts_map;
+
+  // arrays from fix surface/local
+
+  int *atom2connect;       // per-atom index into connect 2d/3d vecs, -1 if none
 
   // lines and tris
 
@@ -72,13 +77,18 @@ class PairSurfGranular : public PairGranular {
 
   // contact processing and force calculation
 
-  void prewalk_connections2d(int, int, std::unordered_set<int> *, std::map<int, int> *);
-  void prewalk_connections3d(int, int, std::vector<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::unordered_set<int> *, std::map<int, int> *);
-  void adjust_external_corner(int, int, int, int);
-  void calculate_2d_forces(std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *);
-  void calculate_3d_forces(std::vector<int> *, std::unordered_set<int> *, std::unordered_set<int> *);
+  void prewalk_connections2d();
+  void prewalk_connections3d();
+  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *);
+  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *);
+  void adjust_exposed_pt_flat_2d(int, int, int, int);
+  void adjust_exposed_pt_nonflat_2d(int, int, int, int);
+  void adjust_exposed_edge_flat_3d(int, int, int, int);
+  void adjust_exposed_edge_nonflat_3d(int, int, int, int);
+  void adjust_exposed_pt_flat_3d(int, int, int, int);
+  void adjust_exposed_pt_nonflat_3d(int, int, int, int);
+  void calculate_2d_forces(std::vector<int> *);
+  void calculate_3d_forces(std::vector<int> *);
 };
 
 }    // namespace LAMMPS_NS

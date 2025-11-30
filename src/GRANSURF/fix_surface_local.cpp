@@ -61,6 +61,7 @@ static constexpr int DELTA_CONNECT = 4;     // make it larger when done testing
 static constexpr int DELTA_RVOUS = 8;       // must be >= 8, make it bigger when done testing
 
 enum{FLAT,CONCAVE,CONVEX};
+enum{INTERIOR = 0,EXPOSED,UNCONNECTED};
 enum{SAME_SIDE,OPPOSITE_SIDE};
 
 static constexpr double FLATTHRESH = 1.0-cos(MY_PI/180.0);    // default = 1 degree
@@ -3173,6 +3174,33 @@ void FixSurfaceLocal::connectivity2d_complete()
 
   memory->destroy(endpts);
   memory->destroy(normals);
+
+  // determine whether pts are exposed based on connectivity
+
+  for (i = 0; i < nlocal; i++) {
+    if (line[i] < 0) continue;
+    iconnect = atom2connect[i];
+    connect2d[iconnect].exposed_pt[0] = INTERIOR;
+    connect2d[iconnect].exposed_pt[1] = INTERIOR;
+  }
+
+  int n;
+  for (i = 0; i < nlocal; i++) {
+    if (line[i] < 0) continue;
+    iconnect = atom2connect[i];
+    // exposed if there's a nonflat connection
+    for (n = 0; n < connect2d[iconnect].np1; n++)
+      if (connect2d[iconnect].aflag_p1[n] != FLAT)
+        connect2d[iconnect].exposed_pt[0] = EXPOSED;
+    for (n = 0; n < connect2d[iconnect].np2; n++)
+      if (connect2d[iconnect].aflag_p2[n] != FLAT)
+        connect2d[iconnect].exposed_pt[1] = EXPOSED;
+    // or if unconnected on border
+    if (connect2d[iconnect].np1 == 0)
+      connect2d[iconnect].exposed_pt[0] = UNCONNECTED;
+    if (connect2d[iconnect].np2 == 0)
+      connect2d[iconnect].exposed_pt[1] = UNCONNECTED;
+  }
 }
 
 /* ----------------------------------------------------------------------
@@ -3467,6 +3495,44 @@ void FixSurfaceLocal::connectivity3d_complete()
 
   memory->destroy(cpts);
   memory->destroy(normals);
+
+  // determine whether edges/pts are exposed based on connectivity
+
+  for (int i = 0; i < nlocal; i++) {
+    if (tri[i] < 0) continue;
+    iconnect = atom2connect[i];
+    for (int a = 0; a < 3; a++)
+      connect3d[iconnect].exposed_edge[a] = INTERIOR;
+  }
+
+  for (int i = 0; i < nlocal; i++) {
+    if (tri[i] < 0) continue;
+    iconnect = atom2connect[i];
+
+    // exposed edge if there's a nonflat connection
+    for (int n = 0; n < connect3d[iconnect].ne1; n++)
+      if (connect3d[iconnect].aflag_e1[n] != FLAT)
+        connect3d[iconnect].exposed_edge[0] = EXPOSED;
+    for (int n = 0; n < connect3d[iconnect].ne2; n++)
+      if (connect3d[iconnect].aflag_e2[n] != FLAT)
+        connect3d[iconnect].exposed_edge[1] = EXPOSED;
+    for (int n = 0; n < connect3d[iconnect].ne3; n++)
+      if (connect3d[iconnect].aflag_e3[n] != FLAT)
+        connect3d[iconnect].exposed_edge[2] = EXPOSED;
+
+    // or unconnected on border
+    if (connect3d[iconnect].ne1 == 0)
+      connect3d[iconnect].exposed_edge[0] = UNCONNECTED;
+    if (connect3d[iconnect].ne2 == 0)
+      connect3d[iconnect].exposed_edge[1] = UNCONNECTED;
+    if (connect3d[iconnect].ne3 == 0)
+      connect3d[iconnect].exposed_edge[2] = UNCONNECTED;
+
+    // corners basically inherit from connected edges
+    connect3d[iconnect].exposed_pt[0] = MAX(connect3d[iconnect].exposed_edge[0], connect3d[iconnect].exposed_edge[2]);
+    connect3d[iconnect].exposed_pt[1] = MAX(connect3d[iconnect].exposed_edge[0], connect3d[iconnect].exposed_edge[1]);
+    connect3d[iconnect].exposed_pt[2] = MAX(connect3d[iconnect].exposed_edge[1], connect3d[iconnect].exposed_edge[2]);
+  }
 }
 
 /* ----------------------------------------------------------------------

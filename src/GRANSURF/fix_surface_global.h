@@ -216,7 +216,6 @@ class FixSurfaceGlobal : public FixSurface {
   void stats3d();
 
   void surface_attributes();
-  void surface_connectivity_attributes();
 
   // contact processing and force calculation
 
@@ -230,8 +229,8 @@ class FixSurfaceGlobal : public FixSurface {
   void adjust_exposed_edge_nonflat_3d(int, int, int, int);
   void adjust_exposed_pt_flat_3d(int, int, int, int);
   void adjust_exposed_pt_nonflat_3d(int, int, int, int);
-  void calculate_2d_forces(std::vector<int> *, double);
-  void calculate_3d_forces(std::vector<int> *, double);
+  void calculate_2d_forces(std::vector<int> *);
+  void calculate_3d_forces(std::vector<int> *);
 
   // surface movement
 

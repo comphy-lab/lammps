@@ -395,10 +395,6 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
     connectivity3d_complete();
   }
 
-  // precalculate other surface attributes based on connectivity
-
-  surface_connectivity_attributes();
-
   // warn if any connections between surfs with different molIDs
 
   check_molecules();
@@ -844,9 +840,9 @@ void FixSurfaceGlobal::post_force(int vflag)
   int itype, jtype, exposed_flag;
   double xtmp, ytmp, ztmp, radi, delx, dely, delz, meff;
   int *ilist, *jlist, *numneigh, **firstneigh;
-  int *touch, **firstflag, touch_flag, zero_overlap;
-  double rsq, radsum, max_overlap, tmp_max, dot, distance_from_surf;
-  double norm[3], dr[3], contact[3], ds[3], xc[3], vc[3], omegac[3], residual[3];
+  int *touch, **firstflag, touch_flag;
+  double rsq, radsum, max_overlap, dot;
+  double norm[3], dr[3], contact[3], ds[3], xc[3], vc[3], omegac[3];
   double *forces, *torquesi, *history, *allhistory, **firsthistory;
 
   int it, jjtmp, nsidej;
@@ -1016,8 +1012,8 @@ void FixSurfaceGlobal::post_force(int vflag)
                                       "surface/global:contact_surfs");
       }
 
-      // Store which side is in contact relative to normal vector
-      exposed_flag = 0;
+      // Find out if contact is on an exposed edge/corner
+      exposed_flag = INTERIOR;
       if (dimension == 2) {
         MathExtra::copy3(lines[j].norm, norm);
         dot = MathExtra::dot3(norm, dr);
@@ -1036,6 +1032,7 @@ void FixSurfaceGlobal::post_force(int vflag)
         if (jflag == -6) exposed_flag = connect3d[j].exposed_pt[2];
       }
 
+      // Store which side is in contact relative to normal vector
       if (dot >= 0) nsidej = SAME_SIDE;
       else nsidej = OPPOSITE_SIDE;
 
@@ -1086,6 +1083,7 @@ void FixSurfaceGlobal::post_force(int vflag)
 
     // Initial walk to assign consistent sides of surfaces
     //   Won't guarantee will work for v. complex geometries (e.g. Mobius)
+
     processed_contacts->clear();
     if (dimension == 2) prewalk_connections2d();
     else prewalk_connections3d();
@@ -1115,10 +1113,10 @@ void FixSurfaceGlobal::post_force(int vflag)
       composite_surfs->clear();
       if (dimension == 2) {
         walk_connections2d(n, composite_surfs, processed_contacts);
-        calculate_2d_forces(composite_surfs, radi);
+        calculate_2d_forces(composite_surfs);
       } else {
         walk_connections3d(n, composite_surfs, processed_contacts);
-        calculate_3d_forces(composite_surfs, radi);
+        calculate_3d_forces(composite_surfs);
       }
 
       max_overlap = -BIG;
@@ -2117,6 +2115,29 @@ void FixSurfaceGlobal::connectivity2d_complete()
 
   memory->destroy(p1_counts);
   memory->destroy(p2_counts);
+
+  // determine whether pts are exposed based on connectivity
+
+  for (int i = 0; i < nsurf; i++) {
+    connect2d[i].exposed_pt[0] = INTERIOR;
+    connect2d[i].exposed_pt[1] = INTERIOR;
+  }
+
+  for (int i = 0; i < nsurf; i++) {
+    // exposed if there's a nonflat connection
+    for (int n = 0; n < connect2d[i].np1; n++)
+      if (connect2d[i].aflag_p1[n] != FLAT)
+        connect2d[i].exposed_pt[0] = EXPOSED;
+    for (int n = 0; n < connect2d[i].np2; n++)
+      if (connect2d[i].aflag_p2[n] != FLAT)
+        connect2d[i].exposed_pt[1] = EXPOSED;
+
+    // or if unconnected on border
+    if (connect2d[i].np1 == 0)
+      connect2d[i].exposed_pt[0] = UNCONNECTED;
+    if (connect2d[i].np2 == 0)
+      connect2d[i].exposed_pt[1] = UNCONNECTED;
+  }
 }
 
 /* ----------------------------------------------------------------------
@@ -2465,6 +2486,38 @@ void FixSurfaceGlobal::connectivity3d_complete()
         connect3d[i].aflag_c3[m] = CONCAVE;
     }
   }
+
+  // determine whether edges/pts are exposed based on connectivity
+
+  for (int i = 0; i < nsurf; i++)
+    for (int a = 0; a < 3; a++)
+      connect3d[i].exposed_edge[a] = INTERIOR;
+
+  for (int i = 0; i < nsurf; i++) {
+    // exposed edge if there's a nonflat connection
+    for (int n = 0; n < connect3d[i].ne1; n++)
+      if (connect3d[i].aflag_e1[n] != FLAT)
+        connect3d[i].exposed_edge[0] = EXPOSED;
+    for (int n = 0; n < connect3d[i].ne2; n++)
+      if (connect3d[i].aflag_e2[n] != FLAT)
+        connect3d[i].exposed_edge[1] = EXPOSED;
+    for (int n = 0; n < connect3d[i].ne3; n++)
+      if (connect3d[i].aflag_e3[n] != FLAT)
+        connect3d[i].exposed_edge[2] = EXPOSED;
+
+    // or unconnected on border
+    if (connect3d[i].ne1 == 0)
+      connect3d[i].exposed_edge[0] = UNCONNECTED;
+    if (connect3d[i].ne2 == 0)
+      connect3d[i].exposed_edge[1] = UNCONNECTED;
+    if (connect3d[i].ne3 == 0)
+      connect3d[i].exposed_edge[2] = UNCONNECTED;
+
+    // corners basically inherit from connected edges
+    connect3d[i].exposed_pt[0] = MAX(connect3d[i].exposed_edge[0], connect3d[i].exposed_edge[2]);
+    connect3d[i].exposed_pt[1] = MAX(connect3d[i].exposed_edge[0], connect3d[i].exposed_edge[1]);
+    connect3d[i].exposed_pt[2] = MAX(connect3d[i].exposed_edge[1], connect3d[i].exposed_edge[2]);
+  }
 }
 
 /* ----------------------------------------------------------------------
@@ -2634,73 +2687,6 @@ void FixSurfaceGlobal::surface_attributes()
   for (int i = 0; i < nsurf; i++) {
     vsurf[i][0] = vsurf[i][1] = vsurf[i][2] = 0.0;
     omegasurf[i][0] = omegasurf[i][1] = omegasurf[i][2] = 0.0;
-  }
-}
-
-/* ----------------------------------------------------------------------
-   calculate surface attributes that depend on connectivity
-     0 => surrounded by flats
-     1 => on a border/perimeter
-     2 => connected to a convex/concave
-     3 => asssociated with an edge w/ a convex/concave connection
-------------------------------------------------------------------------- */
-
-void FixSurfaceGlobal::surface_connectivity_attributes()
-{
-  int i, a, n;
-
-  // Classify whether a pt is exposed
-  if (dimension == 2) {
-    for (i = 0; i < nsurf; i++) {
-      connect2d[i].exposed_pt[0] = INTERIOR;
-      connect2d[i].exposed_pt[1] = INTERIOR;
-    }
-
-    for (i = 0; i < nsurf; i++) {
-      // exposed if there's a nonflat connection
-      for (n = 0; n < connect2d[i].np1; n++)
-        if (connect2d[i].aflag_p1[n] != FLAT)
-          connect2d[i].exposed_pt[0] = EXPOSED;
-      for (n = 0; n < connect2d[i].np2; n++)
-        if (connect2d[i].aflag_p2[n] != FLAT)
-          connect2d[i].exposed_pt[1] = EXPOSED;
-
-      // or if unconnected on border
-      if (connect2d[i].np1 == 0)
-        connect2d[i].exposed_pt[0] = UNCONNECTED;
-      if (connect2d[i].np2 == 0)
-        connect2d[i].exposed_pt[1] = UNCONNECTED;
-    }
-  } else {
-    for (i = 0; i < nsurf; i++)
-      for (a = 0; a < 3; a++)
-        connect3d[i].exposed_edge[a] = INTERIOR;
-
-    for (i = 0; i < nsurf; i++) {
-      // exposed edge if there's a nonflat connection
-      for (n = 0; n < connect3d[i].ne1; n++)
-        if (connect3d[i].aflag_e1[n] != FLAT)
-          connect3d[i].exposed_edge[0] = EXPOSED;
-      for (n = 0; n < connect3d[i].ne2; n++)
-        if (connect3d[i].aflag_e2[n] != FLAT)
-          connect3d[i].exposed_edge[1] = EXPOSED;
-      for (n = 0; n < connect3d[i].ne3; n++)
-        if (connect3d[i].aflag_e3[n] != FLAT)
-          connect3d[i].exposed_edge[2] = EXPOSED;
-
-      // or unconnected on border
-      //if (connect3d[i].ne1 == 0)
-      //  connect3d[i].exposed_edge[0] = UNCONNECTED;
-      //if (connect3d[i].ne2 == 0)q
-      //  connect3d[i].exposed_edge[1] = UNCONNECTED;
-      //if (connect3d[i].ne3 == 0)
-      //  connect3d[i].exposed_edge[2] = UNCONNECTED;
-
-      // corners basically inherit from connected edges
-      connect3d[i].exposed_pt[0] = MAX(connect3d[i].exposed_edge[0], connect3d[i].exposed_edge[2]);
-      connect3d[i].exposed_pt[1] = MAX(connect3d[i].exposed_edge[0], connect3d[i].exposed_edge[1]);
-      connect3d[i].exposed_pt[2] = MAX(connect3d[i].exposed_edge[1], connect3d[i].exposed_edge[2]);
-    }
   }
 }
 
@@ -3666,7 +3652,7 @@ void FixSurfaceGlobal::walk_connections3d(int n, std::vector<int> *composite_sur
    Calculate forces
 ------------------------------------------------------------------------- */
 
-void FixSurfaceGlobal::calculate_2d_forces(std::vector<int> *composite_surfs, double sphere_radius)
+void FixSurfaceGlobal::calculate_2d_forces(std::vector<int> *composite_surfs)
 {
   int n, m, j, k;
   double dot, residual[3];
@@ -3735,7 +3721,7 @@ void FixSurfaceGlobal::calculate_2d_forces(std::vector<int> *composite_surfs, do
    Calculate forces
 ------------------------------------------------------------------------- */
 
-void FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs, double sphere_radius)
+void FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
 {
   int n, m, j, k;
   double dot, residual[3];
