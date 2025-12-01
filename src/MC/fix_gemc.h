@@ -75,7 +75,7 @@ class FixGEMC : public Fix {
   double nexchange_successes;
   double nvolume_attempts;
   double nvolume_successes;
-  double logvolratio;         // log(Vself/Vother) + const
+  double logvolratio;         // log(V1/V2)
 
   // particle - related props
 
@@ -88,12 +88,14 @@ class FixGEMC : public Fix {
   int molecule_flag;    // 0 for atom; 1 for molecule
   int full_flag;        // compute full energy
   int q_flag;           // particles charged?
-
+  double massper;       // mass of exchanged particle
+  
   // MC exchange
 
   int groupbitall;
   int exclusion_group, exclusion_group_bit;    // mask for excluding certain atoms
-
+  double sigma;   // factor for creating thermal velocities
+  
   // domain - related props
 
   int triclinic_flag;
@@ -102,6 +104,8 @@ class FixGEMC : public Fix {
   double *sublo, *subhi;               // sub domain bounds
   double xhi_tmp, yhi_tmp, zhi_tmp;    // temporary upper domain bounds
   std::vector<Fix *> rfix;             // indices of rigid fixes
+  double voltot;                       // V1+V2, conserved
+  int ntot;                            // N1+N2, conserved
 
   // for communication
 

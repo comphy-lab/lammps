@@ -114,14 +114,13 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   MPI_Comm_split(universe->uworld, me, 0, &comm_replica);
 
-  // use same RNG for each replica for volume MC moves
-  // unique to proc
+  // unique to proc and world
 
-  random_proc = new RanPark(lmp,seed+3.0*(universe->iworld+1)+7.0*(me+1));
+  random_proc = new RanPark(lmp,seed+3.0*(myworld+1)+7.0*(me+1));
 
-  // sync between procs
+  // unique to world, sync between procs
 
-  random_world = new RanPark(lmp,seed+13.0*(universe->iworld+1));
+  random_world = new RanPark(lmp,seed+13.0*(myworld+1));
 
   // sync between universes
 
@@ -162,6 +161,10 @@ int FixGEMC::setmask()
 
 void FixGEMC::init()
 {
+  if (!atom->mass) error->all(FLERR, Error::NOLASTLINE, "Fix gemc requires per atom type masses");
+  if (atom->rmass_flag && (comm->me == 0))
+    error->warning(FLERR, "Fix gemc will use per atom type masses for velocity initialization");
+
   progress = 0;
 
   // determine probability of each step during pre_exchange
@@ -257,7 +260,36 @@ void FixGEMC::init()
   ntranslation_attempts = ntranslation_successes = 0.0;
   nvolume_attempts = nvolume_successes = 0.0;
   nexchange_attempts = nexchange_successes = 0.0;
-  logvolratio = 0.0;
+
+  // initialize log volume ratio
+  
+  double vol_i, vol_j;
+  vol_i = (xhi - xlo) * (yhi - ylo) * (zhi - zlo);
+  MPI_Sendrecv(&vol_i, 1, MPI_DOUBLE, 1 - myworld, 0,
+               &vol_j, 1, MPI_DOUBLE, 1 - myworld, 0,
+               comm_replica, MPI_STATUS_IGNORE);
+  MPI_Bcast(&vol_j, 1, MPI_DOUBLE, 0, world);
+
+  voltot = vol_i + vol_j;
+  if (myworld == 0)
+    logvolratio = log(vol_i/vol_j);
+  else
+    logvolratio = log(vol_j/vol_i);
+
+  // initialize total atom count
+  
+  int n_i, n_j;
+  update_gas_atoms_list();
+  n_i = natom_total;
+  MPI_Sendrecv(&n_i, 1, MPI_INT, 1 - myworld, 0,
+               &n_j, 1, MPI_INT, 1 - myworld, 0,
+               comm_replica, MPI_STATUS_IGNORE);
+  MPI_Bcast(&n_j, 1, MPI_INT, 0, world);
+  ntot = n_i + n_j;
+
+  massper = group->mass(igroup)/group->count(igroup);
+
+  sigma = sqrt(force->boltz * box_temp / massper / force->mvv2e);
 }
 
 /* ----------------------------------------------------------------------
@@ -326,17 +358,42 @@ void FixGEMC::pre_exchange()
     int status = static_cast<int>(delta * 100.0);
     if (status > progress) {
       progress = status;
+
       auto msg = fmt::format(
           " GEMC run progress: {:>3d}% \n  Trans: {:g}/{:g}\n"
-          "  Vol: {:g}/{:g}\n  Ex: {:g}/{:g}\n"
-          "  LogVolRatio: {:g}\n",
+          "  Vol: {:g}/{:g}\n  Ex: {:g}/{:g}\n",
           progress,
           ntranslation_successes, ntranslation_attempts,
           nvolume_successes, nvolume_attempts,
-          nexchange_successes, nexchange_attempts,
-          logvolratio);
+          nexchange_successes, nexchange_attempts);
       if (universe->uscreen) utils::print(universe->uscreen, msg);
       if (universe->ulogfile) utils::print(universe->ulogfile, msg);
+
+      double vol1 = voltot / (1 + exp(-logvolratio));
+      double vol2 = voltot / (1 + exp(logvolratio));
+
+      int n1 = natom_total;
+      int n2 = ntot - natom_total;
+
+      // should measure mass dynamically using
+      //    mass_i = group->mass(igroup);
+
+      double rho1 = force->mv2d * massper * n1 / vol1;
+      double rho2 = force->mv2d * massper * n2 / vol2;
+      double rhotot = force->mv2d * massper * ntot / voltot;
+      
+      msg = fmt::format(
+                        "  Replica Volume Nparticles Density:\n"
+                        "   1: {:g} {:d} {:g}\n"
+                        "   2: {:g} {:d} {:g}\n"
+                        "   Total: {:g} {:d} {:g}\n",
+                        vol1, n1, rho1,
+                        vol2, n2, rho2,
+                        voltot, ntot, rhotot
+                        );
+      if (universe->uscreen) utils::print(universe->uscreen, msg);
+      if (universe->ulogfile) utils::print(universe->ulogfile, msg);
+      
       ntranslation_attempts = ntranslation_successes = 0.0;
       nvolume_attempts = nvolume_successes = 0.0;
       nexchange_attempts = nexchange_successes = 0.0;
@@ -363,8 +420,8 @@ void FixGEMC::update_gas_atoms_list()
 
   // natom_total is total atoms in whole system
 
-  MPI_Allreduce(&natom_local,&natom_total,1,MPI_INT,MPI_SUM,world);
-  MPI_Scan(&natom_local,&natom_lower,1,MPI_INT,MPI_SUM,world);
+  MPI_Allreduce(&natom_local, &natom_total, 1, MPI_INT, MPI_SUM, world);
+  MPI_Scan(&natom_local, &natom_lower, 1, MPI_INT, MPI_SUM, world);
   natom_lower -= natom_local;
 }
 

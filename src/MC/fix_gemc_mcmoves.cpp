@@ -54,21 +54,24 @@ void FixGEMC::attempt_volume_change_full()
 
   // sample change in logvolratio
   // logvolratio = v_self/v_other
-  // v_self = v_total/(1+exp(-logvolratio))
+  // v1 = v_total/(1+exp(-logvolratio))
+  // v2 = v_total/(1+exp(logvolratio))
   // - equal and opposite on both replicas
   // - never goes out of bounds, better sampling efficiency
   // - no communication required
 
-  if (me == 0) {
-    dlogvolratio = max_dlogvolratio*(2*random_proc->uniform() - 1.0);
-    if (myworld == 1) dlogvolratio *= -1.0;
-  }
-
-  MPI_Bcast(&dlogvolratio, 1, MPI_DOUBLE, 0, world);
+  dlogvolratio = max_dlogvolratio*(2.0 * random_universe->uniform() - 1.0);
 
   // fvolume = vnew/vold
 
-  double fvolume = (1.0+exp(-logvolratio))/(1.0+exp(-(logvolratio+dlogvolratio)));
+  double fvolume;
+  if (myworld == 0) 
+    fvolume = (1.0+exp(-logvolratio))/(1.0+exp(-(logvolratio+dlogvolratio)));
+  else
+    fvolume = (1.0+exp(logvolratio))/(1.0+exp((logvolratio+dlogvolratio)));
+
+  //  printf("fvolume %d %d %g %g\n",myworld, me, fvolume, logvolratio);
+  
   double scale_length = pow(fvolume, 1.0/domain->dimension);
 
   // convert to lamda coords so they get scaled
@@ -119,13 +122,15 @@ void FixGEMC::attempt_volume_change_full()
 
   double energy_after = energy_full();
 
-  // get total energy from each partition
+  // sum change in full energy across both boxes
 
-  double dU;
+  double dU, idU, jdU;
   if (me == 0) {
-    double idU = energy_after - energy_before - dU_volume;
-    // sum change in full energy across each box
-    MPI_Allreduce(&idU, &dU, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
+    idU = energy_after - energy_before - dU_volume;
+    MPI_Sendrecv(&idU, 1, MPI_DOUBLE, 1 - myworld, 0,
+                 &jdU, 1, MPI_DOUBLE, 1 - myworld, 0,
+                 comm_replica, MPI_STATUS_IGNORE);
+    dU = idU + jdU;
   }
 
   // bcast potential change to rest of my world
@@ -203,18 +208,19 @@ void FixGEMC::attempt_atomic_exchange_full()
   // Choose sender and receiver
 
   int sender;
-  if (me == 0) {
-    double drand = random_proc->uniform();
-    double dmean;
-    MPI_Allreduce(&drand, &dmean, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
-    dmean *= 0.5;
-    if (drand > dmean)
+
+  double drand = random_universe->uniform();
+  if (drand > 0.5)
+    if (myworld == 0)
       sender = 1;
     else
       sender = 0;
-  }
-  MPI_Bcast(&sender, 1, MPI_INT, 0, world);
-
+  else
+    if (myworld == 0)
+      sender = 0;
+    else
+      sender = 1;
+    
   // atom to delete/insert
 
   int iatom = -1;
@@ -370,10 +376,13 @@ void FixGEMC::attempt_atomic_exchange_full()
     // natom_total = (N, sender, old)
     // natom_total = (N, receiver, new)
 
-    double all_dU;
-    double idU = energy_after - energy_before;
-    MPI_Allreduce(&idU, &all_dU, 1, MPI_DOUBLE, MPI_SUM, comm_replica);
-
+    double idU, jdU, all_dU;
+    idU = energy_after - energy_before;
+    MPI_Sendrecv(&idU, 1, MPI_DOUBLE, 1 - myworld, 0,
+                 &jdU, 1, MPI_DOUBLE, 1 - myworld, 0,
+                 comm_replica, MPI_STATUS_IGNORE);
+    all_dU = idU + jdU;
+    
     double volume = (xhi - xlo) * (yhi - ylo) * (zhi - zlo);
     double logVN;
 
@@ -397,13 +406,9 @@ void FixGEMC::attempt_atomic_exchange_full()
   // handle deletion/insertions or revert
 
   if (sender) {
-    // delete iatom
-
     if (success) {
       nexchange_successes += 1.0;
       if (iatom >= 0) {
-        // overwrite iatom with last atom details
-
         atom->avec->copy(atom->nlocal - 1, iatom, 1);
         atom->nlocal--;
       }
@@ -411,10 +416,7 @@ void FixGEMC::attempt_atomic_exchange_full()
       if (atom->map_style != Atom::MAP_NONE) atom->map_init();
       energy_stored = energy_after;
 
-      // packing does not delete atom, just need to revert mask
     } else {
-      // revert mask and charge if deletion rejected
-
       if (iatom >= 0) {
         atom->mask[iatom] = tmp_mask;
         if (q_flag) atom->q[iatom] = q_tmp;
@@ -423,19 +425,15 @@ void FixGEMC::attempt_atomic_exchange_full()
       if (force->pair->tail_flag) force->pair->reinit();
     }
   } else {
-
-    // accept newly inserted iatom there
-
     if (success) {
       nexchange_successes += 1.0;
       energy_stored = energy_after;
-
-      // remove newly inserted iatom (it was added to end)
     } else {
       atom->natoms--;
       if (proc_flag) atom->nlocal--;
       if (force->kspace) force->kspace->qsum_qsq();
       if (force->pair->tail_flag) force->pair->reinit();
+      energy_stored = energy_before;
     }
   }
 
