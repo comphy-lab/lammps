@@ -27,9 +27,6 @@
 #include "memory.h"
 #include "error.h"
 
-// DEBUG
-#include "comm.h"
-
 #include <cstring>
 #include <utility>
 
@@ -357,6 +354,7 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
   //   saves nothing to restart file
 
   if (!historyflag) {
+    create_attribute = 1;
     restart_peratom = 1;
     peratom_flag = 1;
     peratom_freq = 1;
@@ -370,7 +368,7 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
     avalues_history = (double ***) memory->smalloc(nrepeat_history*sizeof(double **),
                                                   "store/state:avalues_history");
     for (int i = 0; i < nrepeat_history; i++) avalues_history[i] = nullptr;
-
+    create_attribute = 1;
     most_recent_step = -1;
     most_recent_index = -1;
     count_history = 0;
@@ -526,7 +524,8 @@ void FixStoreState::end_of_step()
 
   if (cfv_any && nevery) modify->clearstep_compute();
 
-  // fill vector or array with per-atom values
+  // fill avalues with per-atom values
+  // for historyflag, avalues will be copied to avalues_history at the end 
 
   if (avalues) vbuf = &avalues[0][0];
   else vbuf = nullptr;
@@ -622,7 +621,8 @@ void FixStoreState::end_of_step()
     modify->addstep_compute(nextstep);
   }
 
-  // if historyflag, copy avalues single snapshot into avalues_history at most_recent_index
+  // if historyflag
+  // copy single snapshot of avalues to avalues_history at most_recent_index
 
   if (historyflag) {
     if (update->ntimestep - most_recent_step > nevery) count_history = 0;
@@ -636,68 +636,48 @@ void FixStoreState::end_of_step()
       memcpy(&avalues_history[most_recent_index][0][0],&avalues[0][0],
              nlocal*values.size()*sizeof(double));
   }
-
-  // DEBUG
-
-  /*
-  if (historyflag) {
-    int nlocal = atom->nlocal;
-    for (int i = 0; i < nlocal; i++) {
-      if (!(atom->mask[i] & groupbit)) continue;
-      printf("ATOM %d proc %d",atom->tag[i],comm->me);
-      int step = update->ntimestep;
-      int k = most_recent_index;
-      for (int n = 0; n < count_history; n++) {
-        printf(" STEP %d %g %g %g",step,
-               avalues_history[k][i][0],avalues_history[k][i][1],avalues_history[k][i][2]);
-        step -= nevery_history;
-        k--;
-        if (k < 0) k += nrepeat_history;
-      }
-      printf("\n");
-    }
-  }
-  */
 }
 
 /* ----------------------------------------------------------------------
-   memory usage of local atom-based array
+   memory usage of local atom-based arrays
 ------------------------------------------------------------------------- */
 
 double FixStoreState::memory_usage()
 {
-  double bytes;
-  if (!historyflag) bytes = (double)atom->nmax*values.size() * sizeof(double);
-  else bytes = (double)(count_history+1)*atom->nmax*values.size() * sizeof(double);
+  double bytes = (double)atom->nmax*values.size() * sizeof(double);  // avalues
+  if (historyflag)                                                   // history
+    bytes += (double)(nrepeat_history)*atom->nmax*values.size() * sizeof(double);
   return bytes;
 }
 
 /* ----------------------------------------------------------------------
-   allocate atom-based array
+   allocate atom-based arrays
+   avalues always used, history only used if historyflag is set
 ------------------------------------------------------------------------- */
 
 void FixStoreState::grow_arrays(int nmax)
 {
   memory->grow(avalues,nmax,values.size(),"store/state:avalues");
+	 
+  if (values.size() == 1) {
+    if (nmax) vector_atom = &avalues[0][0];
+    else vector_atom = nullptr;
+  } else array_atom = avalues;
 
   if (historyflag) {
     for (int i = 0; i < nrepeat_history; i++)
       memory->grow(avalues_history[i],nmax,values.size(),"store/state:avalues_history");
   }
-
-  if (values.size() == 1) {
-    if (nmax) vector_atom = &avalues[0][0];
-    else vector_atom = nullptr;
-  } else array_atom = avalues;
 }
 
 /* ----------------------------------------------------------------------
-   copy values within local atom-based array
+   copy values within local atom-based arrays
 ------------------------------------------------------------------------- */
 
 void FixStoreState::copy_arrays(int i, int j, int /*delflag*/)
 {
-  for (std::size_t m = 0; m < values.size(); m++) avalues[j][m] = avalues[i][m];
+  if (!historyflag)
+    for (std::size_t m = 0; m < values.size(); m++) avalues[j][m] = avalues[i][m];
 
   if (historyflag) {
     int k = most_recent_index;
@@ -711,12 +691,32 @@ void FixStoreState::copy_arrays(int i, int j, int /*delflag*/)
 }
 
 /* ----------------------------------------------------------------------
+   initialize one atom's stored values, called when atom is created
+   just set to zero, since cannot know values in the past
+   and future values will be reset along with other atoms
+------------------------------------------------------------------------- */
+
+void FixStoreState::set_arrays(int i)
+{
+  if (!historyflag)
+    for (std::size_t m = 0; m < values.size(); m++) avalues[i][m] = 0.0;
+
+  if (historyflag) {
+    for (int n = 0; n < nrepeat_history; n++) {
+      for (std::size_t m = 0; m < values.size(); m++)
+        avalues_history[n][i][m] = 0.0;
+    }
+  }
+}
+
+/* ----------------------------------------------------------------------
    pack values in local atom-based array for exchange with another proc
 ------------------------------------------------------------------------- */
 
 int FixStoreState::pack_exchange(int i, double *buf)
 {
-  for (std::size_t m = 0; m < values.size(); m++) buf[m] = avalues[i][m];
+  if (!historyflag)
+    for (std::size_t m = 0; m < values.size(); m++) buf[m] = avalues[i][m];
 
   if (historyflag) {
     int m = vsize;
@@ -730,7 +730,7 @@ int FixStoreState::pack_exchange(int i, double *buf)
   }
 
   if (!historyflag) return values.size();
-  return (count_history+1)*values.size();
+  return count_history*values.size();
 }
 
 /* ----------------------------------------------------------------------
@@ -739,7 +739,8 @@ int FixStoreState::pack_exchange(int i, double *buf)
 
 int FixStoreState::unpack_exchange(int nlocal, double *buf)
 {
-  for (std::size_t m = 0; m < values.size(); m++) avalues[nlocal][m] = buf[m];
+  if (!historyflag)
+    for (std::size_t m = 0; m < values.size(); m++) avalues[nlocal][m] = buf[m];
 
   if (historyflag) {
     int m = vsize;
@@ -753,7 +754,7 @@ int FixStoreState::unpack_exchange(int nlocal, double *buf)
   }
 
   if (!historyflag) return values.size();
-  return (count_history+1)*values.size();
+  return count_history*values.size();
 }
 
 /* ----------------------------------------------------------------------
@@ -814,7 +815,7 @@ int FixStoreState::size_restart(int /*nlocal*/)
 
 void *FixStoreState::extract(const char *str, int &dim)
 {
-  // scalar history params which can be used by caller
+  // scalar history params which can be useful to caller
 
   if (strcmp(str, "flag_history") == 0) {
     dim = 0;

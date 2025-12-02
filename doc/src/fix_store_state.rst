@@ -204,9 +204,8 @@ accessed on any timestep (see the discussion of Noutput below).
 If the *history* keyword is used, no per-atom vector or array is
 produced.  Instead, the fix provides access to its mulitiple timesteps
 of stored per-atom history via its *extract()* method.
-
-NOTE: need more explanation of how to use extract() here.
-Possibly also document that compute property/atom can access the history.
+The :doc:`compute property/atom <compute_property_atom>`
+command is an example of a command which does this.
 
 No parameter of this fix can be used with the *start/stop* keywords of
 the :doc:`run <run>` command.  This fix is not invoked during
