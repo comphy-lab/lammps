@@ -118,10 +118,10 @@ class FixGEMC : public Fix {
   class RanPark *random_world;       // sync'd RNG for one world
   class RanPark *random_proc;        // RNG for each proc (not sync'd)
 
-  // additional comm (mostly for exchange)
+  // // additional comm (mostly for exchange)
 
-  int maxcommbuf;     // size of buffer for exchange moves
-  double *commbuf;    // buf used for exchange moves
+  // int maxcommbuf;     // size of buffer for exchange moves
+  // double *commbuf;    // buf used for exchange moves
 
   // misc
 

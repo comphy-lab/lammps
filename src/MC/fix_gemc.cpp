@@ -60,8 +60,8 @@ static constexpr double MAXENERGYSIGNAL = 1.0e100;
 
 static constexpr double MAXENERGYTEST = 1.0e50;
 
-static constexpr double COMMBUFFACTOR = 1.2;
-static constexpr int COMMBUFMIN = 1024;
+// static constexpr double COMMBUFFACTOR = 1.2;
+// static constexpr int COMMBUFMIN = 1024;
 
 /* ---------------------------------------------------------------------- */
 
@@ -134,8 +134,8 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   gemc_nmax = 0;
   local_gas_list = nullptr;
-  commbuf = nullptr;
-  maxcommbuf = 0;
+  // commbuf = nullptr;
+  // maxcommbuf = 0;
 
 }
 
@@ -145,7 +145,7 @@ FixGEMC::~FixGEMC()
 {
   memory->destroy(local_gas_list);
   MPI_Comm_free(&comm_replica);
-  memory->destroy(commbuf);
+  // memory->destroy(commbuf);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -251,9 +251,9 @@ void FixGEMC::init()
 
   neighbor->modify_params(fmt::format("exclude group {} all",group_id));
 
-  // allocate communication buffer for exchange moves
+  // // allocate communication buffer for exchange moves
 
-  grow_commbuf();
+  // grow_commbuf();
 
   groupbitall = 1 | groupbit;
 
@@ -474,27 +474,27 @@ double FixGEMC::energy_full()
   return total_energy;
 }
 
-/* ----------------------------------------------------------------------
-   set bufextra based on AtomVec and fixes
-   does not include base data to exchange
-   similar to Comm::init_exchange()
-   *** this is formally an error, since base data is also packed ***
-------------------------------------------------------------------------- */
+// /* ----------------------------------------------------------------------
+//    set bufextra based on AtomVec and fixes
+//    does not include base data to exchange
+//    similar to Comm::init_exchange()
+//    *** this is formally an error, since base data is also packed ***
+// ------------------------------------------------------------------------- */
 
-void FixGEMC::grow_commbuf()
-{
-  int ntmp = 0;
-  for (auto &ifix : modify->get_fix_list())
-    ntmp = MAX(ntmp, ifix->maxexchange);
-  ntmp += atom->avec->maxexchange;
-  ntmp += COMMBUFMIN;
-  ntmp *= COMMBUFFACTOR;
+// void FixGEMC::grow_commbuf()
+// {
+//   int ntmp = 0;
+//   for (auto &ifix : modify->get_fix_list())
+//     ntmp = MAX(ntmp, ifix->maxexchange);
+//   ntmp += atom->avec->maxexchange;
+//   ntmp += COMMBUFMIN;
+//   ntmp *= COMMBUFFACTOR;
 
-  if (maxcommbuf < ntmp) {
-    maxcommbuf = ntmp;
-    memory->grow(commbuf,maxcommbuf,"fix_gemc:commbuf");
-  }
-}
+//   if (maxcommbuf < ntmp) {
+//     maxcommbuf = ntmp;
+//     memory->grow(commbuf,maxcommbuf,"fix_gemc:commbuf");
+//   }
+// }
 
 /* ----------------------------------------------------------------------
    pack entire state of Fix into one write
