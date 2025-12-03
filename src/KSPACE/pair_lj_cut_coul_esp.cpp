@@ -43,7 +43,7 @@ using namespace EwaldConst;
 PairLJCutCoulEsp::PairLJCutCoulEsp(LAMMPS *lmp) : Pair(lmp)
 {
   ewaldflag = pppmflag = 1;
-  psflag = 1;
+  espflag = 1;
   respa_enable = 1;
   writedata = 1;
   ftable = nullptr;
