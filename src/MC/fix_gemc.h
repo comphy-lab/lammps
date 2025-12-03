@@ -89,13 +89,13 @@ class FixGEMC : public Fix {
   int full_flag;        // compute full energy
   int q_flag;           // particles charged?
   double massper;       // mass of exchanged particle
-  
+
   // MC exchange
 
   int groupbitall;
   int exclusion_group, exclusion_group_bit;    // mask for excluding certain atoms
   double sigma;   // factor for creating thermal velocities
-  
+
   // domain - related props
 
   int triclinic_flag;
@@ -117,11 +117,6 @@ class FixGEMC : public Fix {
   class RanPark *random_universe;    // sync'd RNG for all worlds
   class RanPark *random_world;       // sync'd RNG for one world
   class RanPark *random_proc;        // RNG for each proc (not sync'd)
-
-  // // additional comm (mostly for exchange)
-
-  // int maxcommbuf;     // size of buffer for exchange moves
-  // double *commbuf;    // buf used for exchange moves
 
   // misc
 
@@ -147,8 +142,6 @@ class FixGEMC : public Fix {
 
   void attempt_atomic_exchange_full();
   void attempt_molecule_exchange_full();
-
-  void grow_commbuf();
 
   // misc functions for all MC moves
 

@@ -65,13 +65,13 @@ void FixGEMC::attempt_volume_change_full()
   // fvolume = vnew/vold
 
   double fvolume;
-  if (myworld == 0) 
+  if (myworld == 0)
     fvolume = (1.0+exp(-logvolratio))/(1.0+exp(-(logvolratio+dlogvolratio)));
   else
     fvolume = (1.0+exp(logvolratio))/(1.0+exp((logvolratio+dlogvolratio)));
 
   //  printf("fvolume %d %d %g %g\n",myworld, me, fvolume, logvolratio);
-  
+
   double scale_length = pow(fvolume, 1.0/domain->dimension);
 
   // convert to lamda coords so they get scaled
@@ -220,7 +220,7 @@ void FixGEMC::attempt_atomic_exchange_full()
       sender = 0;
     else
       sender = 1;
-    
+
   // atom to delete/insert
 
   int iatom = -1;
@@ -230,7 +230,6 @@ void FixGEMC::attempt_atomic_exchange_full()
   // save old coordinates in case exchange rejected
 
   double old_coord[3];
-  //  int nbuf;
 
   // pick atom to send
 
@@ -247,10 +246,6 @@ void FixGEMC::attempt_atomic_exchange_full()
       old_coord[1] = atom->x[iatom][1];
       old_coord[2] = atom->x[iatom][2];
 
-      // pack atom (only one atom sent per move)
-
-      //      nbuf = atom->avec->pack_exchange(iatom, &commbuf[0]);
-
       // temporarily set mask to exclusion for full energy later
 
       tmp_mask = atom->mask[iatom];
@@ -263,33 +258,7 @@ void FixGEMC::attempt_atomic_exchange_full()
         atom->q[iatom] = 0.0;
       }
     }
-
-    // // send buffer from to owner proc to 0 with
-    // // exclude case where comm 0 already has the information
-
-    // if (iatom >= 0 && me != 0) {
-    //   MPI_Send(&commbuf[0], nbuf, MPI_DOUBLE, 0, 0, world);
-    // } else if (iatom < 0 && me == 0) {
-    //   MPI_Recv(&commbuf[0], maxcommbuf, MPI_DOUBLE, MPI_ANY_SOURCE, 0, world, MPI_STATUS_IGNORE);
-    // }
   }
-
-  // // send over atom thru comm 0's
-
-  // if (me == 0) {
-  //   // send buffer from sender to receiver
-  //   // there's only two procs in comm_replica, so other is always 1-myrank
-
-  //   if (sender)
-  //     MPI_Send(&commbuf[0], maxcommbuf, MPI_DOUBLE, 1 - myworld, 0, comm_replica);
-  //   else
-  //     MPI_Recv(&commbuf[0], maxcommbuf, MPI_DOUBLE, MPI_ANY_SOURCE, 0, comm_replica,
-  //              MPI_STATUS_IGNORE);
-  // }
-
-  // // for now bcast buf to all procs
-
-  // if (!sender) MPI_Bcast(&commbuf[0], maxcommbuf, MPI_DOUBLE, 0, world);
 
   // pick random proc to place atom in
 
@@ -352,14 +321,14 @@ void FixGEMC::attempt_atomic_exchange_full()
       atom->v[m][2] = random_proc->gaussian()*sigma;
       modify->create_attribute(m);
     }
-    
+
     atom->natoms++;
     if (atom->tag_enable) {
       atom->tag_extend();
       if (atom->map_style != Atom::MAP_NONE) atom->map_init();
     }
   }
-  
+
   update_gas_atoms_list();
 
   // evaluate probability for exchange
@@ -369,7 +338,7 @@ void FixGEMC::attempt_atomic_exchange_full()
 
   int success;
   double prob;
-  
+
   if (me == 0) {
 
     // Frenkel & Smit, 3rd Ed. (2023), p. 221, Eq. (6.6.11)
@@ -379,7 +348,7 @@ void FixGEMC::attempt_atomic_exchange_full()
 
     double idU, jdU, all_dU;
     idU = energy_after - energy_before;
-    
+
     double volume = (xhi - xlo) * (yhi - ylo) * (zhi - zlo);
     double logVN;
 
@@ -393,13 +362,13 @@ void FixGEMC::attempt_atomic_exchange_full()
     prob = MIN(exp(-beta * all_dU), 1.0);
 
   }
-  
+
   MPI_Bcast(&prob, 1, MPI_DOUBLE, 0, world);
   if (prob > random_universe->uniform() && energy_after < MAXENERGYTEST)
     success = 1;
   else
     success = 0;
-  
+
   // handle deletion/insertions or revert
 
   if (sender) {

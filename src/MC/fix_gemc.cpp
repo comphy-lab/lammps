@@ -60,9 +60,6 @@ static constexpr double MAXENERGYSIGNAL = 1.0e100;
 
 static constexpr double MAXENERGYTEST = 1.0e50;
 
-// static constexpr double COMMBUFFACTOR = 1.2;
-// static constexpr int COMMBUFMIN = 1024;
-
 /* ---------------------------------------------------------------------- */
 
 FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
@@ -134,9 +131,6 @@ FixGEMC::FixGEMC(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   gemc_nmax = 0;
   local_gas_list = nullptr;
-  // commbuf = nullptr;
-  // maxcommbuf = 0;
-
 }
 
 /* ---------------------------------------------------------------------- */
@@ -145,7 +139,6 @@ FixGEMC::~FixGEMC()
 {
   memory->destroy(local_gas_list);
   MPI_Comm_free(&comm_replica);
-  // memory->destroy(commbuf);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -167,9 +160,7 @@ void FixGEMC::init()
 
   progress = 0;
 
-  // determine probability of each step during pre_exchange
-
-  // set probabilities for MC moves
+  // set probabilities for exchange, volume, and translate moves
 
   if (!molecule_flag) nrotate = 0;
 
@@ -251,10 +242,6 @@ void FixGEMC::init()
 
   neighbor->modify_params(fmt::format("exclude group {} all",group_id));
 
-  // // allocate communication buffer for exchange moves
-
-  // grow_commbuf();
-
   groupbitall = 1 | groupbit;
 
   ntranslation_attempts = ntranslation_successes = 0.0;
@@ -262,7 +249,7 @@ void FixGEMC::init()
   nexchange_attempts = nexchange_successes = 0.0;
 
   // initialize log volume ratio
-  
+
   double vol_i, vol_j;
   vol_i = (xhi - xlo) * (yhi - ylo) * (zhi - zlo);
   MPI_Sendrecv(&vol_i, 1, MPI_DOUBLE, 1 - myworld, 0,
@@ -277,7 +264,7 @@ void FixGEMC::init()
     logvolratio = log(vol_j/vol_i);
 
   // initialize total atom count
-  
+
   int n_i, n_j;
   update_gas_atoms_list();
   n_i = natom_total;
@@ -381,7 +368,7 @@ void FixGEMC::pre_exchange()
       double rho1 = force->mv2d * massper * n1 / vol1;
       double rho2 = force->mv2d * massper * n2 / vol2;
       double rhotot = force->mv2d * massper * ntot / voltot;
-      
+
       msg = fmt::format(
                         "  Replica Volume Nparticles Density:\n"
                         "   1: {:g} {:d} {:g}\n"
@@ -393,7 +380,7 @@ void FixGEMC::pre_exchange()
                         );
       if (universe->uscreen) utils::print(universe->uscreen, msg);
       if (universe->ulogfile) utils::print(universe->ulogfile, msg);
-      
+
       ntranslation_attempts = ntranslation_successes = 0.0;
       nvolume_attempts = nvolume_successes = 0.0;
       nexchange_attempts = nexchange_successes = 0.0;
@@ -473,28 +460,6 @@ double FixGEMC::energy_full()
 
   return total_energy;
 }
-
-// /* ----------------------------------------------------------------------
-//    set bufextra based on AtomVec and fixes
-//    does not include base data to exchange
-//    similar to Comm::init_exchange()
-//    *** this is formally an error, since base data is also packed ***
-// ------------------------------------------------------------------------- */
-
-// void FixGEMC::grow_commbuf()
-// {
-//   int ntmp = 0;
-//   for (auto &ifix : modify->get_fix_list())
-//     ntmp = MAX(ntmp, ifix->maxexchange);
-//   ntmp += atom->avec->maxexchange;
-//   ntmp += COMMBUFMIN;
-//   ntmp *= COMMBUFFACTOR;
-
-//   if (maxcommbuf < ntmp) {
-//     maxcommbuf = ntmp;
-//     memory->grow(commbuf,maxcommbuf,"fix_gemc:commbuf");
-//   }
-// }
 
 /* ----------------------------------------------------------------------
    pack entire state of Fix into one write
