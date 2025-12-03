@@ -1,4 +1,5 @@
 #include "pswf.h"
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -6,8 +7,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include <iomanip>
-#include <iostream>
 #include <limits>
 #include <unordered_map>
 #include <utility>
@@ -403,9 +402,6 @@ static inline void pseudo_inv(double *M, int n1, int n2, double eps, double *M_)
   double *wsbuf = (double *) malloc(wssize * sizeof(double));
   dgesdd_(&JOBZ, &m, &n, M, &m, tS, tU, &m, tVT, &k, wsbuf, &wssize, iwork, &INFO);
   free(wsbuf);
-
-  if (INFO != 0) std::cout << "svd failed with info: " << INFO << '\n';
-  assert(INFO == 0);
 
   double max_S = std::abs(tS[0]);
 
@@ -1191,8 +1187,7 @@ struct Prolate0Fun {
     int ier;
     workarray.resize(lenw);
     prol0ini(ier, c, workarray.data(), rlam20, rkhi, lenw, keep, ltot);
-    // prol0ini_(&ier, &c, workarray.data(), &rlam20, &rkhi, &lenw, &keep, &ltot);
-    if (ier) throw std::runtime_error("Unable to init Prolate0Fun");
+    //if (ier) error->all(FLERR,"Unable to init Prolate0Fun");
   }
 
   // evaluate prolate0 function val and derivative
@@ -1243,9 +1238,6 @@ double prolate0_eval_derivative(double c, double x)
   if (prolate0_funcs_cache.find(c) == prolate0_funcs_cache.end()) {
 #pragma omp critical(PROLATE0_EVAL)
     if (prolate0_funcs_cache.find(c) == prolate0_funcs_cache.end()) {
-#ifdef MYDEBUGPRINT
-      std::cout << "Creating new eval Prolate0Fun derivative for c = " << c << std::endl;
-#endif
       prolate0_funcs_cache.emplace(c, Prolate0Fun(c, 10000));
     }
   }
@@ -1261,9 +1253,6 @@ double prolate0_eval(double c, double x)
   if (prolate0_funcs_cache.find(c) == prolate0_funcs_cache.end()) {
 #pragma omp critical(PROLATE0_EVAL)
     if (prolate0_funcs_cache.find(c) == prolate0_funcs_cache.end()) {
-#ifdef MYDEBUGPRINT
-      std::cout << "Creating new eval Prolate0Fun for c = " << c << std::endl;
-#endif
       prolate0_funcs_cache.emplace(c, Prolate0Fun(c, 10000));
     }
   }
@@ -1279,9 +1268,6 @@ double prolate0_int_eval(double c, double r)
   if (prolate0_funcs_cache.find(c) == prolate0_funcs_cache.end()) {
 #pragma omp critical(PROLATE0_INT_EVAL)
     if (prolate0_funcs_cache.find(c) == prolate0_funcs_cache.end()) {
-#ifdef MYDEBUGPRINT
-      std::cout << "Creating new int_eval Prolate0Fun for c = " << c << std::endl;
-#endif
       prolate0_funcs_cache.emplace(c, Prolate0Fun(c, 10000));
     }
   }
@@ -1587,73 +1573,3 @@ void spread_real_poly(int P, double tol, double tol_coeff, double &c, std::vecto
     for (int j = 0; j < max_order; j++) { coeffs[j * P + i] = coeffs_tmp[i * max_order + max_order - j - 1]; }
   }
 }
-
-// test to generate coefficients
-// g++-14 -std=c++17 -O3 -march=native pswf.cpp -lopenblas
-// int main() {
-//     auto start = std::chrono::steady_clock::now();
-
-//     std::cout << std::scientific << std::setprecision(16);
-
-//     double tol = 0.005;
-
-//     std::vector<double> coeffs;
-//     double c;
-//     force_poly(tol, tol*0.1, c, coeffs);
-//     std::cout << "=== force poly ===\n";
-//     std::cout << "c: " << c << "\n";
-//     std::cout << "real force coeffs: \n";
-//     for (int j = 0; j < coeffs.size(); j++) {
-//         std::cout << coeffs[j] << " ";
-//     }
-//     std::cout << std::endl;
-
-//     energy_poly(tol, tol*0.01, c, coeffs);
-//     std::cout << "=== energy poly ===\n";
-//     std::cout << "c: " << c << "\n";
-//     std::cout << "real energy coeffs: \n";
-//     for (int j = 0; j < coeffs.size(); j++) {
-//         std::cout << coeffs[j] << " ";
-//     }
-//     std::cout << std::endl;
-
-//     double lambda;
-//     fourier_poly(tol, tol*0.1, c, lambda, coeffs);
-//     std::cout << "=== fourier poly ===\n";
-//     std::cout << "c: " << c << "\n";
-//     std::cout << "lambda: " << lambda << "\n";
-//     std::cout << "fourier coeffs: \n";
-//     for (int j = 0; j < coeffs.size(); j++) {
-//         std::cout << coeffs[j] << " ";
-//     }
-//     std::cout << std::endl; 
-
-//     tol = 0.005;
-//     spread_fourier_poly(tol, 0.1*tol, c, lambda, coeffs);
-//     std::cout << "=== spread fourier poly ===\n";
-//     std::cout << "c: " << c << "\n";
-//     std::cout << "lambda: " << lambda << "\n";
-//     std::cout << "fourier coeffs: \n";
-//     for (int j = 0; j < coeffs.size(); j++) {
-//         std::cout << coeffs[j] << " ";
-//     }
-//     std::cout << std::endl;
-
-    // tol = 0.005;
-    // int P = 5;
-    // spread_real_poly(P, tol, 0.1*tol, c, coeffs);
-    // std::cout << "=== spread real poly ===\n";
-    // std::cout << "c: " << c << "\n";
-    // std::cout << "spread real coeffs: \n";
-    // std::cout << coeffs.size()/P << std::endl;
-    // for (int j = 0; j < coeffs.size()/P; j++) {
-    //     for (int i = 0; i < P; i++) {
-    //         std::cout << coeffs[j*P + i] << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-    // std::cout << std::endl;
-
-//     return 0;
-// }
-
