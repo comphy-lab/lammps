@@ -3095,7 +3095,7 @@ void FixSurfaceLocal::connectivity2d_complete()
 
   int i,j,jconnect;
   tagint jtag;
-  double rsq,dotline,dotnorm;
+  double dotline,dotnorm;
   double *inorm,*jnorm;
   double icrossj[3];
 
@@ -3143,10 +3143,6 @@ void FixSurfaceLocal::connectivity2d_complete()
       inorm = normals[iconnect];
       jnorm = normals[jconnect];
       dotnorm = MathExtra::dot3(inorm,jnorm);
-
-      dx = endpts[iconnect][1][0] - endpts[jconnect][0][0];
-      dy = endpts[iconnect][1][1] - endpts[jconnect][0][1];
-      rsq = dx*dx + dy*dy;
 
       if (same_point(endpts[iconnect][1],endpts[jconnect][0])) {
         connect2d[iconnect].pwhich_p2[m] = 0;

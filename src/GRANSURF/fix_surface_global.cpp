@@ -1077,6 +1077,20 @@ void FixSurfaceGlobal::post_force(int vflag)
 
     // Sort contacts by overlap and create a map
     std::sort(contact_surfs, contact_surfs + n_contact_surfs, [](ContactSurf a, ContactSurf b) {return a.overlap > b.overlap;});
+    /*std::sort(contact_surfs, contact_surfs + n_contact_surfs, [](ContactSurf a, ContactSurf b) {
+        if (a.overlap > (b.overlap + EPSILON)) return 1; // 1st compare overlaps within epsilon
+        if (b.overlap > (a.overlap + EPSILON)) return 0;
+        //if (a.priority > b.priority) return 1; // 2nd, prioritize interior > edge > corner
+        //if (b.priority > a.priority) return 0;
+        double dota = MathExtra::dot3(a.surf_norm, a.dr);
+        double dotb = MathExtra::dot3(b.surf_norm, b.dr);
+        dota = fabs(dota); // sign may not yet be set
+        dotb = fabs(dotb);
+        //if (dota > dotb) return 1; // 3rd, prioritize which one aligns best
+        //if (dotb > dota) return 0;
+        return 1;
+      });*/
+
     contacts_map.clear();
     for (n = 0; n < n_contact_surfs; n++)
       contacts_map[contact_surfs[n].index] = n;
@@ -1169,7 +1183,7 @@ void FixSurfaceGlobal::post_force(int vflag)
 
       model->xj = xc;
       model->vj = vc;
-      model->omegaj = omegac;
+      model->omegaj = omegac; // Ask Dan
 
       if (use_history) {
         jj = contact_surfs[n].neigh_index;
@@ -3329,8 +3343,10 @@ void FixSurfaceGlobal::prewalk_connections2d()
       if (walked.find(k) == walked.end() && to_walk.find(k) == to_walk.end()) {
         // which side is associated with the initial closest surf
         m = contacts_map[k];
+
         if (nsidej == OPPOSITE_SIDE)
           nsidek = FLIPSIDE(nsidek);
+
         contact_surfs[m].nside = nsidek;
         to_walk[k] = nsidek;
       }

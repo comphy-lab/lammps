@@ -46,7 +46,7 @@ using namespace MathExtra;
 using namespace SurfExtra;
 
 enum{NONE, LINE, TRI};
-enum{FLAT,FLATEDGE,CONCAVE,CONVEX};
+enum{FLAT,CONCAVE,CONVEX};
 enum{SAME_SIDE,OPPOSITE_SIDE};
 enum{INTERIOR = 0,EXPOSED,UNCONNECTED};
 
@@ -235,13 +235,14 @@ void PairSurfGranular::compute(int eflag, int vflag)
         error->one(FLERR, "Pair surf/granular interaction is invalid");
 
       delx = xtmp - x[j][0];
-      dely = xtmp - x[j][1];
-      delz = xtmp - x[j][2];
+      dely = ytmp - x[j][1];
+      delz = ztmp - x[j][2];
       rsq = delx * delx + dely * dely + delz * delz;
 
       // skip contact check if particle/surf are too far apart
 
       radsum = radi + radius[j];
+
       if (rsq > radsum * radsum) {
         if (use_history) {
           touch[jj] = 0;
@@ -357,8 +358,19 @@ void PairSurfGranular::compute(int eflag, int vflag)
       continue;
 
     // Sort contacts by overlap and create a map
-    std::sort(contact_surfs, contact_surfs + n_contact_surfs,
-      [](FixSurface::ContactSurf a, FixSurface::ContactSurf b) {return a.overlap > b.overlap;});
+    std::sort(contact_surfs, contact_surfs + n_contact_surfs, [](FixSurface::ContactSurf a, FixSurface::ContactSurf b) {
+        if (a.overlap > (b.overlap + EPSILON)) return 1; // 1st compare overlaps within epsilon
+        if (b.overlap > (a.overlap + EPSILON)) return 0;
+        if (a.priority > b.priority) return 1; // 2nd, prioritize interior > edge > corner
+        if (b.priority > a.priority) return 0;
+        double dota = MathExtra::dot3(a.surf_norm, a.dr);
+        double dotb = MathExtra::dot3(b.surf_norm, b.dr);
+        dota = fabs(dota); // sign may not yet be set
+        dotb = fabs(dotb);
+        if (dota > dotb) return 1; // 3rd, prioritize which one aligns best
+        if (dotb > dota) return 0;
+        return 1;
+      });
     contacts_map.clear();
     for (n = 0; n < n_contact_surfs; n++)
       contacts_map[contact_surfs[n].index] = n;
@@ -425,59 +437,20 @@ void PairSurfGranular::compute(int eflag, int vflag)
       } else {
         MathExtra::scale3(radi - max_overlap, contact_surfs[n].force_norm, dr);
       }
-      //INSERT MORE
-    }
-    // Reduce set of contacts
 
-    /*
-    For contact in reduced contacts:
+      for (a = 0; a < 3; a++)
+        xc[a] = x[i][a] - dr[a];
 
-      factor_lj = special_lj[sbmask(j)]; // presumably not necessary
-      j &= NEIGHMASK;
-
-      if (factor_lj == 0) continue;
-
-      // if any history is needed
-
-      if (use_history) touch[jj] = 1;
-
-      // calculate new data
-      // ds = vector from line/tri center to contact pt
-      // vs = velocity of contact pt on line/tri, translation + rotation
-      // omega for tri was set from angmom by calculate_corners()
-
-
+      MathExtra::zero3(vc);
+      MathExtra::zero3(omegac);
 
       jtype = type[j];
       model = models_list[types_indices[itype][jtype]];
-
-      // reset model and copy initial geometric data
-
       model->xi = x[i];
-      model->xj = x[j];
-      model->radi = radius[i];
-      model->radj = radius[j];
-      if (use_history) model->touch = touch[jj];
-
-      model->rsq = rsq;
-
-      ds[0] = contact[0] - x[j][0];
-      ds[1] = contact[1] - x[j][1];
-      ds[2] = contact[2] - x[j][2];
-
-      vs[0] = v[j][0] + (omega[j][1] * ds[2] - omega[j][2] * ds[1]);
-      vs[1] = v[j][1] + (omega[j][2] * ds[0] - omega[j][0] * ds[2]);
-      vs[2] = v[j][2] + (omega[j][0] * ds[1] - omega[j][1] * ds[0]);
-
-      model->dx[0] = dr[0];
-      model->dx[1] = dr[1];
-      model->dx[2] = dr[2];
-
-      // NOTE: add logic to persist history history if contact has changed
-
-      // NOTE: add logic to check for coupled contacts and weight them
-
-      factor_couple = 1.0;
+      model->radi = radi;
+      model->vi = v[i];
+      model->omegai = omega[i];
+      if (heat_flag) model->Ti = temperature[i];
 
       // meff = effective mass of sphere and line/tri
       // if I or J is part of rigid body,use body mass
@@ -491,49 +464,75 @@ void PairSurfGranular::compute(int eflag, int vflag)
           meff = meff * mj / (meff + mj);
         }
       }
-
-      // Copy additional information and prepare force calculations
       model->meff = meff;
-      model->vi = v[i];
-      model->vj = vs;
-      model->omegai = omega[i];
-      model->omegaj = omega0;
+
+      // Correct velocity at contact point, extending from closest surf j
+      ds[0] = xc[0] - x[j][0];
+      ds[1] = xc[1] - x[j][1];
+      ds[2] = xc[2] - x[j][2];
+      vc[0] = v[j][0] + (omega[j][1] * ds[2] - omega[j][2] * ds[1]);
+      vc[1] = v[j][1] + (omega[j][2] * ds[0] - omega[j][0] * ds[2]);
+      vc[2] = v[j][2] + (omega[j][0] * ds[1] - omega[j][1] * ds[0]);
+
+      model->xj = xc;
+      model->vj = vc;
+      model->omegaj = omegac; // Ask Dan
 
       if (use_history) {
+        jj = contact_surfs[n].neigh_index;
+        model->touch = touch[jj];
+      }
+
+      // guaranteed in contact, but need to calculate intermediate variables
+      touchflag = model->check_contact();
+
+      if (use_history) {
+        // Check if another flat contact has a stored history
+        if (touch[jj] != 1) {
+          for (it = 0; it < composite_surfs->size(); it++) {
+            m = (*composite_surfs)[it];
+            jjtmp = contact_surfs[m].neigh_index;
+            if (touch[jjtmp] == 1);
+              jj = jjtmp;
+          }
+        }
+
+        touch[jj] = 1;
         history = &allhistory[size_history * jj];
         model->history = history;
       }
 
-      if (heat_flag) {
-        model->Ti = temperature[i];
-        model->Tj = temperature[j];
-      }
-
       model->calculate_forces();
 
-      // need to add support coupled contacts
-      // is this just multiplying forces (+torques?) by factor_couple?
+      // Sychronize history across flat contacts
+      //   can be arbitrary if not all connected flat surfaces are mutually flat
+      //   e.g. a hair pin turn where surfs on either end of the 'U' are not flat
+      if (use_history) {
+        for (it = 0; it < composite_surfs->size(); it++) {
+          m = (*composite_surfs)[it];
+          jjtmp = contact_surfs[m].neigh_index;
+          if (jj != jjtmp) {
+            touch[jjtmp] = 1;
+            for (k = 0; k < size_history; k++)
+              allhistory[size_history * jjtmp + k] = history[k];
+          }
+        }
+      }
 
       forces = model->forces;
       torquesi = model->torquesi;
-      torquesj = model->torquesj;
 
-      // apply forces & torques
-      scale3(factor_lj, forces);
       add3(f[i], forces, f[i]);
-
-      scale3(factor_lj, torquesi);
       add3(torque[i], torquesi, torque[i]);
 
       if (force->newton_pair || j < nlocal) {
         sub3(f[j], forces, f[j]);
-        scale3(factor_lj, torquesj);
+        torquesj = model->torquesj;
         add3(torque[j], torquesj, torque[j]);
       }
 
       if (heat_flag) {
-        dq = model->dq;
-        heatflow[i] += dq;
+        heatflow[i] += model->dq;
         if (force->newton_pair || j < nlocal) heatflow[j] -= dq;
       }
 
@@ -541,7 +540,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
         ev_tally_xyz(i,j,nlocal,force->newton_pair,
           0.0,0.0,forces[0],forces[1],forces[2],model->dx[0],model->dx[1],model->dx[2]);
       }
-    */
+    }
   }
 
   // NOTE: should there be virial contributions from boundary tris?
@@ -894,6 +893,7 @@ void PairSurfGranular::prewalk_connections2d()
   int j = contact_surfs[0].index;
   to_walk[j] = contact_surfs[0].nside;
 
+  tagint ktag;
   int k, n, m, jconnect, nsidej, nsidek, nconnect, nc;
   std::tuple<int, int> element;
   while (!to_walk.empty()) {
@@ -912,12 +912,15 @@ void PairSurfGranular::prewalk_connections2d()
 
     for (nconnect = 0; nconnect < (connect2d[jconnect].np1 + connect2d[jconnect].np2); nconnect++) {
       if (nconnect < connect2d[jconnect].np1) {
-        k = connect2d[jconnect].neigh_p1[nconnect];
+        ktag = connect2d[jconnect].neigh_p1[nconnect];
         nsidek = connect2d[jconnect].nside_p1[nconnect];
       } else {
-        k = connect2d[jconnect].neigh_p2[nconnect - connect2d[jconnect].np1];
+        ktag = connect2d[jconnect].neigh_p2[nconnect - connect2d[jconnect].np1];
         nsidek = connect2d[jconnect].nside_p2[nconnect - connect2d[jconnect].np1];
       }
+      k = atom->map(ktag);
+      if (k == -1)
+        error->one(FLERR, "Bad atom index");
 
       // Skip if not in contact
       if (contacts_map.find(k) == contacts_map.end())
@@ -928,6 +931,7 @@ void PairSurfGranular::prewalk_connections2d()
         m = contacts_map[k];
         if (nsidej == OPPOSITE_SIDE)
           nsidek = FLIPSIDE(nsidek);
+
         contact_surfs[m].nside = nsidek;
         to_walk[k] = nsidek;
       }
@@ -954,6 +958,7 @@ void PairSurfGranular::prewalk_connections3d()
   int j = contact_surfs[0].index;
   to_walk[j] = contact_surfs[0].nside;
 
+  tagint ktag;
   int k, n, m, jconnect, nsidej, nsidek, nconnect, nc, ntotal;
   std::tuple<int, int> element;
   while (!to_walk.empty()) {
@@ -975,17 +980,20 @@ void PairSurfGranular::prewalk_connections3d()
     for (nconnect = 0; nconnect < ntotal; nconnect++) {
       if (nconnect < connect3d[jconnect].ne1) {
         nc = nconnect;
-        k = connect3d[jconnect].neigh_e1[nc];
+        ktag = connect3d[jconnect].neigh_e1[nc];
         nsidek = connect3d[jconnect].nside_e1[nc];
       } else if (nconnect < connect3d[jconnect].ne1 + connect3d[jconnect].ne2) {
         nc = nconnect - connect3d[jconnect].ne1;
-        k = connect3d[jconnect].neigh_e2[nc];
+        ktag = connect3d[jconnect].neigh_e2[nc];
         nsidek = connect3d[jconnect].nside_e2[nc];
       } else {
         nc = nconnect - connect3d[jconnect].ne1 - connect3d[jconnect].ne2;
-        k = connect3d[jconnect].neigh_e3[nc];
+        ktag = connect3d[jconnect].neigh_e3[nc];
         nsidek = connect3d[jconnect].nside_e3[nc];
       }
+      k = atom->map(ktag);
+      if (k == -1)
+        error->one(FLERR, "Bad atom index");
 
       // Skip if not in contact
       if (contacts_map.find(k) == contacts_map.end())
@@ -1006,17 +1014,21 @@ void PairSurfGranular::prewalk_connections3d()
     for (nconnect = 0; nconnect < ntotal; nconnect++) {
       if (nconnect < connect3d[jconnect].nc1) {
         nc = nconnect;
-        k = connect3d[jconnect].neigh_c1[nc];
+        ktag = connect3d[jconnect].neigh_c1[nc];
         nsidek = connect3d[jconnect].nside_c1[nc];
       } else if (nconnect < connect3d[jconnect].nc1 + connect3d[jconnect].nc2) {
         nc = nconnect - connect3d[jconnect].nc1;
-        k = connect3d[jconnect].neigh_c2[nc];
+        ktag = connect3d[jconnect].neigh_c2[nc];
         nsidek = connect3d[jconnect].nside_c2[nc];
       } else {
         nc = nconnect - connect3d[jconnect].nc1 - connect3d[jconnect].nc2;
-        k = connect3d[jconnect].neigh_c3[nc];
+        ktag = connect3d[jconnect].neigh_c3[nc];
         nsidek = connect3d[jconnect].nside_c3[nc];
       }
+
+      k = atom->map(ktag);
+      if (k == -1)
+        error->one(FLERR, "Bad atom index");
 
       // Skip if not in contact
       if (contacts_map.find(k) == contacts_map.end())
@@ -1050,11 +1062,13 @@ void PairSurfGranular::prewalk_connections3d()
 void PairSurfGranular::walk_connections2d(int n, std::vector<int> *composite_surfs, std::unordered_set<int> *processed_contacts)
 {
   int j = contact_surfs[n].index;
+  int jconnect = atom2connect[j];
 
   processed_contacts->insert(j);
   composite_surfs->push_back(n);
 
-  int k, m, jconnect, aflag, which, nconnect, nc, convex_flag, contact_at_joint;
+  tagint ktag;
+  int k, m, aflag, which, nconnect, nc, convex_flag, contact_at_joint;
   int jflag = contact_surfs[n].flag;
 
   // Whether surf contact is at an exposed pt
@@ -1066,19 +1080,22 @@ void PairSurfGranular::walk_connections2d(int n, std::vector<int> *composite_sur
     contact_at_joint = 0; // If j's contact is at j-k joint
     if (nconnect < connect2d[jconnect].np1) {
       nc = nconnect;
-      k = connect2d[jconnect].neigh_p1[nc];
+      ktag = connect2d[jconnect].neigh_p1[nc];
       aflag = connect2d[jconnect].aflag_p1[nc];
       which = connect2d[jconnect].pwhich_p1[nc];
       if (jflag == -1)
         contact_at_joint = 1;
     } else {
       nc = nconnect - connect2d[jconnect].np1;
-      k = connect2d[jconnect].neigh_p2[nc];
+      ktag = connect2d[jconnect].neigh_p2[nc];
       aflag = connect2d[jconnect].aflag_p2[nc];
       which = connect2d[jconnect].pwhich_p2[nc];
       if (jflag == -2)
         contact_at_joint = 2;
     }
+    k = atom->map(ktag);
+    if (k == -1)
+      error->one(FLERR, "Bad atom index");
 
     // Skip if not in contact
     if (contacts_map.find(k) == contacts_map.end())
@@ -1118,11 +1135,13 @@ void PairSurfGranular::walk_connections2d(int n, std::vector<int> *composite_sur
 void PairSurfGranular::walk_connections3d(int n, std::vector<int> *composite_surfs, std::unordered_set<int> *processed_contacts)
 {
   int j = contact_surfs[n].index;
+  int jconnect = atom2connect[j];
 
   processed_contacts->insert(j);
   composite_surfs->push_back(n);
 
-  int k, m, jconnect, aflag, which, nconnect, nc, ntotal, convex_flag, contact_at_joint;
+  tagint ktag;
+  int k, m, aflag, which, nconnect, nc, ntotal, convex_flag, contact_at_joint;
   int jflag = contact_surfs[n].flag;
 
   // Whether surf contact is at an exposed pt/edge
@@ -1143,7 +1162,7 @@ void PairSurfGranular::walk_connections3d(int n, std::vector<int> *composite_sur
     if (nconnect < connect3d[jconnect].ne1) {
       // e1 = p1+p2
       nc = nconnect;
-      k = connect3d[jconnect].neigh_e1[nc];
+      ktag = connect3d[jconnect].neigh_e1[nc];
       aflag = connect3d[jconnect].aflag_e1[nc];
       which = connect3d[jconnect].ewhich_e1[nc];
       if (jflag == -1 || jflag == -4 || jflag == -5)
@@ -1151,7 +1170,7 @@ void PairSurfGranular::walk_connections3d(int n, std::vector<int> *composite_sur
     } else if (nconnect < connect3d[jconnect].ne1 + connect3d[jconnect].ne2) {
       // e2 = p2+p3
       nc = nconnect - connect3d[jconnect].ne1;
-      k = connect3d[jconnect].neigh_e2[nc];
+      ktag = connect3d[jconnect].neigh_e2[nc];
       aflag = connect3d[jconnect].aflag_e2[nc];
       which = connect3d[jconnect].ewhich_e2[nc];
       if (jflag == -2 || jflag == -5 || jflag == -6)
@@ -1159,12 +1178,16 @@ void PairSurfGranular::walk_connections3d(int n, std::vector<int> *composite_sur
     } else {
       // e3 = p1+p3
       nc = nconnect - connect3d[jconnect].ne1 - connect3d[jconnect].ne2;
-      k = connect3d[jconnect].neigh_e3[nc];
+      ktag = connect3d[jconnect].neigh_e3[nc];
       aflag = connect3d[jconnect].aflag_e3[nc];
       which = connect3d[jconnect].ewhich_e3[nc];
       if (jflag == -3 || jflag == -4 || jflag == -6)
         contact_at_joint = 1;
     }
+
+    k = atom->map(ktag);
+    if (k == -1)
+      error->one(FLERR, "Bad atom index");
 
     // Skip if not in contact
     if (contacts_map.find(k) == contacts_map.end())
@@ -1210,23 +1233,27 @@ void PairSurfGranular::walk_connections3d(int n, std::vector<int> *composite_sur
     contact_at_joint = 0;
     if (nconnect < connect3d[jconnect].nc1) {
       nc = nconnect;
-      k = connect3d[jconnect].neigh_c1[nc];
+      ktag = connect3d[jconnect].neigh_c1[nc];
       aflag = connect3d[jconnect].aflag_c1[nc];
       if (jflag == -4)
         contact_at_joint = 1;
     } else if (nconnect < connect3d[jconnect].nc1 + connect3d[jconnect].nc2) {
       nc = nconnect - connect3d[jconnect].nc1;
-      k = connect3d[jconnect].neigh_c2[nc];
+      ktag = connect3d[jconnect].neigh_c2[nc];
       aflag = connect3d[jconnect].aflag_c2[nc];
       if (jflag == -5)
         contact_at_joint = 1;
     } else {
       nc = nconnect - connect3d[jconnect].nc1 - connect3d[jconnect].nc2;
-      k = connect3d[jconnect].neigh_c3[nc];
+      ktag = connect3d[jconnect].neigh_c3[nc];
       aflag = connect3d[jconnect].aflag_c3[nc];
       if (jflag == -6)
         contact_at_joint = 1;
     }
+
+    k = atom->map(ktag);
+    if (k == -1)
+      error->one(FLERR, "Bad atom index");
 
     // Skip if not in contact
     if (contacts_map.find(k) == contacts_map.end())
