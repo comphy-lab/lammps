@@ -1298,6 +1298,7 @@ void ESP::compute_gf_ik_triclinic()
 
   int k,l,m,n,nx,ny,nz,kper,lper,mper;
   
+  const double * const prd = domain->prd;
   const double xprd = prd[0];
   const double yprd = prd[1];
   const double zprd = prd[2];
