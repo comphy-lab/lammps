@@ -54,8 +54,6 @@ class Pair : protected Pointers {
   int single_enable;              // 1 if single() routine exists
   int born_matrix_enable;         // 1 if born_matrix() routine exists
   int single_hessian_enable;      // 1 if single_hessian() routine exists
-  int atomic_energy_enable;       // 1 if compute_atomic_energy() routine exists
-
   int restartinfo;                // 1 if pair style writes restart info
   int respa_enable;               // 1 if inner/middle/outer rRESPA routines
   int one_coeff;                  // 1 if allows only one coeff * * call
@@ -69,6 +67,7 @@ class Pair : protected Pointers {
 
   int ewaldflag;         // 1 if compatible with Ewald solver
   int pppmflag;          // 1 if compatible with PPPM solver
+  int psflag;            // 1 if compatible with PS solver
   int msmflag;           // 1 if compatible with MSM solver
   int dispersionflag;    // 1 if compatible with LJ/dispersion solver
   int tip4pflag;         // 1 if compatible with TIP4P solver
@@ -142,7 +141,7 @@ class Pair : protected Pointers {
   void write_file(int, char **);
   void init_bitmap(double, double, int, int &, int &, int &, int &);
   virtual void modify_params(int, char **);
-  void compute_dummy(int eflag, int vflag, int alloc = 1);
+  void compute_dummy(int, int);
 
   // need to be public, so can be called by pair_style reaxc
 
@@ -158,7 +157,6 @@ class Pair : protected Pointers {
   virtual void compute_inner() {}
   virtual void compute_middle() {}
   virtual void compute_outer(int, int) {}
-  virtual double compute_atomic_energy(int, NeighList *) { return 0.0; }
 
   virtual double single(int, int, int, int, double, double, double, double &fforce)
   {
@@ -228,6 +226,8 @@ class Pair : protected Pointers {
   virtual void min_xf_get(int) {}
   virtual void min_x_set(int) {}
   virtual void transfer_history(double *, double *, int, int) {}
+  virtual double atom2cut(int) { return 0.0; }
+  virtual double radii2cut(double, double) { return 0.0; }
 
   // management of callbacks to be run from ev_tally()
 
@@ -265,12 +265,11 @@ class Pair : protected Pointers {
 
  public:
   // custom data type for accessing Coulomb tables
-  // NOLINTBEGIN
+
   typedef union {
     int i;
     float f;
   } union_int_float_t;
-  // NOLINTEND
 
   // Accessor for the INTEL package to determine virial calc for hybrid
 
