@@ -16,6 +16,8 @@
 
 #include "math_extra.h"
 
+static constexpr double EPSILON = 1e-14;
+
 using namespace MathExtra;
 
 namespace SurfExtra {
@@ -100,7 +102,7 @@ int overlap_sphere_tri(double *xsphere, double radius,
 {
   int e12flag,e23flag,e31flag,o12flag,o23flag,o31flag;
   int esum,osum,lineflag;
-  double dot;
+  double dot, xnorm;
   double a[3],point[3],edge[3],pvec[3],xproduct[3];
 
   // A = vector from P1 to Xsphere
@@ -120,6 +122,7 @@ int overlap_sphere_tri(double *xsphere, double radius,
   // pvec = vector from triangle vertex to projected point
   // xproduct = cross product of edge with pvec
   // if dot product of xproduct with norm < 0.0 for any of 3 edges,
+  //   (and pvec isn't parallel with edge)
   //   projected point is outside tri
   // NOTE: worry about round-off for pt being on edge or corner?
 
@@ -131,7 +134,8 @@ int overlap_sphere_tri(double *xsphere, double radius,
   MathExtra::sub3(pt,p1,pvec);
   MathExtra::cross3(edge,pvec,xproduct);
   dot = MathExtra::dot3(xproduct,norm);
-  if (dot <= 0.0) {
+  xnorm = MathExtra::lensq3(xproduct);
+  if (dot <= 0.0 && xnorm > EPSILON) {
     o12flag = 1;
     if (dot == 0.0) e12flag = 1;
     else inside = 0;
@@ -141,7 +145,8 @@ int overlap_sphere_tri(double *xsphere, double radius,
   MathExtra::sub3(pt,p2,pvec);
   MathExtra::cross3(edge,pvec,xproduct);
   dot = MathExtra::dot3(xproduct,norm);
-  if (dot <= 0.0) {
+  xnorm = MathExtra::lensq3(xproduct);
+  if (dot <= 0.0 && xnorm > EPSILON) {
     o23flag = 1;
     if (dot == 0.0) e23flag = 1;
     else inside = 0;
@@ -151,7 +156,8 @@ int overlap_sphere_tri(double *xsphere, double radius,
   MathExtra::sub3(pt,p3,pvec);
   MathExtra::cross3(edge,pvec,xproduct);
   dot = MathExtra::dot3(xproduct,norm);
-  if (dot <= 0.0) {
+  xnorm = MathExtra::lensq3(xproduct);
+  if (dot <= 0.0 && xnorm > EPSILON) {
     o31flag = 1;
     if (dot == 0.0) e31flag = 1;
     else inside = 0;
