@@ -81,6 +81,7 @@ PairSurfGranular::PairSurfGranular(LAMMPS *lmp) : PairGranular(lmp)
   corners = nullptr;
 
   contact_surfs = nullptr;
+  nmax_contact_surfs = -1;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -101,7 +102,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
   int inum, jnum, itype, jtype;
   int isphere, itri, jflag, kflag, exposed_flag;
   double xtmp, ytmp, ztmp, radi, delx, dely, delz;
-  double rsq, radsum, max_overlap, dot;
+  double rsq, rsq_com, radsum, max_overlap, dot;
   double factor_lj, mi, mj, meff;
   double norm[3], dr[3], contact[3], ds[3], xc[3], vc[3], omegac[3];
   double *endpt, *corner, *forces, *torquesi, *torquesj, dq;
@@ -119,9 +120,11 @@ void PairSurfGranular::compute(int eflag, int vflag)
   const bool history_update = update->setupflag == 0;
 
   class GranularModel* model;
-
-  for (int i = 0; i < nmodels; i++)
-    models_list[i]->history_update = history_update;
+  for (n = 0; n < nmodels; n++) {
+    model = models_list[n];
+    model->history_update = history_update;
+    model->radj = 0.0;
+  }
 
   ev_init(eflag,vflag);
 
@@ -237,13 +240,13 @@ void PairSurfGranular::compute(int eflag, int vflag)
       delx = xtmp - x[j][0];
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
-      rsq = delx * delx + dely * dely + delz * delz;
+      rsq_com = delx * delx + dely * dely + delz * delz;
 
       // skip contact check if particle/surf are too far apart
 
       radsum = radi + radius[j];
 
-      if (rsq > radsum * radsum) {
+      if (rsq_com > radsum * radsum) {
         if (use_history) {
           touch[jj] = 0;
           history = &allhistory[size_history * jj];
@@ -293,6 +296,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
         nmax_contact_surfs += DELTACONTACTS;
         memory->grow(contact_surfs, nmax_contact_surfs * sizeof(FixSurface::ContactSurf),
                                       "surf/granular:contact_surfs");
+
       }
 
       // Find out if contact is on an exposed edge/corner
@@ -320,9 +324,10 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
       // Currently does not handle unconnected edges/corners in 3D
       if (dimension == 3) {
-        if (exposed_flag == UNCONNECTED)
+        if (exposed_flag == UNCONNECTED) {
           error->warning(FLERR, "Contact detected with an unconnected tri edge/corner");
-        exposed_flag = exposed_flag == EXPOSED;
+          exposed_flag = EXPOSED;
+        }
       }
 
       contact_surfs[n_contact_surfs].index = j;
@@ -332,14 +337,15 @@ void PairSurfGranular::compute(int eflag, int vflag)
       contact_surfs[n_contact_surfs].exposed = exposed_flag;
       contact_surfs[n_contact_surfs].nside = nsidej;
       contact_surfs[n_contact_surfs].overlap = radi - sqrt(rsq);
-      contact_surfs[n_contact_surfs].overlap_ext = 0.0;
-      contact_surfs[n_contact_surfs].copy_ext = -2;
+      contact_surfs[n_contact_surfs].rank_ext = -1;
+      contact_surfs[n_contact_surfs].copy_rank_ext = -2;
       contact_surfs[n_contact_surfs].weight_contribution = 1.0;
       contact_surfs[n_contact_surfs].weight_overlap = 1.0;
       contact_surfs[n_contact_surfs].weight_ext = 0.0;
       contact_surfs[n_contact_surfs].convex_preceding_contact = -1;
       contact_surfs[n_contact_surfs].convex_superseding_contact = -1;
       contact_surfs[n_contact_surfs].concave_contact = -1;
+      contact_surfs[n_contact_surfs].rsq_com = rsq_com;
       contact_surfs[n_contact_surfs].priority = 2;
       if (jflag != 1) contact_surfs[n_contact_surfs].priority = 1;
       if (dimension == 3 && jflag < -3)
@@ -363,14 +369,15 @@ void PairSurfGranular::compute(int eflag, int vflag)
         if (b.overlap > (a.overlap + EPSILON)) return 0;
         if (a.priority > b.priority) return 1; // 2nd, prioritize interior > edge > corner
         if (b.priority > a.priority) return 0;
-        double dota = MathExtra::dot3(a.surf_norm, a.dr);
-        double dotb = MathExtra::dot3(b.surf_norm, b.dr);
-        dota = fabs(dota); // sign may not yet be set
-        dotb = fabs(dotb);
-        if (dota > dotb) return 1; // 3rd, prioritize which one aligns best
-        if (dotb > dota) return 0;
+        double dota = fabs(MathExtra::dot3(a.surf_norm, a.dr)); // sign may not yet be set
+        double dotb = fabs(MathExtra::dot3(b.surf_norm, b.dr));
+        if (dota > (dotb + EPSILON)) return 1; // 3rd, prioritize which one aligns best
+        if (dotb > (dota + EPSILON)) return 0;
+        if (a.rsq_com < (b.rsq_com - EPSILON)) return 1; // 4th, prioritize closer CoM
+        if (b.rsq_com < (a.rsq_com - EPSILON)) return 0;
         return 1;
       });
+
     contacts_map.clear();
     for (n = 0; n < n_contact_surfs; n++)
       contacts_map[contact_surfs[n].index] = n;
@@ -390,8 +397,10 @@ void PairSurfGranular::compute(int eflag, int vflag)
         if (b.priority > a.priority) return 0;
         double dota = MathExtra::dot3(a.surf_norm, a.dr);
         double dotb = MathExtra::dot3(b.surf_norm, b.dr);
-        if (dota > dotb) return 1; // 3rd, prioritize which one aligns best
-        if (dotb > dota) return 0;
+        if (dota > (dotb + EPSILON)) return 1; // 3rd, prioritize which one aligns best
+        if (dotb > (dota + EPSILON)) return 0;
+        if (a.rsq_com < (b.rsq_com - EPSILON)) return 1; // 4th, prioritize closer CoM
+        if (b.rsq_com < (a.rsq_com - EPSILON)) return 0;
         return 1;
       });
 
@@ -434,6 +443,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
         MathExtra::norm3(dr);
         MathExtra::scale3(radi - max_overlap, dr);
+
       } else {
         MathExtra::scale3(radi - max_overlap, contact_surfs[n].force_norm, dr);
       }
@@ -450,7 +460,10 @@ void PairSurfGranular::compute(int eflag, int vflag)
       model->radi = radi;
       model->vi = v[i];
       model->omegai = omega[i];
-      if (heat_flag) model->Ti = temperature[i];
+      if (heat_flag) {
+        model->Ti = temperature[i];
+        model->Tj = temperature[j];
+      }
 
       // meff = effective mass of sphere and line/tri
       // if I or J is part of rigid body,use body mass
@@ -1327,7 +1340,7 @@ void PairSurfGranular::calculate_2d_forces(std::vector<int> *composite_surfs)
     n = (*composite_surfs)[it];
     if (contact_surfs[n].exposed) {
       // If correction never applied, default to dr
-      if (contact_surfs[n].overlap_ext == 0)
+      if (contact_surfs[n].rank_ext == -1)
         MathExtra::copy3(contact_surfs[n].dr, contact_surfs[n].dr_ext);
       MathExtra::norm3(contact_surfs[n].dr_ext);
 
@@ -1394,15 +1407,16 @@ void PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
 
   for (auto it = 0; it < composite_surfs->size(); it++) {
     n = (*composite_surfs)[it];
+
     if (contact_surfs[n].exposed) {
       // If correction never applied, default to dr
-      if (contact_surfs[n].overlap_ext == 0)
+      if (contact_surfs[n].rank_ext == -1)
         MathExtra::copy3(contact_surfs[n].dr, contact_surfs[n].dr_ext);
 
       // If copying from another surf
-      if (contact_surfs[n].copy_ext > -1) {
-        m = contact_surfs[n].copy_ext;
-        if (contact_surfs[m].overlap_ext == 0)
+      if (contact_surfs[n].copy_rank_ext > -1) {
+        m = contact_surfs[n].copy_rank_ext;
+        if (contact_surfs[m].rank_ext == -1)
           MathExtra::copy3(contact_surfs[m].dr, contact_surfs[n].dr_ext);
         else
           MathExtra::copy3(contact_surfs[m].dr_ext, contact_surfs[n].dr_ext);
@@ -1427,12 +1441,12 @@ void PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
 
 void PairSurfGranular::adjust_exposed_pt_flat_2d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext >= contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Further than current surf
-  if (contact_surfs[n].overlap > contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // Otherwise, see if dr has component pointing into other (k) line
@@ -1466,7 +1480,7 @@ void PairSurfGranular::adjust_exposed_pt_flat_2d(int j, int k, int n, int m)
 
   if (dot > 0) {
     MathExtra::scaleadd3(-dot, kline, dr_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+    contact_surfs[n].rank_ext = m;
   }
 }
 
@@ -1476,18 +1490,18 @@ void PairSurfGranular::adjust_exposed_pt_flat_2d(int j, int k, int n, int m)
 
 void PairSurfGranular::adjust_exposed_pt_nonflat_2d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext >= contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap > contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // If concave, use surface normal ~ two forces
   if (contact_surfs[n].concave_contact != -1) {
     MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+    contact_surfs[n].rank_ext = m;
   }
 }
 
@@ -1497,19 +1511,19 @@ void PairSurfGranular::adjust_exposed_pt_nonflat_2d(int j, int k, int n, int m)
 
 void PairSurfGranular::adjust_exposed_edge_flat_3d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext > contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap >= contact_surfs[m].overlap)
+  // Only higher priority contacts can correct
+  if (n < m)
     return;
 
   // If superceding k contact is internal + flat, just use jnorm
   if (!contact_surfs[m].exposed) {
     MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
-    contact_surfs[n].copy_ext = -1;
+    contact_surfs[n].rank_ext = m;
+    contact_surfs[n].copy_rank_ext = -1;
   }
 }
 
@@ -1519,25 +1533,25 @@ void PairSurfGranular::adjust_exposed_edge_flat_3d(int j, int k, int n, int m)
 
 void PairSurfGranular::adjust_exposed_pt_flat_3d(int j, int k, int n, int m)
 {
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap >= contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // Already corrected by a closer flat surf
-  if (contact_surfs[n].copy_ext != -2 && contact_surfs[n].overlap_ext > contact_surfs[m].overlap)
+  if (contact_surfs[n].copy_rank_ext != -2 && contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
   // If superceding k contact is internal + flat, just use jnorm
   if (!contact_surfs[m].exposed) {
     MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
-    contact_surfs[n].copy_ext = -1;
+    contact_surfs[n].rank_ext = m;
+    contact_surfs[n].copy_rank_ext = -1;
   }
 
     // If superceding k contact is a flat external edge, copy it's result
   if (contact_surfs[m].exposed && contact_surfs[m].flag > -4) {
-    contact_surfs[n].copy_ext = m;
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+    contact_surfs[n].copy_rank_ext = m;
+    contact_surfs[n].rank_ext = m;
   }
 }
 
@@ -1547,22 +1561,22 @@ void PairSurfGranular::adjust_exposed_pt_flat_3d(int j, int k, int n, int m)
 
 void PairSurfGranular::adjust_exposed_edge_nonflat_3d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext > contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap >= contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // Skip if corrected by flat surf
-  if (contact_surfs[n].copy_ext != -2)
+  if (contact_surfs[n].copy_rank_ext != -2)
     return;
 
   // If concave, use surface normal ~ two forces
   if (contact_surfs[n].concave_contact != -1) {
     MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+    contact_surfs[n].rank_ext = m;
     return;
   }
 }
@@ -1573,16 +1587,16 @@ void PairSurfGranular::adjust_exposed_edge_nonflat_3d(int j, int k, int n, int m
 
 void PairSurfGranular::adjust_exposed_pt_nonflat_3d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext >= contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap >= contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // Skip if corrected by flat surf
-  if (contact_surfs[n].copy_ext != -2)
+  if (contact_surfs[n].copy_rank_ext != -2)
     return;
 
   // If superceding k contact is not flat, project into j-k norm plane
@@ -1633,9 +1647,9 @@ void PairSurfGranular::adjust_exposed_pt_nonflat_3d(int j, int k, int n, int m)
   if (pt == -1) error->one(FLERR, "Bad geometry?");
 
   int *tri = atom->tri;
-  double *pt_x = &endpts[tri[j]][pt];
-  double *ptj1_x = &endpts[tri[j]][ptj1];
-  double *ptj2_x = &endpts[tri[j]][ptj2];
+  double *pt_x = &corners[tri[j]][pt];
+  double *ptj1_x = &corners[tri[j]][ptj1];
+  double *ptj2_x = &corners[tri[j]][ptj2];
 
   double jline1[3], jline2[3];
   MathExtra::sub3(pt_x, ptj1_x, jline1);
@@ -1649,5 +1663,5 @@ void PairSurfGranular::adjust_exposed_pt_nonflat_3d(int j, int k, int n, int m)
 
   MathExtra::scaleadd3(w, dr, 1.0 - w, contact_surfs[n].dr_ext, contact_surfs[n].dr_ext);
 
-  contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+  contact_surfs[n].rank_ext = m;
 }

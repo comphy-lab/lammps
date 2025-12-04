@@ -841,7 +841,7 @@ void FixSurfaceGlobal::post_force(int vflag)
   double xtmp, ytmp, ztmp, radi, delx, dely, delz, meff;
   int *ilist, *jlist, *numneigh, **firstneigh;
   int *touch, **firstflag, touch_flag;
-  double rsq, radsum, max_overlap, dot;
+  double rsq, rsq_com, radsum, max_overlap, dot;
   double norm[3], dr[3], contact[3], ds[3], xc[3], vc[3], omegac[3];
   double *forces, *torquesi, *history, *allhistory, **firsthistory;
 
@@ -945,12 +945,12 @@ void FixSurfaceGlobal::post_force(int vflag)
       delx = xtmp - xsurf[j][0];
       dely = ytmp - xsurf[j][1];
       delz = ztmp - xsurf[j][2];
-      rsq = delx * delx + dely * dely + delz * delz;
+      rsq_com = delx * delx + dely * dely + delz * delz;
 
       // skip contact check if particle/surf are too far apart
 
       radsum = radi + radsurf[j];
-      if (rsq > radsum * radsum) {
+      if (rsq_com > radsum * radsum) {
         if (use_history) {
           touch[jj] = 0;
           history = &allhistory[size_history * jj];
@@ -1038,9 +1038,10 @@ void FixSurfaceGlobal::post_force(int vflag)
 
       // Currently does not handle unconnected edges/corners in 3D
       if (dimension == 3) {
-        if (exposed_flag == UNCONNECTED)
+        if (exposed_flag == UNCONNECTED) {
           error->warning(FLERR, "Contact detected with an unconnected tri edge/corner");
-        exposed_flag = exposed_flag == EXPOSED;
+          exposed_flag = EXPOSED;
+        }
       }
 
       contact_surfs[n_contact_surfs].index = j;
@@ -1050,14 +1051,15 @@ void FixSurfaceGlobal::post_force(int vflag)
       contact_surfs[n_contact_surfs].exposed = exposed_flag;
       contact_surfs[n_contact_surfs].nside = nsidej;
       contact_surfs[n_contact_surfs].overlap = radi - sqrt(rsq);
-      contact_surfs[n_contact_surfs].overlap_ext = 0.0;
-      contact_surfs[n_contact_surfs].copy_ext = -2;
+      contact_surfs[n_contact_surfs].rank_ext = -1;
+      contact_surfs[n_contact_surfs].copy_rank_ext = -2;
       contact_surfs[n_contact_surfs].weight_contribution = 1.0;
       contact_surfs[n_contact_surfs].weight_overlap = 1.0;
       contact_surfs[n_contact_surfs].weight_ext = 0.0;
       contact_surfs[n_contact_surfs].convex_preceding_contact = -1;
       contact_surfs[n_contact_surfs].convex_superseding_contact = -1;
       contact_surfs[n_contact_surfs].concave_contact = -1;
+      contact_surfs[n_contact_surfs].rsq_com = rsq_com;
       contact_surfs[n_contact_surfs].priority = 2;
       if (jflag != 1) contact_surfs[n_contact_surfs].priority = 1;
       if (dimension == 3 && jflag < -3)
@@ -1076,20 +1078,19 @@ void FixSurfaceGlobal::post_force(int vflag)
       continue;
 
     // Sort contacts by overlap and create a map
-    std::sort(contact_surfs, contact_surfs + n_contact_surfs, [](ContactSurf a, ContactSurf b) {return a.overlap > b.overlap;});
-    /*std::sort(contact_surfs, contact_surfs + n_contact_surfs, [](ContactSurf a, ContactSurf b) {
+    std::sort(contact_surfs, contact_surfs + n_contact_surfs, [](ContactSurf a, ContactSurf b) {
         if (a.overlap > (b.overlap + EPSILON)) return 1; // 1st compare overlaps within epsilon
         if (b.overlap > (a.overlap + EPSILON)) return 0;
-        //if (a.priority > b.priority) return 1; // 2nd, prioritize interior > edge > corner
-        //if (b.priority > a.priority) return 0;
-        double dota = MathExtra::dot3(a.surf_norm, a.dr);
-        double dotb = MathExtra::dot3(b.surf_norm, b.dr);
-        dota = fabs(dota); // sign may not yet be set
-        dotb = fabs(dotb);
-        //if (dota > dotb) return 1; // 3rd, prioritize which one aligns best
-        //if (dotb > dota) return 0;
+        if (a.priority > b.priority) return 1; // 2nd, prioritize interior > edge > corner
+        if (b.priority > a.priority) return 0;
+        double dota = fabs(MathExtra::dot3(a.surf_norm, a.dr)); // sign may not yet be set
+        double dotb = fabs(MathExtra::dot3(b.surf_norm, b.dr));
+        if (dota > (dotb + EPSILON)) return 1; // 3rd, prioritize which one aligns best
+        if (dotb > (dota + EPSILON)) return 0;
+        if (a.rsq_com < (b.rsq_com - EPSILON)) return 1; // 4th, prioritize closer CoM
+        if (b.rsq_com < (a.rsq_com - EPSILON)) return 0;
         return 1;
-      });*/
+      });
 
     contacts_map.clear();
     for (n = 0; n < n_contact_surfs; n++)
@@ -1110,8 +1111,10 @@ void FixSurfaceGlobal::post_force(int vflag)
         if (b.priority > a.priority) return 0;
         double dota = MathExtra::dot3(a.surf_norm, a.dr);
         double dotb = MathExtra::dot3(b.surf_norm, b.dr);
-        if (dota > dotb) return 1; // 3rd, prioritize which one aligns best
-        if (dotb > dota) return 0;
+        if (dota > (dotb + EPSILON)) return 1; // 3rd, prioritize which one aligns best
+        if (dotb > (dota + EPSILON)) return 0;
+        if (a.rsq_com < (b.rsq_com - EPSILON)) return 1; // 4th, prioritize closer CoM
+        if (b.rsq_com < (a.rsq_com - EPSILON)) return 0;
         return 1;
       });
 
@@ -1151,7 +1154,6 @@ void FixSurfaceGlobal::post_force(int vflag)
           m = (*composite_surfs)[it];
           MathExtra::scaleadd3(contact_surfs[m].overlap * contact_surfs[m].weight_contribution, contact_surfs[m].force_norm, dr, dr);
         }
-
         MathExtra::norm3(dr);
         MathExtra::scale3(radi - max_overlap, dr);
       } else {
@@ -2471,6 +2473,7 @@ void FixSurfaceGlobal::connectivity3d_complete()
       inorm = tris[i].norm;
       jnorm = tris[j].norm;
       dotnorm = MathExtra::dot3(inorm,jnorm);
+
       if (dotnorm < 0.0)
         connect3d[i].nside_c2[m] = OPPOSITE_SIDE;
       else
@@ -2520,12 +2523,14 @@ void FixSurfaceGlobal::connectivity3d_complete()
         connect3d[i].exposed_edge[2] = EXPOSED;
 
     // or unconnected on border
+    /* REMOVING FOR TESTING
     if (connect3d[i].ne1 == 0)
       connect3d[i].exposed_edge[0] = UNCONNECTED;
     if (connect3d[i].ne2 == 0)
       connect3d[i].exposed_edge[1] = UNCONNECTED;
     if (connect3d[i].ne3 == 0)
       connect3d[i].exposed_edge[2] = UNCONNECTED;
+    */
 
     // corners basically inherit from connected edges
     connect3d[i].exposed_pt[0] = MAX(connect3d[i].exposed_edge[0], connect3d[i].exposed_edge[2]);
@@ -3414,6 +3419,7 @@ void FixSurfaceGlobal::prewalk_connections3d()
         m = contacts_map[k];
         if (nsidej == OPPOSITE_SIDE)
           nsidek = FLIPSIDE(nsidek);
+
         contact_surfs[m].nside = nsidek;
         to_walk[k] = nsidek;
       }
@@ -3718,7 +3724,7 @@ void FixSurfaceGlobal::calculate_2d_forces(std::vector<int> *composite_surfs)
     n = (*composite_surfs)[it];
     if (contact_surfs[n].exposed) {
       // If correction never applied, default to dr
-      if (contact_surfs[n].overlap_ext == 0)
+      if (contact_surfs[n].rank_ext == -1)
         MathExtra::copy3(contact_surfs[n].dr, contact_surfs[n].dr_ext);
       MathExtra::norm3(contact_surfs[n].dr_ext);
 
@@ -3785,15 +3791,16 @@ void FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
 
   for (auto it = 0; it < composite_surfs->size(); it++) {
     n = (*composite_surfs)[it];
+
     if (contact_surfs[n].exposed) {
       // If correction never applied, default to dr
-      if (contact_surfs[n].overlap_ext == 0)
+      if (contact_surfs[n].rank_ext == -1)
         MathExtra::copy3(contact_surfs[n].dr, contact_surfs[n].dr_ext);
 
       // If copying from another surf
-      if (contact_surfs[n].copy_ext > -1) {
-        m = contact_surfs[n].copy_ext;
-        if (contact_surfs[m].overlap_ext == 0)
+      if (contact_surfs[n].copy_rank_ext > -1) {
+        m = contact_surfs[n].copy_rank_ext;
+        if (contact_surfs[m].rank_ext == -1)
           MathExtra::copy3(contact_surfs[m].dr, contact_surfs[n].dr_ext);
         else
           MathExtra::copy3(contact_surfs[m].dr_ext, contact_surfs[n].dr_ext);
@@ -3818,12 +3825,12 @@ void FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
 
 void FixSurfaceGlobal::adjust_exposed_pt_flat_2d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext >= contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Further than current surf
-  if (contact_surfs[n].overlap > contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // Otherwise, see if dr has component pointing into other (k) line
@@ -3854,7 +3861,7 @@ void FixSurfaceGlobal::adjust_exposed_pt_flat_2d(int j, int k, int n, int m)
 
   if (dot > 0) {
     MathExtra::scaleadd3(-dot, kline, dr_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+    contact_surfs[n].rank_ext = m;
   }
 }
 
@@ -3864,18 +3871,18 @@ void FixSurfaceGlobal::adjust_exposed_pt_flat_2d(int j, int k, int n, int m)
 
 void FixSurfaceGlobal::adjust_exposed_pt_nonflat_2d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext >= contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap > contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // If concave, use surface normal ~ two forces
   if (contact_surfs[n].concave_contact != -1) {
     MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+    contact_surfs[n].rank_ext = m;
   }
 }
 
@@ -3885,19 +3892,19 @@ void FixSurfaceGlobal::adjust_exposed_pt_nonflat_2d(int j, int k, int n, int m)
 
 void FixSurfaceGlobal::adjust_exposed_edge_flat_3d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext > contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap >= contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // If superceding k contact is internal + flat, just use jnorm
   if (!contact_surfs[m].exposed) {
     MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
-    contact_surfs[n].copy_ext = -1;
+    contact_surfs[n].rank_ext = m;
+    contact_surfs[n].copy_rank_ext = -1;
   }
 }
 
@@ -3907,25 +3914,25 @@ void FixSurfaceGlobal::adjust_exposed_edge_flat_3d(int j, int k, int n, int m)
 
 void FixSurfaceGlobal::adjust_exposed_pt_flat_3d(int j, int k, int n, int m)
 {
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap >= contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // Already corrected by a closer flat surf
-  if (contact_surfs[n].copy_ext != -2 && contact_surfs[n].overlap_ext > contact_surfs[m].overlap)
+  if (contact_surfs[n].copy_rank_ext != -2 && contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
   // If superceding k contact is internal + flat, just use jnorm
   if (!contact_surfs[m].exposed) {
     MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
-    contact_surfs[n].copy_ext = -1;
+    contact_surfs[n].rank_ext = m;
+    contact_surfs[n].copy_rank_ext = -1;
   }
 
     // If superceding k contact is a flat external edge, copy it's result
   if (contact_surfs[m].exposed && contact_surfs[m].flag > -4) {
-    contact_surfs[n].copy_ext = m;
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+    contact_surfs[n].copy_rank_ext = m;
+    contact_surfs[n].rank_ext = m;
   }
 }
 
@@ -3935,22 +3942,22 @@ void FixSurfaceGlobal::adjust_exposed_pt_flat_3d(int j, int k, int n, int m)
 
 void FixSurfaceGlobal::adjust_exposed_edge_nonflat_3d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext > contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap >= contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // Skip if corrected by flat surf
-  if (contact_surfs[n].copy_ext != -2)
+  if (contact_surfs[n].copy_rank_ext != -2)
     return;
 
   // If concave, use surface normal ~ two forces
   if (contact_surfs[n].concave_contact != -1) {
     MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_ext);
-    contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+    contact_surfs[n].rank_ext = m;
     return;
   }
 }
@@ -3961,16 +3968,16 @@ void FixSurfaceGlobal::adjust_exposed_edge_nonflat_3d(int j, int k, int n, int m
 
 void FixSurfaceGlobal::adjust_exposed_pt_nonflat_3d(int j, int k, int n, int m)
 {
-  // Already adjusted by closer surf
-  if (contact_surfs[n].overlap_ext >= contact_surfs[m].overlap)
+  // Already adjusted by higher ranked surf
+  if (contact_surfs[n].rank_ext != -1 && contact_surfs[n].rank_ext < m)
     return;
 
-  // Only closer contacts can correct
-  if (contact_surfs[n].overlap >= contact_surfs[m].overlap)
+  // Only higher ranked contacts can correct
+  if (n < m)
     return;
 
   // Skip if corrected by flat surf
-  if (contact_surfs[n].copy_ext != -2)
+  if (contact_surfs[n].copy_rank_ext != -2)
     return;
 
   // If superceding k contact is not flat, project into j-k norm plane
@@ -4032,5 +4039,5 @@ void FixSurfaceGlobal::adjust_exposed_pt_nonflat_3d(int j, int k, int n, int m)
 
   MathExtra::scaleadd3(w, dr, 1.0 - w, contact_surfs[n].dr_ext, contact_surfs[n].dr_ext);
 
-  contact_surfs[n].overlap_ext = contact_surfs[m].overlap;
+  contact_surfs[n].rank_ext = m;
 }

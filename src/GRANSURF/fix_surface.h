@@ -94,8 +94,8 @@ class FixSurface : public Fix {
 
   struct ContactSurf {
     int index, neigh_index, type, flag, nside, exposed, concave_contact;
-    int convex_superseding_contact, convex_preceding_contact, copy_ext, priority;
-    double overlap, overlap_ext, overlap_force;
+    int convex_superseding_contact, convex_preceding_contact, copy_rank_ext, priority;
+    double overlap, overlap_force, rsq_com, rank_ext;
     double weight_ext, weight_overlap, weight_contribution;
     double contact[3], dr[3], surf_norm[3], force_norm[3], dr_ext[3];
   };

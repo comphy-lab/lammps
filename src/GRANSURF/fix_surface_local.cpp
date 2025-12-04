@@ -3517,12 +3517,14 @@ void FixSurfaceLocal::connectivity3d_complete()
         connect3d[iconnect].exposed_edge[2] = EXPOSED;
 
     // or unconnected on border
+    /* REMOVING FOR TESTING
     if (connect3d[iconnect].ne1 == 0)
       connect3d[iconnect].exposed_edge[0] = UNCONNECTED;
     if (connect3d[iconnect].ne2 == 0)
       connect3d[iconnect].exposed_edge[1] = UNCONNECTED;
     if (connect3d[iconnect].ne3 == 0)
       connect3d[iconnect].exposed_edge[2] = UNCONNECTED;
+    */
 
     // corners basically inherit from connected edges
     connect3d[iconnect].exposed_pt[0] = MAX(connect3d[iconnect].exposed_edge[0], connect3d[iconnect].exposed_edge[2]);
