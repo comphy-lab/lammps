@@ -51,7 +51,7 @@ enum{SAME_SIDE,OPPOSITE_SIDE};
 enum{INTERIOR = 0,EXPOSED,UNCONNECTED};
 
 static constexpr int DELTACONTACTS = 4;
-static constexpr double EPSILON = 1e-14;
+static constexpr double EPSILON = 1e-12;
 static constexpr double BIG = 1.0e20;
 
 static inline int FLIPSIDE(int nside) {
@@ -351,11 +351,13 @@ void PairSurfGranular::compute(int eflag, int vflag)
       if (dimension == 3 && jflag < -3)
         contact_surfs[n_contact_surfs].priority = 0;
 
-      MathExtra::zero3(contact_surfs[n_contact_surfs].force_norm);
+      MathExtra::zero3(contact_surfs[n_contact_surfs].dr_force);
       MathExtra::copy3(norm, contact_surfs[n_contact_surfs].surf_norm);
-      MathExtra::normalize3(dr, contact_surfs[n_contact_surfs].dr);
       MathExtra::copy3(contact, contact_surfs[n_contact_surfs].contact);
-      MathExtra::zero3(contact_surfs[n_contact_surfs].dr_ext);
+
+      MathExtra::norm3(dr);
+      MathExtra::copy3(dr, contact_surfs[n_contact_surfs].dr);
+      MathExtra::copy3(dr, contact_surfs[n_contact_surfs].dr_ext);
 
       n_contact_surfs += 1;
     }
@@ -438,14 +440,14 @@ void PairSurfGranular::compute(int eflag, int vflag)
         MathExtra::zero3(dr);
         for (it = 0; it < composite_surfs->size(); it++) {
           m = (*composite_surfs)[it];
-          MathExtra::scaleadd3(contact_surfs[m].overlap * contact_surfs[m].weight_contribution, contact_surfs[m].force_norm, dr, dr);
+          MathExtra::scaleadd3(contact_surfs[m].overlap * contact_surfs[m].weight_contribution, contact_surfs[m].dr_force, dr, dr);
         }
 
         MathExtra::norm3(dr);
         MathExtra::scale3(radi - max_overlap, dr);
 
       } else {
-        MathExtra::scale3(radi - max_overlap, contact_surfs[n].force_norm, dr);
+        MathExtra::scale3(radi - max_overlap, contact_surfs[n].dr_force, dr);
       }
 
       for (a = 0; a < 3; a++)
@@ -1311,8 +1313,19 @@ void PairSurfGranular::calculate_2d_forces(std::vector<int> *composite_surfs)
     j = contact_surfs[n].index;
 
     if (contact_surfs[n].convex_preceding_contact != -1) {
+      // Hide composite surface, unless it's self-hidden (e.g. hairpin turns)
       hidden = 1;
-      break;
+      for (auto it2 = 0; it2 < composite_surfs->size(); it2++) {
+        m = (*composite_surfs)[it2];
+        k = contact_surfs[m].index;
+        if (contact_surfs[n].convex_preceding_contact == k) {
+          hidden = 0;
+          break;
+        }
+      }
+
+      if (hidden == 1)
+        break;
     }
 
     if (contact_surfs[n].exposed)
@@ -1339,16 +1352,11 @@ void PairSurfGranular::calculate_2d_forces(std::vector<int> *composite_surfs)
   for (auto it = 0; it < composite_surfs->size(); it++) {
     n = (*composite_surfs)[it];
     if (contact_surfs[n].exposed) {
-      // If correction never applied, default to dr
-      if (contact_surfs[n].rank_ext == -1)
-        MathExtra::copy3(contact_surfs[n].dr, contact_surfs[n].dr_ext);
-      MathExtra::norm3(contact_surfs[n].dr_ext);
-
-      // Interpolate between surface normal and dr using smoothing
-      MathExtra::scaleadd3(w_ext, contact_surfs[n].dr_ext, w_int, contact_surfs[n].surf_norm, contact_surfs[n].force_norm);
-      MathExtra::norm3(contact_surfs[n].force_norm);
+      // Interpolate between surface normal and dr_ext using smoothing
+      MathExtra::scaleadd3(w_ext, contact_surfs[n].dr_ext, w_int, contact_surfs[n].surf_norm, contact_surfs[n].dr_force);
+      MathExtra::norm3(contact_surfs[n].dr_force);
     } else {
-      MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].force_norm);
+      MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_force);
       if (w_ext > EPSILON)
         contact_surfs[n].weight_contribution *= w_int;
     }
@@ -1380,8 +1388,19 @@ void PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
     j = contact_surfs[n].index;
 
     if (contact_surfs[n].convex_preceding_contact != -1) {
+      // Hide composite surface, unless it's self-hidden (e.g. hairpin turns)
       hidden = 1;
-      break;
+      for (auto it2 = 0; it2 < composite_surfs->size(); it2++) {
+        m = (*composite_surfs)[it2];
+        k = contact_surfs[m].index;
+        if (contact_surfs[n].convex_preceding_contact == k) {
+          hidden = 0;
+          break;
+        }
+      }
+
+      if (hidden == 1)
+        break;
     }
 
     if (contact_surfs[n].exposed)
@@ -1409,10 +1428,6 @@ void PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
     n = (*composite_surfs)[it];
 
     if (contact_surfs[n].exposed) {
-      // If correction never applied, default to dr
-      if (contact_surfs[n].rank_ext == -1)
-        MathExtra::copy3(contact_surfs[n].dr, contact_surfs[n].dr_ext);
-
       // If copying from another surf
       if (contact_surfs[n].copy_rank_ext > -1) {
         m = contact_surfs[n].copy_rank_ext;
@@ -1422,12 +1437,12 @@ void PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
           MathExtra::copy3(contact_surfs[m].dr_ext, contact_surfs[n].dr_ext);
       }
 
-      // Interpolate between surface normal and dr using smoothing
-      MathExtra::scaleadd3(w_ext, contact_surfs[n].dr_ext, w_int, contact_surfs[n].surf_norm, contact_surfs[n].force_norm);
-      MathExtra::norm3(contact_surfs[n].force_norm);
+      // Interpolate between surface normal and dr_ext using smoothing
+      MathExtra::scaleadd3(w_ext, contact_surfs[n].dr_ext, w_int, contact_surfs[n].surf_norm, contact_surfs[n].dr_force);
+      MathExtra::norm3(contact_surfs[n].dr_force);
       contact_surfs[n].weight_contribution *= w_ext;
     } else {
-      MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].force_norm);
+      MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_force);
       contact_surfs[n].weight_contribution *= w_int;
     }
 
@@ -1474,12 +1489,13 @@ void PairSurfGranular::adjust_exposed_pt_flat_2d(int j, int k, int n, int m)
 
   // remove any component of dr that lies along kline
 
-  double dr_norm[3];
-  MathExtra::normalize3(contact_surfs[n].dr, dr_norm);
-  double dot = MathExtra::dot3(dr_norm, kline);
+  double dr[3];
+  MathExtra::copy3(contact_surfs[n].dr, dr);
+  double dot = MathExtra::dot3(dr, kline);
 
   if (dot > 0) {
-    MathExtra::scaleadd3(-dot, kline, dr_norm, contact_surfs[n].dr_ext);
+    MathExtra::scaleadd3(-dot, kline, dr, contact_surfs[n].dr_ext);
+    MathExtra::norm3(contact_surfs[n].dr_ext);
     contact_surfs[n].rank_ext = m;
   }
 }
@@ -1623,10 +1639,11 @@ void PairSurfGranular::adjust_exposed_pt_nonflat_3d(int j, int k, int n, int m)
   MathExtra::scale3(dot, jnorm, dr_proj);
   double scale = magsq_proj / MathExtra::lensq3(dr_proj);
 
-  MathExtra::scaleadd3(scale, dr_proj, dr_keep,contact_surfs[n].dr_ext);
+  double dr_tmp[3];
+  MathExtra::scaleadd3(scale, dr_proj, dr_keep, dr_tmp);
 
-  // Now smooth as it interpolates away from beingperpendicular with edge
-  //   later move to calcualte forces so it's onlycalculated once
+  // Now smooth as it interpolates away from being perpendicular with edge
+  //   later, move to calculate_forces so it's only calculated once
 
   int pt = -1;
   int ptj1 = -1;
@@ -1661,7 +1678,8 @@ void PairSurfGranular::adjust_exposed_pt_nonflat_3d(int j, int k, int n, int m)
   double dot2 = MathExtra::dot3(jline2, dr);
   double w = MIN(fabs(dot1), fabs(dot2));
 
-  MathExtra::scaleadd3(w, dr, 1.0 - w, contact_surfs[n].dr_ext, contact_surfs[n].dr_ext);
+  MathExtra::scaleadd3(w, dr, 1.0 - w, dr_tmp, contact_surfs[n].dr_ext);
+  MathExtra::norm3(contact_surfs[n].dr_ext);
 
   contact_surfs[n].rank_ext = m;
 }

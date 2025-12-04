@@ -3555,37 +3555,32 @@ int FixSurfaceLocal::same_point(double *pt1, double *pt2)
 
 void FixSurfaceLocal::epsilon_calculate()
 {
+  double minlen = BIG;
   if (dimension == 2) {
     AtomVecLine::Bonus *bonus = avec_line->bonus;
     int *line = atom->line;
     int nlocal = atom->nlocal;
 
-    double minlen = BIG;
     for (int i = 0; i < nlocal; i++)
       if (line[i] >= 0) minlen = MIN(minlen,bonus[line[i]].length);
 
     // eps = EPSILON fraction of minimum line length
-
-    MPI_Allreduce(&minlen,&eps,1,MPI_DOUBLE,MPI_MIN,world);
-    eps *= EPSILON;
-    epssq = eps*eps;
 
   } else if (dimension == 3) {
     double *radius = atom->radius;
     int *tri = atom->tri;
     int nlocal = atom->nlocal;
 
-    double minlen = BIG;
     for (int i = 0; i < nlocal; i++)
       if (tri[i] >= 0) minlen = MIN(minlen,radius[i]);
     minlen *= 2.0;
 
     // eps = EPSILON fraction of minimum tri diameter
-
-    MPI_Allreduce(&minlen,&eps,1,MPI_DOUBLE,MPI_MIN,world);
-    eps *= EPSILON;
-    epssq = eps*eps;
   }
+
+  MPI_Allreduce(&minlen,&eps,1,MPI_DOUBLE,MPI_MIN,world);
+  eps *= EPSILON;
+  epssq = eps*eps;
 }
 
 /* ----------------------------------------------------------------------
