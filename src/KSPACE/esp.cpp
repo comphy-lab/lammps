@@ -166,7 +166,6 @@ ESP::~ESP()
 
 void ESP::init()
 {
-  if (me == 0) utils::logmesg(lmp,"ESP initialization ...\n");
 
   // error check
 
@@ -210,7 +209,7 @@ void ESP::init()
   if (p_cutoff == nullptr)
     error->all(FLERR,"KSpace style is incompatible with Pair style");
   cutoff = *p_cutoff;
-  
+
   //std::cout<<"Before table"<<std::endl;
   // Build Table for Real Space and Fourier Space Calulations
   //std::cout<<"After table"<<std::endl;
@@ -260,7 +259,7 @@ void ESP::init()
 
   if (accuracy_absolute >= 0.0) accuracy = accuracy_absolute;
   else accuracy = accuracy_relative * two_charge_force;
-
+  
   // free all arrays previously allocated
 
   deallocate();
@@ -275,7 +274,7 @@ void ESP::init()
 
   gc = nullptr;
   int iteration = 0;
- 
+  
   // Here debug
   while (order >= minorder) {
     if (iteration && me == 0)
@@ -299,6 +298,8 @@ void ESP::init()
     gc->setup_comm(tmp1,tmp2);
     if (gc->ghost_adjacent()) break;
     delete gc;
+    
+    printf("Stencil does not fit on nearest neighbor processors, reducing order from %d\n grids %d %d %d\n",order, nx_pppm, ny_pppm, nz_pppm);
 
     order--;
     iteration++;
@@ -833,8 +834,6 @@ void ESP::allocate()
   order_allocated = order;
   memory->create2d_offset(rho1d,3,-order/2,order/2,"esp:rho1d");
   memory->create2d_offset(drho1d,3,-order/2,order/2,"esp:drho1d");
-  memory->create2d_offset(rho_coeff,poly_order,(1-order)/2,order/2,"esp:rho_coeff");
-  memory->create2d_offset(drho_coeff,poly_order,(1-order)/2,order/2,"esp:drho_coeff");
 
   // create 2 FFTs and a Remap
   // 1st FFT keeps data in FFT decomposition
@@ -1003,20 +1002,13 @@ void ESP::set_grid_global()
 
       h = h_x = h_y = h_z = MY_PI * cutoff / select_c; // set initial h
 
-      while (true) {
+      nx_pppm = static_cast<int> (xprd/h_x);
+      ny_pppm = static_cast<int> (yprd/h_y);
+      nz_pppm = static_cast<int> (zprd_slab/h_z);
 
-        // set grid dimensions
-
-        nx_pppm = static_cast<int> (xprd/h_x);
-        ny_pppm = static_cast<int> (yprd/h_y);
-        nz_pppm = static_cast<int> (zprd_slab/h_z);
-
-        if (nx_pppm <= 1) nx_pppm = 2;
-        if (ny_pppm <= 1) ny_pppm = 2;
-        if (nz_pppm <= 1) nz_pppm = 2;
-
-        // estimate Kspace force error
-      }
+      if (nx_pppm <= 1) nx_pppm = 2;
+      if (ny_pppm <= 1) ny_pppm = 2;
+      if (nz_pppm <= 1) nz_pppm = 2;
 
     } else {
 
@@ -2802,7 +2794,11 @@ void ESP::build_table(double algorithm_accuracy, double spreading_accuracy)
   // spreading kernel in real space - need to be consistent with the spreading accuracy
   poly_coeff.clear();
   spread_real_poly(order, spreading_accuracy, 0.1*spreading_accuracy, spreading_select_c, poly_coeff);
-  poly_order = poly_coeff.size() / order; 
+  poly_order = poly_coeff.size() / order;
+
+  memory->create2d_offset(rho_coeff,poly_order,(1-order)/2,order/2,"esp:rho_coeff");
+  memory->create2d_offset(drho_coeff,poly_order,(1-order)/2,order/2,"esp:drho_coeff");
+
   for(int i=0; i<poly_order; i++){
     for(int j=0; j<order; j++){
         rho_coeff[i][j+(1-order)/2] = poly_coeff[i*order+j];
