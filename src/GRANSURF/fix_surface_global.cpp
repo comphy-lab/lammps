@@ -56,8 +56,10 @@
 #include "modify.h"
 #include "molecule.h"
 #include "my_page.h"
+#include "nbin_manual.h"
 #include "neigh_list.h"
 #include "neighbor.h"
+#include "nstencil_manual.h"
 #include "region.h"
 #include "stl_reader.h"
 #include "surf_extra.h"
@@ -101,7 +103,7 @@ static inline int FLIPSIDE(int nside) {
 /* ---------------------------------------------------------------------- */
 
 FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
-  FixSurface(lmp, narg, arg), tstr(nullptr)
+  FixSurface(lmp, narg, arg), tstr(nullptr), nb(nullptr), ns(nullptr)
 {
   if (!atom->radius_flag || !atom->omega_flag)
     error->all(FLERR,"Fix surface/global requires atom attributes radius and omega");
@@ -119,6 +121,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
   points = nullptr;
   lines = nullptr;
   tris = nullptr;
+  last_setup_bins = -1;
 
   int ninput = 0;
   std::map<std::tuple<double,double,double>,int> *hash =
@@ -485,6 +488,9 @@ FixSurfaceGlobal::~FixSurfaceGlobal()
   delete [] zeroes;
   delete [] tstr;
 
+  delete nb;
+  delete ns;
+
   if (use_history)
     modify->delete_fix("NEIGH_HISTORY_SURFACE_GLOBAL_" + std::to_string(instance_me));
 
@@ -725,7 +731,7 @@ void FixSurfaceGlobal::initial_integrate(int vflag)
 
 void FixSurfaceGlobal::pre_neighbor()
 {
-  int i,j,m,n,nn,dnum,dnumbytes;
+  int i,j,k,m,n,nn,dnum,dnumbytes;
   double xtmp,ytmp,ztmp,delx,dely,delz;
   double radi,rsq,radsum,cutsq;
   int *neighptr,*touchptr;
@@ -784,6 +790,56 @@ void FixSurfaceGlobal::pre_neighbor()
     dpage_atom->reset();
   }
 
+
+  if (nb == nullptr) {
+    nb = new NBinManual(lmp);
+    ns = new NStencilManual(lmp);
+    ns->nb = nb;
+
+    double rmax_surf = 0.0;
+    for (j = 0; j < nsurf; j++)
+      rmax_surf = MAX(rmax_surf, radsurf[j]);
+    MPI_Allreduce(&rmax_surf, &rmax_surf, 1, MPI_DOUBLE, MPI_MAX, world);
+
+    // Does NOT yet account for pour/deposit
+    double rmax_atom = 0.0;
+    for (i = 0; i < nlocal; i++)
+      rmax_atom = MAX(rmax_atom, radius[i]);
+    MPI_Allreduce(&rmax_atom, &rmax_atom, 1, MPI_DOUBLE, MPI_MAX, world);
+
+    //cutneighmax equiv
+    double cutoff = skin + rmax_atom + rmax_surf;
+    nb->assign_neighbor_info(cutoff);
+    ns->assign_neighbor_info(cutoff);
+  }
+
+  if (last_setup_bins < 0 || domain->box_change) {
+    nb->setup_bins(0);
+    ns->create_setup();
+    ns->create();
+    last_setup_bins = update->ntimestep;
+
+    nb->bin_custom_setup(xsurf, nsurf);
+    nb->bin_custom(xsurf, nsurf);
+  } else if (anymove) {
+    nb->bin_custom_setup(xsurf, nsurf);
+    nb->bin_custom(xsurf, nsurf);
+  }
+
+  nb->bin_atoms_setup(nlocal);
+  nb->bin_atoms();
+
+  int *atom2bin = nb->atom2bin;
+  int *binhead_surf = nb->binhead_custom;
+  int *bins_surf = nb->bins_custom;
+
+  int nstencil = ns->nstencil;
+  int *stencil = ns->stencil;
+
+  double dot, dx_proj[3], cutsq_proj;
+  int ibin, bin_start;
+  std::set<int> jadded;
+
   for (i = 0; i < nlocal; i++) {
     n = 0;
     neighptr = ipage->vget();
@@ -797,23 +853,47 @@ void FixSurfaceGlobal::pre_neighbor()
     ytmp = x[i][1];
     ztmp = x[i][2];
     radi = radius[i];
+    cutsq_proj = radi + skin;
+    cutsq_proj *= cutsq_proj;
 
-    // for now, loop over all surfs
-    //   in future, could optimize (e.g. by binning)
+    ibin = atom2bin[i];
+    jadded.clear();
 
-    for (j = 0; j < nsurf; j++) {
-      delx = xtmp - xsurf[j][0];
-      dely = ytmp - xsurf[j][1];
-      delz = ztmp - xsurf[j][2];
-      domain->minimum_image(delx, dely, delz);
-      rsq = delx * delx + dely * dely + delz * delz;
-      radsum = radi + radsurf[j] + skin;
-      cutsq = radsum * radsum;
-      if (rsq <= cutsq) {
-        // Note: saves index of surf (like its tag) so will not work
-        //       with default FixNeighHist methods that grab partner tags
-        neighptr[n] = j;
-        n++;
+    for (k = 0; k < nstencil; k++) {
+      bin_start = binhead_surf[ibin + stencil[k]];
+      for (j = bin_start; j >= 0; j = bins_surf[j]) {
+
+        // Skip if already added surface, can happen due to minimum image
+        if (jadded.find(j) != jadded.end()) continue;
+
+        delx = xtmp - xsurf[j][0];
+        dely = ytmp - xsurf[j][1];
+        delz = ztmp - xsurf[j][2];
+        domain->minimum_image(delx, dely, delz);
+        rsq = delx * delx + dely * dely + delz * delz;
+        radsum = radi + radsurf[j] + skin;
+        cutsq = radsum * radsum;
+
+        if (rsq <= cutsq) {
+          // since lines/tris flat, separately check distance along normal
+          //   should reduce a lot of potential neighbors
+          if (dimension == 2) {
+            dot = lines[j].norm[0] * delx + lines[j].norm[1] * dely + lines[j].norm[2] * delz;
+            MathExtra::scale3(dot, lines[j].norm, dx_proj);
+          } else {
+            dot = tris[j].norm[0] * delx + tris[j].norm[1] * dely + tris[j].norm[2] * delz;
+            MathExtra::scale3(dot, tris[j].norm, dx_proj);
+          }
+
+          rsq = MathExtra::lensq3(dx_proj);
+          if (rsq < cutsq_proj) {
+            // Note: saves index of surf (like its tag) so will not work
+            //       with default FixNeighHist methods that grab partner tags
+            neighptr[n] = j;
+            jadded.insert(j);
+            n++;
+          }
+        }
       }
     }
 
@@ -842,7 +922,7 @@ void FixSurfaceGlobal::post_force(int vflag)
   int *ilist, *jlist, *numneigh, **firstneigh;
   int *touch, **firstflag, touch_flag;
   double rsq, rsq_com, radsum, max_overlap, dot;
-  double norm[3], dr[3], contact[3], ds[3], xc[3], vc[3], omegac[3];
+  double x_min_image[3], norm[3], dr[3], contact[3], ds[3], xc[3], vc[3], omegac[3];
   double *forces, *torquesi, *history, *allhistory, **firsthistory;
 
   int it, jjtmp, nsidej;
@@ -963,6 +1043,10 @@ void FixSurfaceGlobal::post_force(int vflag)
 
       // check for contact between particle and line/tri
 
+      x_min_image[0] = delx + xsurf[j][0];
+      x_min_image[1] = dely + xsurf[j][1];
+      x_min_image[2] = delz + xsurf[j][2];
+
       if (dimension == 2) {
 
         // check for overlap of sphere and line segment
@@ -974,7 +1058,7 @@ void FixSurfaceGlobal::post_force(int vflag)
         //   rsq = squared length of dr
 
         jflag = SurfExtra::
-          overlap_sphere_line(x[i], radius[i],
+          overlap_sphere_line(x_min_image, radius[i],
                               points[lines[j].p1].x, points[lines[j].p2].x,
                               contact, dr, rsq);
       } else {
@@ -989,7 +1073,7 @@ void FixSurfaceGlobal::post_force(int vflag)
         //   rsq = squared length of dr
 
         jflag = SurfExtra::
-          overlap_sphere_tri(x[i], radius[i],
+          overlap_sphere_tri(x_min_image, radius[i],
                              points[tris[j].p1].x, points[tris[j].p2].x,
                              points[tris[j].p3].x, tris[j].norm,
                              contact, dr, rsq);

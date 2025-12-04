@@ -89,6 +89,9 @@ class FixSurfaceGlobal : public FixSurface {
   // neighbor params
 
   double triggersq;
+  int last_setup_bins;
+  class NBinManual *nb;
+  class NStencilManual *ns;
 
   // settings for motion applied to specific surf types
 
