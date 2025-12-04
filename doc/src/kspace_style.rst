@@ -5,6 +5,7 @@
 .. index:: kspace_style ewald/disp/dipole
 .. index:: kspace_style ewald/omp
 .. index:: kspace_style ewald/electrode
+.. index:: kspace_style esp
 .. index:: kspace_style pppm
 .. index:: kspace_style pppm/kk
 .. index:: kspace_style pppm/omp
@@ -63,6 +64,9 @@ Syntax
          accuracy = desired relative error in forces
        *ewald/electrode* value = accuracy
          accuracy = desired relative error in forces
+       *esp* value1 value2 = splitting_accuracy spreading_accuracy
+          splitting_accuracy = desired relative error in forces from kernel splitting part
+          spreading_accuracy = desired relative error in forces from charge spreading part (optional)
        *pppm* value = accuracy
          accuracy = desired relative error in forces
        *pppm/cg* values = accuracy (smallq)
@@ -129,7 +133,8 @@ Examples
 """"""""
 
 .. code-block:: LAMMPS
-
+   
+   kspace_style esp 1.0e-4
    kspace_style pppm 1.0e-4
    kspace_style pppm/cg 1.0e-5 1.0e-6
    kspace_style msm 1.0e-4
@@ -164,7 +169,7 @@ matching keyword to the name of the KSpace style, as in this table:
 +----------------------+-----------------------+
 | Pair style           | KSpace style          |
 +----------------------+-----------------------+
-| coul/long            | ewald or pppm         |
+| coul/long            | ewald or esp or pppm  |
 +----------------------+-----------------------+
 | coul/msm             | msm                   |
 +----------------------+-----------------------+
