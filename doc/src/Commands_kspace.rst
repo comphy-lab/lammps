@@ -18,6 +18,7 @@ OPT.
    * :doc:`msm (o) <kspace_style>`
    * :doc:`msm/cg (o) <kspace_style>`
    * :doc:`msm/dielectric <kspace_style>`
+   * :doc:`esp <kspace_style>`
    * :doc:`pppm (giko) <kspace_style>`
    * :doc:`pppm/cg (o) <kspace_style>`
    * :doc:`pppm/dipole <kspace_style>`
