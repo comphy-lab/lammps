@@ -50,7 +50,7 @@ class ComputePropertyAtom : public Compute {
 
   int historyflag;
   int nattribute_history, nevery_history, nrepeat_history, nfreq_history;
-  int *most_recent_index_ptr;
+  int *count_history_ptr,*most_recent_index_ptr;
   double ***history;
 
   // function ptr for each attribute

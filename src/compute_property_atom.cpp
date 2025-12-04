@@ -465,6 +465,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
     nevery_history = *((int *) fixhistory->extract("nevery_history",dim));
     nrepeat_history = *((int *) fixhistory->extract("nrepeat_history",dim));
     nfreq_history = *((int *) fixhistory->extract("nfreq_history",dim));
+    count_history_ptr = (int *) fixhistory->extract("count_history",dim);
     most_recent_index_ptr = (int *) fixhistory->extract("most_recent_index",dim);
     history = (double ***) fixhistory->extract("history",dim);
 
@@ -512,7 +513,6 @@ void ComputePropertyAtom::init()
 
   // NOTE: need to reset custom vector/array indices here, like dump custom does
   //       in case have been deleted ?
-
   // NOTE: need to check that fix store state is still defined and valid ?
 }
 
@@ -2051,6 +2051,7 @@ void ComputePropertyAtom::pack_d2name(int n)
 
 void ComputePropertyAtom::pack_history(int n)
 {
+  int count_history = *count_history_ptr;
   int k = *most_recent_index_ptr;
   k -= index[n] - 1;
   if (k < 0) k += nrepeat_history;
@@ -2059,10 +2060,17 @@ void ComputePropertyAtom::pack_history(int n)
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
 
-  for (int i = 0; i < nlocal; i++) {
-    if (mask[i] & groupbit) buf[n] = hframe[i][icol];
-    else buf[n] = 0.0;
-    n += nvalues;
+  if (index[n] > count_history) {
+    for (int i = 0; i < nlocal; i++) {
+      buf[n] = 0.0;
+      n += nvalues;
+    }
+  } else {
+    for (int i = 0; i < nlocal; i++) {
+      if (mask[i] & groupbit) buf[n] = hframe[i][icol];
+      else buf[n] = 0.0;
+      n += nvalues;
+    }
   }
 }
 
