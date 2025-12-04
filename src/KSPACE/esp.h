@@ -204,10 +204,10 @@ class ESP : public KSpace {
           for (int i = 1; i < Fourier_spreading_order; i++) {
             r *= ph_2_ky_c;
             appx += Fourier_spreading_coeff[i] * r;
-        }
+          }
           wy = order / 2.0 * appx;
           wy = wy * wy;
-       }
+        }
 
         for (nz = -Nmax; nz <= Nmax; nz++) {
           qz = kz + 2 * MY_PI * nz / hz;
@@ -227,7 +227,8 @@ class ESP : public KSpace {
             }
           }
 
-          denominator = denominator + wx * wy * wz; // could be zero when the spreading accuracy is low
+          denominator =
+              denominator + wx * wy * wz;    // could be zero when the spreading accuracy is low
         }
       }
     }
