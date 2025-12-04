@@ -356,7 +356,7 @@ void PairRuNNer::compute(int eflag, int vflag)
                                      hirshfeld_volume, &vdw_energy, vdw_forces.data(),
                                      vdw_d_energy_d_strain);
 
-      // Add electrostatic interactions to short-range results
+      // Add vdw interactions to short-range results
       committee_energy[i] += vdw_energy;
 
       for (ii = 0; ii < nall * 3; ii++) committee_force[nall * 3 * i + ii] += vdw_forces[ii];
