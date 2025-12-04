@@ -72,7 +72,7 @@ class PairRuNNer : public Pair {
 
   // Additional per-atom arrays
   double *atomic_charge, *hirshfeld_volume, *electronegativity, *lagrange_charges, *de_dq,
-      *screening_de_dq, *hardness, *committee_storage;
+      *screening_de_dq, *committee_storage;
   bool lhirshfeld_vdw;
   bool ltwo_body;
   int nnp_generation;

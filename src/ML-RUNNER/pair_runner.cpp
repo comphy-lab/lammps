@@ -120,7 +120,16 @@ enum {
 };
 }
 
-PairRuNNer::PairRuNNer(LAMMPS *lmp) : Pair(lmp)
+PairRuNNer::PairRuNNer(LAMMPS *lmp) :
+  Pair(lmp),
+  map(nullptr),
+  atomic_charge(nullptr),
+  hirshfeld_volume(nullptr),
+  electronegativity(nullptr),
+  lagrange_charges(nullptr),
+  de_dq(nullptr),
+  screening_de_dq(nullptr),
+  committee_storage(nullptr)
 {
   // HDNNP is not pairwise additive, due to three body terms
   single_enable = 0;
@@ -135,21 +144,12 @@ PairRuNNer::PairRuNNer(LAMMPS *lmp) : Pair(lmp)
   unit_convert_flag = 0;
   // We generally calculate the virial ourselves
   // and do not need to call virial_fdotr().
-  // In case of 2G HDNNP, we could call virial_fdotr()
+  // In case of 2G HDNNP, we call virial_fdotr()
   // for performace reasons.
-  // flag must then be overwritten in init_style().
+  // flag is then overwritten in init_style().
   no_virial_fdotr_compute = 1;
-  map = nullptr;
 
-  // Additional per-atom arrays for communication
   nmax = 0;
-  atomic_charge = nullptr;
-  hirshfeld_volume = nullptr;
-  electronegativity = nullptr;
-  lagrange_charges = nullptr;
-  screening_de_dq = nullptr;
-  de_dq = nullptr;
-  committee_storage = nullptr;
 
   // Set commsize needed by this pairstyle.
   comm_forward = 1;    // Forward communication (1 double per atom)
@@ -157,6 +157,7 @@ PairRuNNer::PairRuNNer(LAMMPS *lmp) : Pair(lmp)
   commstyle = COMM_NONE;
 
   // Sum of extrapolation is zero upon initialization of this pair style
+  // Tracks number of extrapolations over multiple timesteps
   local_extrap_sum = 0;
 
   // variable for output using pair compute
@@ -185,8 +186,6 @@ PairRuNNer::~PairRuNNer()
 
 void PairRuNNer::compute(int eflag, int vflag)
 {
-  const bool debug = false;
-
   int inum, jnum, ii, jj, i, j;
   int *ilist;
   int *jlist;
@@ -210,23 +209,12 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   // Interface variables
   bool lperiodic;
-  // Use stack allocation for small fixed-size arrays
   double lattice[9] = {0.0};
 
   // MPI
   int size, rank;
   rank = comm->me;
   size = comm->nprocs;
-
-  if (nlocal == 0) {
-    error->one(FLERR,
-               "No local atoms on process {}. Try adjusting simulation box "
-               "partitioning with the `balance` command or restart using fewer processors.",
-               rank);
-  }
-
-  MPI_Barrier(world);
-  if (debug) utils::logmesg(lmp, "Entered PairRuNNer::compute\n");
 
   // Allocate additional per-atom arrays
   if (atom->nmax > nmax) {
@@ -249,15 +237,14 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
 
   // Set additional per-atom arrays to zero
-  memset(atomic_charge, 0.0, nmax * (sizeof *atomic_charge));
-  memset(hirshfeld_volume, 0.0, nmax * (sizeof *atomic_charge));
-  memset(electronegativity, 0.0, nmax * (sizeof *electronegativity));
-  memset(lagrange_charges, 0.0, nmax * (sizeof *lagrange_charges));
-  memset(de_dq, 0.0, nmax * (sizeof *de_dq));
-  memset(screening_de_dq, 0.0, nmax * (sizeof *screening_de_dq));
-  memset(committee_storage, 0.0, nmax * (sizeof *committee_storage));
+  memset(atomic_charge, 0, nmax * (sizeof *atomic_charge));
+  memset(hirshfeld_volume, 0, nmax * (sizeof *atomic_charge));
+  memset(electronegativity, 0, nmax * (sizeof *electronegativity));
+  memset(lagrange_charges, 0, nmax * (sizeof *lagrange_charges));
+  memset(de_dq, 0, nmax * (sizeof *de_dq));
+  memset(screening_de_dq, 0, nmax * (sizeof *screening_de_dq));
+  memset(committee_storage, 0, nmax * (sizeof *committee_storage));
 
-  // Use std::vector for RAII management of temporary arrays
   std::vector<double> committee_energy(num_committee_members, 0.0);
   std::vector<double> committee_force(nall * 3 * num_committee_members, 0.0);
   std::vector<double> committee_d_energy_d_strain(9 * num_committee_members, 0.0);
@@ -337,13 +324,9 @@ void PairRuNNer::compute(int eflag, int vflag)
                "Periodic systems must be charge neutral (total_charge = 0.0) when using pair_style "
                "runner.");
 
-  if (debug) utils::logmesg(lmp, "Transfer atoms and neighbor lists to RuNNer interface\n");
-
   runner_lammps_interface_transfer_atoms_and_neighbor_lists(
       &nlocal, &nghost, runner_types.data(), &inum, &num_neigh_sum, ilist, runner_num_neigh.data(),
       runner_first_neighbor.data(), runner_jlist.data(), lattice, &x[0][0], &lperiodic);
-
-  if (debug) utils::logmesg(lmp, "RuNNer short-range predicition\n");
 
   runner_interface_short_range(&nlocal, &nghost, &inum, &nmax, ilist, committee_energy.data(),
                                committee_force.data(), committee_d_energy_d_strain.data(),
@@ -351,7 +334,6 @@ void PairRuNNer::compute(int eflag, int vflag)
                                committee_electronegativity.data(), committee_hardness.data());
 
   if (lhirshfeld_vdw) {
-    if (debug) utils::logmesg(lmp, "RuNNer long-range vdW interactions\n");
 
     for (int i = 0; i < num_committee_members; i++) {
 
@@ -359,7 +341,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
       double vdw_energy = 0.0;
       std::vector<double> vdw_forces(nall * 3, 0.0);
-      std::vector<double> vdw_d_energy_d_strain(9, 0.0);
+      double vdw_d_energy_d_strain[9] = {0.0};
 
       for (int ii = 0; ii < nmax; ii++)
         hirshfeld_volume[ii] = committee_hirshfeld_volume[nmax * i + ii];
@@ -372,7 +354,7 @@ void PairRuNNer::compute(int eflag, int vflag)
       // and volume gradients (stored on runner side)
       runner_interface_hirshfeld_vdw(&nlocal, &nghost, &inum, ilist, icomm_fortran,
                                      hirshfeld_volume, &vdw_energy, vdw_forces.data(),
-                                     vdw_d_energy_d_strain.data());
+                                     vdw_d_energy_d_strain);
 
       // Add electrostatic interactions to short-range results
       committee_energy[i] += vdw_energy;
@@ -385,15 +367,14 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
 
   if (ltwo_body) {
-    if (debug) utils::logmesg(lmp, "RuNNer two-body potential\n");
 
     double two_body_energy = 0.0;
     std::vector<double> two_body_forces(nall * 3, 0.0);
-    std::vector<double> two_body_d_energy_d_strain(9, 0.0);
+    double two_body_d_energy_d_strain[9] = {0.0};
 
     // Calculate two-body energies and forces
     runner_interface_two_body(&nlocal, &nghost, &two_body_energy, two_body_forces.data(),
-                              two_body_d_energy_d_strain.data());
+                              two_body_d_energy_d_strain);
 
     for (int i = 0; i < num_committee_members; i++) {
       // Add two-body interactions to short-range results
@@ -424,7 +405,6 @@ void PairRuNNer::compute(int eflag, int vflag)
     }
 
     if (nnp_generation == 3) {
-      if (debug) utils::logmesg(lmp, "RuNNer 3G long-range electrostatics\n");
 
       for (int i = 0; i < num_committee_members; i++) {
 
@@ -441,14 +421,14 @@ void PairRuNNer::compute(int eflag, int vflag)
         double runner_elec_energy = 0.0;
         std::vector<double> elec_force_global(natoms * 3, 0.0);
         std::vector<double> de_dq_global(natoms, 0.0);
-        std::vector<double> runner_elec_d_energy_d_strain(9, 0.0);
+        double runner_elec_d_energy_d_strain[9] = {0.0};
 
         if (rank == 0) {
           // Calculate long-range electrostatics on root using the global structure.
           runner_interface_evaluate_electrostatics_3g_part_1(
               &natoms, &xyz_global[0], &total_charge, lattice, &lperiodic, &q_global[0],
               &runner_elec_energy, elec_force_global.data(), de_dq_global.data(),
-              runner_elec_d_energy_d_strain.data());
+              runner_elec_d_energy_d_strain);
         }
 
         MPI_Barrier(world);
@@ -457,7 +437,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global_ptr,
                                        atomic_charge);
 
-        memset(de_dq, 0.0, nall * (sizeof *de_dq));
+        memset(de_dq, 0, nall * (sizeof *de_dq));
         double *de_dq_global_ptr = de_dq_global.data();
         unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, de_dq_global_ptr,
                                        de_dq);
@@ -476,13 +456,13 @@ void PairRuNNer::compute(int eflag, int vflag)
 
         double screening_energy = 0.0;
         std::vector<double> screening_forces(nall * 3, 0.0);
-        memset(screening_de_dq, 0.0, nall * (sizeof *screening_de_dq));
-        std::vector<double> screening_d_energy_d_strain(9, 0.0);
+        memset(screening_de_dq, 0, nall * (sizeof *screening_de_dq));
+        double screening_d_energy_d_strain[9] = {0.0};
 
         // Apply screening
         runner_interface_calc_screening(&nlocal, &nghost, atomic_charge, &screening_energy,
                                         screening_forces.data(), screening_de_dq,
-                                        screening_d_energy_d_strain.data());
+                                        screening_d_energy_d_strain);
 
         // Communicate screening de_dq from ghost atoms to local atoms
         commstyle = COMM_SCREENING_DEDQ;
@@ -501,7 +481,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         runner_interface_evaluate_electrostatics_3g_part_2(
             &nlocal, &nghost, &natoms, icomm_fortran, &runner_elec_energy,
             runner_elec_forces.data(), de_dq, &de_dq_sum_global,
-            runner_elec_d_energy_d_strain.data());
+            runner_elec_d_energy_d_strain);
 
         // Add electrostatic interactions to short-range results
         committee_energy[i] += runner_elec_energy - screening_energy;
@@ -515,7 +495,6 @@ void PairRuNNer::compute(int eflag, int vflag)
       }
 
     } else if (nnp_generation == 4) {
-      if (debug) utils::logmesg(lmp, "RuNNer 4G non-local\n");
 
       // Part 1. For each committee member...
       for (int i = 0; i < num_committee_members; i++) {
@@ -572,20 +551,20 @@ void PairRuNNer::compute(int eflag, int vflag)
 
         double screening_energy = 0.0;
         std::vector<double> screening_forces(nall * 3, 0.0);
-        memset(screening_de_dq, 0.0, nall * (sizeof *screening_de_dq));
-        std::vector<double> screening_d_energy_d_strain(9, 0.0);
+        memset(screening_de_dq, 0, nall * (sizeof *screening_de_dq));
+        double screening_d_energy_d_strain[9] = {0.0};
 
         // Apply screening
         runner_interface_calc_screening(&nlocal, &nghost, &committee_atomic_charge[nmax * i],
                                         &screening_energy, screening_forces.data(), screening_de_dq,
-                                        screening_d_energy_d_strain.data());
+                                        screening_d_energy_d_strain);
 
         // Communicate screening de_dq from ghost atoms to local atoms
         commstyle = COMM_SCREENING_DEDQ;
         comm->reverse_comm(this);
 
         // Determine sum of de_dq of local atoms across all procs.
-        memset(de_dq, 0.0, nall * (sizeof *de_dq));
+        memset(de_dq, 0, nall * (sizeof *de_dq));
         for (j = 0; j < inum; j++) {
           ii = ilist[j];
           de_dq[ii] += committee_d_energy_d_q[nall * i + ii] - screening_de_dq[ii];
@@ -594,7 +573,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         double runner_elec_energy = 0.0;
         std::vector<double> elec_force_global(natoms * 3, 0.0);
         std::vector<double> de_dq_global(natoms, 0.0);
-        std::vector<double> runner_elec_d_energy_d_strain(9, 0.0);
+        double runner_elec_d_energy_d_strain[9] = {0.0};
         std::vector<double> lagrange_global(natoms, 0.0);
 
         // Communicate de_dq and pack into global structure for
@@ -612,7 +591,7 @@ void PairRuNNer::compute(int eflag, int vflag)
           // electrostatic contribution from global de_dq
           runner_interface_evaluate_electrostatics_4g_part_1(
               &natoms, de_dq_global.data(), &runner_elec_energy, elec_force_global.data(),
-              runner_elec_d_energy_d_strain.data(), lagrange_global.data(), icomm_fortran);
+              runner_elec_d_energy_d_strain, lagrange_global.data(), icomm_fortran);
         }
 
         MPI_Barrier(world);
@@ -636,7 +615,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         // Apply remaining force contributions
         runner_interface_evaluate_electrostatics_4g_part_2(
             &nlocal, &nghost, icomm_fortran, lagrange_charges, &committee_atomic_charge[nmax * i],
-            runner_elec_forces.data(), runner_elec_d_energy_d_strain.data());
+            runner_elec_forces.data(), runner_elec_d_energy_d_strain);
 
         // Add electrostatic interactions to short-range results
         committee_energy[i] += runner_elec_energy - screening_energy;
@@ -652,7 +631,6 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
 
   // Copy results from RuNNer back into LAMMPS atom array
-  if (debug) utils::logmesg(lmp, "Transferring results from RuNNer to LAMMPS\n");
 
   // Forces
   irunner = 0;
@@ -674,7 +652,7 @@ void PairRuNNer::compute(int eflag, int vflag)
     for (jj = 0; jj < 3; jj++) {                       // xyz components
       for (i = 0; i < num_committee_members; i++) {    // committee members
         irunner = jj + i * nall * 3;
-        memset(committee_storage, 0.0, nmax * (sizeof *committee_storage));
+        memset(committee_storage, 0, nmax * (sizeof *committee_storage));
         for (ii = 0; ii < nall; ii++) {    // nlocal + nghost atoms
           committee_storage[ii] = committee_force[irunner];
           irunner += 3;
@@ -707,15 +685,13 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
 
   // Write committee energies into pair compute vector
-  memset(pvector, 0.0, num_committee_members);
+  memset(pvector, 0, num_committee_members);
   for (i = 0; i < num_committee_members; i++) pvector[i] = committee_energy[i] / cfenergy;
 
   // Charges if charge atom style is used
   if (q != NULL) {
-    memset(
-        q, 0.0,
-        nmax *
-            (sizeof *q));    // This array does not seem to get reset to zero every timestep by LAMMPS
+    // The q array does not seem to get reset to zero every timestep by LAMMPS
+    memset(q, 0,nmax * (sizeof *q));
     for (ii = 0; ii < nall; ii++) {
       for (jj = 0; jj < num_committee_members; jj++) {
         q[ii] += committee_atomic_charge[ii + jj * nmax] / num_committee_members;
@@ -728,7 +704,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   // Virial is -1.0 * d_energy_d_strain
   if (vflag_global) {
-    memset(virial, 0.0, 9);
+    memset(virial, 0, 9);
     for (i = 0; i < num_committee_members; i++) {
       virial[0] -= committee_d_energy_d_strain[0 + 9 * i] / cfenergy / num_committee_members;
       virial[1] -= committee_d_energy_d_strain[4 + 9 * i] / cfenergy / num_committee_members;
@@ -829,7 +805,6 @@ void PairRuNNer::compute(int eflag, int vflag)
   MPI_Barrier(world);
   runner_interface_finalize_step();
 
-  if (debug) utils::logmesg(lmp, "compute done\n");
 }
 
 void PairRuNNer::settings(int narg, char **arg)
@@ -1203,7 +1178,6 @@ void PairRuNNer::pack_structure(int rank, int size, int natoms, int inum, int *i
   int tag_minus_one;
 
   // First collect all Cartesian coordinates.
-  // Use std::vector for local temporary storage
   std::vector<double> xyz_local(natoms * 3, 0.0);
 
   double xtmp, ytmp, ztmp;
@@ -1254,7 +1228,7 @@ void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, 
   std::vector<double> local_property_sorted(natoms, 0.0);
 
   // Clear global property as well
-  memset(global_property, 0.0, natoms * (sizeof *global_property));
+  memset(global_property, 0, natoms * (sizeof *global_property));
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
