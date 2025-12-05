@@ -33,15 +33,15 @@ static constexpr double SMALL = 0.00001;
 
 /* ---------------------------------------------------------------------- */
 
-KSpace::KSpace(LAMMPS *lmp) : Pointers(lmp)
+KSpace::KSpace(LAMMPS *lmp) : 
+    Pointers(lmp), eatom(nullptr), vatom(nullptr), gcons(nullptr), dgcons(nullptr)
 {
   order_allocated = 0;
   energy = 0.0;
   virial[0] = virial[1] = virial[2] = virial[3] = virial[4] = virial[5] = 0.0;
 
   triclinic_support = 1;
-  ewaldflag = pppmflag = espflag = msmflag = dispersionflag = tip4pflag =
-    dipoleflag = spinflag = 0;
+  ewaldflag = pppmflag = espflag = msmflag = dispersionflag = tip4pflag = dipoleflag = spinflag = 0;
   compute_flag = 1;
   group_group_enable = 0;
   stagger_flag = 0;
@@ -82,6 +82,10 @@ KSpace::KSpace(LAMMPS *lmp) : Pointers(lmp)
   accuracy_absolute = -1.0;
   accuracy_real_6 = -1.0;
   accuracy_kspace_6 = -1.0;
+
+  qqrd2e = force->qqrd2e;
+  g_ewald = g_ewald_6 = 0.0;
+  scale = 1.0;
 
   neighrequest_flag = 1;
   mixflag = 0;
@@ -181,9 +185,9 @@ void KSpace::triclinic_check()
 
 /* ---------------------------------------------------------------------- */
 
-void KSpace::compute_dummy(int eflag, int vflag)
+void KSpace::compute_dummy(int eflag, int vflag, int alloc)
 {
-  ev_init(eflag,vflag);
+  ev_init(eflag,vflag,alloc);
 }
 
 /* ----------------------------------------------------------------------
@@ -321,8 +325,8 @@ void KSpace::qsum_qsq(int warning_flag)
   // so issue warning or error
 
   if (fabs(qsum) > SMALL) {
-    std::string message = fmt::format("System is not charge neutral, net "
-                                      "charge = {:.8}",qsum);
+    std::string message = fmt::format("System is not charge neutral, net charge = {:.8}{}",
+                                      qsum, utils::errorurl(29));
     if (!warn_nonneutral) error->all(FLERR,message);
     if (warn_nonneutral == 1 && comm->me == 0) error->warning(FLERR,message);
     warn_nonneutral = 2;
@@ -339,9 +343,9 @@ double KSpace::estimate_table_accuracy(double q2_over_sqrt, double spr)
   int nctb = force->pair->ncoultablebits;
   if (comm->me == 0) {
     if (nctb)
-      utils::logmesg(lmp,"  using {}-bit tables for long-range coulomb",nctb);
+      utils::logmesg(lmp, "  using {}-bit tables for long-range coulomb\n", nctb);
     else
-      utils::logmesg(lmp,"  using polynomial approximation for long-range coulomb");
+      utils::logmesg(lmp, "  using polynomial approximation for long-range coulomb\n");
   }
 
   if (nctb) {
