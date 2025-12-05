@@ -59,13 +59,13 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>, HIP> {
   size_t m_num_scratch_locks;
 
   template <typename TagType>
-  __device__ inline std::enable_if_t<std::is_void<TagType>::value> exec_team(
+  __device__ inline std::enable_if_t<std::is_void_v<TagType>> exec_team(
       const member_type& member) const {
     m_functor(member);
   }
 
   template <typename TagType>
-  __device__ inline std::enable_if_t<!std::is_void<TagType>::value> exec_team(
+  __device__ inline std::enable_if_t<!std::is_void_v<TagType>> exec_team(
       const member_type& member) const {
     m_functor(TagType(), member);
   }
@@ -88,9 +88,11 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>, HIP> {
          league_rank += gridDim.x) {
       this->template exec_team<work_tag>(typename Policy::member_type(
           kokkos_impl_hip_shared_memory<void>(), m_shmem_begin, m_shmem_size,
-          static_cast<void*>(static_cast<char*>(m_scratch_ptr[1]) +
-                             ptrdiff_t(threadid / (blockDim.x * blockDim.y)) *
-                                 m_scratch_size[1]),
+          static_cast<void*>(
+              static_cast<char*>(m_scratch_ptr[1]) +
+              ptrdiff_t(threadid /
+                        static_cast<size_t>(blockDim.x * blockDim.y)) *
+                  m_scratch_size[1]),
           m_scratch_size[1], league_rank, m_league_size));
     }
     if (m_scratch_size[1] > 0) {
@@ -149,7 +151,7 @@ class ParallelFor<FunctorType, Kokkos::TeamPolicy<Properties...>, HIP> {
           m_scratch_pool_id,
           static_cast<std::int64_t>(m_scratch_size[1]) *
               (std::min(
-                  static_cast<std::int64_t>(HIP().concurrency() /
+                  static_cast<std::int64_t>(m_policy.space().concurrency() /
                                             (m_team_size * m_vector_size)),
                   static_cast<std::int64_t>(m_league_size))));
     }

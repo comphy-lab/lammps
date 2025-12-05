@@ -18,9 +18,15 @@
 #define KOKKOS_ALGORITHMS_UNITTESTS_TEST_STD_ALGOS_COMMON_HPP
 
 #include <gtest/gtest.h>
-#include <Kokkos_Core.hpp>
-#include <Kokkos_StdAlgorithms.hpp>
+#include <Kokkos_Macros.hpp>
+#ifdef KOKKOS_ENABLE_EXPERIMENTAL_CXX20_MODULES
+import kokkos.random;
+import kokkos.std_algorithms;
+#else
 #include <Kokkos_Random.hpp>
+#include <Kokkos_StdAlgorithms.hpp>
+#endif
+#include <Kokkos_Core.hpp>
 #include <TestStdAlgorithmsHelperFunctors.hpp>
 #include <utility>
 #include <numeric>
@@ -198,9 +204,8 @@ auto create_deep_copyable_compatible_view_with_same_extent(ViewType view) {
 
   // this is needed for intel to avoid
   // error #1011: missing return statement at end of non-void function
-#if defined KOKKOS_COMPILER_INTEL ||                                  \
-    (defined(KOKKOS_COMPILER_NVCC) && KOKKOS_COMPILER_NVCC >= 1130 && \
-     !defined(KOKKOS_COMPILER_MSVC))
+#if defined(KOKKOS_COMPILER_NVCC) && KOKKOS_COMPILER_NVCC >= 1130 && \
+    !defined(KOKKOS_COMPILER_MSVC)
   __builtin_unreachable();
 #endif
 }
@@ -680,10 +685,10 @@ struct std_algorithms_test : public ::testing::Test {
 
 struct CustomValueType {
   KOKKOS_INLINE_FUNCTION
-  CustomValueType(){};
+  CustomValueType() {}
 
   KOKKOS_INLINE_FUNCTION
-  CustomValueType(value_type val) : value(val){};
+  CustomValueType(value_type val) : value(val) {}
 
   KOKKOS_INLINE_FUNCTION
   CustomValueType(const CustomValueType& other) { this->value = other.value; }

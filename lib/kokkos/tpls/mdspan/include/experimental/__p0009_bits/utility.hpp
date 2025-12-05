@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <array>
 #include <utility>
+#include "macros.hpp"
 
 namespace MDSPAN_IMPL_STANDARD_NAMESPACE {
 namespace detail {
@@ -46,6 +47,9 @@ constexpr bool rankwise_equal(with_rank<N>, const T1& x, const T2& y, F func)
   return match;
 }
 
+#if MDSPAN_HAS_CXX_17
+inline
+#endif
 constexpr struct
 {
   template <class T, class I>
@@ -56,6 +60,9 @@ constexpr struct
   }
 } extent;
 
+#if MDSPAN_HAS_CXX_17
+inline
+#endif
 constexpr struct
 {
   template <class T, class I>
@@ -115,7 +122,7 @@ struct tuple_idx_matcher {
   using type = tuple_member<T, Idx>;
   template<class Other>
   MDSPAN_FUNCTION
-  constexpr auto operator | (Other v) const {
+  constexpr auto operator | ([[maybe_unused]] Other v) const {
     if constexpr (Idx == SearchIdx) { return *this; }
     else { return v; }
   }
@@ -166,6 +173,9 @@ tuple(Elements ...) -> tuple<Elements...>;
 #endif
 } // namespace detail
 
+#if MDSPAN_HAS_CXX_17
+inline
+#endif
 constexpr struct mdspan_non_standard_tag {
 } mdspan_non_standard;
 

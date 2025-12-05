@@ -25,6 +25,7 @@
 #include <impl/Kokkos_HostThreadTeam.hpp>
 
 #include <Kokkos_Atomic.hpp>
+#include <Kokkos_BitManipulation.hpp>
 #include <Threads/Kokkos_Threads_Spinwait.hpp>
 #include <Threads/Kokkos_Threads_State.hpp>
 
@@ -426,9 +427,10 @@ class ThreadsExecTeamMember {
         m_instance->set_work_range(m_league_rank, m_league_end, m_chunk_size);
         m_instance->reset_steal_target(m_team_size);
       }
-      if (std::is_same<typename TeamPolicyInternal<
-                           Kokkos::Threads, Properties...>::schedule_type::type,
-                       Kokkos::Dynamic>::value) {
+      if (std::is_same_v<
+              typename TeamPolicyInternal<Kokkos::Threads,
+                                          Properties...>::schedule_type::type,
+              Kokkos::Dynamic>) {
         m_instance->barrier();
       }
     } else {
@@ -765,12 +767,12 @@ class TeamPolicyInternal<Kokkos::Threads, Properties...>
  private:
   /** \brief finalize chunk_size if it was set to AUTO*/
   inline void set_auto_chunk_size() {
-    int64_t concurrency = space().concurrency() / m_team_alloc;
+    int concurrency = space().concurrency() / m_team_alloc;
     if (concurrency == 0) concurrency = 1;
 
-    if (m_chunk_size > 0) {
-      if (!Impl::is_integral_power_of_two(m_chunk_size))
-        Kokkos::abort("TeamPolicy blocking granularity must be power of two");
+    if (m_chunk_size > 0 &&
+        !Kokkos::has_single_bit(static_cast<unsigned>(m_chunk_size))) {
+      Kokkos::abort("TeamPolicy blocking granularity must be power of two");
     }
 
     int new_chunk_size = 1;
@@ -916,7 +918,7 @@ parallel_reduce(const Impl::TeamThreadRangeBoundariesStruct<
     lambda(i, value);
   }
 
-  loop_boundaries.thread.impl_team_reduce(wrapped_reducer, value);
+  loop_boundaries.member.impl_team_reduce(wrapped_reducer, value);
   wrapped_reducer.final(&value);
   result = value;
 }
@@ -942,7 +944,7 @@ parallel_reduce(const Impl::TeamThreadRangeBoundariesStruct<
     lambda(i, value);
   }
 
-  loop_boundaries.thread.impl_team_reduce(wrapped_reducer, value);
+  loop_boundaries.member.impl_team_reduce(wrapped_reducer, value);
   wrapped_reducer.final(&value);
   reducer.reference() = value;
 }
@@ -1051,7 +1053,7 @@ KOKKOS_INLINE_FUNCTION void parallel_scan(
     lambda(i, scan_val, false);
   }
 
-  auto& team_member = loop_bounds.thread;
+  auto& team_member = loop_bounds.member;
 
   // 'scan_val' output is the exclusive prefix sum
   scan_val = team_member.team_scan(scan_val);

@@ -93,11 +93,16 @@ set(COMPILE_ONLY_SOURCES
     TestTeamMDRangePolicyCTAD.cpp
     TestNestedReducerCTAD.cpp
     view/TestBasicViewMDSpanConversion.cpp
+    view/TestViewCustomization.cpp
     view/TestExtentsDatatypeConversion.cpp
 )
 
 if(NOT Kokkos_ENABLE_IMPL_MDSPAN OR KOKKOS_CXX_COMPILER_ID STREQUAL "Intel")
   list(REMOVE_ITEM COMPILE_ONLY_SOURCES view/TestBasicViewMDSpanConversion.cpp)
+endif()
+
+if(NOT Kokkos_ENABLE_IMPL_MDSPAN OR Kokkos_ENABLE_IMPL_VIEW_LEGACY)
+  list(REMOVE_ITEM COMPILE_ONLY_SOURCES view/TestViewCustomization.cpp)
 endif()
 
 #testing if windows.h and Kokkos_Core.hpp can be included
@@ -169,7 +174,6 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenMPTarget;OpenACC;HIP;SYCL)
       Graph
       HostSharedPtr
       HostSharedPtrAccessOnDevice
-      Init
       JoinBackwardCompatibility
       LocalDeepCopy
       MathematicalConstants
@@ -285,6 +289,11 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenMPTarget;OpenACC;HIP;SYCL)
     if(KOKKOS_CXX_COMPILER_ID STREQUAL Intel)
       list(REMOVE_ITEM ${Tag}_TESTNAMES2A ViewCopy_c)
     endif()
+    # FIXME: we will eventually likely remove ViewHooks entirely, but for now
+    # ViewHooks are not compatible
+    if(NOT Kokkos_ENABLE_IMPL_VIEW_LEGACY)
+      list(REMOVE_ITEM ${Tag}_TESTNAMES2A ViewHooks)
+    endif()
     foreach(Name IN LISTS ${Tag}_TESTNAMES2A)
       set(file ${dir}/Test${Tag}_${Name}.cpp)
       # Write to a temporary intermediate file and call configure_file to avoid
@@ -333,7 +342,7 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenMPTarget;OpenACC;HIP;SYCL)
     endforeach()
 
     set(${Tag}_SOURCES2D)
-    foreach(Name SubView_c10 SubView_c11 SubView_c12 SubView_c13 SubView_c14)
+    foreach(Name SubView_c10 SubView_c11 SubView_c12 SubView_c13 SubView_c14 SubView_c15)
       set(file ${dir}/Test${Tag}_${Name}.cpp)
       # Write to a temporary intermediate file and call configure_file to avoid
       # updating timestamps triggering unnecessary rebuilds on subsequent cmake runs.
@@ -348,9 +357,15 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenMPTarget;OpenACC;HIP;SYCL)
 
     # ViewSupport should eventually contain the new implementation
     # detail tests for the mdspan based View
-    set(${Tag}_VIEWSUPPORT)
     if(Kokkos_ENABLE_IMPL_MDSPAN)
-      foreach(Name BasicView ReferenceCountedAccessor ReferenceCountedDataHandle)
+      set(BV_TestNames BasicView ReferenceCountedAccessor ReferenceCountedDataHandle)
+      if(NOT Kokkos_ENABLE_IMPL_VIEW_LEGACY AND NOT Kokkos_ENABLE_OPENACC)
+        list(APPEND BV_TestNames ViewCustomizationAccessorArg ViewCustomizationAllocationType
+             ViewCustomizationAccessorFromMapping
+        )
+      endif()
+      set(${Tag}_VIEWSUPPORT)
+      foreach(Name IN LISTS BV_TestNames)
         set(file ${dir}/Test${Tag}_View_${Name}.cpp)
         # Write to a temporary intermediate file and call configure_file to avoid
         # updating timestamps triggering unnecessary rebuilds on subsequent cmake runs.
@@ -358,9 +373,6 @@ foreach(Tag Threads;Serial;OpenMP;Cuda;HPX;OpenMPTarget;OpenACC;HIP;SYCL)
         configure_file(${dir}/dummy.cpp ${file})
         list(APPEND ${Tag}_VIEWSUPPORT ${file})
       endforeach()
-      if(KOKKOS_CXX_COMPILER_ID STREQUAL "Intel")
-        list(REMOVE_ITEM ${Tag}_VIEWSUPPORT ${dir}/Test${Tag}_View_BasicView.cpp)
-      endif()
       kokkos_add_executable_and_test(CoreUnitTest_${Tag}_ViewSupport SOURCES UnitTestMainInit.cpp ${${Tag}_VIEWSUPPORT})
     endif()
   endif()
@@ -483,11 +495,6 @@ if(KOKKOS_ARCH_VEGA)
 endif()
 if(KOKKOS_ENABLE_OPENMPTARGET AND KOKKOS_CXX_COMPILER_ID STREQUAL Clang AND KOKKOS_AMDGPU_ARCH)
   list(REMOVE_ITEM OpenMPTarget_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/openmptarget/TestOpenMPTarget_Reducers_e.cpp)
-endif()
-# FIXME_OPENMPTARGET This test causes internal compiler errors as of 09/01/22
-# when compiling for Intel's Xe-HP GPUs.
-if(KOKKOS_ENABLE_OPENMPTARGET AND KOKKOS_CXX_COMPILER_ID STREQUAL IntelLLVM)
-  list(REMOVE_ITEM OpenMPTarget_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/openmptarget/TestOpenMPTarget_TeamVectorRange.cpp)
 endif()
 
 # FIXME_OPENMPTARGET - Comment non-passing tests with the NVIDIA HPC compiler nvc++
@@ -637,7 +644,6 @@ if(KOKKOS_ENABLE_OPENACC AND KOKKOS_CXX_COMPILER_ID STREQUAL Clang)
     ${CMAKE_CURRENT_BINARY_DIR}/openacc/TestOpenACC_Complex.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/openacc/TestOpenACC_ExecutionSpace.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/openacc/TestOpenACC_ExecSpacePartitioning.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/openacc/TestOpenACC_Init.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/openacc/TestOpenACC_MathematicalConstants.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/openacc/TestOpenACC_MathematicalSpecialFunctions.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/openacc/TestOpenACC_MinMaxClamp.cpp
@@ -762,6 +768,16 @@ if(Kokkos_ENABLE_CUDA)
     ${Cuda_SOURCES_SHAREDSPACE}
   )
 
+  # This test seeks to make sure that `desul::ensure_cuda_lock_arrays_on_device` is called before a graph submission.
+  # It is in a separate file to ensure that the test takes place in a separate compilation unit, in which this function
+  # has not been called yet by Kokkos::initialize or by a preceding kernel launch.
+  set(file ${CMAKE_CURRENT_BINARY_DIR}/cuda/TestCuda_GraphAtomicLocks.cpp)
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cuda/dummy.cpp "#include <TestCuda_Category.hpp>\n"
+                                                        "#include <TestGraphAtomicLocks.hpp>\n"
+  )
+  configure_file(${CMAKE_CURRENT_BINARY_DIR}/cuda/dummy.cpp ${file})
+  kokkos_add_executable_and_test(CoreUnitTest_CudaGraphAtomicLocks SOURCES UnitTestMainInit.cpp ${file})
+
   kokkos_add_executable_and_test(
     CoreUnitTest_CudaTimingBased SOURCES UnitTestMainInit.cpp cuda/TestCuda_DebugSerialExecution.cpp
     cuda/TestCuda_DebugPinUVMSpace.cpp
@@ -787,6 +803,7 @@ if(Kokkos_ENABLE_HIP)
     UnitTestMainInit.cpp
     ${HIP_SOURCES}
     hip/TestHIP_ScanUnit.cpp
+    hip/TestHIP_SharedResourceLock.cpp
     hip/TestHIP_Spaces.cpp
     hip/TestHIP_Memory_Requirements.cpp
     hip/TestHIP_TeamScratchStreams.cpp
@@ -794,14 +811,27 @@ if(Kokkos_ENABLE_HIP)
     hip/TestHIP_BlocksizeDeduction.cpp
     hip/TestHIP_UnifiedMemory_ZeroMemset.cpp
   )
+
+  set(file ${CMAKE_CURRENT_BINARY_DIR}/hip/TestHIP_GraphAtomicLocks.cpp)
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/hip/dummy.cpp "#include <TestHIP_Category.hpp>\n"
+                                                       "#include <TestGraphAtomicLocks.hpp>\n"
+  )
+  configure_file(${CMAKE_CURRENT_BINARY_DIR}/hip/dummy.cpp ${file})
+  kokkos_add_executable_and_test(CoreUnitTest_HIPGraphAtomicLocks SOURCES UnitTestMainInit.cpp ${file})
+
   kokkos_add_executable_and_test(CoreUnitTest_HIPInterOpInit SOURCES UnitTestMain.cpp hip/TestHIP_InterOp_Init.cpp)
   kokkos_add_executable_and_test(
     CoreUnitTest_HIPInterOpStreams SOURCES UnitTestMain.cpp hip/TestHIP_InterOp_Streams.cpp
   )
-
   kokkos_add_executable_and_test(
     CoreUnitTest_HIPInterOpGraph SOURCES UnitTestMainInit.cpp hip/TestHIP_InterOp_Graph.cpp
   )
+  if(KOKKOS_CXX_COMPILER_ID STREQUAL HIPCC AND KOKKOS_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 5.6)
+    # MultiGPU only works for rocm 5.6+
+    kokkos_add_executable_and_test(
+      CoreUnitTest_HIPInterOpStreamsMultiGPU SOURCES UnitTestMainInit.cpp hip/TestHIP_InterOp_StreamsMultiGPU.cpp
+    )
+  endif()
 endif()
 
 if(Kokkos_ENABLE_SYCL)
@@ -835,7 +865,7 @@ if(Kokkos_ENABLE_SYCL)
     CoreUnitTest_SYCLInterOpStreamsMultiGPU SOURCES UnitTestMainInit.cpp sycl/TestSYCL_InterOp_StreamsMultiGPU.cpp
   )
 
-  if(KOKKOS_IMPL_HAVE_SYCL_EXT_ONEAPI_GRAPH)
+  if(KOKKOS_IMPL_HAVE_SYCL_EXT_ONEAPI_GRAPH AND NOT Kokkos_ENABLE_IMPL_SYCL_OUT_OF_ORDER_QUEUES)
     kokkos_add_executable_and_test(
       CoreUnitTest_SYCLInterOpGraph SOURCES UnitTestMainInit.cpp sycl/TestSYCL_InterOp_Graph.cpp
     )
@@ -845,8 +875,6 @@ endif()
 set(DEFAULT_DEVICE_SOURCES
     UnitTestMainInit.cpp
     TestCStyleMemoryManagement.cpp
-    TestInitializationSettings.cpp
-    TestParseCmdLineArgsAndEnvVars.cpp
     TestSharedSpace.cpp
     TestSharedHostPinnedSpace.cpp
     TestCompilerMacros.cpp
@@ -913,36 +941,23 @@ endif()
 
 kokkos_add_executable_and_test(CoreUnitTest_Default SOURCES ${DEFAULT_DEVICE_SOURCES})
 
-kokkos_add_executable_and_test(CoreUnitTest_LegionInitialization SOURCES UnitTestMain.cpp TestLegionInitialization.cpp)
-
-kokkos_add_executable_and_test(CoreUnitTest_PushFinalizeHook SOURCES UnitTest_PushFinalizeHook.cpp)
-
-kokkos_add_executable_and_test(CoreUnitTest_ScopeGuard SOURCES UnitTestMain.cpp UnitTest_ScopeGuard.cpp)
+kokkos_add_executable_and_test(
+  CoreUnitTest_InitializeFinalize
+  SOURCES
+  UnitTestMain.cpp
+  TestExecutionEnvironmentNonInitializedOrFinalized.cpp
+  TestInitializationSettings.cpp
+  TestInitializeFinalize.cpp
+  TestKokkosHelpCausesNormalProgramTermination.cpp
+  TestLegionInitialization.cpp
+  TestParseCmdLineArgsAndEnvVars.cpp
+  TestPushFinalizeHook.cpp
+  TestScopeGuard.cpp
+)
 
 # This test is intended for development and debugging by putting code
 # into TestDefaultDeviceDevelop.cpp. By default its empty.
 kokkos_add_executable_and_test(CoreUnitTest_Develop SOURCES UnitTestMainInit.cpp default/TestDefaultDeviceDevelop.cpp)
-
-# With MSVC, the terminate handler is called and prints the message but the
-# program does not seem to exit and we get a timeout with ctest.
-if(NOT WIN32)
-  # This test is special, because it passes exactly when it prints the
-  # message "PASSED: I am the custom std::terminate handler.", AND calls
-  # std::terminate.  This means that we can't use
-  # KOKKOS_ADD_EXECUTABLE_AND_TEST.  See GitHub issue #2147.
-  kokkos_add_test_executable(CoreUnitTest_PushFinalizeHookTerminate SOURCES UnitTest_PushFinalizeHook_terminate.cpp)
-  add_test(NAME Kokkos_CoreUnitTest_PushFinalizeHookTerminateRegex
-           COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:Kokkos_CoreUnitTest_PushFinalizeHookTerminate>
-  )
-  set_property(
-    TEST Kokkos_CoreUnitTest_PushFinalizeHookTerminateRegex PROPERTY PASS_REGULAR_EXPRESSION
-                                                                     "PASSED: I am the custom std::terminate handler."
-  )
-  add_test(NAME Kokkos_CoreUnitTest_PushFinalizeHookTerminateFails
-           COMMAND ${CMAKE_COMMAND} -E env $<TARGET_FILE:Kokkos_CoreUnitTest_PushFinalizeHookTerminate>
-  )
-  set_property(TEST Kokkos_CoreUnitTest_PushFinalizeHookTerminateFails PROPERTY WILL_FAIL TRUE)
-endif()
 
 if(KOKKOS_ENABLE_TUNING)
   kokkos_add_executable_and_test(CoreUnitTest_TuningBuiltins SOURCES tools/TestBuiltinTuners.cpp)
@@ -953,12 +968,6 @@ endif()
 set(KOKKOSP_SOURCES UnitTestMainInit.cpp tools/TestEventCorrectness.cpp tools/TestKernelNames.cpp
                     tools/TestProfilingSection.cpp tools/TestScopedRegion.cpp tools/TestWithoutInitializing.cpp
 )
-
-# FIXME_OPENMPTARGET This test causes internal compiler errors as of 09/01/22
-# when compiling for Intel's Xe-HP GPUs.
-if(KOKKOS_ENABLE_OPENMPTARGET AND KOKKOS_CXX_COMPILER_ID STREQUAL IntelLLVM)
-  list(REMOVE_ITEM KOKKOSP_SOURCES tools/TestEventCorrectness.cpp)
-endif()
 
 kokkos_add_executable_and_test(CoreUnitTest_KokkosP SOURCES ${KOKKOSP_SOURCES})
 if(KOKKOS_ENABLE_LIBDL)

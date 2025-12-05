@@ -196,22 +196,18 @@ LAMMPS.
 
    .. tab:: CMake build
 
-      By default CMake will use the compiler it finds according to
+      By default CMake will use the compiler it finds according to its
       internal preferences, and it will add optimization flags
       appropriate to that compiler and any :doc:`accelerator packages
       <Speed_packages>` you have included in the build.  CMake will
       check if the detected or selected compiler is compatible with the
       C++ support requirements of LAMMPS and stop with an error, if this
-      is not the case.
+      is not the case.  A C++17 compatible compiler is required.
 
       You can tell CMake to look for a specific compiler with setting
       CMake variables (listed below) during configuration.  For a few
       common choices, there are also presets in the ``cmake/presets``
-      folder.  For convenience, there is a ``CMAKE_TUNE_FLAGS`` variable
-      that can be set to apply global compiler options (applied to
-      compilation only), to be used for adding compiler or host specific
-      optimization flags in addition to the "flags" variables listed
-      below. You may also specify the corresponding ``CMAKE_*_FLAGS``
+      folder.  You may also specify the corresponding ``CMAKE_*_FLAGS``
       variables individually, if you want to experiment with alternate
       optimization flags.  You should specify all 3 compilers, so that
       the (few) LAMMPS source files written in C or Fortran are built
@@ -223,6 +219,7 @@ LAMMPS.
          -D CMAKE_C_COMPILER=name              # name of C compiler
          -D CMAKE_Fortran_COMPILER=name        # name of Fortran compiler
 
+         -D CMAKE_CXX_STANDARD=17              # put compiler in C++17 mode
          -D CMAKE_CXX_FLAGS=string             # flags to use with C++ compiler
          -D CMAKE_C_FLAGS=string               # flags to use with C compiler
          -D CMAKE_Fortran_FLAGS=string         # flags to use with Fortran compiler
@@ -258,10 +255,6 @@ LAMMPS.
       will switch to the LLVM based oneAPI Intel compilers,
       ``-C ../cmake/presets/pgi.cmake`` will switch the compiler to the PGI compilers,
       and ``-C ../cmake/presets/nvhpc.cmake`` will switch to the NVHPC compilers.
-
-      Furthermore, you can set ``CMAKE_TUNE_FLAGS`` to specifically add
-      compiler flags to tune for optimal performance on given hosts.
-      This variable is empty by default.
 
       .. note::
 
@@ -311,25 +304,24 @@ LAMMPS.
             In file included from ../pointers.h:24:0,
                        from ../input.h:17,
                        from ../main.cpp:16:
-            ../lmptype.h:34:2: error: #error LAMMPS requires a C++11 (or later) compliant compiler. Enable C++11 compatibility or upgrade the compiler.
+            ../lmptype.h:34:2: error: #error LAMMPS requires a C++17 (or later) compliant compiler. Enable C++17 compatibility or upgrade the compiler.
 
          then you have either an unsupported (old) compiler or you have
-         to turn on C++11 mode.  The latter applies to GCC 4.8.x shipped
-         with RHEL 7.x and CentOS 7.x or GCC 5.4.x shipped with Ubuntu16.04.
-         For those compilers, you need to add the ``-std=c++11`` flag.
-         If there is no compiler that supports this flag (or equivalent),
-         you would have to install a newer compiler that supports C++11;
-         either as a binary package or through compiling from source.
+         to turn on C++17 mode.  For those compilers, you need to add
+         the ``-std=c++17`` flag.  If there is no compiler that supports
+         this flag (or equivalent), you would have to install a newer
+         compiler that supports C++17; either as a binary package or
+         through compiling from source.
 
-         If you build LAMMPS with any :doc:`Speed_packages` included,
-         there may be specific compiler or linker flags that are either
-         required or recommended to enable required features and to
-         achieve optimal performance.  You need to include these in the
-         ``CCFLAGS`` and ``LINKFLAGS`` settings above.  For details, see the
-         documentation for the individual packages listed on the
-         :doc:`Speed_packages` page.  Or examine these files in the
-         ``src/MAKE/OPTIONS`` directory.  They correspond to each of the 5
-         accelerator packages and their hardware variants:
+      If you build LAMMPS with any :doc:`Speed_packages` included,
+      there may be specific compiler or linker flags that are either
+      required or recommended to enable required features and to
+      achieve optimal performance.  You need to include these in the
+      ``CCFLAGS`` and ``LINKFLAGS`` settings above.  For details, see the
+      documentation for the individual packages listed on the
+      :doc:`Speed_packages` page.  Or examine these files in the
+      ``src/MAKE/OPTIONS`` directory.  They correspond to each of the 5
+      accelerator packages and their hardware variants:
 
          .. code-block:: bash
 
@@ -487,7 +479,7 @@ the debug information from the LAMMPS executable:
 .. _tools:
 
 Build LAMMPS tools
-------------------------------
+------------------
 
 Some tools described in :doc:`Auxiliary tools <Tools>` can be built directly
 using CMake or Make.
@@ -520,7 +512,7 @@ using CMake or Make.
 
       .. note::
 
-         Building the LAMMPS-GUI *requires* building LAMMPS with CMake.
+         Building LAMMPS-GUI *requires* building LAMMPS with CMake.
 
 ----------
 

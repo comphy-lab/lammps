@@ -40,10 +40,7 @@ TEST(TEST_CATEGORY, graph_promises_on_native_objects) {
 #if !defined(KOKKOS_IMPL_HIP_NATIVE_GRAPH)
   GTEST_SKIP() << "This test will not work without native graph support";
 #else
-  auto graph = Kokkos::Experimental::create_graph<Kokkos::HIP>();
-
-  auto root = Kokkos::Impl::GraphAccess::create_root_ref(graph);
-
+  Kokkos::Experimental::Graph<Kokkos::HIP> graph{};
   // Before instantiation, the HIP graph is valid, but the HIP executable
   // graph is still null.
   hipGraph_t hip_graph = graph.native_graph();
@@ -86,11 +83,9 @@ TEST(TEST_CATEGORY, graph_instantiate_and_debug_dot_print) {
 
   view_t data(Kokkos::view_alloc(exec, "witness"));
 
-  auto graph = Kokkos::Experimental::create_graph(exec);
+  Kokkos::Experimental::Graph graph{exec};
 
-  auto root = Kokkos::Impl::GraphAccess::create_root_ref(graph);
-
-  root.then_parallel_for(1, Increment<view_t>{data});
+  graph.root_node().then_parallel_for(1, Increment<view_t>{data});
 
   graph.instantiate();
 
@@ -101,6 +96,9 @@ TEST(TEST_CATEGORY, graph_instantiate_and_debug_dot_print) {
 
   ASSERT_EQ(num_nodes, 2u);
 
+  // hipGraphDebugDotPrint was introduced in ROCm 5.5
+#if (HIP_VERSION_MAJOR > 5) || \
+    ((HIP_VERSION_MAJOR > 5) && (HIP_VERSION_MINOR >= 5))
   const auto dot = std::filesystem::temp_directory_path() / "hip_graph.dot";
 
   KOKKOS_IMPL_HIP_SAFE_CALL(hipGraphDebugDotPrint(
@@ -121,6 +119,35 @@ TEST(TEST_CATEGORY, graph_instantiate_and_debug_dot_print) {
   ASSERT_TRUE(std::regex_search(buffer.str(), std::regex(expected)))
       << "Could not find expected signature regex " << std::quoted(expected)
       << " in " << dot;
+#endif
+#endif
+}
+
+// Build a Kokkos::Graph from an existing hipGraph_t.
+TEST(TEST_CATEGORY, graph_construct_from_native) {
+#if !defined(KOKKOS_IMPL_HIP_NATIVE_GRAPH)
+  GTEST_SKIP() << "This test will not work without native graph support";
+#else
+  using view_t = Kokkos::View<int, Kokkos::HIPManagedSpace>;
+
+  hipGraph_t native_graph = nullptr;
+  KOKKOS_IMPL_HIP_SAFE_CALL(hipGraphCreate(&native_graph, 0));
+
+  const Kokkos::HIP exec{};
+
+  Kokkos::Experimental::Graph graph_from_native(exec, native_graph);
+
+  ASSERT_EQ(native_graph, graph_from_native.native_graph());
+
+  const view_t data(Kokkos::view_alloc(exec, "witness"));
+
+  graph_from_native.root_node().then_parallel_for(1, Increment<view_t>{data});
+
+  graph_from_native.submit(exec);
+
+  exec.fence();
+
+  ASSERT_EQ(data(), 1);
 #endif
 }
 

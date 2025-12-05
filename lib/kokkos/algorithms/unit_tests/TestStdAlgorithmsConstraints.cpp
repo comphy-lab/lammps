@@ -16,7 +16,13 @@
 
 #include <gtest/gtest.h>
 #include <Kokkos_Core.hpp>
+#include <Kokkos_Macros.hpp>
+#ifdef KOKKOS_ENABLE_EXPERIMENTAL_CXX20_MODULES
+import kokkos.std_algorithms;
+#include <std_algorithms/impl/Kokkos_Constraints.hpp>
+#else
 #include <Kokkos_StdAlgorithms.hpp>
+#endif
 
 namespace Test {
 namespace stdalgos {
@@ -173,6 +179,7 @@ TEST(std_algorithms_DeathTest, expect_no_overlap) {
 
   KE::Impl::expect_no_overlap(sub_first_d0, sub_last_d0, sub_first_d1);
 
+  // NOLINTNEXTLINE(bugprone-implicit-widening-of-multiplication-result)
   Kokkos::LayoutStride layout2d{2, 3, extent0, 2 * 3};
   Kokkos::View<value_type**, Kokkos::LayoutStride> strided_view_2d{
       "std-algo-test-2d-contiguous-view-strided", layout2d};

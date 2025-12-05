@@ -58,13 +58,10 @@ SYCL::SYCL(const sycl::queue& stream)
         ptr->finalize();
         delete ptr;
       }) {
-  // In principle could be guarded with
-  // #ifdef KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES
-  // but we chose to require user-provided queues to be in-order
-  // unconditionally so that code downstream does not break
-  // when the backend setting changes.
+#ifdef KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES
   if (!stream.is_in_order())
     Kokkos::abort("User provided sycl::queues must be in-order!");
+#endif
   Impl::SYCLInternal::singleton().verify_is_initialized(
       "SYCL instance constructor");
   m_space_instance->initialize(stream);
@@ -114,11 +111,22 @@ void SYCL::print_configuration(std::ostream& os, bool verbose) const {
 #else
   os << "macro  KOKKOS_IMPL_SYCL_USE_IN_ORDER_QUEUES : undefined\n";
 #endif
-#ifdef SYCL_EXT_ONEAPI_GRAPH
-  os << "macro  SYCL_EXT_ONEAPI_GRAPH : defined\n";
+#ifdef KOKKOS_IMPL_SYCL_GRAPH_SUPPORT
+  os << "macro  KOKKOS_IMPL_SYCL_GRAPH_SUPPORT : defined\n";
 #else
-  os << "macro  SYCL_EXT_ONEAPI_GRAPH : undefined\n";
+  os << "macro  KOKKOS_IMPL_SYCL_GRAPH_SUPPORT : undefined\n";
 #endif
+#ifdef SYCL_EXT_ONEAPI_BFLOAT16
+  os << "macro  SYCL_EXT_ONEAPI_BFLOAT16 : defined\n";
+#else
+  os << "macro  SYCL_EXT_ONEAPI_BFLOAT16 : undefined\n";
+#endif
+#ifdef SYCL_EXT_ONEAPI_AUTO_LOCAL_RANGE
+  os << "macro  SYCL_EXT_ONEAPI_AUTO_LOCAL_RANGE : defined\n";
+#else
+  os << "macro  SYCL_EXT_ONEAPI_AUTO_LOCAL_RANGE : undefined\n";
+#endif
+
 #ifdef SYCL_EXT_INTEL_QUEUE_IMMEDIATE_COMMAND_LIST
   if (sycl_queue()
           .has_property<
@@ -166,13 +174,12 @@ void SYCL::print_configuration(std::ostream& os, bool verbose) const {
 
   if (verbose) {
     os << '\n';
-    SYCL::impl_sycl_info(os, m_space_instance->m_queue->get_device());
+    SYCL::impl_sycl_info(os, sycl_queue().get_device());
   }
 }
 
 void SYCL::fence(const std::string& name) const {
-  Impl::SYCLInternal::fence(*m_space_instance->m_queue, name,
-                            impl_instance_id());
+  Impl::SYCLInternal::fence(sycl_queue(), name, impl_instance_id());
 }
 
 void SYCL::impl_static_fence(const std::string& name) {

@@ -18,7 +18,12 @@
 #include <benchmark/benchmark.h>
 #include "Benchmark_Context.hpp"
 #include "PerfTest_Category.hpp"
+#include <Kokkos_Macros.hpp>
+#ifdef KOKKOS_ENABLE_EXPERIMENTAL_CXX20_MODULES
+import kokkos.random;
+#else
 #include <Kokkos_Random.hpp>
+#endif
 #include <utility>
 
 namespace Test {
@@ -107,8 +112,8 @@ int get_R(benchmark::State& state) {
 
 template <class Scalar>
 static void CustomReduction(benchmark::State& state) {
-  int N = get_N(state);
-  int R = get_R(state);
+  size_t N = get_N(state);
+  size_t R = get_R(state);
 
   for (auto _ : state) {
     auto results = custom_reduction_test<double>(N, R);

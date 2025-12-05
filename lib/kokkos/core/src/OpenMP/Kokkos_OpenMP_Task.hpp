@@ -84,13 +84,14 @@ class TaskQueueSpecialization<SimpleTaskScheduler<Kokkos::OpenMP, QueueType>> {
     std::lock_guard<std::mutex> lock(instance->m_instance_mutex);
 
     // TODO @tasking @new_feature DSH allow team sizes other than 1
-    const int team_size = 1;                      // Threads per core
-    instance->resize_thread_data(0,               /* global reduce buffer */
-                                 512 * team_size, /* team reduce buffer */
-                                 0,               /* team shared buffer */
-                                 0                /* thread local buffer */
+    const int team_size = 1;  // Threads per core
+    instance->resize_thread_data(
+        0,                                    /* global reduce buffer */
+        static_cast<size_t>(512) * team_size, /* team reduce buffer */
+        0,                                    /* team shared buffer */
+        0                                     /* thread local buffer */
     );
-    assert(pool_size % team_size == 0);
+    KOKKOS_ASSERT(pool_size % team_size == 0);
 
     auto& queue = scheduler.queue();
 
@@ -178,9 +179,8 @@ class TaskQueueSpecialization<SimpleTaskScheduler<Kokkos::OpenMP, QueueType>> {
 
 template <class Scheduler>
 class TaskQueueSpecializationConstrained<
-    Scheduler,
-    std::enable_if_t<std::is_same<typename Scheduler::execution_space,
-                                  Kokkos::OpenMP>::value>> {
+    Scheduler, std::enable_if_t<std::is_same_v<
+                   typename Scheduler::execution_space, Kokkos::OpenMP>>> {
  public:
   using execution_space = Kokkos::OpenMP;
   using scheduler_type  = Scheduler;
@@ -247,16 +247,17 @@ class TaskQueueSpecializationConstrained<
     // Serialize kernels on the same execution space instance
     std::lock_guard<std::mutex> lock(instance->m_instance_mutex);
 
-    const int team_size = 1;       // Threads per core
-    instance->resize_thread_data(0 /* global reduce buffer */
-                                 ,
-                                 512 * team_size /* team reduce buffer */
-                                 ,
-                                 0 /* team shared buffer */
-                                 ,
-                                 0 /* thread local buffer */
+    const int team_size = 1;  // Threads per core
+    instance->resize_thread_data(
+        0 /* global reduce buffer */
+        ,
+        static_cast<size_t>(512) * team_size /* team reduce buffer */
+        ,
+        0 /* team shared buffer */
+        ,
+        0 /* thread local buffer */
     );
-    assert(pool_size % team_size == 0);
+    KOKKOS_ASSERT(pool_size % team_size == 0);
 
     auto& queue = scheduler.queue();
     queue.initialize_team_queues(pool_size / team_size);

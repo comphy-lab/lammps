@@ -300,7 +300,7 @@ void FixNeighHistory::pre_exchange_onesided()
     partner[i] = ipage_atom->get(n);
     valuepartner[i] = dpage_atom->get(dnum * n);
     if (partner[i] == nullptr || valuepartner[i] == nullptr)
-      error->one(FLERR, "Neighbor history overflow, boost neigh_modify one");
+      error->one(FLERR, Error::NOLASTLINE, "Neighbor history overflow, boost neigh_modify one" + utils::errorurl(36));
   }
 
   // 2nd loop over neighbor list, I = sphere, J = tri
@@ -411,7 +411,7 @@ void FixNeighHistory::pre_exchange_newton()
     partner[i] = ipage_atom->get(n);
     valuepartner[i] = dpage_atom->get(dnum * n);
     if (partner[i] == nullptr || valuepartner[i] == nullptr) {
-      error->one(FLERR, "Neighbor history overflow, boost neigh_modify one");
+      error->one(FLERR, Error::NOLASTLINE, "Neighbor history overflow, boost neigh_modify one" + utils::errorurl(36));
     }
   }
 
@@ -420,7 +420,7 @@ void FixNeighHistory::pre_exchange_newton()
     partner[i] = ipage_atom->get(n);
     valuepartner[i] = dpage_atom->get(dnum * n);
     if (partner[i] == nullptr || valuepartner[i] == nullptr) {
-      error->one(FLERR, "Neighbor history overflow, boost neigh_modify one");
+      error->one(FLERR, Error::NOLASTLINE, "Neighbor history overflow, boost neigh_modify one" + utils::errorurl(36));
     }
   }
 
@@ -536,7 +536,7 @@ void FixNeighHistory::pre_exchange_no_newton()
     partner[i] = ipage_atom->get(n);
     valuepartner[i] = dpage_atom->get(dnum * n);
     if (partner[i] == nullptr || valuepartner[i] == nullptr)
-      error->one(FLERR, "Neighbor history overflow, boost neigh_modify one");
+      error->one(FLERR, Error::NOLASTLINE, "Neighbor history overflow, boost neigh_modify one" + utils::errorurl(36));
   }
 
   // 2nd loop over neighbor list

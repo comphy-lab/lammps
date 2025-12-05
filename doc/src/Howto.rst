@@ -39,6 +39,7 @@ Settings howto
    Howto_walls
    Howto_nemd
    Howto_dispersion
+   Howto_bulk2slab
 
 Analysis howto
 ==============
@@ -64,7 +65,7 @@ Force fields howto
    :name: force_howto
    :maxdepth: 1
 
-   Howto_broken_bonds
+   Howto_FFgeneral
    Howto_bioFF
    Howto_amoeba
    Howto_tip3p
@@ -92,6 +93,7 @@ Packages howto
    Howto_manifold
    Howto_rheo
    Howto_spins
+   Howto_apip
 
 Tutorials howto
 ===============
@@ -105,6 +107,5 @@ Tutorials howto
    Howto_lammps_gui
    Howto_moltemplate
    Howto_python
-   Howto_pylammps
    Howto_wsl
 

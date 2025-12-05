@@ -45,6 +45,25 @@ struct GraphNodeKernelDefaultImpl {
   ExecutionSpace m_execution_space;
 };
 
+template <typename ExecutionSpace, typename Functor>
+struct GraphNodeThenHostImpl
+    : public GraphNodeKernelDefaultImpl<ExecutionSpace> {
+  using execute_kernel_vtable_base_t =
+      GraphNodeKernelDefaultImpl<ExecutionSpace>;
+
+  explicit GraphNodeThenHostImpl(Functor functor)
+      : execute_kernel_vtable_base_t{}, m_functor(std::move(functor)) {}
+
+  void execute_kernel() override final {
+    this->m_execution_space.fence(
+        "Kokkos::DefaultGraphNode::then_host: fence needed before host "
+        "callback");
+    m_functor();
+  }
+
+  Functor m_functor;
+};
+
 // TODO Indicate that this kernel specialization is only for the Host somehow?
 template <class ExecutionSpace, class PolicyType, class Functor,
           class PatternTag, class... Args>
@@ -89,14 +108,8 @@ class GraphNodeKernelImpl
 //==============================================================================
 
 template <class ExecutionSpace>
-struct GraphNodeAggregateKernelDefaultImpl
+struct GraphNodeAggregateDefaultImpl
     : GraphNodeKernelDefaultImpl<ExecutionSpace> {
-  // Aggregates don't need a policy, but for the purposes of checking the static
-  // assertions about graph kernels,
-  struct Policy {
-    using is_graph_kernel = std::true_type;
-  };
-  using graph_kernel = GraphNodeAggregateKernelDefaultImpl;
   void execute_kernel() override final {}
 };
 
