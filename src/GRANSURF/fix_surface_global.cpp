@@ -508,7 +508,6 @@ void FixSurfaceGlobal::post_constructor()
   if (use_history) {
     auto cmd = fmt::format("NEIGH_HISTORY_SURFACE_GLOBAL_" + std::to_string(instance_me) + " all NEIGH_HISTORY {} onesided surface/global", size_history);
     fix_history = dynamic_cast<FixNeighHistory *>(modify->add_fix(cmd));
-    fix_history->fix = this;
   } else
     fix_history = nullptr;
 }
@@ -760,6 +759,7 @@ void FixSurfaceGlobal::pre_neighbor()
   MyPage<int> *ipage = list->ipage;
 
   if (use_history) {
+    fix_history->otherlist = list;
     fix_history->nlocal_neigh = nlocal;
     npartner = fix_history->get_npartner();         // # of touching partners of each atom
     partner = fix_history->get_partner();           // global atom IDs for the partners

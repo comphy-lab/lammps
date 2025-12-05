@@ -16,7 +16,6 @@
 #include "atom.h"
 #include "comm.h"
 #include "error.h"
-#include "fix_surface_global.h"
 #include "force.h"
 #include "memory.h"
 #include "modify.h"
@@ -34,7 +33,7 @@ using namespace FixConst;
 
 FixNeighHistory::FixNeighHistory(LAMMPS *lmp, int narg, char **arg) :
     Fix(lmp, narg, arg), pair(nullptr), npartner(nullptr), partner(nullptr), valuepartner(nullptr),
-    ipage_atom(nullptr), dpage_atom(nullptr), ipage_neigh(nullptr), dpage_neigh(nullptr)
+    ipage_atom(nullptr), dpage_atom(nullptr), ipage_neigh(nullptr), dpage_neigh(nullptr), otherlist(nullptr)
 {
   if (narg < 4) error->all(FLERR, "Illegal fix NEIGH_HISTORY command");
 
@@ -175,6 +174,11 @@ void FixNeighHistory::init()
   // setup data structs
 
   allocate_pages();
+
+  // check for missing list pointer
+
+  if (surface_global && !otherlist)
+    error->all(FLERR, "Cannot find neighbor list for use with fix surface/global");
 }
 
 /* ----------------------------------------------------------------------
@@ -274,7 +278,7 @@ void FixNeighHistory::pre_exchange_onesided()
   tagint *tag = atom->tag;
   NeighList *list;
   if (surface_global)
-    list = fix->list;
+    list = otherlist;
   else
     list = pair->list;
   inum = list->inum;
@@ -635,7 +639,7 @@ void FixNeighHistory::post_neighbor()
   tagint *tag = atom->tag;
   NeighList *list;
   if (surface_global)
-    list = fix->list;
+    list = otherlist;
   else
     list = pair->list;
   inum = list->inum;

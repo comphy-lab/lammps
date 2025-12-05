@@ -32,7 +32,7 @@ class FixNeighHistory : public Fix {
   int **firstflag;             // ptr to each atom's neighbor flag
   double **firstvalue;         // ptr to each atom's values
   class Pair *pair;            // ptr to pair style that uses neighbor history
-  class FixSurfaceGlobal *fix; // ptr to fix surface/global that uses neighbor history
+  class NeighList *otherlist;  // ptr to list if not using a pair style
 
   FixNeighHistory(class LAMMPS *, int, char **);
   ~FixNeighHistory() override;
