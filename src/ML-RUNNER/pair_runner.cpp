@@ -1294,3 +1294,4 @@ void PairRuNNer::unpack_local_atomic_properties(int rank, int size, int natoms, 
     }
   }
 }
+

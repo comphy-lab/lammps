@@ -28,7 +28,7 @@ if(DOWNLOAD_RUNNER)
     set(RUNNER_LIB_FULL_NAME "libRuNNer_mpi.a")
   else()
     set(RUNNER_LIB_FULL_NAME "libRuNNer.a")
-  endif()  
+  endif()
 
   # Add any custom CMake variables required by the RuNNer build system here.
   set(RUNNER_CMAKE_ARGS

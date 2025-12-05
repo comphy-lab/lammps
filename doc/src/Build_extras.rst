@@ -1531,7 +1531,7 @@ To build with this package you need the external
 library. By default, the LAMMPS build process automatically downloads and
 compiles the latest version of `RuNNer`. Alternatively, you may choose the
 path and name of a manually compiled RuNNer library. Please see the box below for
-a detailed list of CMake build options. 
+a detailed list of CMake build options.
 
 In case of manual compilation, RuNNer offers a make and cmake-based build system.
 Please refer to the RuNNer documentation for detailed build options of the
