@@ -199,7 +199,10 @@ void PairRuNNer::compute(int eflag, int vflag)
   double *q = atom->q;
   // Number of atoms owned by this process.
   int nlocal = atom->nlocal;
-  // Number of ghost atoms on this process.
+  // Number of ghost atoms on this process. Ghost atoms are atoms owned by another
+  // process which are inside the neighbor list cutoff for local atoms on this
+  // process. We have to calculate the force contribution from local atoms to
+  // these ghost atoms.
   int nghost = atom->nghost;
   int nall = nlocal + nghost;
   // Total number of atoms in the simulation box.
@@ -254,9 +257,15 @@ void PairRuNNer::compute(int eflag, int vflag)
   std::vector<double> committee_hardness(nmax * num_committee_members, 0.0);
 
   // Neighborlist information
+  // Number of local atoms for which a neighbor list has been built
+  // This is usually equal to nlocal, but may also be smaller when some
+  // atoms have been removed from the neighbor list calculation by the user.
   inum = list->inum;
+  // Local index of those inum atoms for which a neighbor list was built.
   ilist = list->ilist;
+  // The number of neighbors for each atom in ilist (dimension inum).
   numneigh = list->numneigh;
+  // Pointer array to the first neighbor of each atom in ilist (dimension inum).
   firstneigh = list->firstneigh;
 
   // Calculate total number of neighbors
@@ -401,6 +410,9 @@ void PairRuNNer::compute(int eflag, int vflag)
 
     if (rank == 0) {
       // Reinitialize the electrostatics calculator on the root process.
+      // It is completely reallocated if the global
+      // number of atoms changed. Otherwise, only the ordering
+      // of atoms is updated.
       runner_interface_reinitialize_electrostatics(&natoms, &xyz_global[0], z_global.data());
     }
 
@@ -496,11 +508,17 @@ void PairRuNNer::compute(int eflag, int vflag)
 
     } else if (nnp_generation == 4) {
 
-      // Part 1. For each committee member...
+      // Part 1. For each committee member:
+      //   - collect predicted electronegativities and hardness values on root.
+      //   - perform QeQ to obtain charges for all atoms
+      //   - transfer charges back to each process (local and ghost atoms)
       for (int i = 0; i < num_committee_members; i++) {
 
         int icomm_fortran = i + 1;
 
+        // Collect electronegativities and hardness values from each process into
+        // one structure on the root process for the computation of charges via
+        // QeQ.
         std::vector<double> electronegativity_global(natoms, 0.0);
         std::vector<double> hardness_global(natoms, 0.0);
         std::vector<double> q_global(natoms, 0.0);
@@ -544,7 +562,12 @@ void PairRuNNer::compute(int eflag, int vflag)
                                       committee_d_energy_d_q.data());
       MPI_Barrier(world);
 
-      // Part 2. For each committee member...
+      // Part 2. For each committee member:
+      //   - Calculate electrostatic screening
+      //   - sum up short-range and screening dE/dQ
+      //   - determine lagrange charges, evaluate electrostatics, and sum up
+      //     contributions
+      //   - calculate force contributions of dChi/dxyz and dHardness/dxyz.
       for (int i = 0; i < num_committee_members; i++) {
 
         int icomm_fortran = i + 1;
@@ -612,7 +635,9 @@ void PairRuNNer::compute(int eflag, int vflag)
         unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 3,
                                        elec_force_global_ptr, runner_elec_forces_ptr);
 
-        // Apply remaining force contributions
+        // Apply remaining force contributions from predicited
+        // electronegativities and lagrange charges to
+        // electrostatic forces.
         runner_interface_evaluate_electrostatics_4g_part_2(
             &nlocal, &nghost, icomm_fortran, lagrange_charges, &committee_atomic_charge[nmax * i],
             runner_elec_forces.data(), runner_elec_d_energy_d_strain);
@@ -716,6 +741,13 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
 
   // Handling of feature extrapolations
+  // - Adding extrapolation warnings to log and screen if `show_extrap` is set to yes.
+  // - Stops the MD simulation if the number of extrapolations exceeds
+  // the threshold defined by `max_extrap`.
+  // - Resets the number of total number of recorded extrapolations during a simulation if
+  // the timestep is a multiple of `reset_ew_freq` and larger than 0.
+  // - Prints a summary of the recorded extrapolations at every intervall until the timestep is
+  // a multiple of `sum_ew_freq` and larger than 0.
   if (lcheck_extrap) {
 
     long timestep = update->ntimestep;
@@ -764,20 +796,29 @@ void PairRuNNer::compute(int eflag, int vflag)
       c_ptr_extrap_msg = nullptr;
     }
 
+    // Total number of extrapolation accumulated on this process during the simulation
     long local_extrap_count_total = 0;
+    // Number of extrapolation accumulated on this process during this this timestep
     long extrap_count_timestep = 0;
+    // Sets the flag `lreset` to reset the total extrapolation count if the timestep
+    // is a multiple of reset_ew_freq and larger than zero
     bool lreset = false;
     if (reset_ew_freq > 0 && timestep % reset_ew_freq == 0 && timestep > 0) { lreset = true; }
 
+    // Retrive the number of extrapolations during this timestep and during the whole simulation
+    // on each process 1and reset the latter if `lreset` is true.
     runner_interface_extrapolation_count(&extrap_count_timestep, &local_extrap_count_total,
                                          &lreset);
 
-    local_extrap_sum = local_extrap_sum + extrap_count_timestep;
+    // Number of extrapolations recorded on this process (reset at every summary)
+    local_extrap_sum += extrap_count_timestep;
 
+    // Total number of extrapolation accumulated across all processes
     long global_extrap_count_total = 0;
     MPI_Reduce(&local_extrap_count_total, &global_extrap_count_total, 1, MPI_LONG, MPI_SUM, 0,
                world);
 
+    // Abort simulation if the total number of extrapolations across all processes exceeds `max_extrap`
     if (max_extrap > -1 && global_extrap_count_total > max_extrap && rank == 0) {
       error->one(
           FLERR,
@@ -786,6 +827,8 @@ void PairRuNNer::compute(int eflag, int vflag)
           double(global_extrap_count_total));
     }
 
+    // Prints a summary of the recorded extrapolations at every intervall until the timestep is
+    // a multiple of `sum_ew_freq` and larger than 0.
     if (sum_ew_freq > 0 && timestep % sum_ew_freq == 0 && timestep > 0) {
       long global_extrap_sum = 0;
       MPI_Reduce(&local_extrap_sum, &global_extrap_sum, 1, MPI_LONG, MPI_SUM, 0, world);
@@ -799,6 +842,8 @@ void PairRuNNer::compute(int eflag, int vflag)
       }
       local_extrap_sum = 0;
     }
+    // Deallocates the character array containing the extrapolation message on the Fortran side
+    // and frees up the internal memory of the `ExtrapolationHandler` (see RuNNer 2 documentation)
     runner_interface_dealloc_extrapolation_warnings();
   }
 
@@ -1224,7 +1269,9 @@ void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, 
   int i, ii;
   int tag_minus_one;
 
-  // Prepare an array of the local properties that is natoms long
+  // Prepare an array of the local properties that is natoms long,
+  // where the local atoms of each process are sorted according to their unique atom ID
+  // to achieve a consistent order between timesteps.
   std::vector<double> local_property_sorted(natoms, 0.0);
 
   // Clear global property as well
