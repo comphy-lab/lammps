@@ -31,11 +31,105 @@
 
 #include <cmath>
 #include <cstring>
-#include <iostream>
+#include <vector>
+
+// External RuNNer library interface
+extern "C" {
+int runner_lammps_api_version();
+void runner_lammps_interface_init(const char *path, int *npath, double *cutoff, double *cfenergy,
+                                  double *cflength, int *nnp_generation, int *num_committee_members,
+                                  bool *l_hirshfeld_vdw, bool *ltwo_body, bool *lcheck_extrap,
+                                  int *rank, int *size);
+
+void runner_lammps_interface_transfer_atoms_and_neighbor_lists(
+    int *nlocal, int *nghost, int *atomic_numbers, int *inum, int *sum_num_neigh, int *ilist,
+    int *num_neigh, int *first_neigh, int *neigh, double *lattice, double *xyz, bool *lperiodic);
+
+void runner_interface_short_range(int *nlocal, int *nghost, int *inum, int *nmax, int *ilist,
+                                  double *energy, double *forces, double *d_energy_d_strain,
+                                  double *hirsh_volumes, double *atomic_charges,
+                                  double *elec_negativities, double *hardness);
+
+void runner_interface_evaluate_electrostatics_3g_part_1(int *num_atoms, double *xyz,
+                                                        double *total_charge, double *lattice,
+                                                        bool *lperiodic, double *atomic_charges,
+                                                        double *energy, double *force_outer,
+                                                        double *d_energy_d_q,
+                                                        double *d_energy_d_strain);
+
+void runner_interface_reinitialize_electrostatics(int *num_atoms_global, double *pos_global,
+                                                  int *atomic_numbers_global);
+
+void runner_interface_calc_screening(int *nlocal, int *nghost, double *atomic_charges,
+                                     double *energy, double *forces, double *de_dq,
+                                     double *d_energy_d_strain);
+
+void runner_interface_evaluate_electrostatics_3g_part_2(int *nlocal, int *nghost, int *nglobal,
+                                                        int icomm, double *energy, double *forces,
+                                                        double *d_energy_d_q,
+                                                        double *d_energy_d_q_sum_global,
+                                                        double *d_energy_d_strain);
+
+void runner_interface_compute_charges_4g(int *num_atoms, double *total_charge,
+                                         double *atomic_electronegativities,
+                                         double *atomic_hardness, double *atomic_charges,
+                                         bool *luse_prev_q, int icomm);
+
+void runner_interface_finalize_step();
+
+void runner_interface_short_range_4g(int *nlocal, int *nghost, int *inum, int *nmax, int *ilist,
+                                     double *, double *energy, double *forces,
+                                     double *d_energy_d_strain, double *d_energy_d_q);
+
+void runner_interface_evaluate_electrostatics_4g_part_1(int *nglobal, double *d_energy_dq,
+                                                        double *energy, double *forces,
+                                                        double *d_energy_d_strain,
+                                                        double *lagrange_charges, int icomm);
+
+void runner_interface_evaluate_electrostatics_4g_part_2(int *nlocal, int *nghost, int icomm,
+                                                        double *lagrange_charges, double *charges,
+                                                        double *forces, double *d_energy_d_strain);
+
+void runner_interface_hirshfeld_vdw(int *nlocal, int *nghost, int *inum, int *ilist, int icomm,
+                                    double *hirsh_volumes, double *energy, double *forces,
+                                    double *d_energy_d_strain);
+
+void runner_interface_two_body(int *nlocal, int *nghost, double *energy, double *forces,
+                               double *d_energy_d_strain);
+
+void runner_interface_extrapolation_warnings(char **c_ptr_extrap_msg, long *len_extrap_msg);
+
+void runner_interface_dealloc_extrapolation_warnings();
+
+void runner_interface_extrapolation_count(long *extraplation_count, long *total_extrapolation_count,
+                                          bool *lreset);
+}
 
 using namespace LAMMPS_NS;
 
-PairRuNNer::PairRuNNer(LAMMPS *lmp) : Pair(lmp)
+namespace {
+enum {
+  COMM_NONE = 0,
+  COMM_AT_CHARGE = 1,
+  COMM_ELEC_NEGATIVITY = 2,
+  COMM_HIRSH_VOLUME = 3,
+  COMM_DEDQ = 4,
+  COMM_SCREENING_DEDQ = 5,
+  COMM_LAMBDA_CHARGE = 6,
+  COMM_COMMITTEE_STORAGE = 7
+};
+}
+
+PairRuNNer::PairRuNNer(LAMMPS *lmp) :
+  Pair(lmp),
+  map(nullptr),
+  atomic_charge(nullptr),
+  hirshfeld_volume(nullptr),
+  electronegativity(nullptr),
+  lagrange_charges(nullptr),
+  de_dq(nullptr),
+  screening_de_dq(nullptr),
+  committee_storage(nullptr)
 {
   // HDNNP is not pairwise additive, due to three body terms
   single_enable = 0;
@@ -50,28 +144,20 @@ PairRuNNer::PairRuNNer(LAMMPS *lmp) : Pair(lmp)
   unit_convert_flag = 0;
   // We generally calculate the virial ourselves
   // and do not need to call virial_fdotr().
-  // In case of 2G HDNNP, we could call virial_fdotr()
+  // In case of 2G HDNNP, we call virial_fdotr()
   // for performace reasons.
-  // flag must then be overwritten in init_style().
+  // flag is then overwritten in init_style().
   no_virial_fdotr_compute = 1;
-  map = nullptr;
 
-  // Additional per-atom arrays for communication
   nmax = 0;
-  atomic_charge = nullptr;
-  hirshfeld_volume = nullptr;
-  electronegativity = nullptr;
-  lagrange_charges = nullptr;
-  screening_de_dq = nullptr;
-  de_dq = nullptr;
-  committee_storage = nullptr;
 
   // Set commsize needed by this pairstyle.
   comm_forward = 1;    // Forward communication (1 double per atom)
   comm_reverse = 1;    // Reverse communication (1 double per atom)
-  commstyle = 0;
+  commstyle = COMM_NONE;
 
   // Sum of extrapolation is zero upon initialization of this pair style
+  // Tracks number of extrapolations over multiple timesteps
   local_extrap_sum = 0;
 
   // variable for output using pair compute
@@ -100,19 +186,12 @@ PairRuNNer::~PairRuNNer()
 
 void PairRuNNer::compute(int eflag, int vflag)
 {
-  const bool debug = false;
-
   int inum, jnum, ii, jj, i, j;
   int *ilist;
   int *jlist;
   int *numneigh, **firstneigh;
-  int *runner_num_neigh, *runner_first_neighbor, *runner_jlist, *runner_types;
 
   // Initializes flags, which signal if energy and virial need to be tallied.
-  // In a typical MD simulation, these two properties are only required for
-  // output purposes (reporting potential energy and pressure), so their
-  // collection across all processes (=tallying) can be skipped in all timesteps
-  // where no reporting has been requested.
   ev_init(eflag, vflag);
 
   double **x = atom->x;
@@ -125,37 +204,20 @@ void PairRuNNer::compute(int eflag, int vflag)
   // process. We have to calculate the force contribution from local atoms to
   // these ghost atoms.
   int nghost = atom->nghost;
-  int ntotal = nlocal + nghost;
-  // Total number of atoms in the simulation box. This is mpi_sum(nlocal) across
-  // all processes.
+  int nall = nlocal + nghost;
+  // Total number of atoms in the simulation box.
   int natoms = static_cast<int>(atom->natoms);
   int *type = atom->type;
   tagint *tag = atom->tag;
 
   // Interface variables
   bool lperiodic;
-  double *committee_energy, *committee_force, *committee_d_energy_d_strain, *lattice;
-  double *committee_atomic_charge, *committee_hirshfeld_volume, *committee_electronegativity,
-      *committee_hardness;
-
-  lattice = new double[9];
+  double lattice[9] = {0.0};
 
   // MPI
   int size, rank;
   rank = comm->me;
   size = comm->nprocs;
-
-  if (nlocal == 0) {
-    std::cout << "Error in PairRuNNer. No local atoms on process " << rank << "." << std::endl;
-    std::cout << "Try adjusting simulation box partitioning with the "
-                 "`balance` command"
-              << std::endl;
-    std::cout << "or restart the simulation using fewer processors." << std::endl;
-    MPI_Abort(world, -1);
-  }
-
-  MPI_Barrier(world);
-  if (debug) std::cout << "Entered PairRuNNer::compute" << std::endl;
 
   // Allocate additional per-atom arrays
   if (atom->nmax > nmax) {
@@ -178,34 +240,21 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
 
   // Set additional per-atom arrays to zero
-  memset(atomic_charge, 0.0, nmax * (sizeof *atomic_charge));
-  memset(hirshfeld_volume, 0.0, nmax * (sizeof *atomic_charge));
-  memset(electronegativity, 0.0, nmax * (sizeof *electronegativity));
-  memset(lagrange_charges, 0.0, nmax * (sizeof *lagrange_charges));
-  memset(de_dq, 0.0, nmax * (sizeof *de_dq));
-  memset(screening_de_dq, 0.0, nmax * (sizeof *screening_de_dq));
-  memset(committee_storage, 0.0, nmax * (sizeof *committee_storage));
+  memset(atomic_charge, 0, nmax * (sizeof *atomic_charge));
+  memset(hirshfeld_volume, 0, nmax * (sizeof *atomic_charge));
+  memset(electronegativity, 0, nmax * (sizeof *electronegativity));
+  memset(lagrange_charges, 0, nmax * (sizeof *lagrange_charges));
+  memset(de_dq, 0, nmax * (sizeof *de_dq));
+  memset(screening_de_dq, 0, nmax * (sizeof *screening_de_dq));
+  memset(committee_storage, 0, nmax * (sizeof *committee_storage));
 
-  committee_energy = new double[num_committee_members];
-  committee_force = new double[ntotal * 3 * num_committee_members];
-  committee_d_energy_d_strain = new double[9 * num_committee_members];
-  committee_atomic_charge = new double[nmax * num_committee_members];
-  committee_hirshfeld_volume = new double[nmax * num_committee_members];
-  committee_electronegativity = new double[nmax * num_committee_members];
-  committee_hardness = new double[nmax * num_committee_members];
-
-  // Set interface variables to zero
-  memset(committee_energy, 0.0, num_committee_members * (sizeof *committee_energy));
-  memset(committee_force, 0.0, (ntotal * 3 * num_committee_members) * (sizeof *committee_force));
-  memset(committee_d_energy_d_strain, 0.0,
-         9 * num_committee_members * (sizeof *committee_d_energy_d_strain));
-  memset(committee_atomic_charge, 0.0,
-         nmax * num_committee_members * (sizeof *committee_atomic_charge));
-  memset(committee_hirshfeld_volume, 0.0,
-         nmax * num_committee_members * (sizeof *committee_hirshfeld_volume));
-  memset(committee_electronegativity, 0.0,
-         nmax * num_committee_members * (sizeof *committee_electronegativity));
-  memset(committee_hardness, 0.0, nmax * num_committee_members * (sizeof *committee_hardness));
+  std::vector<double> committee_energy(num_committee_members, 0.0);
+  std::vector<double> committee_force(nall * 3 * num_committee_members, 0.0);
+  std::vector<double> committee_d_energy_d_strain(9 * num_committee_members, 0.0);
+  std::vector<double> committee_atomic_charge(nmax * num_committee_members, 0.0);
+  std::vector<double> committee_hirshfeld_volume(nmax * num_committee_members, 0.0);
+  std::vector<double> committee_electronegativity(nmax * num_committee_members, 0.0);
+  std::vector<double> committee_hardness(nmax * num_committee_members, 0.0);
 
   // Neighborlist information
   // Number of local atoms for which a neighbor list has been built
@@ -223,11 +272,11 @@ void PairRuNNer::compute(int eflag, int vflag)
   int num_neigh_sum = 0;
   for (ii = 0; ii < inum; ii++) num_neigh_sum += numneigh[ii];
 
-  // create  arrays for interface
-  runner_num_neigh = new int[inum];
-  runner_first_neighbor = new int[inum];
-  runner_jlist = new int[num_neigh_sum];
-  runner_types = new int[ntotal];
+  // create arrays for interface
+  std::vector<int> runner_num_neigh(inum);
+  std::vector<int> runner_first_neighbor(inum);
+  std::vector<int> runner_jlist(num_neigh_sum);
+  std::vector<int> runner_types(nall);
 
   // Collect neighbor data
   int irunner = 0;
@@ -247,7 +296,7 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
   // collect atomic numbers of all atoms by converting element id to atomic
   // number using map
-  for (ii = 0; ii < ntotal; ii++) runner_types[ii] = map[type[ii]];
+  for (ii = 0; ii < nall; ii++) runner_types[ii] = map[type[ii]];
 
   // get lattice parameters
   lattice[0] = domain->xprd;
@@ -284,175 +333,151 @@ void PairRuNNer::compute(int eflag, int vflag)
                "Periodic systems must be charge neutral (total_charge = 0.0) when using pair_style "
                "runner.");
 
-  if (debug) std::cout << "Transfer atoms and neighbor lists to RuNNer interface" << std::endl;
-
   runner_lammps_interface_transfer_atoms_and_neighbor_lists(
-      &nlocal, &nghost, runner_types, &inum, &num_neigh_sum, ilist, runner_num_neigh,
-      runner_first_neighbor, runner_jlist, lattice, &x[0][0], &lperiodic);
+      &nlocal, &nghost, runner_types.data(), &inum, &num_neigh_sum, ilist, runner_num_neigh.data(),
+      runner_first_neighbor.data(), runner_jlist.data(), lattice, &x[0][0], &lperiodic);
 
-  if (debug) std::cout << "RuNNer short-range predicition" << std::endl;
-
-  runner_interface_short_range(&nlocal, &nghost, &inum, &nmax, ilist, committee_energy,
-                               committee_force, committee_d_energy_d_strain,
-                               committee_hirshfeld_volume, committee_atomic_charge,
-                               committee_electronegativity, committee_hardness);
+  runner_interface_short_range(&nlocal, &nghost, &inum, &nmax, ilist, committee_energy.data(),
+                               committee_force.data(), committee_d_energy_d_strain.data(),
+                               committee_hirshfeld_volume.data(), committee_atomic_charge.data(),
+                               committee_electronegativity.data(), committee_hardness.data());
 
   if (lhirshfeld_vdw) {
-    if (debug) std::cout << "RuNNer long-range vdW interactions" << std::endl;
 
     for (int i = 0; i < num_committee_members; i++) {
 
       int icomm_fortran = i + 1;
 
       double vdw_energy = 0.0;
-
-      double *vdw_forces = new double[ntotal * 3];
-      memset(vdw_forces, 0.0, ntotal * 3 * (sizeof *vdw_forces));
-
-      double *vdw_d_energy_d_strain = new double[9];
-      memset(vdw_d_energy_d_strain, 0.0, 9 * (sizeof *vdw_d_energy_d_strain));
+      std::vector<double> vdw_forces(nall * 3, 0.0);
+      double vdw_d_energy_d_strain[9] = {0.0};
 
       for (int ii = 0; ii < nmax; ii++)
         hirshfeld_volume[ii] = committee_hirshfeld_volume[nmax * i + ii];
 
       // Communicate Hirshfeld volumes from local atoms to ghost atoms.
-      commstyle = COMMHIRSHVOLUME;
+      commstyle = COMM_HIRSH_VOLUME;
       comm->forward_comm(this);
 
       // Calculate dispersion energies and forces using Hirshfeld volumes
       // and volume gradients (stored on runner side)
       runner_interface_hirshfeld_vdw(&nlocal, &nghost, &inum, ilist, icomm_fortran,
-                                     hirshfeld_volume, &vdw_energy, vdw_forces,
+                                     hirshfeld_volume, &vdw_energy, vdw_forces.data(),
                                      vdw_d_energy_d_strain);
 
-      // Add electrostatic interactions to short-range results
+      // Add vdw interactions to short-range results
       committee_energy[i] += vdw_energy;
 
-      for (ii = 0; ii < ntotal * 3; ii++) committee_force[ntotal * 3 * i + ii] += vdw_forces[ii];
+      for (ii = 0; ii < nall * 3; ii++) committee_force[nall * 3 * i + ii] += vdw_forces[ii];
 
       for (ii = 0; ii < 9; ii++)
         committee_d_energy_d_strain[i * 9 + ii] += vdw_d_energy_d_strain[ii];
-
-      delete[] vdw_forces;
-      delete[] vdw_d_energy_d_strain;
     }
   }
 
   if (ltwo_body) {
-    if (debug) std::cout << "RuNNer two-body potential" << std::endl;
 
     double two_body_energy = 0.0;
-
-    double *two_body_forces = new double[ntotal * 3];
-    memset(two_body_forces, 0.0, ntotal * 3 * (sizeof *two_body_forces));
-
-    double *two_body_d_energy_d_strain = new double[9];
-    memset(two_body_d_energy_d_strain, 0.0, 9 * (sizeof *two_body_d_energy_d_strain));
+    std::vector<double> two_body_forces(nall * 3, 0.0);
+    double two_body_d_energy_d_strain[9] = {0.0};
 
     // Calculate two-body energies and forces
-    runner_interface_two_body(&nlocal, &nghost, &two_body_energy, two_body_forces,
+    runner_interface_two_body(&nlocal, &nghost, &two_body_energy, two_body_forces.data(),
                               two_body_d_energy_d_strain);
 
     for (int i = 0; i < num_committee_members; i++) {
       // Add two-body interactions to short-range results
       committee_energy[i] += two_body_energy;
 
-      for (ii = 0; ii < ntotal * 3; ii++)
-        committee_force[ntotal * 3 * i + ii] += two_body_forces[ii];
+      for (ii = 0; ii < nall * 3; ii++) committee_force[nall * 3 * i + ii] += two_body_forces[ii];
 
       for (ii = 0; ii < 9; ii++)
         committee_d_energy_d_strain[i * 9 + ii] += two_body_d_energy_d_strain[ii];
-
-      delete[] two_body_forces;
-      delete[] two_body_d_energy_d_strain;
     }
   }
 
   if (nnp_generation >= 3) {
     // Collect local atoms into a global structure. This needs to be done only
     // once for all committee members.
-    double *xyz_global = new double[natoms * 3];
-    int *z_global = new int[natoms];
+    std::vector<double> xyz_global(natoms * 3, 0.0);
+    std::vector<int> z_global(natoms, 0);
 
-    pack_structure(rank, size, natoms, inum, ilist, tag, x, runner_types, xyz_global, z_global);
+    double *xyz_global_ptr = xyz_global.data();
+    int *z_global_ptr = z_global.data();
+
+    pack_structure(rank, size, natoms, inum, ilist, tag, x, runner_types.data(), xyz_global_ptr,
+                   z_global_ptr);
 
     if (rank == 0) {
-      // Reinitialize the electrostatics calculator on the root
-      // process. It is completely reallocated if the global
+      // Reinitialize the electrostatics calculator on the root process.
+      // It is completely reallocated if the global
       // number of atoms changed. Otherwise, only the ordering
       // of atoms is updated.
-      runner_interface_reinitialize_electrostatics(&natoms, &xyz_global[0], z_global);
+      runner_interface_reinitialize_electrostatics(&natoms, &xyz_global[0], z_global.data());
     }
 
     if (nnp_generation == 3) {
-      if (debug) std::cout << "RuNNer 3G long-range electrostatics" << std::endl;
 
       for (int i = 0; i < num_committee_members; i++) {
 
         int icomm_fortran = i + 1;
 
         // Collect the charge predicted by the committee members into one global array.
-        double *q_global = new double[natoms];
+        std::vector<double> q_global(natoms, 0.0);
+        double *q_global_ptr = q_global.data();
+
         pack_atomic_property(rank, size, natoms, inum, ilist, tag,
-                             &committee_atomic_charge[nmax * i], q_global);
+                             &committee_atomic_charge[nmax * i], q_global_ptr);
 
         // long-range electrostatics variables
         double runner_elec_energy = 0.0;
-        double *elec_force_global = new double[natoms * 3];
-        memset(elec_force_global, 0.0, natoms * 3 * (sizeof *elec_force_global));
-
-        double *de_dq_global = new double[natoms];
-        memset(de_dq_global, 0.0, natoms * (sizeof *de_dq_global));
-
-        double *runner_elec_d_energy_d_strain = new double[9];
-        memset(runner_elec_d_energy_d_strain, 0.0, 9 * (sizeof *runner_elec_d_energy_d_strain));
+        std::vector<double> elec_force_global(natoms * 3, 0.0);
+        std::vector<double> de_dq_global(natoms, 0.0);
+        double runner_elec_d_energy_d_strain[9] = {0.0};
 
         if (rank == 0) {
-          // Calculate long-range electrostatics on root using the global
-          // structure.
+          // Calculate long-range electrostatics on root using the global structure.
           runner_interface_evaluate_electrostatics_3g_part_1(
               &natoms, &xyz_global[0], &total_charge, lattice, &lperiodic, &q_global[0],
-              &runner_elec_energy, &elec_force_global[0], &de_dq_global[0],
-              &runner_elec_d_energy_d_strain[0]);
+              &runner_elec_energy, elec_force_global.data(), de_dq_global.data(),
+              runner_elec_d_energy_d_strain);
         }
 
         MPI_Barrier(world);
 
-        // Broadcast and unpack electrostatic results back to each local
-        // process.
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global,
+        // Broadcast and unpack electrostatic results back to each local process.
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global_ptr,
                                        atomic_charge);
 
-        memset(de_dq, 0.0, ntotal * (sizeof *de_dq));
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, de_dq_global,
+        memset(de_dq, 0, nall * (sizeof *de_dq));
+        double *de_dq_global_ptr = de_dq_global.data();
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, de_dq_global_ptr,
                                        de_dq);
 
-        double *runner_elec_forces = new double[ntotal * 3];
-        memset(runner_elec_forces, 0.0, ntotal * 3 * (sizeof *runner_elec_forces));
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 3, elec_force_global,
-                                       runner_elec_forces);
+        std::vector<double> runner_elec_forces(nall * 3, 0.0);
+        double *elec_force_global_ptr = elec_force_global.data();
+        double *runner_elec_forces_ptr = runner_elec_forces.data();
+
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 3,
+                                       elec_force_global_ptr, runner_elec_forces_ptr);
 
         // Communicate scaled atomic charges from local atoms to ghost
         // atoms for screening calculation.
-        commstyle = COMMATCHARGE;
+        commstyle = COMM_AT_CHARGE;
         comm->forward_comm(this);
 
         double screening_energy = 0.0;
-        double *screening_forces = new double[ntotal * 3];
-        memset(screening_forces, 0.0, ntotal * 3 * (sizeof *screening_forces));
-
-        memset(screening_de_dq, 0.0, ntotal * (sizeof *screening_de_dq));
-
-        double *screening_d_energy_d_strain = new double[9];
-        memset(screening_d_energy_d_strain, 0.0, 9 * (sizeof *screening_d_energy_d_strain));
+        std::vector<double> screening_forces(nall * 3, 0.0);
+        memset(screening_de_dq, 0, nall * (sizeof *screening_de_dq));
+        double screening_d_energy_d_strain[9] = {0.0};
 
         // Apply screening
         runner_interface_calc_screening(&nlocal, &nghost, atomic_charge, &screening_energy,
-                                        screening_forces, screening_de_dq,
+                                        screening_forces.data(), screening_de_dq,
                                         screening_d_energy_d_strain);
 
         // Communicate screening de_dq from ghost atoms to local atoms
-        commstyle = COMMSCREENINGDEDQ;
+        commstyle = COMM_SCREENING_DEDQ;
         comm->reverse_comm(this);
 
         // Determine sum of de_dq of local atoms across all procs.
@@ -466,30 +491,22 @@ void PairRuNNer::compute(int eflag, int vflag)
         MPI_Allreduce(&de_dq_sum_local, &de_dq_sum_global, 1, MPI_DOUBLE, MPI_SUM, world);
 
         runner_interface_evaluate_electrostatics_3g_part_2(
-            &nlocal, &nghost, &natoms, icomm_fortran, &runner_elec_energy, runner_elec_forces,
-            de_dq, &de_dq_sum_global, runner_elec_d_energy_d_strain);
+            &nlocal, &nghost, &natoms, icomm_fortran, &runner_elec_energy,
+            runner_elec_forces.data(), de_dq, &de_dq_sum_global,
+            runner_elec_d_energy_d_strain);
 
         // Add electrostatic interactions to short-range results
         committee_energy[i] += runner_elec_energy - screening_energy;
 
-        for (ii = 0; ii < ntotal * 3; ii++)
-          committee_force[ntotal * 3 * i + ii] += runner_elec_forces[ii] - screening_forces[ii];
+        for (ii = 0; ii < nall * 3; ii++)
+          committee_force[nall * 3 * i + ii] += runner_elec_forces[ii] - screening_forces[ii];
 
         for (ii = 0; ii < 9; ii++)
           committee_d_energy_d_strain[i * 9 + ii] +=
               runner_elec_d_energy_d_strain[ii] - screening_d_energy_d_strain[ii];
-
-        delete[] screening_forces;
-        delete[] screening_d_energy_d_strain;
-        delete[] elec_force_global;
-        delete[] de_dq_global;
-        delete[] runner_elec_forces;
-        delete[] runner_elec_d_energy_d_strain;
-        delete[] q_global;
       }
 
     } else if (nnp_generation == 4) {
-      if (debug) std::cout << "RuNNer 4G non-local" << std::endl;
 
       // Part 1. For each committee member:
       //   - collect predicted electronegativities and hardness values on root.
@@ -502,46 +519,47 @@ void PairRuNNer::compute(int eflag, int vflag)
         // Collect electronegativities and hardness values from each process into
         // one structure on the root process for the computation of charges via
         // QeQ.
-        double *electronegativity_global = new double[natoms];
-        double *hardness_global = new double[natoms];
-        double *q_global = new double[natoms];
+        std::vector<double> electronegativity_global(natoms, 0.0);
+        std::vector<double> hardness_global(natoms, 0.0);
+        std::vector<double> q_global(natoms, 0.0);
+
+        double *electronegativity_global_ptr = electronegativity_global.data();
+        double *hardness_global_ptr = hardness_global.data();
+        double *q_global_ptr = q_global.data();
 
         pack_atomic_property(rank, size, natoms, inum, ilist, tag,
-                             &committee_electronegativity[nmax * i], electronegativity_global);
+                             &committee_electronegativity[nmax * i], electronegativity_global_ptr);
 
         pack_atomic_property(rank, size, natoms, inum, ilist, tag, &committee_hardness[nmax * i],
-                             hardness_global);
+                             hardness_global_ptr);
 
         if (rank == 0) {
           // compute charges using qeq on root using global structure
-          runner_interface_compute_charges_4g(&natoms, &total_charge, &electronegativity_global[0],
-                                              &hardness_global[0], &q_global[0], &luse_prev_q,
-                                              icomm_fortran);
+          runner_interface_compute_charges_4g(
+              &natoms, &total_charge, electronegativity_global.data(), hardness_global.data(),
+              q_global.data(), &luse_prev_q, icomm_fortran);
         }
         MPI_Barrier(world);
 
         // unpack global charges from root to respective processes
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global,
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global_ptr,
                                        atomic_charge);
 
         // Communicate qeq charges from local atoms to ghost atoms
         // for screening calculation
-        commstyle = COMMATCHARGE;
+        commstyle = COMM_AT_CHARGE;
         comm->forward_comm(this);
 
         for (ii = 0; ii < nmax; ii++) committee_atomic_charge[nmax * i + ii] = atomic_charge[ii];
-
-        delete[] electronegativity_global;
-        delete[] hardness_global;
-        delete[] q_global;
       }
 
-      double *committee_d_energy_d_q = new double[ntotal * num_committee_members];
+      std::vector<double> committee_d_energy_d_q(nall * num_committee_members, 0.0);
 
       // Perform short-range prediction for all committee members at once.
       runner_interface_short_range_4g(&nlocal, &nghost, &inum, &nmax, ilist,
-                                      committee_atomic_charge, committee_energy, committee_force,
-                                      committee_d_energy_d_strain, committee_d_energy_d_q);
+                                      committee_atomic_charge.data(), committee_energy.data(),
+                                      committee_force.data(), committee_d_energy_d_strain.data(),
+                                      committee_d_energy_d_q.data());
       MPI_Barrier(world);
 
       // Part 2. For each committee member:
@@ -555,116 +573,94 @@ void PairRuNNer::compute(int eflag, int vflag)
         int icomm_fortran = i + 1;
 
         double screening_energy = 0.0;
-        double *screening_forces = new double[ntotal * 3];
-        memset(screening_forces, 0.0, ntotal * 3 * (sizeof *screening_forces));
-
-        memset(screening_de_dq, 0.0, ntotal * (sizeof *screening_de_dq));
-
-        double *screening_d_energy_d_strain = new double[9];
-        memset(screening_d_energy_d_strain, 0.0, 9 * (sizeof *screening_d_energy_d_strain));
+        std::vector<double> screening_forces(nall * 3, 0.0);
+        memset(screening_de_dq, 0, nall * (sizeof *screening_de_dq));
+        double screening_d_energy_d_strain[9] = {0.0};
 
         // Apply screening
         runner_interface_calc_screening(&nlocal, &nghost, &committee_atomic_charge[nmax * i],
-                                        &screening_energy, screening_forces, screening_de_dq,
+                                        &screening_energy, screening_forces.data(), screening_de_dq,
                                         screening_d_energy_d_strain);
 
         // Communicate screening de_dq from ghost atoms to local atoms
-        commstyle = COMMSCREENINGDEDQ;
+        commstyle = COMM_SCREENING_DEDQ;
         comm->reverse_comm(this);
 
         // Determine sum of de_dq of local atoms across all procs.
-        memset(de_dq, 0.0, ntotal * (sizeof *de_dq));
+        memset(de_dq, 0, nall * (sizeof *de_dq));
         for (j = 0; j < inum; j++) {
           ii = ilist[j];
-          de_dq[ii] += committee_d_energy_d_q[ntotal * i + ii] - screening_de_dq[ii];
+          de_dq[ii] += committee_d_energy_d_q[nall * i + ii] - screening_de_dq[ii];
         }
 
         double runner_elec_energy = 0.0;
-        double *elec_force_global = new double[natoms * 3];
-        memset(elec_force_global, 0.0, natoms * 3 * (sizeof *elec_force_global));
-
-        double *de_dq_global = new double[natoms];
-        memset(de_dq_global, 0.0, natoms * (sizeof *de_dq_global));
-
-        double *runner_elec_d_energy_d_strain = new double[9];
-        memset(runner_elec_d_energy_d_strain, 0.0, 9 * (sizeof *runner_elec_d_energy_d_strain));
-
-        double *lagrange_global = new double[natoms];
-        memset(lagrange_global, 0.0, natoms * (sizeof *lagrange_global));
+        std::vector<double> elec_force_global(natoms * 3, 0.0);
+        std::vector<double> de_dq_global(natoms, 0.0);
+        double runner_elec_d_energy_d_strain[9] = {0.0};
+        std::vector<double> lagrange_global(natoms, 0.0);
 
         // Communicate de_dq and pack into global structure for
         // determination of lagrange charges.
 
         // communicate ghost atom contributions to local atoms
-        commstyle = COMMDEDQ;
+        commstyle = COMM_DEDQ;
         comm->reverse_comm(this);
 
-        pack_atomic_property(rank, size, natoms, inum, ilist, tag, de_dq, de_dq_global);
+        double *de_dq_global_ptr = de_dq_global.data();
+        pack_atomic_property(rank, size, natoms, inum, ilist, tag, de_dq, de_dq_global_ptr);
 
         if (rank == 0) {
           // serial step determining lagrange charges and
           // electrostatic contribution from global de_dq
           runner_interface_evaluate_electrostatics_4g_part_1(
-              &natoms, de_dq_global, &runner_elec_energy, elec_force_global,
-              runner_elec_d_energy_d_strain, lagrange_global, icomm_fortran);
+              &natoms, de_dq_global.data(), &runner_elec_energy, elec_force_global.data(),
+              runner_elec_d_energy_d_strain, lagrange_global.data(), icomm_fortran);
         }
 
         MPI_Barrier(world);
 
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, lagrange_global,
+        double *lagrange_global_ptr = lagrange_global.data();
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, lagrange_global_ptr,
                                        lagrange_charges);
 
         // communicate lagrange charges from local atoms to ghost
         // atoms for calculation of force trick part 2
-        commstyle = COMMLAMBDACHARGE;
+        commstyle = COMM_LAMBDA_CHARGE;
         comm->forward_comm(this);
 
-        double *runner_elec_forces = new double[ntotal * 3];
-        memset(runner_elec_forces, 0.0, ntotal * 3 * (sizeof *runner_elec_forces));
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 3, elec_force_global,
-                                       runner_elec_forces);
+        std::vector<double> runner_elec_forces(nall * 3, 0.0);
+        double *elec_force_global_ptr = elec_force_global.data();
+        double *runner_elec_forces_ptr = runner_elec_forces.data();
+
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 3,
+                                       elec_force_global_ptr, runner_elec_forces_ptr);
 
         // Apply remaining force contributions from predicited
         // electronegativities and lagrange charges to
         // electrostatic forces.
-        runner_interface_evaluate_electrostatics_4g_part_2(&nlocal, &nghost, icomm_fortran, lagrange_charges,
-                                                           &committee_atomic_charge[nmax * i], 
-                                                           runner_elec_forces,
-                                                           runner_elec_d_energy_d_strain);
+        runner_interface_evaluate_electrostatics_4g_part_2(
+            &nlocal, &nghost, icomm_fortran, lagrange_charges, &committee_atomic_charge[nmax * i],
+            runner_elec_forces.data(), runner_elec_d_energy_d_strain);
 
         // Add electrostatic interactions to short-range results
         committee_energy[i] += runner_elec_energy - screening_energy;
 
-        for (ii = 0; ii < ntotal * 3; ii++)
-          committee_force[ntotal * 3 * i + ii] += runner_elec_forces[ii] - screening_forces[ii];
+        for (ii = 0; ii < nall * 3; ii++)
+          committee_force[nall * 3 * i + ii] += runner_elec_forces[ii] - screening_forces[ii];
 
         for (ii = 0; ii < 9; ii++)
           committee_d_energy_d_strain[i * 9 + ii] +=
               runner_elec_d_energy_d_strain[ii] - screening_d_energy_d_strain[ii];
-
-        delete[] runner_elec_forces;
-        delete[] screening_forces;
-        delete[] screening_d_energy_d_strain;
-        delete[] elec_force_global;
-        delete[] runner_elec_d_energy_d_strain;
-        delete[] lagrange_global;
-        delete[] de_dq_global;
       }
-
-      delete[] committee_d_energy_d_q;
     }
-
-    delete[] xyz_global;
-    delete[] z_global;
   }
 
   // Copy results from RuNNer back into LAMMPS atom array
-  if (debug) std::cout << "Transferring results from RuNNer to LAMMPS" << std::endl;
 
   // Forces
   irunner = 0;
   for (i = 0; i < num_committee_members; i++) {
-    for (ii = 0; ii < ntotal; ii++) {
+    for (ii = 0; ii < nall; ii++) {
       for (jj = 0; jj < 3; jj++) {
         f[ii][jj] += committee_force[irunner] / cfenergy * cflength /
             num_committee_members;    // runner_force is a vector
@@ -680,16 +676,16 @@ void PairRuNNer::compute(int eflag, int vflag)
     double **f_comm = atom->darray[idx];
     for (jj = 0; jj < 3; jj++) {                       // xyz components
       for (i = 0; i < num_committee_members; i++) {    // committee members
-        irunner = jj + i * ntotal * 3;
-        memset(committee_storage, 0.0, nmax * (sizeof *committee_storage));
-        for (ii = 0; ii < ntotal; ii++) {    // nlocal + nghost atoms
+        irunner = jj + i * nall * 3;
+        memset(committee_storage, 0, nmax * (sizeof *committee_storage));
+        for (ii = 0; ii < nall; ii++) {    // nlocal + nghost atoms
           committee_storage[ii] = committee_force[irunner];
           irunner += 3;
         }
-        commstyle = COMMCOMMITTEESTORAGE;
+        commstyle = COMM_COMMITTEE_STORAGE;
         comm->reverse_comm(
             this);    // communicate forces so that local atoms have full contribution
-        for (ii = 0; ii < ntotal; ii++)
+        for (ii = 0; ii < nall; ii++)
           f_comm[ii][jj + i * 3] =
               committee_storage[ii] / cfenergy * cflength;    // copy into custom d2_array
       }
@@ -702,7 +698,7 @@ void PairRuNNer::compute(int eflag, int vflag)
     int idx = atom->find_custom_ghost("q_comm", flag, cols, ghost);
     double **q_comm = atom->darray[idx];
     for (i = 0; i < num_committee_members; i++) {    // committee members
-      for (ii = 0; ii < ntotal; ii++) q_comm[ii][i] = committee_atomic_charge[ii + i * nmax];
+      for (ii = 0; ii < nall; ii++) q_comm[ii][i] = committee_atomic_charge[ii + i * nmax];
       // copy into custom d2_array
     }
   }
@@ -714,16 +710,14 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
 
   // Write committee energies into pair compute vector
-  memset(pvector, 0.0, num_committee_members);
+  memset(pvector, 0, num_committee_members);
   for (i = 0; i < num_committee_members; i++) pvector[i] = committee_energy[i] / cfenergy;
 
   // Charges if charge atom style is used
   if (q != NULL) {
-    memset(
-        q, 0.0,
-        nmax *
-            (sizeof *q));    // This array does not seem to get reset to zero every timestep by LAMMPS
-    for (ii = 0; ii < ntotal; ii++) {
+    // The q array does not seem to get reset to zero every timestep by LAMMPS
+    memset(q, 0,nmax * (sizeof *q));
+    for (ii = 0; ii < nall; ii++) {
       for (jj = 0; jj < num_committee_members; jj++) {
         q[ii] += committee_atomic_charge[ii + jj * nmax] / num_committee_members;
       }
@@ -735,7 +729,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   // Virial is -1.0 * d_energy_d_strain
   if (vflag_global) {
-    memset(virial, 0.0, 9);
+    memset(virial, 0, 9);
     for (i = 0; i < num_committee_members; i++) {
       virial[0] -= committee_d_energy_d_strain[0 + 9 * i] / cfenergy / num_committee_members;
       virial[1] -= committee_d_energy_d_strain[4 + 9 * i] / cfenergy / num_committee_members;
@@ -765,14 +759,9 @@ void PairRuNNer::compute(int eflag, int vflag)
 
       runner_interface_extrapolation_warnings(&c_ptr_extrap_msg, &len_extrap_msg);
 
-      long *len_extrap_msg_array = nullptr;
       if (rank == 0) {
-        len_extrap_msg_array = new long[size];
-
         // Write extrapolation message owned by rank 0
         if (len_extrap_msg > 0) {
-
-          // Write header for extrapolation warnings
           utils::logmesg(lmp, "RuNNer2: Feature extrapolations on process 0 at timestep {:d}\n",
                          timestep);
           std::string extrap_msg = std::string(c_ptr_extrap_msg);
@@ -780,50 +769,37 @@ void PairRuNNer::compute(int eflag, int vflag)
         }
       }
 
-      // Gather length of the extrapolation messages owned by the other processes.
-      MPI_Gather(&len_extrap_msg, 1, MPI_LONG, len_extrap_msg_array, 1, MPI_LONG, 0, world);
+      // Gather and print warnings from other ranks
+      std::vector<long> len_extrap_msg_array;
+      if (rank == 0) len_extrap_msg_array.resize(size);
 
-      // Write extrapolation message owned by the other processes.
+      MPI_Gather(&len_extrap_msg, 1, MPI_LONG, len_extrap_msg_array.data(), 1, MPI_LONG, 0, world);
+
       if (rank == 0) {
-
-        // Loop over the processes
         for (int irank = 1; irank < size; irank++) {
-
           if (len_extrap_msg_array[irank] > 0) {
-
-            // Receive extrapolation message from irank if there is one
-            char *c_extrap_msg = nullptr;
-            c_extrap_msg = new char[len_extrap_msg_array[irank]];
+            std::vector<char> c_extrap_msg(len_extrap_msg_array[irank]);
             MPI_Status mpi_stat;
-            MPI_Recv(c_extrap_msg, len_extrap_msg_array[irank], MPI_BYTE, irank, 0, world,
+            MPI_Recv(c_extrap_msg.data(), len_extrap_msg_array[irank], MPI_BYTE, irank, 0, world,
                      &mpi_stat);
 
-            // Write header for extrapolation warnings
             utils::logmesg(lmp,
                            "RuNNer2: Feature extrapolations on process {:d} at timestep {:d}\n",
                            irank, timestep);
-
-            // Convert C char array to string and write extrapolation warning to screen and log
-            std::string extrap_msg = std::string(c_extrap_msg);
+            std::string extrap_msg = std::string(c_extrap_msg.data());
             utils::logmesg(lmp, extrap_msg);
-            delete[] c_extrap_msg;
           }
         }
-
       } else if (len_extrap_msg > 0) {
-
         MPI_Send(c_ptr_extrap_msg, len_extrap_msg, MPI_BYTE, 0, 0, world);
       }
-
       c_ptr_extrap_msg = nullptr;
-      if (rank == 0) delete[] len_extrap_msg_array;
     }
 
     // Total number of extrapolation accumulated on this process during the simulation
     long local_extrap_count_total = 0;
     // Number of extrapolation accumulated on this process during this this timestep
     long extrap_count_timestep = 0;
-
     // Sets the flag `lreset` to reset the total extrapolation count if the timestep
     // is a multiple of reset_ew_freq and larger than zero
     bool lreset = false;
@@ -834,10 +810,10 @@ void PairRuNNer::compute(int eflag, int vflag)
     runner_interface_extrapolation_count(&extrap_count_timestep, &local_extrap_count_total,
                                          &lreset);
 
-    // Number of extrapolations recorded on this process (being reseted at every summary)
-    local_extrap_sum = local_extrap_sum + extrap_count_timestep;
+    // Number of extrapolations recorded on this process (reset at every summary)
+    local_extrap_sum += extrap_count_timestep;
 
-    // Total number of extrapolation accumulated across all processes "..."
+    // Total number of extrapolation accumulated across all processes
     long global_extrap_count_total = 0;
     MPI_Reduce(&local_extrap_count_total, &global_extrap_count_total, 1, MPI_LONG, MPI_SUM, 0,
                world);
@@ -854,8 +830,6 @@ void PairRuNNer::compute(int eflag, int vflag)
     // Prints a summary of the recorded extrapolations at every intervall until the timestep is
     // a multiple of `sum_ew_freq` and larger than 0.
     if (sum_ew_freq > 0 && timestep % sum_ew_freq == 0 && timestep > 0) {
-
-      // Number of extrapolations recorded on all process for the extrapolation summary
       long global_extrap_sum = 0;
       MPI_Reduce(&local_extrap_sum, &global_extrap_sum, 1, MPI_LONG, MPI_SUM, 0, world);
 
@@ -866,34 +840,16 @@ void PairRuNNer::compute(int eflag, int vflag)
                        timestep, double(global_extrap_sum),
                        double(global_extrap_sum) / double(sum_ew_freq));
       }
-
       local_extrap_sum = 0;
     }
-
     // Deallocates the character array containing the extrapolation message on the Fortran side
     // and frees up the internal memory of the `ExtrapolationHandler` (see RuNNer 2 documentation)
     runner_interface_dealloc_extrapolation_warnings();
   }
 
   MPI_Barrier(world);
-
-  // Deallocate internal arrays
-  delete[] runner_types;
-  delete[] runner_num_neigh;
-  delete[] runner_first_neighbor;
-  delete[] runner_jlist;
-  delete[] committee_energy;
-  delete[] committee_force;
-  delete[] committee_d_energy_d_strain;
-  delete[] committee_atomic_charge;
-  delete[] committee_hirshfeld_volume;
-  delete[] committee_electronegativity;
-  delete[] committee_hardness;
-  delete[] lattice;
-
   runner_interface_finalize_step();
 
-  if (debug) std::cout << "compute done" << std::endl;
 }
 
 void PairRuNNer::settings(int narg, char **arg)
@@ -1101,173 +1057,161 @@ communication between local and ghost atoms
 
 int PairRuNNer::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int *pbc)
 {
-  int i, j, m;
+  int i, j, m = 0;
 
-  if (commstyle == COMMHIRSHVOLUME) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      buf[m++] = hirshfeld_volume[j];
-    }
-  } else if (commstyle == COMMATCHARGE) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      buf[m++] = atomic_charge[j];
-    }
-  } else if (commstyle == COMMELECNEGATIVITY) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      buf[m++] = electronegativity[j];
-    }
-  } else if (commstyle == COMMDEDQ) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      buf[m++] = de_dq[j];
-    }
-  } else if (commstyle == COMMSCREENINGDEDQ) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      buf[m++] = screening_de_dq[j];
-    }
-  } else if (commstyle == COMMLAMBDACHARGE) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      buf[m++] = lagrange_charges[j];
-    }
-  } else if (commstyle == COMMCOMMITTEESTORAGE) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      buf[m++] = committee_storage[j];
-    }
+  switch (commstyle) {
+    case COMM_HIRSH_VOLUME:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        buf[m++] = hirshfeld_volume[j];
+      }
+      break;
+    case COMM_AT_CHARGE:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        buf[m++] = atomic_charge[j];
+      }
+      break;
+    case COMM_ELEC_NEGATIVITY:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        buf[m++] = electronegativity[j];
+      }
+      break;
+    case COMM_DEDQ:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        buf[m++] = de_dq[j];
+      }
+      break;
+    case COMM_SCREENING_DEDQ:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        buf[m++] = screening_de_dq[j];
+      }
+      break;
+    case COMM_LAMBDA_CHARGE:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        buf[m++] = lagrange_charges[j];
+      }
+      break;
+    case COMM_COMMITTEE_STORAGE:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        buf[m++] = committee_storage[j];
+      }
+      break;
   }
-
   return m;
 }
 
 void PairRuNNer::unpack_forward_comm(int n, int first, double *buf)
 {
-  int i, m, last;
+  int i, m = 0, last = first + n;
 
-  if (commstyle == COMMHIRSHVOLUME) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) hirshfeld_volume[i] = buf[m++];
-  } else if (commstyle == COMMATCHARGE) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) atomic_charge[i] = buf[m++];
-  } else if (commstyle == COMMELECNEGATIVITY) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) electronegativity[i] = buf[m++];
-  } else if (commstyle == COMMDEDQ) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) de_dq[i] = buf[m++];
-  } else if (commstyle == COMMSCREENINGDEDQ) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) screening_de_dq[i] = buf[m++];
-  } else if (commstyle == COMMLAMBDACHARGE) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) lagrange_charges[i] = buf[m++];
-  } else if (commstyle == COMMCOMMITTEESTORAGE) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) committee_storage[i] = buf[m++];
+  switch (commstyle) {
+    case COMM_HIRSH_VOLUME:
+      for (i = first; i < last; i++) hirshfeld_volume[i] = buf[m++];
+      break;
+    case COMM_AT_CHARGE:
+      for (i = first; i < last; i++) atomic_charge[i] = buf[m++];
+      break;
+    case COMM_ELEC_NEGATIVITY:
+      for (i = first; i < last; i++) electronegativity[i] = buf[m++];
+      break;
+    case COMM_DEDQ:
+      for (i = first; i < last; i++) de_dq[i] = buf[m++];
+      break;
+    case COMM_SCREENING_DEDQ:
+      for (i = first; i < last; i++) screening_de_dq[i] = buf[m++];
+      break;
+    case COMM_LAMBDA_CHARGE:
+      for (i = first; i < last; i++) lagrange_charges[i] = buf[m++];
+      break;
+    case COMM_COMMITTEE_STORAGE:
+      for (i = first; i < last; i++) committee_storage[i] = buf[m++];
+      break;
   }
 }
 
 int PairRuNNer::pack_reverse_comm(int n, int first, double *buf)
 {
-  int i, m, last;
+  int i, m = 0, last = first + n;
 
-  if (commstyle == COMMHIRSHVOLUME) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) buf[m++] = hirshfeld_volume[i];
-  } else if (commstyle == COMMATCHARGE) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) buf[m++] = atomic_charge[i];
-  } else if (commstyle == COMMELECNEGATIVITY) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) buf[m++] = electronegativity[i];
-  } else if (commstyle == COMMDEDQ) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) buf[m++] = de_dq[i];
-  } else if (commstyle == COMMSCREENINGDEDQ) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) buf[m++] = screening_de_dq[i];
-  } else if (commstyle == COMMLAMBDACHARGE) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) buf[m++] = lagrange_charges[i];
-  } else if (commstyle == COMMCOMMITTEESTORAGE) {
-    m = 0;
-    last = first + n;
-    for (i = first; i < last; i++) buf[m++] = committee_storage[i];
+  switch (commstyle) {
+    case COMM_HIRSH_VOLUME:
+      for (i = first; i < last; i++) buf[m++] = hirshfeld_volume[i];
+      break;
+    case COMM_AT_CHARGE:
+      for (i = first; i < last; i++) buf[m++] = atomic_charge[i];
+      break;
+    case COMM_ELEC_NEGATIVITY:
+      for (i = first; i < last; i++) buf[m++] = electronegativity[i];
+      break;
+    case COMM_DEDQ:
+      for (i = first; i < last; i++) buf[m++] = de_dq[i];
+      break;
+    case COMM_SCREENING_DEDQ:
+      for (i = first; i < last; i++) buf[m++] = screening_de_dq[i];
+      break;
+    case COMM_LAMBDA_CHARGE:
+      for (i = first; i < last; i++) buf[m++] = lagrange_charges[i];
+      break;
+    case COMM_COMMITTEE_STORAGE:
+      for (i = first; i < last; i++) buf[m++] = committee_storage[i];
+      break;
   }
-
   return m;
 }
 
 void PairRuNNer::unpack_reverse_comm(int n, int *list, double *buf)
 {
-  int i, j, m;
+  int i, j, m = 0;
 
-  if (commstyle == COMMHIRSHVOLUME) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      hirshfeld_volume[j] += buf[m++];
-    }
-  } else if (commstyle == COMMATCHARGE) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      atomic_charge[j] += buf[m++];
-    }
-  } else if (commstyle == COMMELECNEGATIVITY) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      electronegativity[j] += buf[m++];
-    }
-  } else if (commstyle == COMMDEDQ) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      de_dq[j] += buf[m++];
-    }
-  } else if (commstyle == COMMSCREENINGDEDQ) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      screening_de_dq[j] += buf[m++];
-    }
-  } else if (commstyle == COMMLAMBDACHARGE) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      lagrange_charges[j] += buf[m++];
-    }
-  } else if (commstyle == COMMCOMMITTEESTORAGE) {
-    m = 0;
-    for (i = 0; i < n; i++) {
-      j = list[i];
-      committee_storage[j] += buf[m++];
-    }
+  switch (commstyle) {
+    case COMM_HIRSH_VOLUME:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        hirshfeld_volume[j] += buf[m++];
+      }
+      break;
+    case COMM_AT_CHARGE:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        atomic_charge[j] += buf[m++];
+      }
+      break;
+    case COMM_ELEC_NEGATIVITY:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        electronegativity[j] += buf[m++];
+      }
+      break;
+    case COMM_DEDQ:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        de_dq[j] += buf[m++];
+      }
+      break;
+    case COMM_SCREENING_DEDQ:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        screening_de_dq[j] += buf[m++];
+      }
+      break;
+    case COMM_LAMBDA_CHARGE:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        lagrange_charges[j] += buf[m++];
+      }
+      break;
+    case COMM_COMMITTEE_STORAGE:
+      for (i = 0; i < n; i++) {
+        j = list[i];
+        committee_storage[j] += buf[m++];
+      }
+      break;
   }
 }
 
@@ -1279,9 +1223,7 @@ void PairRuNNer::pack_structure(int rank, int size, int natoms, int inum, int *i
   int tag_minus_one;
 
   // First collect all Cartesian coordinates.
-  double *xyz_local = new double[natoms * 3];
-  memset(xyz_local, 0, (natoms * 3) * (sizeof *xyz_local));
-  memset(xyz_global, 0, (natoms * 3) * (sizeof *xyz_global));
+  std::vector<double> xyz_local(natoms * 3, 0.0);
 
   double xtmp, ytmp, ztmp;
   for (ii = 0; ii < inum; ii++) {
@@ -1304,13 +1246,10 @@ void PairRuNNer::pack_structure(int rank, int size, int natoms, int inum, int *i
   MPI_Barrier(world);
 
   // Communicate local positions to root process.
-  MPI_Reduce(xyz_local, xyz_global, natoms * 3, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(xyz_local.data(), xyz_global, natoms * 3, MPI_DOUBLE, MPI_SUM, 0, world);
 
   // Second collect the atomic numbers z.
-  int *z_local = new int[natoms];
-
-  memset(z_local, 0.0, natoms * (sizeof *z_local));
-  memset(z_global, 0.0, natoms * (sizeof *z_global));
+  std::vector<int> z_local(natoms, 0);
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
@@ -1321,11 +1260,7 @@ void PairRuNNer::pack_structure(int rank, int size, int natoms, int inum, int *i
   MPI_Barrier(world);
 
   // Communicate local atomic numbers to root process.
-  MPI_Reduce(z_local, z_global, natoms, MPI_INT, MPI_SUM, 0, world);
-
-  // Deallocation of local arrays.
-  delete[] xyz_local;
-  delete[] z_local;
+  MPI_Reduce(z_local.data(), z_global, natoms, MPI_INT, MPI_SUM, 0, world);
 }
 
 void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, int *ilist,
@@ -1337,10 +1272,10 @@ void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, 
   // Prepare an array of the local properties that is natoms long,
   // where the local atoms of each process are sorted according to their unique atom ID
   // to achieve a consistent order between timesteps.
-  double *local_property_sorted = new double[natoms];
+  std::vector<double> local_property_sorted(natoms, 0.0);
 
-  memset(global_property, 0.0, natoms * (sizeof *global_property));
-  memset(local_property_sorted, 0.0, natoms * (sizeof *local_property_sorted));
+  // Clear global property as well
+  memset(global_property, 0, natoms * (sizeof *global_property));
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
@@ -1350,10 +1285,7 @@ void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, 
   MPI_Barrier(world);
 
   // Communicate local charges to root process.
-  MPI_Reduce(local_property_sorted, global_property, natoms, MPI_DOUBLE, MPI_SUM, 0, world);
-
-  // Deallocation of local arrays.
-  delete[] local_property_sorted;
+  MPI_Reduce(local_property_sorted.data(), global_property, natoms, MPI_DOUBLE, MPI_SUM, 0, world);
 }
 
 void PairRuNNer::unpack_local_atomic_properties(int rank, int size, int natoms, int inum,
