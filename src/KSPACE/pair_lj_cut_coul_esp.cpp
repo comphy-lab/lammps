@@ -13,7 +13,7 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing author: Paul Crozier (SNL)
+   Contributing author: Jiuyang Liang, Libin Lu, Shidong Jiang (Flatiron Institute)
 ------------------------------------------------------------------------- */
 
 #include "pair_lj_cut_coul_esp.h"
