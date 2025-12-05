@@ -2485,18 +2485,16 @@ void Molecule::read(int flag)
 
   // error checks
 
-  if (!has_atoms)
-    error->all(FLERR, fileiarg, "Required \"atoms\" header keyword not found in molecule file");
-  if (natoms < 1) error->all(FLERR, fileiarg, "No atoms or invalid atom count in molecule file");
+  if (!has_atoms && nlines == 0 && ntris == 0)
+    error->all(FLERR,"Molecule file must define either atoms or lines or triangles");
+
+  if (natoms < 0) error->all(FLERR, fileiarg, "Invalid atom count in molecule file");
   if (nlines < 0) error->all(FLERR,"Invalid line count in molecule file");
   if (ntris < 0) error->all(FLERR,"Invalid triangle count in molecule file");
   if (nbonds < 0) error->all(FLERR, fileiarg, "Invalid bond count in molecule file");
   if (nangles < 0) error->all(FLERR, fileiarg, "Invalid angle count in molecule file");
   if (ndihedrals < 0) error->all(FLERR, fileiarg, "Invalid dihedral count in molecule file");
   if (nimpropers < 0) error->all(FLERR, fileiarg, "Invalid improper count in molecule file");
-
-  if (natoms == 0 && nlines == 0 && ntris == 0)
-    error->all(FLERR,"Molecule file must define either atoms or lines or triangles");
 
   if (nlines && domain->dimension != 2)
     error->all(FLERR,"Molecule file with lines must be for 2d simulation");
@@ -4113,9 +4111,7 @@ void Molecule::initialize()
   nbondtypes = nangletypes = ndihedraltypes = nimpropertypes = 0;
   nibody = ndbody = 0;
   nfragments = 0;
-<<<<<<< HEAD
   nlines = ntris = 0;
-=======
   masstotal = 0.0;
   maxradius = 0.0;
   molradius = 0.0;
@@ -4125,7 +4121,6 @@ void Molecule::initialize()
   nset = 0;
   last = 0;
   fileiarg = 0;
->>>>>>> develop
 
   bond_per_atom = angle_per_atom = dihedral_per_atom = improper_per_atom = 0;
   maxspecial = 0;

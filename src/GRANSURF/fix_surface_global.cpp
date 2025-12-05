@@ -869,7 +869,7 @@ void FixSurfaceGlobal::pre_neighbor()
         delx = xtmp - xsurf[j][0];
         dely = ytmp - xsurf[j][1];
         delz = ztmp - xsurf[j][2];
-        domain->minimum_image(delx, dely, delz);
+        domain->minimum_image(FLERR, delx, dely, delz);
         rsq = delx * delx + dely * dely + delz * delz;
         radsum = radi + radsurf[j] + skin;
         cutsq = radsum * radsum;
@@ -1025,7 +1025,7 @@ void FixSurfaceGlobal::post_force(int vflag)
       delx = xtmp - xsurf[j][0];
       dely = ytmp - xsurf[j][1];
       delz = ztmp - xsurf[j][2];
-      domain->minimum_image(delx, dely, delz);
+      domain->minimum_image(FLERR, delx, dely, delz);
 
       rsq_com = delx * delx + dely * dely + delz * delz;
 
