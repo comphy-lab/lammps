@@ -402,11 +402,8 @@ void PairRuNNer::compute(int eflag, int vflag)
     std::vector<double> xyz_global(natoms * 3, 0.0);
     std::vector<int> z_global(natoms, 0);
 
-    double *xyz_global_ptr = xyz_global.data();
-    int *z_global_ptr = z_global.data();
-
-    pack_structure(rank, size, natoms, inum, ilist, tag, x, runner_types.data(), xyz_global_ptr,
-                   z_global_ptr);
+    pack_structure(rank, size, natoms, inum, ilist, tag, x, runner_types.data(), xyz_global.data(),
+                   z_global.data());
 
     if (rank == 0) {
       // Reinitialize the electrostatics calculator on the root process.
@@ -424,10 +421,9 @@ void PairRuNNer::compute(int eflag, int vflag)
 
         // Collect the charge predicted by the committee members into one global array.
         std::vector<double> q_global(natoms, 0.0);
-        double *q_global_ptr = q_global.data();
 
         pack_atomic_property(rank, size, natoms, inum, ilist, tag,
-                             &committee_atomic_charge[nmax * i], q_global_ptr);
+                             &committee_atomic_charge[nmax * i], q_global.data());
 
         // long-range electrostatics variables
         double runner_elec_energy = 0.0;
@@ -446,20 +442,16 @@ void PairRuNNer::compute(int eflag, int vflag)
         MPI_Barrier(world);
 
         // Broadcast and unpack electrostatic results back to each local process.
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global_ptr,
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global.data(),
                                        atomic_charge);
 
         memset(de_dq, 0, nall * (sizeof *de_dq));
-        double *de_dq_global_ptr = de_dq_global.data();
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, de_dq_global_ptr,
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, de_dq_global.data(),
                                        de_dq);
 
         std::vector<double> runner_elec_forces(nall * 3, 0.0);
-        double *elec_force_global_ptr = elec_force_global.data();
-        double *runner_elec_forces_ptr = runner_elec_forces.data();
-
         unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 3,
-                                       elec_force_global_ptr, runner_elec_forces_ptr);
+                                       elec_force_global.data(), runner_elec_forces.data());
 
         // Communicate scaled atomic charges from local atoms to ghost
         // atoms for screening calculation.
@@ -523,15 +515,11 @@ void PairRuNNer::compute(int eflag, int vflag)
         std::vector<double> hardness_global(natoms, 0.0);
         std::vector<double> q_global(natoms, 0.0);
 
-        double *electronegativity_global_ptr = electronegativity_global.data();
-        double *hardness_global_ptr = hardness_global.data();
-        double *q_global_ptr = q_global.data();
-
         pack_atomic_property(rank, size, natoms, inum, ilist, tag,
-                             &committee_electronegativity[nmax * i], electronegativity_global_ptr);
+                             &committee_electronegativity[nmax * i], electronegativity_global.data());
 
         pack_atomic_property(rank, size, natoms, inum, ilist, tag, &committee_hardness[nmax * i],
-                             hardness_global_ptr);
+                             hardness_global.data());
 
         if (rank == 0) {
           // compute charges using qeq on root using global structure
@@ -542,7 +530,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         MPI_Barrier(world);
 
         // unpack global charges from root to respective processes
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global_ptr,
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global.data(),
                                        atomic_charge);
 
         // Communicate qeq charges from local atoms to ghost atoms
@@ -606,8 +594,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         commstyle = COMM_DEDQ;
         comm->reverse_comm(this);
 
-        double *de_dq_global_ptr = de_dq_global.data();
-        pack_atomic_property(rank, size, natoms, inum, ilist, tag, de_dq, de_dq_global_ptr);
+        pack_atomic_property(rank, size, natoms, inum, ilist, tag, de_dq, de_dq_global.data());
 
         if (rank == 0) {
           // serial step determining lagrange charges and
@@ -619,8 +606,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
         MPI_Barrier(world);
 
-        double *lagrange_global_ptr = lagrange_global.data();
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, lagrange_global_ptr,
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, lagrange_global.data(),
                                        lagrange_charges);
 
         // communicate lagrange charges from local atoms to ghost
@@ -629,11 +615,8 @@ void PairRuNNer::compute(int eflag, int vflag)
         comm->forward_comm(this);
 
         std::vector<double> runner_elec_forces(nall * 3, 0.0);
-        double *elec_force_global_ptr = elec_force_global.data();
-        double *runner_elec_forces_ptr = runner_elec_forces.data();
-
         unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 3,
-                                       elec_force_global_ptr, runner_elec_forces_ptr);
+                                       elec_force_global.data(), runner_elec_forces.data());
 
         // Apply remaining force contributions from predicited
         // electronegativities and lagrange charges to
@@ -1216,7 +1199,7 @@ void PairRuNNer::unpack_reverse_comm(int n, int *list, double *buf)
 }
 
 void PairRuNNer::pack_structure(int rank, int size, int natoms, int inum, int *ilist, tagint *tag,
-                                double **x, int *runner_types, double *&xyz_global, int *&z_global)
+                                double **x, int *runner_types, double *xyz_global, int *z_global)
 {
   int i, ii;
   int start;
@@ -1264,7 +1247,7 @@ void PairRuNNer::pack_structure(int rank, int size, int natoms, int inum, int *i
 }
 
 void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, int *ilist,
-                                      tagint *tag, double *local_property, double *&global_property)
+                                      tagint *tag, double *local_property, double *global_property)
 {
   int i, ii;
   int tag_minus_one;
@@ -1290,7 +1273,7 @@ void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, 
 
 void PairRuNNer::unpack_local_atomic_properties(int rank, int size, int natoms, int inum,
                                                 int *ilist, tagint *tag, int nprop,
-                                                double *&global_properties,
+                                                double *global_properties,
                                                 double *local_properties)
 {
   int i, ii, iprop;
