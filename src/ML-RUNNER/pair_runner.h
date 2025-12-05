@@ -42,13 +42,13 @@ class PairRuNNer : public Pair {
   void unpack_reverse_comm(int n, int *list, double *buf) override;
 
   void pack_structure(int rank, int size, int natoms, int inum, int *ilist, tagint *tag, double **x,
-                      int *runner_types, double *&xyz_global, int *&z_global);
+                      int *runner_types, double *xyz_global, int *z_global);
 
   void pack_atomic_property(int rank, int size, int natoms, int inum, int *ilist, tagint *tag,
-                            double *local_property, double *&global_property);
+                            double *local_property, double *global_property);
 
   void unpack_local_atomic_properties(int rank, int size, int natoms, int inum, int *ilist,
-                                      tagint *tag, int nprop, double *&global_properties,
+                                      tagint *tag, int nprop, double *global_properties,
                                       double *local_properties);
 
  private:
@@ -63,7 +63,7 @@ class PairRuNNer : public Pair {
   bool lshow_ew;            // Flag enabling output of extrapolation warnings to log file
   long sum_ew_freq;         // Frequency where extrapolation warning summary is printed to log file
   long reset_ew_freq;       // Frequency where extrapolation count is reseted to 0
-  long local_extrap_sum;    // Sum of recorded extrapolations per process
+  long local_extrap_sum;    // Sum of recorded extrapolations per process over multiple time steps
   double cutoff;            // Max feature map cutoff.
   double total_charge;      // The total charge of the structure. Must be 0 for periodic systems.
   char *directory;          // directory containing RuNNer potential files
