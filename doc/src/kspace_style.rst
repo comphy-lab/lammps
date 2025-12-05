@@ -205,17 +205,17 @@ magnetic spins.
 ----------
 
 The *esp* style implements the Ewald Summation with Prolates (ESP) method 
-:rdf:`(Liang) <Liang>`, a fast Ewald-summation approach that can reduce 
+:ref:`(Liang2025) <Liang2025>`, a fast Ewald-summation approach that can reduce 
 the cost of long-range electrostatics compared to PPPM and PME. Without 
 any loss of accuracy, ESP alters the fast Ewald pipeline in two places. 
 First, for kernel splitting it uses prolate spheroidal wave functions (PSWFs)
 instead of Gaussians, which—thanks to the optimal concentration of PSWFs
-among band-limited functions—significantly reduces the required Fourier grid. 
-With everything else equal, the FFT length drops by about a factor of two 
+among band-limited functions—significantly reduces the required Fourier grid.
+With everything else equal, the FFT length drops by about a factor of two
 per dimension at high accuracy (:math:`\approx 8\times` in 3D). The residual
 kernel also vanishes at the real-space cutoff, eliminating any need for an
-“energy shift.” Second, for particle–mesh operations ESP employs PSWFs in 
-place of the B-splines used by PPPM. For comparable accuracy without k-space 
+“energy shift.” Second, for particle–mesh operations ESP employs PSWFs in
+place of the B-splines used by PPPM. For comparable accuracy without k-space
 upsampling, PSWFs require fewer neighboring grid points (e.g., :math:`\approx 8` vs :math:`\approx 12`
 for five-digit accuracy). In contrast, PPPM solvers typically sets the spreading/interpolation
 order to order:math:`=5`, which forces substantial Fourier-space upsampling. 
@@ -571,9 +571,9 @@ Adam Hilger, NY (1989).
 
 **(Kolafa)** Kolafa and Perram, Molecular Simulation, 9, 351 (1992).
 
-:: _Liang:
+.. _Liang2025:
 
-**(Liang)** Liang, Lu, Barnett, Greengard, Jiang, arXiv:2505.09727 (2025).
+**(Liang2025)** Liang, Lu, Barnett, Greengard, Jiang, arXiv:2505.09727 (2025).
 
 .. _Petersen:
 
