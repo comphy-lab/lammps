@@ -431,7 +431,7 @@ void Pair::init_tables(double cut_coul, double *cut_respa)
       rsq_lookup.i = i << ncoulshiftbits;
       rsq_lookup.i |= maskhi;
     }
-    r = sqrtf((double)rsq_lookup.f);
+    r = sqrt((double)rsq_lookup.f);
     if (msmflag) {
       egamma = 1.0 - (r/cut_coul)*force->kspace->gamma(r/cut_coul);
       fgamma = 1.0 + ((double)rsq_lookup.f/cut_coulsq)*
@@ -808,7 +808,7 @@ void Pair::read_restart(FILE *)
 void Pair::write_restart(FILE *)
 {
   if (comm->me == 0)
-    error->all(FLERR, Error::NOLASTLINE, "Cannot yet use compute tally with Kokkos");
+    error->warning(FLERR,"Pair style restartinfo set but has no restart support");
 }
 
 /* -------------------------------------------------------------------
@@ -820,7 +820,7 @@ void Pair::write_restart(FILE *)
 void Pair::add_tally_callback(Compute *ptr)
 {
   if (lmp->kokkos)
-    error->all(FLERR,"Cannot yet use compute tally with Kokkos");
+    error->all(FLERR, Error::NOLASTLINE, "Cannot yet use compute tally with Kokkos");
 
   int i,found=-1;
 

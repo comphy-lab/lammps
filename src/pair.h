@@ -55,7 +55,7 @@ class Pair : protected Pointers {
   int born_matrix_enable;         // 1 if born_matrix() routine exists
   int single_hessian_enable;      // 1 if single_hessian() routine exists
   int atomic_energy_enable;       // 1 if compute_atomic_energy() routine exists
-  
+
   int restartinfo;                // 1 if pair style writes restart info
   int respa_enable;               // 1 if inner/middle/outer rRESPA routines
   int one_coeff;                  // 1 if allows only one coeff * * call
@@ -274,6 +274,7 @@ class Pair : protected Pointers {
     float f;
   } union_int_float_t;
   // NOLINTEND
+  
   // Accessor for the INTEL package to determine virial calc for hybrid
 
   inline int fdotr_is_set() const { return vflag_fdotr; }
