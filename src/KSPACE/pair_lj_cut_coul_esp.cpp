@@ -528,7 +528,14 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
         if (eflag) {
           if (rsq < cut_coulsq) {
             if (!ncoultablebits || rsq <= tabinnersq) {
-              ecoul = prefactor*erfc;
+              double energy_poly_appx = energy_poly_coeff[0];
+              double energy_poly_r = 1.0;
+              double r_scal = r/cut_coul;
+              for(int index = 1; index<num_of_energy_poly; index++){
+                energy_poly_r *= r_scal;
+                energy_poly_appx = energy_poly_appx + energy_poly_coeff[index] * energy_poly_r;
+              } 
+              ecoul = prefactor * energy_poly_appx;
               if (factor_coul < 1.0) ecoul -= (1.0-factor_coul)*prefactor;
             } else {
               table = etable[itable] + fraction*detable[itable];
@@ -552,7 +559,16 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
         if (vflag) {
           if (rsq < cut_coulsq) {
             if (!ncoultablebits || rsq <= tabinnersq) {
-              forcecoul = prefactor * (erfc + EWALD_F*grij*expm2);
+              // Polynomial approximation
+              double force_poly_appx = force_poly_coeff[0];
+              double force_poly_r = 1.0;
+              double r_scal = r/cut_coul;
+              for(int index=1; index<num_of_force_poly; index++){
+                 force_poly_r *= r_scal;
+                 force_poly_appx += force_poly_coeff[index] * force_poly_r;
+              }
+              prefactor = qqrd2e * qtmp* q[j] / r;
+              forcecoul = prefactor * force_poly_appx;
               if (factor_coul < 1.0) forcecoul -= (1.0-factor_coul)*prefactor;
             } else {
               table = vtable[itable] + fraction*dvtable[itable];
@@ -939,7 +955,16 @@ double PairLJCutCoulEsp::single(int i, int j, int itype, int jtype,
   double eng = 0.0;
   if (rsq < cut_coulsq) {
     if (!ncoultablebits || rsq <= tabinnersq)
-      phicoul = prefactor*erfc;
+    {
+      double energy_poly_appx = energy_poly_coeff[0];
+      double energy_poly_r = 1.0;
+      double r_scal = r/cut_coul;
+      for(int index = 1; index<num_of_energy_poly; index++){
+        energy_poly_r *= r_scal;
+        energy_poly_appx = energy_poly_appx + energy_poly_coeff[index] * energy_poly_r;
+      } 
+      phicoul = prefactor * energy_poly_appx;
+    }
     else {
       table = etable[itable] + fraction*detable[itable];
       phicoul = atom->q[i]*atom->q[j] * table;
