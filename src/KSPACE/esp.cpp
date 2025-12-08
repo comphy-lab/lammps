@@ -564,15 +564,13 @@ void ESP::reset_grid()
   if (group_allocate_flag) deallocate_groups();
   
   // reset splitting/spreading c
-  prolc180(accuracy_relative, select_c);
-  prolc180(spreading_accuracy, spreading_select_c);
+  //prolc180(accuracy_relative, select_c);
+  //prolc180(spreading_accuracy, spreading_select_c);
 
   // reset portion of global grid that each proc owns
 
   set_grid_local();
   
-  //std::cout<<"Here is the stencil "<<std::endl;
-
   // reallocate K-space dependent memory
   // check if grid communication is now overlapping if not allowed
   // don't invoke allocate peratom() or group(), will be allocated when needed
