@@ -481,6 +481,8 @@ struct AtomVecEllipsoidKokkos_PackExchangeBonus {
     const int &offset):
       _bonus(bonus.template view<DeviceType>()),
       _ellipsoid(atomKK->k_ellipsoid.template view<DeviceType>()),
+      _bonusw(bonus.template view<DeviceType>()),
+      _ellipsoidw(atomKK->k_ellipsoid.template view<DeviceType>()),
 
       _size_exchange(atomKK->avecKK->size_exchange),
       _sendlist(sendlist.template view<DeviceType>()),
@@ -498,9 +500,9 @@ struct AtomVecEllipsoidKokkos_PackExchangeBonus {
 
     int m = _offset;
     if (_ellipsoid[i] < 0)
-      _buf(mysend,m) = d_ubuf(0).d;
+      _buf(mysend,m++) = d_ubuf(0).d;
     else {
-      _buf(mysend,m) = d_ubuf(1).d;
+      _buf(mysend,m++) = d_ubuf(1).d;
       int j = _ellipsoid[i];
       _buf(mysend,m++) = _bonus(j).shape[0];
       _buf(mysend,m++) = _bonus(j).shape[1];
