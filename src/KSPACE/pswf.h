@@ -18,6 +18,7 @@ void dgemm_(char *TransA, char *TransB, int *M, int *N, int *K, double *alpha, d
 }
 
 // prolate functions
+void prolc180(double eps, double &c);
 void prolc180_der3(double eps, double &der3);
 // prolate0 functor
 struct Prolate0Fun;
@@ -34,12 +35,11 @@ evaluate prolate0c function integral of \int_0^r \psi_0^c(x) dx
 double prolate0_int_eval(double c, double r);
 
 // approximation functions
-void force_poly(double tol, double r_tol, double &c, std::vector<double> &coeffs);
-void energy_poly(double tol, double r_tol, double &c, std::vector<double> &coeffs);
-void fourier_poly(double tol, double r_tol, double &c, double &lambda, std::vector<double> &coeffs);
-void spread_fourier_poly(double tol, double r_tol, double &c, double &lambda,
+void force_poly(double tol, double r_tol, const double &c, std::vector<double> &coeffs);
+void energy_poly(double tol, double r_tol, const double &c, std::vector<double> &coeffs);
+void fourier_poly(double tol, double r_tol, const double &c, double &lambda, std::vector<double> &coeffs);
+void spread_fourier_poly(double tol, double r_tol, const double &c, double &lambda,
                          std::vector<double> &coeffs);
-void spread_real_poly(int P, double tol, double r_tol, double &c, std::vector<double> &coeffs);
-void spread_real_poly_LegendaryJiangFormula(int P, double tol, double r_tol, double rcut, double h,
-                                            double &c, std::vector<double> &coeffs);
+void spread_real_poly(int P, double tol, double r_tol, const double &c, std::vector<double> &coeffs);
+
 #endif    // MATH_PSWF_H

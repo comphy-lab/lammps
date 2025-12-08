@@ -715,7 +715,7 @@ void prolc180_der3(double eps, double &der3)
   der3 = der3s[i - 1];
 }
 
-static inline void prolc180(double eps, double &c)
+void prolc180(double eps, double &c)
 {
   static const std::array<double, 180> cs = {
       0.43368E-16, 0.10048E+01, 0.17298E+01, 0.22271E+01, 0.26382E+01, 0.30035E+01, 0.33409E+01,
@@ -1273,9 +1273,9 @@ double prolate0_int_eval(double c, double r)
 // end of prolate functions
 
 // start of approximation functions
-void force_poly(double tol, double tol_coeff, double &c, std::vector<double> &coeffs)
+void force_poly(double tol, double tol_coeff, const double &c, std::vector<double> &coeffs)
 {
-  prolc180(tol, c);
+  //prolc180(tol, c);
 
   double c0 = prolate0_int_eval(c, 1.0);
 
@@ -1327,9 +1327,9 @@ void force_poly(double tol, double tol_coeff, double &c, std::vector<double> &co
   for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
 }
 
-void energy_poly(double tol, double tol_coeff, double &c, std::vector<double> &coeffs)
+void energy_poly(double tol, double tol_coeff, const double &c, std::vector<double> &coeffs)
 {
-  prolc180(tol, c);
+  //prolc180(tol, c);
 
   double c0 = prolate0_int_eval(c, 1.0);
 
@@ -1379,10 +1379,10 @@ void energy_poly(double tol, double tol_coeff, double &c, std::vector<double> &c
   for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
 }
 
-void fourier_poly(double tol, double tol_coeff, double &c, double &lambda,
+void fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
                   std::vector<double> &coeffs)
 {
-  prolc180(tol, c);
+  //prolc180(tol, c);
 
   double c0 = prolate0_int_eval(c, 1.0);
 
@@ -1441,10 +1441,10 @@ void fourier_poly(double tol, double tol_coeff, double &c, double &lambda,
   for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
 }
 
-void spread_fourier_poly(double tol, double tol_coeff, double &c, double &lambda,
+void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
                          std::vector<double> &coeffs)
 {
-  prolc180(tol, c);
+  //prolc180(tol, c);
 
   double c0 = prolate0_int_eval(c, 1.0);
 
@@ -1503,9 +1503,9 @@ void spread_fourier_poly(double tol, double tol_coeff, double &c, double &lambda
   for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
 }
 
-void spread_real_poly(int P, double tol, double tol_coeff, double &c, std::vector<double> &coeffs)
+void spread_real_poly(int P, double tol, double tol_coeff, const double &c, std::vector<double> &coeffs)
 {
-  prolc180(tol, c);
+  //prolc180(tol, c);
 
   int order = MAX_CHEB_ORDER;
   std::vector<double> nodes;

@@ -275,6 +275,9 @@ void ESP::init()
   gc = nullptr;
   int iteration = 0;
   
+  prolc180(accuracy_relative, select_c);
+  prolc180(spreading_accuracy, spreading_select_c);
+
   // Here debug
   while (order >= minorder) {
     if (iteration && me == 0)
@@ -298,8 +301,6 @@ void ESP::init()
     gc->setup_comm(tmp1,tmp2);
     if (gc->ghost_adjacent()) break;
     delete gc;
-    
-    printf("Stencil does not fit on nearest neighbor processors, reducing order from %d\n grids %d %d %d\n",order, nx_pppm, ny_pppm, nz_pppm);
 
     order--;
     iteration++;
@@ -563,6 +564,10 @@ void ESP::reset_grid()
   deallocate();
   if (peratom_allocate_flag) deallocate_peratom();
   if (group_allocate_flag) deallocate_groups();
+  
+  // reset splitting/spreading c
+  prolc180(accuracy_relative, select_c);
+  prolc180(spreading_accuracy, spreading_select_c);
 
   // reset portion of global grid that each proc owns
 
@@ -2431,15 +2436,6 @@ void ESP::fieldforce_ad()
     dx = nx+shiftone - (x[i][0]-boxlo[0])*delxinv;
     dy = ny+shiftone - (x[i][1]-boxlo[1])*delyinv;
     dz = nz+shiftone - (x[i][2]-boxlo[2])*delzinv;
-    
-    /*
-    if(macro_if_use_new_shidong_formula == 1)
-    {
-      dx = dx * order / delxinv / 2.0 / cutoff;
-      dy = dy * order / delyinv / 2.0 / cutoff;
-      dz = dz * order / delzinv / 2.0 / cutoff;
-    }
-    */
    
     compute_rho1d(dx,dy,dz);
     compute_drho1d(dx,dy,dz);
@@ -2472,6 +2468,7 @@ void ESP::fieldforce_ad()
     sf = sf_coeff[0]*sin(2*MY_PI*s1);
     sf += sf_coeff[1]*sin(4*MY_PI*s1);
     sf *= 2*q[i]*q[i];
+    
     f[i][0] += qfactor*(ekx*q[i] - sf);
 
     sf = sf_coeff[2]*sin(2*MY_PI*s2);
@@ -2483,7 +2480,10 @@ void ESP::fieldforce_ad()
     sf += sf_coeff[5]*sin(4*MY_PI*s3);
     sf *= 2*q[i]*q[i];
 
-    if (slabflag != 2) f[i][2] += qfactor*(ekz*q[i] - sf);
+    if (slabflag != 2) 
+    {
+      f[i][2] += qfactor*(ekz*q[i] - sf);
+    }
   }
 }
 
