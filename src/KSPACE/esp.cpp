@@ -76,8 +76,6 @@ ESP::ESP(LAMMPS *lmp) : KSpace(lmp),
   factors[0] = 2;
   factors[1] = 3;
   factors[2] = 5;
-  
-  macro_if_use_new_shidong_formula = 0;
 
   MPI_Comm_rank(world,&me);
   MPI_Comm_size(world,&nprocs);
