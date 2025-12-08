@@ -2845,6 +2845,8 @@ uint64_t AtomVecKokkos::field2mask(std::string field)
     return MU_MASK;
   else if (field == "radius")
     return RADIUS_MASK;
+  else if (field == "angmom")
+    return ANGMOM_MASK;
   else if (field == "omega")
     return OMEGA_MASK;
   else if (field == "torque")
@@ -2905,6 +2907,7 @@ int AtomVecKokkos::field2size(std::string field)
   else if (field == "mu") return 4;
   else if (field == "mu3") return 3;
   else if (field == "radius") return 1;
+  else if (field == "angmom") return 3;
   else if (field == "omega") return 3;
   else if (field == "torque") return 3;
   else if (field == "ellipsoid") return 1;

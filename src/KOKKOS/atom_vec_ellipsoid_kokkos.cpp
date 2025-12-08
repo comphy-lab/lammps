@@ -500,7 +500,7 @@ struct AtomVecEllipsoidKokkos_PackExchangeBonus {
     if (_ellipsoid[i] < 0)
       _buf(mysend,m) = d_ubuf(0).d;
     else {
-      _buf(mysend,m++) = d_ubuf(1).d;
+      _buf(mysend,m) = d_ubuf(1).d;
       int j = _ellipsoid[i];
       _buf(mysend,m++) = _bonus(j).shape[0];
       _buf(mysend,m++) = _bonus(j).shape[1];
@@ -516,6 +516,7 @@ struct AtomVecEllipsoidKokkos_PackExchangeBonus {
     
     if (j > -1 && j_bonus < 0)
       j_bonus = _ellipsoid[i]; // self-copy
+
     if (j_bonus > -1) {
       if (j < 0) j = i; // self-copy
 
@@ -855,4 +856,12 @@ void AtomVecEllipsoidKokkos::modified(ExecutionSpace space, uint64_t mask)
     if (mask & ELLIPSOID_MASK) atomKK->k_ellipsoid.modify_host();
     if (mask & BONUS_MASK) k_bonus.modify_host();
   }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void AtomVecEllipsoidKokkos::set_size_exchange()
+{
+  AtomVecKokkos::set_size_exchange();
+  size_exchange += size_exchange_bonus;
 }

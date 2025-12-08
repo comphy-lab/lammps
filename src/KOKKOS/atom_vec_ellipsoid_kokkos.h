@@ -108,6 +108,8 @@ class AtomVecEllipsoidKokkos : public AtomVecKokkos, public AtomVecEllipsoid {
   DEllipsoidBonusAT::tdual_bonus_1d k_bonus; 
   DEllipsoidBonusAT::t_bonus_1d d_bonus; 
   HEllipsoidBonusAT::t_bonus_1d h_bonus;
+
+  void set_size_exchange() override;
     
  private:
   int size_exchange_bonus;
