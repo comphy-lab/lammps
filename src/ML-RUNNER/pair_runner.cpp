@@ -43,8 +43,7 @@ void runner_lammps_interface_init(const char *path, int *npath, double *cutoff, 
 
 void runner_lammps_interface_transfer_atoms_and_neighbor_lists(
     int *nlocal, int *nghost, int *atomic_numbers, int *inum, int *sum_num_neigh, int *ilist,
-    int *num_neigh, int *first_neigh, int *neigh, double *lattice, double *xyz, bool *lperiodic,
-    int *lstress);
+    int *num_neigh, int *first_neigh, int *neigh, double *lattice, double *xyz, bool *lperiodic, int *lstress);
 
 void runner_interface_short_range(int *nlocal, int *nghost, int *inum, int *nmax, int *ilist,
                                   double *energy, double *forces, double *d_energy_d_strain,
@@ -122,9 +121,15 @@ enum {
 }
 
 PairRuNNer::PairRuNNer(LAMMPS *lmp) :
-    Pair(lmp), map(nullptr), atomic_charge(nullptr), hirshfeld_volume(nullptr),
-    electronegativity(nullptr), lagrange_charges(nullptr), de_dq(nullptr), screening_de_dq(nullptr),
-    committee_storage(nullptr)
+  Pair(lmp),
+  map(nullptr),
+  atomic_charge(nullptr),
+  hirshfeld_volume(nullptr),
+  electronegativity(nullptr),
+  lagrange_charges(nullptr),
+  de_dq(nullptr),
+  screening_de_dq(nullptr),
+  committee_storage(nullptr)
 {
   // HDNNP is not pairwise additive, due to three body terms
   single_enable = 0;
@@ -330,8 +335,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   runner_lammps_interface_transfer_atoms_and_neighbor_lists(
       &nlocal, &nghost, runner_types.data(), &inum, &num_neigh_sum, ilist, runner_num_neigh.data(),
-      runner_first_neighbor.data(), runner_jlist.data(), lattice, &x[0][0], &lperiodic,
-      &vflag_global);
+      runner_first_neighbor.data(), runner_jlist.data(), lattice, &x[0][0], &lperiodic, &vflag_global);
 
   runner_interface_short_range(&nlocal, &nghost, &inum, &nmax, ilist, committee_energy.data(),
                                committee_force.data(), committee_d_energy_d_strain.data(),
@@ -480,7 +484,8 @@ void PairRuNNer::compute(int eflag, int vflag)
 
         runner_interface_evaluate_electrostatics_3g_part_2(
             &nlocal, &nghost, &natoms, icomm_fortran, &runner_elec_energy,
-            runner_elec_forces.data(), de_dq, &de_dq_sum_global, runner_elec_d_energy_d_strain);
+            runner_elec_forces.data(), de_dq, &de_dq_sum_global,
+            runner_elec_d_energy_d_strain);
 
         // Add electrostatic interactions to short-range results
         committee_energy[i] += runner_elec_energy - screening_energy;
@@ -511,8 +516,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         std::vector<double> q_global(natoms, 0.0);
 
         pack_atomic_property(rank, size, natoms, inum, ilist, tag,
-                             &committee_electronegativity[nmax * i],
-                             electronegativity_global.data());
+                             &committee_electronegativity[nmax * i], electronegativity_global.data());
 
         pack_atomic_property(rank, size, natoms, inum, ilist, tag, &committee_hardness[nmax * i],
                              hardness_global.data());
@@ -602,8 +606,8 @@ void PairRuNNer::compute(int eflag, int vflag)
 
         MPI_Barrier(world);
 
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1,
-                                       lagrange_global.data(), lagrange_charges);
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, lagrange_global.data(),
+                                       lagrange_charges);
 
         // communicate lagrange charges from local atoms to ghost
         // atoms for calculation of force trick part 2
@@ -695,7 +699,7 @@ void PairRuNNer::compute(int eflag, int vflag)
   // Charges if charge atom style is used
   if (q != NULL) {
     // The q array does not seem to get reset to zero every timestep by LAMMPS
-    memset(q, 0, nmax * (sizeof *q));
+    memset(q, 0,nmax * (sizeof *q));
     for (ii = 0; ii < nall; ii++) {
       for (jj = 0; jj < num_committee_members; jj++) {
         q[ii] += committee_atomic_charge[ii + jj * nmax] / num_committee_members;
@@ -828,6 +832,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   MPI_Barrier(world);
   runner_interface_finalize_step();
+
 }
 
 void PairRuNNer::settings(int narg, char **arg)
@@ -1268,7 +1273,8 @@ void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, 
 
 void PairRuNNer::unpack_local_atomic_properties(int rank, int size, int natoms, int inum,
                                                 int *ilist, tagint *tag, int nprop,
-                                                double *global_properties, double *local_properties)
+                                                double *global_properties,
+                                                double *local_properties)
 {
   int i, ii, iprop;
   int start;
@@ -1288,3 +1294,4 @@ void PairRuNNer::unpack_local_atomic_properties(int rank, int size, int natoms, 
     }
   }
 }
+
