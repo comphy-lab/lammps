@@ -38,7 +38,7 @@ extern "C" {
 int runner_lammps_api_version();
 void runner_lammps_interface_init(const char *path, int *npath, double *cutoff, double *cfenergy,
                                   double *cflength, int *nnp_generation, int *num_committee_members,
-                                  bool *l_hirshfeld_vdw, bool *ltwo_body, bool *lcheck_extrap,
+                                  int *lstress, bool *l_hirshfeld_vdw, bool *ltwo_body, bool *lcheck_extrap,
                                   int *rank, int *size);
 
 void runner_lammps_interface_transfer_atoms_and_neighbor_lists(
@@ -985,7 +985,7 @@ void PairRuNNer::init_style()
   int size = comm->nprocs;
 
   runner_lammps_interface_init(directory, &n_directory_len, &cutoff, &cfenergy, &cflength,
-                               &nnp_generation, &num_committee_members, &lhirshfeld_vdw, &ltwo_body,
+                               &nnp_generation, &num_committee_members, &vflag_global, &lhirshfeld_vdw, &ltwo_body,
                                &lcheck_extrap, &rank, &size);
 
   // In the 2G case, this has a performance benefit when multiple MPI processes
