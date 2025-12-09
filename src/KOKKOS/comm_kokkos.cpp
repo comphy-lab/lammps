@@ -884,9 +884,8 @@ void CommKokkos::exchange_device()
 
       k_count.view_host()(0) = k_exchange_sendlist.view_host().extent(0);
       while (k_count.view_host()(0) >= (int)k_exchange_sendlist.view_host().extent(0)) {
-        k_count.view_host()(0) = 0;
-        k_count.modify_host();
-        k_count.sync<DeviceType>();
+        auto d_count = k_count.view<DeviceType>();
+        Kokkos::deep_copy(d_count,0.0);
 
         if (bonus_flag) {
           atomKK->sync(ExecutionSpaceFromDevice<DeviceType>::space,ELLIPSOID_MASK);
@@ -895,11 +894,12 @@ void CommKokkos::exchange_device()
           if (line_flag || tri_flag || body_flag)
             error->all(FLERR,"Bonus struct for line/tri/body not yet supported by Kokkos communication.");
 
-          const int extent = k_exchange_sendlist.h_view.extent(0);
+          const int extent = k_exchange_sendlist.view_host().extent(0);
           if (k_exchange_sendlist_bonus.extent(0) < extent) {
             MemKK::realloc_kokkos(k_exchange_sendlist_bonus,"comm:k_exchange_sendlist_bonus",extent);
             MemKK::realloc_kokkos(k_exchange_copylist_bonus,"comm:k_exchange_copylist_bonus",extent);
           }
+
           BuildExchangeListFunctor<DeviceType,1>
             f(atomKK->k_x,k_exchange_sendlist,k_count,
               k_exchange_sendlist_bonus,k_bonus_flags,
@@ -912,7 +912,8 @@ void CommKokkos::exchange_device()
               nlocal,dim,lo,hi);
           Kokkos::parallel_for(nlocal,f);
         }
-
+        k_exchange_sendlist.modify<DeviceType>();
+        k_count.modify<DeviceType>();
         k_count.sync_host();
         int count = k_count.view_host()(0);
         int count_bonus = k_count.view_host()(1);
@@ -924,7 +925,7 @@ void CommKokkos::exchange_device()
           MemKK::realloc_kokkos(k_exchange_copylist,"comm:k_exchange_copylist",count*1.1);
           k_count.view_host()(0) = k_exchange_sendlist.view_host().extent(0);
         }
-        if (count_bonus >= (int)k_exchange_sendlist_bonus.h_view.extent(0)) {
+        if (count_bonus >= (int)k_exchange_sendlist_bonus.view_host().extent(0)) {
           MemKK::realloc_kokkos(k_exchange_sendlist_bonus,"comm:k_exchange_sendlist_bonus",\
                                 count_bonus*1.1);
           MemKK::realloc_kokkos(k_exchange_copylist_bonus,"comm:k_exchange_copylist_bonus",\

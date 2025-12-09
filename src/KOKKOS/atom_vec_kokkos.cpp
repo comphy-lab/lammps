@@ -2235,8 +2235,8 @@ struct AtomVecKokkos_PackExchangeFunctor {
   KOKKOS_INLINE_FUNCTION
   void operator() (const int &mysend) const {
     const int i = _sendlist(mysend);
-    _buf(mysend,0) = _size_exchange;
-    int m = 1;
+    int m = 0;
+    _buf(mysend,m++) = _size_exchange;
 
     _buf(mysend,m++) = _x(i,0);
     _buf(mysend,m++) = _x(i,1);
