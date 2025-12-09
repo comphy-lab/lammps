@@ -2235,8 +2235,8 @@ struct AtomVecKokkos_PackExchangeFunctor {
   KOKKOS_INLINE_FUNCTION
   void operator() (const int &mysend) const {
     const int i = _sendlist(mysend);
-    _buf(mysend,0) = _size_exchange;
-    int m = 1;
+    int m = 0;
+    _buf(mysend,m++) = _size_exchange;
 
     _buf(mysend,m++) = _x(i,0);
     _buf(mysend,m++) = _x(i,1);
@@ -2845,6 +2845,8 @@ uint64_t AtomVecKokkos::field2mask(std::string field)
     return MU_MASK;
   else if (field == "radius")
     return RADIUS_MASK;
+  else if (field == "angmom")
+    return ANGMOM_MASK;
   else if (field == "omega")
     return OMEGA_MASK;
   else if (field == "torque")
@@ -2905,6 +2907,7 @@ int AtomVecKokkos::field2size(std::string field)
   else if (field == "mu") return 4;
   else if (field == "mu3") return 3;
   else if (field == "radius") return 1;
+  else if (field == "angmom") return 3;
   else if (field == "omega") return 3;
   else if (field == "torque") return 3;
   else if (field == "ellipsoid") return 1;
