@@ -17,6 +17,85 @@ set(RUNNER_LIB_NAME "libRuNNer_mpi" CACHE STRING "Name of the RuNNer library \
   considered if DOWNLOAD_RUNNER is OFF."
 )
 
+# FFT Library Selection
+# Priority: 1. User choice via -D FFT=..., 2. MKL, 3. FFTW3, 4. KISSFFT.
+
+# This block only runs if the user has NOT specified -D FFT=... on the command line.
+if(NOT DEFINED FFT)
+  # 1. Try to find MKL first.
+  find_package(MKL QUIET)
+  if(MKL_FOUND)
+    set(FFT "MKL")
+    message(STATUS "Auto-detected MKL. Using MKL for FFT by default.")
+  else()
+    # 2. If no MKL, try to find a standalone FFTW3.
+    find_package(FFTW3 QUIET)
+    if(FFTW3_FOUND)
+      set(FFT "FFTW3")
+      message(STATUS "Auto-detected FFTW3. Using standalone FFTW3 for FFT by default.")
+    else()
+      # 3. If nothing else is found, fall back to KISSFFT.
+      set(FFT "KISS")
+      message(STATUS "No MKL or FFTW3 found. Defaulting to KISS FFT.")
+    endif()
+  endif()
+endif()
+
+# Create the user-configurable cache variable with the determined default.
+# This makes the option visible in tools like ccmake/cmake-gui and allows changes.
+set(FFT_VALUES KISS FFTW3 MKL NVPL)
+set(FFT ${FFT} CACHE STRING "FFT library for RUNNER package")
+set_property(CACHE FFT PROPERTY STRINGS ${FFT_VALUES})
+
+# Ensure the selected option is valid.
+# validate_option(FFT FFT_VALUES) # Make sure this custom function is defined in your project
+string(TOUPPER ${FFT} FFT_UPPER)
+message(STATUS "Using ${FFT_UPPER} for FFT calculations.")
+
+# Configure Project Based on Selected FFT Library
+
+if(FFT_UPPER STREQUAL "MKL")
+  find_package(MKL REQUIRED)
+  target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_MKL)
+  option(FFT_MKL_THREADS "Use threaded MKL FFT" ON)
+  if(FFT_MKL_THREADS)
+    target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_MKL_THREADS)
+  endif()
+  target_link_libraries(lammps PRIVATE RuNNer::RuNNer MKL::MKL)
+
+elseif(FFT_UPPER STREQUAL "FFTW3")
+  find_package(FFTW3 REQUIRED)
+  target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_FFTW3)
+  target_link_libraries(lammps PRIVATE RuNNer::RuNNer FFTW3::FFTW3)
+
+  # Check for OpenMP support in the found FFTW3 library
+  if(FFTW3_OMP_LIBRARIES OR FFTW3F_OMP_LIBRARIES)
+    option(FFT_FFTW_THREADS "Use threaded FFTW library" ON)
+  else()
+    option(FFT_FFTW_THREADS "Use threaded FFTW library" OFF)
+  endif()
+
+  if(FFT_FFTW_THREADS)
+    if(FFTW3_OMP_LIBRARIES OR FFTW3F_OMP_LIBRARIES)
+      target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_FFTW_THREADS)
+      target_link_libraries(lammps PRIVATE RuNNer::RuNNer FFTW3::FFTW3_OMP)
+    else()
+      message(FATAL_ERROR "FFT_FFTW_THREADS is ON, but an OpenMP-enabled FFTW3 library was not found.")
+    endif()
+  endif()
+
+elseif(FFT_UPPER STREQUAL "NVPL")
+  find_package(nvpl_fft REQUIRED)
+  target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_NVPL)
+  target_link_libraries(lammps PRIVATE nvpl::fftw)
+
+else() # Fallback to KISSFFT
+  if(NOT FFT_UPPER STREQUAL "KISS")
+     message(WARNING "FFT option '${FFT}' not recognized. Falling back to KISSFFT.")
+  endif()
+  target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_KISS)
+endif()
+
 if(DOWNLOAD_RUNNER)
   message(STATUS "DOWNLOAD_RUNNER is ON. Building RuNNer from source as a static library.")
 
@@ -28,7 +107,7 @@ if(DOWNLOAD_RUNNER)
     set(RUNNER_LIB_FULL_NAME "libRuNNer_mpi.a")
   else()
     set(RUNNER_LIB_FULL_NAME "libRuNNer.a")
-  endif()
+  endif()  
 
   # Add any custom CMake variables required by the RuNNer build system here.
   set(RUNNER_CMAKE_ARGS
