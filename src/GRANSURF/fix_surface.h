@@ -30,7 +30,7 @@ class FixSurface : public Fix {
                           // counts, not including self
     int np1,np2;          // # of lines connected to endpts 1/2
 
-    int exposed_pt[2];    // whether p1 and p2 are exposed
+    int external_pt[2];   // whether p1 and p2 are external
 
                           // pairs of endpoint connections
     tagint *neigh_p1;     // indices (or IDs) of lines connected to endpt 1
@@ -54,8 +54,8 @@ class FixSurface : public Fix {
     int ne1,ne2,ne3;      // # of tris connected to edges 1,2,3
     int nc1,nc2,nc3;      // # of tris connected to corner pts 1,2,3
 
-    int exposed_pt[3];    // whether p1, p2, and p3 are exposed
-    int exposed_edge[3];  // whether e1, e2, and e3 are exposed
+    int external_pt[3];   // whether p1, p2, and p3 are external
+    int external_edge[3]; // whether e1, e2, and e3 are external
 
                           // pairs of edge connections
     tagint *neigh_e1;     // indices (or IDs) of tris connected to edge 1
@@ -93,10 +93,9 @@ class FixSurface : public Fix {
   // struct for storing contact data
 
   struct ContactSurf {
-    int index, neigh_index, type, flag, nside, exposed, concave_contact;
-    int convex_superseding_contact, convex_preceding_contact, copy_rank_ext, priority;
-    double overlap, overlap_force, rsq_com, rank_ext;
-    double weight_ext, weight_overlap, weight_contribution;
+    int index, neigh_index, type, flag, nside, external, priority;
+    int convex_preceding_contact, rank_ext, copy_index_ext, flat_ext;
+    double rmag, overlap, rsq_com, weight_contribution, weight_overlap;
     double contact[3], dr[3], surf_norm[3], dr_force[3], dr_ext[3];
   };
 

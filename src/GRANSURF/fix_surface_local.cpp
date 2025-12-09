@@ -61,7 +61,7 @@ static constexpr int DELTA_CONNECT = 4;     // make it larger when done testing
 static constexpr int DELTA_RVOUS = 8;       // must be >= 8, make it bigger when done testing
 
 enum{FLAT,CONCAVE,CONVEX};
-enum{INTERIOR = 0,EXPOSED,UNCONNECTED};
+enum{INTERIOR = 0,EXTERNAL,UNCONNECTED};
 enum{SAME_SIDE,OPPOSITE_SIDE};
 
 static constexpr double FLATTHRESH = 1.0-cos(MY_PI/180.0);    // default = 1 degree
@@ -708,8 +708,8 @@ int FixSurfaceLocal::pack_border(int n, int *list, double *buf)
         np2 = connect2d[ic].np2;
         buf[m++] = ubuf(np1).d;
         buf[m++] = ubuf(np2).d;
-        buf[m++] = ubuf(connect2d[ic].exposed_pt[0]).d;
-        buf[m++] = ubuf(connect2d[ic].exposed_pt[1]).d;
+        buf[m++] = ubuf(connect2d[ic].external_pt[0]).d;
+        buf[m++] = ubuf(connect2d[ic].external_pt[1]).d;
         if (np1)
           for (k = 0; k < np1; k++) {
             buf[m++] = ubuf(connect2d[ic].neigh_p1[k]).d;
@@ -743,9 +743,9 @@ int FixSurfaceLocal::pack_border(int n, int *list, double *buf)
         buf[m++] = ubuf(ne1).d;
         buf[m++] = ubuf(ne2).d;
         buf[m++] = ubuf(ne3).d;
-        buf[m++] = ubuf(connect3d[ic].exposed_edge[0]).d;
-        buf[m++] = ubuf(connect3d[ic].exposed_edge[1]).d;
-        buf[m++] = ubuf(connect3d[ic].exposed_edge[2]).d;
+        buf[m++] = ubuf(connect3d[ic].external_edge[0]).d;
+        buf[m++] = ubuf(connect3d[ic].external_edge[1]).d;
+        buf[m++] = ubuf(connect3d[ic].external_edge[2]).d;
         if (ne1)
           for (k = 0; k < ne1; k++) {
             buf[m++] = ubuf(connect3d[ic].neigh_e1[k]).d;
@@ -774,9 +774,9 @@ int FixSurfaceLocal::pack_border(int n, int *list, double *buf)
         buf[m++] = ubuf(nc1).d;
         buf[m++] = ubuf(nc2).d;
         buf[m++] = ubuf(nc3).d;
-        buf[m++] = ubuf(connect3d[ic].exposed_pt[0]).d;
-        buf[m++] = ubuf(connect3d[ic].exposed_pt[1]).d;
-        buf[m++] = ubuf(connect3d[ic].exposed_pt[2]).d;
+        buf[m++] = ubuf(connect3d[ic].external_pt[0]).d;
+        buf[m++] = ubuf(connect3d[ic].external_pt[1]).d;
+        buf[m++] = ubuf(connect3d[ic].external_pt[2]).d;
         if (nc1)
           for (k = 0; k < nc1; k++) {
             buf[m++] = ubuf(connect3d[ic].neigh_c1[k]).d;
@@ -831,8 +831,8 @@ int FixSurfaceLocal::unpack_border(int n, int first, double *buf)
         connect2d[j].np1 = np1;
         connect2d[j].np2 = np2;
 
-        connect2d[j].exposed_pt[0] = (int) ubuf(buf[m++]).i;
-        connect2d[j].exposed_pt[1] = (int) ubuf(buf[m++]).i;
+        connect2d[j].external_pt[0] = (int) ubuf(buf[m++]).i;
+        connect2d[j].external_pt[1] = (int) ubuf(buf[m++]).i;
 
         if (np1) {
           connect2d[j].neigh_p1 = tpc->get(np1,pool2d[j].neigh_p1);
@@ -893,9 +893,9 @@ int FixSurfaceLocal::unpack_border(int n, int first, double *buf)
         connect3d[j].ne2 = ne2;
         connect3d[j].ne3 = ne3;
 
-        connect3d[j].exposed_edge[0] = (int) ubuf(buf[m++]).i;
-        connect3d[j].exposed_edge[1] = (int) ubuf(buf[m++]).i;
-        connect3d[j].exposed_edge[2] = (int) ubuf(buf[m++]).i;
+        connect3d[j].external_edge[0] = (int) ubuf(buf[m++]).i;
+        connect3d[j].external_edge[1] = (int) ubuf(buf[m++]).i;
+        connect3d[j].external_edge[2] = (int) ubuf(buf[m++]).i;
 
         if (ne1) {
           connect3d[j].neigh_e1 = tpc->get(ne1,pool3d[j].neigh_e1);
@@ -958,9 +958,9 @@ int FixSurfaceLocal::unpack_border(int n, int first, double *buf)
         connect3d[j].nc2 = nc2;
         connect3d[j].nc3 = nc3;
 
-        connect3d[j].exposed_pt[0] = (int) ubuf(buf[m++]).i;
-        connect3d[j].exposed_pt[1] = (int) ubuf(buf[m++]).i;
-        connect3d[j].exposed_pt[2] = (int) ubuf(buf[m++]).i;
+        connect3d[j].external_pt[0] = (int) ubuf(buf[m++]).i;
+        connect3d[j].external_pt[1] = (int) ubuf(buf[m++]).i;
+        connect3d[j].external_pt[2] = (int) ubuf(buf[m++]).i;
 
         if (nc1) {
           connect3d[j].neigh_c1 = tpc->get(nc1,pool3d[j].neigh_c1);
@@ -1048,8 +1048,8 @@ int FixSurfaceLocal::pack_exchange(int i, double *buf)
       buf[m++] = ubuf(np1).d;
       buf[m++] = ubuf(np2).d;
 
-      buf[m++] = ubuf(connect2d[j].exposed_pt[0]).d;
-      buf[m++] = ubuf(connect2d[j].exposed_pt[1]).d;
+      buf[m++] = ubuf(connect2d[j].external_pt[0]).d;
+      buf[m++] = ubuf(connect2d[j].external_pt[1]).d;
 
       if (np1)
         for (k = 0; k < np1; k++) {
@@ -1082,9 +1082,9 @@ int FixSurfaceLocal::pack_exchange(int i, double *buf)
       buf[m++] = ubuf(ne2).d;
       buf[m++] = ubuf(ne3).d;
 
-      buf[m++] = ubuf(connect3d[j].exposed_edge[0]).d;
-      buf[m++] = ubuf(connect3d[j].exposed_edge[1]).d;
-      buf[m++] = ubuf(connect3d[j].exposed_edge[2]).d;
+      buf[m++] = ubuf(connect3d[j].external_edge[0]).d;
+      buf[m++] = ubuf(connect3d[j].external_edge[1]).d;
+      buf[m++] = ubuf(connect3d[j].external_edge[2]).d;
 
       if (ne1)
         for (k = 0; k < ne1; k++) {
@@ -1115,9 +1115,9 @@ int FixSurfaceLocal::pack_exchange(int i, double *buf)
       buf[m++] = ubuf(nc2).d;
       buf[m++] = ubuf(nc3).d;
 
-      buf[m++] = ubuf(connect3d[j].exposed_pt[0]).d;
-      buf[m++] = ubuf(connect3d[j].exposed_pt[1]).d;
-      buf[m++] = ubuf(connect3d[j].exposed_pt[2]).d;
+      buf[m++] = ubuf(connect3d[j].external_pt[0]).d;
+      buf[m++] = ubuf(connect3d[j].external_pt[1]).d;
+      buf[m++] = ubuf(connect3d[j].external_pt[2]).d;
 
       if (nc1)
         for (k = 0; k < nc1; k++) {
@@ -1168,8 +1168,8 @@ int FixSurfaceLocal::unpack_exchange(int nlocal, double *buf)
       connect2d[nlocal_connect].np1 = np1;
       connect2d[nlocal_connect].np2 = np2;
 
-      connect2d[nlocal_connect].exposed_pt[0] = (int) ubuf(buf[m++]).i;
-      connect2d[nlocal_connect].exposed_pt[1] = (int) ubuf(buf[m++]).i;
+      connect2d[nlocal_connect].external_pt[0] = (int) ubuf(buf[m++]).i;
+      connect2d[nlocal_connect].external_pt[1] = (int) ubuf(buf[m++]).i;
 
       if (np1) {
         connect2d[nlocal_connect].neigh_p1 = tpc->get(np1,pool2d[nlocal_connect].neigh_p1);
@@ -1226,9 +1226,9 @@ int FixSurfaceLocal::unpack_exchange(int nlocal, double *buf)
       connect3d[nlocal_connect].ne2 = ne2;
       connect3d[nlocal_connect].ne3 = ne3;
 
-      connect3d[nlocal_connect].exposed_edge[0] = (int) ubuf(buf[m++]).i;
-      connect3d[nlocal_connect].exposed_edge[1] = (int) ubuf(buf[m++]).i;
-      connect3d[nlocal_connect].exposed_edge[2] = (int) ubuf(buf[m++]).i;
+      connect3d[nlocal_connect].external_edge[0] = (int) ubuf(buf[m++]).i;
+      connect3d[nlocal_connect].external_edge[1] = (int) ubuf(buf[m++]).i;
+      connect3d[nlocal_connect].external_edge[2] = (int) ubuf(buf[m++]).i;
 
       if (ne1) {
         connect3d[nlocal_connect].neigh_e1 = tpc->get(ne1,pool3d[nlocal_connect].neigh_e1);
@@ -1291,9 +1291,9 @@ int FixSurfaceLocal::unpack_exchange(int nlocal, double *buf)
       connect3d[nlocal_connect].nc2 = nc2;
       connect3d[nlocal_connect].nc3 = nc3;
 
-      connect3d[nlocal_connect].exposed_pt[0] = (int) ubuf(buf[m++]).i;
-      connect3d[nlocal_connect].exposed_pt[1] = (int) ubuf(buf[m++]).i;
-      connect3d[nlocal_connect].exposed_pt[2] = (int) ubuf(buf[m++]).i;
+      connect3d[nlocal_connect].external_pt[0] = (int) ubuf(buf[m++]).i;
+      connect3d[nlocal_connect].external_pt[1] = (int) ubuf(buf[m++]).i;
+      connect3d[nlocal_connect].external_pt[2] = (int) ubuf(buf[m++]).i;
 
       if (nc1) {
         connect3d[nlocal_connect].neigh_c1 = tpc->get(nc1,pool3d[nlocal_connect].neigh_c1);
@@ -3171,31 +3171,31 @@ void FixSurfaceLocal::connectivity2d_complete()
   memory->destroy(endpts);
   memory->destroy(normals);
 
-  // determine whether pts are exposed based on connectivity
+  // determine whether pts are external based on connectivity
 
   for (i = 0; i < nlocal; i++) {
     if (line[i] < 0) continue;
     iconnect = atom2connect[i];
-    connect2d[iconnect].exposed_pt[0] = INTERIOR;
-    connect2d[iconnect].exposed_pt[1] = INTERIOR;
+    connect2d[iconnect].external_pt[0] = INTERIOR;
+    connect2d[iconnect].external_pt[1] = INTERIOR;
   }
 
   int n;
   for (i = 0; i < nlocal; i++) {
     if (line[i] < 0) continue;
     iconnect = atom2connect[i];
-    // exposed if there's a nonflat connection
+    // external if there's a nonflat connection
     for (n = 0; n < connect2d[iconnect].np1; n++)
       if (connect2d[iconnect].aflag_p1[n] != FLAT)
-        connect2d[iconnect].exposed_pt[0] = EXPOSED;
+        connect2d[iconnect].external_pt[0] = EXTERNAL;
     for (n = 0; n < connect2d[iconnect].np2; n++)
       if (connect2d[iconnect].aflag_p2[n] != FLAT)
-        connect2d[iconnect].exposed_pt[1] = EXPOSED;
+        connect2d[iconnect].external_pt[1] = EXTERNAL;
     // or if unconnected on border
     if (connect2d[iconnect].np1 == 0)
-      connect2d[iconnect].exposed_pt[0] = UNCONNECTED;
+      connect2d[iconnect].external_pt[0] = UNCONNECTED;
     if (connect2d[iconnect].np2 == 0)
-      connect2d[iconnect].exposed_pt[1] = UNCONNECTED;
+      connect2d[iconnect].external_pt[1] = UNCONNECTED;
   }
 }
 
@@ -3492,44 +3492,44 @@ void FixSurfaceLocal::connectivity3d_complete()
   memory->destroy(cpts);
   memory->destroy(normals);
 
-  // determine whether edges/pts are exposed based on connectivity
+  // determine whether edges/pts are external based on connectivity
 
   for (int i = 0; i < nlocal; i++) {
     if (tri[i] < 0) continue;
     iconnect = atom2connect[i];
     for (int a = 0; a < 3; a++)
-      connect3d[iconnect].exposed_edge[a] = INTERIOR;
+      connect3d[iconnect].external_edge[a] = INTERIOR;
   }
 
   for (int i = 0; i < nlocal; i++) {
     if (tri[i] < 0) continue;
     iconnect = atom2connect[i];
 
-    // exposed edge if there's a nonflat connection
+    // external edge if there's a nonflat connection
     for (int n = 0; n < connect3d[iconnect].ne1; n++)
       if (connect3d[iconnect].aflag_e1[n] != FLAT)
-        connect3d[iconnect].exposed_edge[0] = EXPOSED;
+        connect3d[iconnect].external_edge[0] = EXTERNAL;
     for (int n = 0; n < connect3d[iconnect].ne2; n++)
       if (connect3d[iconnect].aflag_e2[n] != FLAT)
-        connect3d[iconnect].exposed_edge[1] = EXPOSED;
+        connect3d[iconnect].external_edge[1] = EXTERNAL;
     for (int n = 0; n < connect3d[iconnect].ne3; n++)
       if (connect3d[iconnect].aflag_e3[n] != FLAT)
-        connect3d[iconnect].exposed_edge[2] = EXPOSED;
+        connect3d[iconnect].external_edge[2] = EXTERNAL;
 
     // or unconnected on border
     /* REMOVING FOR TESTING
     if (connect3d[iconnect].ne1 == 0)
-      connect3d[iconnect].exposed_edge[0] = UNCONNECTED;
+      connect3d[iconnect].external_edge[0] = UNCONNECTED;
     if (connect3d[iconnect].ne2 == 0)
-      connect3d[iconnect].exposed_edge[1] = UNCONNECTED;
+      connect3d[iconnect].external_edge[1] = UNCONNECTED;
     if (connect3d[iconnect].ne3 == 0)
-      connect3d[iconnect].exposed_edge[2] = UNCONNECTED;
+      connect3d[iconnect].external_edge[2] = UNCONNECTED;
     */
 
     // corners basically inherit from connected edges
-    connect3d[iconnect].exposed_pt[0] = MAX(connect3d[iconnect].exposed_edge[0], connect3d[iconnect].exposed_edge[2]);
-    connect3d[iconnect].exposed_pt[1] = MAX(connect3d[iconnect].exposed_edge[0], connect3d[iconnect].exposed_edge[1]);
-    connect3d[iconnect].exposed_pt[2] = MAX(connect3d[iconnect].exposed_edge[1], connect3d[iconnect].exposed_edge[2]);
+    connect3d[iconnect].external_pt[0] = MAX(connect3d[iconnect].external_edge[0], connect3d[iconnect].external_edge[2]);
+    connect3d[iconnect].external_pt[1] = MAX(connect3d[iconnect].external_edge[0], connect3d[iconnect].external_edge[1]);
+    connect3d[iconnect].external_pt[2] = MAX(connect3d[iconnect].external_edge[1], connect3d[iconnect].external_edge[2]);
   }
 }
 
