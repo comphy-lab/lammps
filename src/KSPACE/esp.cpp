@@ -152,10 +152,10 @@ ESP::~ESP()
   if (peratom_allocate_flag) ESP::deallocate_peratom();
   if (group_allocate_flag) ESP::deallocate_groups();
   memory->destroy(part2grid);
-  memory->destroy(force_poly_coeff);
-  memory->destroy(energy_poly_coeff);
-  memory->destroy(Fourier_poly_coeff);
-  memory->destroy(Fourier_spreading_coeff);
+  // memory->destroy(force_poly_coeff);
+  // memory->destroy(energy_poly_coeff);
+  // memory->destroy(Fourier_poly_coeff);
+  // memory->destroy(Fourier_spreading_coeff);
 }
 
 /* ----------------------------------------------------------------------
@@ -564,9 +564,10 @@ void ESP::reset_grid()
   if (group_allocate_flag) deallocate_groups();
   
   // reset splitting/spreading c
-  //prolc180(accuracy_relative, select_c);
-  //prolc180(spreading_accuracy, spreading_select_c);
-
+  prolc180(accuracy_relative, select_c);
+  prolc180(spreading_accuracy, spreading_select_c);
+  
+  //printf("accuracy_relative = %lf, spreading_accuracy = %lf\n", accuracy_relative, spreading_accuracy);
   // reset portion of global grid that each proc owns
 
   set_grid_local();
@@ -907,6 +908,18 @@ void ESP::deallocate()
   memory->destroy2d_offset(drho1d,-order_allocated/2);
   memory->destroy2d_offset(rho_coeff, 0, (1-order_allocated)/2);
   memory->destroy2d_offset(drho_coeff, 0, (1-order_allocated)/2);
+
+  if(force_poly_coeff)
+    memory->destroy(force_poly_coeff);
+  
+  if(energy_poly_coeff)
+    memory->destroy(energy_poly_coeff);
+
+  if(Fourier_poly_coeff)
+    memory->destroy(Fourier_poly_coeff);
+
+  if(Fourier_spreading_coeff)
+    memory->destroy(Fourier_spreading_coeff);
 
   delete fft1;
   delete fft2;
@@ -2742,7 +2755,7 @@ void ESP::procs2grid2d(int nprocs, int nx, int ny, int *px, int *py)
 
 int ESP::estimate_order(double accuracy)
 {
-  // p = -log10(acc)
+    // p = -log10(acc)
     double p = -std::log10(accuracy);
 
     double p_round = std::round(p);

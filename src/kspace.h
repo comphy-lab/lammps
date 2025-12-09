@@ -112,17 +112,18 @@ class KSpace : protected Pointers {
                                // charges separated by 1 Angstrom
 
   double g_ewald, g_ewald_6;
-  
+
   // Parameters required for ESP methods (automatically determined based on the user-specified force accuracy)
 
-  double *force_poly_coeff, *energy_poly_coeff, *Fourier_poly_coeff; // polynomial coefficients
-  int num_of_force_poly, num_of_energy_poly, num_of_Fourier_poly; // order of polynomial approximations
-  double select_c; // the c value for ESP
-  double Lambda_0; // the Lambda_0 value for ESP
-  
-  double spreading_accuracy; // using the pswf as the spreading function
-  double spreading_select_c; // select the c value for the spreading step
-  double spreading_Lambda_0; // select the Lambda_0 value for the spreading step
+  double *force_poly_coeff, *energy_poly_coeff, *Fourier_poly_coeff;    // polynomial coefficients
+  int num_of_force_poly, num_of_energy_poly,
+      num_of_Fourier_poly;    // order of polynomial approximations
+  double select_c;            // the c value for ESP
+  double Lambda_0;            // the Lambda_0 value for ESP
+
+  double spreading_accuracy;    // using the pswf as the spreading function
+  double spreading_select_c;    // select the c value for the spreading step
+  double spreading_Lambda_0;    // select the Lambda_0 value for the spreading step
   int poly_order, Fourier_spreading_order;
   double *Fourier_spreading_coeff;
 

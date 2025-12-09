@@ -67,7 +67,6 @@ class ESP : public KSpace {
   int nxlo_fft, nylo_fft, nzlo_fft, nxhi_fft, nyhi_fft, nzhi_fft;
   int nlower, nupper;
   int ngrid, nfft_brick, nfft, nfft_both;
-  int macro_if_use_new_shidong_formula;
 
   FFT_SCALAR ***density_brick;
   FFT_SCALAR ***vdx_brick, ***vdy_brick, ***vdz_brick;
@@ -211,22 +210,18 @@ class ESP : public KSpace {
 
         for (nz = -Nmax; nz <= Nmax; nz++) {
           qz = kz + 2 * MY_PI * nz / hz;
-
-          if (macro_if_use_new_shidong_formula == 0) {
-            double ph_2_kz_c = order * hz / 2.0 * fabs(qz) / spreading_select_c;
-            wz = 0.00;
-            if (ph_2_kz_c <= 1.00) {
-              double appx = Fourier_spreading_coeff[0];
-              double r = 1.0;
-              for (int i = 1; i < Fourier_spreading_order; i++) {
-                r *= ph_2_kz_c;
-                appx += Fourier_spreading_coeff[i] * r;
-              }
-              wz = order / 2.0 * appx;
-              wz = wz * wz;
+          double ph_2_kz_c = order * hz / 2.0 * fabs(qz) / spreading_select_c;
+          wz = 0.00;
+          if (ph_2_kz_c <= 1.00) {
+            double appx = Fourier_spreading_coeff[0];
+            double r = 1.0;
+            for (int i = 1; i < Fourier_spreading_order; i++) {
+              r *= ph_2_kz_c;
+              appx += Fourier_spreading_coeff[i] * r;
             }
+            wz = order / 2.0 * appx;
+            wz = wz * wz;
           }
-
           denominator =
               denominator + wx * wy * wz;    // could be zero when the spreading accuracy is low
         }

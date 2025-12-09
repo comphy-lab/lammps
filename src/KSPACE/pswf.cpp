@@ -1503,7 +1503,8 @@ void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &
   for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
 }
 
-void spread_real_poly(int P, double tol, double tol_coeff, const double &c, std::vector<double> &coeffs)
+void spread_real_poly(int P, double tol, double tol_coeff, const double &c,
+                      std::vector<double> &coeffs)
 {
   //prolc180(tol, c);
 
