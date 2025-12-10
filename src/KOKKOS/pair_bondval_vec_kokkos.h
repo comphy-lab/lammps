@@ -106,12 +106,12 @@ class PairBondValVecKokkos : public PairBondValVec, public KokkosBase {
   template<int NEIGHFLAG, int NEWTON_PAIR>
   KOKKOS_INLINE_FUNCTION
   void ev_tally(EV_FLOAT &ev, const int &i, const int &j,
-      const F_FLOAT &epair, const F_FLOAT &fx, const F_FLOAT &fy, const F_FLOAT &fz, const F_FLOAT &delx,
-                  const F_FLOAT &dely, const F_FLOAT &delz) const;
+      const KK_FLOAT &epair, const KK_FLOAT &fx, const KK_FLOAT &fy, const KK_FLOAT &fz, const KK_FLOAT &delx,
+                  const KK_FLOAT &dely, const KK_FLOAT &delz) const;
 
-  int pack_forward_comm_kokkos(int, DAT::tdual_int_1d, DAT::tdual_xfloat_1d&,
+  int pack_forward_comm_kokkos(int, DAT::tdual_int_1d, DAT::tdual_double_1d&,
                        int, int *) override;
-  void unpack_forward_comm_kokkos(int, int, DAT::tdual_xfloat_1d&) override;
+  void unpack_forward_comm_kokkos(int, int, DAT::tdual_double_1d&) override;
 
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
@@ -123,7 +123,7 @@ class PairBondValVecKokkos : public PairBondValVec, public KokkosBase {
     params_bvv() {cut=0;cutsq=0;r0=0;alpha=0;bvvsparam=0;bvvv0=0;offset=0;};
     KOKKOS_INLINE_FUNCTION
     params_bvv(int /*i*/) {cut=0;cutsq=0;r0=0;alpha=0;bvvsparam=0;bvvv0=0;offset=0;};
-    F_FLOAT cut,cutsq,r0,alpha,bvvsparam,bvvv0,offset;
+    KK_FLOAT cut,cutsq,r0,alpha,bvvsparam,bvvv0,offset;
   };
 
  protected:
@@ -134,18 +134,18 @@ class PairBondValVecKokkos : public PairBondValVec, public KokkosBase {
   //m_params is an instance of params_bv stucture
   params_bvv m_params[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
 
-  F_FLOAT m_cutsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
-  typename AT::tdual_ffloat_2d k_cutsq;
-  typename AT::t_ffloat_2d d_cutsq;
+  KK_FLOAT m_cutsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
+  typename AT::tdual_kkfloat_2d k_cutsq;
+  typename AT::t_kkfloat_2d d_cutsq;
 
-  typename AT::t_x_array x;
-  typename AT::t_f_array f;
+  typename AT::t_kkfloat_1d_3 x;
+  typename AT::t_kkacc_1d_3 f;
   typename AT::t_int_1d type;
 
-  DAT::tdual_efloat_1d k_eatom;
-  DAT::tdual_virial_array k_vatom;
-  typename AT::t_efloat_1d d_eatom;
-  typename AT::t_virial_array d_vatom;
+  DAT::tdual_kkacc_1d k_eatom;
+  DAT::tdual_kkacc_1d_6 k_vatom;
+  typename AT::t_kkacc_1d d_eatom;
+  typename AT::t_kkacc_1d_6 d_vatom;
 
   int need_dup,inum;
 
@@ -157,24 +157,24 @@ class PairBondValVecKokkos : public PairBondValVec, public KokkosBase {
   template<typename DataType, typename Layout>
   using NonDupScatterView = KKScatterView<DataType, Layout, KKDeviceType, KKScatterSum, KKScatterNonDuplicated>;
 
-  DupScatterView<F_FLOAT*[3], typename DAT::t_f_array::array_layout> dup_s0;
-  DupScatterView<F_FLOAT*[3], typename DAT::t_f_array::array_layout> dup_f;
-  DupScatterView<E_FLOAT*, typename DAT::t_efloat_1d::array_layout> dup_eatom;
-  DupScatterView<F_FLOAT*[6], typename DAT::t_virial_array::array_layout> dup_vatom;
+  DupScatterView<KK_ACC_FLOAT*[3], typename DAT::t_kkacc_1d_3::array_layout> dup_s0;
+  DupScatterView<KK_ACC_FLOAT*[3], typename DAT::t_kkacc_1d_3::array_layout> dup_f;
+  DupScatterView<KK_ACC_FLOAT*, typename DAT::t_kkacc_1d::array_layout> dup_eatom;
+  DupScatterView<KK_ACC_FLOAT*[6], typename DAT::t_kkacc_1d_6::array_layout> dup_vatom;
 
-  NonDupScatterView<F_FLOAT*[3], typename DAT::t_f_array::array_layout> ndup_s0;
-  NonDupScatterView<F_FLOAT*[3], typename DAT::t_f_array::array_layout> ndup_f;
-  NonDupScatterView<E_FLOAT*, typename DAT::t_efloat_1d::array_layout> ndup_eatom;
-  NonDupScatterView<F_FLOAT*[6], typename DAT::t_virial_array::array_layout> ndup_vatom;
+  NonDupScatterView<KK_ACC_FLOAT*[3], typename DAT::t_kkacc_1d_3::array_layout> ndup_s0;
+  NonDupScatterView<KK_ACC_FLOAT*[3], typename DAT::t_kkacc_1d_3::array_layout> ndup_f;
+  NonDupScatterView<KK_ACC_FLOAT*, typename DAT::t_kkacc_1d::array_layout> ndup_eatom;
+  NonDupScatterView<KK_ACC_FLOAT*[6], typename DAT::t_kkacc_1d_6::array_layout> ndup_vatom;
 
-  DAT::tdual_f_array k_s0;
-  DAT::tdual_f_array k_Di;
+  DAT::tdual_kkacc_1d_3 k_s0;
+  DAT::tdual_kkfloat_1d_3 k_Di;
 
-  typename AT::t_f_array d_s0;
-  typename AT::t_f_array d_Di;
+  typename AT::t_kkacc_1d_3 d_s0;
+  typename AT::t_kkfloat_1d_3 d_Di;
 
-  HAT::t_f_array h_s0;
-  HAT::t_f_array h_Di;
+  HAT::t_kkfloat_1d_3 h_s0;
+  HAT::t_kkfloat_1d_3 h_Di;
 
   template<class TAG>
   struct policyInstance;
@@ -185,7 +185,7 @@ class PairBondValVecKokkos : public PairBondValVec, public KokkosBase {
 
   int first;
   typename AT::t_int_1d d_sendlist;
-  typename AT::t_xfloat_1d_um v_buf;
+  typename AT::t_kkfloat_1d_um v_buf;
 
   int neighflag,newton_pair;
   int nlocal,nall,eflag,vflag;

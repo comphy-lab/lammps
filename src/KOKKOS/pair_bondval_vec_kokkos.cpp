@@ -98,8 +98,8 @@ void PairBondValVecKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
   if (atom->nmax > nmax) {
     nmax = atom->nmax;
-    k_s0 = DAT::tdual_f_array("pair:s0",nmax);
-    k_Di = DAT::tdual_f_array("pair:Di",nmax);
+    k_s0 = DAT::tdual_kkacc_1d_3("pair:s0",nmax);
+    k_Di = DAT::tdual_kkfloat_1d_3("pair:Di",nmax);
     d_s0 = k_s0.template view<DeviceType>();
     d_Di = k_Di.template view<DeviceType>();
     h_s0 = k_s0.h_view;
@@ -328,7 +328,6 @@ void PairBondValVecKokkos<DeviceType>::allocate()
 
   k_params = Kokkos::DualView<params_bvv**,Kokkos::LayoutRight,DeviceType>("PairBondValVec::params",n+1,n+1);
   params = k_params.template view<DeviceType>();
-
 }
 
 /* ----------------------------------------------------------------------
@@ -343,11 +342,9 @@ void PairBondValVecKokkos<DeviceType>::settings(int narg, char **arg)
   PairBondValVec::settings(2,arg);
 }
 
-
 /* ----------------------------------------------------------------------
    init specific to this pair style
 ------------------------------------------------------------------------- */
-
 
 template<class DeviceType>
 void PairBondValVecKokkos<DeviceType>::init_style()
@@ -395,7 +392,7 @@ double PairBondValVecKokkos<DeviceType>::init_one(int i, int j)
 
 template<class DeviceType>
 int PairBondValVecKokkos<DeviceType>::pack_forward_comm_kokkos(int n, DAT::tdual_int_1d k_sendlist,
-                                                        DAT::tdual_xfloat_1d &buf,
+                                                        DAT::tdual_double_1d &buf,
                                                         int /*pbc_flag*/, int * /*pbc*/)
 {
   d_sendlist = k_sendlist.view<DeviceType>();
@@ -420,7 +417,7 @@ void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecPackForwardCo
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-void PairBondValVecKokkos<DeviceType>::unpack_forward_comm_kokkos(int n, int first_in, DAT::tdual_xfloat_1d &buf)
+void PairBondValVecKokkos<DeviceType>::unpack_forward_comm_kokkos(int n, int first_in, DAT::tdual_double_1d &buf)
 {
   first = first_in;
   v_buf = buf.view<DeviceType>();
@@ -538,41 +535,41 @@ void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelA<NEIGH
   auto a_s0 = v_s0.template access<AtomicDup_v<NEIGHFLAG,DeviceType>>();
 
   const int i = d_ilist[ii];
-  const X_FLOAT xtmp = x(i,0);
-  const X_FLOAT ytmp = x(i,1);
-  const X_FLOAT ztmp = x(i,2);
+  const KK_FLOAT xtmp = x(i,0);
+  const KK_FLOAT ytmp = x(i,1);
+  const KK_FLOAT ztmp = x(i,2);
   const int itype = type(i);
 
   const int jnum = d_numneigh[i];
 
-  F_FLOAT s0xtmp = 0.0;
-  F_FLOAT s0ytmp = 0.0;
-  F_FLOAT s0ztmp = 0.0;
+  KK_FLOAT s0xtmp = 0.0;
+  KK_FLOAT s0ytmp = 0.0;
+  KK_FLOAT s0ztmp = 0.0;
 
   for (int jj = 0; jj < jnum; jj++) {
     int j = d_neighbors(i,jj);
     j &= NEIGHMASK;
-    const X_FLOAT delx = xtmp - x(j,0);
-    const X_FLOAT dely = ytmp - x(j,1);
-    const X_FLOAT delz = ztmp - x(j,2);
+    const KK_FLOAT delx = xtmp - x(j,0);
+    const KK_FLOAT dely = ytmp - x(j,1);
+    const KK_FLOAT delz = ztmp - x(j,2);
     const int jtype = type(j);
-    const F_FLOAT rsq = delx*delx + dely*dely + delz*delz;
+    const KK_FLOAT rsq = delx*delx + dely*dely + delz*delz;
 
 
     if (rsq < (d_cutsq(itype,jtype))) {
-        F_FLOAT recip = 1.0/sqrt(rsq);
+      KK_FLOAT recip = 1.0/sqrt(rsq);
 
-        s0xtmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
+      s0xtmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
 
-        s0ytmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
+      s0ytmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
 
-        s0ztmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
+      s0ztmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
 
-        if (NEWTON_PAIR || j < nlocal) {
-        a_s0(j,0) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
-        a_s0(j,1) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
-        a_s0(j,2) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
-        }
+      if (NEWTON_PAIR || j < nlocal) {
+      a_s0(j,0) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
+      a_s0(j,1) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
+      a_s0(j,2) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
+      }
     }
   }
   a_s0(i,0) += s0xtmp;
@@ -594,15 +591,15 @@ void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelB<EFLAG
   const int i = d_ilist[ii];
   const int itype = type(i);
 
-  F_FLOAT s = d_s0(i,0)*d_s0(i,0)+d_s0(i,1)*d_s0(i,1)+d_s0(i,2)*d_s0(i,2)-(params(itype,itype).bvvv0)*(params(itype,itype).bvvv0);
-  F_FLOAT ss = s*s;
+  KK_FLOAT s = d_s0(i,0)*d_s0(i,0)+d_s0(i,1)*d_s0(i,1)+d_s0(i,2)*d_s0(i,2)-(params(itype,itype).bvvv0)*(params(itype,itype).bvvv0);
+  KK_FLOAT ss = s*s;
   d_Di(i,0) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,0)*s;
   d_Di(i,1) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,1)*s;
   d_Di(i,2) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,2)*s;
   //printf("i: %d, d_Di(i,0): %f, d_Di(i,1): %f, d_Di(i,2): %f\n", i, d_Di(i,0), d_Di(i,1), d_Di(i,2));
 
   if (EFLAG) {
-    F_FLOAT phi = (params(itype,itype).bvvsparam)*ss;
+    KK_FLOAT phi = (params(itype,itype).bvvsparam)*ss;
     //printf("i: %d, phi: %f", i, phi);
     if (eflag_global) ev.evdwl += phi;
     if (eflag_atom) d_eatom[i] += phi;
@@ -629,49 +626,49 @@ void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelAB<EFLA
   // loop over neighbors of my atoms
 
   const int i = d_ilist[ii];
-  const X_FLOAT xtmp = x(i,0);
-  const X_FLOAT ytmp = x(i,1);
-  const X_FLOAT ztmp = x(i,2);
+  const KK_FLOAT xtmp = x(i,0);
+  const KK_FLOAT ytmp = x(i,1);
+  const KK_FLOAT ztmp = x(i,2);
   const int itype = type(i);
 
   const int jnum = d_numneigh[i];
 
-  F_FLOAT s0xtmp = 0.0;
-  F_FLOAT s0ytmp = 0.0;
-  F_FLOAT s0ztmp = 0.0;
+  KK_FLOAT s0xtmp = 0.0;
+  KK_FLOAT s0ytmp = 0.0;
+  KK_FLOAT s0ztmp = 0.0;
 
   for (int jj = 0; jj < jnum; jj++) {
     int j = d_neighbors(i,jj);
     j &= NEIGHMASK;
 
-    const X_FLOAT delx = xtmp - x(j,0);
-    const X_FLOAT dely = ytmp - x(j,1);
-    const X_FLOAT delz = ztmp - x(j,2);
+    const KK_FLOAT delx = xtmp - x(j,0);
+    const KK_FLOAT dely = ytmp - x(j,1);
+    const KK_FLOAT delz = ztmp - x(j,2);
     const int jtype = type(j);
-    const F_FLOAT rsq = delx*delx + dely*dely + delz*delz;
+    const KK_FLOAT rsq = delx*delx + dely*dely + delz*delz;
 
     if (rsq < (d_cutsq(itype,jtype))) {
-        F_FLOAT recip = 1.0/sqrt(rsq);
+      KK_FLOAT recip = 1.0/sqrt(rsq);
 
-        s0xtmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
+      s0xtmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
 
-        s0ytmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
+      s0ytmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
 
-        s0ztmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
+      s0ztmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
     }
   }
   d_s0(i,0) += s0xtmp;
   d_s0(i,1) += s0ytmp;
   d_s0(i,2) += s0ztmp;
 
-  F_FLOAT s = d_s0(i,0)*d_s0(i,0)+d_s0(i,1)*d_s0(i,1)+d_s0(i,2)*d_s0(i,2)-(params(itype,itype).bvvv0)*(params(itype,itype).bvvv0);
-  F_FLOAT ss = s*s;
+  KK_FLOAT s = d_s0(i,0)*d_s0(i,0)+d_s0(i,1)*d_s0(i,1)+d_s0(i,2)*d_s0(i,2)-(params(itype,itype).bvvv0)*(params(itype,itype).bvvv0);
+  KK_FLOAT ss = s*s;
   d_Di(i,0) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,0)*s;
   d_Di(i,1) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,1)*s;
   d_Di(i,2) = (params(itype,itype).bvvsparam)*power_global*2.0*d_s0(i,2)*s;
 
   if (EFLAG) {
-    F_FLOAT phi = (params(itype,itype).bvvsparam)*ss;
+    KK_FLOAT phi = (params(itype,itype).bvvsparam)*ss;
     if (eflag_global) ev.evdwl += phi;
     if (eflag_atom) d_eatom[i] += phi;
   }
@@ -700,71 +697,69 @@ void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelC<NEIGH
   auto a_f = v_f.template access<AtomicDup_v<NEIGHFLAG,DeviceType>>();
 
   const int i = d_ilist[ii];
-  const X_FLOAT xtmp = x(i,0);
-  const X_FLOAT ytmp = x(i,1);
-  const X_FLOAT ztmp = x(i,2);
+  const KK_FLOAT xtmp = x(i,0);
+  const KK_FLOAT ytmp = x(i,1);
+  const KK_FLOAT ztmp = x(i,2);
   const int itype = type(i);
 
   const int jnum = d_numneigh[i];
 
-  F_FLOAT fxtmp = 0.0;
-  F_FLOAT fytmp = 0.0;
-  F_FLOAT fztmp = 0.0;
+  KK_ACC_FLOAT fxtmp = 0.0;
+  KK_ACC_FLOAT fytmp = 0.0;
+  KK_ACC_FLOAT fztmp = 0.0;
 
   for (int jj = 0; jj < jnum; jj++) {
     int j = d_neighbors(i,jj);
     j &= NEIGHMASK;
-    const X_FLOAT delx = xtmp - x(j,0);
-    const X_FLOAT dely = ytmp - x(j,1);
-    const X_FLOAT delz = ztmp - x(j,2);
+    const KK_FLOAT delx = xtmp - x(j,0);
+    const KK_FLOAT dely = ytmp - x(j,1);
+    const KK_FLOAT delz = ztmp - x(j,2);
     const int jtype = type(j);
-    const F_FLOAT rsq = delx*delx + dely*dely + delz*delz;
+    const KK_FLOAT rsq = delx*delx + dely*dely + delz*delz;
 
 
     if (rsq < (d_cutsq(itype,jtype))) {
-        const F_FLOAT r = sqrt(rsq);
-        const F_FLOAT recip = 1.0/r;
-        const F_FLOAT recip2 = recip*recip;
-        const F_FLOAT Aij = pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip;
-        const F_FLOAT Eij = ((params(itype,jtype).alpha)+1.0)*recip2;
+      const KK_FLOAT r = sqrt(rsq);
+      const KK_FLOAT recip = 1.0/r;
+      const KK_FLOAT recip2 = recip*recip;
+      const KK_FLOAT Aij = pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip;
+      const KK_FLOAT Eij = ((params(itype,jtype).alpha)+1.0)*recip2;
 
-        F_FLOAT fx = (d_Di(j,0)-d_Di(i,0))*Aij
-             + (d_Di(i,0)-d_Di(j,0))*Eij*delx*delx*Aij
-             + (d_Di(i,1)-d_Di(j,1))*Eij*delx*dely*Aij
-             + (d_Di(i,2)-d_Di(j,2))*Eij*delx*delz*Aij;
+      KK_FLOAT fx = (d_Di(j,0)-d_Di(i,0))*Aij
+           + (d_Di(i,0)-d_Di(j,0))*Eij*delx*delx*Aij
+           + (d_Di(i,1)-d_Di(j,1))*Eij*delx*dely*Aij
+           + (d_Di(i,2)-d_Di(j,2))*Eij*delx*delz*Aij;
 
-        fxtmp += fx;
+      fxtmp += fx;
 
-        F_FLOAT fy = (d_Di(j,1)-d_Di(i,1))*Aij
-             + (d_Di(i,1)-d_Di(j,1))*Eij*dely*dely*Aij
-             + (d_Di(i,2)-d_Di(j,2))*Eij*dely*delz*Aij
-             + (d_Di(i,0)-d_Di(j,0))*Eij*dely*delx*Aij;
+      KK_FLOAT fy = (d_Di(j,1)-d_Di(i,1))*Aij
+           + (d_Di(i,1)-d_Di(j,1))*Eij*dely*dely*Aij
+           + (d_Di(i,2)-d_Di(j,2))*Eij*dely*delz*Aij
+           + (d_Di(i,0)-d_Di(j,0))*Eij*dely*delx*Aij;
 
-        fytmp += fy;
+      fytmp += fy;
 
-        F_FLOAT fz = (d_Di(j,2)-d_Di(i,2))*Aij
-             + (d_Di(i,2)-d_Di(j,2))*Eij*delz*delz*Aij
-             + (d_Di(i,0)-d_Di(j,0))*Eij*delz*delx*Aij
-             + (d_Di(i,1)-d_Di(j,1))*Eij*delz*dely*Aij;
+      KK_FLOAT fz = (d_Di(j,2)-d_Di(i,2))*Aij
+           + (d_Di(i,2)-d_Di(j,2))*Eij*delz*delz*Aij
+           + (d_Di(i,0)-d_Di(j,0))*Eij*delz*delx*Aij
+           + (d_Di(i,1)-d_Di(j,1))*Eij*delz*dely*Aij;
 
-        fztmp += fz;
+      fztmp += fz;
 
-        if ((NEIGHFLAG==HALF || NEIGHFLAG==HALFTHREAD) && (NEWTON_PAIR || j < nlocal)) {
-          a_f(j,0) -= fx;
-          a_f(j,1) -= fy;
-          a_f(j,2) -= fz;
+      if ((NEIGHFLAG==HALF || NEIGHFLAG==HALFTHREAD) && (NEWTON_PAIR || j < nlocal)) {
+        a_f(j,0) -= fx;
+        a_f(j,1) -= fy;
+        a_f(j,2) -= fz;
+      }
+
+      if (EVFLAG) {
+        if (eflag) {
+          ev.evdwl += 0.0;
         }
 
-        if (EVFLAG) {
-          if (eflag) {
-            ev.evdwl += 0.0;
-          }
-
-          if (vflag_either || eflag_atom) this->template ev_tally<NEIGHFLAG,NEWTON_PAIR>(ev,i,j,0.0,fx,fy,fz,delx,dely,delz);
-          }
-
-        }
-
+        if (vflag_either || eflag_atom) this->template ev_tally<NEIGHFLAG,NEWTON_PAIR>(ev,i,j,0.0,fx,fy,fz,delx,dely,delz);
+      }
+    }
   }
 
   a_f(i,0) += fxtmp;
@@ -787,8 +782,8 @@ template<class DeviceType>
 template<int NEIGHFLAG, int NEWTON_PAIR>
 KOKKOS_INLINE_FUNCTION
 void PairBondValVecKokkos<DeviceType>::ev_tally(EV_FLOAT &ev, const int &i, const int &j,
-      const F_FLOAT &epair, const F_FLOAT &fx, const F_FLOAT &fy , const F_FLOAT &fz, const F_FLOAT &delx,
-                const F_FLOAT &dely, const F_FLOAT &delz) const
+      const KK_FLOAT &epair, const KK_FLOAT &fx, const KK_FLOAT &fy , const KK_FLOAT &fz, const KK_FLOAT &delx,
+                const KK_FLOAT &dely, const KK_FLOAT &delz) const
 {
   const int EFLAG = eflag;
   const int VFLAG = vflag_either;
@@ -803,7 +798,7 @@ void PairBondValVecKokkos<DeviceType>::ev_tally(EV_FLOAT &ev, const int &i, cons
 
   if (EFLAG) {
     if (eflag_atom) {
-      const E_FLOAT epairhalf = 0.5 * epair;
+      const KK_FLOAT epairhalf = 0.5 * epair;
       if (NEIGHFLAG!=FULL) {
         if (NEWTON_PAIR || i < nlocal) a_eatom[i] += epairhalf;
         if (NEWTON_PAIR || j < nlocal) a_eatom[j] += epairhalf;
@@ -814,12 +809,12 @@ void PairBondValVecKokkos<DeviceType>::ev_tally(EV_FLOAT &ev, const int &i, cons
   }
 
   if (VFLAG) {
-    const E_FLOAT v0 = delx*fx;
-    const E_FLOAT v1 = dely*fy;
-    const E_FLOAT v2 = delz*fz;
-    const E_FLOAT v3 = delx*fy;
-    const E_FLOAT v4 = delx*fz;
-    const E_FLOAT v5 = dely*fz;
+    const KK_FLOAT v0 = delx*fx;
+    const KK_FLOAT v1 = dely*fy;
+    const KK_FLOAT v2 = delz*fz;
+    const KK_FLOAT v3 = delx*fy;
+    const KK_FLOAT v4 = delx*fz;
+    const KK_FLOAT v5 = dely*fz;
 
     if (vflag_global) {
       if (NEIGHFLAG!=FULL) {
