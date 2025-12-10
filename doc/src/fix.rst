@@ -194,12 +194,13 @@ accelerated styles exist.
 * :doc:`adapt/fep <fix_adapt_fep>` - enhanced version of fix adapt
 * :doc:`addforce <fix_addforce>` - add a force to each atom
 * :doc:`add/heat <fix_add_heat>` - add a heat flux to each atom
-* :doc:`addtorque <fix_addtorque>` - add a torque to a group of atoms
+* :doc:`addtorque/atom <fix_addtorque_atom>` - add a torque to a finite-size particles
+* :doc:`addtorque/group <fix_addtorque_group>` - add a torque to a group of atoms
 * :doc:`alchemy <fix_alchemy>` - perform an "alchemical transformation" between two partitions
+* :doc:`align/self <fix_align_self>` - add torque to groups of atoms due to a self-alignment
 * :doc:`amoeba/bitorsion <fix_amoeba_bitorsion>` - torsion/torsion terms in AMOEBA force field
 * :doc:`amoeba/pitorsion <fix_amoeba_pitorsion>` - 6-body terms in AMOEBA force field
 * :doc:`append/atoms <fix_append_atoms>` - append atoms to a running simulation
-* :doc:`atc <fix_atc>` - initiates a coupled MD/FE simulation
 * :doc:`atom/swap <fix_atom_swap>` - Monte Carlo atom type swapping
 * :doc:`atom_weight/apip <fix_atom_weight_apip>` - compute atomic load of an :doc:`APIP potential <Howto_apip>` for load balancing
 * :doc:`ave/atom <fix_ave_atom>` - compute per-atom time-averaged quantities
@@ -296,6 +297,7 @@ accelerated styles exist.
 * :doc:`mvv/tdpd <fix_mvv_dpd>` - constant temperature DPD using the modified velocity-Verlet algorithm
 * :doc:`neb <fix_neb>` - nudged elastic band (NEB) spring forces
 * :doc:`neb/spin <fix_neb_spin>` - nudged elastic band (NEB) spring forces for spins
+* :doc:`neighbor/swap <fix_neighbor_swap>` - kinetic Monte Carlo (kMC) atom swapping
 * :doc:`nonaffine/displacement <fix_nonaffine_displacement>` - calculate nonaffine displacement of atoms
 * :doc:`nph <fix_nh>` - constant NPH time integration via Nose/Hoover
 * :doc:`nph/asphere <fix_nph_asphere>` - NPH for aspherical particles
@@ -315,7 +317,6 @@ accelerated styles exist.
 * :doc:`nve <fix_nve>` - constant NVE time integration
 * :doc:`nve/asphere <fix_nve_asphere>` - NVE for aspherical particles
 * :doc:`nve/asphere/noforce <fix_nve_asphere_noforce>` - NVE for aspherical particles without forces
-* :doc:`nve/awpmd <fix_nve_awpmd>` - NVE for the Antisymmetrized Wave Packet Molecular Dynamics model
 * :doc:`nve/body <fix_nve_body>` - NVE for body particles
 * :doc:`nve/dot <fix_nve_dot>` - rigid body constant energy time integrator for coarse grain models
 * :doc:`nve/dotc/langevin <fix_nve_dotc_langevin>` - Langevin style rigid body time integrator for coarse grain models
@@ -351,7 +352,6 @@ accelerated styles exist.
 * :doc:`pimd/nvt/bosonic <fix_pimd>` - Bosonic Feynman path-integral molecular dynamics with Nose-Hoover thermostat
 * :doc:`planeforce <fix_planeforce>` - constrain atoms to move in a plane
 * :doc:`plumed <fix_plumed>` - wrapper on PLUMED free energy library
-* :doc:`poems <fix_poems>` - constrain clusters of atoms to move as coupled rigid bodies
 * :doc:`polarize/bem/gmres <fix_polarize>` - compute induced charges at the interface between impermeable media with different dielectric constants with generalized minimum residual (GMRES)
 * :doc:`polarize/bem/icc <fix_polarize>` - compute induced charges at the interface between impermeable media with different dielectric constants with the successive over-relaxation algorithm
 * :doc:`polarize/functional <fix_polarize>` - compute induced charges at the interface between impermeable media with different dielectric constants with the energy variational approach
@@ -404,6 +404,7 @@ accelerated styles exist.
 * :doc:`set <fix_set>` - reset an atom property via an atom-style variable every N steps
 * :doc:`setforce <fix_setforce>` - set the force on each atom
 * :doc:`setforce/spin <fix_setforce>` - set magnetic precession vectors on each atom
+* :doc:`settorque/atom <fix_settorque_atom>` - set the torque on each finite-size atom
 * :doc:`sgcmc <fix_sgcmc>` - fix for hybrid semi-grand canonical MD/MC simulations
 * :doc:`shake <fix_shake>` - SHAKE constraints on bonds and/or angles
 * :doc:`shardlow <fix_shardlow>` - integration of DPD equations of motion using the Shardlow splitting
@@ -438,6 +439,7 @@ accelerated styles exist.
 * :doc:`ttm <fix_ttm>` - two-temperature model for electronic/atomic coupling (replicated grid)
 * :doc:`ttm/grid <fix_ttm>` - two-temperature model for electronic/atomic coupling (distributed grid)
 * :doc:`ttm/mod <fix_ttm>` - enhanced two-temperature model with additional options
+* :doc:`ttm/thermal <fix_ttm>` - a two-temperature model for thermal transport
 * :doc:`tune/kspace <fix_tune_kspace>` - auto-tune :math:`k`-space parameters
 * :doc:`vector <fix_vector>` - accumulate a global vector every *N* timesteps
 * :doc:`viscosity <fix_viscosity>` - Mueller-Plathe momentum exchange for viscosity calculation

@@ -264,6 +264,7 @@ int lammps_version(void *handle);
 void lammps_get_os_info(char *buffer, int buf_size);
 
 int lammps_config_has_mpi_support();
+int lammps_config_has_omp_support();
 int lammps_config_has_gzip_support();
 int lammps_config_has_png_support();
 int lammps_config_has_jpeg_support();
@@ -330,7 +331,8 @@ int lammps_get_last_error_message(void *handle, char *buffer, int buf_size);
 int lammps_set_show_error(void *handle, const int flag);
 
 int lammps_python_api_version();
-// NOLINTBEGIN
+
+// NOLINTEND
 
 #ifdef __cplusplus
 }

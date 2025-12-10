@@ -71,6 +71,9 @@
 /// string buffer for error messages of global errors
 static std::string lammps_last_global_errormessage;
 
+/// maximum number of groups
+static constexpr int LMP_MAX_GROUP = 32;
+
 using namespace LAMMPS_NS;
 
 // for printing the non-null pointer argument warning only once
@@ -1314,6 +1317,7 @@ be called without a valid LAMMPS object handle (it is ignored).
 * :ref:`System sizes <extract_system_sizes>`
 * :ref:`Neighbor list settings <extract_neighbor_settings>`
 * :ref:`Atom style flags <extract_atom_flags>`
+* :ref:`Thermo settings <extract_thermo_settings>`
 
 .. _extract_integer_sizes:
 
@@ -1412,7 +1416,7 @@ internally by the :doc:`Fortran interface <Fortran>` and are not likely to be us
    * - comm_layout
      - communication layout (0 = LAYOUT_UNIFORM, 1 = LAYOUT_NONUNIFORM, 2 = LAYOUT_TILED)
    * - comm_mode
-     - communication mode (0 = SINGLE, 1 = MULTI, 2 = MULTIOLD)
+     - communication mode (0 = SINGLE, 1 = MULTI)
    * - ghost_velocity
      - whether velocities are communicated for ghost atoms (0 = no, 1 = yes)
 
@@ -1517,6 +1521,21 @@ internally by the :doc:`Fortran interface <Fortran>` and are not likely to be us
    * - angmom_flag
      - 1 if the atom style can store per-atom angular momentum. See :doc:`atom_style`.
 
+.. _extract_thermo_settings:
+
+**Thermo settings**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 15 85
+
+   * - Keyword
+     - Description / Return value
+   * - thermo_every
+     - The current interval of thermo output. See :doc:`thermo`.
+   * - thermo_norm
+     - 1 if the thermo output is normalized. See :doc:`thermo_modify`.
+
 *See also*
    :cpp:func:`lammps_extract_global`
 
@@ -1604,6 +1623,11 @@ int lammps_extract_setting(void *handle, const char *keyword)
   if (strcmp(keyword,"angmom_flag") == 0) return lmp->atom->angmom_flag;
   if (strcmp(keyword,"peri_flag") == 0) return lmp->atom->peri_flag;
 
+  if (strcmp(keyword,"thermo_every") == 0) return lmp->output->thermo_every;
+  if (lmp->output->thermo) {
+    if (strcmp(keyword,"thermo_norm") == 0) return lmp->output->thermo->normflag;
+  }
+
   return -1;
 }
 
@@ -1675,6 +1699,9 @@ int lammps_extract_global_datatype(void * /*handle*/, const char *name)
   if (strcmp(name,"special_lj") == 0) return LAMMPS_DOUBLE;
   if (strcmp(name,"special_coul") == 0) return LAMMPS_DOUBLE;
 
+  if (strcmp(name,"neigh_skin") == 0) return LAMMPS_DOUBLE;
+  if (strcmp(name,"neigh_cutmin") == 0) return LAMMPS_DOUBLE;
+  if (strcmp(name,"neigh_cutmax") == 0) return LAMMPS_DOUBLE;
   if (strcmp(name,"neigh_bondlist") == 0) return LAMMPS_INT_2D;
   if (strcmp(name,"neigh_anglelist") == 0) return LAMMPS_INT_2D;
   if (strcmp(name,"neigh_dihedrallist") == 0) return LAMMPS_INT_2D;
@@ -2031,6 +2058,18 @@ Get length of lists with :ref:`lammps_extract_setting() <extract_neighbor_settin
      - Type
      - Length
      - Description
+   * - neigh_skin
+     - double
+     - 1
+     - neighbor list skin
+   * - neigh_cutmin
+     - double
+     - 1
+     - minimum neighbor cutoff across all type pairs
+   * - neigh_cutmax
+     - double
+     - 1
+     - maximum neighbor cutoff across all type pairs
    * - neigh_bondlist
      - 2d int
      - nbondlist
@@ -2208,6 +2247,11 @@ Get length of lists with :ref:`lammps_extract_setting() <extract_neighbor_settin
 
 void *lammps_extract_global(void *handle, const char *name)
 {
+  if (strcmp(name,"git_commit") == 0) return (void *)LAMMPS::git_commit;
+  if (strcmp(name,"git_branch") == 0) return (void  *)LAMMPS::git_branch;
+  if (strcmp(name,"git_descriptor") == 0) return (void *)LAMMPS::git_descriptor;
+  if (strcmp(name,"lammps_version") == 0) return (void *)LAMMPS_VERSION;
+
   auto *lmp = (LAMMPS *) handle;
   if (!lmp || !lmp->update || !lmp->atom || !lmp->force || !lmp->domain || !lmp->domain->lattice
       || !lmp->update->integrate) {
@@ -2238,11 +2282,6 @@ void *lammps_extract_global(void *handle, const char *name)
     if (strcmp(name,"respa_levels") == 0) return (void *) &respa->nlevels;
     if (strcmp(name,"respa_dt") == 0) return (void *) respa->step;
   }
-
-  if (strcmp(name,"git_commit") == 0) return (void *)LAMMPS::git_commit;
-  if (strcmp(name,"git_branch") == 0) return (void  *)LAMMPS::git_branch;
-  if (strcmp(name,"git_descriptor") == 0) return (void *)LAMMPS::git_descriptor;
-  if (strcmp(name,"lammps_version") == 0) return (void *)LAMMPS_VERSION;
 
   if (strcmp(name,"boxlo") == 0) return (void *) lmp->domain->boxlo;
   if (strcmp(name,"boxhi") == 0) return (void *) lmp->domain->boxhi;
@@ -2288,6 +2327,9 @@ void *lammps_extract_global(void *handle, const char *name)
 
   if (strcmp(name,"q_flag") == 0) return (void *) &lmp->atom->q_flag;
 
+  if (strcmp(name,"neigh_skin") == 0) return (void *) &lmp->neighbor->skin;
+  if (strcmp(name,"neigh_cutmin") == 0) return (void *) &lmp->neighbor->cutneighmin;
+  if (strcmp(name,"neigh_cutmax") == 0) return (void *) &lmp->neighbor->cutneighmax;
   if (strcmp(name,"neigh_bondlist") == 0) return (void *) lmp->neighbor->bondlist;
   if (strcmp(name,"neigh_anglelist") == 0) return (void *) lmp->neighbor->anglelist;
   if (strcmp(name,"neigh_dihedrallist") == 0) return (void *) lmp->neighbor->dihedrallist;
@@ -6211,7 +6253,7 @@ int lammps_create_atoms(void *handle, int n, const tagint *id, const int *type,
  *
 \verbatim embed:rst
 
-.. versionadded:: TBD
+.. versionadded:: 22Jul2025
 
 This function creates a new molecule template similar to the
 :doc:`molecule command <molecule>`, but uses JSON data passed
@@ -6221,7 +6263,7 @@ as a C-style string instead of reading it from a file.
  *
  * \param  handle   pointer to a previously created LAMMPS instance
  * \param  id       molecule-ID
- * \param  json     molecule data in JSON format as C-style string */
+ * \param  jsonstr  molecule data in JSON format as C-style string */
 
 void lammps_create_molecule(void *handle, const char *id, const char *jsonstr)
 {
@@ -6629,6 +6671,31 @@ int lammps_config_has_mpi_support()
   return 0;
 #else
   return sizeof(MPI_Comm);
+#endif
+}
+
+/* ---------------------------------------------------------------------- */
+
+/** This function is used to query whether LAMMPS was compiled with
+ *  OpenMP enabled.
+ *
+\verbatim embed:rst
+
+.. versionadded:: 10Sep2025
+
+*See also*
+   :cpp:func:`lammps_config_has_mpi_support`
+
+\endverbatim
+ *
+ * \return 1 when compiled with OpenMP enabled, otherwise 0 */
+
+int lammps_config_has_omp_support()
+{
+#ifdef _OPENMP
+  return 1;
+#else
+  return 0;
 #endif
 }
 
@@ -7149,9 +7216,15 @@ int lammps_id_name(void *handle, const char *category, int idx, char *buffer, in
       return 1;
     }
   } else if (strcmp(category,"group") == 0) {
-    if ((idx >= 0) && (idx < lmp->group->ngroup)) {
-      strncpy(buffer, lmp->group->names[idx], buf_size);
-      return 1;
+    // the list of groups may have "holes". So the available range is always 0 to 32
+    if ((idx >= 0) && (idx < LMP_MAX_GROUP)) {
+      if (lmp->group->names[idx]) {
+        strncpy(buffer, lmp->group->names[idx], buf_size);
+        return 1;
+      } else {
+        buffer[0] = '\0';
+        return 0;
+      }
     }
   } else if (strcmp(category,"molecule") == 0) {
     if ((idx >= 0) && (idx < lmp->atom->nmolecule)) {
@@ -7368,7 +7441,7 @@ void lammps_set_fix_external_callback(void *handle, const char *id, FixExternalF
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} does not exist", FNERR, id);
 
     auto *fext = dynamic_cast<FixExternal *>(fix);
-    if (!fext || (strcmp("external",fix->style) != 0))
+    if (!fext || !(utils::strmatch(fix->style, "^external")))
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} is not of style external", FNERR, id);
 
     fext->set_callback(callback, ptr);
@@ -7436,7 +7509,7 @@ double **lammps_fix_external_get_force(void *handle, const char *id)
     if (!fix)
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} does not exist", FNERR, id);
 
-    if (strcmp("external",fix->style) != 0)
+    if (!utils::strmatch(fix->style,"^external"))
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} is not of style external", FNERR, id);
 
     int tmp;
@@ -7491,7 +7564,7 @@ void lammps_fix_external_set_energy_global(void *handle, const char *id, double 
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} does not exist", FNERR, id);
 
     auto *fext = dynamic_cast<FixExternal*>(fix);
-    if (!fext || (strcmp("external",fix->style) != 0))
+    if (!fext || !utils::strmatch(fix->style,"^external"))
       lmp->error->all(FLERR, Error::NOLASTLINE, "Fix {} is not of style external", FNERR, id);
 
     fext->set_energy_global(eng);
@@ -7546,7 +7619,7 @@ void lammps_fix_external_set_virial_global(void *handle, const char *id, double 
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} does not exist", FNERR, id);
 
     auto *fext = dynamic_cast<FixExternal*>(fix);
-    if (!fext || (strcmp("external",fix->style) != 0))
+    if (!fext || !utils::strmatch(fix->style,"^external"))
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} is not of style external", FNERR, id);
 
     fext->set_virial_global(virial);
@@ -7601,7 +7674,7 @@ void lammps_fix_external_set_energy_peratom(void *handle, const char *id, double
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} does not exist", FNERR, id);
 
     auto *fext = dynamic_cast<FixExternal*>(fix);
-    if (!fext || (strcmp("external",fix->style) != 0))
+    if (!fext || !utils::strmatch(fix->style,"^external"))
       lmp->error->all(FLERR, Error::NOLASTLINE, "Fix {} is not of style external", FNERR, id);
 
     fext->set_energy_peratom(eng);
@@ -7659,7 +7732,7 @@ void lammps_fix_external_set_virial_peratom(void *handle, const char *id, double
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} does not exist", FNERR, id);
 
     auto *fext = dynamic_cast<FixExternal*>(fix);
-    if (!fext || (strcmp("external",fix->style) != 0))
+    if (!fext || !utils::strmatch(fix->style,"^external"))
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} is not of style external", FNERR, id);
 
     fext->set_virial_peratom(virial);
@@ -7710,7 +7783,7 @@ void lammps_fix_external_set_vector_length(void *handle, const char *id, int len
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} does not exist", FNERR, id);
 
     auto *fext = dynamic_cast<FixExternal*>(fix);
-    if (!fext || (strcmp("external",fix->style) != 0))
+    if (!fext || !utils::strmatch(fix->style,"^external"))
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} is not of style external", FNERR, id);
 
     fext->set_vector_length(len);
@@ -7771,7 +7844,7 @@ void lammps_fix_external_set_vector(void *handle, const char *id, int idx, doubl
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} does not exist", FNERR, id);
 
     auto *fext = dynamic_cast<FixExternal*>(fix);
-    if (!fext || (strcmp("external",fix->style) != 0))
+    if (!fext || !utils::strmatch(fix->style,"^external"))
       lmp->error->all(FLERR, Error::NOLASTLINE, "{}(): Fix {} is not of style external", FNERR, id);
 
     fext->set_vector(idx, val);

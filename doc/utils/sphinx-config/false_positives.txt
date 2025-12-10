@@ -84,6 +84,7 @@ Alexey
 ali
 aliceblue
 aliphatic
+alkyl
 Allera
 Allinger
 allocatable
@@ -96,6 +97,7 @@ Alonso
 Alperen
 alphak
 alphashrink
+Alvares
 amap
 Amatrix
 AMD
@@ -153,6 +155,7 @@ arge
 args
 argv
 Armv
+armv
 arrhenius
 Arun
 arXiv
@@ -226,8 +229,10 @@ Azuri
 ba
 Babadi
 Babaei
+Baconnier
 backcolor
 Baczewski
+Bear
 Bagchi
 Bagi
 Bagnold
@@ -691,6 +696,7 @@ cuthi
 cutinner
 cutlo
 cutmax
+cutmin
 cutoffA
 cutoffC
 cutsq
@@ -743,6 +749,7 @@ datafile
 datatype
 dataset
 datums
+Dauchot
 Davidchack
 Daw
 dcd
@@ -760,6 +767,8 @@ Decius
 decompositions
 decorrelation
 decrementing
+deduplicates
+deduplication
 deeppink
 deepskyblue
 defgrad
@@ -779,6 +788,7 @@ delr
 deltaHf
 deltamu
 dem
+Demery
 Dendrimer
 dendritic
 Denniston
@@ -823,6 +833,7 @@ diagonalizers
 diagonalizing
 Diallo
 diblock
+dichalcogenide
 dichalcogenides
 Dickel
 diel
@@ -920,6 +931,7 @@ du
 dU
 Ducastelle
 Dudarev
+Duering
 Dufils
 Duin
 Dullweber
@@ -1135,6 +1147,7 @@ ew
 ewald
 Ewald
 ewaldflag
+exascale
 excitations
 excv
 exe
@@ -1477,6 +1490,7 @@ Hasan
 Hashtable
 Haswell
 Haugk
+Hayakawa
 Hayoun
 Hayre
 hbar
@@ -1510,6 +1524,7 @@ Hershchel
 Hertizian
 hertzian
 Hertzsch
+heterointerfaces
 heterostructures
 hexahedrons
 hexatic
@@ -1561,6 +1576,7 @@ hTST
 https
 hu
 Hueckel
+Huepe
 Huetter
 Hugonio
 hugoniostat
@@ -1787,6 +1803,7 @@ jN
 Joanes
 Joannopoulos
 Jochim
+Johansson
 Jonsson
 Jorgensen
 jp
@@ -2128,6 +2145,7 @@ lunit
 Lunkad
 Lussetti
 Lustig
+Lutsko
 lval
 lwsock
 lx
@@ -2352,6 +2370,7 @@ Mishra
 mistyped
 mistyrose
 Miyazaki
+Mizuguchi
 Mj
 mK
 mkdir
@@ -2898,6 +2917,7 @@ parallelepiped
 parallelepipeds
 Parallelizable
 parallelization
+parallelize
 parallelized
 parallelizing
 param
@@ -3195,6 +3215,7 @@ quadrupolar
 quadrupole
 quadrupoles
 Quant
+quantumness
 quartic
 quat
 quaternion
@@ -3207,6 +3228,7 @@ queryargs
 Queteschiner
 quickmin
 quintic
+qval
 qw
 qx
 qy
@@ -3457,6 +3479,7 @@ sandia
 Sandia
 sandybrown
 sanitizer
+Sano
 Sanyal
 Sanz
 Sarath
@@ -3507,6 +3530,7 @@ segmental
 Seibold
 Seifert
 Seleson
+selfalign
 sellerio
 Sellerio
 Semaev
@@ -3525,6 +3549,7 @@ Sethna
 setmask
 Setmask
 setpoint
+settorque
 setvel
 sevenbody
 sfftw
@@ -3542,11 +3567,13 @@ shapshot
 shardlow
 Shardlow
 shawn
+Shee
 Shen
 Shenderova
 Sherrill
 Shi
 Shiga
+Shimoyama
 Shinoda
 Shiomi
 shlib
@@ -3678,6 +3705,7 @@ stdout
 steelblue
 Stegailov
 Steinbach
+steinhardt
 Steinhardt
 Steinhauser
 Stepaniants
@@ -3733,6 +3761,7 @@ subscripted
 subscripting
 sudo
 Sugaku
+Sugawara
 Suhai
 Sukumaran
 Sulc
@@ -3752,6 +3781,7 @@ surfactants
 Suter
 Sutmann
 Suzen
+sve
 svn
 Svoboda
 sw
@@ -3975,7 +4005,9 @@ tweakable
 twobody
 twojmax
 Tx
+tx
 txt
+ty
 Tyagi
 typeargs
 typedefs
@@ -3986,6 +4018,7 @@ typeN
 typesafe
 typestr
 Tz
+tz
 Tzou
 ub
 Uberuaga
@@ -4086,8 +4119,8 @@ valent
 Valeriu
 valgrind
 validator
+validators
 Valone
-valuev
 Valuev
 Vanden
 Vandenbrande
@@ -4322,6 +4355,7 @@ Yamada
 yaml
 Yan
 Yanxon
+Yao
 Yaser
 Yazdani
 Ybar

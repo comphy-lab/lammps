@@ -80,7 +80,7 @@ class Thermo : protected Pointers {
   int flushflag, lineflag;
 
   double last_tpcpu, last_spcpu;
-  double last_time;
+  double last_time, last_cpu1, last_cpu2;
   bigint last_step;
 
   bigint natoms;
@@ -128,6 +128,7 @@ class Thermo : protected Pointers {
   void deallocate();
 
   void parse_fields(const std::string &);
+  void colname_auto();
   int add_compute(const char *, int);
   int add_fix(const char *);
   int add_variable(const char *);
@@ -156,6 +157,7 @@ class Thermo : protected Pointers {
   void compute_cpu();
   void compute_tpcpu();
   void compute_spcpu();
+  void compute_cpuuse();
   void compute_cpuremain();
   void compute_part();
   void compute_timeremain();
