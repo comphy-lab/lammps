@@ -169,7 +169,9 @@ matching keyword to the name of the KSpace style, as in this table:
 +----------------------+-----------------------+
 | Pair style           | KSpace style          |
 +----------------------+-----------------------+
-| coul/long            | ewald or esp or pppm  |
+| coul/long            | ewald or pppm         |
++----------------------+-----------------------+
+| coul/esp             | esp                   |
 +----------------------+-----------------------+
 | coul/msm             | msm                   |
 +----------------------+-----------------------+

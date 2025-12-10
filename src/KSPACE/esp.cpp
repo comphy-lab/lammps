@@ -567,7 +567,6 @@ void ESP::reset_grid()
   prolc180(accuracy_relative, select_c);
   prolc180(spreading_accuracy, spreading_select_c);
   
-  //printf("accuracy_relative = %lf, spreading_accuracy = %lf\n", accuracy_relative, spreading_accuracy);
   // reset portion of global grid that each proc owns
 
   set_grid_local();
