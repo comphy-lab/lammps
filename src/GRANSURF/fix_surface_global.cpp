@@ -917,7 +917,7 @@ void FixSurfaceGlobal::pre_neighbor()
 void FixSurfaceGlobal::post_force(int vflag)
 {
   int i, j, k, a, n, m, nconnect, ii, jj, inum, jnum, jflag;
-  int itype, jtype, external_flag, priority;
+  int itype, jtype, external_flag, priority, hidden;
   double xtmp, ytmp, ztmp, radi, delx, dely, delz, meff;
   int *ilist, *jlist, *numneigh, **firstneigh;
   int *touch, **firstflag, touch_flag;
@@ -1149,7 +1149,7 @@ void FixSurfaceGlobal::post_force(int vflag)
       contact_surfs[n_contact_surfs].copy_index_ext = -1;
       contact_surfs[n_contact_surfs].flat_ext = 0;
       contact_surfs[n_contact_surfs].weight_contribution = 1.0;
-      contact_surfs[n_contact_surfs].weight_overlap = 1.0;
+      contact_surfs[n_contact_surfs].hidden = 0;
       contact_surfs[n_contact_surfs].convex_preceding_contact = -1;
       contact_surfs[n_contact_surfs].rsq_com = rsq_com;
       contact_surfs[n_contact_surfs].priority = priority;
@@ -1228,12 +1228,17 @@ void FixSurfaceGlobal::post_force(int vflag)
       }
 
       max_overlap = -BIG;
+      hidden = 0;
       for (auto it = 0; it < composite_surfs->size(); it++) {
         m = (*composite_surfs)[it];
-        max_overlap = MAX(max_overlap, contact_surfs[m].overlap * contact_surfs[m].weight_overlap);
+        max_overlap = MAX(max_overlap, contact_surfs[m].overlap);
+        if (contact_surfs[m].hidden) {
+          hidden = 1;
+          break;
+        }
       }
 
-      if (max_overlap < EPSILON)
+      if (hidden || (max_overlap < EPSILON))
         continue;
 
       // Calculate geometry of contact
@@ -3601,10 +3606,10 @@ void FixSurfaceGlobal::walk_connections2d(int n, std::vector<int> *composite_sur
 
     m = contacts_map[k];
 
-    // Different type flat surfs act independently
-    if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
+    if (aflag == FLAT) {
       // flat, same-type: walk
-      if (processed_contacts->find(k) == processed_contacts->end())
+      if (contact_surfs[n].type == contact_surfs[m].type &&
+          processed_contacts->find(k) == processed_contacts->end())
         walk_connections2d(m, composite_surfs, processed_contacts);
 
       if (needs_correction && contact_at_joint)
@@ -3685,10 +3690,10 @@ void FixSurfaceGlobal::walk_connections3d(int n, std::vector<int> *composite_sur
 
     m = contacts_map[k];
 
-    // Different type flat surfs act independently
-    if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
+    if (aflag == FLAT) {
       // flat, same-type: walk
-      if (processed_contacts->find(k) == processed_contacts->end())
+      if (contact_surfs[n].type == contact_surfs[m].type &&
+          processed_contacts->find(k) == processed_contacts->end())
         walk_connections3d(m, composite_surfs, processed_contacts);
 
       if (needs_edge_correction && contact_at_joint)
@@ -3745,8 +3750,9 @@ void FixSurfaceGlobal::walk_connections3d(int n, std::vector<int> *composite_sur
 
     m = contacts_map[k];
 
-    if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
-      if (processed_contacts->find(k) == processed_contacts->end())
+    if (aflag == FLAT) {
+      if (contact_surfs[n].type == contact_surfs[m].type &&
+          processed_contacts->find(k) == processed_contacts->end())
         walk_connections3d(m, composite_surfs, processed_contacts);
 
       // Corner connections can only correct flat tris
@@ -3804,8 +3810,7 @@ void FixSurfaceGlobal::calculate_2d_forces(std::vector<int> *composite_surfs)
   if (hidden) {
     for (auto it = 0; it < composite_surfs->size(); it++) {
       n = (*composite_surfs)[it];
-      contact_surfs[n].weight_overlap = 0.0;
-      contact_surfs[n].weight_contribution = 0.0;
+      contact_surfs[n].hidden = 1;
     }
     return;
   }
@@ -3879,8 +3884,7 @@ void FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
   if (hidden) {
     for (auto it = 0; it < composite_surfs->size(); it++) {
       n = (*composite_surfs)[it];
-      contact_surfs[n].weight_overlap = 0.0;
-      contact_surfs[n].weight_contribution = 0.0;
+      contact_surfs[n].hidden = 1;
     }
     return;
   }
@@ -3911,8 +3915,6 @@ void FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
       MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_force);
       contact_surfs[n].weight_contribution *= w_int;
     }
-
-    contact_surfs[n].weight_contribution = MIN(contact_surfs[n].weight_contribution, contact_surfs[n].weight_overlap);
   }
 }
 
@@ -4088,21 +4090,6 @@ void FixSurfaceGlobal::adjust_external_pt_nonflat_3d(int j, int k, int n, int m)
   double w = MIN(fabs(dot1), fabs(dot2));
 
   MathExtra::scaleadd3(w, dr, 1.0 - w, dr_tmp, contact_surfs[n].dr_ext);
-
-  // not tested/implemented, but might fix some of the rarer discontinuities...
-  //      if component along edge < overlap, transition to an edge contact
-  //      weight to surface normal (concave) or dr (convex)
-
-  /*
-  double rparallel = contact_surfs[n].rmag * w;
-  if (rparallel < contact_surfs[n].overlap) {
-    MathExtra::normalize3(contact_surfs[n].dr_ext, dr_tmp);
-    w = rparallel / contact_surfs[n].overlap;
-    // todo: can one easily figure out if concave vs convex?
-    concave: MathExtra::scaleadd3(w, dr_tmp, 1.0 - w, jnorm, contact_surfs[n].dr_ext);
-    convex:  MathExtra::scaleadd3(w, dr_tmp, 1.0 - w, dr, contact_surfs[n].dr_ext);
-  }
-  */
 
   MathExtra::norm3(contact_surfs[n].dr_ext);
   contact_surfs[n].rank_ext = m;

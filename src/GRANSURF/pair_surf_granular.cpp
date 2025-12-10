@@ -100,7 +100,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
 {
   int i, j, k, a, n, m, iconnect, jconnect, nconnect, ii, jj;
   int inum, jnum, itype, jtype;
-  int isphere, itri, jflag, kflag, external_flag, priority;
+  int isphere, itri, jflag, kflag, external_flag, priority, hidden;
   double xtmp, ytmp, ztmp, radi, delx, dely, delz;
   double rsq, rsq_com, rmag, radsum, max_overlap, dot;
   double factor_lj, mi, mj, meff;
@@ -349,7 +349,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
       contact_surfs[n_contact_surfs].copy_index_ext = -1;
       contact_surfs[n_contact_surfs].flat_ext = 0;
       contact_surfs[n_contact_surfs].weight_contribution = 1.0;
-      contact_surfs[n_contact_surfs].weight_overlap = 1.0;
+      contact_surfs[n_contact_surfs].hidden = 0;
       contact_surfs[n_contact_surfs].convex_preceding_contact = -1;
       contact_surfs[n_contact_surfs].rsq_com = rsq_com;
       contact_surfs[n_contact_surfs].priority = priority;
@@ -428,12 +428,17 @@ void PairSurfGranular::compute(int eflag, int vflag)
       }
 
       max_overlap = -BIG;
+      hidden = 0;
       for (auto it = 0; it < composite_surfs->size(); it++) {
         m = (*composite_surfs)[it];
-        max_overlap = MAX(max_overlap, contact_surfs[m].overlap * contact_surfs[m].weight_overlap);
+        max_overlap = MAX(max_overlap, contact_surfs[m].overlap);
+        if (contact_surfs[m].hidden) {
+          hidden = 1;
+          break;
+        }
       }
 
-      if (max_overlap < EPSILON)
+      if (hidden || (max_overlap < EPSILON))
         continue;
 
       // Calculate geometry of contact
@@ -1121,10 +1126,10 @@ void PairSurfGranular::walk_connections2d(int n, std::vector<int> *composite_sur
 
     m = contacts_map[k];
 
-    // Different type flat surfs act independently
-    if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
+    if (aflag == FLAT) {
       // flat, same-type: walk
-      if (processed_contacts->find(k) == processed_contacts->end())
+      if (contact_surfs[n].type == contact_surfs[m].type &&
+          processed_contacts->find(k) == processed_contacts->end())
         walk_connections2d(m, composite_surfs, processed_contacts);
 
       if (needs_correction && contact_at_joint)
@@ -1211,10 +1216,10 @@ void PairSurfGranular::walk_connections3d(int n, std::vector<int> *composite_sur
 
     m = contacts_map[k];
 
-    // Different type flat surfs act independently
-    if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
+    if (aflag == FLAT) {
       // flat, same-type: walk
-      if (processed_contacts->find(k) == processed_contacts->end())
+      if (contact_surfs[n].type == contact_surfs[m].type &&
+          processed_contacts->find(k) == processed_contacts->end())
         walk_connections3d(m, composite_surfs, processed_contacts);
 
       if (needs_edge_correction && contact_at_joint)
@@ -1275,8 +1280,9 @@ void PairSurfGranular::walk_connections3d(int n, std::vector<int> *composite_sur
 
     m = contacts_map[k];
 
-    if (aflag == FLAT && contact_surfs[n].type == contact_surfs[m].type) {
-      if (processed_contacts->find(k) == processed_contacts->end())
+    if (aflag == FLAT) {
+      if (contact_surfs[n].type == contact_surfs[m].type &&
+          processed_contacts->find(k) == processed_contacts->end())
         walk_connections3d(m, composite_surfs, processed_contacts);
 
       // Edge connections can only correct flat tris
@@ -1334,8 +1340,7 @@ void PairSurfGranular::calculate_2d_forces(std::vector<int> *composite_surfs)
   if (hidden) {
     for (auto it = 0; it < composite_surfs->size(); it++) {
       n = (*composite_surfs)[it];
-      contact_surfs[n].weight_overlap = 0.0;
-      contact_surfs[n].weight_contribution = 0.0;
+      contact_surfs[n].hidden = 1;
     }
     return;
   }
@@ -1409,8 +1414,7 @@ void PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
   if (hidden) {
     for (auto it = 0; it < composite_surfs->size(); it++) {
       n = (*composite_surfs)[it];
-      contact_surfs[n].weight_overlap = 0.0;
-      contact_surfs[n].weight_contribution = 0.0;
+      contact_surfs[n].hidden = 1;
     }
     return;
   }
@@ -1441,8 +1445,6 @@ void PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
       MathExtra::copy3(contact_surfs[n].surf_norm, contact_surfs[n].dr_force);
       contact_surfs[n].weight_contribution *= w_int;
     }
-
-    contact_surfs[n].weight_contribution = MIN(contact_surfs[n].weight_contribution, contact_surfs[n].weight_overlap);
   }
 }
 

@@ -93,9 +93,9 @@ class FixSurface : public Fix {
   // struct for storing contact data
 
   struct ContactSurf {
-    int index, neigh_index, type, flag, nside, external, priority;
+    int index, neigh_index, type, flag, nside, external, priority, hidden;
     int convex_preceding_contact, rank_ext, copy_index_ext, flat_ext;
-    double rmag, overlap, rsq_com, weight_contribution, weight_overlap;
+    double rmag, overlap, rsq_com, weight_contribution;
     double contact[3], dr[3], surf_norm[3], dr_force[3], dr_ext[3];
   };
 
