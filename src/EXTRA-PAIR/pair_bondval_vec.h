@@ -12,9 +12,9 @@
 ------------------------------------------------------------------------- */
 
 #ifdef PAIR_CLASS
-
+// clang-format off
 PairStyle(bondval/vec,PairBondValVec)
-
+// clang-format on
 #else
 
 #ifndef LMP_PAIR_BONDVAL_VEC_H
@@ -27,9 +27,9 @@ namespace LAMMPS_NS {
 class PairBondValVec : public Pair {
  public:
   PairBondValVec(class LAMMPS *);
-  virtual ~PairBondValVec() override;
+  ~PairBondValVec() override;
 
-  virtual void compute(int, int) override;
+  void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
   void init_style() override;
@@ -41,24 +41,20 @@ class PairBondValVec : public Pair {
 
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
-
-
   int pack_reverse_comm(int, int, double *) override;
   void unpack_reverse_comm(int, int *, double *) override;
-
-
 
  protected:
   double cut_global;
   double power_global;
   double **cut;
-  double **r0,**alpha;
+  double **r0, **alpha;
   double *fp;
-  double **bvvsparam,**bvvv0;
-  double *s0x,*s0y,*s0z;
-  double *Dix,*Diy,*Diz;
+  double **bvvsparam, **bvvv0;
+  double *s0x, *s0y, *s0z;
+  double *Dix, *Diy, *Diz;
   double *s0temp;
-  double *fpx,*fpy,*fpz;
+  double *fpx, *fpy, *fpz;
   int index, index2;
   int nmax;
   double **offset;
@@ -66,7 +62,7 @@ class PairBondValVec : public Pair {
   virtual void allocate();
 };
 
-}
+}    // namespace LAMMPS_NS
 
 #endif
 #endif

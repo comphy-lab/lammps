@@ -17,6 +17,7 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_bondval_kokkos.h"
+
 #include "atom_kokkos.h"
 #include "atom_masks.h"
 #include "comm.h"
@@ -31,8 +32,6 @@
 
 #include <cmath>
 using namespace LAMMPS_NS;
-
-#define MAX_CACHE_ROWS 500
 
 /* ---------------------------------------------------------------------- */
 
