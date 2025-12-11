@@ -33,6 +33,7 @@ class AtomVecHybridKokkos : public AtomVecKokkos, public AtomVecHybrid {
  public:
   AtomVecHybridKokkos(class LAMMPS *);
   void init() override;
+  void process_args(int, char **) override;
 
   void grow(int) override;
   void sort_kokkos(Kokkos::BinSort<KeyViewType, BinOp> &Sorter) override;
@@ -67,6 +68,9 @@ class AtomVecHybridKokkos : public AtomVecKokkos, public AtomVecHybrid {
   void sync(ExecutionSpace space, uint64_t mask) override;
   void modified(ExecutionSpace space, uint64_t mask) override;
   void sync_pinned(ExecutionSpace space, uint64_t mask, int async_flag = 0) override;
+
+ private:
+  class AtomVecKokkos **nstyles_cast;
 };
 
 } // namespace LAMMPS_NS
