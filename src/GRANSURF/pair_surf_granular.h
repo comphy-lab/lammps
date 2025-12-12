@@ -79,14 +79,14 @@ class PairSurfGranular : public PairGranular {
 
   void prewalk_connections2d();
   void prewalk_connections3d();
-  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *);
-  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *);
+  void walk_connections2d(std::vector<int> *, std::unordered_set<int> *);
+  void walk_connections3d(std::vector<int> *, std::unordered_set<int> *);
   void adjust_external_pt_flat_2d(int, int, int, int);
   void adjust_external_edge_flat_3d(int, int, int, int);
   void adjust_external_pt_flat_3d(int, int, int, int);
   void adjust_external_pt_nonflat_3d(int, int, int, int);
-  void calculate_2d_forces(std::vector<int> *);
-  void calculate_3d_forces(std::vector<int> *);
+  double calculate_2d_forces(std::vector<int> *);
+  double calculate_3d_forces(std::vector<int> *);
 };
 
 }    // namespace LAMMPS_NS

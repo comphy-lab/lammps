@@ -41,10 +41,12 @@ class FixSurface : public Fix {
     int *nside_p2;        // ditto for endpt 2
                           //   SAME_SIDE = 2 normals are on same side of surf
                           //   OPPOSITE_SIDE = opposite sides of surf
-    int *aflag_p1;        // is this line + other line a FLAT,CONCAVE,CONVEX surf
+    int *aflag_p1;        // is this line + other line a CONCAVE or CONVEX surf
     int *aflag_p2;        // ditto for endpt 2
                           //   surf = on normal side of this line
-                          //   aflag = FLAT, CONCAVE, CONVEX
+                          //   aflag = CONCAVE, CONVEX
+    int *fflag_p1;        // is this line + other line are FLAT or  NONFLAT
+    int *fflag_p2;        // ditto for endpt 2
   };
 
   struct Connect3d {      // tri connectivity
@@ -54,7 +56,7 @@ class FixSurface : public Fix {
     int ne1,ne2,ne3;      // # of tris connected to edges 1,2,3
     int nc1,nc2,nc3;      // # of tris connected to corner pts 1,2,3
 
-    int external_pt[3];   // whether p1, p2, and p3 are external
+    int external_cor[3];   // whether c1, c2, and c3 are external
     int external_edge[3]; // whether e1, e2, and e3 are external
 
                           // pairs of edge connections
@@ -74,6 +76,9 @@ class FixSurface : public Fix {
     int *aflag_e3;        // ditto for edge 3
                           //   surf = on normal side of this tri
                           //   aflag = FLAT, CONCAVE, CONVEX
+    int *fflag_e1;        // is this line + other line are FLAT or  NONFLAT
+    int *fflag_e2;        // ditto for edge 2
+    int *fflag_e3;        // ditto for edge 3
 
                           // pairs of corner pt connections
     tagint *neigh_c1;     // indices (or IDs) of tris connected to corner pt 1
@@ -85,16 +90,17 @@ class FixSurface : public Fix {
     int *nside_c1;        // consistency of normals, only meaningful for FLAT
     int *nside_c2;        // ditto for corner 2
     int *nside_c3;        // ditto for corner 3
-    int *aflag_c1;        // are tris FLAT or CONCAVE (no CONVEX)
-    int *aflag_c2;        // ditto for corner 2
-    int *aflag_c3;        // ditto for corner 3
+    int *fflag_c1;        // are tris FLAT or NONFLAT
+    int *fflag_c2;        // ditto for edge 2
+    int *fflag_c3;        // ditto for edge 3
   };
 
   // struct for storing contact data
 
   struct ContactSurf {
     int index, neigh_index, type, flag, nside, external, priority, hidden;
-    int convex_preceding_contact, rank_ext, copy_index_ext, flat_ext;
+    int convex_preceding_contact;
+    int rank_ext, copy_index_ext, flat_ext;
     double rmag, overlap, rsq_com, weight_contribution;
     double contact[3], dr[3], surf_norm[3], dr_force[3], dr_ext[3];
   };

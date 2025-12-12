@@ -152,12 +152,15 @@ class FixSurfaceGlobal : public FixSurface {
   int **pwhich_p1;            // which point (0/1) on other line is endpt 1
   int **nside_p1;             // consistency of other line normal
                               //   SAME_SIDE or OPPOSITE_SIDE
-  int **aflag_p1;             // is this line + other line a FLAT,CONCAVE,CONVEX surf
+  int **aflag_p1;             // is this line + other line CONCAVE or CONVEX surf
                               //   surf = on normal side of this line
+  int **fflag_p1;             // is this line + other line FLAT or NONFLAT
+
   int **neigh_p2;             // ditto for connections to endpt 2
   int **pwhich_p2;            // ditto for endpt 2
   int **nside_p2;             // ditto for endpt 2
   int **aflag_p2;             // ditto for endpt 2
+  int **fflag_p2;             // ditto for endpt 2
 
   // ragged 2d arrays for 3d edge connectivity
 
@@ -167,14 +170,17 @@ class FixSurfaceGlobal : public FixSurface {
                               //   SAME_SIDE or OPPOSITE_SIDE
   int **aflag_e1;             // is this tri + other tri a FLAT,CONCAVE,CONVEX surf
                               //   surf = on normal side of this tri
+  int **fflag_e1;             // is this tri + other tri FLAT or NONFLAT
   int **neigh_e2;             // ditto for connections to edge 2
   int **ewhich_e2;            // ditto for edge 2
   int **nside_e2;             // ditto for edge 2
   int **aflag_e2;             // ditto for edge 2
+  int **fflag_e2;             // ditto for edge 2
   int **neigh_e3;             // ditto for connections to edge 3
   int **ewhich_e3;            // ditto for edge 3
   int **nside_e3;             // ditto for edge 3
   int **aflag_e3;             // ditto for edge 3
+  int **fflag_e3;             // ditto for edge 3
 
   // ragged 2d arrays for 3d corner connectivity
 
@@ -182,16 +188,15 @@ class FixSurfaceGlobal : public FixSurface {
   int **cwhich_c1;            // which corner point (0/1/2) on other tri is cpt 1
   int **nside_c1;             // consistency of other tri normal
                               //   SAME_SIDE or OPPOSITE_SIDE, only meaningful for FLAT
-  int **aflag_c1;             // is this tri + other tri a FLAT or CONCAVE surf
-                              //   surf = on normal side of this tri
+  int **fflag_c1;             // is this tri + other tri FLAT or NONFLAT
   int **neigh_c2;             // indices of other tris connected to cpt 21
   int **cwhich_c2;            // which corner point (0/1/2) on other tri is cpt 2
   int **nside_c2;             // ditto for corner 2
-  int **aflag_c2;             // ditto for corner 2
+  int **fflag_c2;             // ditto for corner 2
   int **neigh_c3;             // indices of tris connected to cpt 3
   int **cwhich_c3;            // which corner point (0/1/2) on other tri is cpt 3
   int **nside_c3;             // ditto for corner 3
-  int **aflag_c3;             // ditto for corner 3
+  int **fflag_c3;             // ditto for corner 3
 
   // per-surface 2d/3d connectivity
 
@@ -224,14 +229,14 @@ class FixSurfaceGlobal : public FixSurface {
 
   void prewalk_connections2d();
   void prewalk_connections3d();
-  void walk_connections2d(int, std::vector<int> *, std::unordered_set<int> *);
-  void walk_connections3d(int, std::vector<int> *, std::unordered_set<int> *);
+  void walk_connections2d(std::vector<int> *, std::unordered_set<int> *);
+  void walk_connections3d(std::vector<int> *, std::unordered_set<int> *);
   void adjust_external_pt_flat_2d(int, int, int, int);
   void adjust_external_edge_flat_3d(int, int, int, int);
   void adjust_external_pt_flat_3d(int, int, int, int);
   void adjust_external_pt_nonflat_3d(int, int, int, int);
-  void calculate_2d_forces(std::vector<int> *);
-  void calculate_3d_forces(std::vector<int> *);
+  double calculate_2d_forces(std::vector<int> *);
+  double calculate_3d_forces(std::vector<int> *);
 
   // surface movement
 
