@@ -43,7 +43,7 @@ void runner_lammps_interface_init(const char *path, int *npath, double *cutoff, 
 
 void runner_lammps_interface_transfer_atoms_and_neighbor_lists(
     int *nlocal, int *nghost, int *atomic_numbers, int *inum, int *sum_num_neigh, int *ilist,
-    int *num_neigh, int *first_neigh, int *neigh, double *lattice, double *xyz, bool *lperiodic);
+    int *num_neigh, int *first_neigh, int *neigh, double *lattice, double *xyz, bool *lperiodic, int *lstress);
 
 void runner_interface_short_range(int *nlocal, int *nghost, int *inum, int *nmax, int *ilist,
                                   double *energy, double *forces, double *d_energy_d_strain,
@@ -335,7 +335,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   runner_lammps_interface_transfer_atoms_and_neighbor_lists(
       &nlocal, &nghost, runner_types.data(), &inum, &num_neigh_sum, ilist, runner_num_neigh.data(),
-      runner_first_neighbor.data(), runner_jlist.data(), lattice, &x[0][0], &lperiodic);
+      runner_first_neighbor.data(), runner_jlist.data(), lattice, &x[0][0], &lperiodic, &vflag_global);
 
   runner_interface_short_range(&nlocal, &nghost, &inum, &nmax, ilist, committee_energy.data(),
                                committee_force.data(), committee_d_energy_d_strain.data(),
