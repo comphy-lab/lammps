@@ -40,7 +40,7 @@ class FixIndent : public Fix {
 
   int image(int *&, double **&) override;
 
-private:
+ private:
   int istyle, scaleflag, side;
   double k, k3;
   char *xstr, *ystr, *zstr, *rstr, *pstr;

@@ -453,7 +453,7 @@ void FixIndent::post_force(int /*vflag*/)
 
     // planar indenter
 
-  } else {
+  } else {    // if (istyle == PLANE)
 
     // plane = current plane position
 
@@ -473,66 +473,66 @@ void FixIndent::post_force(int /*vflag*/)
     // store indenter object visualization parameters: positions of cylinder edges and diameter
 
     switch (cdim) {
-    case 0:
-      imgparms[0][1] = planeside * plane;
-      imgparms[0][2] = domain->boxlo[1];
-      imgparms[0][3] = domain->boxlo[2];
-      imgparms[0][4] = planeside * plane;
-      imgparms[0][5] = domain->boxhi[1];
-      imgparms[0][6] = domain->boxlo[2];
-      imgparms[0][7] = planeside * plane;
-      imgparms[0][8] = domain->boxlo[1];
-      imgparms[0][9] = domain->boxhi[2];
-      imgparms[1][1] = planeside * plane;
-      imgparms[1][2] = domain->boxhi[1];
-      imgparms[1][3] = domain->boxhi[2];
-      imgparms[1][4] = planeside * plane;
-      imgparms[1][5] = domain->boxlo[1];
-      imgparms[1][6] = domain->boxhi[2];
-      imgparms[1][7] = planeside * plane;
-      imgparms[1][8] = domain->boxhi[1];
-      imgparms[1][9] = domain->boxlo[2];
-      break;
-    case 1:
-      imgparms[0][1] = domain->boxlo[0];
-      imgparms[0][2] = planeside * plane;
-      imgparms[0][3] = domain->boxlo[2];
-      imgparms[0][4] = domain->boxhi[0];
-      imgparms[0][5] = planeside * plane;
-      imgparms[0][6] = domain->boxlo[2];
-      imgparms[0][7] = domain->boxlo[0];
-      imgparms[0][8] = planeside * plane;
-      imgparms[0][9] = domain->boxhi[2];
-      imgparms[1][1] = domain->boxhi[0];
-      imgparms[1][2] = planeside * plane;
-      imgparms[1][3] = domain->boxhi[2];
-      imgparms[1][4] = domain->boxlo[0];
-      imgparms[1][5] = planeside * plane;
-      imgparms[1][6] = domain->boxhi[2];
-      imgparms[1][7] = domain->boxhi[0];
-      imgparms[1][8] = planeside * plane;
-      imgparms[1][9] = domain->boxlo[2];
-      break;
-    case 2:
-      imgparms[0][1] = domain->boxlo[0];
-      imgparms[0][2] = domain->boxlo[1];
-      imgparms[0][3] = planeside * plane;
-      imgparms[0][4] = domain->boxhi[0];
-      imgparms[0][5] = domain->boxlo[1];
-      imgparms[0][6] = planeside * plane;
-      imgparms[0][7] = domain->boxlo[0];
-      imgparms[0][8] = domain->boxhi[1];
-      imgparms[0][9] = planeside * plane;
-      imgparms[1][1] = domain->boxhi[0];
-      imgparms[1][2] = domain->boxhi[1];
-      imgparms[1][3] = planeside * plane;
-      imgparms[1][4] = domain->boxlo[0];
-      imgparms[1][5] = domain->boxhi[1];
-      imgparms[1][6] = planeside * plane;
-      imgparms[1][7] = domain->boxhi[0];
-      imgparms[1][8] = domain->boxlo[1];
-      imgparms[1][9] = planeside * plane;
-      break;
+      case 0:
+        imgparms[0][1] = planeside * plane;
+        imgparms[0][2] = domain->boxlo[1];
+        imgparms[0][3] = domain->boxlo[2];
+        imgparms[0][4] = planeside * plane;
+        imgparms[0][5] = domain->boxhi[1];
+        imgparms[0][6] = domain->boxlo[2];
+        imgparms[0][7] = planeside * plane;
+        imgparms[0][8] = domain->boxlo[1];
+        imgparms[0][9] = domain->boxhi[2];
+        imgparms[1][1] = planeside * plane;
+        imgparms[1][2] = domain->boxhi[1];
+        imgparms[1][3] = domain->boxhi[2];
+        imgparms[1][4] = planeside * plane;
+        imgparms[1][5] = domain->boxlo[1];
+        imgparms[1][6] = domain->boxhi[2];
+        imgparms[1][7] = planeside * plane;
+        imgparms[1][8] = domain->boxhi[1];
+        imgparms[1][9] = domain->boxlo[2];
+        break;
+      case 1:
+        imgparms[0][1] = domain->boxlo[0];
+        imgparms[0][2] = planeside * plane;
+        imgparms[0][3] = domain->boxlo[2];
+        imgparms[0][4] = domain->boxhi[0];
+        imgparms[0][5] = planeside * plane;
+        imgparms[0][6] = domain->boxlo[2];
+        imgparms[0][7] = domain->boxlo[0];
+        imgparms[0][8] = planeside * plane;
+        imgparms[0][9] = domain->boxhi[2];
+        imgparms[1][1] = domain->boxhi[0];
+        imgparms[1][2] = planeside * plane;
+        imgparms[1][3] = domain->boxhi[2];
+        imgparms[1][4] = domain->boxlo[0];
+        imgparms[1][5] = planeside * plane;
+        imgparms[1][6] = domain->boxhi[2];
+        imgparms[1][7] = domain->boxhi[0];
+        imgparms[1][8] = planeside * plane;
+        imgparms[1][9] = domain->boxlo[2];
+        break;
+      case 2:
+        imgparms[0][1] = domain->boxlo[0];
+        imgparms[0][2] = domain->boxlo[1];
+        imgparms[0][3] = planeside * plane;
+        imgparms[0][4] = domain->boxhi[0];
+        imgparms[0][5] = domain->boxlo[1];
+        imgparms[0][6] = planeside * plane;
+        imgparms[0][7] = domain->boxlo[0];
+        imgparms[0][8] = domain->boxhi[1];
+        imgparms[0][9] = planeside * plane;
+        imgparms[1][1] = domain->boxhi[0];
+        imgparms[1][2] = domain->boxhi[1];
+        imgparms[1][3] = planeside * plane;
+        imgparms[1][4] = domain->boxlo[0];
+        imgparms[1][5] = domain->boxhi[1];
+        imgparms[1][6] = planeside * plane;
+        imgparms[1][7] = domain->boxhi[0];
+        imgparms[1][8] = domain->boxlo[1];
+        imgparms[1][9] = planeside * plane;
+        break;
     }
   }
 
