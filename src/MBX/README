@@ -9,7 +9,7 @@ and maintained by the Paesani Lab (https://github.com/paesanilab).
 The corresponding author is Francesco Paesani (fpaesani@ucsd.edu).
 
 MBX can be added to LAMMPS by using ` cmake -D PKG_MBX=yes ...` as
-part of the build process. LAMMPS with then automatically download
+part of the build process. LAMMPS will then automatically download
 and compile the MBX library. Do note that the compilation of MBX can
 take a long time and can be quite memory intensive. If MBX is already
 detected on your system using PKG_CONFIG, then LAMMPS will use that

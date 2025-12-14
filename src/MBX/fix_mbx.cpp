@@ -692,7 +692,7 @@ void FixMBX::mbx_fill_system_information_from_atom()
 
   // Idea of this loop: fill an array that will say the position
   // of each atom in the monomer
-  // PROBLEM CHRIS: no idea how to get when mroe than 1 rank is involved
+  // PROBLEM CHRIS: no idea how to get when more than 1 rank is involved
 
   //    bigint itag = 1;
   //    while( itag < natoms+1) {

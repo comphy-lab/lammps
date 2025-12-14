@@ -22,7 +22,7 @@ done
 # edit 2 Makefile.package files to include/exclude package info
 
 if (test $1 = 1 || test $1 = 2) then
-  echo "The MBX package does not supports the legacy build system. Please build LAMMPS with CMake instead."
+  echo "The MBX package does not support the legacy build system. Please build LAMMPS with CMake instead."
   exit 1
 
 elif (test $1 = 0) then
