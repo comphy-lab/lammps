@@ -26,7 +26,8 @@ namespace LAMMPS_NS {
 class Region;
 class DumpImage : public DumpCustom {
  public:
-  int multifile_override;    // used by write_dump command
+  int multifile_override;                  // used by write_dump command
+  enum { SPHERE, LINE, TRI, CYLINDER };    // used by some Body and Fix child classes
 
   DumpImage(class LAMMPS *, int, char **);
   ~DumpImage() override;

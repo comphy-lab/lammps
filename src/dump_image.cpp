@@ -281,7 +281,6 @@ using MathConst::DEG2RAD;
 static constexpr double BIG = 1.0e20;
 
 enum { NUMERIC, ATOM, TYPE, ELEMENT, ATTRIBUTE };
-enum { SPHERE, LINE, TRI };    // also in some Body and Fix child classes
 enum { STATIC, DYNAMIC };
 enum { NO = 0, YES = 1, AUTO = 2 };
 enum { FILLED, FRAME, POINTS };
