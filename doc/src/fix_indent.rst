@@ -201,6 +201,27 @@ contains *xlat*, *ylat*, *zlat* keywords of the :doc:`thermo_style
    variable k equal 100.0/xlat/xlat
    fix 1 all indent $k sphere ...
 
+Dump image info
+"""""""""""""""
+
+.. versionadded:: TBD
+
+Fix indent supports the *fix* keyword of :doc:`dump image <dump_image>`.
+The fix will pass geometry information about the indenter to *dump
+image* so that the indenter object will be included in the rendered
+image.
+
+This feature currently only supports spherical and cylindrical
+indenters. The *fflag1* setting of *dump image fix* has no impact on
+rendering a spherical indenter.  For a cylindrical indenter it
+determines whether the cylinder is capped with a sphere at the ends: 0
+means no caps, 1 means the lower end is capped, 2 means the upper end is
+capped, and 3 means both ends are capped.  The *fflag2* setting allows
+to adjust the radius of the rendered object.  In many cases you want to
+use a value > 0 so that the rendered indenter object does not obscure
+atoms close to it.
+
+
 Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 

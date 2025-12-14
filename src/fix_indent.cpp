@@ -19,10 +19,12 @@
 
 #include "atom.h"
 #include "domain.h"
+#include "dump_image.h"
 #include "error.h"
 #include "input.h"
 #include "lattice.h"
 #include "math_extra.h"
+#include "memory.h"
 #include "modify.h"
 #include "respa.h"
 #include "update.h"
@@ -41,7 +43,8 @@ enum { INSIDE, OUTSIDE };
 
 FixIndent::FixIndent(LAMMPS *lmp, int narg, char **arg) :
     Fix(lmp, narg, arg), xstr(nullptr), ystr(nullptr), zstr(nullptr), rstr(nullptr), pstr(nullptr),
-    rlostr(nullptr), rhistr(nullptr), lostr(nullptr), histr(nullptr)
+    rlostr(nullptr), rhistr(nullptr), lostr(nullptr), histr(nullptr), imgobjs(nullptr),
+    imgparms(nullptr)
 {
   if (narg < 4) utils::missing_cmd_args(FLERR, "fix indent", error);
 
@@ -111,13 +114,29 @@ FixIndent::FixIndent(LAMMPS *lmp, int narg, char **arg) :
       pvalue *= zscale;
 
   } else
-    error->all(FLERR, "Unknown fix indent keyword: {}", istyle);
+    error->all(FLERR, "Unknown fix indent style: {}", istyle);
 
   varflag = 0;
   if (xstr || ystr || zstr || rstr || pstr || rlostr || rhistr || lostr || histr) varflag = 1;
 
   indenter_flag = 0;
   indenter[0] = indenter[1] = indenter[2] = indenter[3] = 0.0;
+
+  // set up indenter visualization
+
+  if (istyle == SPHERE) {
+    // only one object to draw
+    memory->create(imgobjs, 1, "fix_indent:imgobjs");
+    memory->create(imgparms, 1, 5, "fix_indent:imgparms");
+    imgobjs[0] = DumpImage::SPHERE;
+    imgparms[0][0] = atom->ntypes;    // use color of the last atom type
+  } else if (istyle == CYLINDER) {
+    // only one object to draw
+    memory->create(imgobjs, 1, "fix_indent:imgobjs");
+    memory->create(imgparms, 1, 8, "fix_indent:imgparms");
+    imgobjs[0] = DumpImage::CYLINDER;
+    imgparms[0][0] = atom->ntypes;    // use color of the last atom type
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -133,6 +152,9 @@ FixIndent::~FixIndent()
   delete[] rhistr;
   delete[] lostr;
   delete[] histr;
+
+  memory->destroy(imgobjs);
+  memory->destroy(imgparms);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -268,7 +290,7 @@ void FixIndent::post_force(int /*vflag*/)
     double radius = rstr ? input->variable->compute_equal(rvar) : rvalue;
     if (radius < 0.0) error->all(FLERR, "Illegal fix indent sphere radius: {}", radius);
 
-    for (int i = 0; i < nlocal; i++)
+    for (int i = 0; i < nlocal; i++) {
       if (mask[i] & groupbit) {
         delx = x[i][0] - ctr[0];
         dely = x[i][1] - ctr[1];
@@ -294,6 +316,14 @@ void FixIndent::post_force(int /*vflag*/)
         indenter[2] -= fy;
         indenter[3] -= fz;
       }
+    }
+
+    // store indenter object visualization parameters
+
+    imgparms[0][1] = ctr[0];
+    imgparms[0][2] = ctr[1];
+    imgparms[0][3] = ctr[2];
+    imgparms[0][4] = 2.0 * radius;
 
     // cylindrical indenter
 
@@ -309,7 +339,7 @@ void FixIndent::post_force(int /*vflag*/)
     double radius{rstr ? input->variable->compute_equal(rvar) : rvalue};
     if (radius < 0.0) error->all(FLERR, "Illegal fix indent cylinder radius: {}", radius);
 
-    for (int i = 0; i < nlocal; i++)
+    for (int i = 0; i < nlocal; i++) {
       if (mask[i] & groupbit) {
         double del[3] = {x[i][0] - ctr[0], x[i][1] - ctr[1], x[i][2] - ctr[2]};
         del[cdim] = 0;
@@ -334,6 +364,18 @@ void FixIndent::post_force(int /*vflag*/)
         indenter[2] -= fy;
         indenter[3] -= fz;
       }
+    }
+
+    // store indenter object visualization parameters
+
+    imgparms[0][1] = ctr[0];
+    imgparms[0][2] = ctr[1];
+    imgparms[0][3] = ctr[2];
+    ctr[cdim] = domain->boxhi[cdim];
+    imgparms[0][4] = ctr[0];
+    imgparms[0][5] = ctr[1];
+    imgparms[0][6] = ctr[2];
+    imgparms[0][7] = 2.0 * radius;
 
     // conical indenter
 
@@ -852,4 +894,19 @@ double FixIndent::closest(double *x, double *near, double *nearest, double dsq)
   nearest[1] = near[1];
   nearest[2] = near[2];
   return rsq;
+}
+
+/* ----------------------------------------------------------------------
+   provide graphics information to dump image to render indenter
+------------------------------------------------------------------------- */
+int FixIndent::image(int *&objs, double **&parms)
+{
+  objs = imgobjs;
+  parms = imgparms;
+  if (istyle == SPHERE)
+    return 1;
+  else if (istyle == CYLINDER)
+    return 1;
+  else
+    return 0;
 }
