@@ -1557,6 +1557,7 @@ double *Image::color2rgb(const char *color, int index)
   }
 
   if (color) {
+    if (strcmp(color,"none") == 0) return nullptr;
     for (int i = 0; i < ncolors; i++)
       if (strcmp(color,username[i]) == 0) return userrgb[i];
     for (int i = 0; i < NCOLORS; i++)
