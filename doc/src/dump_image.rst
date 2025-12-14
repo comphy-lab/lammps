@@ -216,17 +216,17 @@ Here are two sample images, rendered as :math:`1024\times 1024` JPEG files.
 
 Only atoms in the specified group are rendered in the image.  The
 :doc:`dump_modify region and thresh <dump_modify>` commands can also
-alter what atoms are included in the image.
-The filename suffix determines whether a JPEG, PNG, or PPM file is
-created with the *image* dump style.  If the suffix is ".jpg" or
-".jpeg", then a `JPEG format <jpeg_format_>`_ file is created, if the
-suffix is ".png", then a `PNG format <png_format_>`_ is created, else
-a `PPM (aka NETPBM) format <ppm_format_>`_ file is created.
-The JPEG and PNG files are binary; PPM has a text mode header followed
-by binary data. JPEG images have lossy compression, PNG has lossless
-compression, and PPM files are uncompressed but can be compressed with
-gzip, if LAMMPS has been compiled with -DLAMMPS_GZIP and a ".gz" suffix
-is used.
+alter what atoms are included in the image.  The filename suffix
+determines whether a JPEG, PNG, or PPM file is created with the *image*
+dump style.  If the suffix is ".jpg" or ".jpeg", then a `JPEG format
+<jpeg_format_>`_ file is created, if the suffix is ".png", then a `PNG
+format <png_format_>`_ is created, else a `PPM (aka NETPBM) format
+<ppm_format_>`_ file is created.  The JPEG and PNG files are binary; PPM
+has a text mode header followed by binary data. JPEG images have lossy
+compression, PNG has lossless compression, and PPM files are
+uncompressed but can be compressed with a supported compression program,
+if LAMMPS has been compiled with :ref:`compression support <gzip>` and a
+supported suffix is used.
 
 .. _jpeg_format: https://jpeg.org/jpeg/
 .. _png_format: https://en.wikipedia.org/wiki/Portable_Network_Graphics
@@ -530,20 +530,20 @@ change this via the dump_modify command.
 
 .. versionadded:: 10Sep2025
 
-The *region* keyword can be used to create a graphical representation
-of a :doc:`region <region>`.  This can be helpful in debugging the
-location and extent of regions, especially when those have parameters
-controlled by variables.  Three styles of representing a region are
-available: *filled*, *frame*, and *points*. With style *filled* the
-surface of the region is drawn.  For region styles that support open
-faces, surfaces are not drawn for such open faces. Draw style *frame*
-represents the region with a mesh of "wires" the diameter of which can
-be set. Unlike with *filled*, you can look inside the region with this
-draw style. The third draw style *points* generates a random point
-cloud inside the simulation box and draws only those points that are
-within the region.  Draw styles *filled* and *frame* support only
-"primitive" region style (no unions or intersections), but the *points*
-draw style supports all region styles.
+The *region* keyword can be used to create a graphical representation of
+a :doc:`region <region>`.  This can be helpful in debugging the location
+and extent of regions, especially when those have parameters controlled
+by variables.  Three styles of representing a region are available:
+*filled*, *frame*, and *points*.  With style *filled* the surface of the
+region is drawn.  For region styles that support open faces, surfaces
+are not drawn for such open faces.  Draw style *frame* represents the
+region with a mesh of "wires".  The diameter of these "wires" can be
+set.  Unlike with the *filled* style, you can see what is *inside* the
+region with this draw style.  The third draw style *points* generates a
+random point cloud inside the simulation box and draws only those points
+that are within the region.  Draw styles *filled* and *frame* support
+only "primitive" region style (no unions or intersections), but the
+*points* draw style supports all region styles.
 
 ----------
 
