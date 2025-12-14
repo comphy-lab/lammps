@@ -99,6 +99,8 @@ class DumpImage : public DumpCustom {
   class AtomVecBody *avec_body;
 
   class Fix *fixptr;    // ptr to Fix that provides image data
+  char *id_fix;
+  double *fcolor;    // custom color choice for fix
 
   class Image *image;    // class that renders each image
 

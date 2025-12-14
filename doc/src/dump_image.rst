@@ -160,6 +160,8 @@ Syntax
        *color* args = name R G B
          name = name of color
          R,G,B = red/green/blue numeric values from 0.0 to 1.0
+       *fcolor* args = color
+         color = name of color for fix objects
        *framerate* arg = fps
          fps = frames per second for movie
        *gmap* args = identical to *amap* args
@@ -505,26 +507,18 @@ change this via the dump_modify command.
 ----------
 
 The *fix* keyword can be used with a :doc:`fix <fix>` that produces
-objects to be drawn.
+objects to be drawn.  Below is a list of supported fixes:
 
-The *fflag1* and *fflag2* settings are numerical values which are
-passed to the fix to affect how the drawing of its objects is done.
-See the individual fix page for a description of what these
-parameters mean for a particular fix.
+* :doc:`fix indent <fix_indent>`
+
+The *fflag1* and *fflag2* settings are numerical values which are used
+by *dump image* to adjust how the drawing of the objects communicated
+by the fix is done.  See the documentation of the individual fixes for
+a description of what these parameters mean.
 
 The only setting currently allowed for the *color* value is *type*,
-which will color the fix objects according to their type.  By default
-the mapping of types to colors is as follows:
-
-* type 1 = red
-* type 2 = green
-* type 3 = blue
-* type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
-
-and repeats itself for types > 6.  There is not yet an option to
-change this via the dump_modify command.
+which will color the fix objects in the same color as atom type 1.
+By default this will be "red".
 
 ----------
 
@@ -1026,6 +1020,14 @@ When a color name is converted to RGB values, the user-defined color
 names are searched first, then the 140 pre-defined color names.  This
 means you can also use the *color* keyword to overwrite one of the
 pre-defined color names with new RBG values.
+
+----------
+
+.. versionadded:: TBD
+
+The *fcolor* keyword sets the color of any image objects created by a
+fix.  The color name can be any of the 140 pre-defined colors (see
+below) or a color name defined by the *dump_modify color* option.
 
 ----------
 

@@ -294,7 +294,7 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
     colorelement(nullptr), bcolortype(nullptr), grid2d(nullptr), grid3d(nullptr),
     id_grid_compute(nullptr), id_grid_fix(nullptr), grid_compute(nullptr), grid_fix(nullptr),
     gbuf(nullptr), avec_line(nullptr), avec_tri(nullptr), avec_body(nullptr), fixptr(nullptr),
-    image(nullptr), chooseghost(nullptr), bufcopy(nullptr)
+    id_fix(nullptr), fcolor(nullptr), image(nullptr), chooseghost(nullptr), bufcopy(nullptr)
 {
   if (binary || multiproc) error->all(FLERR, 4, "Invalid dump image filename {}", filename);
 
@@ -363,7 +363,6 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
     bdiam = NUMERIC;
     bdiamvalue = 0.5;
   }
-  char *fixID = nullptr;
 
   cflag = STATIC;
   cx = cy = cz = 0.5;
@@ -477,7 +476,8 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
     } else if (strcmp(arg[iarg],"fix") == 0) {
       if (iarg+5 > narg) utils::missing_cmd_args(FLERR,"dump image fix", error);
       fixflag = YES;
-      fixID = arg[iarg+1];
+      delete[] id_fix;
+      id_fix = utils::strdup(arg[iarg+1]);
       if (strcmp(arg[iarg+2],"type") == 0) fixcolor = TYPE;
       else error->all(FLERR, iarg+2, "Dump image fix only supports color by type");
       fixflag1 = utils::numeric(FLERR,arg[iarg+3],false,lmp);
@@ -687,10 +687,9 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
   if (lineflag || triflag || bodyflag) extraflag = 1;
 
   if (fixflag) {
-    fixptr = modify->get_fix_by_id(fixID);
+    fixptr = modify->get_fix_by_id(id_fix);
     if (!fixptr)
-      error->all(FLERR, Error::NOLASTLINE, "Fix ID {} for dump image does not exist", fixID);
-
+      error->all(FLERR, Error::NOLASTLINE, "Fix ID {} for dump image does not exist", id_fix);
   }
 
   // allocate image buffer now that image size is known
@@ -783,6 +782,7 @@ DumpImage::~DumpImage()
 
   delete[] id_grid_compute;
   delete[] id_grid_fix;
+  delete[] id_fix;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -913,6 +913,13 @@ void DumpImage::init_style()
         (domain->yperiodic && (bondcutoff > domain->yprd)) ||
         ((domain->dimension == 3) && domain->zperiodic && (bondcutoff > domain->zprd)))
       error->all(FLERR, "Dump image autobond cutoff is larger than periodic domain");
+  }
+
+  // check if fix with visualization still exists
+  if (fixflag) {
+    fixptr = modify->get_fix_by_id(id_fix);
+    if (!fixptr)
+      error->all(FLERR, Error::NOLASTLINE, "Fix ID {} for dump image does not exist", id_fix);
   }
 }
 
@@ -1680,7 +1687,8 @@ void DumpImage::create_image()
   // render objects provided by a fix
 
   if (fixflag) {
-    int tridraw=0,edgedraw=0;
+    int tridraw = 0;
+    int edgedraw = 0;
     if (domain->dimension == 3) {
       tridraw = 1;
       edgedraw = 1;
@@ -1689,30 +1697,48 @@ void DumpImage::create_image()
     }
 
     n = fixptr->image(fixvec,fixarray);
-
-    for (i = 0; i < n; i++) {
-      if (fixvec[i] == SPHERE) {
-        // no fix draws spheres yet
-      } else if (fixvec[i] == LINE) {
-        if (fixcolor == TYPE) {
-          itype = static_cast<int>(fixarray[i][0]);
-          color = colortype[itype];
-        }
-        image->draw_cylinder(&fixarray[i][1],&fixarray[i][4],
-                             color,fixflag1,3);
-      } else if (fixvec[i] == TRI) {
-        if (fixcolor == TYPE) {
-          itype = static_cast<int>(fixarray[i][0]);
-          color = colortype[itype];
-        }
-        p1 = &fixarray[i][1];
-        p2 = &fixarray[i][4];
-        p3 = &fixarray[i][7];
-        if (tridraw) image->draw_triangle(p1,p2,p3,color);
-        if (edgedraw) {
-          image->draw_cylinder(p1,p2,color,fixflag2,3);
-          image->draw_cylinder(p2,p3,color,fixflag2,3);
-          image->draw_cylinder(p3,p1,color,fixflag2,3);
+    if (fixvec && fixarray) {
+      for (i = 0; i < n; i++) {
+        if (fixvec[i] == SPHERE) {
+          if (fcolor) {
+            color = fcolor;
+          } else if (fixcolor == TYPE) {
+            itype = static_cast<int>(fixarray[i][0]);
+            color = colortype[itype];
+          }
+          image->draw_sphere(&fixarray[i][1],color,fixarray[i][4]-fixflag2);
+        } else if (fixvec[i] == LINE) {
+          if (fcolor) {
+            color = fcolor;
+          } else if (fixcolor == TYPE) {
+            itype = static_cast<int>(fixarray[i][0]);
+            color = colortype[itype];
+          }
+          image->draw_cylinder(&fixarray[i][1],&fixarray[i][4],color,fixflag1,3);
+        } else if (fixvec[i] == TRI) {
+          if (fcolor) {
+            color = fcolor;
+          } else if (fixcolor == TYPE) {
+            itype = static_cast<int>(fixarray[i][0]);
+            color = colortype[itype];
+          }
+          p1 = &fixarray[i][1];
+          p2 = &fixarray[i][4];
+          p3 = &fixarray[i][7];
+          if (tridraw) image->draw_triangle(p1,p2,p3,color);
+          if (edgedraw) {
+            image->draw_cylinder(p1,p2,color,fixflag2,3);
+            image->draw_cylinder(p2,p3,color,fixflag2,3);
+            image->draw_cylinder(p3,p1,color,fixflag2,3);
+          }
+        } else if (fixvec[i] == CYLINDER) {
+          if (fcolor) {
+            color = fcolor;
+          } else if (fixcolor == TYPE) {
+            itype = static_cast<int>(fixarray[i][0]);
+            color = colortype[itype];
+          }
+          image->draw_cylinder(&fixarray[i][1],&fixarray[i][4],color,fixarray[i][7]-fixflag2,(int)fixflag1);
         }
       }
     }
@@ -2577,6 +2603,12 @@ int DumpImage::modify_param(int narg, char **arg)
                                utils::numeric(FLERR,arg[4],false,lmp));
     if (flag) error->all(FLERR,"Illegal dump_modify command");
     return 5;
+  }
+
+  if (strcmp(arg[0],"fcolor") == 0) {
+    if (narg < 2) error->all(FLERR,"Illegal dump_modify command");
+    fcolor = image->color2rgb(arg[1]);
+    return 2;
   }
 
   return 0;
