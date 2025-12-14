@@ -510,6 +510,15 @@ The *fix* keyword can be used with a :doc:`fix <fix>` that produces
 objects to be drawn.  Below is a list of supported fixes:
 
 * :doc:`fix indent <fix_indent>`
+* :doc:`fix wall/lj93 <fix_wall>`
+* :doc:`fix wall/lj126 <fix_wall>`
+* :doc:`fix wall/lj1043 <fix_wall>`
+* :doc:`fix wall/colloid <fix_wall>`
+* :doc:`fix wall/harmonic <fix_wall>`
+* :doc:`fix wall/harmonic/outside <fix_wall>`
+* :doc:`fix wall/lepton <fix_wall>`
+* :doc:`fix wall/morse <fix_wall>`
+* :doc:`fix wall/table <fix_wall>`
 
 The *fflag1* and *fflag2* settings are numerical values which are used
 by *dump image* to adjust how the drawing of the objects communicated

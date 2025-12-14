@@ -222,7 +222,6 @@ cylindrical indenders.  In many cases you want to use a value < 0 to
 reduce the radius of the rendered object to that it does not obscure
 atoms close to it.
 
-
 Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 

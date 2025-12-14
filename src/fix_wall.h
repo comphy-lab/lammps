@@ -43,6 +43,8 @@ class FixWall : public Fix {
   double compute_scalar() override;
   double compute_vector(int) override;
 
+  int image(int *&, double **&) override;
+
   virtual void precompute(int) = 0;
   virtual void wall_particle(int, int, double) = 0;
 
@@ -57,6 +59,8 @@ class FixWall : public Fix {
   int eflag;      // per-wall flag for energy summation
   int ilevel_respa;
   int fldflag;
+  int *imgobjs;
+  double **imgparms;
 };
 
 }    // namespace LAMMPS_NS

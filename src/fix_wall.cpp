@@ -14,9 +14,11 @@
 #include "fix_wall.h"
 
 #include "domain.h"
+#include "dump_image.h"
 #include "error.h"
 #include "input.h"
 #include "lattice.h"
+#include "memory.h"
 #include "modify.h"
 #include "respa.h"
 #include "update.h"
@@ -232,6 +234,16 @@ FixWall::FixWall(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg), nwall
 
   eflag = 0;
   for (int m = 0; m <= nwall; m++) ewall[m] = 0.0;
+
+  // for rendering walls with dump image: two triangle objects per wall to draw
+  memory->create(imgobjs, 2 * nwall, "fix_indent:imgobjs");
+  memory->create(imgparms, 2 * nwall, 10, "fix_indent:imgparms");
+  for (int m = 0; m < nwall; ++m) {
+    imgobjs[2 * m] = DumpImage::TRIANGLE;
+    imgobjs[2 * m + 1] = DumpImage::TRIANGLE;
+    imgparms[2 * m][0] = 1;        // use color of first atom type by default
+    imgparms[2 * m + 1][0] = 1;    // use color of first atom type by default
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -377,6 +389,71 @@ void FixWall::post_force(int vflag)
     }
 
     wall_particle(m, wallwhich[m], coord);
+    switch (wallwhich[m]) {
+      case XLO:    // fallthrough
+      case XHI:
+        imgparms[2 * m][1] = coord;
+        imgparms[2 * m][2] = domain->boxlo[1];
+        imgparms[2 * m][3] = domain->boxlo[2];
+        imgparms[2 * m][4] = coord;
+        imgparms[2 * m][5] = domain->boxhi[1];
+        imgparms[2 * m][6] = domain->boxlo[2];
+        imgparms[2 * m][7] = coord;
+        imgparms[2 * m][8] = domain->boxlo[1];
+        imgparms[2 * m][9] = domain->boxhi[2];
+        imgparms[2 * m + 1][1] = coord;
+        imgparms[2 * m + 1][2] = domain->boxhi[1];
+        imgparms[2 * m + 1][3] = domain->boxhi[2];
+        imgparms[2 * m + 1][4] = coord;
+        imgparms[2 * m + 1][5] = domain->boxlo[1];
+        imgparms[2 * m + 1][6] = domain->boxhi[2];
+        imgparms[2 * m + 1][7] = coord;
+        imgparms[2 * m + 1][8] = domain->boxhi[1];
+        imgparms[2 * m + 1][9] = domain->boxlo[2];
+        break;
+      case YLO:    // fallthrough
+      case YHI:
+        imgparms[2 * m][1] = domain->boxlo[0];
+        imgparms[2 * m][2] = coord;
+        imgparms[2 * m][3] = domain->boxlo[2];
+        imgparms[2 * m][4] = domain->boxhi[0];
+        imgparms[2 * m][5] = coord;
+        imgparms[2 * m][6] = domain->boxlo[2];
+        imgparms[2 * m][7] = domain->boxlo[0];
+        imgparms[2 * m][8] = coord;
+        imgparms[2 * m][9] = domain->boxhi[2];
+        imgparms[2 * m + 1][1] = domain->boxhi[0];
+        imgparms[2 * m + 1][2] = coord;
+        imgparms[2 * m + 1][3] = domain->boxhi[2];
+        imgparms[2 * m + 1][4] = domain->boxlo[0];
+        imgparms[2 * m + 1][5] = coord;
+        imgparms[2 * m + 1][6] = domain->boxhi[2];
+        imgparms[2 * m + 1][7] = domain->boxhi[0];
+        imgparms[2 * m + 1][8] = coord;
+        imgparms[2 * m + 1][9] = domain->boxlo[2];
+        break;
+      case ZLO:    // fallthrough
+      case ZHI:
+        imgparms[2 * m][1] = domain->boxlo[0];
+        imgparms[2 * m][2] = domain->boxlo[1];
+        imgparms[2 * m][3] = coord;
+        imgparms[2 * m][4] = domain->boxhi[0];
+        imgparms[2 * m][5] = domain->boxlo[1];
+        imgparms[2 * m][6] = coord;
+        imgparms[2 * m][7] = domain->boxlo[0];
+        imgparms[2 * m][8] = domain->boxhi[1];
+        imgparms[2 * m][9] = coord;
+        imgparms[2 * m + 1][1] = domain->boxhi[0];
+        imgparms[2 * m + 1][2] = domain->boxhi[1];
+        imgparms[2 * m + 1][3] = coord;
+        imgparms[2 * m + 1][4] = domain->boxlo[0];
+        imgparms[2 * m + 1][5] = domain->boxhi[1];
+        imgparms[2 * m + 1][6] = coord;
+        imgparms[2 * m + 1][7] = domain->boxhi[0];
+        imgparms[2 * m + 1][8] = domain->boxlo[1];
+        imgparms[2 * m + 1][9] = coord;
+        break;
+    }
   }
 
   if (varflag) modify->addstep_compute(update->ntimestep + 1);
@@ -424,4 +501,16 @@ double FixWall::compute_vector(int n)
     eflag = 1;
   }
   return ewall_all[n + 1];
+}
+
+/* ----------------------------------------------------------------------
+   provide graphics information to dump image to render wall as plane
+   data has been copied to dedicated storage during fix indent execution
+------------------------------------------------------------------------- */
+
+int FixWall::image(int *&objs, double **&parms)
+{
+  objs = imgobjs;
+  parms = imgparms;
+  return 2*nwall;
 }
