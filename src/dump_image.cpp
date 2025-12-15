@@ -920,6 +920,15 @@ void DumpImage::init_style()
     fixptr = modify->get_fix_by_id(id_fix);
     if (!fixptr)
       error->all(FLERR, Error::NOLASTLINE, "Fix ID {} for dump image does not exist", id_fix);
+
+    // check if fix data for dump image is available at the required steps.
+
+    int nfreq = fixptr->global_freq;
+    if (nfreq == 0) nfreq = fixptr->nevery;
+    if ((nfreq == 0) || (nevery % nfreq))
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Dump {} and fix {} are not computed at compatible times{}",
+                 style, fixptr->style, utils::errorurl(7));
   }
 }
 
