@@ -2143,6 +2143,6 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n)
     n.push_back("X");
     n.push_back("X");
   }
-  else 
+  else
     error->one(FLERR, "Unsupported molecule type in MBX");
 }
