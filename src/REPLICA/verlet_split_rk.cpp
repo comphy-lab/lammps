@@ -36,6 +36,7 @@
 #include "angle.h"
 #include "atom.h"
 #include "bond.h"
+#include "citeme.h"
 #include "comm.h"
 #include "dihedral.h"
 #include "domain.h"
@@ -54,12 +55,32 @@
 
 using namespace LAMMPS_NS;
 
+static const char cite_verlet_split_rk[] =
+    "run_style verlet/split/rk command: "
+    "https://doi.org/10.1109/IPDPS64566.2025.00077\n\n"
+    "@inproceedings{11078563,\n"
+    "author={Dandurand, Brian and Vandierendonck, Hans and De Supinski, Bronis R.},\n"
+    "booktitle={2025 IEEE International Parallel and Distributed Processing Symposium (IPDPS)},\n" 
+    "title={Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era},\n" 
+    "year={2025},\n"
+    "volume={},\n"
+    "number={},\n"
+    "pages={813-823},\n"
+    "keywords={Distributed processing;Accuracy;Scalability;Computational modeling;Parallel processing;"
+    "Trajectory;Timing;Maintenance;History;Optimization;molecular dynamics simulation;parallelism;"
+    "asynchrony;scalability;LAMMPS;MPI},\n"
+    "doi={10.1109/IPDPS64566.2025.00077}\n"
+    "}\n\n";
+
 /* ---------------------------------------------------------------------- */
 
 VerletSplitRK::VerletSplitRK(LAMMPS *lmp, int narg, char **arg) :
   Verlet(lmp, narg, arg)
 {
   rk_flag = 1;
+  if (lmp->citeme) {
+      lmp->citeme->add(cite_verlet_split_rk);
+  }
 }
 
 /* ---------------------------------------------------------------------- */

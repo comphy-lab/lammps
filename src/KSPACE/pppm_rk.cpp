@@ -40,6 +40,7 @@
 #include "pppm_rk.h"
 
 #include "atom.h"
+#include "citeme.h"
 #include "comm.h"
 #include "domain.h"
 #include "error.h"
@@ -53,6 +54,23 @@
 using namespace LAMMPS_NS;
 using namespace MathConst;
 
+static const char cite_pppm_rk[] =
+    "kspace_style pppm/rk command: "
+    "https://doi.org/10.1109/IPDPS64566.2025.00077\n\n"
+    "@inproceedings{11078563,\n"
+    "author={Dandurand, Brian and Vandierendonck, Hans and De Supinski, Bronis R.},\n"
+    "booktitle={2025 IEEE International Parallel and Distributed Processing Symposium (IPDPS)},\n" 
+    "title={Improving Parallel Scalability for Molecular Dynamics Simulations in the Exascale Era},\n" 
+    "year={2025},\n"
+    "volume={},\n"
+    "number={},\n"
+    "pages={813-823},\n"
+    "keywords={Distributed processing;Accuracy;Scalability;Computational modeling;Parallel processing;"
+    "Trajectory;Timing;Maintenance;History;Optimization;molecular dynamics simulation;parallelism;"
+    "asynchrony;scalability;LAMMPS;MPI},\n"
+    "doi={10.1109/IPDPS64566.2025.00077}\n"
+    "}\n\n";
+
 /* ---------------------------------------------------------------------- */
 
 PPPM_RK::PPPM_RK(LAMMPS *lmp) :
@@ -62,6 +80,9 @@ PPPM_RK::PPPM_RK(LAMMPS *lmp) :
 {
   rk_flag = 1;
   group_group_enable = 0;
+  if (lmp->citeme) {
+      lmp->citeme->add(cite_pppm_rk);
+  }
 }
 
 void PPPM_RK::init()
