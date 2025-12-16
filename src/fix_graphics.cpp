@@ -73,7 +73,7 @@ FixGraphics::FixGraphics(LAMMPS *lmp, int narg, char **arg) :
         varflag = 1;
         sphere.dstr = utils::strdup(arg[iarg + 5] + 2);
       } else
-        sphere.diameter = utils::numeric(FLERR, arg[iarg + 5], false, lmp);
+        sphere.diameter = 2.0 * utils::numeric(FLERR, arg[iarg + 5], false, lmp);
       GraphicsItem g;
       g.sphere = sphere;
       items.emplace_back(g);
@@ -172,7 +172,7 @@ void FixGraphics::end_of_step()
       if (gi.sphere.xstr) gi.sphere.pos[0] = input->variable->compute_equal(gi.sphere.xvar);
       if (gi.sphere.ystr) gi.sphere.pos[1] = input->variable->compute_equal(gi.sphere.yvar);
       if (gi.sphere.zstr) gi.sphere.pos[2] = input->variable->compute_equal(gi.sphere.zvar);
-      if (gi.sphere.dstr) gi.sphere.diameter = input->variable->compute_equal(gi.sphere.dvar);
+      if (gi.sphere.dstr) gi.sphere.diameter = 2.0 * input->variable->compute_equal(gi.sphere.dvar);
       imgparms[n][1] = gi.sphere.pos[0];
       imgparms[n][2] = gi.sphere.pos[1];
       imgparms[n][3] = gi.sphere.pos[2];
