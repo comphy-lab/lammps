@@ -1779,6 +1779,8 @@ void DumpImage::create_image()
         } else {
           diameter = bdiamvalue;
         }
+        // bond diameter adjustment from dump image command line
+        diameter += ifix.flag2;
 
         // draw bond cylinder in 2 pieces
 

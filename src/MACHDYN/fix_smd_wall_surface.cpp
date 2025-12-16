@@ -353,7 +353,7 @@ int FixSMDWallSurface::image(int *&objs, double **&parms)
   memory->destroy(imgobjs);
   memory->destroy(imgparms);
   memory->create(imgobjs, numobjs, "wall_surface:imgobjs");
-  memory->create(imgparms, numobjs, 10, "wall_surface:imgobjs");
+  memory->create(imgparms, numobjs, 10, "wall_surface:imgparms");
 
   // copy local tri object info
   numobjs = 0;
