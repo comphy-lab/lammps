@@ -359,12 +359,14 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
   gridflag = NO;
   lineflag = triflag = bodyflag = NO;
 
-  if (atom->nbondtypes == 0) bondflag = NO;
-  else {
+  bdiamvalue = 0.5;
+  bcolor = ATOM;
+  bdiam = NUMERIC;
+  bdiamvalue = 0.5;
+  if (atom->nbondtypes == 0) {
+    bondflag = NO;
+  } else {
     bondflag = YES;
-    bcolor = ATOM;
-    bdiam = NUMERIC;
-    bdiamvalue = 0.5;
   }
 
   cflag = STATIC;
@@ -1746,6 +1748,57 @@ void DumpImage::create_image()
                              fixarray[i][7]+ifix.flag2,(int)ifix.flag1);
       } else if (fixvec[i] == TRIANGLE) {
         image->draw_triangle(&fixarray[i][1],&fixarray[i][4],&fixarray[i][7],color);
+      } else if (fixvec[i] == BOND) {
+        int type1 = static_cast<int>(fixarray[i][0]);
+        int type2 = static_cast<int>(fixarray[i][1]);
+        double *color1;
+        double *color2;
+        if (ifix.colorstyle == TYPE) {
+          color1 = colortype[type1];
+          color2 = colortype[type2];
+        } else if (ifix.colorstyle == ELEMENT) {
+          color1 = colorelement[type1];
+          color2 = colorelement[type2];
+        } else if  (ifix.colorstyle == CONSTANT) {
+          color1 = ifix.rgb;
+          color2 = ifix.rgb;
+        } else {
+          color1 = image->color2rgb("white");
+          color2 = image->color2rgb("white");
+        }
+
+        double diameter = 0.5;
+        if (bdiam == ATOM) {
+          if (adiam == NUMERIC) {
+            diameter = adiamvalue;
+          } else if (adiam == TYPE) {
+            diameter = MIN(diamtype[type1],diamtype[type2]);
+          } else if (adiam == ELEMENT) {
+            diameter = MIN(diamelement[type1],diamelement[type2]);
+          } else if (adiam == ATTRIBUTE) {
+            diameter = MIN(bufcopy[atom1][1],bufcopy[atom2][1]);
+          }
+        } else {
+          diameter = bdiamvalue;
+        }
+
+        // draw bond cylinder in 2 pieces
+
+        int capflag = ifix.flag1 ? 3 : 0;
+        delx = fixarray[i][5] - fixarray[i][2];
+        dely = fixarray[i][6] - fixarray[i][3];
+        delz = fixarray[i][7] - fixarray[i][4];
+
+        domain->minimum_image(FLERR,delx,dely,delz);
+        double xmid[3];
+        xmid[0] = fixarray[i][2] + 0.5*delx;
+        xmid[1] = fixarray[i][3] + 0.5*dely;
+        xmid[2] = fixarray[i][4] + 0.5*delz;
+        image->draw_cylinder(&fixarray[i][2],xmid,color1,diameter,capflag);
+        xmid[0] = fixarray[i][5] - 0.5*delx;
+        xmid[1] = fixarray[i][6] - 0.5*dely;
+        xmid[2] = fixarray[i][7] - 0.5*delz;
+        image->draw_cylinder(xmid,&fixarray[i][5],color2,diameter,capflag);
       }
     }
   }

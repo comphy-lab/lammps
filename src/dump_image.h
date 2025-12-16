@@ -38,8 +38,15 @@ class Region;
 
 class DumpImage : public DumpCustom {
  public:
-  int multifile_override;                            // used by write_dump command
-  enum { SPHERE, LINE, TRI, CYLINDER, TRIANGLE };    // used by some Body and Fix child classes
+  int multifile_override;    // used by write_dump command
+  enum {
+    SPHERE,    // a single sphere with radius provided
+    LINE,      // a cylinder with diameter given through fflag2
+    TRI,       // a surface mesh as triangles or cylinder mesh based on fflag1, fflag2 set diameter
+    CYLINDER,  // a cylinder with diameter given by fix, fflag1 choose caps, fflag2 adjusts diameter
+    TRIANGLE,  // a regular triangle, no settings apply
+    BOND       // two connected cylinders with bond diameter, colored by atom types, fflag1 sets cap
+  };    // used by some Body and Fix child classes
 
   DumpImage(LAMMPS *, int, char **);
   ~DumpImage() override;
