@@ -311,7 +311,7 @@ void PairBondValVec::coeff(int narg, char **arg)
   double bvvv0_one = utils::numeric(FLERR, arg[5], false, lmp);
   double cut_one = cut_global;
 
-  if (narg == 7) double cut_one = utils::numeric(FLERR, arg[4], false, lmp);
+  if (narg == 7) cut_one = utils::numeric(FLERR, arg[6], false, lmp);
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
     for (int j = MAX(jlo, i); j <= jhi; j++) {
