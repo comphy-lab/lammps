@@ -81,8 +81,18 @@ Available graphics objects are (see above for exact command line syntax):
 
 - *sphere* - a sphere defined by its center location and its radius
 - *cylinder* - a cylinder defined by its two center endpoints and its radius
-- *arrow* - a cylinder with a cone at one side
+- *arrow* - a cylinder with a cone at one side (see note below)
 - *progbar* - progress bar a long a selected axis and with optional tick marks
+
+.. admonition:: Work in progress notice
+   :class: note
+
+   The *arrow* object is currently composed of two cylinders since the
+   :doc:`dump image <dump_image>` render implementation is missing a
+   primitive to render a cone.  This fix will be updated when that
+   functionality becomes available.
+
+----------------------
 
 Many of the quantities defining a graphics object can be specified as an
 equal-style :doc:`variable <variable>`, namely *x*, *y*, *z*, or *R* for
@@ -148,6 +158,37 @@ The *fflag2* setting allows you to adjust the radius of the rendered
 sphere and cylinder items comprising the objects.  Since the radius of
 these objects is an input parameter for this fix, it is recommended to
 set this flag to 0.0.
+
+.. figure:: JPG/fix-graphics-example.png
+   :figclass: align-center
+
+   Example of graphics objects rendered with *fix graphics* with *fflag1* setting of 0 (left) and 3 (right)
+
+These images were created with the following input file:
+
+.. code-block:: LAMMPS
+
+   units           si
+   region      simulation_box block -0.01 0.01 -0.01 0.01 -0.01 0.01 units box
+   create_box 4 simulation_box
+   mass * 1
+
+   variable xpos equal 0.004*sin(PI*step/1000)
+   variable ypos equal 0.004*cos(PI*step/1000)
+   variable zpos equal 5.0*v_xpos
+   variable prog equal (step)/10000.0
+   fix gra all graphics 50 sphere 1 v_xpos v_ypos -0.009 0.002 &
+                           sphere 1 0.01 -0.005 0.01 0.005 &
+                           progbar 3 1 z 0.012 -0.012 0.002 0.02 0.0005 v_prog 10 &
+                           cylinder 4 0.01 -0.005 -0.01 0.01 -0.005 0.01 0.005  &
+                           arrow 2 v_xpos v_ypos 0.0 v_xpos v_ypos 0.01 0.0005 0.2
+
+   dump viz all image 100 myimage2-*.ppm type type size 600 600 zoom 1.24872 &
+                 shiny 0.2 fsaa yes ssao yes 4539 0.6 box no 0.01 axes no 0.5 0.025 &
+                 fix gra type 0 0 view 75 5
+   dump_modify viz pad 9 backcolor black  acolor 3 gray
+
+   run 2000
 
 
 Restart, fix_modify, output, run start/stop, minimize info
