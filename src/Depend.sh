@@ -94,6 +94,7 @@ if (test $1 = "EXTRA-FIX") then
 fi
 
 if (test $1 = "EXTRA-MOLECULE") then
+  depend KOKKOS
   depend OPENMP
 fi
 
