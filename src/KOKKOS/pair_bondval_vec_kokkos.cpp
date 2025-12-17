@@ -559,16 +559,14 @@ void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelA<NEIGH
     if (rsq < (d_cutsq(itype,jtype))) {
       KK_FLOAT recip = 1.0/sqrt(rsq);
 
-      s0xtmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
-
-      s0ytmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
-
-      s0ztmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
-
+      const F_FLOAT Aij = pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip;
+      s0xtmp += Aij * (delx);
+      s0ytmp += Aij * (dely);
+      s0ztmp += Aij * (delz);
       if (NEWTON_PAIR || j < nlocal) {
-      a_s0(j,0) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
-      a_s0(j,1) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
-      a_s0(j,2) -= pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
+      a_s0(j,0) -= Aij * (delx);
+      a_s0(j,1) -= Aij * (dely);
+      a_s0(j,2) -= Aij * (delz);
       }
     }
   }
