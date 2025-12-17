@@ -617,8 +617,8 @@ void PairBondValKokkos<DeviceType>::operator()(TagPairBondValKernelAB<EFLAG>, co
 
     if((params(itype,jtype).alpha)!=0.0){
         if (rsq < (d_cutsq(itype,jtype))) {
-          KK_FLOAT recip = 1.0/sqrt(rsq);
           KK_FLOAT r = sqrt(rsq);
+          KK_FLOAT recip = 1.0/r;
           s0tmp += pow((params(itype,jtype).r0)/r,(params(itype,jtype).alpha));
           }
     }
