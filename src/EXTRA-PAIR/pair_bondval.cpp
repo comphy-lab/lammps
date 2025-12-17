@@ -175,7 +175,7 @@ void PairBondVal::compute(int eflag, int vflag)
       if (alpha[itype][jtype] != 0.0) {  /*1*/
         if (rsq < cutsq[itype][jtype]) { /*2*/
           r = sqrt(rsq);
-          recip = 1.0 / sqrt(rsq);
+          recip = 1.0 / r;
           Aij = alpha[itype][jtype] * pow(r0[itype][jtype] * recip, alpha[itype][jtype]) * recip;
           psip = (fp[i] + fp[j]) * Aij;
           fpair = psip * recip;
