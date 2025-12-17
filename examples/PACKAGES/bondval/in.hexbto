@@ -1,4 +1,4 @@
-# temperarory input for lammps
+# temporary input for lammps
  
 units     metal
 atom_style full
