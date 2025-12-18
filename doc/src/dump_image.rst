@@ -117,7 +117,7 @@ Syntax
    dump_modify dump-ID keyword values ...
 
 * these keywords apply only to the *image* and *movie* styles and are documented on this page
-* keyword = *acolor* or *adiam* or *amap* or *gmap* or *backcolor* or *bcolor* or *bdiam* or *bitrate* or *boxcolor* or *color* or *framerate* or *gmap*
+* keyword = *acolor* or *adiam* or *amap* or *gmap* or *atrans* or *backcolor* or *bcolor* or *bdiam* or *btrans* or *bitrate* or *boxcolor* or *color* or *framerate* or *axestrans* or *boxtrans* or *subboxtrans*
 * see the :doc:`dump modify <dump_modify>` doc page for more general keywords
 
   .. parsed-literal::
@@ -148,6 +148,9 @@ Syntax
            color = name of color used for that subset of values
          entry = color (for sequential style)
            color = name of color used for a bin of values
+       *atrans* args = type transparency
+         type = atom type (numeric or type label) or range of numeric types (see below)
+         transparency = transparency of atoms of that type (value between 0 (invisible) and 1 (fully opaque))
        *backcolor* arg = color
          color = name of color for background
        *bcolor* args = type color
@@ -156,16 +159,25 @@ Syntax
        *bdiam* args = type diam
          type = bond type (numeric or type label) or range of numeric types (see below)
          diam = diameter of bonds of that type (distance units)
-       *bitrate* arg = rate
-         rate = target bitrate for movie in kbps
+       *btrans* args = type transparency
+         type = bond type (numeric or type label) or range of numeric types (see below)
+         transparency = transparency of bonds of that type (value between 0 (invisible) and 1 (fully opaque))
+       *axestrans* arg = transparency
+         transparency = transparency for axes lines (value between 0 (invisible) and 1 (fully opaque))
+       *boxtrans* arg = transparency
+         transparency = transparency for simulation box lines (value between 0 (invisible) and 1 (fully opaque))
        *boxcolor* arg = color
          color = name of color for simulation box lines and processor subdomain lines
+       *subboxtrans* arg = transparency
+         transparency = transparency for simulation subbox lines (value between 0 (invisible) and 1 (fully opaque))
        *color* args = name R G B
          name = name of color
          R,G,B = red/green/blue numeric values from 0.0 to 1.0
        *fcolor* args = fix-ID color
          fix-ID = ID of the fix
          color = name of color for image objects provided by this fix
+       *bitrate* arg = rate
+         rate = target bitrate for movie in kbps
        *framerate* arg = fps
          fps = frames per second for movie
        *gmap* args = identical to *amap* args
@@ -1066,6 +1078,22 @@ pre-defined color names with new RBG values.
 
 ----------
 
+**Transparency settings**
+
+.. versionadded:: TBD
+
+Various graphical objects in *dump image* output can be rendered in a
+transparent fashion using the so-called screen-door transparency method.
+This means that only a subset of pixels for a graphical object are
+written to the image.  This can be controlled with various
+*dump\_modify* settings: *atrans* for atoms, *btrans* for bonds,
+*axestrans* for axes lines, *boxtrans* for the simulation box, and
+*subboxtrans* for the subdomain box lines.  The transparency value
+must be between 0.0 (invisible) and 1.0 (fully opaque).  The default
+setting for all is 1.0.
+
+----------
+
 .. versionadded:: TBD
 
 The *fcolor* keyword sets the color of any image objects created by a
@@ -1169,6 +1197,7 @@ The defaults for the dump image and dump movie keywords are as follows:
 * subbox no 0.0
 * shiny = 1.0
 * ssao = no
+* fsaa = no
 
 ----------
 
@@ -1177,14 +1206,18 @@ The defaults for the dump_modify keywords specific to dump image and dump movie 
 * acolor = \* red/green/blue/yellow/aqua/cyan
 * adiam = \* 1.0
 * amap = min max cf 0.0 2 min blue max red
+* atrans = 1.0
 * backcolor = black
 * bcolor = \* red/green/blue/yellow/aqua/cyan
 * bdiam = \* 0.5
-* bitrate = 2000
+* btrans = 1.0
 * boxcolor = yellow
+* axestrans = 1.0
+* boxtrans = 1.0
+* subboxtrans = 1.0
 * color = 140 color names are pre-defined as listed below
+* bitrate = 2000
 * framerate = 24
-* fsaa = no
 * gmap = min max cf 0.0 2 min blue max red
 
 ----------
