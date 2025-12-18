@@ -454,17 +454,18 @@ void Pair::init_tables(double cut_coul, double *cut_respa)
         ftable[i] = qqrd2e/r * fgamma;
         etable[i] = qqrd2e/r * egamma;
       } else if (espflag) {
+        double r_coul = 2.0 * r/cut_coul - 1.0;
         double force_poly_appx = force_poly_coeff[0];
         double force_poly_r = 1.0;
         for(int ii=1; ii<num_of_force_poly; ii++){
-            force_poly_r *= r/cut_coul;
+            force_poly_r *= r_coul;
             force_poly_appx += force_poly_coeff[ii] * force_poly_r;
         }
         ftable[i] = qqrd2e * force_poly_appx / r;
         double energy_poly_appx = energy_poly_coeff[0];
         double energy_poly_r = 1.0;
         for(int ii=1; ii<num_of_energy_poly; ii++){
-            energy_poly_r *= r/cut_coul;
+            energy_poly_r *= r_coul;
             energy_poly_appx += energy_poly_coeff[ii] * energy_poly_r;
         }
         etable[i] = qqrd2e * energy_poly_appx / r;
@@ -565,17 +566,18 @@ void Pair::init_tables(double cut_coul, double *cut_respa)
         f_tmp = qqrd2e/r * fgamma;
         e_tmp = qqrd2e/r * egamma;
       } else if (espflag) {
+        double r_coul = 2.0 * r/cut_coul - 1.0;
         double force_poly_appx = force_poly_coeff[0];
         double force_poly_r = 1.0;
         for(int ii=1; ii<num_of_force_poly; ii++){
-            force_poly_r *= r/cut_coul;
+            force_poly_r *= r_coul;
             force_poly_appx += force_poly_coeff[ii] * force_poly_r;
         }
         f_tmp = qqrd2e * force_poly_appx / r;
         double energy_poly_appx = energy_poly_coeff[0];
         double energy_poly_r = 1.0;
         for(int ii=1; ii<num_of_energy_poly; ii++){
-            energy_poly_r *= r/cut_coul;
+            energy_poly_r *= r_coul;
             energy_poly_appx += energy_poly_coeff[ii] * energy_poly_r; 
         }
         e_tmp = qqrd2e * energy_poly_appx / r;

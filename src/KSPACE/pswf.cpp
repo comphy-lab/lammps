@@ -12,6 +12,8 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+
 // start of legendre functions
 static inline void legepol(double x, int n, double &pol, double &der)
 {
@@ -452,6 +454,46 @@ static inline void cheb_nodes_1d(int order, std::vector<double> &nodes, double a
   for (int i = 0; i < order; i++) {
     nodes[i] = -cos((i + (double) 0.5) * my_pi / order) * (double) 0.5 + (double) 0.5;
     nodes[i] = nodes[i] * (b - a) + a;
+  }
+}
+
+static inline void monomial_interp_1d(int nnodes, std::vector<double> &fn_v,
+                                      std::vector<double> &coeff, double a = 0, double b = 1)
+{
+  std::vector<double> x;
+  cheb_nodes_1d(nnodes, x, a, b);
+
+  auto multiply_x = [](const std::vector<double> &p, double x) {
+    std::vector<double> r(p.size() + 1, double(0));
+    for (std::size_t i = 0; i < p.size(); ++i) {
+      r[i] += -x * p[i];
+      r[i + 1] += p[i];
+    }
+    return r;
+  };
+
+  size_t dof = fn_v.size() / nnodes;
+
+  std::vector<double> newton_coeffs = fn_v;
+
+  if (coeff.size() != dof * nnodes) coeff.resize(dof * nnodes);
+  coeff.assign(dof * nnodes, 0.0);
+
+  // Turner, L. R.. “Inverse of the Vandermonde matrix with applications.” (1966)
+  for (int idof = 0; idof < dof; ++idof){
+    int offset = idof * nnodes;
+    for (int j = 1; j < nnodes; ++j)
+      for (int i = nnodes - 1; i >= j; --i)
+        newton_coeffs[offset + i] = (newton_coeffs[offset + i] - newton_coeffs[offset + i - 1]) / (x[i] - x[i - j]);
+    coeff[offset] = newton_coeffs[offset];
+  }
+  std::vector<double> basis{1.0};
+  for (int j = 1; j < nnodes; ++j) {
+    basis = multiply_x(basis, x[j - 1]);
+    for (int idof = 0; idof < dof; idof++) {
+      int offset = idof * nnodes;
+      for (std::size_t m = 0; m < basis.size(); ++m) coeff[offset + m] += newton_coeffs[offset + j] * basis[m];
+    }
   }
 }
 
@@ -1281,9 +1323,10 @@ void force_poly(double tol, double tol_coeff, const double &c, std::vector<doubl
 
   int order = MAX_CHEB_ORDER;
   std::vector<double> nodes;
-  cheb_nodes_1d(order, nodes, 0, 1);
+  cheb_nodes_1d(order, nodes, -1.0, 1.0);
 
   auto f = [](double c0, double c, double x) {
+    x = (x + 1.0)/2.0;
     double val = prolate0_int_eval(c, x) / c0 - x / c0 * prolate0_eval(c, x);
     val = 1 - val;
     return val;
@@ -1315,16 +1358,18 @@ void force_poly(double tol, double tol_coeff, const double &c, std::vector<doubl
   coeffs.resize(dof * max_order, 0.0);
 
   std::vector<double> coeffs_tmp(max_order);
-  int nnodes = (int) max_order * 1.75;
-  cheb_nodes_1d(nnodes, nodes, 0, 1);
+  int nnodes = (int) max_order;// * 1.75;
+  cheb_nodes_1d(nnodes, nodes, -1.0, 1.0);
   fn_v.resize(dof * nnodes);
 
   for (int i = 0; i < nnodes; i++) { fn_v[i] = f(c0, c, nodes[i]); }
 
-  monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
+  //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
+  monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -1.0, 1.0);
   coeffs.resize(max_order, 0.0);
 
-  for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
+  //for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
+  for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
 }
 
 void energy_poly(double tol, double tol_coeff, const double &c, std::vector<double> &coeffs)
@@ -1335,9 +1380,10 @@ void energy_poly(double tol, double tol_coeff, const double &c, std::vector<doub
 
   int order = MAX_CHEB_ORDER;
   std::vector<double> nodes;
-  cheb_nodes_1d(order, nodes, 0, 1);
+  cheb_nodes_1d(order, nodes, -1.0, 1.0);
 
   auto f = [](double c0, double c, double x) {
+    x = (x + 1.0) / 2.0;
     double val = prolate0_int_eval(c, x) / c0;
     val = 1 - val;
     return val;
@@ -1369,14 +1415,16 @@ void energy_poly(double tol, double tol_coeff, const double &c, std::vector<doub
   coeffs.resize(dof * max_order, 0.0);
 
   std::vector<double> coeffs_tmp(dof * max_order);
-  int nnodes = (int) max_order * 1.75;
-  cheb_nodes_1d(nnodes, nodes, 0, 1);
+  int nnodes = (int) max_order;// * 1.75;
+  cheb_nodes_1d(nnodes, nodes, -1.0, 1.0);
   fn_v.resize(dof * nnodes);
   for (int i = 0; i < nnodes; i++) { fn_v[i] = f(c0, c, nodes[i]); }
 
-  monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
+  //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
+  monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -1.0, 1.0);
 
-  for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
+  //for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
+  for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
 }
 
 void fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
@@ -1397,9 +1445,10 @@ void fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
 
   int order = MAX_CHEB_ORDER;
   std::vector<double> nodes;
-  cheb_nodes_1d(order, nodes, 0, 1);
+  cheb_nodes_1d(order, nodes, -1.0, 1.0);
 
   auto f = [](double lambda, double c0, double c, double x) {
+    x = (x + 1.0) / 2.0;
     double val = lambda * prolate0_eval(c, x) / c0;
     return val;
   };
@@ -1431,14 +1480,16 @@ void fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
   coeffs.resize(dof * max_order, 0.0);
 
   std::vector<double> coeffs_tmp(dof * max_order);
-  int nnodes = (int) max_order * 1.75;
-  cheb_nodes_1d(nnodes, nodes, 0, 1);
+  int nnodes = (int) max_order;// * 1.75;
+  cheb_nodes_1d(nnodes, nodes, -1.0, 1.0);
   fn_v.resize(dof * nnodes);
   for (int i = 0; i < nnodes; i++) { fn_v[i] = f(lambda, c0, c, nodes[i]); }
 
-  monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
+  //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
+  monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -1.0, 1.0);
 
-  for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
+  //for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
+  for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
 }
 
 void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
@@ -1459,9 +1510,10 @@ void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &
 
   int order = MAX_CHEB_ORDER;
   std::vector<double> nodes;
-  cheb_nodes_1d(order, nodes, 0, 1);
+  cheb_nodes_1d(order, nodes, -1.0, 1.0);
 
   auto f = [](double lambda, double c0, double c, double x) {
+    x = (x + 1.0) / 2.0;
     double val = lambda * prolate0_eval(c, x);
     return val;
   };
@@ -1492,15 +1544,17 @@ void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &
 
   coeffs.resize(dof * max_order, 0.0);
   std::vector<double> coeffs_tmp(dof * max_order);
-  int nnodes = (int) max_order * 1.75;
+  int nnodes = (int) max_order;// * 1.75;
   //monomial_nodes_1d(nnodes, nodes, 0, 1);
-  cheb_nodes_1d(nnodes, nodes, 0, 1);
+  cheb_nodes_1d(nnodes, nodes, -1.0, 1.0);
   fn_v.resize(dof * nnodes);
   for (int i = 0; i < nnodes; i++) { fn_v[i] = f(lambda, c0, c, nodes[i]); }
 
-  monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
+  //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
+  monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -1.0, 1.0);
 
-  for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
+  //for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
+  for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
 }
 
 void spread_real_poly(int P, double tol, double tol_coeff, const double &c,
@@ -1543,7 +1597,7 @@ void spread_real_poly(int P, double tol, double tol_coeff, const double &c,
 
   coeffs.resize(dof * max_order, 0.0);
 
-  int nnodes = (int) max_order * 1.75;
+  int nnodes = (int) max_order;// * 1.75;
   //monomial_nodes_1d(nnodes, nodes, -0.5, 0.5);
   cheb_nodes_1d(nnodes, nodes, -0.5, 0.5);    // use Chebyshev nodes for better accuracy
   fn_v.resize(dof * nnodes);          // sample Chebyshev points > order (polynomial interpolation)
@@ -1555,13 +1609,16 @@ void spread_real_poly(int P, double tol, double tol_coeff, const double &c,
   }
 
   std::vector<double> coeffs_tmp(P * order);    // coefficients for each P, order polynomial
-  monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp, -0.5,
+  //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp, -0.5,
+                     //0.5);    // interpolate each polynomial for each P
+  monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -0.5,
                      0.5);    // interpolate each polynomial for each P
 
   // copy coeffs_tmp to coeffs
   for (int i = 0; i < P; i++) {
     for (int j = 0; j < max_order; j++) {
-      coeffs[j * P + i] = coeffs_tmp[i * max_order + max_order - j - 1];
+      //coeffs[j * P + i] = coeffs_tmp[i * max_order + max_order - j - 1];
+      coeffs[j * P + i] = coeffs_tmp[i * max_order + j];
     }
   }
 }

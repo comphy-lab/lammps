@@ -111,10 +111,6 @@ class ESP : public KSpace {
 
   virtual void set_grid_global();
   virtual void set_grid_local();
-  //void adjust_gewald();
-  //virtual double newton_raphson_f();
-  //double derivf();
-  //double final_accuracy();
 
   virtual void allocate();
   virtual void allocate_peratom();
@@ -168,67 +164,79 @@ class ESP : public KSpace {
   virtual void poisson_groups(int);
   virtual void slabcorr_groups(int, int, int);
 
+  // =========================================
+  // Horner's method for polynomial evaluation
+  // =========================================
+
+  inline double poly_horner(const double x, const double *coeff, const int n) const
+  {
+    // coeff[0] + coeff[1] x + ... + coeff[n-1] x^(n-1)
+    double p = coeff[n-1];
+    for (int i = n-2; i >= 0; --i) p = p * x + coeff[i];
+    return p;
+  }
+  
+  inline void poly_and_deriv_horner(const double x, const double *coeff, const int n,
+                                  double &p, double &dp) const
+  {
+    // p(x) and dp/dx, Horner form
+    p  = coeff[n-1];
+    dp = 0.0;
+    for (int i = n-2; i >= 0; --i) {
+      dp = dp * x + p;
+      p  = p  * x + coeff[i];
+    }
+  }
+  
+  // t = (order * h / 2) * |q| / spreading_select_c
+  // returns ( (order/2 * poly(2t-1))^2 ), or 0 if t>1
+  inline double spreading_weight2_from_t(const double t) const
+  {
+    if (t > 1.0) return 0.0;
+    const double x = 2.0 * t - 1.0;
+    const double appx = poly_horner(x, Fourier_spreading_coeff, Fourier_spreading_order);
+    const double w = 0.5 * order * appx;
+    return w * w;
+  }
+  
+  // integer-form helper: t = scale * abs_index
+  inline double spreading_weight2_from_abs_index(const int abs_index, const double scale) const
+  {
+    return spreading_weight2_from_t(scale * (double)abs_index);
+  }
+
   inline double gf_denom_psw(const double &kx, const double &ky, const double &kz, const double &hx,
                              const double &hy, const double &hz) const
   {
-    double qx, qy, qz;
-    int nx, ny, nz;
-    double wx, wy, wz;
-    double denominator = 0.00;
-    int Nmax = 2;
-    for (nx = -Nmax; nx <= Nmax; nx++) {
-      qx = kx + 2 * MY_PI * nx / hx;
-      double ph_2_kx_c = order * hx / 2.0 * fabs(qx) / spreading_select_c;
-      wx = 0.00;
-
-      if (ph_2_kx_c <= 1.00) {
-        double appx = Fourier_spreading_coeff[0];
-        double r = 1.0;
-        for (int i = 1; i < Fourier_spreading_order; i++) {
-          r *= ph_2_kx_c;
-          appx += Fourier_spreading_coeff[i] * r;
-        }
-        wx = order * 0.5 * appx;
-        wx = wx * wx;
-      }
-
-      for (ny = -Nmax; ny <= Nmax; ny++) {
-        qy = ky + 2 * MY_PI * ny / hy;
-
-        double ph_2_ky_c = order * hy / 2.0 * fabs(qy) / spreading_select_c;
-        wy = 0.00;
-        if (ph_2_ky_c <= 1.00) {
-          double appx = Fourier_spreading_coeff[0];
-          double r = 1.0;
-          for (int i = 1; i < Fourier_spreading_order; i++) {
-            r *= ph_2_ky_c;
-            appx += Fourier_spreading_coeff[i] * r;
-          }
-          wy = order / 2.0 * appx;
-          wy = wy * wy;
-        }
-
-        for (nz = -Nmax; nz <= Nmax; nz++) {
-          qz = kz + 2 * MY_PI * nz / hz;
-          double ph_2_kz_c = order * hz / 2.0 * fabs(qz) / spreading_select_c;
-          wz = 0.00;
-          if (ph_2_kz_c <= 1.00) {
-            double appx = Fourier_spreading_coeff[0];
-            double r = 1.0;
-            for (int i = 1; i < Fourier_spreading_order; i++) {
-              r *= ph_2_kz_c;
-              appx += Fourier_spreading_coeff[i] * r;
-            }
-            wz = order / 2.0 * appx;
-            wz = wz * wz;
-          }
-          denominator =
-              denominator + wx * wy * wz;    // could be zero when the spreading accuracy is low
-        }
-      }
+    int Nmax = (differentiation_flag == 0) ? 2 : 0;
+    
+    const double stepx = 2.0 * MY_PI / hx;
+    const double stepy = 2.0 * MY_PI / hy;
+    const double stepz = 2.0 * MY_PI / hz;
+    
+    // sum_{nx,ny,nz} wx*wy*wz = (sum wx)*(sum wy)*(sum wz)
+    double sumx = 0.0, sumy = 0.0, sumz = 0.0;
+    
+    for (int nx = -Nmax; nx <= Nmax; ++nx) {
+      const double qx = kx + stepx * (double)nx;
+      const double t  = (0.5 * order * hx * fabs(qx)) / spreading_select_c;
+      sumx += spreading_weight2_from_t(t);
+    }
+    
+      for (int ny = -Nmax; ny <= Nmax; ++ny) {
+      const double qy = ky + stepy * (double)ny;
+      const double t  = (0.5 * order * hy * fabs(qy)) / spreading_select_c;
+      sumy += spreading_weight2_from_t(t);
     }
 
-    return denominator * denominator;
+    for (int nz = -Nmax; nz <= Nmax; ++nz) {
+      const double qz = kz + stepz * (double)nz;
+      const double t  = (0.5 * order * hz * fabs(qz)) / spreading_select_c;
+      sumz += spreading_weight2_from_t(t);
+    }
+    
+    const double denom = sumx * sumy * sumz;
+    return denom * denom;
   };
 };
 

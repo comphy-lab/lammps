@@ -138,7 +138,7 @@ void PairLJCutCoulEsp::compute(int eflag, int vflag)
             // Polynomial approximation
             double force_poly_appx = force_poly_coeff[0];
             double force_poly_r = 1.0;
-            double r_scal = r/cut_coul;
+            double r_scal = 2.0 * r/cut_coul - 1.0;
 
             for(int index=1; index<num_of_force_poly; index++){
                force_poly_r *= r_scal;
@@ -185,7 +185,7 @@ void PairLJCutCoulEsp::compute(int eflag, int vflag)
             if (!ncoultablebits || rsq <= tabinnersq){
               double energy_poly_appx = energy_poly_coeff[0];
               double energy_poly_r = 1.0;
-              double r_scal = r/cut_coul;
+              double r_scal = 2.0 * r/cut_coul - 1.0;
               for(int index = 1; index<num_of_energy_poly; index++){
                 energy_poly_r *= r_scal;
                 energy_poly_appx = energy_poly_appx + energy_poly_coeff[index] * energy_poly_r;
@@ -466,7 +466,7 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
             // Polynomial approximation
             double force_poly_appx = force_poly_coeff[0];
             double force_poly_r = 1.0;
-            double r_scal = r / cut_coul;
+            double r_scal = 2.0 * r / cut_coul - 1.0;
 
             for (int index = 1; index < num_of_force_poly; index++) {
               force_poly_r *= r_scal;
@@ -530,7 +530,7 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
             if (!ncoultablebits || rsq <= tabinnersq) {
               double energy_poly_appx = energy_poly_coeff[0];
               double energy_poly_r = 1.0;
-              double r_scal = r/cut_coul;
+              double r_scal = 2.0 * r/cut_coul - 1.0;
               for(int index = 1; index<num_of_energy_poly; index++){
                 energy_poly_r *= r_scal;
                 energy_poly_appx = energy_poly_appx + energy_poly_coeff[index] * energy_poly_r;
@@ -562,7 +562,7 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
               // Polynomial approximation
               double force_poly_appx = force_poly_coeff[0];
               double force_poly_r = 1.0;
-              double r_scal = r/cut_coul;
+              double r_scal = 2.0 * r/cut_coul - 1.0;
               for(int index=1; index<num_of_force_poly; index++){
                  force_poly_r *= r_scal;
                  force_poly_appx += force_poly_coeff[index] * force_poly_r;
@@ -920,7 +920,7 @@ double PairLJCutCoulEsp::single(int i, int j, int itype, int jtype,
       // Polynomial approximation
       double force_poly_appx = force_poly_coeff[0];
       double force_poly_r = 1.0;
-      double r_scal = r / cut_coul;
+      double r_scal = 2.0 * r / cut_coul - 1.0;
       for (int index = 1; index < num_of_force_poly; index++) {
         force_poly_r *= r_scal;
         force_poly_appx += force_poly_coeff[index] * force_poly_r;
@@ -958,7 +958,7 @@ double PairLJCutCoulEsp::single(int i, int j, int itype, int jtype,
     {
       double energy_poly_appx = energy_poly_coeff[0];
       double energy_poly_r = 1.0;
-      double r_scal = r/cut_coul;
+      double r_scal = 2.0 * r/cut_coul - 1.0;
       for(int index = 1; index<num_of_energy_poly; index++){
         energy_poly_r *= r_scal;
         energy_poly_appx = energy_poly_appx + energy_poly_coeff[index] * energy_poly_r;

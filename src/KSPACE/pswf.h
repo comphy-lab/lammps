@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
-static constexpr int MAX_CHEB_ORDER = 30;
-static constexpr int MAX_MONO_ORDER = 20;
+static constexpr int MAX_CHEB_ORDER = 40;
+static constexpr int MAX_MONO_ORDER = 40;
 
 // blas, lapack math functions used
 extern "C" {

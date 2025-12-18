@@ -43,7 +43,7 @@ using namespace LAMMPS_NS;
 using namespace MathConst;
 using namespace MathSpecial;
 
-static constexpr int MAXORDER = 16;
+static constexpr int MAXORDER = 32;
 static constexpr int OFFSET = 16384;
 static constexpr double LARGE = 10000.0;
 static constexpr double SMALL = 0.00001;
@@ -694,9 +694,17 @@ void ESP::compute(int eflag, int vflag)
     double energy_all;
     MPI_Allreduce(&energy,&energy_all,1,MPI_DOUBLE,MPI_SUM,world);
     energy = energy_all;
+    
+    double self_coeff = 0.00;
+
+    for(int i=1;i<num_of_energy_poly;i++)
+    {
+      self_coeff += 2 * (i+0.00) * energy_poly_coeff[i] * (i%2==1?1.0:-1.0);
+    }
 
     energy *= 0.5*volume;
-    energy -= (-energy_poly_coeff[1]/cutoff) * qsqsum / 2.0;
+    //energy -= (-energy_poly_coeff[1]/cutoff) * qsqsum / 2.0;
+    energy -= (-self_coeff/cutoff) * qsqsum / 2.0;
     energy *= qscale;
   } 
 
@@ -719,9 +727,15 @@ void ESP::compute(int eflag, int vflag)
     if (tip4pflag) ntotal += atom->nghost;
 
     if (eflag_atom) {
+      double self_coeff = 0.00;
+      for(int i=1;i<num_of_energy_poly;i++)
+      {
+        self_coeff += 2 * (i+0.00) * energy_poly_coeff[i] * (i%2==1?1.0:-1.0);
+      }
       for (i = 0; i < nlocal; i++) {
         eatom[i] *= 0.5;
-        eatom[i] -= (-energy_poly_coeff[1]/cutoff) * q[i] * q[i] / 2.0;
+        //eatom[i] -= (-energy_poly_coeff[1]/cutoff) * q[i] * q[i] / 2.0;
+        eatom[i] -= (-self_coeff/cutoff) * q[i] * q[i] / 2.0;
         eatom[i] *= qscale;
       }
       for (i = nlocal; i < ntotal; i++) eatom[i] *= 0.5*qscale;
@@ -1213,6 +1227,7 @@ void ESP::compute_gf_ik()
             double ph_2_kx_c = order * (xprd/nx_pppm) / 2.0 * fabs(qx) / spreading_select_c;
             wx = 0.00;
             if(ph_2_kx_c <= 1.00){
+                ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
                 double Fourier_spreading_appx = Fourier_spreading_coeff[0];
                 double Fourier_spreading_r = 1.0;
                 for(int i=1; i<Fourier_spreading_order; i++){
@@ -1229,6 +1244,7 @@ void ESP::compute_gf_ik()
               double ph_2_ky_c = order * (yprd/ny_pppm) / 2.0 * fabs(qy) / spreading_select_c;
               wy = 0.00;
               if(ph_2_ky_c <= 1.00){
+                ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
                 double Fourier_spreading_appx = Fourier_spreading_coeff[0];
                 double Fourier_spreading_r = 1.0;
                 for(int i=1; i<Fourier_spreading_order; i++){
@@ -1245,6 +1261,7 @@ void ESP::compute_gf_ik()
                 double ph_2_kz_c = order * (zprd/nz_pppm) / 2.0 * fabs(qz) / spreading_select_c;
                 wz = 0.00;
                 if(ph_2_kz_c <= 1.00){
+                  ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
                   double Fourier_spreading_appx = Fourier_spreading_coeff[0];
                   double Fourier_spreading_r = 1.0;
                   for(int i=1; i<Fourier_spreading_order; i++){
@@ -1259,6 +1276,7 @@ void ESP::compute_gf_ik()
                 double k_rc_c = sqrt(qx*qx+qy*qy+qz*qz) * cutoff / select_c;
                 dot2 = 0.00;
                 if(k_rc_c <= 1.00){
+                  k_rc_c = 2.0 * k_rc_c - 1.0;
                   double Fourier_poly_appx = Fourier_poly_coeff[0];
                   double Fourier_poly_r = 1.0;
                   for(int i=1; i<num_of_Fourier_poly; i++){
@@ -1351,6 +1369,7 @@ void ESP::compute_gf_ik_triclinic()
             double ph_2_kx_c = order * MY_PI * fabs(kper/nx_pppm + nx) / spreading_select_c;
             wx = 0.00;
             if (ph_2_kx_c <= 1.00) {
+              ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
               double Fourier_spreading_appx = Fourier_spreading_coeff[0];
               double Fourier_spreading_r = 1.0;
               for (int i = 1; i < Fourier_spreading_order; i++) {
@@ -1367,6 +1386,7 @@ void ESP::compute_gf_ik_triclinic()
               double ph_2_ky_c = order * MY_PI * fabs(lper/ny_pppm + ny) / spreading_select_c;
               wy = 0.00;
               if (ph_2_ky_c <= 1.00) {
+                ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
                 double Fourier_spreading_appx = Fourier_spreading_coeff[0];
                 double Fourier_spreading_r = 1.0;
                 for (int i = 1; i < Fourier_spreading_order; i++) {
@@ -1383,6 +1403,7 @@ void ESP::compute_gf_ik_triclinic()
                 double ph_2_kz_c = order * MY_PI * fabs(mper/nz_pppm + nz) / spreading_select_c;
                 wz = 0.00;
                 if (ph_2_kz_c <= 1.00) {
+                  ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
                   double Fourier_spreading_appx = Fourier_spreading_coeff[0];
                   double Fourier_spreading_r = 1.0;
                   for (int i = 1; i < Fourier_spreading_order; i++) {
@@ -1407,6 +1428,7 @@ void ESP::compute_gf_ik_triclinic()
                 double k_rc_c = sqrt(qx * qx + qy * qy + qz * qz) * cutoff / select_c;
                 dot2 = 0.00;
                 if (k_rc_c <= 1.00) {
+                  k_rc_c = 2.0 * k_rc_c - 1.0;
                   double Fourier_poly_appx = Fourier_poly_coeff[0];
                   double Fourier_poly_r = 1.0;
                   for (int i = 1; i < num_of_Fourier_poly; i++) {
@@ -1446,165 +1468,169 @@ void ESP::compute_gf_ad()
   const double xprd = prd[0];
   const double yprd = prd[1];
   const double zprd = prd[2];
-  const double zprd_slab = zprd*slab_volfactor;
-  const double unitkx = (MY_2PI/xprd);
-  const double unitky = (MY_2PI/yprd);
-  const double unitkz = (MY_2PI/zprd_slab);
 
-  double snx,sny,snz,sqk;
-  double argx,argy,argz,wx,wy,wz,sx,sy,sz,qx,qy,qz;
-  double numerator,denominator;
-  double sum1, sum_virial, dot1, dot2, dot_virial;
-  int k,l,m,n,kper,lper,mper;
+  const double zprd_slab = zprd * slab_volfactor;
+
+  const double unitkx = (MY_2PI / xprd);
+  const double unitky = (MY_2PI / yprd);
+  const double unitkz = (MY_2PI / zprd_slab);
+
+  const double hx = xprd / (double)nx_pppm;
+  const double hy = yprd / (double)ny_pppm;
+  const double hz_slab = zprd_slab / (double)nz_pppm;
+
+  const double sqk_cut2 = (select_c / cutoff) * (select_c / cutoff);
   
-  double delxinv = nx_pppm/xprd;
-  double delyinv = ny_pppm/yprd;
-  double delzinv = nz_pppm/zprd_slab;
-
-  const int twoorder = 2*order;
+  const double scale_x = (order * MY_PI) / ((double)nx_pppm * spreading_select_c);
+  const double scale_y = (order * MY_PI) / ((double)ny_pppm * spreading_select_c);
+  const double scale_z = (order * MY_PI) / ((double)nz_pppm * spreading_select_c * slab_volfactor);
 
   for (int i = 0; i < 6; i++) sf_coeff[i] = 0.0;
 
-  n = 0;
-  for (m = nzlo_fft; m <= nzhi_fft; m++) {
-    mper = m - nz_pppm*(2*m/nz_pppm);
-    qz = unitkz*mper;
-    snz = unitkz*mper;
-    
-    double ph_2_kz_c = order * (zprd/nz_pppm) / 2.0 * fabs(qz) / spreading_select_c;
-    wz = 0.00;
-    if(ph_2_kz_c <= 1.00){
-      double Fourier_spreading_appx = Fourier_spreading_coeff[0];
-      double Fourier_spreading_r = 1.0;
-      for(int i=1; i<Fourier_spreading_order; i++){
-        Fourier_spreading_r *= ph_2_kz_c;
-        Fourier_spreading_appx += Fourier_spreading_coeff[i] * Fourier_spreading_r;
-      }
-      wz = order / 2.0 * Fourier_spreading_appx;
-      wz = wz * wz;
-    }
+  const int nx = nxhi_fft - nxlo_fft + 1;
+  const int ny = nyhi_fft - nylo_fft + 1;
+  const int nz = nzhi_fft - nzlo_fft + 1;
 
-    for (l = nylo_fft; l <= nyhi_fft; l++) {
-      lper = l - ny_pppm*(2*l/ny_pppm);
-      qy = unitky*lper;
-      sny = unitky*lper;  
-      
-      double ph_2_ky_c = order * (yprd/ny_pppm) / 2.0 * fabs(qy) / spreading_select_c;
-      wy = 0.00;
-      if(ph_2_ky_c <= 1.00){
-        double Fourier_spreading_appx = Fourier_spreading_coeff[0];
-        double Fourier_spreading_r = 1.0;
-        for(int i=1; i<Fourier_spreading_order; i++){
-          Fourier_spreading_r *= ph_2_ky_c;
-          Fourier_spreading_appx += Fourier_spreading_coeff[i] * Fourier_spreading_r;
-        }
-        wy = order / 2.0 * Fourier_spreading_appx;
-        wy = wy * wy;
-      }
+  // --- precompute per-dimension tables (removes integer division from inner loop) ---
+  std::vector<int>    kper(nx), lper(ny), mper(nz);
+  std::vector<double> qx(nx), qy(ny), qz(nz);
+  std::vector<double> qx2(nx), qy2(ny), qz2(nz);
 
-      for (k = nxlo_fft; k <= nxhi_fft; k++) {
-        kper = k - nx_pppm*(2*k/nx_pppm);
-        qx = unitkx*kper;
-        snx = unitkx*kper;
-        
-        double ph_2_kx_c = order * (xprd/nx_pppm) / 2.0 * fabs(qx) / spreading_select_c;
-        wx = 0.00;
-        if(ph_2_kx_c <= 1.00){
-          double Fourier_spreading_appx = Fourier_spreading_coeff[0];
-          double Fourier_spreading_r = 1.0;
-          for(int i=1; i<Fourier_spreading_order; i++){
-            Fourier_spreading_r *= ph_2_kx_c;
-            Fourier_spreading_appx += Fourier_spreading_coeff[i] * Fourier_spreading_r;
-          }
-          wx = order / 2.0 * Fourier_spreading_appx;
-          wx = wx * wx;
-        }
+  std::vector<double> wx_denom(nx), wy_denom(ny), wz_denom(nz);
 
-        sqk = qx*qx + qy*qy + qz*qz;
+  // k dimension
+  for (int ii = 0; ii < nx; ++ii) {
+    const int k = nxlo_fft + ii;
+    const int kp = k - nx_pppm * (2 * k / nx_pppm);
+    kper[ii] = kp;
 
-        dot1 = unitkx*kper*qx + unitky*lper*qy + unitkz*mper*qz;
+    const double q = unitkx * (double)kp;
+    qx[ii]  = q;
+    qx2[ii] = q * q;
 
-        double k_rc_c = sqrt(sqk) * cutoff / select_c;
-        if(k_rc_c <= 1.00){
-          double Fourier_poly_appx = Fourier_poly_coeff[0];
-          double Fourier_poly_r = 1.0;
+    wx_denom[ii] = spreading_weight2_from_abs_index(std::abs(kp), scale_x);
+  }
+  
+  // l dimension
+  for (int ll = 0; ll < ny; ++ll) {
+    const int l = nylo_fft + ll;
+    const int lp = l - ny_pppm * (2 * l / ny_pppm);
+    lper[ll] = lp;
 
-          double Fourier_poly_appx_virial = 0.0;
-          double Fourier_poly_r_virial = 1.0;
+    const double q = unitky * (double)lp;
+    qy[ll]  = q;
+    qy2[ll] = q * q;
 
-          for(int i=1; i<num_of_Fourier_poly; i++){
-            Fourier_poly_r *= k_rc_c;
-            Fourier_poly_r_virial *= k_rc_c;
+    wy_denom[ll] = spreading_weight2_from_abs_index(std::abs(lp), scale_y);
+  }
 
-            Fourier_poly_appx += Fourier_poly_coeff[i] * Fourier_poly_r;
-            Fourier_poly_appx_virial += Fourier_poly_coeff[i] * (i + 0.00) * Fourier_poly_r_virial;
-          }
-          dot2 = MY_2PI * Fourier_poly_appx / (sqk);
-          dot_virial = MY_2PI * Fourier_poly_appx_virial / (sqk*sqk);
-        }
-        else
-        { 
-          dot2 = 0.0;
-          dot_virial = 0.0;
-        }
-        
-        sum1 = dot1 * dot2 * wx * wy * wz;
-        sum_virial = dot_virial * wx * wy * wz;
+  // m dimension
+  for (int mm = 0; mm < nz; ++mm) {
+    const int m = nzlo_fft + mm;
+    const int mp = m - nz_pppm * (2 * m / nz_pppm);
+    mper[mm] = mp;
 
-        if (sqk != 0.0) {
-          numerator = 1.0/sqk;
-          denominator = gf_denom_psw(snx,sny,snz,xprd/nx_pppm,yprd/ny_pppm,zprd_slab/nz_pppm);
-          
-          if(denominator==0.00){
-            greensfn[n] = 0.00;
-            greensfn2[n] = 0.00;
-          }
-          else{
-            greensfn[n] = numerator*sum1/denominator;
-            greensfn2[n] = sum_virial/denominator;
-          }
+    const double q = unitkz * (double)mp; // slab kz
+    qz[mm]  = q;
+    qz2[mm] = q * q;
 
-          sf_coeff[0] += sf_precoeff1[n]*greensfn[n];
-          sf_coeff[1] += sf_precoeff2[n]*greensfn[n];
-          sf_coeff[2] += sf_precoeff3[n]*greensfn[n];
-          sf_coeff[3] += sf_precoeff4[n]*greensfn[n];
-          sf_coeff[4] += sf_precoeff5[n]*greensfn[n];
-          sf_coeff[5] += sf_precoeff6[n]*greensfn[n];
-          n++;
-        } else {
-          greensfn[n] = 0.0;
-          greensfn2[n] = 0.0;
-          sf_coeff[0] += sf_precoeff1[n]*greensfn[n];
-          sf_coeff[1] += sf_precoeff2[n]*greensfn[n];
-          sf_coeff[2] += sf_precoeff3[n]*greensfn[n];
-          sf_coeff[3] += sf_precoeff4[n]*greensfn[n];
-          sf_coeff[4] += sf_precoeff5[n]*greensfn[n];
-          sf_coeff[5] += sf_precoeff6[n]*greensfn[n];
-          n++;
-        }
+    // base wz: matches your compute_gf_ad (uses zprd/nz_pppm but kz uses slab)
+    wz_denom[mm] = spreading_weight2_from_abs_index(std::abs(mp), scale_z);
+  }
+  
+  // local accumulators (less traffic on sf_coeff[])
+  double c0=0.0, c1=0.0, c2=0.0, c3=0.0, c4=0.0, c5=0.0;
+
+  // pointers (helps compiler)
+  double * __restrict__ g1 = greensfn;
+  double * __restrict__ g2 = greensfn2;
+
+  const double * __restrict__ p1 = sf_precoeff1;
+  const double * __restrict__ p2 = sf_precoeff2;
+  const double * __restrict__ p3 = sf_precoeff3;
+  const double * __restrict__ p4 = sf_precoeff4;
+  const double * __restrict__ p5 = sf_precoeff5;
+  const double * __restrict__ p6 = sf_precoeff6;
+
+  // --- main loops (k is inner, contiguous n) ---
+  int n = 0;
+  for (int mm = 0; mm < nz; ++mm) {
+    const double wz = wz_denom[mm];
+
+    for (int ll = 0; ll < ny; ++ll) {
+      const double wy = wy_denom[ll];
+
+      const double wyz = wy * wz;
+
+      for (int ii = 0; ii < nx; ++ii, ++n) {
+        const double wx = wx_denom[ii];
+
+        // base weight product
+        const double wxyz = wx * wyz;
+
+        // sqk
+        const double sqk = qx2[ii] + qy2[ll] + qz2[mm];
+        g1[n] = 0.0;
+        g2[n] = 0.0;
+        if (sqk == 0.0) continue;
+
+        // denom = (sumx*sumy*sumz)^2  (sumx=denomx[ii], etc.)
+        const double d1 = wx * wyz;
+        const double denom = d1 * d1;
+        if (denom == 0.0) continue;
+
+        // outside cutoff => dot2=0, greensfn stays 0 (same behavior as your code)
+        if (sqk > sqk_cut2) continue;
+
+        // k_rc_c_old in [0,1], then map to x in [-1,1]
+        const double krc_old = std::sqrt(sqk) * cutoff / select_c;
+        const double x = 2.0 * krc_old - 1.0;
+
+        double poly, dpoly_dx;
+        poly_and_deriv_horner(x, Fourier_poly_coeff, num_of_Fourier_poly, poly, dpoly_dx);
+
+        // Your original virial construction equals: poly_virial = 2*krc_old * dpoly/dx
+        const double poly_virial = 2.0 * krc_old * dpoly_dx;
+
+        const double invden = 1.0 / denom;
+
+        // dot1 == sqk  (because qx=unitkx*kper, etc.), so sum1 = 2pi * poly * wxyz
+        g1[n] = (MY_2PI * poly) * wxyz * invden / sqk;
+
+        const double sqk2 = sqk * sqk;
+        g2[n] = (MY_2PI * poly_virial) * wxyz * invden / sqk2;
+
+        const double gg = g1[n];
+        c0 += p1[n] * gg;  c1 += p2[n] * gg;
+        c2 += p3[n] * gg;  c3 += p4[n] * gg;
+        c4 += p5[n] * gg;  c5 += p6[n] * gg;
       }
     }
   }
 
-  // compute the coefficients for the self-force correction
+  sf_coeff[0] = c0; sf_coeff[1] = c1; sf_coeff[2] = c2;
+  sf_coeff[3] = c3; sf_coeff[4] = c4; sf_coeff[5] = c5;
 
-  double prex, prey, prez;
-  prex = prey = prez = MY_PI/volume;
-  prex *= nx_pppm/xprd;
-  prey *= ny_pppm/yprd;
-  prez *= nz_pppm/zprd_slab;
+  // self-force correction
+  double prex = MY_PI / volume;
+  double prey = MY_PI / volume;
+  double prez = MY_PI / volume;
+
+  prex *= nx_pppm / xprd;
+  prey *= ny_pppm / yprd;
+  prez *= nz_pppm / zprd_slab;
+
   sf_coeff[0] *= prex;
-  sf_coeff[1] *= prex*2;
+  sf_coeff[1] *= prex * 2.0;
   sf_coeff[2] *= prey;
-  sf_coeff[3] *= prey*2;
+  sf_coeff[3] *= prey * 2.0;
   sf_coeff[4] *= prez;
-  sf_coeff[5] *= prez*2;
+  sf_coeff[5] *= prez * 2.0;
 
-  // communicate values with other procs
-
+  // MPI reduce
   double tmp[6];
-  MPI_Allreduce(sf_coeff,tmp,6,MPI_DOUBLE,MPI_SUM,world);
-  for (n = 0; n < 6; n++) sf_coeff[n] = tmp[n];
+  MPI_Allreduce(sf_coeff, tmp, 6, MPI_DOUBLE, MPI_SUM, world);
+  for (int i = 0; i < 6; i++) sf_coeff[i] = tmp[i];
 }
 
 /* ----------------------------------------------------------------------
@@ -1640,6 +1666,7 @@ void ESP::compute_sf_precoeff()
           double ph_2_kx_c = (0.5 * order / nx_pppm) * (std::abs(qx0) / spreading_select_c);
           wx0[i] = 0.00;
           if(ph_2_kx_c <= 1.00){
+            ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -1652,6 +1679,7 @@ void ESP::compute_sf_precoeff()
           ph_2_kx_c = (0.5 * order / nx_pppm) * (std::abs(qx1) / spreading_select_c);
           wx1[i] = 0.00;
           if(ph_2_kx_c <= 1.00){
+            ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -1664,6 +1692,7 @@ void ESP::compute_sf_precoeff()
           ph_2_kx_c = (0.5 * order / nx_pppm) * (std::abs(qx2) / spreading_select_c);
           wx2[i] = 0.00;
           if(ph_2_kx_c <= 1.00){
+            ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -1680,6 +1709,7 @@ void ESP::compute_sf_precoeff()
           double ph_2_ky_c = (0.5 * order / ny_pppm) * (std::abs(qy0) / spreading_select_c);
           wy0[i] = 0.00;
           if(ph_2_ky_c <= 1.00){
+            ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -1692,6 +1722,7 @@ void ESP::compute_sf_precoeff()
           ph_2_ky_c = (0.5 * order / ny_pppm) * (std::abs(qy1) / spreading_select_c);
           wy1[i] = 0.00;
           if(ph_2_ky_c <= 1.00){
+            ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -1704,6 +1735,7 @@ void ESP::compute_sf_precoeff()
           ph_2_ky_c = (0.5 * order / ny_pppm) * (std::abs(qy2) / spreading_select_c);
           wy2[i] = 0.00;
           if(ph_2_ky_c <= 1.00){
+            ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -1720,6 +1752,7 @@ void ESP::compute_sf_precoeff()
           double ph_2_kz_c = (0.5 * order / nz_pppm) * (std::abs(qz0) / spreading_select_c);
           wz0[i] = 0.00;
           if(ph_2_kz_c <= 1.00){
+            ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -1733,6 +1766,7 @@ void ESP::compute_sf_precoeff()
 
           wz1[i] = 0.00;
           if(ph_2_kz_c <= 1.00){
+            ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -1745,6 +1779,7 @@ void ESP::compute_sf_precoeff()
           ph_2_kz_c = (0.5 * order / nz_pppm) * (std::abs(qz2) / spreading_select_c);
           wz2[i] = 0.00;
           if(ph_2_kz_c <= 1.00){
+            ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
             double Fourier_spreading_appx = Fourier_spreading_coeff[0];
             double Fourier_spreading_r = 1.0;
             for(int ii=1; ii<Fourier_spreading_order; ii++){
@@ -2784,13 +2819,15 @@ void ESP::build_table(double algorithm_accuracy, double spreading_accuracy)
   num_of_force_poly = poly_coeff.size();
   memory->create(force_poly_coeff, num_of_force_poly, "ESP:force_poly_coeff");
   for (int i = 0; i < num_of_force_poly; i++) force_poly_coeff[i] = poly_coeff[i];
-  
+  if (me == 0) utils::logmesg(lmp," force poly size: {}\n",num_of_force_poly);
+
   // energy kernel
   poly_coeff.clear();
   energy_poly(accuracy_relative, 0.01*accuracy_relative, select_c, poly_coeff);
   num_of_energy_poly = poly_coeff.size();
   memory->create(energy_poly_coeff, num_of_energy_poly, "ESP:energy_poly_coeff");
   for (int i = 0; i < num_of_energy_poly; i++) energy_poly_coeff[i] = poly_coeff[i];
+  if (me == 0) utils::logmesg(lmp," energy poly size: {}\n",num_of_energy_poly);
 
   // Fourier space kernel
   poly_coeff.clear();
@@ -2798,7 +2835,8 @@ void ESP::build_table(double algorithm_accuracy, double spreading_accuracy)
   num_of_Fourier_poly = poly_coeff.size();
   memory->create(Fourier_poly_coeff, num_of_Fourier_poly, "ESP:Fourier_poly_coeff");
   for (int i = 0; i < num_of_Fourier_poly; i++) Fourier_poly_coeff[i] = poly_coeff[i];
-  
+  if (me == 0) utils::logmesg(lmp," Fourier poly size: {}\n",num_of_Fourier_poly);
+
   // spreading kernel in real space - need to be consistent with the spreading accuracy
   poly_coeff.clear();
   spread_real_poly(order, spreading_accuracy, 0.1*spreading_accuracy, spreading_select_c, poly_coeff);
@@ -2817,6 +2855,7 @@ void ESP::build_table(double algorithm_accuracy, double spreading_accuracy)
         drho_coeff[l-1][m] = l*rho_coeff[l][m]; // Coefficients for l x^l-1 terms
     drho_coeff[poly_order-1][m] = 0.00;    
   }
+  if (me == 0) utils::logmesg(lmp," spread real poly size: {}\n",poly_order);
 
   // spreading kernel in Fourier space
   poly_coeff.clear();
@@ -2824,6 +2863,7 @@ void ESP::build_table(double algorithm_accuracy, double spreading_accuracy)
   Fourier_spreading_order = poly_coeff.size();
   memory->create(Fourier_spreading_coeff, Fourier_spreading_order, "ESP:Fourier_spreading_coeff");
   for (int i = 0; i < Fourier_spreading_order; i++) Fourier_spreading_coeff[i] = poly_coeff[i];
+  if (me == 0) utils::logmesg(lmp," Fourier spreading poly size: {}\n",Fourier_spreading_order);
 }
 
 
