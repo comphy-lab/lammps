@@ -89,6 +89,7 @@ class DumpImage : public DumpCustom {
   int zoomvar;                          // index to zoom variable
   int boxflag, axesflag;                // 0/1 for draw box and axes
   double boxdiam, axeslen, axesdiam;    // params for drawing box and axes
+  double boxopacity, axesopacity, subboxopacity; // opacity for box, subbox, axes
   int subboxflag;
   double subboxdiam;
 
@@ -96,6 +97,7 @@ class DumpImage : public DumpCustom {
 
   double *diamtype, *diamelement, *bdiamtype;          // per-type diameters
   double **colortype, **colorelement, **bcolortype;    // per-type colors
+  double *aopacity, *bopacity;                         // per-type opacity
 
   int gridflag;    // 0/1 for draw grid cells
   Grid2d *grid2d;

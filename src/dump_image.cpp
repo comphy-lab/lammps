@@ -293,10 +293,10 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
     DumpCustom(lmp, narg, arg), thetastr(nullptr), phistr(nullptr), cxstr(nullptr), cystr(nullptr),
     czstr(nullptr), upxstr(nullptr), upystr(nullptr), upzstr(nullptr), zoomstr(nullptr),
     diamtype(nullptr), diamelement(nullptr), bdiamtype(nullptr), colortype(nullptr),
-    colorelement(nullptr), bcolortype(nullptr), grid2d(nullptr), grid3d(nullptr),
-    id_grid_compute(nullptr), id_grid_fix(nullptr), grid_compute(nullptr), grid_fix(nullptr),
-    gbuf(nullptr), avec_line(nullptr), avec_tri(nullptr), avec_body(nullptr), image(nullptr),
-    chooseghost(nullptr), bufcopy(nullptr)
+    colorelement(nullptr), bcolortype(nullptr), aopacity(nullptr), bopacity(nullptr),
+    grid2d(nullptr), grid3d(nullptr), id_grid_compute(nullptr), id_grid_fix(nullptr),
+    grid_compute(nullptr), grid_fix(nullptr), gbuf(nullptr), avec_line(nullptr), avec_tri(nullptr),
+    avec_body(nullptr), image(nullptr), chooseghost(nullptr), bufcopy(nullptr)
 {
   if (binary || multiproc) error->all(FLERR, 4, "Invalid dump image filename {}", filename);
 
@@ -375,6 +375,9 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
   boxdiam = 0.02;
   axesflag = NO;
   subboxflag = NO;
+  boxopacity = 1.0;
+  axesopacity = 1.0;
+  subboxopacity = 1.0;
 
   // parse optional args
 
@@ -719,9 +722,11 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
   diamelement = new double[ntypes+1];
   colortype = new double*[ntypes+1];
   colorelement = new double*[ntypes+1];
+  aopacity = new double[ntypes+1];
 
   for (int i = 1; i <= ntypes; i++) {
     diamtype[i] = 1.0;
+    aopacity[i] = 1.0;
     if (i % 6 == 1) colortype[i] = image->color2rgb("red");
     else if (i % 6 == 2) colortype[i] = image->color2rgb("green");
     else if (i % 6 == 3) colortype[i] = image->color2rgb("blue");
@@ -733,8 +738,10 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
   if (bondflag == YES) {
     bdiamtype = new double[atom->nbondtypes+1];
     bcolortype = new double*[atom->nbondtypes+1];
+    bopacity = new double[atom->nbondtypes+1];
     for (int i = 1; i <= atom->nbondtypes; i++) {
       bdiamtype[i] = 0.5;
+      bopacity[i] = 1.0;
       if (i % 6 == 1) bcolortype[i] = image->color2rgb("red");
       else if (i % 6 == 2) bcolortype[i] = image->color2rgb("green");
       else if (i % 6 == 3) bcolortype[i] = image->color2rgb("blue");
@@ -771,8 +778,10 @@ DumpImage::~DumpImage()
   delete[] diamelement;
   delete[] colortype;
   delete[] colorelement;
+  delete[] aopacity;
   delete[] bdiamtype;
   delete[] bcolortype;
+  delete[] bopacity;
   memory->destroy(chooseghost);
   memory->destroy(bufcopy);
   memory->destroy(gbuf);
@@ -1221,7 +1230,7 @@ void DumpImage::create_image()
 {
   int i,j,k,m,n,itype,atom1,atom2,imol,iatom,btype,ibonus,drawflag;
   tagint tagprev;
-  double diameter,delx,dely,delz;
+  double diameter,delx,dely,delz,opacity;
   int *bodyvec;
   double **bodyarray;
   double *color,*color1,*color2;
@@ -1272,7 +1281,7 @@ void DumpImage::create_image()
         if (bodyflag && body[j] >= 0) drawflag = 0;
       }
 
-      if (drawflag) image->draw_sphere(x[j],color,diameter);
+      if (drawflag) image->draw_sphere(x[j],color,diameter,aopacity[atom->type[j]]);
 
       m += size_one;
     }
@@ -1368,7 +1377,7 @@ void DumpImage::create_image()
       pt2[1] = x[j][1] - dy;
       pt2[2] = 0.0;
 
-      image->draw_cylinder(pt1,pt2,color,ldiamvalue,3);
+      image->draw_cylinder(pt1,pt2,color,ldiamvalue,3,aopacity[atom->type[j]]);
     }
   }
 
@@ -1392,6 +1401,7 @@ void DumpImage::create_image()
       if (tcolor == TYPE) {
         color = colortype[type[j]];
       }
+      double opacity = aopacity[atom->type[j]];
 
       MathExtra::quat_to_mat(avec_tri->bonus[tri[i]].quat,mat);
       MathExtra::matvec(mat,avec_tri->bonus[tri[i]].c1,pt1);
@@ -1401,11 +1411,11 @@ void DumpImage::create_image()
       MathExtra::add3(pt2,x[i],pt2);
       MathExtra::add3(pt3,x[i],pt3);
 
-      if (tridraw) image->draw_triangle(pt1,pt2,pt3,color);
+      if (tridraw) image->draw_triangle(pt1,pt2,pt3,color,opacity);
       if (edgedraw) {
-        image->draw_cylinder(pt1,pt2,color,tdiamvalue,3);
-        image->draw_cylinder(pt2,pt3,color,tdiamvalue,3);
-        image->draw_cylinder(pt3,pt1,color,tdiamvalue,3);
+        image->draw_cylinder(pt1,pt2,color,tdiamvalue,3,opacity);
+        image->draw_cylinder(pt2,pt3,color,tdiamvalue,3,opacity);
+        image->draw_cylinder(pt3,pt1,color,tdiamvalue,3,opacity);
       }
     }
   }
@@ -1425,15 +1435,15 @@ void DumpImage::create_image()
         itype = static_cast<int>(buf[m]);
         color = colortype[itype];
       }
+      double opacity = aopacity[atom->type[j]];
 
       ibonus = body[j];
       n = bptr->image(ibonus,bodyflag1,bodyflag2,bodyvec,bodyarray);
       for (k = 0; k < n; k++) {
         if (bodyvec[k] == SPHERE)
-          image->draw_sphere(bodyarray[k],color,bodyarray[k][3]);
+          image->draw_sphere(bodyarray[k],color,bodyarray[k][3],opacity);
         else if (bodyvec[k] == LINE)
-          image->draw_cylinder(&bodyarray[k][0],&bodyarray[k][3],
-                               color,bodyarray[k][6],3);
+          image->draw_cylinder(&bodyarray[k][0],&bodyarray[k][3],color,bodyarray[k][6],3,opacity);
       }
 
       m += size_one;
@@ -1565,16 +1575,16 @@ void DumpImage::create_image()
           xmid[1] = x[atom1][1] + 0.5*dely;
           xmid[2] = x[atom1][2] + 0.5*delz;
           if (bcolor == ATOM)
-            image->draw_cylinder(x[atom1],xmid,color1,diameter,3);
-          else image->draw_cylinder(x[atom1],xmid,color,diameter,3);
+            image->draw_cylinder(x[atom1],xmid,color1,diameter,3,aopacity[type[atom1]]);
+          else image->draw_cylinder(x[atom1],xmid,color,diameter,3,bopacity[btype]);
           xmid[0] = x[atom2][0] - 0.5*delx;
           xmid[1] = x[atom2][1] - 0.5*dely;
           xmid[2] = x[atom2][2] - 0.5*delz;
           if (bcolor == ATOM)
-            image->draw_cylinder(xmid,x[atom2],color2,diameter,3);
-          else image->draw_cylinder(xmid,x[atom2],color,diameter,3);
+            image->draw_cylinder(xmid,x[atom2],color2,diameter,3,aopacity[type[atom1]]);
+          else image->draw_cylinder(xmid,x[atom2],color,diameter,3,bopacity[btype]);
 
-        } else image->draw_cylinder(x[atom1],x[atom2],color,diameter,3);
+        } else image->draw_cylinder(x[atom1],x[atom2],color,diameter,3,bopacity[btype]);
       }
     }
   }
@@ -1687,12 +1697,12 @@ void DumpImage::create_image()
             xmid[0] = x[atom1][0] + 0.5*dx;
             xmid[1] = x[atom1][1] + 0.5*dy;
             xmid[2] = x[atom1][2] + 0.5*dz;
-            image->draw_cylinder(x[atom1],xmid,color1,diameter,3);
+            image->draw_cylinder(x[atom1],xmid,color1,diameter,3,aopacity[type[atom1]]);
 
             xmid[0] = x[atom2][0] - 0.5*dx;
             xmid[1] = x[atom2][1] - 0.5*dy;
             xmid[2] = x[atom2][2] - 0.5*dz;
-            image->draw_cylinder(xmid,x[atom2],color2,diameter,3);
+            image->draw_cylinder(xmid,x[atom2],color2,diameter,3,aopacity[type[atom2]]);
           }
         }
       }
@@ -2341,7 +2351,7 @@ void DumpImage::create_image()
       boxcorners = domain->corners;
     }
 
-    image->draw_box(boxcorners,diameter);
+    image->draw_box(boxcorners,diameter,subboxopacity);
   }
 
   // render outline of simulation box, orthogonal or triclinic
@@ -2368,7 +2378,7 @@ void DumpImage::create_image()
       boxcorners = domain->corners;
     }
 
-    image->draw_box(boxcorners,diameter);
+    image->draw_box(boxcorners,diameter,boxopacity);
   }
 
   // render XYZ axes in red/green/blue
@@ -2421,7 +2431,7 @@ void DumpImage::create_image()
     axes[3][1] = axes[0][1] + axeslen*(axes[3][1]-axes[0][1]);
     axes[3][2] = axes[0][2] + axeslen*(axes[3][2]-axes[0][2]);
 
-    image->draw_axes(axes,diameter);
+    image->draw_axes(axes,diameter,axesopacity);
   }
 }
 
@@ -2589,6 +2599,16 @@ int DumpImage::modify_param(int narg, char **arg)
     return 3;
   }
 
+  if (strcmp(arg[0],"atrans") == 0) {
+    if (narg < 3) error->all(FLERR,"Illegal dump_modify command");
+    int nlo,nhi;
+    utils::bounds_typelabel(FLERR,arg[1],1,atom->ntypes,nlo,nhi,lmp,Atom::ATOM);
+    double opacity = utils::numeric(FLERR,arg[2],false,lmp);
+    if ((opacity < 0.0) || (opacity > 1.0))  error->all(FLERR,"Illegal dump_modify command");
+    for (int i = nlo; i <= nhi; i++) aopacity[i] = opacity;
+    return 3;
+  }
+
   if ((strcmp(arg[0],"amap") == 0) || (strcmp(arg[0],"gmap") == 0)) {
     if (narg < 6) error->all(FLERR,"Illegal dump_modify command");
     if (strlen(arg[3]) != 2) error->all(FLERR,"Illegal dump_modify command");
@@ -2643,6 +2663,18 @@ int DumpImage::modify_param(int narg, char **arg)
     return 3;
   }
 
+  if (strcmp(arg[0],"btrans") == 0) {
+    if (narg < 3) error->all(FLERR,"Illegal dump_modify command");
+    if (atom->nbondtypes == 0)
+      error->all(FLERR,"Dump modify btrans not allowed with no bond types");
+    int nlo,nhi;
+    utils::bounds_typelabel(FLERR,arg[1],1,atom->nbondtypes,nlo,nhi,lmp,Atom::BOND);
+    double opacity = utils::numeric(FLERR,arg[2],false,lmp);
+    if ((opacity < 0.0) || (opacity > 1.0)) error->all(FLERR,"Illegal dump_modify command");
+    for (int i = nlo; i <= nhi; i++) bopacity[i] = opacity;
+    return 3;
+  }
+
   if (strcmp(arg[0],"backcolor") == 0) {
     if (narg < 2) error->all(FLERR,"Illegal dump_modify command");
     double *color = image->color2rgb(arg[1]);
@@ -2658,6 +2690,30 @@ int DumpImage::modify_param(int narg, char **arg)
     image->boxcolor = image->color2rgb(arg[1]);
     if (image->boxcolor == nullptr)
       error->all(FLERR,"Invalid color in dump_modify command");
+    return 2;
+  }
+
+  if (strcmp(arg[0],"boxtrans") == 0) {
+    if (narg < 2) error->all(FLERR,"Illegal dump_modify command");
+    boxopacity = utils::numeric(FLERR,arg[1],false,lmp);
+    if ((boxopacity < 0.0) || (boxopacity > 1.0))
+      error->all(FLERR,"Invalid boxtrans in dump_modify command");
+    return 2;
+  }
+
+  if (strcmp(arg[0],"subboxtrans") == 0) {
+    if (narg < 2) error->all(FLERR,"Illegal dump_modify command");
+    subboxopacity = utils::numeric(FLERR,arg[1],false,lmp);
+    if ((subboxopacity < 0.0) || (subboxopacity > 1.0))
+      error->all(FLERR,"Invalid subboxtrans in dump_modify command");
+    return 2;
+  }
+
+  if (strcmp(arg[0],"axestrans") == 0) {
+    if (narg < 2) error->all(FLERR,"Illegal dump_modify command");
+    axesopacity = utils::numeric(FLERR,arg[1],false,lmp);
+    if ((axesopacity < 0.0) || (axesopacity > 1.0))
+      error->all(FLERR,"Invalid axestrans in dump_modify command");
     return 2;
   }
 
