@@ -66,6 +66,7 @@ class Pair : protected Pointers {
   int finitecutflag;              // 1 if cut depends on finite atom size
   int ghostneigh;                 // 1 if pair style needs neighbors of ghosts
   double **cutghost;              // cutoff for each ghost pair
+  int suffix_flag;                // suffix compatibility flag
 
   int ewaldflag;         // 1 if compatible with Ewald solver
   int pppmflag;          // 1 if compatible with PPPM solver
@@ -245,7 +246,6 @@ class Pair : protected Pointers {
  protected:
   int instance_me;      // which Pair class instantiation I am
   int special_lj[4];    // copied from force->special_lj for Kokkos
-  int suffix_flag;      // suffix compatibility flag
 
   // pair_modify settings
   int offset_flag, mix_flag;    // flags for offset and mixing
