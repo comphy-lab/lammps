@@ -89,7 +89,7 @@ Pair::Pair(LAMMPS *lmp) :
   ewaldflag = pppmflag = espflag = msmflag = dispersionflag = tip4pflag = dipoleflag = spinflag = 0;
   reinitflag = 1;
   centroidstressflag = CENTROID_SAME;
-  
+
   atomic_energy_enable = 0;
 
   // pair_modify settings

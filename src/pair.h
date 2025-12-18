@@ -51,10 +51,10 @@ class Pair : protected Pointers {
   int comm_reverse;        // size of reverse communication (0 if none)
   int comm_reverse_off;    // size of reverse comm even if newton off
 
-  int single_enable;              // 1 if single() routine exists
-  int born_matrix_enable;         // 1 if born_matrix() routine exists
-  int single_hessian_enable;      // 1 if single_hessian() routine exists
-  int atomic_energy_enable;       // 1 if compute_atomic_energy() routine exists
+  int single_enable;            // 1 if single() routine exists
+  int born_matrix_enable;       // 1 if born_matrix() routine exists
+  int single_hessian_enable;    // 1 if single_hessian() routine exists
+  int atomic_energy_enable;     // 1 if compute_atomic_energy() routine exists
 
   int restartinfo;                // 1 if pair style writes restart info
   int respa_enable;               // 1 if inner/middle/outer rRESPA routines
@@ -69,7 +69,7 @@ class Pair : protected Pointers {
 
   int ewaldflag;         // 1 if compatible with Ewald solver
   int pppmflag;          // 1 if compatible with PPPM solver
-  int espflag;            // 1 if compatible with PS solver
+  int espflag;           // 1 if compatible with PS solver
   int msmflag;           // 1 if compatible with MSM solver
   int dispersionflag;    // 1 if compatible with LJ/dispersion solver
   int tip4pflag;         // 1 if compatible with TIP4P solver
@@ -273,7 +273,7 @@ class Pair : protected Pointers {
     float f;
   } union_int_float_t;
   // NOLINTEND
-  
+
   // Accessor for the INTEL package to determine virial calc for hybrid
 
   inline int fdotr_is_set() const { return vflag_fdotr; }
