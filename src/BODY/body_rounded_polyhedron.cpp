@@ -198,14 +198,12 @@ void BodyRoundedPolyhedron::data_body(int ibonus, int ninteger, int ndouble,
   // set ninteger, ndouble in bonus and allocate 2 vectors of ints, doubles
 
   if (ninteger != 3)
-    error->one(FLERR,"Incorrect # of integer values in "
-               "Bodies section of data file");
+    error->one(FLERR,"Incorrect # of integer values in Bodies section of data file");
   int nsub = ifile[0];
   int ned = ifile[1];
   int nfac = ifile[2];
   if (nsub < 1)
-    error->one(FLERR,"Incorrect integer value in "
-               "Bodies section of data file");
+    error->one(FLERR,"Incorrect integer value in Bodies section of data file");
 
   // nentries = number of double entries to be read from Body section:
   // nsub == 1,2:
@@ -222,8 +220,7 @@ void BodyRoundedPolyhedron::data_body(int ibonus, int ninteger, int ndouble,
   }
 
   if (ndouble != nentries)
-    error->one(FLERR,"Incorrect # of floating-point values in "
-               "Bodies section of data file");
+    error->one(FLERR,"Incorrect # of floating-point values in Bodies section of data file");
 
   bonus->ninteger = 3;
   bonus->ivalue = icp->get(bonus->iindex);
@@ -603,7 +600,7 @@ void BodyRoundedPolyhedron::output(int ibonus, int m, double *values)
 /* ---------------------------------------------------------------------- */
 
 int BodyRoundedPolyhedron::image(int ibonus, double flag1, double /*flag2*/,
-                              int *&ivec, double **&darray)
+                                 int *&ivec, double **&darray)
 {
   int nelements;
   double p[3][3];
@@ -624,7 +621,7 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double /*flag2*/,
       imdata[i][0] += x[0];
       imdata[i][1] += x[1];
       imdata[i][2] += x[2];
-      if (flag1 <= 0) imdata[i][3] = 2*rrad;
+      if (flag1 <= 0) imdata[i][3] = 2.0*rrad;
       else imdata[i][3] = flag1;
     }
 
@@ -636,13 +633,13 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double /*flag2*/,
     double* edge_ends = &bonus->dvalue[3*nvertices];
     int pt1, pt2;
 
+    MathExtra::quat_to_mat(bonus->quat,p);
     for (int i = 0; i < nedges; i++) {
       imflag[i] = LINE;
 
       pt1 = static_cast<int>(edge_ends[2*i]);
       pt2 = static_cast<int>(edge_ends[2*i+1]);
 
-      MathExtra::quat_to_mat(bonus->quat,p);
       MathExtra::matvec(p,&bonus->dvalue[3*pt1],imdata[i]);
       MathExtra::matvec(p,&bonus->dvalue[3*pt2],&imdata[i][3]);
 
@@ -655,7 +652,7 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double /*flag2*/,
       imdata[i][4] += x[1];
       imdata[i][5] += x[2];
 
-      if (flag1 <= 0) imdata[i][6] = 2*rrad;
+      if (flag1 <= 0) imdata[i][6] = 2.0*rrad;
       else imdata[i][6] = flag1;
     }
 
