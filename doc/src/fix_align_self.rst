@@ -36,8 +36,8 @@ Description
 
 .. versionadded:: 10Dec2025
 
-Add a torque to each atom in the group due to a self-alignment toward an
-intrinsic orientation. The torque is given by :
+Add a torque to each atom in the group which accounts for the reorientation of each particle toward its own velocity, a generic phenomenon called self-alignment (see :ref:`(Baconnier2025)
+<Baconnier2025>`). The torque is given by :
 
 .. math::
 
@@ -49,8 +49,7 @@ of the particle, and :math:`\mathbf{v}_i` is its velocity. The
 self-alignment term, introduced in :ref:`(Shimoyama1996)
 <Shimoyama1996>` with the study of collective motion in systems of
 self-propelled particles, is an effective torque arising from
-differential drag in asymmetric rigid bodies (see :ref:`(Baconnier2025)
-<Baconnier2025>`).
+differential drag in asymmetric rigid bodies.
 
 
 For mode *dipole*, :math:`e_i` is just equal to the dipole vectors of
