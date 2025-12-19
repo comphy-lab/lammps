@@ -33,7 +33,7 @@ static constexpr double SMALL = 0.00001;
 
 /* ---------------------------------------------------------------------- */
 
-KSpace::KSpace(LAMMPS *lmp) : 
+KSpace::KSpace(LAMMPS *lmp) :
     Pointers(lmp), eatom(nullptr), vatom(nullptr), gcons(nullptr), dgcons(nullptr),
     force_poly_coeff(nullptr), energy_poly_coeff(nullptr), Fourier_poly_coeff(nullptr), Fourier_spreading_coeff(nullptr)
 {

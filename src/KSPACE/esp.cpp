@@ -11,7 +11,7 @@
 
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
- 
+
 /* ----------------------------------------------------------------------
    Contributing authors: Jiuyang Liang, Libin Lu, Shidong Jiang (Flatiron)
      analytic diff (2 FFT) option is set to default and highly recommended
@@ -57,7 +57,7 @@ ESP::ESP(LAMMPS *lmp) : KSpace(lmp),
   u_brick(nullptr), v0_brick(nullptr), v1_brick(nullptr), v2_brick(nullptr), v3_brick(nullptr),
   v4_brick(nullptr), v5_brick(nullptr), greensfn(nullptr), greensfn2(nullptr), vg(nullptr), vg2(nullptr), fkx(nullptr), fky(nullptr),
   fkz(nullptr), density_fft(nullptr), work1(nullptr), work2(nullptr), rho1d(nullptr),
-  rho_coeff(nullptr), drho1d(nullptr), drho_coeff(nullptr), 
+  rho_coeff(nullptr), drho1d(nullptr), drho_coeff(nullptr),
   sf_precoeff1(nullptr), sf_precoeff2(nullptr), sf_precoeff3(nullptr),
   sf_precoeff4(nullptr), sf_precoeff5(nullptr), sf_precoeff6(nullptr),
   fft1(nullptr), fft2(nullptr), remap(nullptr), gc(nullptr),
@@ -122,8 +122,8 @@ void ESP::settings(int narg, char **arg)
 {
   if (narg < 1) error->all(FLERR,"Illegal kspace_style {} command", force->kspace_style);
 
-  accuracy_relative = fabs(utils::numeric(FLERR, arg[0], false, lmp)); // will be used for splitting accuracy 
-  
+  accuracy_relative = fabs(utils::numeric(FLERR, arg[0], false, lmp)); // will be used for splitting accuracy
+
   if (narg == 1){
     spreading_accuracy = 0.5 * accuracy_relative;
   }
@@ -134,7 +134,7 @@ void ESP::settings(int narg, char **arg)
   if (accuracy_relative > 1.0 || spreading_accuracy > 1.0)
     error->all(FLERR, "Invalid relative accuracy {:g} or spreading accuracy {:g} for kspace_style {}",
                accuracy_relative, spreading_accuracy, force->kspace_style);
-  
+
   // Estimate order for ESP method
   order = estimate_order(accuracy_relative);
 }
@@ -189,7 +189,7 @@ void ESP::init()
         domain->boundary[2][0] != 1 || domain->boundary[2][1] != 1)
       error->all(FLERR,"Incorrect boundaries with slab ESP");
   }
-  
+
   if (order < 2 || order > MAXORDER)
     error->all(FLERR,"ESP order cannot be < 2 or > {}",MAXORDER);
 
@@ -203,7 +203,7 @@ void ESP::init()
   pair_check();
 
   int itmp = 0;
-  auto p_cutoff = (double *) force->pair->extract("cut_coul",itmp); 
+  auto p_cutoff = (double *) force->pair->extract("cut_coul",itmp);
   if (p_cutoff == nullptr)
     error->all(FLERR,"KSpace style is incompatible with Pair style");
   cutoff = *p_cutoff;
@@ -257,7 +257,7 @@ void ESP::init()
 
   if (accuracy_absolute >= 0.0) accuracy = accuracy_absolute;
   else accuracy = accuracy_relative * two_charge_force;
-  
+
   // free all arrays previously allocated
 
   deallocate();
@@ -272,7 +272,7 @@ void ESP::init()
 
   gc = nullptr;
   int iteration = 0;
-  
+
   prolc180(accuracy_relative, select_c);
   prolc180(spreading_accuracy, spreading_select_c);
 
@@ -306,7 +306,7 @@ void ESP::init()
     if (me == 0)
       error->warning(FLERR,"Order decreased to {} to fit stencil on nearest neighbor processors. May not achieve the desired accuracy.", order);
   }
-  
+
   if (order < minorder) error->all(FLERR,"ESP order < minimum allowed order");
   if (!overlap_allowed && !gc->ghost_adjacent())
     error->all(FLERR,"ESP grid stencil extends beyond nearest neighbor processor");
@@ -336,7 +336,7 @@ void ESP::init()
     mesg += fmt::format("  estimated relative splitting force accuracy = {:.8g}\n",
                        accuracy_relative);
     mesg += fmt::format("  estimated relative spreading accuracy = {:.8g}\n",
-                       spreading_accuracy);                   
+                       spreading_accuracy);
     mesg += "  using " LMP_FFT_PREC " precision " LMP_FFT_LIB "\n";
     mesg += fmt::format("  3d grid and FFT values/proc = {} {}\n",
                        ngrid_max,nfft_both_max);
@@ -562,21 +562,21 @@ void ESP::reset_grid()
   deallocate();
   if (peratom_allocate_flag) deallocate_peratom();
   if (group_allocate_flag) deallocate_groups();
-  
+
   // reset splitting/spreading c
   prolc180(accuracy_relative, select_c);
   prolc180(spreading_accuracy, spreading_select_c);
-  
+
   // reset portion of global grid that each proc owns
 
   set_grid_local();
-  
+
   // reallocate K-space dependent memory
   // check if grid communication is now overlapping if not allowed
   // don't invoke allocate peratom() or group(), will be allocated when needed
 
   allocate();
-  
+
   ////
   build_table(accuracy_relative, spreading_accuracy);
 
@@ -586,7 +586,7 @@ void ESP::reset_grid()
   // pre-compute 1d charge distribution coefficients
 
   if (differentiation_flag == 1) compute_sf_precoeff();
-  
+
   ////compute_rho_coeff();
 
   // pre-compute volume-dependent coeffs for portion of grid I now own
@@ -641,7 +641,7 @@ void ESP::compute(int eflag, int vflag)
 
   particle_map();
   make_rho();
-  
+
   // all procs communicate density values from their ghost cells
   //   to fully sum contribution in their 3d bricks
   // remap from 3d decomposition to FFT decomposition
@@ -694,7 +694,7 @@ void ESP::compute(int eflag, int vflag)
     double energy_all;
     MPI_Allreduce(&energy,&energy_all,1,MPI_DOUBLE,MPI_SUM,world);
     energy = energy_all;
-    
+
     double self_coeff = 0.00;
 
     for(int i=1;i<num_of_energy_poly;i++)
@@ -706,7 +706,7 @@ void ESP::compute(int eflag, int vflag)
     //energy -= (-energy_poly_coeff[1]/cutoff) * qsqsum / 2.0;
     energy -= (-self_coeff/cutoff) * qsqsum / 2.0;
     energy *= qscale;
-  } 
+  }
 
   // sum global virial across procs
 
@@ -860,17 +860,17 @@ void ESP::allocate()
   fft1 = new FFT3d(lmp,world,nx_pppm,ny_pppm,nz_pppm,
                    nxlo_fft,nxhi_fft,nylo_fft,nyhi_fft,nzlo_fft,nzhi_fft,
                    nxlo_fft,nxhi_fft,nylo_fft,nyhi_fft,nzlo_fft,nzhi_fft,
-                   0,0,&tmp,collective_flag);
+                   0,0,&tmp,collective_flag,nonblocking_flag);
 
   fft2 = new FFT3d(lmp,world,nx_pppm,ny_pppm,nz_pppm,
                    nxlo_fft,nxhi_fft,nylo_fft,nyhi_fft,nzlo_fft,nzhi_fft,
                    nxlo_in,nxhi_in,nylo_in,nyhi_in,nzlo_in,nzhi_in,
-                   0,0,&tmp,collective_flag);
+                   0,0,&tmp,collective_flag,nonblocking_flag);
 
   remap = new Remap(lmp,world,
                     nxlo_in,nxhi_in,nylo_in,nyhi_in,nzlo_in,nzhi_in,
                     nxlo_fft,nxhi_fft,nylo_fft,nyhi_fft,nzlo_fft,nzhi_fft,
-                    1,0,0,FFT_PRECISION,collective_flag);
+                    1,0,0,FFT_PRECISION,collective_flag,nonblocking_flag);
 }
 
 /* ----------------------------------------------------------------------
@@ -924,7 +924,7 @@ void ESP::deallocate()
 
   if(force_poly_coeff)
     memory->destroy(force_poly_coeff);
-  
+
   if(energy_poly_coeff)
     memory->destroy(energy_poly_coeff);
 
@@ -1130,7 +1130,7 @@ void ESP::set_grid_local()
 
   nlower = -(order-1)/2;
   nupper = order/2;
-  
+
   // shiftatom lo/hi are passed to Grid3d to determine ghost cell extents
   // shiftatom_lo = min shift on lo side
   // shiftatom_hi = max shift on hi side
@@ -1138,7 +1138,7 @@ void ESP::set_grid_local()
   if (order % 2) {
     shiftatom_lo = 0.5;
     shiftatom_hi = 0.5;
-  } 
+  }
   else if (order % 2 == 0) {
     shiftatom_lo = 0.0;
     shiftatom_hi = 0.0;
@@ -1197,9 +1197,9 @@ void ESP::compute_gf_ik()
   const int nbx = static_cast<int> (select_c * xprd / (MY_2PI * cutoff * nx_pppm)) * pow(-log(EPS_HOC),0.25);
   const int nby = static_cast<int> (select_c * yprd / (MY_2PI * cutoff * ny_pppm)) * pow(-log(EPS_HOC),0.25);
   const int nbz = static_cast<int> (select_c * zprd / (MY_2PI * cutoff * nz_pppm)) * pow(-log(EPS_HOC),0.25);
-  
+
   const int twoorder = 2*order;
- 
+
   n = 0;
   for (m = nzlo_fft; m <= nzhi_fft; m++) {
     mper = m - nz_pppm*(2*m/nz_pppm);
@@ -1287,9 +1287,9 @@ void ESP::compute_gf_ik()
                 }
                 else
                   dot2 = 0.0;
-                
+
                 sum1 += dot1 * dot2 * wx * wy * wz;
-              } 
+              }
             }
           }
 
@@ -1299,7 +1299,7 @@ void ESP::compute_gf_ik()
           else{
              greensfn[n++] = numerator*sum1/denominator;
           }
-          
+
         } else greensfn[n++] = 0.0;
       }
     }
@@ -1320,7 +1320,7 @@ void ESP::compute_gf_ik_triclinic()
   double sqk;
 
   int k,l,m,n,nx,ny,nz,kper,lper,mper;
-  
+
   const double * const prd = domain->prd;
   const double xprd = prd[0];
   const double yprd = prd[1];
@@ -1480,7 +1480,7 @@ void ESP::compute_gf_ad()
   const double hz_slab = zprd_slab / (double)nz_pppm;
 
   const double sqk_cut2 = (select_c / cutoff) * (select_c / cutoff);
-  
+
   const double scale_x = (order * MY_PI) / ((double)nx_pppm * spreading_select_c);
   const double scale_y = (order * MY_PI) / ((double)ny_pppm * spreading_select_c);
   const double scale_z = (order * MY_PI) / ((double)nz_pppm * spreading_select_c * slab_volfactor);
@@ -1510,7 +1510,7 @@ void ESP::compute_gf_ad()
 
     wx_denom[ii] = spreading_weight2_from_abs_index(std::abs(kp), scale_x);
   }
-  
+
   // l dimension
   for (int ll = 0; ll < ny; ++ll) {
     const int l = nylo_fft + ll;
@@ -1537,7 +1537,7 @@ void ESP::compute_gf_ad()
     // base wz: matches your compute_gf_ad (uses zprd/nz_pppm but kz uses slab)
     wz_denom[mm] = spreading_weight2_from_abs_index(std::abs(mp), scale_z);
   }
-  
+
   // local accumulators (less traffic on sf_coeff[])
   double c0=0.0, c1=0.0, c2=0.0, c3=0.0, c4=0.0, c5=0.0;
 
@@ -1661,7 +1661,7 @@ void ESP::compute_sf_precoeff()
 
           qx0 = MY_2PI*(kper+nx_pppm*(i-2));
           qx1 = MY_2PI*(kper+nx_pppm*(i-1));
-          qx2 = MY_2PI*(kper+nx_pppm*(i  )); 
+          qx2 = MY_2PI*(kper+nx_pppm*(i  ));
 
           double ph_2_kx_c = (0.5 * order / nx_pppm) * (std::abs(qx0) / spreading_select_c);
           wx0[i] = 0.00;
@@ -1675,7 +1675,7 @@ void ESP::compute_sf_precoeff()
             }
             wx0[i] = order / 2.0 * Fourier_spreading_appx;
           }
-          
+
           ph_2_kx_c = (0.5 * order / nx_pppm) * (std::abs(qx1) / spreading_select_c);
           wx1[i] = 0.00;
           if(ph_2_kx_c <= 1.00){
@@ -1718,7 +1718,7 @@ void ESP::compute_sf_precoeff()
             }
             wy0[i] = order / 2.0 * Fourier_spreading_appx;
           }
-          
+
           ph_2_ky_c = (0.5 * order / ny_pppm) * (std::abs(qy1) / spreading_select_c);
           wy1[i] = 0.00;
           if(ph_2_ky_c <= 1.00){
@@ -1747,8 +1747,8 @@ void ESP::compute_sf_precoeff()
 
           qz0 = MY_2PI*(mper+nz_pppm*(i-2));
           qz1 = MY_2PI*(mper+nz_pppm*(i-1));
-          qz2 = MY_2PI*(mper+nz_pppm*(i  )); 
-          
+          qz2 = MY_2PI*(mper+nz_pppm*(i  ));
+
           double ph_2_kz_c = (0.5 * order / nz_pppm) * (std::abs(qz0) / spreading_select_c);
           wz0[i] = 0.00;
           if(ph_2_kz_c <= 1.00){
@@ -1761,7 +1761,7 @@ void ESP::compute_sf_precoeff()
             }
             wz0[i] = order / 2.0 * Fourier_spreading_appx;
           }
-          
+
           ph_2_kz_c = (0.5 * order / nz_pppm) * (std::abs(qz1) / spreading_select_c);
 
           wz1[i] = 0.00;
@@ -1788,7 +1788,7 @@ void ESP::compute_sf_precoeff()
             }
             wz2[i] = order / 2.0 * Fourier_spreading_appx;
           }
-        } 
+        }
 
         for (nx = 0; nx < 5; nx++) {
           for (ny = 0; ny < 5; ny++) {
@@ -2185,8 +2185,8 @@ void ESP::poisson_ad()
       for (i = 0; i < nfft; i++) {
         eng = s2 * greensfn[i] * (work1[n]*work1[n] + work1[n+1]*work1[n+1]);
         eng_virial = s2 * greensfn2[i] * (work1[n]*work1[n] + work1[n+1]*work1[n+1]);
-        for (j = 0; j < 6; j++) 
-        { 
+        for (j = 0; j < 6; j++)
+        {
           virial[j] += eng*vg[i][j]; // The first term
           virial[j] += eng_virial*vg2[i][j]; // The second term
         }
@@ -2479,7 +2479,7 @@ void ESP::fieldforce_ad()
     dx = nx+shiftone - (x[i][0]-boxlo[0])*delxinv;
     dy = ny+shiftone - (x[i][1]-boxlo[1])*delyinv;
     dz = nz+shiftone - (x[i][2]-boxlo[2])*delzinv;
-   
+
     compute_rho1d(dx,dy,dz);
     compute_drho1d(dx,dy,dz);
 
@@ -2511,7 +2511,7 @@ void ESP::fieldforce_ad()
     sf = sf_coeff[0]*sin(2*MY_PI*s1);
     sf += sf_coeff[1]*sin(4*MY_PI*s1);
     sf *= 2*q[i]*q[i];
-    
+
     f[i][0] += qfactor*(ekx*q[i] - sf);
 
     sf = sf_coeff[2]*sin(2*MY_PI*s2);
@@ -2523,7 +2523,7 @@ void ESP::fieldforce_ad()
     sf += sf_coeff[5]*sin(4*MY_PI*s3);
     sf *= 2*q[i]*q[i];
 
-    if (slabflag != 2) 
+    if (slabflag != 2)
     {
       f[i][2] += qfactor*(ekz*q[i] - sf);
     }
@@ -2853,7 +2853,7 @@ void ESP::build_table(double algorithm_accuracy, double spreading_accuracy)
   for (int m = -(order-1)/2; m <= order/2; m += 1) {
     for (int l = 1; l < poly_order; l++)
         drho_coeff[l-1][m] = l*rho_coeff[l][m]; // Coefficients for l x^l-1 terms
-    drho_coeff[poly_order-1][m] = 0.00;    
+    drho_coeff[poly_order-1][m] = 0.00;
   }
   if (me == 0) utils::logmesg(lmp," spread real poly size: {}\n",poly_order);
 
@@ -2877,9 +2877,9 @@ void ESP::compute_rho1d(const FFT_SCALAR &dx, const FFT_SCALAR &dy,
 {
   int k,l;
   FFT_SCALAR r1,r2,r3;
-  
+
   // k: order of spreading points
-  // l: order of polynomials 
+  // l: order of polynomials
   for (k = (1-order)/2; k <= order/2; k++) {
     r1 = r2 = r3 = ZEROF;
 
@@ -2912,7 +2912,7 @@ void ESP::compute_drho1d(const FFT_SCALAR &dx, const FFT_SCALAR &dy,
       r1 = drho_coeff[l][k] + r1*dx;
       r2 = drho_coeff[l][k] + r2*dy;
       r3 = drho_coeff[l][k] + r3*dz;
-    } 
+    }
     drho1d[0][k] = r1;
     drho1d[1][k] = r2;
     drho1d[2][k] = r3;
@@ -3555,4 +3555,4 @@ void ESP::slabcorr_groups(int groupbit_A, int groupbit_B, int AA_flag)
   const double ffact = qscale * (-4.0*MY_PI/volume);
   f2group[2] += ffact * (qsum_A*dipole_B - qsum_B*dipole_A);
 }
-  
+

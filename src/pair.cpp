@@ -379,7 +379,7 @@ void Pair::init_tables(double cut_coul, double *cut_respa)
     error->all(FLERR, Error::NOLASTLINE,
                "Pair style {} requires a KSpace style", force->pair_style);
   double g_ewald = force->kspace->g_ewald;
-  
+
   double *force_poly_coeff = force->kspace->force_poly_coeff;
   int num_of_force_poly = force->kspace->num_of_force_poly;
   double *energy_poly_coeff = force->kspace->energy_poly_coeff;
@@ -578,7 +578,7 @@ void Pair::init_tables(double cut_coul, double *cut_respa)
         double energy_poly_r = 1.0;
         for(int ii=1; ii<num_of_energy_poly; ii++){
             energy_poly_r *= r_coul;
-            energy_poly_appx += energy_poly_coeff[ii] * energy_poly_r; 
+            energy_poly_appx += energy_poly_coeff[ii] * energy_poly_r;
         }
         e_tmp = qqrd2e * energy_poly_appx / r;
         } else {

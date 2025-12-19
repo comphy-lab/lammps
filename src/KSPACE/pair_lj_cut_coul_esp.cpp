@@ -53,7 +53,7 @@ PairLJCutCoulEsp::PairLJCutCoulEsp(LAMMPS *lmp) : Pair(lmp)
 
 /* ---------------------------------------------------------------------- */
 
-PairLJCutCoulEsp::~PairLJCutCoulEsp() 
+PairLJCutCoulEsp::~PairLJCutCoulEsp()
 {
   if (copymode) return;
 
@@ -127,7 +127,7 @@ void PairLJCutCoulEsp::compute(int eflag, int vflag)
       delz = ztmp - x[j][2];
       rsq = delx*delx + dely*dely + delz*delz;
       jtype = type[j];
-      
+
       if (rsq < cutsq[itype][jtype]) {
         r2inv = 1.0/rsq;
 
@@ -146,7 +146,7 @@ void PairLJCutCoulEsp::compute(int eflag, int vflag)
             }
 
             prefactor = qqrd2e * qtmp* q[j] / r;
-            forcecoul = prefactor * force_poly_appx; 
+            forcecoul = prefactor * force_poly_appx;
             if (factor_coul < 1.0) forcecoul -= (1.0-factor_coul)*prefactor;
           } else {
             union_int_float_t rsq_lookup;
@@ -175,13 +175,13 @@ void PairLJCutCoulEsp::compute(int eflag, int vflag)
         f[i][1] += dely*fpair;
         f[i][2] += delz*fpair;
         if (newton_pair || j < nlocal) {
-          f[j][0] -= delx*fpair;  
+          f[j][0] -= delx*fpair;
           f[j][1] -= dely*fpair;
           f[j][2] -= delz*fpair;
         }
 
         if (eflag) {
-          if (rsq < cut_coulsq) { 
+          if (rsq < cut_coulsq) {
             if (!ncoultablebits || rsq <= tabinnersq){
               double energy_poly_appx = energy_poly_coeff[0];
               double energy_poly_r = 1.0;
@@ -189,7 +189,7 @@ void PairLJCutCoulEsp::compute(int eflag, int vflag)
               for(int index = 1; index<num_of_energy_poly; index++){
                 energy_poly_r *= r_scal;
                 energy_poly_appx = energy_poly_appx + energy_poly_coeff[index] * energy_poly_r;
-              } 
+              }
               ecoul = prefactor * energy_poly_appx;
             }
             else {
@@ -534,7 +534,7 @@ void PairLJCutCoulEsp::compute_outer(int eflag, int vflag)
               for(int index = 1; index<num_of_energy_poly; index++){
                 energy_poly_r *= r_scal;
                 energy_poly_appx = energy_poly_appx + energy_poly_coeff[index] * energy_poly_r;
-              } 
+              }
               ecoul = prefactor * energy_poly_appx;
               if (factor_coul < 1.0) ecoul -= (1.0-factor_coul)*prefactor;
             } else {
@@ -962,7 +962,7 @@ double PairLJCutCoulEsp::single(int i, int j, int itype, int jtype,
       for(int index = 1; index<num_of_energy_poly; index++){
         energy_poly_r *= r_scal;
         energy_poly_appx = energy_poly_appx + energy_poly_coeff[index] * energy_poly_r;
-      } 
+      }
       phicoul = prefactor * energy_poly_appx;
     }
     else {
@@ -993,4 +993,4 @@ void *PairLJCutCoulEsp::extract(const char *str, int &dim)
   if (strcmp(str,"sigma") == 0) return (void *) sigma;
   return nullptr;
 }
- 
+

@@ -110,7 +110,7 @@ Examples
    pair_style lj/cut/coul/dsf 0.05 2.5 10.0
    pair_coeff * * 1.0 1.0
    pair_coeff 1 1 1.0 1.0 2.5
-   
+
    pair_style lj/cut/coul/esp 10.0
    pair_style lj/cut/coul/esp 10.0 8.0
    pair_coeff * * 100.0 3.0

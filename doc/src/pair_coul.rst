@@ -131,7 +131,7 @@ Examples
 
    pair_style coul/dsf 0.05 10.0
    pair_coeff * *
-   
+
    pair_style coul/esp 10.0
    pair_coeff * *
 
