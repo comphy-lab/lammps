@@ -385,7 +385,6 @@ int FixReaxFFBonds::image(int *&objs, double **&parms)
   memory->create(imgobjs, numobjs, "reaxff/bonds:imgobjs");
   memory->create(imgparms, numobjs, 8, "reaxff/bonds:imgparms");
 
-  const int nlocal = atom->nlocal;
   const int *type = atom->type;
   const double * const * const x = atom->x;
 

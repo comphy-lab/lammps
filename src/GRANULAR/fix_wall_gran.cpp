@@ -417,7 +417,7 @@ void FixWallGran::setup(int vflag)
 void FixWallGran::post_force(int /*vflag*/)
 {
   int i,j,n;
-  double dx,dy,dz,del1,del2,delxy,delr,rwall,meff;
+  double dx,dy,dz,del1,del2,rwall,meff;
   double *forces, *torquesi;
   double vwall[3];
   double w0[3] = {0.0};

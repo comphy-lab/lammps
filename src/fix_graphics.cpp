@@ -80,7 +80,7 @@ FixGraphics::FixGraphics(LAMMPS *lmp, int narg, char **arg) :
         sphere.dstr = utils::strdup(arg[iarg + 5] + 2);
       } else
         sphere.diameter = 2.0 * utils::numeric(FLERR, arg[iarg + 5], false, lmp);
-      items.emplace_back(std::move(sphere));
+      items.emplace_back(sphere);
       ++numobjs;
       iarg += 6;
     } else if (strcmp(arg[iarg], "cylinder") == 0) {
@@ -126,7 +126,7 @@ FixGraphics::FixGraphics(LAMMPS *lmp, int narg, char **arg) :
         cylinder.dstr = utils::strdup(arg[iarg + 8] + 2);
       } else
         cylinder.diameter = 2.0 * utils::numeric(FLERR, arg[iarg + 8], false, lmp);
-      items.emplace_back(std::move(cylinder));
+      items.emplace_back(cylinder);
       ++numobjs;
       iarg += 9;
     } else if (strcmp(arg[iarg], "arrow") == 0) {
@@ -175,7 +175,7 @@ FixGraphics::FixGraphics(LAMMPS *lmp, int narg, char **arg) :
       arrow.ratio = utils::numeric(FLERR, arg[iarg + 9], false, lmp);
       if ((arrow.ratio < 0.1) || (arrow.ratio > 0.5))
         error->all(FLERR, iarg + 9, "Arrow tip ratio must be between 0.1 and 0.5");
-      items.emplace_back(std::move(arrow));
+      items.emplace_back(arrow);
       numobjs += 2;
       iarg += 10;
     } else if (strcmp(arg[iarg], "progbar") == 0) {
@@ -210,8 +210,8 @@ FixGraphics::FixGraphics(LAMMPS *lmp, int narg, char **arg) :
       progbar.tics = utils::inumeric(FLERR, arg[iarg + 10], false, lmp);
       if ((progbar.tics < 0) || (progbar.tics > 20))
         error->all(FLERR, iarg + 10, "Unsupported number of progress bar tics {}", arg[iarg + 10]);
-      items.emplace_back(std::move(progbar));
       numobjs += 2 + progbar.tics;
+      items.emplace_back(progbar);
       iarg += 11;
     } else {
       error->all(FLERR, iarg, "Unknown fix graphics keyword {}", arg[iarg]);

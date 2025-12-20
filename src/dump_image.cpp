@@ -1230,7 +1230,7 @@ void DumpImage::create_image()
 {
   int i,j,k,m,n,itype,atom1,atom2,imol,iatom,btype,ibonus,drawflag;
   tagint tagprev;
-  double diameter,delx,dely,delz,opacity;
+  double diameter,delx,dely,delz;
   int *bodyvec;
   double **bodyarray;
   double *color,*color1,*color2;
