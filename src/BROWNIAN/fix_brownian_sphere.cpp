@@ -14,7 +14,8 @@
 /* ----------------------------------------------------------------------
    Originally modified from CG-DNA/fix_nve_dotc_langevin.cpp.
 
-   Contributing author: Sam Cameron (University of Bristol)
+   Contributing authors: Sam Cameron (University of Bristol)
+                         Arthur Straube (Zuse Institute Berlin)
 ------------------------------------------------------------------------- */
 
 #include "fix_brownian_sphere.h"
@@ -61,34 +62,34 @@ void FixBrownianSphere::initial_integrate(int /*vflag */)
 {
   if (domain->dimension == 2) {
     if (!noise_flag) {
-      initial_integrate_templated<0, 0, 1, 0>();
+      initial_integrate_templated<0, 0, 0, 1, 0>();
     } else if (gaussian_noise_flag) {
-      initial_integrate_templated<0, 1, 1, 0>();
+      initial_integrate_templated<0, 0, 1, 1, 0>();
     } else {
-      initial_integrate_templated<1, 0, 1, 0>();
+      initial_integrate_templated<0, 1, 0, 1, 0>();
     }
   } else if (planar_rot_flag) {
     if (!noise_flag) {
-      initial_integrate_templated<0, 0, 0, 1>();
+      initial_integrate_templated<0, 0, 0, 0, 1>();
     } else if (gaussian_noise_flag) {
-      initial_integrate_templated<0, 1, 0, 1>();
+      initial_integrate_templated<0, 0, 1, 0, 1>();
     } else {
-      initial_integrate_templated<1, 0, 0, 1>();
+      initial_integrate_templated<0, 1, 0, 0, 1>();
     }
   } else {
     if (!noise_flag) {
-      initial_integrate_templated<0, 0, 0, 0>();
+      initial_integrate_templated<0, 0, 0, 0, 0>();
     } else if (gaussian_noise_flag) {
-      initial_integrate_templated<0, 1, 0, 0>();
+      initial_integrate_templated<0, 0, 1, 0, 0>();
     } else {
-      initial_integrate_templated<1, 0, 0, 0>();
+      initial_integrate_templated<0, 1, 0, 0, 0>();
     }
   }
 }
 
 /* ---------------------------------------------------------------------- */
 
-template <int Tp_UNIFORM, int Tp_GAUSS, int Tp_2D, int Tp_2Drot>
+template <int Tp_ROTGEOM, int Tp_UNIFORM, int Tp_GAUSS, int Tp_2D, int Tp_2Drot>
 void FixBrownianSphere::initial_integrate_templated()
 {
   double **x = atom->x;
