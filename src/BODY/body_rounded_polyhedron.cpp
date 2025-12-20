@@ -663,7 +663,7 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double flag2,
         int pt3 = static_cast<int>(edge_ends[4*i+2]);
         int pt4 = static_cast<int>(edge_ends[4*i+3]);
 
-        // quadrilinear face requires two triangles. triangle has fourth vertex index set to -1
+        // quadrilateral face requires two triangles. triangle has fourth vertex index set to -1
         if (pt4 >= 0) {
           // first triangle
           imflag[nelements] = DumpImage::TRI;

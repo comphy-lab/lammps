@@ -20,7 +20,6 @@
 
 #include "atom.h"
 #include "atom_vec_body.h"
-#include "dump_image.h"
 #include "domain.h"
 #include "dump_image.h"
 #include "error.h"
