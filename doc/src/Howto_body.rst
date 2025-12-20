@@ -500,12 +500,11 @@ sphere is determined by the *bflag1* parameter for the *body* keyword.
 The *bflag2* argument is ignored.
 
 For the *rounded/polygon* body style, each body is drawn as a polygon
-with N line segments.  For the *rounded/polyhedron* body style, each
-face of each body is drawn as either a polygon with N line segments
-or as M faces.  The drawn diameter of each line segment is determined
-by the *bflag1* parameter for the *body* keyword.  The *bflag2* argument
-selects whether the lines (2) are drawn or the faces (1) or both (3);
-a value of 0 selects the default, which is currently both.
+and for *rounded/polyhedron* as a polyhedron.  The *bflag2* argument
+selects whether a wireframe mesh (2) is drawn or the faces (1) or both
+(3).  A value of 0 selects the default, which is currently the same as
+option 3.  The drawn diameter of each wireframe line is determined by
+the *bflag1* parameter for the *body* keyword.
 
 Note that for both the *rounded/polygon* and *rounded/polyhedron*
 styles, line segments are drawn between the pairs of vertices.
