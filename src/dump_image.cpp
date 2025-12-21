@@ -128,150 +128,110 @@ void scale_and_displace_triangle(triangle &tri, const double *radius, const vec3
   }
 }
 
+// define edges of an octahedron
+
+constexpr vec3 oct1 = {-1.0, 0.0, 0.0};
+constexpr vec3 oct2 = {1.0, 0.0, 0.0};
+constexpr vec3 oct3 = {0.0, -1.0, 0.0};
+constexpr vec3 oct4 = {0.0, 1.0, 0.0};
+constexpr vec3 oct5 = {0.0, 0.0, -1.0};
+constexpr vec3 oct6 = {0.0, 0.0, 1.0};
+
 void ellipsoid2wireframe(LAMMPS_NS::Image *img, int level, const double *color, double diameter,
                          const double *center, const double *radius, LAMMPS_NS::Region *reg)
 {
-  vec3 offset = {center[0], center[1], center[2]};
-
-  // define edges of an octahedron
-  vec3 pos1 = {-1.0, 0.0, 0.0};
-  vec3 pos2 = {1.0, 0.0, 0.0};
-  vec3 pos3 = {0.0, -1.0, 0.0};
-  vec3 pos4 = {0.0, 1.0, 0.0};
-  vec3 pos5 = {0.0, 0.0, -1.0};
-  vec3 pos6 = {0.0, 0.0, 1.0};
+  if (diameter <= 0.0) return;
 
   // define level 1 octahedron triangle mesh
-  std::vector<triangle> trilist = {{pos1, pos4, pos5}, {pos5, pos4, pos2}, {pos2, pos4, pos6},
-                                   {pos6, pos4, pos1}, {pos5, pos3, pos1}, {pos2, pos3, pos5},
-                                   {pos6, pos3, pos2}, {pos1, pos3, pos6}};
+  std::vector<triangle> trilist = {{oct5, oct4, oct1}, {oct2, oct4, oct5}, {oct6, oct4, oct2},
+                                   {oct1, oct4, oct6}, {oct1, oct3, oct5}, {oct5, oct3, oct2},
+                                   {oct2, oct3, oct6}, {oct6, oct3, oct1}};
 
-  // draw level 1 triangle mesh
-  if (level <= 1) {
-    for (auto &tri : trilist) {
-      scale_and_displace_triangle(tri, radius, offset);
-      reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
-      reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
-      reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
-      img->draw_cylinder(tri[0].data(), tri[1].data(), color, diameter, 3);
-      img->draw_cylinder(tri[0].data(), tri[2].data(), color, diameter, 3);
-      img->draw_cylinder(tri[1].data(), tri[2].data(), color, diameter, 3);
-    }
-  }
+  // refine the list of triangles to the desired level
+  for (int i = 1; i < level; ++i) trilist = refine_triangle_list(trilist);
 
-  if (level >= 2) {
-    trilist = refine_triangle_list(trilist);
+  // draw wire mesh
 
-    if (level == 2) {
-      for (auto &tri : trilist) {
-        scale_and_displace_triangle(tri, radius, offset);
-        reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
-        reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
-        reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
-        img->draw_cylinder(tri[0].data(), tri[1].data(), color, diameter, 3);
-        img->draw_cylinder(tri[0].data(), tri[2].data(), color, diameter, 3);
-        img->draw_cylinder(tri[1].data(), tri[2].data(), color, diameter, 3);
-      }
-    }
-  }
-
-  if (level >= 3) {
-    trilist = refine_triangle_list(trilist);
-
-    if (level == 3) {
-      for (auto &tri : trilist) {
-        scale_and_displace_triangle(tri, radius, offset);
-        reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
-        reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
-        reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
-        img->draw_cylinder(tri[0].data(), tri[1].data(), color, diameter, 3);
-        img->draw_cylinder(tri[0].data(), tri[2].data(), color, diameter, 3);
-        img->draw_cylinder(tri[1].data(), tri[2].data(), color, diameter, 3);
-      }
-    }
-  }
-
-  if (level == 4) {
-    trilist = refine_triangle_list(trilist);
-
-    for (auto &tri : trilist) {
-      scale_and_displace_triangle(tri, radius, offset);
-      reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
-      reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
-      reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
-      img->draw_cylinder(tri[0].data(), tri[1].data(), color, diameter, 3);
-      img->draw_cylinder(tri[0].data(), tri[2].data(), color, diameter, 3);
-      img->draw_cylinder(tri[1].data(), tri[2].data(), color, diameter, 3);
-    }
+  for (auto &tri : trilist) {
+    scale_and_displace_triangle(tri, radius, {center[0], center[1], center[2]});
+    reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
+    reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
+    reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
+    img->draw_cylinder(tri[0].data(), tri[1].data(), color, diameter, 3);
+    img->draw_cylinder(tri[0].data(), tri[2].data(), color, diameter, 3);
+    img->draw_cylinder(tri[1].data(), tri[2].data(), color, diameter, 3);
   }
 }
 
 void ellipsoid2filled(LAMMPS_NS::Image *img, int level, const double *color, const double *center,
                       const double *radius, LAMMPS_NS::Region *reg, double opacity)
 {
-  vec3 offset = {center[0], center[1], center[2]};
+  // define level 1 octahedron triangle mesh
+  std::vector<triangle> trilist = {{oct5, oct4, oct1}, {oct2, oct4, oct5}, {oct6, oct4, oct2},
+                                   {oct1, oct4, oct6}, {oct1, oct3, oct5}, {oct5, oct3, oct2},
+                                   {oct2, oct3, oct6}, {oct6, oct3, oct1}};
 
-  // define edges of an octahedron
-  vec3 pos1 = {-1.0, 0.0, 0.0};
-  vec3 pos2 = {1.0, 0.0, 0.0};
-  vec3 pos3 = {0.0, -1.0, 0.0};
-  vec3 pos4 = {0.0, 1.0, 0.0};
-  vec3 pos5 = {0.0, 0.0, -1.0};
-  vec3 pos6 = {0.0, 0.0, 1.0};
+  // refine the list of triangles to the desired level
+  for (int i = 1; i < level; ++i) trilist = refine_triangle_list(trilist);
+
+  // draw triangles
+  for (auto &tri : trilist) {
+    scale_and_displace_triangle(tri, radius, {center[0], center[1], center[2]});
+    reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
+    reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
+    reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
+    img->draw_triangle(tri[0].data(), tri[1].data(), tri[2].data(), color, opacity);
+  }
+}
+
+void draw_ellipsoid(LAMMPS_NS::Image *img, int level, int flag, const double *color,
+                    const double *center, const double *radius, const double *quat, double diameter,
+                    double opacity)
+{
+  bool doframe = true;
+  bool dotri = true;
+  if (flag == 1) doframe = false;
+  if (flag == 2) dotri = false;
+  if (diameter <= 0.0) doframe = false;
+  if (!dotri && !doframe) return;    // nothing to do
+
+  double p[3][3];
+  vec3 e1, e2, e3;
 
   // define level 1 octahedron triangle mesh
-  std::vector<triangle> trilist = {{pos1, pos4, pos5}, {pos5, pos4, pos2}, {pos2, pos4, pos6},
-                                   {pos6, pos4, pos1}, {pos5, pos3, pos1}, {pos2, pos3, pos5},
-                                   {pos6, pos3, pos2}, {pos1, pos3, pos6}};
+  std::vector<triangle> trilist = {{oct5, oct4, oct1}, {oct2, oct4, oct5}, {oct6, oct4, oct2},
+                                   {oct1, oct4, oct6}, {oct1, oct3, oct5}, {oct5, oct3, oct2},
+                                   {oct2, oct3, oct6}, {oct6, oct3, oct1}};
 
-  if (level <= 1) {
-    for (auto &tri : trilist) {
-      scale_and_displace_triangle(tri, radius, offset);
-      reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
-      reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
-      reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
-      img->draw_triangle(tri[0].data(), tri[1].data(), tri[2].data(), color, opacity);
+  MathExtra::quat_to_mat(quat, p);    // get rotation matrix for body frame to box frame
+
+  // refine the list of triangles to the desired level
+  for (int i = 1; i < level; ++i) trilist = refine_triangle_list(trilist);
+
+  // draw triangles and edges as requested
+  for (auto &tri : trilist) {
+
+    // set shape
+    for (int i = 0; i < 3; ++i) {
+      auto &t = tri[i];
+      const auto scale = radscale(radius, t);
+      t[0] *= scale;
+      t[1] *= scale;
+      t[2] *= scale;
     }
-  }
-
-  // refine the list of triangles
-  if (level >= 2) {
-    trilist = refine_triangle_list(trilist);
-
-    if (level == 2) {
-      for (auto &tri : trilist) {
-        scale_and_displace_triangle(tri, radius, offset);
-        reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
-        reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
-        reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
-        img->draw_triangle(tri[0].data(), tri[1].data(), tri[2].data(), color, opacity);
-      }
-    }
-  }
-
-  if (level >= 3) {
-    trilist = refine_triangle_list(trilist);
-
-    if (level == 3) {
-      for (auto &tri : trilist) {
-        scale_and_displace_triangle(tri, radius, offset);
-        reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
-        reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
-        reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
-        img->draw_triangle(tri[0].data(), tri[1].data(), tri[2].data(), color, opacity);
-      }
-    }
-  }
-
-  if (level == 4) {
-    trilist = refine_triangle_list(trilist);
-
-    for (auto &tri : trilist) {
-      scale_and_displace_triangle(tri, radius, offset);
-      reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
-      reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
-      reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
-      img->draw_triangle(tri[0].data(), tri[1].data(), tri[2].data(), color, opacity);
+    // rotate
+    MathExtra::matvec(p, tri[0].data(), e1.data());
+    MathExtra::matvec(p, tri[1].data(), e2.data());
+    MathExtra::matvec(p, tri[2].data(), e3.data());
+    // translate
+    e1 = vecadd(e1, {center[0], center[1], center[2]});
+    e2 = vecadd(e2, {center[0], center[1], center[2]});
+    e3 = vecadd(e3, {center[0], center[1], center[2]});
+    if (dotri) img->draw_triangle(e1.data(), e2.data(), e3.data(), color, opacity);
+    if (doframe) {
+      img->draw_cylinder(e1.data(), e2.data(), color, diameter, 3, opacity);
+      img->draw_cylinder(e2.data(), e3.data(), color, diameter, 3, opacity);
+      img->draw_cylinder(e3.data(), e1.data(), color, diameter, 3, opacity);
     }
   }
 }
