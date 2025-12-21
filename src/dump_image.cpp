@@ -131,12 +131,12 @@ void scale_and_displace_triangle(triangle &tri, const double *radius, const vec3
 
 // define edges of an octahedron
 
-constexpr vec3 oct1 = {-1.0, 0.0, 0.0};
-constexpr vec3 oct2 = {1.0, 0.0, 0.0};
-constexpr vec3 oct3 = {0.0, -1.0, 0.0};
-constexpr vec3 oct4 = {0.0, 1.0, 0.0};
-constexpr vec3 oct5 = {0.0, 0.0, -1.0};
-constexpr vec3 oct6 = {0.0, 0.0, 1.0};
+constexpr vec3 OCT1 = {-1.0, 0.0, 0.0};
+constexpr vec3 OCT2 = {1.0, 0.0, 0.0};
+constexpr vec3 OCT3 = {0.0, -1.0, 0.0};
+constexpr vec3 OCT4 = {0.0, 1.0, 0.0};
+constexpr vec3 OCT5 = {0.0, 0.0, -1.0};
+constexpr vec3 OCT6 = {0.0, 0.0, 1.0};
 
 void ellipsoid2wireframe(LAMMPS_NS::Image *img, int level, const double *color, double diameter,
                          const double *center, const double *radius, LAMMPS_NS::Region *reg)
@@ -144,9 +144,9 @@ void ellipsoid2wireframe(LAMMPS_NS::Image *img, int level, const double *color, 
   if (diameter <= 0.0) return;
 
   // define level 1 octahedron triangle mesh
-  std::vector<triangle> trilist = {{oct5, oct4, oct1}, {oct2, oct4, oct5}, {oct6, oct4, oct2},
-                                   {oct1, oct4, oct6}, {oct1, oct3, oct5}, {oct5, oct3, oct2},
-                                   {oct2, oct3, oct6}, {oct6, oct3, oct1}};
+  std::vector<triangle> trilist = {{OCT5, OCT4, OCT1}, {OCT2, OCT4, OCT5}, {OCT6, OCT4, OCT2},
+                                   {OCT1, OCT4, OCT6}, {OCT1, OCT3, OCT5}, {OCT5, OCT3, OCT2},
+                                   {OCT2, OCT3, OCT6}, {OCT6, OCT3, OCT1}};
 
   // refine the list of triangles to the desired level
   for (int i = 1; i < level; ++i) trilist = refine_triangle_list(trilist);
@@ -168,9 +168,9 @@ void ellipsoid2filled(LAMMPS_NS::Image *img, int level, const double *color, con
                       const double *radius, LAMMPS_NS::Region *reg, double opacity)
 {
   // define level 1 octahedron triangle mesh
-  std::vector<triangle> trilist = {{oct5, oct4, oct1}, {oct2, oct4, oct5}, {oct6, oct4, oct2},
-                                   {oct1, oct4, oct6}, {oct1, oct3, oct5}, {oct5, oct3, oct2},
-                                   {oct2, oct3, oct6}, {oct6, oct3, oct1}};
+  std::vector<triangle> trilist = {{OCT5, OCT4, OCT1}, {OCT2, OCT4, OCT5}, {OCT6, OCT4, OCT2},
+                                   {OCT1, OCT4, OCT6}, {OCT1, OCT3, OCT5}, {OCT5, OCT3, OCT2},
+                                   {OCT2, OCT3, OCT6}, {OCT6, OCT3, OCT1}};
 
   // refine the list of triangles to the desired level
   for (int i = 1; i < level; ++i) trilist = refine_triangle_list(trilist);
@@ -200,9 +200,9 @@ void draw_ellipsoid(LAMMPS_NS::Image *img, int level, int flag, const double *co
   vec3 e1, e2, e3;
 
   // define level 1 octahedron triangle mesh
-  std::vector<triangle> trilist = {{oct5, oct4, oct1}, {oct2, oct4, oct5}, {oct6, oct4, oct2},
-                                   {oct1, oct4, oct6}, {oct1, oct3, oct5}, {oct5, oct3, oct2},
-                                   {oct2, oct3, oct6}, {oct6, oct3, oct1}};
+  std::vector<triangle> trilist = {{OCT5, OCT4, OCT1}, {OCT2, OCT4, OCT5}, {OCT6, OCT4, OCT2},
+                                   {OCT1, OCT4, OCT6}, {OCT1, OCT3, OCT5}, {OCT5, OCT3, OCT2},
+                                   {OCT2, OCT3, OCT6}, {OCT6, OCT3, OCT1}};
 
   MathExtra::quat_to_mat(quat, p);    // get rotation matrix for body frame to box frame
 
