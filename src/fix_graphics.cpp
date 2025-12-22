@@ -647,7 +647,7 @@ void FixGraphics::end_of_step()
       ++n;
       if (gi.progbar.pstr) gi.progbar.progress = input->variable->compute_equal(gi.progbar.pvar);
       // bracket into [0.0;1.0] rather than throwing an error for just a viz item
-      gi.progbar.progress = std::max(std::min(gi.progbar.progress, 1.0), 0.0);
+      gi.progbar.progress = std::max(std::min(gi.progbar.progress, 1.0), 0.01);
       switch (gi.progbar.dim) {
         case X:
           imgparms[n][1] = gi.progbar.pos[X] + (gi.progbar.progress - 0.5) * gi.progbar.length;
