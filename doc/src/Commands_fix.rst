@@ -84,6 +84,7 @@ OPT.
    * :doc:`gld <fix_gld>`
    * :doc:`gle <fix_gle>`
    * :doc:`graphics <fix_graphics>`
+   * :doc:`graphics/arrows <fix_graphics_arrows>`
    * :doc:`gravity (ko) <fix_gravity>`
    * :doc:`grem <fix_grem>`
    * :doc:`halt <fix_halt>`

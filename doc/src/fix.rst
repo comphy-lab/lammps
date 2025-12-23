@@ -263,6 +263,7 @@ accelerated styles exist.
 * :doc:`gld <fix_gld>` - generalized Langevin dynamics integrator
 * :doc:`gle <fix_gle>` - generalized Langevin equation thermostat
 * :doc:`graphics <fix_graphics>` - add graphics objects to :doc:`dump image <dump_image>` output
+* :doc:`graphics/arrows <fix_graphics_arrows>` - add arrow graphics objects to :doc:`dump image <dump_image>` output
 * :doc:`gravity <fix_gravity>` - add gravity to atoms in a granular simulation
 * :doc:`grem <fix_grem>` - implements the generalized replica exchange method
 * :doc:`halt <fix_halt>` - terminate a dynamics run or minimization
