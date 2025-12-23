@@ -1148,8 +1148,10 @@ char *Variable::retrieve(const char *name)
 
 double Variable::compute_equal(int ivar)
 {
-  if (eval_in_progress[ivar])
-    print_var_error(FLERR,"has a circular dependency",ivar);
+  // do nothing for out of range index
+  if ((ivar < 0) || (ivar >= nvar)) return 0.0;
+
+  if (eval_in_progress[ivar]) print_var_error(FLERR,"has a circular dependency",ivar);
 
   eval_in_progress[ivar] = 1;
 
@@ -1265,6 +1267,10 @@ void Variable::compute_atom(int ivar, int igroup, double *result, int stride, in
 int Variable::compute_vector(int ivar, double **result)
 {
   Tree *tree = nullptr;
+
+  // index is out-of-range. do nothing
+
+  if ((ivar < 0) || (ivar >= nvar)) return 0;
 
   // if vector is not dynamic, just return stored values
 
@@ -4692,8 +4698,7 @@ int Variable::special_function(const std::string &word, char *contents, Tree **t
         print_var_error(FLERR,"Invalid special function in variable formula",ivar);
       if (style[ivar] != VECTOR)
         print_var_error(FLERR,"Mis-matched special function variable in variable formula",ivar);
-      if (eval_in_progress[ivar])
-        print_var_error(FLERR,"has a circular dependency",ivar);
+      if (eval_in_progress[ivar]) print_var_error(FLERR,"has a circular dependency",ivar);
 
       double *vec;
       nvec = compute_vector(ivar,&vec);
