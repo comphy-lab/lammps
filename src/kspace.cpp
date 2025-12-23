@@ -35,7 +35,7 @@ static constexpr double SMALL = 0.00001;
 
 KSpace::KSpace(LAMMPS *lmp) :
     Pointers(lmp), eatom(nullptr), vatom(nullptr), gcons(nullptr), dgcons(nullptr),
-    force_poly_coeff(nullptr), energy_poly_coeff(nullptr), Fourier_poly_coeff(nullptr), Fourier_spreading_coeff(nullptr)
+    force_poly_coeff(nullptr), energy_poly_coeff(nullptr), splitting_poly_coeff(nullptr), spreading_poly_coeff(nullptr)
 {
   order_allocated = 0;
   energy = 0.0;
@@ -95,8 +95,6 @@ KSpace::KSpace(LAMMPS *lmp) :
   splittol = 1.0e-6;
 
   maxeatom = maxvatom = 0;
-  eatom = nullptr;
-  vatom = nullptr;
   centroidstressflag = CENTROID_NOTAVAIL;
 
   execution_space = Host;

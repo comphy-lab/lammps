@@ -230,7 +230,6 @@ class Pair : protected Pointers {
   virtual void min_xf_get(int) {}
   virtual void min_x_set(int) {}
   virtual void transfer_history(double *, double *, int, int) {}
-  virtual double radii2cut(double, double) { return 0.0; }
 
   // management of callbacks to be run from ev_tally()
 

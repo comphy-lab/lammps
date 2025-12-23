@@ -20,7 +20,6 @@ KSpaceStyle(esp,ESP);
 #ifndef LMP_ESP_H
 #define LMP_ESP_H
 
-#include "error.h"
 #include "kspace.h"
 #include "lmpfftsettings.h"    // IWYU pragma: export
 #include "math_const.h"
@@ -28,7 +27,7 @@ KSpaceStyle(esp,ESP);
 #include <cmath>
 
 using namespace LAMMPS_NS;
-using namespace MathConst;
+using MathConst::MY_PI;
 
 namespace LAMMPS_NS {
 
@@ -163,11 +162,7 @@ class ESP : public KSpace {
   virtual void poisson_groups(int);
   virtual void slabcorr_groups(int, int, int);
 
-  // =========================================
-  // Horner's method for polynomial evaluation
-  // =========================================
-
-  inline double poly_horner(const double x, const double *coeff, const int n) const
+  double poly_horner(const double x, const double *coeff, const int n) const
   {
     // coeff[0] + coeff[1] x + ... + coeff[n-1] x^(n-1)
     double p = coeff[n - 1];
@@ -175,7 +170,7 @@ class ESP : public KSpace {
     return p;
   }
 
-  inline void poly_and_deriv_horner(const double x, const double *coeff, const int n, double &p,
+  void poly_and_deriv_horner(const double x, const double *coeff, const int n, double &p,
                                     double &dp) const
   {
     // p(x) and dp/dx, Horner form
@@ -187,24 +182,24 @@ class ESP : public KSpace {
     }
   }
 
-  // t = (order * h / 2) * |q| / spreading_select_c
-  // returns ( (order/2 * poly(2t-1))^2 ), or 0 if t>1
-  inline double spreading_weight2_from_t(const double t) const
+  double spreading_weight2_from_t(const double t) const
   {
+    // t = (order * h / 2) * |q| / spreading_select_c
+    // returns ( (order/2 * poly(2t-1))^2 ), or 0 if t>1
     if (t > 1.0) return 0.0;
     const double x = 2.0 * t - 1.0;
-    const double appx = poly_horner(x, Fourier_spreading_coeff, Fourier_spreading_order);
+    const double appx = poly_horner(x, spreading_poly_coeff, Fourier_spreading_order);
     const double w = 0.5 * order * appx;
     return w * w;
   }
 
-  // integer-form helper: t = scale * abs_index
-  inline double spreading_weight2_from_abs_index(const int abs_index, const double scale) const
+  double spreading_weight2_from_abs_index(const int abs_index, const double scale) const
   {
+    // integer-form helper: t = scale * abs_index
     return spreading_weight2_from_t(scale * (double) abs_index);
   }
 
-  inline double gf_denom_psw(const double &kx, const double &ky, const double &kz, const double &hx,
+  double gf_denom_psw(const double &kx, const double &ky, const double &kz, const double &hx,
                              const double &hy, const double &hz) const
   {
     int Nmax = (differentiation_flag == 0) ? 2 : 0;
