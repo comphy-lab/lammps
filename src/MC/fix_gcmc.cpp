@@ -2577,8 +2577,8 @@ void FixGCMC::write_restart(FILE *fp)
   int nglobalvals = 12;
   int nlocalvals = comm->nprocs;
   int ntotalvals = nglobalvals + nlocalvals;
-  double list[ntotalvals];
-  
+  //  double list[ntotalvals];
+  std::vector<double> list(ntotalvals);
   int n = 0;
   list[n++] = random_equal->state();
   list[n++] = ubuf(next_reneighbor).d;
@@ -2599,7 +2599,7 @@ void FixGCMC::write_restart(FILE *fp)
   if (comm->me == 0) {
     int size =  ntotalvals * sizeof(double);
     fwrite(&size, sizeof(int), 1, fp);
-    fwrite(list, sizeof(double), ntotalvals, fp);
+    fwrite(&list[0], sizeof(double), ntotalvals, fp);
   }
 }
 
