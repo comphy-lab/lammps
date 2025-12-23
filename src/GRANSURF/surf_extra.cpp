@@ -106,11 +106,10 @@ int overlap_sphere_tri(double *xsphere, double radius,
   double a[3],point[3],edge[3],pvec[3],xproduct[3];
 
   // A = vector from P1 to Xsphere
+  // alpha = distance from Xsphere to triangle plane
+  // pt = projection of Xsphere onto triangle plane
 
   MathExtra::sub3(xsphere,p1,a);
-
-  // pt = projected point on infinite triangle plane
-
   double alpha = MathExtra::dot3(a,norm);
   pt[0] = xsphere[0] - alpha*norm[0];
   pt[1] = xsphere[1] - alpha*norm[1];
@@ -122,9 +121,8 @@ int overlap_sphere_tri(double *xsphere, double radius,
   // pvec = vector from triangle vertex to projected point
   // xproduct = cross product of edge with pvec
   // if dot product of xproduct with norm < 0.0 for any of 3 edges,
-  //   (and pvec isn't parallel with edge)
+  //   (and pvec isn't parallel with edge),
   //   projected point is outside tri
-  // NOTE: worry about round-off for pt being on edge or corner?
 
   int inside = 1;
   e12flag = e23flag = e31flag = 0;
@@ -163,7 +161,8 @@ int overlap_sphere_tri(double *xsphere, double radius,
     else inside = 0;
   }
 
-  // projected point is inside tri = interior or boundary
+  // projected point is inside tri = interior or boundary of tri
+  // the projected point is the nearest triangle point to sphere center
   // set ptflag = 1 for interior
   // set ptflag = -1,-2,-3 for 3 edges E12,E23,E31
   // set ptflag = -4,-5,-6 for 3 corner pts P1,P2,P3
@@ -185,12 +184,22 @@ int overlap_sphere_tri(double *xsphere, double radius,
     }
 
   // projected point is outside tri
-  // reset pt to nearest point to tri center
-  // set ptflag = -1,-2,-3 if pt on edges
-  // set ptflag = -4,-5,-6 if pt = corner pts
+  // reset pt to be nearest triangle point to sphere center
+  // if osum = 1, projected point is outside one edge
+  //   nearest tri pt must be on that edge
+  // if osum = 2, projected pt is outside two edges
+  //   nearest tri pt could be interior to either edge or on both (corner)
+  // set ptflag = -1,-2,-3 if nearest tri pt is interior to an edge
+  // set ptflag = -4,-5,-6 if nearest tri pt is a corner pt
 
   } else {
     osum = o12flag + o23flag + o31flag;
+
+    // projected point is outside a single edge
+    // 3 possible cases:
+    // nearest tri pt is interior to edge
+    // or nearest tri pt = either corner pt of edge
+    
     if (osum == 1) {
       if (o12flag) {
         lineflag = SurfExtra::nearest_point_line(xsphere,p1,p2,pt);
@@ -208,36 +217,58 @@ int overlap_sphere_tri(double *xsphere, double radius,
         else if (lineflag == -1) flag = -6;
         else flag = -4;
       }
+
+    // projected point is outside two edges
+    // 3 possible cases:
+    // nearest tri pt is interior to either of the two edges
+    //   (only possible if angle between 2 edges is obtuse)
+    // or nearest tri pt = corner point between the two edges
+
     } else {
       if (!o12flag) {
-        flag = -6;
-        pt[0] = p3[0];
-        pt[1] = p3[1];
-        pt[2] = p3[2];
+        lineflag = SurfExtra::nearest_point_line(xsphere,p2,p3,pt);
+        if (lineflag == 1) flag = -2;
+        else {
+          lineflag = SurfExtra::nearest_point_line(xsphere,p3,p1,pt);
+          if (lineflag == 1) flag = -3;
+          else {
+            flag = -6;
+            pt[0] = p3[0];
+            pt[1] = p3[1];
+            pt[2] = p3[2];
+          }
+        }
       } else if (!o23flag) {
-        flag = -4;
-        pt[0] = p1[0];
-        pt[1] = p1[1];
-        pt[2] = p1[2];
+        lineflag = SurfExtra::nearest_point_line(xsphere,p3,p1,pt);
+        if (lineflag == 1) flag = -3;
+        else {
+          lineflag = SurfExtra::nearest_point_line(xsphere,p1,p2,pt);
+          if (lineflag == 1) flag = -1;
+          else {
+            flag = -4;
+            pt[0] = p1[0];
+            pt[1] = p1[1];
+            pt[2] = p1[2];
+          }
+        }
       } else {
-        flag = -5;
-        pt[0] = p2[0];
-        pt[1] = p2[1];
-        pt[2] = p2[2];
+        lineflag = SurfExtra::nearest_point_line(xsphere,p1,p2,pt);
+        if (lineflag == 1) flag = -1;
+        else {
+          lineflag = SurfExtra::nearest_point_line(xsphere,p2,p3,pt);
+          if (lineflag == 1) flag = -2;
+          else {
+            flag = -5;
+            pt[0] = p2[0];
+            pt[1] = p2[1];
+            pt[2] = p2[2];
+          }
+        }
       }
     }
   }
 
-  // test if point is exactly a corner pt
-  // if so, reset ptwhich to corner pt
-
-  /*
-  if (pt[0] == p1[0] && pt[1] == p1[1] && pt[2] == p1[2]) flag == -4;
-  else if (pt[0] == p2[0] && pt[1] == p2[1] && pt[2] == p2[2]) flag == -5;
-  else if (pt[0] == p3[0] && pt[1] == p3[1] && pt[2] == p3[2]) flag == -6;
-  */
-
-  // R = vector from nearest pt on line to Xsphere center
+  // R = vector from nearest pt on triangle to Xsphere center
   // return flag if len(R) < sphere radius
   // else no contact, return 0
 
