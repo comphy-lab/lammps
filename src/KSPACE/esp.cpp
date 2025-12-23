@@ -154,8 +154,8 @@ ESP::~ESP()
   memory->destroy(part2grid);
   // memory->destroy(force_poly_coeff);
   // memory->destroy(energy_poly_coeff);
-  // memory->destroy(splitting_poly_coeff);
-  // memory->destroy(spreading_poly_coeff);
+  // memory->destroy(fourier_split_poly_coeff);
+  // memory->destroy(fourier_spread_poly_coeff);
 }
 
 /* ----------------------------------------------------------------------
@@ -928,11 +928,11 @@ void ESP::deallocate()
   if(energy_poly_coeff)
     memory->destroy(energy_poly_coeff);
 
-  if(splitting_poly_coeff)
-    memory->destroy(splitting_poly_coeff);
+  if(fourier_split_poly_coeff)
+    memory->destroy(fourier_split_poly_coeff);
 
-  if(spreading_poly_coeff)
-    memory->destroy(spreading_poly_coeff);
+  if(fourier_spread_poly_coeff)
+    memory->destroy(fourier_spread_poly_coeff);
 
   delete fft1;
   delete fft2;
@@ -1228,11 +1228,11 @@ void ESP::compute_gf_ik()
             wx = 0.00;
             if(ph_2_kx_c <= 1.00){
                 ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
-                double Fourier_spreading_appx = spreading_poly_coeff[0];
+                double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
                 double Fourier_spreading_r = 1.0;
-                for(int i=1; i<Fourier_spreading_order; i++){
+                for(int i=1; i<fourier_spreading_order; i++){
                     Fourier_spreading_r *= ph_2_kx_c;
-                    Fourier_spreading_appx += spreading_poly_coeff[i] * Fourier_spreading_r;
+                    Fourier_spreading_appx += fourier_spread_poly_coeff[i] * Fourier_spreading_r;
                 }
                 wx = order / 2.0 * Fourier_spreading_appx;
                 wx = wx * wx;
@@ -1245,11 +1245,11 @@ void ESP::compute_gf_ik()
               wy = 0.00;
               if(ph_2_ky_c <= 1.00){
                 ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
-                double Fourier_spreading_appx = spreading_poly_coeff[0];
+                double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
                 double Fourier_spreading_r = 1.0;
-                for(int i=1; i<Fourier_spreading_order; i++){
+                for(int i=1; i<fourier_spreading_order; i++){
                     Fourier_spreading_r *= ph_2_ky_c;
-                    Fourier_spreading_appx += spreading_poly_coeff[i] * Fourier_spreading_r;
+                    Fourier_spreading_appx += fourier_spread_poly_coeff[i] * Fourier_spreading_r;
                 }
                 wy = order / 2.0 * Fourier_spreading_appx;
                 wy = wy * wy;
@@ -1262,11 +1262,11 @@ void ESP::compute_gf_ik()
                 wz = 0.00;
                 if(ph_2_kz_c <= 1.00){
                   ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
-                  double Fourier_spreading_appx = spreading_poly_coeff[0];
+                  double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
                   double Fourier_spreading_r = 1.0;
-                  for(int i=1; i<Fourier_spreading_order; i++){
+                  for(int i=1; i<fourier_spreading_order; i++){
                     Fourier_spreading_r *= ph_2_kz_c;
-                    Fourier_spreading_appx += spreading_poly_coeff[i] * Fourier_spreading_r;
+                    Fourier_spreading_appx += fourier_spread_poly_coeff[i] * Fourier_spreading_r;
                   }
                   wz = order / 2.0 * Fourier_spreading_appx;
                   wz = wz * wz;
@@ -1277,11 +1277,11 @@ void ESP::compute_gf_ik()
                 dot2 = 0.00;
                 if(k_rc_c <= 1.00){
                   k_rc_c = 2.0 * k_rc_c - 1.0;
-                  double Fourier_poly_appx = splitting_poly_coeff[0];
+                  double Fourier_poly_appx = fourier_split_poly_coeff[0];
                   double Fourier_poly_r = 1.0;
                   for(int i=1; i<num_of_Fourier_poly; i++){
                     Fourier_poly_r *= k_rc_c;
-                    Fourier_poly_appx += splitting_poly_coeff[i] * Fourier_poly_r;
+                    Fourier_poly_appx += fourier_split_poly_coeff[i] * Fourier_poly_r;
                   }
                   dot2 = 2 * 3.14159265 * Fourier_poly_appx / (qx*qx+qy*qy+qz*qz);
                 }
@@ -1370,11 +1370,11 @@ void ESP::compute_gf_ik_triclinic()
             wx = 0.00;
             if (ph_2_kx_c <= 1.00) {
               ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
-              double Fourier_spreading_appx = spreading_poly_coeff[0];
+              double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
               double Fourier_spreading_r = 1.0;
-              for (int i = 1; i < Fourier_spreading_order; i++) {
+              for (int i = 1; i < fourier_spreading_order; i++) {
                 Fourier_spreading_r *= ph_2_kx_c;
-                Fourier_spreading_appx += spreading_poly_coeff[i] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[i] * Fourier_spreading_r;
               }
               wx = order / 2.0 * Fourier_spreading_appx;
               wx = wx * wx;
@@ -1387,11 +1387,11 @@ void ESP::compute_gf_ik_triclinic()
               wy = 0.00;
               if (ph_2_ky_c <= 1.00) {
                 ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
-                double Fourier_spreading_appx = spreading_poly_coeff[0];
+                double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
                 double Fourier_spreading_r = 1.0;
-                for (int i = 1; i < Fourier_spreading_order; i++) {
+                for (int i = 1; i < fourier_spreading_order; i++) {
                   Fourier_spreading_r *= ph_2_ky_c;
-                  Fourier_spreading_appx += spreading_poly_coeff[i] * Fourier_spreading_r;
+                  Fourier_spreading_appx += fourier_spread_poly_coeff[i] * Fourier_spreading_r;
                 }
                 wy = order / 2.0 * Fourier_spreading_appx;
                 wy = wy * wy;
@@ -1404,11 +1404,11 @@ void ESP::compute_gf_ik_triclinic()
                 wz = 0.00;
                 if (ph_2_kz_c <= 1.00) {
                   ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
-                  double Fourier_spreading_appx = spreading_poly_coeff[0];
+                  double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
                   double Fourier_spreading_r = 1.0;
-                  for (int i = 1; i < Fourier_spreading_order; i++) {
+                  for (int i = 1; i < fourier_spreading_order; i++) {
                     Fourier_spreading_r *= ph_2_kz_c;
-                    Fourier_spreading_appx += spreading_poly_coeff[i] * Fourier_spreading_r;
+                    Fourier_spreading_appx += fourier_spread_poly_coeff[i] * Fourier_spreading_r;
                   }
                   wz = order / 2.0 * Fourier_spreading_appx;
                   wz = wz * wz;
@@ -1429,11 +1429,11 @@ void ESP::compute_gf_ik_triclinic()
                 dot2 = 0.00;
                 if (k_rc_c <= 1.00) {
                   k_rc_c = 2.0 * k_rc_c - 1.0;
-                  double Fourier_poly_appx = splitting_poly_coeff[0];
+                  double Fourier_poly_appx = fourier_split_poly_coeff[0];
                   double Fourier_poly_r = 1.0;
                   for (int i = 1; i < num_of_Fourier_poly; i++) {
                     Fourier_poly_r *= k_rc_c;
-                    Fourier_poly_appx += splitting_poly_coeff[i] * Fourier_poly_r;
+                    Fourier_poly_appx += fourier_split_poly_coeff[i] * Fourier_poly_r;
                   }
                   dot2 = 2 * MY_PI * Fourier_poly_appx / (qx * qx + qy * qy + qz * qz);
                 } else
@@ -1587,7 +1587,7 @@ void ESP::compute_gf_ad()
         const double x = 2.0 * krc_old - 1.0;
 
         double poly, dpoly_dx;
-        poly_and_deriv_horner(x, splitting_poly_coeff, num_of_Fourier_poly, poly, dpoly_dx);
+        poly_and_deriv_horner(x, fourier_split_poly_coeff, num_of_Fourier_poly, poly, dpoly_dx);
 
         // Your original virial construction equals: poly_virial = 2*krc_old * dpoly/dx
         const double poly_virial = 2.0 * krc_old * dpoly_dx;
@@ -1667,11 +1667,11 @@ void ESP::compute_sf_precoeff()
           wx0[i] = 0.00;
           if(ph_2_kx_c <= 1.00){
             ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_kx_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wx0[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -1680,11 +1680,11 @@ void ESP::compute_sf_precoeff()
           wx1[i] = 0.00;
           if(ph_2_kx_c <= 1.00){
             ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_kx_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wx1[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -1693,11 +1693,11 @@ void ESP::compute_sf_precoeff()
           wx2[i] = 0.00;
           if(ph_2_kx_c <= 1.00){
             ph_2_kx_c = 2.0 * ph_2_kx_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_kx_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wx2[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -1710,11 +1710,11 @@ void ESP::compute_sf_precoeff()
           wy0[i] = 0.00;
           if(ph_2_ky_c <= 1.00){
             ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_ky_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wy0[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -1723,11 +1723,11 @@ void ESP::compute_sf_precoeff()
           wy1[i] = 0.00;
           if(ph_2_ky_c <= 1.00){
             ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_ky_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wy1[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -1736,11 +1736,11 @@ void ESP::compute_sf_precoeff()
           wy2[i] = 0.00;
           if(ph_2_ky_c <= 1.00){
             ph_2_ky_c = 2.0 * ph_2_ky_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_ky_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wy2[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -1753,11 +1753,11 @@ void ESP::compute_sf_precoeff()
           wz0[i] = 0.00;
           if(ph_2_kz_c <= 1.00){
             ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_kz_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wz0[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -1767,11 +1767,11 @@ void ESP::compute_sf_precoeff()
           wz1[i] = 0.00;
           if(ph_2_kz_c <= 1.00){
             ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_kz_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wz1[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -1780,11 +1780,11 @@ void ESP::compute_sf_precoeff()
           wz2[i] = 0.00;
           if(ph_2_kz_c <= 1.00){
             ph_2_kz_c = 2.0 * ph_2_kz_c - 1.0;
-            double Fourier_spreading_appx = spreading_poly_coeff[0];
+            double Fourier_spreading_appx = fourier_spread_poly_coeff[0];
             double Fourier_spreading_r = 1.0;
-            for(int ii=1; ii<Fourier_spreading_order; ii++){
+            for(int ii=1; ii<fourier_spreading_order; ii++){
                 Fourier_spreading_r *= ph_2_kz_c;
-                Fourier_spreading_appx += spreading_poly_coeff[ii] * Fourier_spreading_r;
+                Fourier_spreading_appx += fourier_spread_poly_coeff[ii] * Fourier_spreading_r;
             }
             wz2[i] = order / 2.0 * Fourier_spreading_appx;
           }
@@ -2833,8 +2833,8 @@ void ESP::build_table(double algorithm_accuracy, double spreading_accuracy)
   poly_coeff.clear();
   fourier_poly(accuracy_relative, 0.1*accuracy_relative, select_c, Lambda_0, poly_coeff);
   num_of_Fourier_poly = poly_coeff.size();
-  memory->create(splitting_poly_coeff, num_of_Fourier_poly, "ESP:splitting_poly_coeff");
-  for (int i = 0; i < num_of_Fourier_poly; i++) splitting_poly_coeff[i] = poly_coeff[i];
+  memory->create(fourier_split_poly_coeff, num_of_Fourier_poly, "ESP:fourier_split_poly_coeff");
+  for (int i = 0; i < num_of_Fourier_poly; i++) fourier_split_poly_coeff[i] = poly_coeff[i];
   if (me == 0) utils::logmesg(lmp," Fourier poly size: {}\n",num_of_Fourier_poly);
 
   // spreading kernel in real space - need to be consistent with the spreading accuracy
@@ -2860,10 +2860,10 @@ void ESP::build_table(double algorithm_accuracy, double spreading_accuracy)
   // spreading kernel in Fourier space
   poly_coeff.clear();
   spread_fourier_poly(spreading_accuracy, 0.1*spreading_accuracy, spreading_select_c, spreading_Lambda_0, poly_coeff);
-  Fourier_spreading_order = poly_coeff.size();
-  memory->create(spreading_poly_coeff, Fourier_spreading_order, "ESP:spreading_poly_coeff");
-  for (int i = 0; i < Fourier_spreading_order; i++) spreading_poly_coeff[i] = poly_coeff[i];
-  if (me == 0) utils::logmesg(lmp," Fourier spreading poly size: {}\n",Fourier_spreading_order);
+  fourier_spreading_order = poly_coeff.size();
+  memory->create(fourier_spread_poly_coeff, fourier_spreading_order, "ESP:fourier_spread_poly_coeff");
+  for (int i = 0; i < fourier_spreading_order; i++) fourier_spread_poly_coeff[i] = poly_coeff[i];
+  if (me == 0) utils::logmesg(lmp," Fourier spreading poly size: {}\n",fourier_spreading_order);
 }
 
 
