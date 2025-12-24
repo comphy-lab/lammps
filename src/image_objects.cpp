@@ -113,7 +113,7 @@ std::vector<triangle> transform(const std::vector<triangle> &triangles, const ve
 // ^        ^  ^
 // bot    mid tip
 
-void ArrowObj::construct(double _tipl, double _tipw, double radius, int res)
+ArrowObj::ArrowObj(double _tipl, double _tipw, double radius, int res)
 {
   triangles.clear();
 
@@ -162,8 +162,8 @@ void ArrowObj::construct(double _tipl, double _tipw, double radius, int res)
 void ArrowObj::draw(Image *img, const double *color, const double *center, double length,
                     const double *data, double scale, double opacity)
 {
-  // construct arrow template with default settings if not already done
-  if (!triangles.size()) construct();
+  // nothing to draw
+  if (!triangles.size()) return;
 
   // transform the template into the arrow object we want to draw
 
@@ -206,7 +206,7 @@ void ArrowObj::draw(Image *img, const double *color, const double *center, doubl
 // ^  ^
 //bot top
 
-void ConeObj::construct(double length, double topwidth, double botwidth, int flag, int resolution)
+ConeObj::ConeObj(double length, double topwidth, double botwidth, int flag, int resolution)
 {
   triangles.clear();
 
@@ -317,7 +317,7 @@ void EllipsoidObj::refine()
 
 // build list of triangles by refinining the triangles of an octahedron
 
-void EllipsoidObj::construct(int level)
+EllipsoidObj::EllipsoidObj(int level)
 {
   // define edges of an octahedron
   constexpr vec3 OCT1 = {-1.0, 0.0, 0.0};
@@ -353,8 +353,8 @@ void EllipsoidObj::draw(Image *img, int flag, const double *color, const double 
     return;
   }
 
-  // construct ellipsoid template with default settings if not already done
-  if (!triangles.size()) construct();
+  // nothing to draw
+  if (!triangles.size()) return;
 
   // draw triangles
 
@@ -401,8 +401,8 @@ void EllipsoidObj::draw(LAMMPS_NS::Image *img, int flag, const double *color, co
     return;
   }
 
-  // construct ellipsoid template with default settings if not already done
-  if (!triangles.size()) construct();
+  // nothing to draw
+  if (!triangles.size()) return;
 
   // get rotation matrix for body frame to box frame
   MathExtra::quat_to_mat(quat, p);

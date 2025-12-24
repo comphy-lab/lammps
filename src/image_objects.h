@@ -49,8 +49,7 @@ namespace ImageObjects {
   class ArrowObj {
    public:
     // build an arrow template with length 1 in (1.0, 0.0, 0.0) direction as list of triangles
-    void construct(double _tipl = 0.2, double _tipw = 0.1, double radius = 0.1,
-                   int res = RESOLUTION);
+    ArrowObj(double _tipl = 0.2, double _tipw = 0.1, double radius = 0.1, int res = RESOLUTION);
 
     // draw custom arrow from unit template
     void draw(Image *, const double *, const double *, double, const double *, double, double);
@@ -68,7 +67,7 @@ namespace ImageObjects {
     // build a truncated cone in (1.0, 0.0, 0.0) direction centered at (0.0, 0.0, 0.0)
     // with given length and top / bottom diameter as list of triangles.
     // flag is bitmap deciding of  top / bottom or side is shown: 1 is top, 2 is bottom, 4 is side
-    void construct(double, double, double, int flag = 7, int res = RESOLUTION);
+    ConeObj(double, double, double, int flag = 7, int res = RESOLUTION);
 
     // draw triangle mesh for region. flag 1 is triangles, flag 2 is wireframe, flag 3 both
     void draw(Image *, int, const vec3 &, const vec3 &, const double *, Region *, double, double);
@@ -79,14 +78,14 @@ namespace ImageObjects {
 
   class EllipsoidObj {
    public:
-    // construct triangle mesh by refinining the triangles of an octahedron
-    void construct(int level = DEFLEVEL);
+    // construct (spherical) triangle mesh by refinining the triangles of an octahedron
+    EllipsoidObj(int level = DEFLEVEL);
 
     // draw ellipsoid from triangle mesh for ellipsoid particles
     void draw(Image *, int, const double *, const double *, const double *, const double *, double,
               double opacity = 1.0);
 
-    // draw ellipsoid from triangle mesh for regions
+    // draw ellipsoid from triangle mesh for ellipsoid regions
     void draw(Image *, int, const double *, const double *, const double *, Region *, double,
               double opacity = 1.0);
 

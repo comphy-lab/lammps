@@ -1253,8 +1253,7 @@ void DumpImage::create_image()
       if (ecolor == TYPE) {
         color = colortype[type[j]];
       }
-      EllipsoidObj e;
-      e.construct(elevel);
+      EllipsoidObj e(elevel);
       e.draw(image, estyle, color, x[j], avec_ellipsoid->bonus[ellipsoid[j]].shape,
              avec_ellipsoid->bonus[ellipsoid[j]].quat, ediamvalue, aopacity[type[j]]);
     }
@@ -1605,10 +1604,8 @@ void DumpImage::create_image()
       } else if (fixvec[i] == TRIANGLE) {
         image->draw_triangle(&fixarray[i][1], &fixarray[i][4], &fixarray[i][7], color, opacity);
       } else if (fixvec[i] == ARROW) {
-        ArrowObj a;
-        a.construct();
-        a.draw(image, color, &fixarray[i][1], fixarray[i][7], &fixarray[i][4], fixarray[i][8],
-               opacity);
+        ArrowObj().draw(image, color, &fixarray[i][1], fixarray[i][7], &fixarray[i][4],
+                        fixarray[i][8], opacity);
       } else if (fixvec[i] == BOND) {
         int type1 = static_cast<int>(fixarray[i][0] - 1.0) % ntypes + 1;
         int type2 = static_cast<int>(fixarray[i][1] - 1.0) % ntypes + 1;
@@ -1722,7 +1719,7 @@ void DumpImage::create_image()
     } else {
       std::string regstyle = reg.ptr->style;
 
-      // prism is just a special case of block so we can handle them together
+      // prism differs from block only in the positions of the corners; handle them together
       if ((regstyle == "block") || (regstyle == "prism")) {
 
         // set the positions of the corners
@@ -1761,7 +1758,6 @@ void DumpImage::create_image()
           reg.ptr->forward_transform(corners[i][0], corners[i][1], corners[i][2]);
 
 #define CPTR(idx) corners[idx].data()
-
         if (reg.style == FRAME) {
           image->draw_cylinder(CPTR(0), CPTR(1), reg.color, reg.diameter, 3);
           image->draw_cylinder(CPTR(1), CPTR(2), reg.color, reg.diameter, 3);
@@ -1818,14 +1814,14 @@ void DumpImage::create_image()
 
         // construct triangle mesh and store direction and hi/lo center coordinates
         vec3 lo, hi;
-        ConeObj c;
+        ConeObj c(0.0,0.0,0.0,0,2);
         double xdir = 0.0, ydir = 0.0, zdir = 0.0;
 
         if (regstyle == "cone") {
           auto *myreg = dynamic_cast<RegCone *>(reg.ptr);
           // inconsistent style. should not happen.
           if (!myreg) continue;
-          c.construct(myreg->hi - myreg->lo, myreg->radiushi, myreg->radiuslo, flag);
+          c = std::move(ConeObj(myreg->hi - myreg->lo, myreg->radiushi, myreg->radiuslo, flag));
           if (myreg->axis == 'x') {
             xdir = 1.0;
             lo = {myreg->lo, myreg->c1, myreg->c2};
@@ -1848,7 +1844,7 @@ void DumpImage::create_image()
           if (!myreg) continue;
 
           radius = myreg->radius;
-          c.construct(myreg->hi - myreg->lo, myreg->radius, myreg->radius, flag);
+          c = std::move(ConeObj(myreg->hi - myreg->lo, myreg->radius, myreg->radius, flag));
           if (myreg->axis == 'x') {
             xdir = 1.0;
             lo = {myreg->lo, myreg->c1, myreg->c2};
@@ -1899,8 +1895,7 @@ void DumpImage::create_image()
         center[1] = myreg->yc;
         center[2] = myreg->zc;
         double radius[3] = {myreg->a, myreg->b, myreg->c};
-        EllipsoidObj e;
-        e.construct(4);
+        EllipsoidObj e(4);
         if (reg.style == FRAME) {
           e.draw(image, 2, reg.color, center, radius, reg.ptr, reg.diameter, 1.0);
         } else if ((reg.style == FILLED) || (reg.style == TRANSPARENT)) {
@@ -1920,8 +1915,7 @@ void DumpImage::create_image()
         if (reg.style == FRAME) {
           // use wireframe mode of ellipsoid with three identical radii
           double radius[3] = {myreg->radius, myreg->radius, myreg->radius};
-          EllipsoidObj e;
-          e.construct(4);
+          EllipsoidObj e(4);
           e.draw(image, 2, reg.color, center, radius, reg.ptr, reg.diameter, 1.0);
         } else if ((reg.style == FILLED) || (reg.style == TRANSPARENT)) {
           double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
