@@ -53,7 +53,7 @@ through periodic boundaries.
 
 If the *wrap* flag is used with an argument of *yes*, *true*, *on* or
 *1* the computed center of mass is wrapped back into the simulation
-cell.  With an argument of *no*, *false", *off* or 0 it is not (the
+cell.  With an argument of *no*, *false*, *off* or 0 it is not (the
 default).
 
 Note that only atoms in the specified group contribute to the
