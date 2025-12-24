@@ -68,28 +68,6 @@ inline double radscale(const double *shape, const vec3 &pos)
                pos[2] / shape[2] * pos[2] / shape[2]));
 }
 
-// refine triangle mesh by replacing each triangle with four triangles
-//
-//    /\            /\
-//   /  \          /__\
-//  /    \   -->  /\  /\
-// /______\      /__\/__\
-
-std::vector<triangle> refine(const std::vector<triangle> &triangles)
-{
-  std::vector<triangle> newlist;
-  for (const auto &tri : triangles) {
-    vec3 posa = vec3norm(tri[0] + tri[2]);
-    vec3 posb = vec3norm(tri[0] + tri[1]);
-    vec3 posc = vec3norm(tri[1] + tri[2]);
-    newlist.push_back({tri[0], posb, posa});
-    newlist.push_back({posb, tri[1], posc});
-    newlist.push_back({posa, posb, posc});
-    newlist.push_back({posa, posc, tri[2]});
-  }
-  return newlist;
-}
-
 // re-orient list of triangles to point along "dir", then scale and translate it.
 std::vector<triangle> transform(const std::vector<triangle> &triangles, const vec3 &dir,
                                 const vec3 &offs, double len, double width)
@@ -315,6 +293,28 @@ void ConeObj::draw(Image *img, int flag, const vec3 &dir, const vec3 &mid, const
 
 // construct an ellipsoid from primitives, mostly triangles and cylinders, and draw them
 
+// refine triangle mesh by replacing each triangle with four triangles
+//
+//    /\            /\
+//   /  \          /__\
+//  /    \   -->  /\  /\
+// /______\      /__\/__\
+
+void EllipsoidObj::refine()
+{
+  std::vector<triangle> newlist;
+  for (const auto &tri : triangles) {
+    vec3 posa = vec3norm(tri[0] + tri[2]);
+    vec3 posb = vec3norm(tri[0] + tri[1]);
+    vec3 posc = vec3norm(tri[1] + tri[2]);
+    newlist.push_back({tri[0], posb, posa});
+    newlist.push_back({posb, tri[1], posc});
+    newlist.push_back({posa, posb, posc});
+    newlist.push_back({posa, posc, tri[2]});
+  }
+  triangles = std::move(newlist);
+}
+
 // build list of triangles by refinining the triangles of an octahedron
 
 EllipsoidObj::EllipsoidObj(int level)
@@ -332,7 +332,7 @@ EllipsoidObj::EllipsoidObj(int level)
                {OCT1, OCT3, OCT5}, {OCT5, OCT3, OCT2}, {OCT2, OCT3, OCT6}, {OCT6, OCT3, OCT1}};
 
   // refine the list of triangles to the desired level
-  for (int i = 1; i < level; ++i) triangles = std::move(refine(triangles));
+  for (int i = 1; i < level; ++i) refine();
 }
 
 // draw method for drawing ellipsoids from a region which has its own transformation function
@@ -380,7 +380,7 @@ void EllipsoidObj::draw(Image *img, int flag, const double *color, const double 
 
 // draw method for drawing ellipsoids from per-atom data which has a quaternion
 // and the shape list to define the orientation and stretch
-void EllipsoidObj::draw(LAMMPS_NS::Image *img, int flag, const double *color, const double *center,
+void EllipsoidObj::draw(Image *img, int flag, const double *color, const double *center,
                         const double *shape, const double *quat, double diameter, double opacity)
 {
   // select between triangles or cylinders or both
@@ -455,6 +455,87 @@ void EllipsoidObj::draw(LAMMPS_NS::Image *img, int flag, const double *color, co
       img->draw_cylinder(e1.data(), e2.data(), color, diameter, 3, opacity);
       img->draw_cylinder(e2.data(), e3.data(), color, diameter, 3, opacity);
       img->draw_cylinder(e3.data(), e1.data(), color, diameter, 3, opacity);
+    }
+  }
+}
+
+// refine triangle mesh by replacing each triangle with four triangles
+//
+//    /\            /\
+//   /  \          /__\
+//  /    \   -->  /\  /\
+// /______\      /__\/__\
+
+void PlaneObj::refine()
+{
+  std::vector<triangle> newlist;
+  for (const auto &tri : triangles) {
+    vec3 posa = 0.5 * (tri[0] + tri[2]);
+    vec3 posb = 0.5 * (tri[0] + tri[1]);
+    vec3 posc = 0.5 * (tri[1] + tri[2]);
+    newlist.push_back({tri[0], posb, posa});
+    newlist.push_back({posb, tri[1], posc});
+    newlist.push_back({posa, posb, posc});
+    newlist.push_back({posa, posc, tri[2]});
+  }
+  triangles = std::move(newlist);
+}
+
+// construct a plane from many triangles (so we can truncate it to the box dimensions)
+
+PlaneObj::PlaneObj(int level)
+{
+  // define unit plane with norm (1.0,0.0,0.0) from two triangles
+  triangles = {{vec3{0.0, 1.0, 1.0}, vec3{0.0, -1.0, -1.0}, vec3{0.0, 1.0, -1.0}},
+               {vec3{0.0, -1.0, -1.0}, vec3{0.0, 1.0, 1.0}, vec3{0.0, -1.0, 1.0}}};
+
+  // refine the list of triangles to the desired level
+  for (int i = 1; i < level; ++i) refine();
+}
+
+// draw method for drawing planes from a region which has its own transformation function
+void PlaneObj::draw(Image *img, int flag, const double *color, const double *center,
+                    const double *norm, const double *boxlo, const double *boxhi, double scale,
+                    Region *reg, double diameter, double opacity)
+{
+  // select between triangles or cylinders
+  bool doframe = false;
+  bool dotri = false;
+  if (flag == 1) dotri = true;
+  if (flag == 2) doframe = true;
+  if (diameter <= 0.0) doframe = false;
+  if (!dotri && !doframe) return;    // nothing to do
+
+  // nothing to draw
+  if (!triangles.size()) return;
+
+  // draw triangles
+
+  const vec3 dir{norm[0], norm[1], norm[2]};
+  const vec3 offs{center[0], center[1], center[2]};
+  auto plane = std::move(transform(triangles, dir, offs, scale, scale));
+
+  for (auto tri : plane) {
+
+    // set size and move
+    reg->forward_transform(tri[0][0], tri[0][1], tri[0][2]);
+    reg->forward_transform(tri[1][0], tri[1][1], tri[1][2]);
+    reg->forward_transform(tri[2][0], tri[2][1], tri[2][2]);
+
+    // skip drawing triangle if all corners are outside the box in one direction
+    int n = 0;
+    for (int i = 0; i < 3; ++i) {
+      if (((tri[0][i] < boxlo[i]) || (tri[0][i] > boxhi[i])) &&
+          ((tri[1][i] < boxlo[i]) || (tri[1][i] > boxhi[i])) &&
+          ((tri[2][i] < boxlo[i]) || (tri[2][i] > boxhi[i]))) ++n;
+    }
+    if (n) continue;
+
+    if (dotri) img->draw_triangle(tri[0].data(), tri[1].data(), tri[2].data(), color, opacity);
+    if (doframe) {
+      img->draw_cylinder(tri[0].data(), tri[1].data(), color, diameter, 3, opacity);
+      img->draw_cylinder(tri[0].data(), tri[2].data(), color, diameter, 3, opacity);
+      img->draw_cylinder(tri[1].data(), tri[2].data(), color, diameter, 3, opacity);
     }
   }
 }

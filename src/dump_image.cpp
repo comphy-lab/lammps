@@ -48,6 +48,7 @@
 #include "region_cone.h"
 #include "region_cylinder.h"
 #include "region_ellipsoid.h"
+#include "region_plane.h"
 #include "region_prism.h"
 #include "region_sphere.h"
 #include "thermo.h"
@@ -1882,10 +1883,7 @@ void DumpImage::create_image()
         // inconsistent style. should not happen.
         if (!myreg) continue;
 
-        double center[3];
-        center[0] = myreg->xc;
-        center[1] = myreg->yc;
-        center[2] = myreg->zc;
+        double center[3] = {myreg->xc, myreg->yc, myreg->zc};
         double radius[3] = {myreg->a, myreg->b, myreg->c};
         EllipsoidObj e(4);
         if (reg.style == FRAME) {
@@ -1895,15 +1893,31 @@ void DumpImage::create_image()
           e.draw(image, 1, reg.color, center, radius, reg.ptr, reg.diameter, opacity);
         }
 
+      } else if (regstyle == "plane") {
+        auto *myreg = dynamic_cast<RegPlane *>(reg.ptr);
+        // inconsistent style. should not happen.
+        if (!myreg) continue;
+
+        // determine draw style flags
+        int flag = 1;
+        double opacity = 1.0;
+        if (reg.style == FRAME) {
+          flag = 2;
+        } else if (reg.style == TRANSPARENT) {
+          opacity = reg.opacity;
+        }
+        double center[3] = {myreg->xp, myreg->yp, myreg->zp};
+        double scale = MathExtra::len3(domain->prd);
+        PlaneObj p(7);
+        p.draw(image, flag, reg.color, center, myreg->normal, domain->boxlo, domain->boxhi, scale,
+               myreg, reg.diameter, opacity);
+
       } else if (regstyle == "sphere") {
         auto *myreg = dynamic_cast<RegSphere *>(reg.ptr);
         // inconsistent style. should not happen.
         if (!myreg) continue;
 
-        double center[3];
-        center[0] = myreg->xc;
-        center[1] = myreg->yc;
-        center[2] = myreg->zc;
+        double center[3] = {myreg->xc, myreg->yc, myreg->zc};
         if (reg.style == FRAME) {
           // use wireframe mode of ellipsoid with three identical radii
           double radius[3] = {myreg->radius, myreg->radius, myreg->radius};
@@ -1914,6 +1928,7 @@ void DumpImage::create_image()
           myreg->forward_transform(center[0], center[1], center[2]);
           image->draw_sphere(center, reg.color, 2.0 * myreg->radius, opacity);
         }
+
       } else {
         if (comm->me == 0)
           error->warning(FLERR, "Region style {} is not yet supported by dump image", regstyle);

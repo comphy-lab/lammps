@@ -91,18 +91,21 @@ namespace ImageObjects {
 
    private:
     std::vector<triangle> triangles;
+    void refine();
   };
 
   class PlaneObj {
    public:
     // build a plane template with four triangles extending well outside the box
-    PlaneObj(const double *normal, const double *center, const double *boxlo, const double *boxhi);
+    PlaneObj(int level);
 
     // draw plane for region after transforming it.
-    void draw(Image *, int, Region *, const double *,double opacity = 1.0);
+    void draw(Image *, int, const double *, const double *, const double *, const double *,
+              const double *, double, Region *reg, double, double opacity = 1.0);
 
    private:
     std::vector<triangle> triangles;
+    void refine();
   };
 }    // namespace ImageObjects
 }    // namespace LAMMPS_NS
