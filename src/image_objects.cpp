@@ -485,9 +485,15 @@ void PlaneObj::refine()
 
 PlaneObj::PlaneObj(int level)
 {
-  // define unit plane with norm (1.0,0.0,0.0) from two triangles
-  triangles = {{vec3{0.0, 1.0, 1.0}, vec3{0.0, -1.0, -1.0}, vec3{0.0, 1.0, -1.0}},
-               {vec3{0.0, -1.0, -1.0}, vec3{0.0, 1.0, 1.0}, vec3{0.0, -1.0, 1.0}}};
+  // define edges and center of a square
+  constexpr vec3 SQ1 = {0.0, 1.0, 1.0};
+  constexpr vec3 SQ2 = {0.0, 1.0, -1.0};
+  constexpr vec3 SQ3 = {0.0, -1.0, -1.0};
+  constexpr vec3 SQ4 = {0.0, -1.0, 1.0};
+  constexpr vec3 CEN = {0.0, 0.0, 0.0};
+
+  // define unit plane with norm (1.0,0.0,0.0) from four triangles
+  triangles = {{SQ1, CEN, SQ2}, {SQ2, CEN, SQ3}, {SQ3, CEN, SQ4}, {SQ4, CEN, SQ1}};
 
   // refine the list of triangles to the desired level
   for (int i = 1; i < level; ++i) refine();
@@ -527,7 +533,8 @@ void PlaneObj::draw(Image *img, int flag, const double *color, const double *cen
     for (int i = 0; i < 3; ++i) {
       if (((tri[0][i] < boxlo[i]) || (tri[0][i] > boxhi[i])) &&
           ((tri[1][i] < boxlo[i]) || (tri[1][i] > boxhi[i])) &&
-          ((tri[2][i] < boxlo[i]) || (tri[2][i] > boxhi[i]))) ++n;
+          ((tri[2][i] < boxlo[i]) || (tri[2][i] > boxhi[i])))
+        ++n;
     }
     if (n) continue;
 

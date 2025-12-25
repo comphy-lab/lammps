@@ -1908,7 +1908,7 @@ void DumpImage::create_image()
         }
         double center[3] = {myreg->xp, myreg->yp, myreg->zp};
         double scale = MathExtra::len3(domain->prd);
-        PlaneObj p(7);
+        PlaneObj p(6);
         p.draw(image, flag, reg.color, center, myreg->normal, domain->boxlo, domain->boxhi, scale,
                myreg, reg.diameter, opacity);
 
