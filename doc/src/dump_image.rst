@@ -246,6 +246,9 @@ Here are five sample images, rendered as JPEG or PNG files.
 
    <center>(Click to see the full-size images)</center>
 
+A detailed discussion of advanced graphics settings and workflows
+with examples is provided in the :doc:`Howto_viz` howto.
+
 Only atoms in the specified group are rendered in the image.  The
 :doc:`dump_modify region and thresh <dump_modify>` commands can also
 alter what atoms are included in the image.  The filename suffix
@@ -274,7 +277,7 @@ described below.
 
 To write out JPEG and PNG format files, you must build LAMMPS with
 support for the corresponding JPEG or PNG library.  To convert images
-into movies, LAMMPS has to be compiled with the -DLAMMPS_FFMPEG
+into movies, LAMMPS has to be compiled with the ``-DLAMMPS_FFMPEG``
 flag. See the :doc:`Build settings <Build_settings>` page for
 details.
 
@@ -587,24 +590,28 @@ and repeats itself for types > 6.
    Support for several fix styles added and more flexible color selection
 
 The *fix* keyword can be used with a :doc:`fix <fix>` that produces
-objects to be drawn.  Below is a list of supported fixes:
+objects to be drawn.  Below is a table with links to the documentation
+of supported fix styles:
 
-* :doc:`fix graphics <fix_graphics>`
-* :doc:`fix graphics/arrows <fix_graphics_arrows>`
-* :doc:`fix indent <fix_indent>`
-* :doc:`fix smd/wall_surface <fix_smd_wall_surface>`
-* :doc:`fix wall/lj93 <fix_wall>`
-* :doc:`fix wall/lj126 <fix_wall>`
-* :doc:`fix wall/lj1043 <fix_wall>`
-* :doc:`fix wall/colloid <fix_wall>`
-* :doc:`fix wall/gran <fix_wall_gran>`
-* :doc:`fix wall/harmonic <fix_wall>`
-* :doc:`fix wall/harmonic/outside <fix_wall>`
-* :doc:`fix wall/lepton <fix_wall>`
-* :doc:`fix wall/morse <fix_wall>`
-* :doc:`fix wall/reflect <fix_wall_reflect>`
-* :doc:`fix wall/reflect/stochastic <fix_wall_reflect_stochastic>`
-* :doc:`fix wall/table <fix_wall>`
+.. table_from_list::
+   :columns: 4
+
+   * :doc:`fix graphics <fix_graphics>`
+   * :doc:`fix graphics/arrows <fix_graphics_arrows>`
+   * :doc:`fix indent <fix_indent>`
+   * :doc:`fix smd/wall_surface <fix_smd_wall_surface>`
+   * :doc:`fix wall/lj93 <fix_wall>`
+   * :doc:`fix wall/lj126 <fix_wall>`
+   * :doc:`fix wall/lj1043 <fix_wall>`
+   * :doc:`fix wall/colloid <fix_wall>`
+   * :doc:`fix wall/gran <fix_wall_gran>`
+   * :doc:`fix wall/harmonic <fix_wall>`
+   * :doc:`fix wall/harmonic/outside <fix_wall>`
+   * :doc:`fix wall/lepton <fix_wall>`
+   * :doc:`fix wall/morse <fix_wall>`
+   * :doc:`fix wall/reflect <fix_wall_reflect>`
+   * :doc:`fix wall/reflect/stochastic <fix_wall_reflect_stochastic>`
+   * :doc:`fix wall/table <fix_wall>`
 
 The fix keyword may be used multiple times to include visualizations of
 graphics objects from multiple fixes.  The fix keyword is followed by
@@ -775,110 +782,9 @@ parameter.  If *no* is set, no depth shading is performed.  The
 calculation of this effect can increase the cost of computing the image
 substantially by 5x or more, especially with larger images.  When used
 in combination with the *fsaa* keyword the computational cost of depth
-shading is particularly large.
-
-----------
-
-Image Quality Settings
-""""""""""""""""""""""
-
-The two keywords *fsaa* and *ssao* can be used to improve the image
-quality at the expense of additional computational cost to render the
-images. The images below show from left to right the same render with
-default settings, with *fsaa* added, with *ssao* added, and with both
-keywords added.
-
-.. |imagequality1| image:: JPG/image.default.png
-   :width: 24%
-.. |imagequality2| image:: JPG/image.fsaa.png
-   :width: 24%
-.. |imagequality3| image:: JPG/image.ssao.png
-   :width: 24%
-.. |imagequality4| image:: JPG/image.both.png
-   :width: 24%
-
-|imagequality1|  |imagequality2|  |imagequality3|  |imagequality4|
-
-----------
-
-A series of JPEG, PNG, or PPM images can be converted into a movie
-file and then played as a movie using commonly available tools. Using
-dump style *movie* automates this step and avoids the intermediate
-step of writing (many) image snapshot file. But LAMMPS has to be
-compiled with -DLAMMPS_FFMPEG and an FFmpeg executable have to be
-installed.
-
-To manually convert JPEG, PNG or PPM files into an animated GIF or
-MPEG or other movie file you can use:
-
-* a) Use the ImageMagick convert program.
-
-  .. code-block:: bash
-
-     convert *.jpg foo.gif
-     convert -loop 1 *.ppm foo.mpg
-
-  Animated GIF files from ImageMagick are not optimized. You can use
-  a program like gifsicle to optimize and thus massively shrink them.
-  MPEG files created by ImageMagick are in MPEG-1 format with a rather
-  inefficient compression and low quality compared to more modern
-  compression styles like MPEG-4, H.264, VP8, VP9, H.265 and so on.
-
-* b) Use QuickTime.
-
-  Select "Open Image Sequence" under the File menu Load the images into
-  QuickTime to animate them Select "Export" under the File menu Save the
-  movie as a QuickTime movie (\*.mov) or in another format.  QuickTime
-  can generate very high quality and efficiently compressed movie
-  files. Some of the supported formats require to buy a license and some
-  are not readable on all platforms until specific runtime libraries are
-  installed.
-
-* c) Use FFmpeg
-
-  FFmpeg is a command-line tool that is available on many platforms and
-  allows extremely flexible encoding and decoding of movies.
-
-  .. code-block:: bash
-
-     cat snap.*.jpg | ffmpeg -y -f image2pipe -c:v mjpeg -i - -b:v 2000k movie.m4v
-     cat snap.*.ppm | ffmpeg -y -f image2pipe -c:v ppm -i - -b:v 2400k movie.avi
-
-  Front ends for FFmpeg exist for multiple platforms. For more
-  information see the `FFmpeg homepage <https://ffmpeg.org/>`_
-
-----------
-
-Play the movie:
-
-* a) Use your browser to view an animated GIF movie.
-
-  Select "Open File" under the File menu
-  Load the animated GIF file
-
-* b) Use the freely available mplayer or ffplay tool to view a
-  movie. Both are available for multiple OSes and support a large
-  variety of file formats and decoders.
-
-  .. code-block:: bash
-
-     mplayer foo.mpg
-     ffplay bar.avi
-
-* c) Use the `Pizza.py <https://lammps.github.io/pizza/>`_
-  `animate tool <https://lammps.github.io/pizza/doc/animate.html>`_,
-  which works directly on a series of image files.
-
-  .. code-block:: python
-
-     a = animate("foo*.jpg")
-
-* d) QuickTime and other Windows- or macOS-based media players can
-  obviously play movie files directly. Similarly for corresponding tools
-  bundled with Linux desktop environments.  However, due to licensing
-  issues with some file formats, the formats may require installing
-  additional libraries, purchasing a license, or may not be
-  supported.
+shading is particularly large.  In case LAMMPS has been :doc:`compiled
+with OpenMP support <Build_basics>`, the SSAO processing is distributed
+across multiple threads.
 
 ----------
 
