@@ -623,7 +623,7 @@ void FixGraphics::end_of_step()
 
       double mid[3], vec[3];
       MathExtra::add3(gi.arrow.tip, gi.arrow.bot, vec);
-      MathExtra::scale3(0.5,vec,mid);
+      MathExtra::scale3(0.5, vec, mid);
       MathExtra::sub3(gi.arrow.tip, gi.arrow.bot, vec);
       imgparms[n][1] = mid[0];
       imgparms[n][2] = mid[1];
@@ -638,8 +638,8 @@ void FixGraphics::end_of_step()
     } else if (gi.style == PROGBAR) {
       ++n;
       if (gi.progbar.pstr) gi.progbar.progress = input->variable->compute_equal(gi.progbar.pvar);
-      // bracket into [0.0;1.0] rather than throwing an error for just a viz item
-      gi.progbar.progress = std::max(std::min(gi.progbar.progress, 1.0), 0.01);
+      // bracket into (0.0;1.0] rather than throwing an error for just a viz item
+      gi.progbar.progress = std::max(std::min(gi.progbar.progress, 1.0), 1.0e-10);
       switch (gi.progbar.dim) {
         case X:
           imgparms[n][1] = gi.progbar.pos[X] + (gi.progbar.progress - 0.5) * gi.progbar.length;

@@ -290,7 +290,7 @@ void Image::view_params(double boxxlo, double boxxhi, double boxylo,
   // sufficient to handle common cases where theta = 0 or 180 is degenerate?
 
   double dot = MathExtra::dot3(up,camDir);
-  if (fabs(dot) > 1.0-EPSILON) {
+  if (fabs(dot) > (1.0 - EPSILON)) {
     if (theta == 0.0) {
       camDir[0] = sin(EPSILON)*cos(phi);
       camDir[1] = sin(EPSILON)*sin(phi);
@@ -553,8 +553,7 @@ void Image::draw_sphere(const double *x, const double *surfaceColor, double diam
 
   double radius = 0.5*diameter;
   double radsq = radius*radius;
-  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist :
-    -tanPerPixel / zoom;
+  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist : -tanPerPixel / zoom;
   double pixelRadiusFull = radius / pixelWidth;
   int pixelRadius = std::lround(pixelRadiusFull) + 1;
 
@@ -573,7 +572,8 @@ void Image::draw_sphere(const double *x, const double *surfaceColor, double diam
   for (int iy = yc - pixelRadius; iy <= yc + pixelRadius; iy++) {
     for (int ix = xc - pixelRadius; ix <= xc + pixelRadius; ix++) {
       if (iy < 0 || iy >= height || ix < 0 || ix >= width) continue;
-      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0)) continue;
+      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0))
+        continue;
 
       double surface[3];
       surface[1] = ((iy - yc) - height_error) * pixelWidth;
@@ -617,8 +617,7 @@ void Image::draw_cube(const double *x, const double *surfaceColor, double diamet
   double dist = MathExtra::dot3(camPos,camDir) - MathExtra::dot3(xlocal,camDir);
 
   double radius = 0.5*diameter;
-  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist :
-    -tanPerPixel / zoom;
+  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist : -tanPerPixel / zoom;
 
   double halfWidth = diameter;
   double pixelHalfWidthFull = halfWidth / pixelWidth;
@@ -639,7 +638,8 @@ void Image::draw_cube(const double *x, const double *surfaceColor, double diamet
   for (int iy = yc - pixelHalfWidth; iy <= yc + pixelHalfWidth; iy ++) {
     for (int ix = xc - pixelHalfWidth; ix <= xc + pixelHalfWidth; ix ++) {
       if (iy < 0 || iy >= height || ix < 0 || ix >= width) continue;
-      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0)) continue;
+      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0))
+        continue;
 
       double sy = ((iy - yc) - height_error) * pixelWidth;
       double sx = ((ix - xc) - width_error) * pixelWidth;
@@ -743,8 +743,7 @@ void Image::draw_cylinder(const double *x, const double *y,
   double ymap = MathExtra::dot3(camUp,mid);
   double dist = MathExtra::dot3(camPos,camDir) - MathExtra::dot3(mid,camDir);
 
-  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist :
-    -tanPerPixel / zoom;
+  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist : -tanPerPixel / zoom;
 
   double xf = xmap / pixelWidth;
   double yf = ymap / pixelWidth;
@@ -792,7 +791,8 @@ void Image::draw_cylinder(const double *x, const double *y,
   for (int iy = yc - pixelHalfHeight; iy <= yc + pixelHalfHeight; iy ++) {
     for (int ix = xc - pixelHalfWidth; ix <= xc + pixelHalfWidth; ix ++) {
       if (iy < 0 || iy >= height || ix < 0 || ix >= width) continue;
-      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0)) continue;
+      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0))
+        continue;
 
       double surface[3], normal[3];
       double sy = ((iy - yc) - height_error) * pixelWidth;
@@ -840,8 +840,8 @@ void Image::draw_cylinder(const double *x, const double *y,
    draw triangle with 3 corner points x,y,z, surfaceColor
 ------------------------------------------------------------------------- */
 
-void Image::draw_triangle(const double *x, const double *y, const double *z, const double *surfaceColor,
-                          const double opacity)
+void Image::draw_triangle(const double *x, const double *y, const double *z,
+                          const double *surfaceColor, const double opacity)
 {
   double d1[3], d1len, d2[3], d2len, normal[3], invndotd;
   double xlocal[3], ylocal[3], zlocal[3];
@@ -892,8 +892,7 @@ void Image::draw_triangle(const double *x, const double *y, const double *z, con
   double ymap = MathExtra::dot3(camUp,xlocal);
   double dist = MathExtra::dot3(camPos,camDir) - MathExtra::dot3(xlocal,camDir);
 
-  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist :
-    -tanPerPixel / zoom;
+  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist : -tanPerPixel / zoom;
 
   double xf = xmap / pixelWidth;
   double yf = ymap / pixelWidth;
@@ -919,7 +918,8 @@ void Image::draw_triangle(const double *x, const double *y, const double *z, con
   for (int iy = yc - pixelDown; iy <= yc + pixelUp; iy ++) {
     for (int ix = xc - pixelLeft; ix <= xc + pixelRight; ix ++) {
       if (iy < 0 || iy >= height || ix < 0 || ix >= width) continue;
-      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0)) continue;
+      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0))
+        continue;
 
       double sy = ((iy - yc) - height_error) * pixelWidth;
       double sx = ((ix - xc) - width_error) * pixelWidth;
@@ -939,34 +939,35 @@ void Image::draw_triangle(const double *x, const double *y, const double *z, con
       double s1[3], s2[3], s3[3];
       double c1[3], c2[3];
 
-      // for grid cell viz:
-      // using <= if test can leave single-pixel gaps between 2 tris
-      // using < if test fixes it
-      // suggested by Nathan Fabian, Nov 2022
+      // for grid cell and other triangle meshes:
+      // there can be single pixel gaps due to rounding
+      // we allow a little overlap without making the triangles to "frizzy".
+      // this still can leave a few small gaps, but those can be mostly
+      // hidden by using anti-aliasing (e.g. via "dump_modify fsaa on")
+      //
+      // changed by Axel Kohlmeyer in 2025.
+      // original test was < 0.0
 
       MathExtra::sub3 (zlocal, xlocal, s1);
       MathExtra::sub3 (ylocal, xlocal, s2);
       MathExtra::sub3 (p, xlocal, s3);
       MathExtra::cross3 (s1, s2, c1);
       MathExtra::cross3 (s1, s3, c2);
-      if (MathExtra::dot3 (c1, c2) < 0) continue;
-      //if (MathExtra::dot3 (c1, c2) <= 0) continue;
+      if (MathExtra::dot3 (c1, c2) < -EPSILON) continue;
 
       MathExtra::sub3 (xlocal, ylocal, s1);
       MathExtra::sub3 (zlocal, ylocal, s2);
       MathExtra::sub3 (p, ylocal, s3);
       MathExtra::cross3 (s1, s2, c1);
       MathExtra::cross3 (s1, s3, c2);
-      if (MathExtra::dot3 (c1, c2) < 0) continue;
-      //if (MathExtra::dot3 (c1, c2) <= 0) continue;
+      if (MathExtra::dot3 (c1, c2) < -EPSILON) continue;
 
       MathExtra::sub3 (ylocal, zlocal, s1);
       MathExtra::sub3 (xlocal, zlocal, s2);
       MathExtra::sub3 (p, zlocal, s3);
       MathExtra::cross3 (s1, s2, c1);
       MathExtra::cross3 (s1, s3, c2);
-      if (MathExtra::dot3 (c1, c2) < 0) continue;
-      //if (MathExtra::dot3 (c1, c2) <= 0) continue;
+      if (MathExtra::dot3 (c1, c2) < -EPSILON) continue;
 
       double cNormal[3];
       cNormal[0] = MathExtra::dot3(camRight, normal);
@@ -1040,8 +1041,7 @@ void Image::compute_SSAO()
 
   // typical neighborhood value for shading
 
-  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel :
-        -tanPerPixel / zoom;
+  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel : -tanPerPixel / zoom;
   int pixelRadius = (int) trunc (SSAORadius / pixelWidth + 0.5);
 
   // each proc is assigned a subset of contiguous pixels from the full image

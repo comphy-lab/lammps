@@ -397,7 +397,7 @@ void EllipsoidObj::draw(Image *img, int flag, const double *color, const double 
 
   // optimization: just draw a sphere if a filled surface is requested and the object is a sphere
   if (dotri && (shape[0] == shape[1]) && (shape[0] == shape[2])) {
-    img->draw_sphere(center, color, 2.0 * shape[0] + (doframe ? diameter : 0.0), opacity);
+    img->draw_sphere(center, color, 2.0 * shape[0], opacity);
     return;
   }
 
@@ -414,13 +414,7 @@ void EllipsoidObj::draw(Image *img, int flag, const double *color, const double 
       // set shape by shifting each corner to the surface
       for (int i = 0; i < 3; ++i) {
         auto &t = tri[i];
-        if (doframe && dotri) {
-          // add extra shift when using cylinders and triangles for a smoother surface
-          double shapeplus[3] = {shape[0] + diameter, shape[1] + diameter, shape[1] + diameter};
-          t = radscale(shapeplus, t) * t;
-        } else {
-          t = radscale(shape, t) * t;
-        }
+        t = radscale(shape, t) * t;
       }
 
       // rotate
@@ -440,7 +434,14 @@ void EllipsoidObj::draw(Image *img, int flag, const double *color, const double 
       // set shape
       for (int i = 0; i < 3; ++i) {
         auto &t = tri[i];
-        t = radscale(shape, t) * t;
+        if (dotri) {
+          // shift the cylinder positions inward by their diameter when using cylinders and
+          // triangles together for a smoother surface to avoid increasing the final size
+          double shapeplus[3] = {shape[0] - diameter, shape[1] - diameter, shape[1] - diameter};
+          t = radscale(shapeplus, t) * t;
+        } else {
+          t = radscale(shape, t) * t;
+        }
       }
 
       // rotate

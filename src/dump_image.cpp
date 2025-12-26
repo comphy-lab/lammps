@@ -750,7 +750,7 @@ void DumpImage::init_style()
     // check if fix data for dump image is available at the required steps.
 
     int nfreq = fixptr->global_freq;
-    if ((nfreq == 0) || (nevery % nfreq))
+    if ((update->ntimestep != 0) && ((nfreq == 0) || (nevery % nfreq)))
       error->all(FLERR, Error::NOLASTLINE,
                  "Dump {} and fix {} are not executed at compatible timesteps {}",
                  style, fixptr->style, utils::errorurl(7));
@@ -1795,26 +1795,20 @@ void DumpImage::create_image()
 
         // cylinder is just a special case of cone so we can handle them together
       } else if ((regstyle == "cone") || (regstyle == "cylinder")) {
-        int flag;
-        if (reg.style == FRAME) {
-          flag = 4;
-        } else {
-          flag = 0;
-          if (!reg.ptr->open_faces[0]) flag |= 1;
-          if (!reg.ptr->open_faces[1]) flag |= 2;
-          if (!reg.ptr->open_faces[2]) flag |= 4;
-        }
 
         // construct triangle mesh and store direction and hi/lo center coordinates
         vec3 lo, hi;
-        ConeObj c(0.0, 0.0, 0.0, 0, 2);
+        double length = 0.0, radiuslo = 0.0, radiushi = 0.0;
         double xdir = 0.0, ydir = 0.0, zdir = 0.0;
 
         if (regstyle == "cone") {
           auto *myreg = dynamic_cast<RegCone *>(reg.ptr);
           // inconsistent style. should not happen.
           if (!myreg) continue;
-          c = std::move(ConeObj(myreg->hi - myreg->lo, myreg->radiushi, myreg->radiuslo, flag));
+
+          length = myreg->hi - myreg->lo;
+          radiuslo = myreg->radiuslo;
+          radiushi = myreg->radiushi;
           if (myreg->axis == 'x') {
             xdir = 1.0;
             lo = {myreg->lo, myreg->c1, myreg->c2};
@@ -1836,8 +1830,8 @@ void DumpImage::create_image()
           // inconsistent style. should not happen.
           if (!myreg) continue;
 
-          radius = myreg->radius;
-          c = std::move(ConeObj(myreg->hi - myreg->lo, myreg->radius, myreg->radius, flag));
+          radiuslo = myreg->radius;
+          radiushi = myreg->radius;
           if (myreg->axis == 'x') {
             xdir = 1.0;
             lo = {myreg->lo, myreg->c1, myreg->c2};
@@ -1857,17 +1851,23 @@ void DumpImage::create_image()
 
         vec3 dir{xdir, ydir, zdir};
         vec3 mid = 0.5 * (hi + lo);
-        double opacity = 1.0;
 
-        // determine draw style flags
-        flag = 1;
+        // determine which faces to draw
+        int faceflag = 0;
         if (reg.style == FRAME) {
-          flag = 2;
-        } else if (reg.style == TRANSPARENT) {
-          opacity = reg.opacity;
+          faceflag = 4;         // no caps
+        } else {
+          if (!reg.ptr->open_faces[0]) faceflag |= 1;
+          if (!reg.ptr->open_faces[1]) faceflag |= 2;
+          if (!reg.ptr->open_faces[2]) faceflag |= 4;
         }
 
-        c.draw(image, flag, dir, mid, reg.color, reg.ptr, reg.diameter, opacity);
+        // determine draw style flags
+        int drawflag = (reg.style == FRAME) ? 2 : 1;
+        double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
+
+        ConeObj c(length, radiushi, radiuslo, faceflag);
+        c.draw(image, drawflag, dir, mid, reg.color, reg.ptr, reg.diameter, opacity);
 
         // draw an additional uncapped cylinder for a smoother image for filled cylinders only
         if ((regstyle == "cylinder") && ((reg.style == FILLED) || (reg.style == TRANSPARENT))) {
@@ -1885,12 +1885,13 @@ void DumpImage::create_image()
 
         double center[3] = {myreg->xc, myreg->yc, myreg->zc};
         double radius[3] = {myreg->a, myreg->b, myreg->c};
-        EllipsoidObj e(4);
         if (reg.style == FRAME) {
-          e.draw(image, 2, reg.color, center, radius, reg.ptr, reg.diameter, 1.0);
+          // we use a moderate mesh level for wireframe so we can better see what is inside
+          EllipsoidObj(4).draw(image, 2, reg.color, center, radius, reg.ptr, reg.diameter, 1.0);
         } else if ((reg.style == FILLED) || (reg.style == TRANSPARENT)) {
-          double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
-          e.draw(image, 1, reg.color, center, radius, reg.ptr, reg.diameter, opacity);
+          // we get a smoother surface with a one step higher mesh level (and 4x more triangles)
+          EllipsoidObj(5).draw(image, 1, reg.color, center, radius, reg.ptr, reg.diameter,
+                               (reg.style == TRANSPARENT) ? reg.opacity : 1.0);
         }
 
       } else if (regstyle == "plane") {
@@ -1908,9 +1909,12 @@ void DumpImage::create_image()
         }
         double center[3] = {myreg->xp, myreg->yp, myreg->zp};
         double scale = MathExtra::len3(domain->prd);
-        PlaneObj p(6);
-        p.draw(image, flag, reg.color, center, myreg->normal, domain->boxlo, domain->boxhi, scale,
-               myreg, reg.diameter, opacity);
+        if (domain->triclinic)
+          PlaneObj(6).draw(image, flag, reg.color, center, myreg->normal, domain->boxlo_bound,
+                           domain->boxhi_bound, scale, myreg, reg.diameter, opacity);
+        else
+          PlaneObj(6).draw(image, flag, reg.color, center, myreg->normal, domain->boxlo,
+                           domain->boxhi, scale, myreg, reg.diameter, opacity);
 
       } else if (regstyle == "sphere") {
         auto *myreg = dynamic_cast<RegSphere *>(reg.ptr);
@@ -1919,10 +1923,9 @@ void DumpImage::create_image()
 
         double center[3] = {myreg->xc, myreg->yc, myreg->zc};
         if (reg.style == FRAME) {
-          // use wireframe mode of ellipsoid with three identical radii
+          // use wireframe mode of ellipsoid with three identical radii at a medium mesh level
           double radius[3] = {myreg->radius, myreg->radius, myreg->radius};
-          EllipsoidObj e(4);
-          e.draw(image, 2, reg.color, center, radius, reg.ptr, reg.diameter, 1.0);
+          EllipsoidObj(4).draw(image, 2, reg.color, center, radius, reg.ptr, reg.diameter, 1.0);
         } else if ((reg.style == FILLED) || (reg.style == TRANSPARENT)) {
           double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
           myreg->forward_transform(center[0], center[1], center[2]);

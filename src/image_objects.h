@@ -23,7 +23,7 @@ class Region;
 namespace ImageObjects {
   constexpr int RESOLUTION = 36;       // default resolution for cylindrical objects
   constexpr int DEF_ELEVEL = 3;        // default refinement level for ellipsoids
-  constexpr int DEF_PLEVEL = 6;        // default refinement lavel for planes
+  constexpr int DEF_PLEVEL = 6;        // default refinement level for planes
   constexpr int CONE_TOP = 1 << 0;     // draw top cap of cone/cylinder
   constexpr int CONE_BOT = 1 << 1;     // draw bottom cap of cone/cylinder
   constexpr int CONE_SIDE = 1 << 2;    // draw side of cone/cylinder

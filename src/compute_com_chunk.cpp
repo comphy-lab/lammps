@@ -42,7 +42,7 @@ ComputeCOMChunk::ComputeCOMChunk(LAMMPS *lmp, int narg, char **arg) :
   ComputeCOMChunk::init();
   ComputeCOMChunk::allocate();
 
-  // parse remaining arguments
+  // parse any remaining optional arguments
 
   wrapflag = false;
   int iarg = 4;
