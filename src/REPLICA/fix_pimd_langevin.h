@@ -82,6 +82,7 @@ class FixPIMDLangevin : public Fix {
 
   // inter-partition communication
 
+  int nmiss;
   MPI_Comm rootworld;
   int me, nprocs, ireplica, nreplica, nprocs_universe;
   int ntotal, maxlocal;
@@ -90,21 +91,22 @@ class FixPIMDLangevin : public Fix {
 
   int cmode;
   int sizeplan;
+  int maxsend;
   int *plansend, *planrecv;
 
   tagint *tagsend, *tagrecv;
-  double **bufsend, **bufrecv, **bufbeads;
+  double *bufsend, *bufrecv, **bufbeads;
   double **bufsorted, **bufsortedall;
-  double **outsorted, **buftransall;
-
-  tagint *tagsendall, *tagrecvall;
-  double **bufsendall, **bufrecvall;
 
   int *counts, *displacements;
 
   void comm_init();
   virtual void prepare_coordinates();
   void inter_replica_comm(double **ptr);
+  void ring_repair(const std::vector<tagint> &miss_tag,
+                                            double **ptr,
+                                            std::vector<tagint> &rep_tag,
+                                            std::vector<double> &rep_val);
   void virtual spring_force();
 
   /* normal-mode operations */

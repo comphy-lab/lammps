@@ -69,8 +69,7 @@ std::map<int, std::string> Ensembles{{FixPIMDLangevin::NVE, "NVE"},
 FixPIMDLangevin::FixPIMDLangevin(LAMMPS *lmp, int narg, char **arg) :
     Fix(lmp, narg, arg), mass(nullptr), plansend(nullptr), planrecv(nullptr), tagsend(nullptr),
     tagrecv(nullptr), bufsend(nullptr), bufrecv(nullptr), bufbeads(nullptr), bufsorted(nullptr),
-    bufsortedall(nullptr), outsorted(nullptr), buftransall(nullptr), tagsendall(nullptr),
-    tagrecvall(nullptr), bufsendall(nullptr), bufrecvall(nullptr), counts(nullptr),
+    bufsortedall(nullptr), counts(nullptr),
     displacements(nullptr), lam(nullptr), M_x2xp(nullptr), M_xp2x(nullptr), M_f2fp(nullptr),
     M_fp2f(nullptr), modeindex(nullptr), tau_k(nullptr), c1_k(nullptr), c2_k(nullptr),
     _omega_k(nullptr), Lan_s(nullptr), Lan_c(nullptr), random(nullptr), xc(nullptr), xcall(nullptr),
@@ -80,7 +79,7 @@ FixPIMDLangevin::FixPIMDLangevin(LAMMPS *lmp, int narg, char **arg) :
   time_integrate = 1;
 
   ntotal = 0;
-  maxlocal = maxunwrap = maxxc = 0;
+  maxlocal = maxsend = maxunwrap = maxxc = 0;
 
   sizeplan = 0;
 
@@ -267,12 +266,12 @@ FixPIMDLangevin::FixPIMDLangevin(LAMMPS *lmp, int narg, char **arg) :
   global_freq = 1;
   vector_flag = 1;
   if (!pstat_flag) {
-    size_vector = 10;
+    size_vector = 11;
   } else if (pstat_flag) {
     if (pstyle == ISO) {
-      size_vector = 15;
+      size_vector = 16;
     } else if (pstyle == ANISO) {
-      size_vector = 17;
+      size_vector = 18;
     }
   }
   extvector = 1;
@@ -336,23 +335,6 @@ FixPIMDLangevin::FixPIMDLangevin(LAMMPS *lmp, int narg, char **arg) :
   if (atom->nmax > maxxc) reallocate_xc();
   memory->create(xcall, ntotal * 3, "FixPIMDLangevin:xcall");
 
-  if (cmode == SINGLE_PROC) {
-    memory->create(bufsorted, ntotal, 3, "FixPIMDLangevin:bufsorted");
-    memory->create(outsorted, ntotal, 3, "FixPIMDLangevin:outsorted");
-    memory->create(bufsortedall, nreplica * ntotal, 3, "FixPIMDLangevin:bufsortedall");
-    memory->create(buftransall, nreplica * ntotal, 3, "FixPIMDLangevin:buftransall");
-    memory->create(counts, nreplica, "FixPIMDLangevin:counts");
-    memory->create(displacements, nreplica, "FixPIMDLangevin:displacements");
-  }
-
-  if ((cmode == MULTI_PROC) && (counts == nullptr)) {
-    memory->create(bufsendall, ntotal, 3, "FixPIMDLangevin:bufsendall");
-    memory->create(bufrecvall, ntotal, 3, "FixPIMDLangevin:bufrecvall");
-    memory->create(tagsendall, ntotal, "FixPIMDLangevin:tagsendall");
-    memory->create(tagrecvall, ntotal, "FixPIMDLangevin:tagrecvall");
-    memory->create(counts, nprocs, "FixPIMDLangevin:counts");
-    memory->create(displacements, nprocs, "FixPIMDLangevin:displacements");
-  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -377,21 +359,11 @@ FixPIMDLangevin::~FixPIMDLangevin()
   memory->destroy(xcall);
   if (cmode == SINGLE_PROC) {
     memory->destroy(bufsorted);
-    memory->destroy(outsorted);
     memory->destroy(bufsortedall);
-    memory->destroy(buftransall);
     memory->destroy(counts);
     memory->destroy(displacements);
   }
 
-  if (cmode == MULTI_PROC) {
-    memory->destroy(bufsendall);
-    memory->destroy(bufrecvall);
-    memory->destroy(tagsendall);
-    memory->destroy(tagrecvall);
-    memory->destroy(counts);
-    memory->destroy(displacements);
-  }
   memory->destroy(M_x2xp);
   memory->destroy(M_xp2x);
   memory->destroy(xc);
@@ -1273,6 +1245,11 @@ void FixPIMDLangevin::spring_force()
 
 void FixPIMDLangevin::comm_init()
 {
+  int nlocal = atom->nlocal;
+  if (cmode == SINGLE_PROC) {
+    memory->create(counts, nreplica, "FixPIMDLangevin:counts");
+    for (int i = 0; i < nreplica; i++) counts[i] = 3*nlocal;
+  }
   if (sizeplan) {
     delete[] plansend;
     delete[] planrecv;
@@ -1283,14 +1260,18 @@ void FixPIMDLangevin::comm_init()
   planrecv = new int[sizeplan];
   modeindex = new int[sizeplan];
   for (int i = 0; i < sizeplan; i++) {
-    int isend, irecv;
-    isend = ireplica + i + 1;
-    if (isend >= nreplica) isend -= nreplica;
-    irecv = ireplica - (i + 1);
-    if (irecv < 0) irecv += nreplica;
-    plansend[i] = universe->root_proc[isend];
-    planrecv[i] = universe->root_proc[irecv];
-    modeindex[i] = irecv;
+
+    // send to the (i+1)-th "next" replica, same local rank within that replica
+    plansend[i] = universe->me + comm->nprocs * (i + 1);
+    if (plansend[i] >= universe->nprocs) plansend[i] -= universe->nprocs;
+
+    // receive from the (i+1)-th "previous" replica, same local rank within that replica
+    planrecv[i] = universe->me - comm->nprocs * (i + 1);
+    if (planrecv[i] < 0) planrecv[i] += universe->nprocs;
+
+    // where to store what we receive this round:
+    // this is the replica index you are pulling from in this step
+    modeindex[i] = (universe->iworld + i + 1) % universe->nworlds;
   }
 
   x_next = (universe->iworld + 1 + universe->nworlds) % (universe->nworlds);
@@ -1320,28 +1301,36 @@ void FixPIMDLangevin::reallocate_x_unwrap()
 void FixPIMDLangevin::reallocate()
 {
   maxlocal = atom->nmax;
-  memory->destroy(bufsend);
-  memory->destroy(bufrecv);
-  memory->destroy(tagsend);
-  memory->destroy(tagrecv);
-  memory->destroy(bufbeads);
-  memory->create(bufsend, maxlocal, 3, "FixPIMDLangevin:bufsend");
-  memory->create(bufrecv, maxlocal, 3, "FixPIMDLangevin:bufrecv");
-  memory->create(tagsend, maxlocal, "FixPIMDLangevin:tagsend");
-  memory->create(tagrecv, maxlocal, "FixPIMDLangevin:tagrecv");
-  memory->create(bufbeads, nreplica, maxlocal * 3, "FixPIMDLangevin:bufrecv");
+  ntotal = atom->natoms;
+  if (cmode == SINGLE_PROC) {
+    memory->create(bufsorted, ntotal, 3, "FixPIMDLangevin:bufsorted");
+    memory->create(bufsortedall, nreplica * ntotal, 3, "FixPIMDLangevin:bufsortedall");
+    memory->create(counts, nreplica, "FixPIMDLangevin:counts");
+    memory->create(displacements, nreplica, "FixPIMDLangevin:displacements");
+  }
+  else if (cmode == MULTI_PROC) {
+    memory->destroy(bufsend);
+    memory->destroy(bufrecv);
+    memory->destroy(tagsend);
+    memory->destroy(tagrecv);
+    memory->destroy(bufbeads);
+    memory->create(bufsend, maxlocal*3, "FixPIMDLangevin:bufsend");
+    memory->create(bufrecv, maxlocal*3, "FixPIMDLangevin:bufrecv");
+    memory->create(tagsend, maxlocal, "FixPIMDLangevin:tagsend");
+    memory->create(tagrecv, maxlocal, "FixPIMDLangevin:tagrecv");
+    memory->create(bufbeads, nreplica, maxlocal * 3, "FixPIMDLangevin:bufrecv");
+  }
 }
 
 /* ---------------------------------------------------------------------- */
 
 void FixPIMDLangevin::inter_replica_comm(double **ptr)
 {
-  MPI_Request requests[2];
-  MPI_Status statuses[2];
   if (atom->nmax > maxlocal) reallocate();
   int nlocal = atom->nlocal;
   tagint *tag = atom->tag;
   int i, m;
+  nmiss = 0;
 
   // copy local values
   for (i = 0; i < nlocal; i++) {
@@ -1360,50 +1349,225 @@ void FixPIMDLangevin::inter_replica_comm(double **ptr)
       bufsorted[tagtmp - 1][2] = ptr[i][2];
       m++;
     }
-    MPI_Allgather(&m, 1, MPI_INT, counts, 1, MPI_INT, universe->uworld);
-    for (i = 0; i < nreplica; i++) counts[i] *= 3;
     displacements[0] = 0;
     for (i = 0; i < nreplica - 1; i++) displacements[i + 1] = displacements[i] + counts[i];
     MPI_Allgatherv(bufsorted[0], 3 * m, MPI_DOUBLE, bufsortedall[0], counts, displacements,
                    MPI_DOUBLE, universe->uworld);
   } else if (cmode == MULTI_PROC) {
-    m = 0;
-    for (i = 0; i < nlocal; i++) {
-      tagsend[m] = tag[i];
-      bufsend[m][0] = ptr[i][0];
-      bufsend[m][1] = ptr[i][1];
-      bufsend[m][2] = ptr[i][2];
-      m++;
+    int nmiss_bead;
+    const int nlocal = atom->nlocal;
+
+    // Ensure receive buffer sized for my local atoms (3*nlocal doubles)
+    if (nlocal > maxlocal) {
+      maxlocal = nlocal + 200;
+      const int nbytes = sizeof(double) * 3 * maxlocal;
+
+      bufrecv = (double *) memory->srealloc(bufrecv, nbytes, "FixPIMDLangevin:bufrecv");
+
+      // if bufbeads[mode] are per-mode arrays of size 3*nlocal:
+      for (int imode = 0; imode < np; imode++) {
+        bufbeads[imode] = (double *) memory->srealloc(bufbeads[imode], nbytes, "FixPIMDLangevin:bufbeads");
+      }
     }
-    MPI_Gather(&m, 1, MPI_INT, counts, 1, MPI_INT, 0, world);
-    displacements[0] = 0;
-    for (i = 0; i < nprocs - 1; i++) displacements[i + 1] = displacements[i] + counts[i];
-    MPI_Gatherv(tagsend, m, MPI_LMP_TAGINT, tagsendall, counts, displacements, MPI_LMP_TAGINT, 0,
-                world);
-    for (i = 0; i < nprocs; i++) counts[i] *= 3;
-    for (i = 0; i < nprocs - 1; i++) displacements[i + 1] = displacements[i] + counts[i];
-    MPI_Gatherv(bufsend[0], 3 * m, MPI_DOUBLE, bufsendall[0], counts, displacements, MPI_DOUBLE, 0,
-                world);
+
+    // Optionally cache "my own bead" (like your reference does):
+    // bufbeads[universe->iworld] holds my current ptr for local atoms
+    memcpy(bufbeads[universe->iworld], &ptr[0][0], sizeof(double) * 3 * nlocal);
+
+    // Loop over replica comm plans
     for (int iplan = 0; iplan < sizeplan; iplan++) {
-      if (me == 0) {
-        MPI_Irecv(bufrecvall[0], 3 * ntotal, MPI_DOUBLE, planrecv[iplan], 0, universe->uworld,
-                  &requests[0]);
-        MPI_Irecv(tagrecvall, ntotal, MPI_LMP_TAGINT, planrecv[iplan], 0, universe->uworld,
-                  &requests[1]);
-        MPI_Send(bufsendall[0], 3 * ntotal, MPI_DOUBLE, plansend[iplan], 0, universe->uworld);
-        MPI_Send(tagsendall, ntotal, MPI_LMP_TAGINT, plansend[iplan], 0, universe->uworld);
-        MPI_Waitall(2, requests, statuses);
+
+      // 1) exchange local counts between the paired ranks in universe->uworld
+      int nsend = 0;
+      MPI_Sendrecv((void*)&nlocal, 1, MPI_INT,
+                  plansend[iplan], 10,
+                  (void*)&nsend, 1, MPI_INT,
+                  planrecv[iplan], 10,
+                  universe->uworld, MPI_STATUS_IGNORE);
+
+      // 2) ensure buffers sized for nsend
+      if (nsend > maxsend) {
+        maxsend = nsend + 200;
+        tagsend = (tagint *) memory->srealloc(tagsend, sizeof(tagint) * maxsend,
+                                              "FixPIMDLangevin:tagsend");
+        bufsend = (double *) memory->srealloc(bufsend, sizeof(double) * 3 * maxsend,
+                                              "FixPIMDLangevin:bufsend");
       }
-      MPI_Bcast(tagrecvall, ntotal, MPI_LMP_TAGINT, 0, world);
-      MPI_Bcast(bufrecvall[0], 3 * ntotal, MPI_DOUBLE, 0, world);
-      for (i = 0; i < ntotal; i++) {
-        m = atom->map(tagrecvall[i]);
-        if (m < 0 || m >= nlocal) continue;
-        bufbeads[modeindex[iplan]][3 * m + 0] = bufrecvall[i][0];
-        bufbeads[modeindex[iplan]][3 * m + 1] = bufrecvall[i][1];
-        bufbeads[modeindex[iplan]][3 * m + 2] = bufrecvall[i][2];
+
+      // 3) exchange tags:
+      //    send my local tags (atom->tag[0..nlocal-1])
+      //    receive remote rank's local tags into tagsend[0..nsend-1]
+      MPI_Sendrecv((void*)atom->tag, nlocal, MPI_LMP_TAGINT,
+                  plansend[iplan], 11,
+                  (void*)tagsend, nsend, MPI_LMP_TAGINT,
+                  planrecv[iplan], 11,
+                  universe->uworld, MPI_STATUS_IGNORE);
+
+      // 4) pack ptr for the tags the remote rank needs from me
+      //    For each received tag, find my local index and copy ptr[index][0..2]
+      std::vector<int> miss_idx;
+      std::vector<tagint> miss_tag;
+      miss_idx.reserve(nsend);
+      miss_tag.reserve(nsend);
+
+      for (int i = 0; i < nsend; i++) {
+        const int idx = atom->map(tagsend[i]);
+        if (idx >= 0 && idx < nlocal) {
+          bufsend[3*i + 0] = ptr[idx][0];
+          bufsend[3*i + 1] = ptr[idx][1];
+          bufsend[3*i + 2] = ptr[idx][2];
+        } else {
+          miss_idx.push_back(i);   // remember which slot in bufsend needs repair
+          miss_tag.push_back(tagsend[i]);   // remember which tag that slot corresponds to
+        }
+      }
+
+      int nmiss_local = static_cast<int>(miss_tag.size());
+      MPI_Allreduce(&nmiss_local, &nmiss_bead, 1, MPI_INT, MPI_SUM, world);
+      nmiss += nmiss_bead;
+
+      // 5) repair missing tags within this world (local-only claiming)
+      if (!miss_tag.empty()) {
+        // Optional safeguard: if too many missing, fall back / error
+        // if ((int)miss_tag.size() > 2000) { ... }
+
+        std::vector<tagint> rep_tag;
+        std::vector<double> rep_val;
+        ring_repair(miss_tag, ptr, rep_tag, rep_val);
+
+        // fill missing slots in bufsend by tag lookup (missing is small)
+        // Use O(m^2) to avoid unordered_map overhead in hot path
+        for (int k = 0; k < (int)miss_tag.size(); k++) {
+          const tagint t = miss_tag[k];
+          int pos = -1;
+          for (int j = 0; j < (int)rep_tag.size(); j++) {
+            if (rep_tag[j] == t) { pos = j; break; }
+          }
+          if (pos < 0) {
+            auto mesg = fmt::format("Repair failed: tag {} not returned on world [{}] rank [{}]\n",
+                                    (int)t, universe->iworld, comm->me);
+            error->universe_one(FLERR, mesg);
+          }
+
+          const int i = miss_idx[k];
+          bufsend[3*i + 0] = rep_val[3*pos + 0];
+          bufsend[3*i + 1] = rep_val[3*pos + 1];
+          bufsend[3*i + 2] = rep_val[3*pos + 2];
+        }
+      }
+
+      // 5) exchange packed x/f buffers:
+      //    - send bufsend (3*nsend) to planrecv[iplan]
+      //    - receive bufrecv (3*nlocal) from plansend[iplan]
+      //
+      // This mirrors your reference's direction choices.
+      MPI_Sendrecv((void*)bufsend, 3*nsend, MPI_DOUBLE,
+                  planrecv[iplan], 12,
+                  (void*)bufrecv, 3*nlocal, MPI_DOUBLE,
+                  plansend[iplan], 12,
+                  universe->uworld, MPI_STATUS_IGNORE);
+
+      // 6) store received x/f for this plan into bufbeads[modeindex[iplan]]
+      memcpy(bufbeads[modeindex[iplan]], bufrecv, sizeof(double) * 3 * nlocal);
+    }
+    nmiss /= sizeplan;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void FixPIMDLangevin::ring_repair(const std::vector<tagint> &miss_tag,
+                                            double **ptr,
+                                            std::vector<tagint> &rep_tag,
+                                            std::vector<double> &rep_val)
+{
+  const int me = comm->me;
+  const int P  = comm->nprocs;
+  const int next = (me + 1) % P;
+  const int prev = (me - 1 + P) % P;
+  const int nlocal = atom->nlocal;
+
+  // Token state for *this rank's* missing tags
+  std::vector<tagint> tok_missing = miss_tag;
+  std::vector<tagint> tok_found_tags;
+  std::vector<double> tok_found_vals;   // 3 per found tag
+
+  // If missing is tiny (expected), reserve to reduce realloc
+  tok_found_tags.reserve(tok_missing.size());
+  tok_found_vals.reserve(3 * tok_missing.size());
+
+  // Move one hop per iteration; after P hops, your token returns to you.
+  for (int hop = 0; hop < P; hop++) {
+
+    // --- 1) exchange sizes
+    int sm = (int) tok_missing.size();
+    int sf = (int) tok_found_tags.size();
+    int rm = 0, rf = 0;
+
+    MPI_Sendrecv(&sm, 1, MPI_INT, next, 400,
+                 &rm, 1, MPI_INT, prev, 400,
+                 world, MPI_STATUS_IGNORE);
+
+    MPI_Sendrecv(&sf, 1, MPI_INT, next, 401,
+                 &rf, 1, MPI_INT, prev, 401,
+                 world, MPI_STATUS_IGNORE);
+
+    // --- 2) prepare recv buffers
+    std::vector<tagint> in_missing(rm);
+    std::vector<tagint> in_found_tags(rf);
+    std::vector<double> in_found_vals(3 * (size_t)rf);
+
+    // --- 3) exchange payloads
+    MPI_Sendrecv(tok_missing.data(), sm, MPI_LMP_TAGINT, next, 402,
+                 in_missing.data(), rm, MPI_LMP_TAGINT, prev, 402,
+                 world, MPI_STATUS_IGNORE);
+
+    MPI_Sendrecv(tok_found_tags.data(), sf, MPI_LMP_TAGINT, next, 403,
+                 in_found_tags.data(), rf, MPI_LMP_TAGINT, prev, 403,
+                 world, MPI_STATUS_IGNORE);
+
+    MPI_Sendrecv(tok_found_vals.data(), 3*sf, MPI_DOUBLE, next, 404,
+                 in_found_vals.data(), 3*rf, MPI_DOUBLE, prev, 404,
+                 world, MPI_STATUS_IGNORE);
+
+    // --- 4) process received token: claim only if LOCAL owner
+    std::vector<tagint> out_missing;
+    out_missing.reserve(in_missing.size());
+
+    for (tagint t : in_missing) {
+      const int idx = atom->map(t);
+
+      // local-only claim (ignore ghosts)
+      if (idx >= 0 && idx < nlocal) {
+        in_found_tags.push_back(t);
+        in_found_vals.push_back(ptr[idx][0]);
+        in_found_vals.push_back(ptr[idx][1]);
+        in_found_vals.push_back(ptr[idx][2]);
+      } else {
+        out_missing.push_back(t);
       }
     }
+
+    // --- 5) forward updated token
+    tok_missing.swap(out_missing);
+    tok_found_tags.swap(in_found_tags);
+    tok_found_vals.swap(in_found_vals);
+  }
+
+  // After full ring, the token for this rank should be back here.
+  // What we have now is the resolved list for this rank.
+  rep_tag.swap(tok_found_tags);
+  rep_val.swap(tok_found_vals);
+
+  // Optional: if anything still missing, it's a real error (tag not present in this world)
+  if (!tok_missing.empty()) {
+    // Print a small sample to help debug
+    const tagint t0 = tok_missing[0];
+    auto mesg = fmt::format(
+      "ring_repair: unresolved {} tags after {} hops on world [{}] rank [{}]. "
+      "Example tag = {}.\n",
+      (int)tok_missing.size(), P, universe->iworld, me, (int)t0);
+    error->universe_one(FLERR, mesg);
   }
 }
 
@@ -1732,6 +1896,7 @@ void FixPIMDLangevin::restart(char *buf)
 
 double FixPIMDLangevin::compute_vector(int n)
 {
+  int imiss;
   if (n == 0) return ke_bead;
   if (n == 1) return se_bead;
   if (n == 2) return pe_bead;
@@ -1742,6 +1907,7 @@ double FixPIMDLangevin::compute_vector(int n)
   if (n == 7) return p_prim;
   if (n == 8) return p_md;
   if (n == 9) return p_cv;
+  imiss = 10;
 
   if (pstat_flag) {
     double volume = domain->xprd * domain->yprd * domain->zprd;
@@ -1755,6 +1921,7 @@ double FixPIMDLangevin::compute_vector(int n)
       if (n == 12) { return np * Pext * volume / force->nktv2p; }
       if (n == 13) { return -Vcoeff * np * kt * log(volume); }
       if (n == 14) return totenthalpy;
+      imiss = 15;
     } else if (pstyle == ANISO) {
       if (n == 10) return vw[0];
       if (n == 11) return vw[1];
@@ -1766,8 +1933,10 @@ double FixPIMDLangevin::compute_vector(int n)
         return -Vcoeff * np * kt * log(volume);
       }
       if (n == 16) return totenthalpy;
+      imiss = 17;
     }
   }
+  if (n == imiss) return nmiss;
 
   return 0.0;
 }
