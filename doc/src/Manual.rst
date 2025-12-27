@@ -87,7 +87,7 @@ User Guide
 
 .. toctree::
    :maxdepth: 2
-   :numbered: 3
+   :numbered: 4
    :caption: User Guide
    :name: userdoc
    :includehidden:
@@ -112,7 +112,7 @@ Programmer Guide
 
 .. toctree::
    :maxdepth: 2
-   :numbered: 3
+   :numbered: 4
    :caption: Programmer Guide
    :name: progdoc
    :includehidden:
