@@ -169,19 +169,6 @@ will have no effect on the motion of the rigid bodies if they are
 specified in the input script after the fix rigid command.  LAMMPS
 will give a warning if that is the case.
 
-<<<<<<< HEAD
-The *colname* keyword can be used to change the default header keywords
-in output files of fix styles that support it: currently only :doc:`fix
-ave/time <fix_ave_time>` is supported.  The setting for *ID string*
-replaces the default text with the provided string.  *ID* can be a
-positive integer when it represents the column number counting from the
-left, a negative integer when it represents the column number from the
-right (i.e. -1 is the last column/keyword), or a custom fix output
-keyword (or compute, fix, property, or variable reference) and then it
-replaces the string for that specific keyword. The *colname* keyword can
-be used multiple times. If multiple *colname* settings refer to the same
-keyword, the last setting has precedence.
-=======
 .. versionadded:: 2Apr2025
 
 The *pad* keyword only applies when a fix produces a file and the output
@@ -194,7 +181,6 @@ is padded with leading zeroes so they are all the same length = *Nchar*\
 be useful so that post-processing programs can easily read the files in
 ascending timestep order.  Please see the documentation of the individual
 fix styles if this keyword is supported.
->>>>>>> develop
 
 Restrictions
 """"""""""""

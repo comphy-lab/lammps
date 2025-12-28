@@ -22,7 +22,6 @@ namespace SurfExtra {
                          double *, double *, double *, double *,
                          double *, double *, double &);
   int nearest_point_line(double *, double *, double *, double *);
-
 }
 
 #endif
