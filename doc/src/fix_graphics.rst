@@ -30,7 +30,7 @@ Syntax
          any of x1, y1, z1, x2, y2, z2, and R can be a variable (see below)
        *arrow* args = type x1 y1 z1 x2 y2 z2 R ratio
          type = an atom type value to select the color of the sphere
-         x1, y1, z1, x2, y2, z2 = positions of the centers at the tip and the bottom of the arrow (distance units)
+         x1, y1, z1, x2, y2, z2 = positions of the centers at the bottom (x1,y1,z1) and the tip (x2,y2,z2) of the arrow (distance units)
          R = cylinder radius (distance units)
          ratio = tip to body ratio (unitless)
          any of x1, y1, z1, x2, y2, z2, and R can be a variable (see below)

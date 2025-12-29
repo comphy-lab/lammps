@@ -141,32 +141,32 @@ FixGraphics::FixGraphics(LAMMPS *lmp, int narg, char **arg) :
         varflag = 1;
         arrow.x1str = utils::strdup(arg[iarg + 2] + 2);
       } else
-        arrow.tip[X] = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
+        arrow.bot[X] = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
       if (strstr(arg[iarg + 3], "v_") == arg[iarg + 3]) {
         varflag = 1;
         arrow.y1str = utils::strdup(arg[iarg + 3] + 2);
       } else
-        arrow.tip[Y] = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
+        arrow.bot[Y] = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
       if (strstr(arg[iarg + 4], "v_") == arg[iarg + 4]) {
         varflag = 1;
         arrow.z1str = utils::strdup(arg[iarg + 4] + 2);
       } else
-        arrow.tip[Z] = utils::numeric(FLERR, arg[iarg + 4], false, lmp);
+        arrow.bot[Z] = utils::numeric(FLERR, arg[iarg + 4], false, lmp);
       if (strstr(arg[iarg + 5], "v_") == arg[iarg + 5]) {
         varflag = 1;
         arrow.x2str = utils::strdup(arg[iarg + 5] + 2);
       } else
-        arrow.bot[X] = utils::numeric(FLERR, arg[iarg + 5], false, lmp);
+        arrow.tip[X] = utils::numeric(FLERR, arg[iarg + 5], false, lmp);
       if (strstr(arg[iarg + 6], "v_") == arg[iarg + 6]) {
         varflag = 1;
         arrow.y2str = utils::strdup(arg[iarg + 6] + 2);
       } else
-        arrow.bot[Y] = utils::numeric(FLERR, arg[iarg + 6], false, lmp);
+        arrow.tip[Y] = utils::numeric(FLERR, arg[iarg + 6], false, lmp);
       if (strstr(arg[iarg + 7], "v_") == arg[iarg + 7]) {
         varflag = 1;
         arrow.z2str = utils::strdup(arg[iarg + 7] + 2);
       } else
-        arrow.bot[Z] = utils::numeric(FLERR, arg[iarg + 7], false, lmp);
+        arrow.tip[Z] = utils::numeric(FLERR, arg[iarg + 7], false, lmp);
       if (strstr(arg[iarg + 8], "v_") == arg[iarg + 8]) {
         varflag = 1;
         arrow.dstr = utils::strdup(arg[iarg + 8] + 2);
@@ -613,12 +613,12 @@ void FixGraphics::end_of_step()
       imgparms[n][7] = gi.cylinder.diameter;
       ++n;
     } else if (gi.style == ARROW) {
-      if (gi.arrow.x1str) gi.arrow.tip[X] = input->variable->compute_equal(gi.arrow.x1var);
-      if (gi.arrow.y1str) gi.arrow.tip[Y] = input->variable->compute_equal(gi.arrow.y1var);
-      if (gi.arrow.z1str) gi.arrow.tip[Z] = input->variable->compute_equal(gi.arrow.z1var);
-      if (gi.arrow.x2str) gi.arrow.bot[X] = input->variable->compute_equal(gi.arrow.x2var);
-      if (gi.arrow.y2str) gi.arrow.bot[Y] = input->variable->compute_equal(gi.arrow.y2var);
-      if (gi.arrow.z2str) gi.arrow.bot[Z] = input->variable->compute_equal(gi.arrow.z2var);
+      if (gi.arrow.x1str) gi.arrow.bot[X] = input->variable->compute_equal(gi.arrow.x1var);
+      if (gi.arrow.y1str) gi.arrow.bot[Y] = input->variable->compute_equal(gi.arrow.y1var);
+      if (gi.arrow.z1str) gi.arrow.bot[Z] = input->variable->compute_equal(gi.arrow.z1var);
+      if (gi.arrow.x2str) gi.arrow.tip[X] = input->variable->compute_equal(gi.arrow.x2var);
+      if (gi.arrow.y2str) gi.arrow.tip[Y] = input->variable->compute_equal(gi.arrow.y2var);
+      if (gi.arrow.z2str) gi.arrow.tip[Z] = input->variable->compute_equal(gi.arrow.z2var);
       if (gi.arrow.dstr) gi.arrow.diameter = 2.0 * input->variable->compute_equal(gi.arrow.dvar);
 
       double mid[3], vec[3];
