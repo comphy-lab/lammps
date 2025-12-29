@@ -1878,7 +1878,8 @@ void DumpImage::create_image()
         int drawflag = (reg.style == FRAME) ? 2 : 1;
         double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
 
-        ConeObj c(length, radiushi, radiuslo, faceflag);
+        ConeObj c(length, radiushi, radiuslo, faceflag,
+                  (reg.style == FRAME) ? RESOLUTION : 2 * RESOLUTION);
         c.draw(image, drawflag, dir, mid, reg.color, reg.ptr, reg.diameter, opacity);
 
         // draw an additional uncapped cylinder for a smoother image for filled cylinders only
