@@ -1748,48 +1748,53 @@ void DumpImage::create_image()
         for (int i = 0; i < 8; ++i)
           reg.ptr->forward_transform(corners[i][0], corners[i][1], corners[i][2]);
 
-#define CPTR(idx) corners[idx].data()
+#define DRAW_CYLINDER(i, j) \
+  image->draw_cylinder(corners[i].data(), corners[j].data(), reg.color, reg.diameter, 3, 1.0)
+#define DRAW_TRIANGLE(i, j, k) \
+  image->draw_triangle(corners[i].data(), corners[j].data(), corners[k].data(), reg.color, opacity)
+
         if (reg.style == FRAME) {
-          image->draw_cylinder(CPTR(0), CPTR(1), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(1), CPTR(2), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(0), CPTR(3), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(2), CPTR(3), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(0), CPTR(4), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(1), CPTR(5), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(2), CPTR(6), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(3), CPTR(7), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(4), CPTR(5), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(5), CPTR(6), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(4), CPTR(7), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(6), CPTR(7), reg.color, reg.diameter, 3);
+          DRAW_CYLINDER(0, 1);
+          DRAW_CYLINDER(1, 2);
+          DRAW_CYLINDER(0, 3);
+          DRAW_CYLINDER(2, 3);
+          DRAW_CYLINDER(0, 4);
+          DRAW_CYLINDER(1, 5);
+          DRAW_CYLINDER(2, 6);
+          DRAW_CYLINDER(3, 7);
+          DRAW_CYLINDER(4, 5);
+          DRAW_CYLINDER(5, 6);
+          DRAW_CYLINDER(4, 7);
+          DRAW_CYLINDER(6, 7);
         } else if ((reg.style == FILLED) || (reg.style == TRANSPARENT)) {
           double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
           if (!reg.ptr->open_faces[0]) {
-            image->draw_triangle(CPTR(0), CPTR(1), CPTR(2), reg.color, opacity);
-            image->draw_triangle(CPTR(2), CPTR(3), CPTR(0), reg.color, opacity);
+            DRAW_TRIANGLE(0, 1, 2);
+            DRAW_TRIANGLE(2, 3, 0);
           }
           if (!reg.ptr->open_faces[1]) {
-            image->draw_triangle(CPTR(4), CPTR(5), CPTR(6), reg.color, opacity);
-            image->draw_triangle(CPTR(6), CPTR(7), CPTR(4), reg.color, opacity);
+            DRAW_TRIANGLE(4, 5, 6);
+            DRAW_TRIANGLE(6, 7, 4);
           }
           if (!reg.ptr->open_faces[2]) {
-            image->draw_triangle(CPTR(0), CPTR(4), CPTR(7), reg.color, opacity);
-            image->draw_triangle(CPTR(7), CPTR(3), CPTR(0), reg.color, opacity);
+            DRAW_TRIANGLE(0, 4, 7);
+            DRAW_TRIANGLE(7, 3, 0);
           }
           if (!reg.ptr->open_faces[3]) {
-            image->draw_triangle(CPTR(1), CPTR(2), CPTR(6), reg.color, opacity);
-            image->draw_triangle(CPTR(6), CPTR(5), CPTR(1), reg.color, opacity);
+            DRAW_TRIANGLE(1, 2, 6);
+            DRAW_TRIANGLE(6, 5, 1);
           }
           if (!reg.ptr->open_faces[4]) {
-            image->draw_triangle(CPTR(0), CPTR(1), CPTR(5), reg.color, opacity);
-            image->draw_triangle(CPTR(5), CPTR(4), CPTR(0), reg.color, opacity);
+            DRAW_TRIANGLE(0, 1, 5);
+            DRAW_TRIANGLE(5, 4, 0);
           }
           if (!reg.ptr->open_faces[5]) {
-            image->draw_triangle(CPTR(3), CPTR(2), CPTR(6), reg.color, opacity);
-            image->draw_triangle(CPTR(6), CPTR(7), CPTR(3), reg.color, opacity);
+            DRAW_TRIANGLE(3, 2, 6);
+            DRAW_TRIANGLE(6, 7, 3);
           }
         }
-#undef CPTR
+#undef DRAW_CYLINDER
+#undef DRAW_TRIANGLE
 
         // cylinder is just a special case of cone so we can handle them together
       } else if ((regstyle == "cone") || (regstyle == "cylinder")) {
