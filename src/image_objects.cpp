@@ -494,7 +494,7 @@ PlaneObj::PlaneObj(int level)
   constexpr vec3 CEN = {0.0, 0.0, 0.0};
 
   // define unit plane with norm (1.0,0.0,0.0) from four triangles
-  triangles = {{SQ1, CEN, SQ2}, {SQ2, CEN, SQ3}, {SQ3, CEN, SQ4}, {SQ4, CEN, SQ1}};
+  triangles = {{SQ2, CEN, SQ1}, {SQ3, CEN, SQ2}, {SQ4, CEN, SQ3}, {SQ1, CEN, SQ4}};
 
   // refine the list of triangles to the desired level
   for (int i = 1; i < level; ++i) refine();
