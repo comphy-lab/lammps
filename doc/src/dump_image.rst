@@ -227,18 +227,27 @@ has been run, using the :doc:`rerun <rerun>` command to read snapshots
 from an existing dump file, and using these dump commands in the rerun
 script to generate the images/movie.
 
-Here are two sample images, rendered as :math:`1024\times 1024` JPEG files.
-
 .. |dump1| image:: img/dump1.jpg
-   :width: 48%
+   :width: 19%
 .. |dump2| image:: img/dump2.jpg
-   :width: 48%
+   :width: 19%
+.. |dump3| image:: img/dump3.png
+   :width: 19%
+.. |dump4| image:: img/dump4.png
+   :width: 19%
+.. |dump5| image:: img/dump5.png
+   :width: 21.3%
 
-|dump1|  |dump2|
+Here are five sample images, rendered as JPEG or PNG files.
+
+|dump1|  |dump2|  |dump4|  |dump5|  |dump3|
 
 .. raw:: html
 
-   Click to see the full-size images:
+   <center>(Click to see the full-size images)</center>
+
+A detailed discussion of advanced graphics settings and workflows
+with examples is provided in the :doc:`Howto_viz` howto.
 
 Only atoms in the specified group are rendered in the image.  The
 :doc:`dump_modify region and thresh <dump_modify>` commands can also
@@ -268,7 +277,7 @@ described below.
 
 To write out JPEG and PNG format files, you must build LAMMPS with
 support for the corresponding JPEG or PNG library.  To convert images
-into movies, LAMMPS has to be compiled with the -DLAMMPS_FFMPEG
+into movies, LAMMPS has to be compiled with the ``-DLAMMPS_FFMPEG``
 flag. See the :doc:`Build settings <Build_settings>` page for
 details.
 
@@ -409,13 +418,13 @@ through using :doc:`fix reaxff/bonds <fix_reaxff_bonds>` with the
 ----------
 
 The *bond* keyword allows to you to alter how bonds are drawn.  A bond
-is only drawn if both atoms in the bond are being drawn due to being
-in the specified group and due to other selection criteria
-(e.g. region, threshold settings of the
-:doc:`dump_modify <dump_modify>` command).  By default, bonds are drawn
-if they are defined in the input data file as read by the
-:doc:`read_data <read_data>` command.  Using *none* for both the bond
-*color* and *width* value will turn off the drawing of all bonds.
+is only drawn if both atoms in the bond are being drawn due to being in
+the specified group and due to other selection criteria (e.g. region,
+threshold settings of the :doc:`dump_modify <dump_modify>` command).  By
+default, bonds are drawn if they are defined in the input data file as
+read by the :doc:`read_data <read_data>` command.  Using *none* for both
+the bond *color* and *width* value will turn off the drawing of all
+bonds.
 
 If *atom* is specified for the bond *color* value, then each bond is
 drawn in 2 halves, with the color of each half being the color of the
@@ -581,26 +590,7 @@ and repeats itself for types > 6.
    Support for several fix styles added and more flexible color selection
 
 The *fix* keyword can be used with a :doc:`fix <fix>` that produces
-objects to be drawn.  Below is a list of supported fixes:
-
-* :doc:`fix graphics <fix_graphics>`
-* :doc:`fix graphics/arrows <fix_graphics_arrows>`
-* :doc:`fix indent <fix_indent>`
-* :doc:`fix smd/wall_surface <fix_smd_wall_surface>`
-* :doc:`fix wall/lj93 <fix_wall>`
-* :doc:`fix wall/lj126 <fix_wall>`
-* :doc:`fix wall/lj1043 <fix_wall>`
-* :doc:`fix wall/colloid <fix_wall>`
-* :doc:`fix wall/gran <fix_wall_gran>`
-* :doc:`fix wall/harmonic <fix_wall>`
-* :doc:`fix wall/harmonic/outside <fix_wall>`
-* :doc:`fix wall/lepton <fix_wall>`
-* :doc:`fix wall/morse <fix_wall>`
-* :doc:`fix wall/reflect <fix_wall_reflect>`
-* :doc:`fix wall/reflect/stochastic <fix_wall_reflect_stochastic>`
-* :doc:`fix wall/table <fix_wall>`
-
-The fix keyword may be used multiple times to include visualizations of
+objects to be drawn.  The fix keyword may be used multiple times to include visualizations of
 graphics objects from multiple fixes.  The fix keyword is followed by
 the :doc:`fix ID <fix>` of the fix, the color style setting and two
 numerical values *fflag1* and *fflag2*.
@@ -619,32 +609,42 @@ the fix is done.  See the documentation of the individual fixes for a
 description of what these parameters mean for the graphics objects
 provided by those fixes.
 
+More details and some examples for including graphics objects from fix
+commands are in the :doc:`Howto_viz` howto.
+
 ----------
 
 .. versionadded:: 10Sep2025
 
 .. versionchanged:: TBD
 
-   style *transparency* was added
+   draw style *transparency* was added
 
 The *region* keyword can be used to create a graphical representation of
 a :doc:`region <region>`.  This can be helpful in debugging the location
 and extent of regions, especially when those have parameters controlled
-by variables.  Three styles of representing a region are available:
-*filled*\, *transparency*\, *frame*\, and *points*.  With style *filled*
-the surface of the region is triangulated and drawn.  For region styles
-that support open faces, surfaces for such open faces are skipped.  The
-style *transparent* is like *filled* but takes an additional parameter
-in the range of 0.0 to 1.0 that defines the opacity and thus allows to
-see what is inside the region.  Draw style *frame* represents the region
-with a mesh of "wires".  The diameter of these "wires" can be set.
-Unlike with the *filled* style and similar to the *transparent* style,
-you can see what is *inside* the region with this draw style.  The third
-draw style, *points*\, generates a random point cloud inside the
-simulation box and draws only those points that are within the region.
-Draw styles *filled*\, *transparent*\, and *frame* support only
-"primitive" region styles (no unions or intersections), but the *points*
-draw style supports *all* region styles.
+by variables.  The sequence of arguments to the *region* are: the
+region-ID, the color for drawing the region, the draw style, and
+possible additional arguments as required by the draw style.
+
+Four draw styles of representing a region are available: *filled*\,
+*transparency*\, *frame*\, and *points*.  With draw style *filled* the
+surface of the region is triangulated and drawn.  For region styles that
+support open faces, surfaces for such open faces are skipped.  The style
+*transparent* is like *filled* but takes an additional parameter in the
+range of 0.0 to 1.0 that defines the opacity and thus allows to see what
+is inside the region for values < 1.  Draw style *frame* represents the
+region with a mesh of "wires".  The diameter of these "wires" are set
+with the following argument.  Unlike with the *filled* style and similar
+to the *transparent* style, you can see what is *inside* the region with
+this draw style.  The fourth draw style, *points*\, generates a random
+point cloud inside the simulation box and draws only those points that
+are within the region.  This uses the same test than what is used to
+determine if an atom is inside the region but ignores any open faces
+(which would match *all* positions as "inside").  Draw styles *filled*\,
+*transparent*\, and *frame* support only "primitive" region styles (no
+unions or intersections of multiple regions), but the *points* draw
+style supports *all* region styles.
 
 Recommended transparency values are 0.25, 0.5, or 0.75 when used in
 combination with *fsaa on*.
@@ -660,15 +660,14 @@ The *view*, *center*, *up*, and *zoom* values determine how
 3d simulation space is mapped to the 2d plane of the image.  Basically
 they control how the simulation box appears in the image.
 
-All of the *view*, *center*, *up*, and *zoom* values can be
-specified as numeric quantities, whose meaning is explained below.
-Any of them can also be specified as an :doc:`equal-style variable <variable>`,
-by using v_name as the value, where "name" is
-the variable name.  In this case the variable will be evaluated on the
-timestep each image is created to create a new value.  If the
-equal-style variable is time-dependent, this is a means of changing
-the way the simulation box appears from image to image, effectively
-doing a pan or fly-by view of your simulation.
+All of the *view*, *center*, *up*, and *zoom* values can be specified as
+numeric quantities, whose meaning is explained below.  Any of them can
+also be specified as an :doc:`equal-style variable <variable>`, by using
+v_name as the value, where "name" is the variable name.  In this case
+the variable will be evaluated on the timestep each image is created to
+create a new value.  If the equal-style variable is time-dependent, this
+is a means of changing the way the simulation box appears from image to
+image, effectively doing a pan or fly-by view of your simulation.
 
 The *view* keyword determines the viewpoint from which the simulation
 box is viewed, looking towards the *center* point.  The *theta* value
@@ -769,110 +768,9 @@ parameter.  If *no* is set, no depth shading is performed.  The
 calculation of this effect can increase the cost of computing the image
 substantially by 5x or more, especially with larger images.  When used
 in combination with the *fsaa* keyword the computational cost of depth
-shading is particularly large.
-
-----------
-
-Image Quality Settings
-""""""""""""""""""""""
-
-The two keywords *fsaa* and *ssao* can be used to improve the image
-quality at the expense of additional computational cost to render the
-images. The images below show from left to right the same render with
-default settings, with *fsaa* added, with *ssao* added, and with both
-keywords added.
-
-.. |imagequality1| image:: JPG/image.default.png
-   :width: 24%
-.. |imagequality2| image:: JPG/image.fsaa.png
-   :width: 24%
-.. |imagequality3| image:: JPG/image.ssao.png
-   :width: 24%
-.. |imagequality4| image:: JPG/image.both.png
-   :width: 24%
-
-|imagequality1|  |imagequality2|  |imagequality3|  |imagequality4|
-
-----------
-
-A series of JPEG, PNG, or PPM images can be converted into a movie
-file and then played as a movie using commonly available tools. Using
-dump style *movie* automates this step and avoids the intermediate
-step of writing (many) image snapshot file. But LAMMPS has to be
-compiled with -DLAMMPS_FFMPEG and an FFmpeg executable have to be
-installed.
-
-To manually convert JPEG, PNG or PPM files into an animated GIF or
-MPEG or other movie file you can use:
-
-* a) Use the ImageMagick convert program.
-
-  .. code-block:: bash
-
-     convert *.jpg foo.gif
-     convert -loop 1 *.ppm foo.mpg
-
-  Animated GIF files from ImageMagick are not optimized. You can use
-  a program like gifsicle to optimize and thus massively shrink them.
-  MPEG files created by ImageMagick are in MPEG-1 format with a rather
-  inefficient compression and low quality compared to more modern
-  compression styles like MPEG-4, H.264, VP8, VP9, H.265 and so on.
-
-* b) Use QuickTime.
-
-  Select "Open Image Sequence" under the File menu Load the images into
-  QuickTime to animate them Select "Export" under the File menu Save the
-  movie as a QuickTime movie (\*.mov) or in another format.  QuickTime
-  can generate very high quality and efficiently compressed movie
-  files. Some of the supported formats require to buy a license and some
-  are not readable on all platforms until specific runtime libraries are
-  installed.
-
-* c) Use FFmpeg
-
-  FFmpeg is a command-line tool that is available on many platforms and
-  allows extremely flexible encoding and decoding of movies.
-
-  .. code-block:: bash
-
-     cat snap.*.jpg | ffmpeg -y -f image2pipe -c:v mjpeg -i - -b:v 2000k movie.m4v
-     cat snap.*.ppm | ffmpeg -y -f image2pipe -c:v ppm -i - -b:v 2400k movie.avi
-
-  Front ends for FFmpeg exist for multiple platforms. For more
-  information see the `FFmpeg homepage <https://ffmpeg.org/>`_
-
-----------
-
-Play the movie:
-
-* a) Use your browser to view an animated GIF movie.
-
-  Select "Open File" under the File menu
-  Load the animated GIF file
-
-* b) Use the freely available mplayer or ffplay tool to view a
-  movie. Both are available for multiple OSes and support a large
-  variety of file formats and decoders.
-
-  .. code-block:: bash
-
-     mplayer foo.mpg
-     ffplay bar.avi
-
-* c) Use the `Pizza.py <https://lammps.github.io/pizza/>`_
-  `animate tool <https://lammps.github.io/pizza/doc/animate.html>`_,
-  which works directly on a series of image files.
-
-  .. code-block:: python
-
-     a = animate("foo*.jpg")
-
-* d) QuickTime and other Windows- or macOS-based media players can
-  obviously play movie files directly. Similarly for corresponding tools
-  bundled with Linux desktop environments.  However, due to licensing
-  issues with some file formats, the formats may require installing
-  additional libraries, purchasing a license, or may not be
-  supported.
+shading is particularly large.  In case LAMMPS has been :doc:`compiled
+with OpenMP support <Build_basics>`, the SSAO processing is distributed
+across multiple threads.
 
 ----------
 

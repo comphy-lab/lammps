@@ -342,7 +342,11 @@ void FixIndent::post_force(int /*vflag*/)
 
     imgparms[0][1] = ctr[0];
     imgparms[0][2] = ctr[1];
-    imgparms[0][3] = ctr[2];
+    if (domain->dimension == 2) {
+      imgparms[0][3] = -0.5;
+    } else {
+      imgparms[0][3] = ctr[2];
+    }
     imgparms[0][4] = 2.0 * radius;
 
     // cylindrical indenter

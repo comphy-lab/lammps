@@ -1597,8 +1597,9 @@ void DumpImage::create_image()
       } else if (fixvec[i] == TRIANGLE) {
         image->draw_triangle(&fixarray[i][1], &fixarray[i][4], &fixarray[i][7], color, opacity);
       } else if (fixvec[i] == ARROW) {
-        ArrowObj().draw(image, color, &fixarray[i][1], fixarray[i][7], &fixarray[i][4],
-                        fixarray[i][8], opacity);
+        ArrowObj a(fixarray[i][9]);
+        a.draw(image, color, &fixarray[i][1], fixarray[i][7], &fixarray[i][4], fixarray[i][8],
+               opacity);
       } else if (fixvec[i] == BOND) {
         int type1 = static_cast<int>(fixarray[i][0] - 1.0) % ntypes + 1;
         int type2 = static_cast<int>(fixarray[i][1] - 1.0) % ntypes + 1;
@@ -1699,15 +1700,21 @@ void DumpImage::create_image()
         zlen = domain->boxhi_bound[2] - domain->boxlo_bound[2];
       }
 
+      // temporarily turn off the region's open faces flag since
+      // otherwise Region::match() will match for *any* position
+      int saved_flag = reg.ptr->openflag;
+      reg.ptr->openflag = 0;
+
       for (int i = 0; i < reg.npoints; ++i) {
         pos[0] = rand.uniform() * xlen + xoff;
         pos[1] = rand.uniform() * ylen + yoff;
         pos[2] = rand.uniform() * zlen + zoff;
-        if (reg.ptr->inside(pos[0], pos[1], pos[2])) {
-          reg.ptr->forward_transform(pos[0], pos[1], pos[2]);
+        if (reg.ptr->match(pos[0], pos[1], pos[2]))
           image->draw_sphere(pos, reg.color, reg.diameter);
-        }
       }
+
+      // restore saved open face flag
+      reg.ptr->openflag = saved_flag;
 
     } else {
       std::string regstyle = reg.ptr->style;
@@ -1750,48 +1757,53 @@ void DumpImage::create_image()
         for (int i = 0; i < 8; ++i)
           reg.ptr->forward_transform(corners[i][0], corners[i][1], corners[i][2]);
 
-#define CPTR(idx) corners[idx].data()
+#define DRAW_CYLINDER(i, j) \
+  image->draw_cylinder(corners[i].data(), corners[j].data(), reg.color, reg.diameter, 3, 1.0)
+#define DRAW_TRIANGLE(i, j, k) \
+  image->draw_triangle(corners[i].data(), corners[j].data(), corners[k].data(), reg.color, opacity)
+
         if (reg.style == FRAME) {
-          image->draw_cylinder(CPTR(0), CPTR(1), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(1), CPTR(2), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(0), CPTR(3), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(2), CPTR(3), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(0), CPTR(4), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(1), CPTR(5), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(2), CPTR(6), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(3), CPTR(7), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(4), CPTR(5), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(5), CPTR(6), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(4), CPTR(7), reg.color, reg.diameter, 3);
-          image->draw_cylinder(CPTR(6), CPTR(7), reg.color, reg.diameter, 3);
+          DRAW_CYLINDER(0, 1);
+          DRAW_CYLINDER(1, 2);
+          DRAW_CYLINDER(0, 3);
+          DRAW_CYLINDER(2, 3);
+          DRAW_CYLINDER(0, 4);
+          DRAW_CYLINDER(1, 5);
+          DRAW_CYLINDER(2, 6);
+          DRAW_CYLINDER(3, 7);
+          DRAW_CYLINDER(4, 5);
+          DRAW_CYLINDER(5, 6);
+          DRAW_CYLINDER(4, 7);
+          DRAW_CYLINDER(6, 7);
         } else if ((reg.style == FILLED) || (reg.style == TRANSPARENT)) {
           double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
           if (!reg.ptr->open_faces[0]) {
-            image->draw_triangle(CPTR(0), CPTR(1), CPTR(2), reg.color, opacity);
-            image->draw_triangle(CPTR(2), CPTR(3), CPTR(0), reg.color, opacity);
+            DRAW_TRIANGLE(0, 1, 2);
+            DRAW_TRIANGLE(2, 3, 0);
           }
           if (!reg.ptr->open_faces[1]) {
-            image->draw_triangle(CPTR(4), CPTR(5), CPTR(6), reg.color, opacity);
-            image->draw_triangle(CPTR(6), CPTR(7), CPTR(4), reg.color, opacity);
+            DRAW_TRIANGLE(4, 5, 6);
+            DRAW_TRIANGLE(6, 7, 4);
           }
           if (!reg.ptr->open_faces[2]) {
-            image->draw_triangle(CPTR(0), CPTR(4), CPTR(7), reg.color, opacity);
-            image->draw_triangle(CPTR(7), CPTR(3), CPTR(0), reg.color, opacity);
+            DRAW_TRIANGLE(0, 4, 7);
+            DRAW_TRIANGLE(7, 3, 0);
           }
           if (!reg.ptr->open_faces[3]) {
-            image->draw_triangle(CPTR(1), CPTR(2), CPTR(6), reg.color, opacity);
-            image->draw_triangle(CPTR(6), CPTR(5), CPTR(1), reg.color, opacity);
+            DRAW_TRIANGLE(1, 2, 6);
+            DRAW_TRIANGLE(6, 5, 1);
           }
           if (!reg.ptr->open_faces[4]) {
-            image->draw_triangle(CPTR(0), CPTR(1), CPTR(5), reg.color, opacity);
-            image->draw_triangle(CPTR(5), CPTR(4), CPTR(0), reg.color, opacity);
+            DRAW_TRIANGLE(0, 1, 5);
+            DRAW_TRIANGLE(5, 4, 0);
           }
           if (!reg.ptr->open_faces[5]) {
-            image->draw_triangle(CPTR(3), CPTR(2), CPTR(6), reg.color, opacity);
-            image->draw_triangle(CPTR(6), CPTR(7), CPTR(3), reg.color, opacity);
+            DRAW_TRIANGLE(3, 2, 6);
+            DRAW_TRIANGLE(6, 7, 3);
           }
         }
-#undef CPTR
+#undef DRAW_CYLINDER
+#undef DRAW_TRIANGLE
 
         // cylinder is just a special case of cone so we can handle them together
       } else if ((regstyle == "cone") || (regstyle == "cylinder")) {
@@ -1830,6 +1842,7 @@ void DumpImage::create_image()
           // inconsistent style. should not happen.
           if (!myreg) continue;
 
+          length = myreg->hi - myreg->lo;
           radiuslo = myreg->radius;
           radiushi = myreg->radius;
           if (myreg->axis == 'x') {
@@ -1855,7 +1868,7 @@ void DumpImage::create_image()
         // determine which faces to draw
         int faceflag = 0;
         if (reg.style == FRAME) {
-          faceflag = 4;         // no caps
+          faceflag = 4;    // no caps
         } else {
           if (!reg.ptr->open_faces[0]) faceflag |= 1;
           if (!reg.ptr->open_faces[1]) faceflag |= 2;
@@ -1866,7 +1879,8 @@ void DumpImage::create_image()
         int drawflag = (reg.style == FRAME) ? 2 : 1;
         double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
 
-        ConeObj c(length, radiushi, radiuslo, faceflag);
+        ConeObj c(length, radiushi, radiuslo, faceflag,
+                  (reg.style == FRAME) ? RESOLUTION : 2 * RESOLUTION);
         c.draw(image, drawflag, dir, mid, reg.color, reg.ptr, reg.diameter, opacity);
 
         // draw an additional uncapped cylinder for a smoother image for filled cylinders only

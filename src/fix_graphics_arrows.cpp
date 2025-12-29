@@ -257,7 +257,7 @@ void FixGraphicsArrows::end_of_step()
 
     numobjs = n;
     memory->create(imgobjs, numobjs, "fix_graphics_arrows:imgobjs");
-    memory->create(imgparms, numobjs, 9, "fix_graphics_arrows:imgparms");
+    memory->create(imgparms, numobjs, 10, "fix_graphics_arrows:imgparms");
     double *xdata = nullptr;
     double *ydata = nullptr;
     double *zdata = nullptr;
@@ -366,6 +366,7 @@ void FixGraphicsArrows::end_of_step()
         }
         imgparms[n][7] = scale;
         imgparms[n][8] = 2.0 * radius;
+        imgparms[n][9] = 0.2;
         ++n;
       }
     }
@@ -376,7 +377,7 @@ void FixGraphicsArrows::end_of_step()
   } else {    // mode == CHUNK
     numobjs = cchunk->setup_chunks();
     memory->create(imgobjs, numobjs, "fix_graphics_arrows:imgobjs");
-    memory->create(imgparms, numobjs, 9, "fix_graphics_arrows:imgparms");
+    memory->create(imgparms, numobjs, 10, "fix_graphics_arrows:imgparms");
 
     // invoke per-chunk computes
     if (!(cpos->invoked_flag & Compute::INVOKED_ARRAY)) {
@@ -414,6 +415,7 @@ void FixGraphicsArrows::end_of_step()
       imgparms[n][6] = vdata[n][2];
       imgparms[n][7] = scale;
       imgparms[n][8] = 2.0 * radius;
+      imgparms[n][9] = 0.2;
     }
   }
 

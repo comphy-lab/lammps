@@ -3278,6 +3278,7 @@ RANN
 Rapetti
 Raphson
 Rappe
+rasterizer
 Ravelo
 rc
 Rc
@@ -4292,6 +4293,7 @@ Wildcard
 wildcards
 Winkler
 wireframe
+wireframes
 Wirnsberger
 wirtes
 witin

@@ -141,8 +141,8 @@ ArrowObj::ArrowObj(double _tipl, double _tipw, double radius, int res)
     p1[2] = (radius + tipwidth) * cos(radinc * i - RADOVERLAP);
     p2[1] = (radius + tipwidth) * sin(radinc * (i + 1));
     p2[2] = (radius + tipwidth) * cos(radinc * (i + 1));
-    triangles.emplace_back(triangle{p1, tip, p2});
-    triangles.emplace_back(triangle{p1, mid, p2});
+    triangles.emplace_back(triangle{p2, tip, p1});
+    triangles.emplace_back(triangle{p2, mid, p1});
   }
 
   // construct list of triangles for the cap at the bottom
@@ -150,11 +150,11 @@ ArrowObj::ArrowObj(double _tipl, double _tipw, double radius, int res)
   p1[0] = -0.5;
   p2[0] = -0.5;
   for (int i = 0; i < resolution; ++i) {
-    p1[1] = radius * sin(radinc * i);
-    p1[2] = radius * cos(radinc * i);
+    p1[1] = radius * sin(radinc * i - RADOVERLAP);
+    p1[2] = radius * cos(radinc * i - RADOVERLAP);
     p2[1] = radius * sin(radinc * (i + 1));
     p2[2] = radius * cos(radinc * (i + 1));
-    triangles.emplace_back(triangle{p1, bot, p2});
+    triangles.emplace_back(triangle{p2, bot, p1});
   }
 }
 
@@ -184,7 +184,7 @@ void ArrowObj::draw(Image *img, const double *color, const double *center, doubl
   // infer cylinder end points for body from list of triangles
   // (middle corner of all triangles in the the second and last set of triangles)
   if (arrow.size() > resolution + 2)
-    img->draw_cylinder(arrow[resolution + 1][1].data(), arrow[arrow.size() - 1][1].data(), color,
+    img->draw_cylinder(arrow[1][1].data(), arrow[arrow.size() - 1][1].data(), color,
                        scale, 0, opacity);
 }
 
@@ -494,7 +494,7 @@ PlaneObj::PlaneObj(int level)
   constexpr vec3 CEN = {0.0, 0.0, 0.0};
 
   // define unit plane with norm (1.0,0.0,0.0) from four triangles
-  triangles = {{SQ1, CEN, SQ2}, {SQ2, CEN, SQ3}, {SQ3, CEN, SQ4}, {SQ4, CEN, SQ1}};
+  triangles = {{SQ2, CEN, SQ1}, {SQ3, CEN, SQ2}, {SQ4, CEN, SQ3}, {SQ1, CEN, SQ4}};
 
   // refine the list of triangles to the desired level
   for (int i = 1; i < level; ++i) refine();
