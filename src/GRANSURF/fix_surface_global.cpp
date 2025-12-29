@@ -4124,11 +4124,13 @@ double FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
       if (dot1xp != -1) w2 *= (1 - dot1xp);
       if (dot2xp != -1) w1 *= (1 - dot2xp);
 
-     // If any component points into other line, remove it
+      // If any component points into other line, cap at surf norm
+      //   this can happen b/c default is dr - along-line-component
+
       dot = MathExtra::dot3(fn1, line2);
-      if (dot < 0.0) w1 = 0;
+      if (dot < 0.0) MathExtra::copy3(jnorm, fn1);
       dot = MathExtra::dot3(fn2, line1);
-      if (dot < 0.0) w2 = 0;
+      if (dot < 0.0) MathExtra::copy3(jnorm, fn2);
 
       MathExtra::scaleadd3(w1, fn1, fntot, fntot);
       MathExtra::scaleadd3(w2, fn2, fntot, fntot);
