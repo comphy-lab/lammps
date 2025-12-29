@@ -166,10 +166,10 @@ objects listed on the command line to *dump image* so that they are
 included in the rendered image.
 
 The *fflag1* setting of *dump image fix* determines whether cylinder
-elements are capped with spheres:  0 means no caps, 1 means the lower
-end is capped, 2 means the upper end is capped, and 3 means both ends
-are capped.  This applies to the *cylinder* object and also to the
-body of the *arrow* object and the elements of the *progbar* object.
+elements are capped with spheres: 0 means no caps, 1 means the lower end
+is capped, 2 means the upper end is capped, and 3 means both ends are
+capped.  This applies to the *cylinder* object and the elements of the
+*progbar* object.
 
 The *fflag2* setting allows you to adjust the radius of the rendered
 sphere and cylinder items comprising the objects.  Since the radius of
@@ -187,26 +187,25 @@ These images were created with the following input file:
 
    units           si
    region      simulation_box block -0.01 0.01 -0.01 0.01 -0.01 0.01 units box
-   create_box 4 simulation_box
+   create_box 5 simulation_box
    mass * 1
 
    variable xpos equal 0.004*sin(PI*step/1000)
    variable ypos equal 0.004*cos(PI*step/1000)
    variable zpos equal 5.0*v_xpos
    variable prog equal (step)/10000.0
-   fix gra all graphics 50 sphere 1 v_xpos v_ypos -0.009 0.002 &
+   fix gra all graphics 50 sphere 5 v_xpos v_ypos -0.009 0.002 &
                            sphere 1 0.01 -0.005 0.01 0.005 &
                            progbar 3 1 z 0.012 -0.012 0.002 0.02 0.0005 v_prog 10 &
-                           cylinder 4 0.01 -0.005 -0.01 0.01 -0.005 0.01 0.005  &
-                           arrow 2 v_xpos v_ypos 0.0 v_xpos v_ypos 0.01 0.0005 0.2
+                           cylinder 4 0.01 -0.005 -0.01 0.01 -0.005 0.01 0.003  &
+                           arrow 2 v_xpos v_ypos 0.0 v_xpos v_ypos 0.01 0.002 0.4
 
-   dump viz all image 100 myimage2-*.ppm type type size 600 600 zoom 1.24872 &
+   dump viz all image 100 myimage2-*.ppm type type size 500 600 zoom 1.24872 &
                  shiny 0.2 fsaa yes ssao yes 4539 0.6 box no 0.01 axes no 0.5 0.025 &
-                 fix gra type 0 0 view 75 5
+                 fix gra type 3 0 view 80 10 center s 0.4 0.3 0.4
    dump_modify viz pad 9 backcolor black  acolor 3 gray
 
    run 2000
-
 
 Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
