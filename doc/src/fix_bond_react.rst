@@ -408,7 +408,7 @@ ways of writing higher-order interactions.  Types labels for bonds, angles,
 and dihedrals are assumed to be equivalent to those written in reverse
 order.  For example, an angle with type label 'c1-c2-n' is equivalent to
 'n-c2-c1'.  Symmetries for impropers are more complex and are listed on
-the doc page for each improper style (TODO).
+the doc page for each improper style in the 'Symmetry convention' section.
 
 The post-reacted molecule template contains a sample of the reaction
 site and its surrounding topology after the reaction has occurred. It
