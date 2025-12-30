@@ -8,19 +8,19 @@ Syntax
 
 .. code-block:: LAMMPS
 
-   fix ID group-ID graphics/surface Nevery type keyword args ...
+   fix ID group-ID graphics/surface Nevery type isovalue radius keyword args ...
 
 * ID, group-ID are documented in :doc:`fix <fix>` command
 * graphics/surface = style name of this fix command
 * Nevery = update graphics information every this many time steps
 * type = an atom type value to select the color of the surface
+* isovalue = isovalue for the surface selection (unitless)
+* radius = radius of the atoms for computing the isosurface density (may be a variable)
 * one or more keyword/args pairs may be appended
-* keyword = *isovalue* or *radius* or *quality* or *filename* or *binary* or *pad*
+* keyword = *quality* or *filename* or *binary* or *pad*
 
   .. parsed-literal::
 
-     *isovalue* value = isovalue for the surface selection (unitless)
-     *radius* value = radius of the atoms for computing the isosurface density (may be a variable)
      *quality* keyword = surface algorithm quality setting
         keyword = one of *max*, *high*, *medium*, or *low*
      *filename* name = name pattern for output of a sequence of STL format mesh files (must contain a \* character to be replaced by the timestep number)
@@ -109,11 +109,8 @@ none
 Related commands
 """"""""""""""""
 
-none
 
-Default
-"""""""
+Defaults
+""""""""
 
-isovalue  = 0.5,
-radius = 1.5,
-quality = low
+quality = medium, binary = no, pad = 0

@@ -34,14 +34,20 @@ class FixGraphicsSurface : public Fix {
 
   int image(int *&, double **&) override;
 
- protected:
+ private:
   int varflag;
-  int type;
+  int atype;
+  int quality;
+  int binary;
   double iso;
   double rad;
-  double quality;
   char *rstr;
   int rvar;
+  int pad;
+  std::string filename;
+
+  double dx, dy, dz;
+  int nx, ny, nz;
 
   int numobjs;
   int *imgobjs;
