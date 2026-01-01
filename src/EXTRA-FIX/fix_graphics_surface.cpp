@@ -13,11 +13,20 @@
 
 #include "fix_graphics_surface.h"
 
+#include "arg_info.h"
 #include "atom.h"
+#include "comm.h"
+#include "compute.h"
 #include "domain.h"
 #include "dump_image.h"
 #include "error.h"
+#include "fix.h"
+#include "input.h"
 #include "memory.h"
+#include "modify.h"
+#include "respa.h"
+#include "update.h"
+#include "variable.h"
 
 #include <array>
 #include <cmath>
@@ -26,14 +35,26 @@
 using namespace LAMMPS_NS;
 
 namespace {
+constexpr double BIG = 1.0e200;
 
 // for choosing the mesh resolution
-enum { NONE, SURFLOW, SURFMED, SURFHIGH, SURFMAX };
-constexpr double GRIDPOINTS[] = {0, 16.0, 32.0, 64.0, 128.0};
+enum { NONE, SURFMIN, SURFLOW, SURFMED, SURFHIGH, SURFMAX };
+constexpr double GRIDPOINTS[] = {0, 16.0, 32.0, 64.0, 256.0, 512.0};
+
+// for choosing property
+enum { NUMBER, MASS, CHARGE, VARIABLE, COMPUTE, FIX, CUSTOM };
+
+// for truncating gaussian spreading
+constexpr double CUTVAL = -std::log(0.0001);
+// extra grid points at the sides of the subbox grid
+constexpr int GRIDEXTRA = 3;
 
 // custom data types for positions and triangles based on std::array
 using vec3 = std::array<double, 3>;
-using triangle = std::array<vec3, 3>;
+using triangle = struct {
+  std::array<vec3, 3> triangle;
+  int type;
+};
 using gridcell = struct {
   vec3 pos[8];
   double iso[8];
@@ -51,41 +72,53 @@ void get_vertex(const gridcell &g, int c1, int c2, vec3 &vert)
   vert[2] = g.pos[c1][2] + fraction * (g.pos[c2][2] - g.pos[c1][2]);
 }
 
-// distribute atom density across the grid
-void distribute(double ***grid, int ix, int iy, int iz, int nx, int ny, int nz, double dx,
-                double dy, double dz)
+// spread out atom data across the grid
+void distribute(double ***pgrid, double ***dgrid, int ***tgrid, const double *pos, int type,
+                double val, const double *sublo, double delta, int nx, int ny, int nz, int nrange,
+                double rcutsq, double sigma)
 {
-  // clang-format off
-  if ((ix >= 0) && (ix < nx)) {
-    if ((iy >= 0) && (iy < ny)) {
-      if ((iz >= 0) && (iz < nz))
-        grid[ix][iy][iz] = dx * dy * dz;
-      if ((iz > 0) && (iz < nz - 1))
-        grid[ix][iy][iz + 1] = dx * dy * (1.0 - dz);
-    }
-    if ((iy > 0) && (iy < ny - 1)) {
-      if ((iz >= 0) && (iz < nz))
-        grid[ix][iy + 1][iz] = dx * (1.0 - dy) * dz;
-      if ((iz > 0) && (iz < nz - 1))
-        grid[ix][iy + 1][iz + 1] = dx * (1.0 - dy) * (1.0 - dz);
-    }
-  }
+  // locate the primary grid cell of the atom
+  const int ix = GRIDEXTRA + static_cast<int>(floor((pos[0] - sublo[0]) / delta));
+  const int iy = GRIDEXTRA + static_cast<int>(floor((pos[1] - sublo[1]) / delta));
+  const int iz = GRIDEXTRA + static_cast<int>(floor((pos[2] - sublo[2]) / delta));
 
-  if ((ix > 0) && (ix < nx - 1)) {
-    if ((iy >= 0) && (iy < ny)) {
-      if ((iz >= 0) && (iz < nz))
-        grid[ix + 1][iy][iz] = (1.0 - dx) * dy * dz;
-      if ((iz > 0) && (iz < nz - 1))
-        grid[ix + 1][iy][iz + 1] = (1.0 - dx) * dy * (1.0 - dz);
-    }
-    if ((iy > 0) && (iy < ny - 1)) {
-      if ((iz >= 0) && (iz < nz))
-        grid[ix + 1][iy + 1][iz] = (1.0 - dx) * (1.0 - dy) * dz;
-      if ((iz > 0) && (iz < nz - 1))
-        grid[ix + 1][iy + 1][iz + 1] = (1.0 - dx) * (1.0 - dy) * (1.0 - dz);
+  // compute relative position inside the cell
+  const double dx = (pos[0] - (sublo[0] + (ix - GRIDEXTRA) * delta));
+  const double dy = (pos[1] - (sublo[1] + (iy - GRIDEXTRA) * delta));
+  const double dz = (pos[2] - (sublo[2] + (iz - GRIDEXTRA) * delta));
+
+  // loop over possible grid positions for spreading the data
+#if defined(_OPENMP)
+#pragma omp parallel for
+#endif
+  for (int jx = -nrange; jx <= nrange; ++jx) {
+    int kx = ix + jx;
+    // skip if outside the local grid
+    if ((kx < 0) || (kx >= nx)) continue;
+    for (int jy = -nrange; jy <= nrange; ++jy) {
+      int ky = iy + jy;
+      // skip if outside the local grid
+      if ((ky < 0) || (ky >= ny)) continue;
+      for (int jz = -nrange; jz <= nrange; ++jz) {
+        int kz = iz + jz;
+        // skip if outside the local grid
+        if ((kz < 0) || (kz >= nz)) continue;
+
+        // compute squared distance to grid point and apply cutoff and set value
+        double xpos = jx * delta + dx;
+        double ypos = jy * delta + dy;
+        double zpos = jz * delta + dz;
+        double distsq = xpos * xpos + ypos * ypos + zpos * zpos;
+        if (distsq < rcutsq) {
+          pgrid[kx][ky][kz] += val * exp(-distsq / sigma);
+          if (distsq < dgrid[kx][ky][kz]) {
+            dgrid[kx][ky][kz] = distsq;
+            tgrid[kx][ky][kz] = type;
+          }
+        }
+      }
     }
   }
-  // clang-format on
 }
 
 // for identifying the edges that contain the isosurface
@@ -375,13 +408,17 @@ constexpr int TRITABLE[256][16] = {
 /* ---------------------------------------------------------------------- */
 
 FixGraphicsSurface::FixGraphicsSurface(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), imgobjs(nullptr), imgparms(nullptr)
+    Fix(lmp, narg, arg), pstr(nullptr), pcomp(nullptr), pfix(nullptr), pdata(nullptr),
+    imgobjs(nullptr), imgparms(nullptr)
 {
   if (narg < 6) utils::missing_cmd_args(FLERR, "fix graphics/surface", error);
 
   // fix settings
   global_freq = nevery;
   dynamic_group_allow = 1;
+  comm_forward = 1;
+  nlevels_respa = 1;
+  nmax = -1;
 
   if (domain->triclinic)
     error->all(FLERR, "Fix graphics/surface is currently not compatible with triclinic cells");
@@ -391,6 +428,7 @@ FixGraphicsSurface::FixGraphicsSurface(LAMMPS *lmp, int narg, char **arg) :
   // defaults
   numobjs = 0;
   quality = SURFMED;
+  pflag = NUMBER;
   binary = 0;
   pad = 0;
 
@@ -398,10 +436,9 @@ FixGraphicsSurface::FixGraphicsSurface(LAMMPS *lmp, int narg, char **arg) :
 
   nevery = utils::inumeric(FLERR, arg[3], false, lmp);
   if (nevery <= 0) error->all(FLERR, 3, "Illegal fix graphics/surface nevery value {}", nevery);
-  atype = utils::inumeric(FLERR, arg[4], false, lmp);
-  if (atype < 0) error->all(FLERR, 4, "Illegal fix graphics/surface type value {}", atype);
-  iso = utils::numeric(FLERR, arg[5], false, lmp);
-  if (iso <= 0.0) error->all(FLERR, 5, "Illegal fix graphics/surface isovalue {}", iso);
+  iso = utils::numeric(FLERR, arg[4], false, lmp);
+  rad = 2.0*utils::numeric(FLERR, arg[5], false, lmp);
+  if (rad <= 0.0) error->all(FLERR, 5, "Illegal fix graphics/surface radius value {}", rad);
 
   // parse optional args
 
@@ -409,16 +446,89 @@ FixGraphicsSurface::FixGraphicsSurface(LAMMPS *lmp, int narg, char **arg) :
   while (iarg < narg) {
     if (strcmp(arg[iarg], "quality") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/surface quality", error);
-      if (strncmp(arg[iarg + 1], "low", 3) == 0) {
+      if (strcmp(arg[iarg + 1], "min") == 0) {
+        quality = SURFMIN;
+      } else if (strcmp(arg[iarg + 1], "low") == 0) {
         quality = SURFLOW;
-      } else if (strncmp(arg[iarg + 1], "med", 3) == 0) {
+      } else if (strcmp(arg[iarg + 1], "med") == 0) {
         quality = SURFMED;
       } else if (strcmp(arg[iarg + 1], "high") == 0) {
         quality = SURFHIGH;
-      } else if (strncmp(arg[iarg + 1], "max", 3) == 0) {
+      } else if (strcmp(arg[iarg + 1], "max") == 0) {
         quality = SURFMAX;
       } else {
-        error->all(FLERR, iarg, "Unknown fix graphics/surface quality setting {}", arg[iarg + 1]);
+        error->all(FLERR, iarg + 1, "Unknown fix graphics/surface quality setting {}",
+                   arg[iarg + 1]);
+      }
+      iarg += 2;
+    } else if (strcmp(arg[iarg], "property") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/surface property", error);
+      if (strcmp(arg[iarg + 1], "none") == 0) {
+        pflag = ArgInfo::NONE;
+      } else if (strcmp(arg[iarg + 1], "mass") == 0) {
+        pflag = ArgInfo::MASS;
+      } else {
+        ArgInfo argi(arg[iarg + 1]);
+        pflag = argi.get_type();
+        pindex = argi.get_index1();
+        delete[] pstr;
+        pstr = utils::strdup(argi.get_name());
+
+        // check validity of property argument
+        if ((pflag == ArgInfo::UNKNOWN) || (pflag == ArgInfo::NONE) || (argi.get_dim() > 1))
+          error->all(FLERR, iarg + 1, "Invalid fix graphics/surface property {}", arg[iarg + 1]);
+
+        if (pflag == ArgInfo::COMPUTE) {
+          pcomp = modify->get_compute_by_id(pstr);
+          if (!pcomp)
+            error->all(FLERR, iarg + 1, "Compute ID {} for fix graphics/surface does not exist",
+                       pstr);
+          if (pcomp->peratom_flag == 0)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface compute {} does not calculate per-atom values", pstr);
+          if (pindex == 0 && pcomp->size_peratom_cols != 0)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface compute {} does not calculate a per-atom vector",
+                       pstr);
+          if (pindex && pcomp->size_peratom_cols == 0)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface compute {} does not calculate a per-atom array", pstr);
+          if (pindex && pindex > pcomp->size_peratom_cols)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface compute {} array is accessed out-of-range{}", pstr,
+                       utils::errorurl(20));
+
+        } else if (pflag == ArgInfo::FIX) {
+          pfix = modify->get_fix_by_id(pstr);
+          if (!pfix)
+            error->all(FLERR, iarg + 1, "Fix ID {} for fix graphics/surface does not exist", pstr);
+          if (pfix->peratom_flag == 0)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface fix {} does not calculate per-atom values", pstr);
+          if (pindex == 0 && pfix->size_peratom_cols != 0)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface fix {} does not calculate a per-atom vector", pstr);
+          if (pindex && pfix->size_peratom_cols == 0)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface fix {} does not calculate a per-atom array", pstr);
+          if (pindex && pindex > pfix->size_peratom_cols)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface fix {} array is accessed out-of-range{}", pstr,
+                       utils::errorurl(20));
+          if (nevery % pfix->peratom_freq)
+            error->all(FLERR, iarg + 1,
+                       "Fix {} for fix graphics/surface not computed at compatible time{}", pstr,
+                       utils::errorurl(7));
+
+        } else if (pflag == ArgInfo::VARIABLE) {
+          pvar = input->variable->find(pstr);
+          if (pvar < 0)
+            error->all(FLERR, iarg + 1, "Variable name {} for fix graphics/surface does not exist",
+                       pstr);
+          if (input->variable->atomstyle(pvar) == 0)
+            error->all(FLERR, iarg + 1,
+                       "Fix graphics/surface variable {} is not atom-style variable", pstr);
+        }
       }
       iarg += 2;
     } else if (strcmp(arg[iarg], "filename") == 0) {
@@ -443,6 +553,8 @@ FixGraphicsSurface::FixGraphicsSurface(LAMMPS *lmp, int narg, char **arg) :
 
 FixGraphicsSurface::~FixGraphicsSurface()
 {
+  delete[] pstr;
+  memory->destroy(pdata);
   memory->destroy(imgobjs);
   memory->destroy(imgparms);
 }
@@ -451,14 +563,149 @@ FixGraphicsSurface::~FixGraphicsSurface()
 
 int FixGraphicsSurface::setmask()
 {
-  return FixConst::END_OF_STEP;
+  int mask = 0;
+  mask |= FixConst::POST_FORCE;
+  mask |= FixConst::POST_FORCE_RESPA;
+  mask |= FixConst::END_OF_STEP;
+  return mask;
 }
 
 /* ---------------------------------------------------------------------- */
 
-void FixGraphicsSurface::setup(int)
+void FixGraphicsSurface::init()
 {
+  if (utils::strmatch(update->integrate_style, "^respa"))
+    nlevels_respa = (dynamic_cast<Respa *>(update->integrate))->nlevels;
+
+  // check validity of all compute, fix, or variable and update
+
+  if (pflag == ArgInfo::COMPUTE) {
+    pcomp = modify->get_compute_by_id(pstr);
+    if (!pcomp)
+      error->all(FLERR, Error::NOLASTLINE, "Compute ID {} for fix ave/atom does not exist", pstr);
+
+  } else if (pflag == ArgInfo::FIX) {
+    pfix = modify->get_fix_by_id(pstr);
+    if (!pfix)
+      error->all(FLERR, Error::NOLASTLINE, "Fix ID {} for fix ave/atom does not exist", pstr);
+
+  } else if (pflag == ArgInfo::VARIABLE) {
+    pvar = input->variable->find(pstr);
+    if (pvar < 0)
+      error->all(FLERR, Error::NOLASTLINE, "Variable name {} for fix ave/atom does not exist",
+                 pstr);
+  }
+
+  // request updates of computes, if needed
+  if ((pflag != ArgInfo::NONE) || (pflag != ArgInfo::MASS)) {
+    bigint nextstep = (update->ntimestep / nevery) * nevery + nevery;
+    if ((nextstep - nevery) == update->ntimestep) nextstep = update->ntimestep;
+    modify->addstep_compute(nextstep);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void FixGraphicsSurface::setup(int vflag)
+{
+  post_force(vflag);
   end_of_step();
+}
+
+/* ---------------------------------------------------------------------- */
+
+void FixGraphicsSurface::post_force(int /*vflag*/)
+{
+  // manage updates of computes, if needed
+  if ((pflag != ArgInfo::NONE) && (pflag != ArgInfo::MASS)) modify->clearstep_compute();
+
+  // ensure data storage is sufficient
+  if (nmax < atom->nmax) {
+    nmax = MAX(1, atom->nmax);
+    memory->destroy(pdata);
+    memory->create(pdata, nmax, "fix_graphics/surface:pdata");
+  }
+
+  // fill per-atom data storage with requested data for local atoms
+  const int nlocal = atom->nlocal;
+  const int *const type = atom->type;
+  const double *const mass = atom->mass;
+  const double *const rmass = atom->rmass;
+
+  if (pflag == ArgInfo::NONE) {
+    for (int i = 0; i < nlocal; ++i) pdata[i] = 1.0;
+  } else if (pflag == ArgInfo::MASS) {
+    if (rmass) {
+      for (int i = 0; i < nlocal; ++i) pdata[i] = rmass[i];
+    } else {
+      for (int i = 0; i < nlocal; ++i) pdata[i] = mass[type[i]];
+    }
+  } else if (pflag == ArgInfo::COMPUTE) {
+    if (!(pcomp->invoked_flag & Compute::INVOKED_PERATOM)) {
+      pcomp->compute_peratom();
+      pcomp->invoked_flag |= Compute::INVOKED_PERATOM;
+    }
+    if (pindex == 0) {
+      double *compute_vector = pcomp->vector_atom;
+      for (int i = 0; i < nlocal; ++i) pdata[i] = compute_vector[i];
+    } else {
+      int jm1 = pindex - 1;
+      double **compute_array = pcomp->array_atom;
+      for (int i = 0; i < nlocal; ++i) pdata[i] = compute_array[i][jm1];
+    }
+  } else if (pflag == ArgInfo::FIX) {
+    if (pindex == 0) {
+      double *fix_vector = pfix->vector_atom;
+      for (int i = 0; i < nlocal; ++i) pdata[i] = fix_vector[i];
+    } else {
+      int jm1 = pindex - 1;
+      double **fix_array = pfix->array_atom;
+      for (int i = 0; i < nlocal; ++i) pdata[i] = fix_array[i][jm1];
+    }
+  } else if (pflag == ArgInfo::VARIABLE) {
+    input->variable->compute_atom(pvar, igroup, pdata, 1, 0);
+  }
+
+  // set data for ghost atoms
+  comm->forward_comm(this);
+
+  // request updates of computes, if needed
+  if ((pflag != ArgInfo::NONE) && (pflag != ArgInfo::MASS)) {
+    bigint nextstep = (update->ntimestep / nevery) * nevery + nevery;
+    if ((nextstep - nevery) == update->ntimestep) nextstep = update->ntimestep;
+    modify->addstep_compute(nextstep);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+int FixGraphicsSurface::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/,
+                                          int * /*pbc*/)
+{
+  int m = 0;
+  for (int i = 0; i < n; ++i) {
+    int j = list[i];
+    buf[m++] = pdata[list[i]];
+  }
+
+  return m;
+}
+
+/* ---------------------------------------------------------------------- */
+
+void FixGraphicsSurface::unpack_forward_comm(int n, int first, double *buf)
+{
+  int m = 0;
+  int last = first + n;
+
+  for (int i = first; i < last; ++i) pdata[i] = buf[m++];
+}
+
+/* ---------------------------------------------------------------------- */
+
+void FixGraphicsSurface::post_force_respa(int vflag, int ilevel, int /*iloop*/)
+{
+  if (ilevel == nlevels_respa - 1) post_force(vflag);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -470,56 +717,49 @@ void FixGraphicsSurface::end_of_step()
   const double *const sublo = domain->sublo;
   const double *const subhi = domain->subhi;
 
-  double volfac = cbrt(domain->xprd * domain->yprd * domain->zprd) / GRIDPOINTS[quality];
+  // get grid spacing and sub-domain lengths
+  double delta = cbrt(domain->xprd * domain->yprd * domain->zprd) / GRIDPOINTS[quality];
   double sublen[3] = {subhi[0] - sublo[0], subhi[1] - sublo[1], subhi[2] - sublo[2]};
 
-  // get grid dims for subdomains, add 2 points on each side and make sure they are even numbers
-  int nx = 4 + static_cast<int>(sublen[0] / volfac);
-  if (nx % 2) ++nx;
-  int ny = 4 + static_cast<int>(sublen[1] / volfac);
-  if (ny % 2) ++ny;
-  int nz = 4 + static_cast<int>(sublen[2] / volfac);
-  if (nz % 2) ++nz;
+  // get grid dims for subdomains, add extra points on each side
+  int nx = 2 * GRIDEXTRA + static_cast<int>(ceil(sublen[0] / delta));
+  int ny = 2 * GRIDEXTRA + static_cast<int>(ceil(sublen[1] / delta));
+  int nz = 2 * GRIDEXTRA + static_cast<int>(ceil(sublen[2] / delta));
 
-  double ***isogrid;
+  // determine cutoff for spreading and number of gridpoints for spreading
+  const double rcutsq = rad * CUTVAL;
+  const int nrange = static_cast<int>(ceil(sqrt(rcutsq) / delta));
+
+  // allocate grids and zero it out the property grid
+  double ***isogrid, ***distgrid;
+  int ***typegrid;
   memory->create(isogrid, nx, ny, nz, "fix graphics/surface:isogrid");
+  memory->create(distgrid, nx, ny, nz, "fix graphics/surface:distgrid");
+  memory->create(typegrid, nx, ny, nz, "fix graphics/surface:typegrid");
   memset(isogrid[0][0], 0, sizeof(double) * nx * ny * nz);
-
-  // loop over local and ghost atoms, match group and check if within grid range
-  const int nall = atom->nlocal + atom->nghost;
-  const int *const mask = atom->mask;
-  const double *const *const x = atom->x;
-  for (int i = 0; i < nall; ++i) {
-    if (mask[i] & groupbit) {
-      int ix = 2 + static_cast<int>(floor((x[i][0] - sublo[0]) / volfac));
-      int iy = 2 + static_cast<int>(floor((x[i][1] - sublo[1]) / volfac));
-      int iz = 2 + static_cast<int>(floor((x[i][2] - sublo[2]) / volfac));
-
-      // skip if outside the grid
-      if ((ix < 0) || (ix >= nx - 1)) continue;
-      if ((iy < 0) || (iy >= ny - 1)) continue;
-      if ((iz < 0) || (iz >= nz - 1)) continue;
-
-      // compute relative position in cell
-      double dx = (x[i][0] - (sublo[0] + (ix - 2) * volfac)) / volfac;
-      double dy = (x[i][1] - (sublo[1] + (iy - 2) * volfac)) / volfac;
-      double dz = (x[i][2] - (sublo[2] + (iz - 2) * volfac)) / volfac;
-
-      // distribute density on the grid
-      distribute(isogrid, ix, iy, iz, nx, ny, nz, dx, dy, dz);
+  memset(typegrid[0][0], 0, sizeof(int) * nx * ny * nz);
+  for (int ix = 0; ix < nx; ++ix) {
+    for (int iy = 0; iy < ny; ++iy) {
+      for (int iz = 0; iz < nz; ++iz) distgrid[ix][iy][iz] = BIG;
     }
   }
 
-  // adjust collected density to be independent of number of atoms and number of grid points
-  // and subtract the isovalue so that the surface would be drawn for a value of < 0.0
-  double densadjust =
-      ((double) (nx - 4)) * ((double) (ny - 4)) * ((double) (nz - 4)) / (double) atom->natoms;
+  // loop over local and ghost atoms, match group and check if within grid range
+  // per-atom data was copied to pdata array and sent to ghost atoms in post_force()
+  const int nall = atom->nlocal + atom->nghost;
+  const int *const mask = atom->mask;
+  const int *const type = atom->type;
+  const double *const *const x = atom->x;
+  for (int i = 0; i < nall; ++i) {
+    if (mask[i] & groupbit)
+      distribute(isogrid, distgrid, typegrid, x[i], type[i], pdata[i], sublo, delta, nx, ny, nz,
+                 nrange, rcutsq, rad);
+  }
+
+  // subtract the isovalue from grid data so that the surface would be drawn for a value of < 0.0
   for (int ix = 0; ix < nx; ++ix) {
     for (int iy = 0; iy < ny; ++iy) {
-      for (int iz = 0; iz < nz; ++iz) {
-        isogrid[ix][iy][iz] *= densadjust;
-        isogrid[ix][iy][iz] -= iso;
-      }
+      for (int iz = 0; iz < nz; ++iz) isogrid[ix][iy][iz] -= iso;
     }
   }
 
@@ -535,27 +775,27 @@ void FixGraphicsSurface::end_of_step()
         // clang-format off
 
         // get lower edge coordinates of the grid cell
-        double gx = sublo[0] + (ix - 2) * volfac;
-        double gy = sublo[1] + (iy - 2) * volfac;
-        double gz = sublo[2] + (iz - 2) * volfac;
+        double gx = sublo[0] + (ix - GRIDEXTRA) * delta;
+        double gy = sublo[1] + (iy - GRIDEXTRA) * delta;
+        double gz = sublo[2] + (iz - GRIDEXTRA) * delta;
 
         // store position and isovalue for each corner of the grid cell
         g.iso[0] = isogrid[ix  ][iy  ][iz  ];
-        g.pos[0] = {gx,        gy,        gz};
-        g.iso[1] = isogrid[ix  ][iy  ][iz+1];
-        g.pos[1] = {gx,        gy,        gz+volfac};
+        g.iso[1] = isogrid[ix+1][iy  ][iz  ];
         g.iso[3] = isogrid[ix  ][iy+1][iz  ];
-        g.pos[3] = {gx,        gy+volfac, gz};
-        g.iso[2] = isogrid[ix  ][iy+1][iz+1];
-        g.pos[2] = {gx,        gy+volfac, gz+volfac};
-        g.iso[4] = isogrid[ix+1][iy  ][iz  ];
-        g.pos[4] = {gx+volfac, gy,        gz};
+        g.iso[2] = isogrid[ix+1][iy+1][iz  ];
+        g.iso[4] = isogrid[ix  ][iy  ][iz+1];
         g.iso[5] = isogrid[ix+1][iy  ][iz+1];
-        g.pos[5] = {gx+volfac, gy,        gz+volfac};
-        g.iso[7] = isogrid[ix+1][iy+1][iz  ];
-        g.pos[7] = {gx+volfac, gy+volfac, gz};
+        g.iso[7] = isogrid[ix  ][iy+1][iz+1];
         g.iso[6] = isogrid[ix+1][iy+1][iz+1];
-        g.pos[6] = {gx+volfac, gy+volfac, gz+volfac};
+        g.pos[0] = {gx,       gy,       gz};
+        g.pos[1] = {gx+delta, gy,        gz};
+        g.pos[3] = {gx,       gy+delta, gz};
+        g.pos[2] = {gx+delta, gy+delta, gz};
+        g.pos[4] = {gx,       gy,       gz+delta};
+        g.pos[5] = {gx+delta, gy,       gz+delta};
+        g.pos[7] = {gx,       gy+delta, gz+delta};
+        g.pos[6] = {gx+delta, gy+delta, gz+delta};
         // clang-format on
 
         // determine edge table index
@@ -589,9 +829,10 @@ void FixGraphicsSurface::end_of_step()
 
         // compute the triangles for this grid cell and add them to the list
         for (int i = 0; TRITABLE[idx][i] != -1; i += 3)
-          triangles.emplace_back(triangle{vertices[TRITABLE[idx][i]],
-                                          vertices[TRITABLE[idx][i + 1]],
-                                          vertices[TRITABLE[idx][i + 2]]});
+          triangles.emplace_back(
+              triangle{{vertices[TRITABLE[idx][i]], vertices[TRITABLE[idx][i + 1]],
+                        vertices[TRITABLE[idx][i + 2]]},
+                       typegrid[ix][iy][iz]});
       }
     }
   }
@@ -611,21 +852,20 @@ void FixGraphicsSurface::end_of_step()
     bool addme = true;
     for (int i = 0; i < 3; ++i)
       for (int j = 0; j < 3; ++j)
-        if ((tri[i][j] <= (sublo[j] - 0.5 * volfac)) || (tri[i][j] >= (subhi[j] + 0.5 * volfac)))
+        if ((tri.triangle[i][j] <= (sublo[j] - 0.001 * delta)) || (tri.triangle[i][j] >= (subhi[j] + 0.001 * delta)))
           addme = false;
-
     if (addme) {
       imgobjs[n] = DumpImage::TRI;
-      imgparms[n][0] = atype;
-      imgparms[n][1] = tri[0][0];
-      imgparms[n][2] = tri[0][1];
-      imgparms[n][3] = tri[0][2];
-      imgparms[n][4] = tri[1][0];
-      imgparms[n][5] = tri[1][1];
-      imgparms[n][6] = tri[1][2];
-      imgparms[n][7] = tri[2][0];
-      imgparms[n][8] = tri[2][1];
-      imgparms[n][9] = tri[2][2];
+      imgparms[n][0] = tri.type;
+      imgparms[n][1] = tri.triangle[0][0];
+      imgparms[n][2] = tri.triangle[0][1];
+      imgparms[n][3] = tri.triangle[0][2];
+      imgparms[n][4] = tri.triangle[1][0];
+      imgparms[n][5] = tri.triangle[1][1];
+      imgparms[n][6] = tri.triangle[1][2];
+      imgparms[n][7] = tri.triangle[2][0];
+      imgparms[n][8] = tri.triangle[2][1];
+      imgparms[n][9] = tri.triangle[2][2];
       ++n;
     }
   }

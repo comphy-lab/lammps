@@ -30,15 +30,31 @@ class FixGraphicsSurface : public Fix {
   ~FixGraphicsSurface() override;
 
   int setmask() override;
+  void init() override;
   void setup(int) override;
+  void post_force(int) override;
+  void post_force_respa(int, int, int) override;
+  int pack_forward_comm(int, int *, double *, int, int *) override;
+  void unpack_forward_comm(int, int, double *) override;
   void end_of_step() override;
 
   int image(int *&, double **&) override;
 
  private:
-  int atype;
-  int quality;
   double iso;
+  double rad;
+  double *pdata;    // holding space for per-atom property data
+  int quality;
+  int nlevels_respa;
+  int nmax;
+
+  int pflag;               // type of property data
+  int pindex;              // 1-based index if data is vector, else 0
+  char *pstr;              // compute/fix/variable ID
+  class Compute *pcomp;    // pointer to per-atom compute
+  class Fix *pfix;         // pointer to per-atom fix
+  int pvar;                // property variable index
+
   int binary;
   int pad;
   std::string filename;
