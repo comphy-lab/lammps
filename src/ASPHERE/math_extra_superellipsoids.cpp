@@ -46,27 +46,14 @@ static constexpr double TOL_OVERLAP = 1e-8;
 static constexpr unsigned int ITERMAX_OVERLAP = 20;
 static constexpr double MINSLOPE_OVERLAP = 1e-12;
 
-/* ----------------------------------------------------------------------
-   beta function B(x,y) = Gamma(x) * Gamma(y) / Gamma(x+y)
-------------------------------------------------------------------------- */
-double beta_func(double a, double b) {
-    return exp(lgamma(a) + lgamma(b) - lgamma(a + b));
-}
-// TODO: the reason why I had codded the beta function from scratch is because LAMMPS must be guaranteed to work with some older standard of C++
-//       I don't remember which one exactly (C++14 I think) but this standard does not have gamma() of beta() in the <cmath> implementation
-//       TBD if the code above will be accepted or if we need to fall back to the implementation of beta I copied from Cephes
-/* ----------------------------------------------------------------------
-   Volume of superellipsoid
-   source https://cse.buffalo.edu/~jryde/cse673/files/superquadrics.pdf
-------------------------------------------------------------------------- */
 
 void volume_superellipsoid(const double *blockiness, const double *shape, double volume)
 {
   const double eps1 = 2.0 / blockiness[0]; // shape exponent in latitude direction
   const double eps2 = 2.0 / blockiness[1]; // shape exponent in longitude direction
   volume = 2.0*shape[0]*shape[1]*shape[2]*eps1*eps2*
-      beta_func(0.5*eps1, eps1 + 1.0)*
-      beta_func(0.5*eps2, 0.5*eps2 + 1.0);
+      std::beta(0.5*eps1, eps1 + 1.0)*
+      std::beta(0.5*eps2, 0.5*eps2 + 1.0);
 }
 
 /* ----------------------------------------------------------------------
@@ -83,12 +70,12 @@ void inertia_superellipsoid(const double *shape, const double *blockiness, doubl
   const double a1 = shape[0];
   const double a2 = shape[1];
   const double a3 = shape[2];
-  const double I_xx = 0.5*a1*a2*a3*eps1*eps2*(a2*a2*beta_func(1.5*eps2, 0.5*eps2)*beta_func(0.5*eps1, 2.0*eps1+1.0)+
-      4.0*a3*a3*beta_func(0.5*eps2, 0.5*eps2+1.0)*beta_func(1.5*eps1, eps1+1.0)) * density;
-  const double I_yy = 0.5*a1*a2*a3*eps1*eps2*(a1*a1*beta_func(1.5*eps2, 0.5*eps2)*beta_func(0.5*eps1, 2.0*eps1+1.0)+
-      4.0*a3*a3*beta_func(0.5*eps2, 0.5*eps2+1.0)*beta_func(1.5*eps1, eps1+1.0)) * density;
+  const double I_xx = 0.5*a1*a2*a3*eps1*eps2*(a2*a2*std::beta(1.5*eps2, 0.5*eps2)*std::beta(0.5*eps1, 2.0*eps1+1.0)+
+      4.0*a3*a3*std::beta(0.5*eps2, 0.5*eps2+1.0)*std::beta(1.5*eps1, eps1+1.0)) * density;
+  const double I_yy = 0.5*a1*a2*a3*eps1*eps2*(a1*a1*std::beta(1.5*eps2, 0.5*eps2)*std::beta(0.5*eps1, 2.0*eps1+1.0)+
+      4.0*a3*a3*std::beta(0.5*eps2, 0.5*eps2+1.0)*std::beta(1.5*eps1, eps1+1.0)) * density;
   const double I_zz = 0.5*a1*a2*a3*eps1*eps2*(a1*a1 + a2*a2)*
-      beta_func(1.5*eps2, 0.5*eps2)*beta_func(0.5*eps1, 2.0*eps1+1.0) * density;
+      std::beta(1.5*eps2, 0.5*eps2)*std::beta(0.5*eps1, 2.0*eps1+1.0) * density;
 
   inertia[0] = I_xx;
   inertia[1] = I_yy;

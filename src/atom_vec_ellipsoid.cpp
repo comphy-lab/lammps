@@ -23,7 +23,6 @@
 #include "fix.h"
 #include "math_const.h"
 #include "math_extra.h"
-#include "math_special.h"
 #include "memory.h"
 #include "modify.h"
 

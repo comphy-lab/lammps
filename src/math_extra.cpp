@@ -492,13 +492,13 @@ void inertia_ellipsoid_principal(double *shape, double mass, double *idiag,
   if (flag_super) {
     // super-ellipsoid, Eq. (12) of Jaklic and Solina, 2003
     double e1 = 2.0 / block[0], e2 = 2.0 / block[1];
-    double beta_tmp1 = MathSpecial::beta(0.5 * e1, 1 + 2 * e1);
-    double beta_tmp2 = MathSpecial::beta(0.5 * e2, 0.5 * e2);
-    double beta_tmp3 = MathSpecial::beta(0.5 * e2, 1.5 * e2);
-    double dens = mass / (MathSpecial::beta(0.5 * e1, 1.0 + e1) * beta_tmp2);
+    double beta_tmp1 = std::beta(0.5 * e1, 1 + 2 * e1);
+    double beta_tmp2 = std::beta(0.5 * e2, 0.5 * e2);
+    double beta_tmp3 = std::beta(0.5 * e2, 1.5 * e2);
+    double dens = mass / (std::beta(0.5 * e1, 1.0 + e1) * beta_tmp2);
     double m0 = 0.5 * rsq0 * beta_tmp1 * beta_tmp3;
     double m1 = 0.5 * rsq1 * beta_tmp1 * beta_tmp3;
-    double m2 = rsq2 * MathSpecial::beta(1.5 * e1, 1 + e1) * beta_tmp2;
+    double m2 = rsq2 * std::beta(1.5 * e1, 1 + e1) * beta_tmp2;
     idiag[0] = dens * (m1 + m2);
     idiag[1] = dens * (m0 + m2);
     idiag[2] = dens * (m0 + m1);
@@ -657,8 +657,8 @@ double volume_ellipsoid(double *shape, double *block, bool flag_super)
 
   if (flag_super) {
     double e1 = 2.0 / block[0], e2 = 2.0 / block[1];
-    unitvol = e1 * e2 * MathSpecial::beta(0.5 * e1, 1.0 + e1) *
-                        MathSpecial::beta(0.5 * e2, 0.5 * e2);
+    unitvol = e1 * e2 * std::beta(0.5 * e1, 1.0 + e1) *
+                        std::beta(0.5 * e2, 0.5 * e2);
   }
   return unitvol * shape[0] * shape[1] * shape[2];
 }
