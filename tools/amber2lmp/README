@@ -1,3 +1,33 @@
+IMPORTANT NOTICE
+================
+
+The legacy scripts in this directory (amber2lammps.py, dump2trj.py,
+dump2trj99.py) are obsolete and no longer maintained. They may not work
+correctly with current versions of Python (Python 3).
+
+For converting AMBER files to LAMMPS format, please use the actively
+maintained AMBER2LAMMPS tool:
+
+  Project:  https://github.com/askforarun/AMBER2LAMMPS
+  Issues:   https://github.com/askforarun/AMBER2LAMMPS/issues
+
+Installation:
+
+  pip install numpy parmed
+  git clone https://github.com/askforarun/AMBER2LAMMPS.git
+
+Quick Start:
+
+  python3 amber_to_lammps.py <data_file> <param_file> <topology.prmtop> <coords.mol2> <params.frcmod>
+
+For help, bug reports, and feature requests, please use the GitHub repository
+listed above.
+
+-------------------------------------------------------------------------
+
+LEGACY SCRIPTS (OBSOLETE - FOR REFERENCE ONLY)
+==============================================
+
 These Python scripts were written originally by Keir Novik, but he can
 no longer support them.  See some documentation at the top of the
 files - they are supposed to be fairly self-explanatory.

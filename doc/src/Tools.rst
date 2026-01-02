@@ -110,19 +110,23 @@ Tool descriptions
 
 .. _amber:
 
-amber2lmp tool
+amber2lmp tool (Legacy)
 --------------------------
 
-The amber2lmp subdirectory contains three Python scripts for converting
-files back-and-forth between the AMBER MD code and LAMMPS.  See the
-README file in amber2lmp for more information.
+The amber2lmp subdirectory contains legacy Python scripts for converting
+files between the AMBER MD code and LAMMPS. These scripts are obsolete
+and no longer maintained.
+They may not work correctly with current versions of Python (Python 3).
 
-These tools were written by Keir Novik while he was at Queen Mary
-University of London.  Keir is no longer there and cannot support
-these tools which are out-of-date with respect to the current LAMMPS
-version (and maybe with respect to AMBER as well).  Since we don't use
-these tools at Sandia, you will need to experiment with them and make
-necessary modifications yourself.
+**For modern AMBER to LAMMPS conversion, please use the external AMBER2LAMMPS tool:**
+
+* **Project:** https://github.com/askforarun/AMBER2LAMMPS
+* **Dependencies:** NumPy, ParmEd
+* **Documentation:** See :doc:`Howto_amber_to_lammps` for detailed usage
+* **Support:** Please use the AMBER2LAMMPS issue tracker (not the LAMMPS repository)
+
+The legacy tools were written by Keir Novik while he was at Queen Mary
+University of London. They are provided for reference only.
 
 ----------
 
