@@ -181,7 +181,8 @@ Image::Image(LAMMPS *lmp, int nmap_caller) :
 
   ncolors = 0;
   boxcolor = color2rgb("yellow");
-  background[0] = background[1] = background[2] = 0;
+  background[0] = background[1] = background[2] = 0.0;
+  background2[0] = background2[1] = background2[2] = -1.0;
 
   // define nmap colormaps, all with default settings
 
@@ -377,22 +378,39 @@ void Image::view_params(double boxxlo, double boxxhi, double boxylo,
 /* ----------------------------------------------------------------------
    initialize image to background color and depth buffer
    no need to init surfaceBuffer, since will be based on depth
+   create background gradient, if background2[0] is >= 0
+     otherwise use single background color
 ------------------------------------------------------------------------- */
 
 void Image::clear()
 {
-  int red = background[0];
+  int red   = background[0];
   int green = background[1];
-  int blue = background[2];
+  int blue  = background[2];
 
-  int ix,iy;
-  for (iy = 0; iy < height; iy ++)
-    for (ix = 0; ix < width; ix ++) {
-      imageBuffer[iy * width * 3 + ix * 3 + 0] = red;
-      imageBuffer[iy * width * 3 + ix * 3 + 1] = green;
-      imageBuffer[iy * width * 3 + ix * 3 + 2] = blue;
-      depthBuffer[iy * width + ix] = -1;
+  if (background2[0] < 0.0) {
+    for (int iy = 0; iy < height; iy ++) {
+      for (int ix = 0; ix < width; ix ++) {
+        imageBuffer[iy * width * 3 + ix * 3 + 0] = red;
+        imageBuffer[iy * width * 3 + ix * 3 + 1] = green;
+        imageBuffer[iy * width * 3 + ix * 3 + 2] = blue;
+        depthBuffer[iy * width + ix] = -1;
+      }
     }
+  } else {
+    for (int iy = 0; iy < height; iy ++) {
+      double fraction = (double) iy / (double) height;
+      red   = fraction * background2[0] + (1.0 - fraction) * background[0];
+      green = fraction * background2[1] + (1.0 - fraction) * background[1];
+      blue  = fraction * background2[2] + (1.0 - fraction) * background[2];
+      for (int ix = 0; ix < width; ix ++) {
+        imageBuffer[iy * width * 3 + ix * 3 + 0] = red;
+        imageBuffer[iy * width * 3 + ix * 3 + 1] = green;
+        imageBuffer[iy * width * 3 + ix * 3 + 2] = blue;
+        depthBuffer[iy * width + ix] = -1;
+      }
+    }
+  }
 }
 
 /* ----------------------------------------------------------------------

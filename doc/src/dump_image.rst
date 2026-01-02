@@ -122,7 +122,7 @@ Syntax
    dump_modify dump-ID keyword values ...
 
 * these keywords apply only to the *image* and *movie* styles and are documented on this page
-* keyword = *acolor* or *adiam* or *amap* or *gmap* or *atrans* or *backcolor* or *bcolor* or *bdiam* or *btrans* or *bitrate* or *boxcolor* or *color* or *framerate* or *axestrans* or *boxtrans* or *subboxtrans*
+* keyword = *acolor* or *adiam* or *amap* or *gmap* or *atrans* or *backcolor* or *backcolor2* or *bcolor* or *bdiam* or *btrans* or *bitrate* or *boxcolor* or *color* or *framerate* or *axestrans* or *boxtrans* or *subboxtrans*
 * see the :doc:`dump modify <dump_modify>` doc page for more general keywords
 
   .. parsed-literal::
@@ -158,6 +158,8 @@ Syntax
          transparency = transparency of atoms of that type (value between 0 (invisible) and 1 (fully opaque))
        *backcolor* arg = color
          color = name of color for background
+       *backcolor2* arg = color
+         color = name of second color for vertical background gradiant. "none" to disable gradient
        *bcolor* args = type color
          type = bond type (numeric or type label) or range of numeric types (see below)
          color = name of color or color1/color2/...
@@ -953,6 +955,17 @@ The *backcolor* sets the background color of the images.  The color
 name can be any of the 140 pre-defined colors (see below) or a color
 name defined by the dump_modify color option.
 
+.. versionadded:: TBD
+
+The *backcolor2* sets a second background color of the images to create
+a vertical background gradient.  The regular background color is the
+color at the bottom and *backcolor2* sets the background color at the
+top.  The color in between is a linear interpolation between those two
+colors.  The color name can be any of the 140 pre-defined colors (see
+below) or a color name defined by the dump_modify color option.  Using a
+color name of "none" will disable the background gradient feature (this
+is the default).
+
 ----------
 
 The *bcolor* keyword can be used with the dump image command, with its
@@ -1173,6 +1186,7 @@ The defaults for the dump_modify keywords specific to dump image and dump movie 
 * amap = min max cf 0.0 2 min blue max red
 * atrans = 1.0
 * backcolor = black
+* backcolor2 = none
 * bcolor = \* red/green/blue/yellow/aqua/cyan
 * bdiam = \* 0.5
 * btrans = 1.0

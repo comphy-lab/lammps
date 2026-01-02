@@ -2310,6 +2310,22 @@ int DumpImage::modify_param(int narg, char **arg)
     return 2;
   }
 
+  if (strcmp(arg[0],"backcolor2") == 0) {
+    if (narg < 2) error->all(FLERR,"Illegal dump_modify command");
+    if (strcmp(arg[1],"none") == 0) {
+      image->background2[0] = -1;
+      image->background2[1] = -1;
+      image->background2[2] = -1;
+    } else {
+      double *color = image->color2rgb(arg[1]);
+      if (color == nullptr) error->all(FLERR,"Invalid color in dump_modify command");
+      image->background2[0] = static_cast<int>(color[0]*255.0);
+      image->background2[1] = static_cast<int>(color[1]*255.0);
+      image->background2[2] = static_cast<int>(color[2]*255.0);
+    }
+    return 2;
+  }
+
   if (strcmp(arg[0],"boxcolor") == 0) {
     if (narg < 2) error->all(FLERR,"Illegal dump_modify command");
     image->boxcolor = image->color2rgb(arg[1]);
