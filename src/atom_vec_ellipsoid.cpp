@@ -259,7 +259,6 @@ int AtomVecEllipsoid::unpack_border_bonus(int n, int first, double *buf)
       quat[3] = buf[m++];
       block[0] = buf[m++];
       block[1] = buf[m++];
-      block[2] = block[0] / block[1];
       inertia[0] = buf[m++];
       inertia[1] = buf[m++];
       inertia[2] = buf[m++];
@@ -333,7 +332,6 @@ int AtomVecEllipsoid::unpack_exchange_bonus(int ilocal, double *buf)
     quat[3] = buf[m++];
     block[0] = buf[m++];
     block[1] = buf[m++];
-    block[2] = block[0] / block[1];
     inertia[0] = buf[m++];
     inertia[1] = buf[m++];
     inertia[2] = buf[m++];
@@ -425,7 +423,6 @@ int AtomVecEllipsoid::unpack_restart_bonus(int ilocal, double *buf)
     quat[3] = buf[m++];
     block[0] = buf[m++];
     block[1] = buf[m++];
-    block[2] = block[0] / block[1];
     inertia[0] = buf[m++];
     inertia[1] = buf[m++];
     inertia[2] = buf[m++];
@@ -475,7 +472,6 @@ void AtomVecEllipsoid::data_atom_bonus(int m, const std::vector<std::string> &va
     block[1] = utils::numeric(FLERR, values[ivalue++], true, lmp);
     flag_super = ((std::fabs(block[0] - 2) > EPSBLOCK2) || (std::fabs(block[1] - 2) > EPSBLOCK2));
   }
-  block[2] = block[0] / block[1];
 
   // reset ellipsoid mass
   // previously stored density in rmass
@@ -765,7 +761,6 @@ void AtomVecEllipsoid::set_block(int i, double blockn1, double blockn2)
     shape[2] = 0.5;
     block[0] = blockn1;
     block[1] = blockn2;
-    block[2] = blockn1 / blockn2;
     quat[0] = 1.0;
     quat[1] = 0.0;
     quat[2] = 0.0;
@@ -782,7 +777,6 @@ void AtomVecEllipsoid::set_block(int i, double blockn1, double blockn2)
     bool &flag_super = bonus[ellipsoid[i]].flag_super;
     block[0] = blockn1;
     block[1] = blockn2;
-    block[2] = blockn1 / blockn2;
     flag_super = ((std::fabs(blockn1 - 2) > EPSBLOCK2) || (std::fabs(blockn2 - 2) > EPSBLOCK2));
     MathExtra::inertia_ellipsoid_principal(shape, rmass[i], inertia, block, flag_super);
     radius[i] = MathExtra::radius_ellipsoid(shape, block, flag_super);

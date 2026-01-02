@@ -29,7 +29,7 @@ class AtomVecEllipsoid : virtual public AtomVec {
   struct Bonus {
     double shape[3];
     double quat[4];
-    double block[3];
+    double block[2];
     double inertia[3];
     bool flag_super;
     int ilocal;

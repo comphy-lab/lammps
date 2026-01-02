@@ -677,7 +677,7 @@ double radius_ellipsoid(double *shape, double *block, bool flag_super)
 
   // Super ellipsoid
   double a = shape[0], b = shape[1], c = shape[2];
-  double n1 = block[0], n2 = block[1], n1divn2 = block[2];
+  double n1 = block[0], n2 = block[1];
   if (shape[0] < shape[1]) {a = shape[1]; b = shape[0];}
 
   // Cylinder approximation for n2=2
