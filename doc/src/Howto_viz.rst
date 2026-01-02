@@ -623,6 +623,61 @@ dipole moment as arrows in addition to the per-atom velocities:
                 adiam 1 0.5 adiam 2 0.3 acolor 1 silver acolor 2 red fcolor vec goldenrod &
                 fcolor dipole forestgreen ftrans dipole 0.75 fcolor vel cyan ftrans vel 0.5
 
+Fix graphics/isosurface
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Fix :doc:`graphics/isosurface <fix_graphics_isosurface>` adds a
+triangulated surface following a given isovalue through a 3d-grid of
+data of some per-atom property.  The data is spread out using a Gaussian
+distribution with a given width and can be just a value of 1 (leading
+to a grid representing the number density) or mass or some other computed
+per-atom property from a :doc:`compute <compute>`, :doc:`fix <fix>`, or
+atom-style :doc:`variable <variable>`.  The isosurface can be represented
+by either a wireframe or a mesh of triangles and there are five choices
+for the resolution of the grid and thus the smoothness of the surface.
+
+The commands below provide an example for how to use the
+*graphics/isosurface* fix to visualize the water and lipid bilayer of
+the "rhodo" benchmark example as isosurfaces by using a green wireframe
+and a transparent white triangle surface to represent those molecules.
+
+.. code-block:: LAMMPS
+
+   group water type 4 33
+   group membrane type 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51
+   group other subtract all water membrane
+
+   fix water water graphics/isosurface 100 30.0 3.0 quality high property mass
+   fix membrane membrane graphics/isosurface 100 25.0 4.0 quality low property mass
+
+   dump viz other image 100 image-*.png element type size 600 600 zoom 1.4641 view 80 10 &
+                  shiny 0.2 fsaa yes bond atom type box yes 0.025  &
+                  fix membrane const 2 0.33 fix water const 1 0.2
+   dump_modify viz pad 9 boxcolor silver backcolor gray &
+          fcolor membrane darkgreen ftrans membrane 1.0 ftrans water 0.5 &
+          element H H H H H H H H H C C C C C C C C C C C C C N N N N N N N O O O O S S &
+                  H H H H H C C C C C C N O O O P Cl Na H H H N C C C C C C C C C C C &
+          adiam 1 1.92 adiam 2 1.92 adiam 3 1.92 adiam 5 1.92 adiam 6 1.92 adiam 7 1.92 adiam 8 1.92 &
+          adiam 9 1.92 adiam 10 2.72 adiam 11 2.72 adiam 12 2.72 adiam 13 2.72 adiam 14 2.72 &
+          adiam 15 2.72 adiam 16 2.72 adiam 17 2.72 adiam 18 2.72 adiam 19 2.72 adiam 20 2.72 &
+          adiam 21 2.72 adiam 22 2.72 adiam 23 2.48 adiam 24 2.48 adiam 25 2.48 adiam 26 2.48 &
+          adiam 27 2.48 adiam 28 2.48 adiam 29 2.48 adiam 30 2.432 adiam 31 2.432 adiam 32 2.432 &
+          adiam 34 2.88 adiam 35 2.88 adiam 52 3.632 adiam 53 2.176 adiam 54 1.92 adiam 55 1.92 &
+          adiam 56 1.92 adiam 57 2.48 adiam 58 2.72 adiam 59 2.72 adiam 60 2.72 adiam 61 2.72 &
+          adiam 62 2.72 adiam 63 2.72 adiam 64 2.72 adiam 65 2.72 adiam 66 2.72 adiam 67 2.72 adiam 68 2.72
+
+.. |isosurface1| image:: img/rhodo-all.png
+   :width: 49%
+.. |isosurface2| image:: img/rhodo-iso.png
+   :width: 49%
+
+|isosurface1|  |isosurface2|
+
+.. raw:: html
+
+   <center>(Isosurface graphics visualization example. Click to see the full-size images)</center><br>
+
+
 Fix reaxff/bonds
 ^^^^^^^^^^^^^^^^
 

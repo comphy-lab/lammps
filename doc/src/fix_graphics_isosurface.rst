@@ -150,6 +150,86 @@ The *quality* settings of "min" and "low" work best with the cylinder
 mesh setting while the other quality settings are more suitable for a
 triangle mesh.
 
+Example for using STL output in VMD
+"""""""""""""""""""""""""""""""""""
+
+Below is an example input commands showcasing the use of the
+*graphics/isosurface* fix and exporting STL files.  They are added to a
+simulation of :doc:`a bulk SPC/E water system <Howto_spce>` with 1350
+water molecules.
+
+.. code-block:: LAMMPS
+
+   region center sphere 10.0 10.0 10.0 10.0 units box
+   group sphere dynamic all region center
+
+   compute prop all property/atom mass
+   fix surf sphere graphics/isosurface 10 2.0 2.0 quality high property c_prop filename sphere-*.stl pad 5
+
+   dump viz sphere image 10 sphere-lammps-*.png type type size 600 600 zoom 1.6 shiny 0.4 fsaa yes &
+       view 70 -20 box no 0.025 fsaa yes bond atom 0.5 fix surf const 1 0.2
+   dump_modify viz pad 5 backcolor2 gray adiam 1 2.432 adiam 2 1.92 &
+        acolor 1 firebrick acolor 2 silver fcolor surf forestgreen ftrans surf 0.25
+
+   dump xyz sphere xyz 10 sphere.xyz
+   dump_modify xyz element O H
+
+With the following script (use ``vmd -e -eofexit vizsphere.vmd`` to run
+the script) the first frame of the trajectory of those selected atoms
+and the corresponding STL file are then loaded into `VMD
+<https://www.ks.uiuc.edu/Research/vmd/>`_ via VMD/Tcl script commands
+and then rendered with both OpenGL (which is what you see on the
+screen) and then also with the `Tachyon ray tracing program
+<http://jedi.ks.uiuc.edu/~johns/raytracer/>`_ included with VMD.  The
+following images compare the LAMMPS output with the VMD OpenGL output
+and the Tachyon ray tracer (from left to right).
+
+.. code-block:: Tcl
+
+   display projection   Orthographic
+   display depthcue   off
+   display backgroundgradient on
+   display shadows on
+   display ambientocclusion on
+   display aoambient 0.800000
+   display aodirect 0.300000
+   display resize 600 600
+
+   mol new sphere.xyz type xyz first 0 last 0 step 1 autobonds 1 waitfor all
+   mol delrep 0 top
+   mol representation VDW 0.300000 12.000000
+   mol color Name
+   mol selection {all}
+   mol material AOShiny
+   mol addrep top
+   mol representation DynamicBonds 1.000000 0.200000 12.000000
+   mol color Name
+   mol selection {all}
+   mol material AOShiny
+   mol addrep top
+   graphics top delete all
+   graphics top color green
+   graphics top material BlownGlass
+   mol addfile sphere-00000.stl type stl waitfor all
+
+   render snapshot vmdscene.tga convert %s sphere-opengl.png
+   render TachyonInternal vmdscene.tga convert %s sphere-raytrace.png
+   rm vmdscene.tga
+
+
+.. |surface1| image:: img/isosurface-lammps.png
+   :width: 33%
+.. |surface2| image:: img/isosurface-opengl.png
+   :width: 33%
+.. |surface3| image:: img/isosurface-raytrace.png
+   :width: 33%
+
+|surface1|  |surface2|  |surface3|
+
+.. raw:: html
+
+   <center>(Fix graphics/isosurface visualization and exporty example. Click to see the full-size images)</center><br>
+
 Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
