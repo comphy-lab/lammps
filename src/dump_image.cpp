@@ -1553,18 +1553,15 @@ void DumpImage::create_image()
       if (!fixvec || !fixarray) continue;
 
       // set color and transparency
-      double opacity;
+      double opacity = ifix.opacity;
       if (ifix.colorstyle == TYPE) {
         itype = static_cast<int>(fixarray[i][0] - 1.0) % ntypes + 1;
         color = colortype[itype];
-        opacity = aopacity[itype];
       } else if (ifix.colorstyle == ELEMENT) {
         itype = static_cast<int>(fixarray[i][0] - 1.0) % ntypes + 1;
         color = colorelement[itype];
-        opacity = aopacity[itype];
       } else if (ifix.colorstyle == CONSTANT) {
         color = ifix.rgb;
-        opacity = ifix.opacity;
       } else {
         color = image->color2rgb("white");
         opacity = 1.0;
