@@ -47,7 +47,7 @@ class DumpImage : public DumpCustom {
     CYLINDER,    // a cylinder with diameter given by fix, fflag1 choose caps, fflag2 adjusts diameter
     TRIANGLE,    // a regular triangle, no settings apply
     BOND,    // two connected cylinders with bond diameter, colored by atom types, fflag1 sets cap
-    ARROW // a cylinder with a conical tip and a flat cap at the bottom
+    ARROW    // a cylinder with a conical tip and a flat cap at the bottom
   };    // used by some Body and Fix child classes
 
   DumpImage(LAMMPS *, int, char **);

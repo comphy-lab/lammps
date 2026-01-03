@@ -47,7 +47,7 @@ arguments, please refer to the detailed documentation of the command.
 Please note that many of these features were added or significantly
 updated after LAMMPS version 10 Sep 2025 and well into the 2026
 stable version development cycle.  If you are using an older version
-of LAMMPS, these examples will cause errors or may look differently.
+of LAMMPS, these examples may cause errors or may look differently.
 
 .. contents:: Available topics
    :local:
@@ -89,6 +89,13 @@ fairly simple and thus fast compared to more advanced image generation
 tools like ray tracers.  At the moment there is no GPU acceleration or
 multi-threading parallelization available, except for the
 multi-threading support for SSAO processing.
+
+--------------------
+
+Color selection and color management
+------------------------------------
+
+
 
 --------------------
 
