@@ -18,7 +18,7 @@ Syntax
 
   .. parsed-literal::
 
-     *xlo*, *xhi*, *ylo*, *yhi*, *zlo*, *zhi* = enable peridoic images of atoms and bonds to either side of the simulation box in the given direction
+     *xlo*, *xhi*, *ylo*, *yhi*, *zlo*, *zhi* = enable periodic images of atoms and bonds to either side of the simulation box in the given direction
      *radius* value = sets the atom radius
         value = either "auto" or a number (distance units)
      *atoms* yes/no = enables or disables displaying periodic images of atoms
