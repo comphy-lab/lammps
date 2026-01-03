@@ -510,7 +510,7 @@ int LabelMap::infer_impropertype(int type1, int type2, int type3, int type4)
 {
   // convert numeric atom types to type label
 
-  std::vector<std::string> mytypes;
+  std::vector<std::string> mytypes(4);
   mytypes[0] = typelabel[type1-1];
   mytypes[1] = typelabel[type2-1];
   mytypes[2] = typelabel[type3-1];
