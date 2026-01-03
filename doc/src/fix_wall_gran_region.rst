@@ -285,7 +285,7 @@ minimization <minimize>`.
 Dump image info
 """""""""""""""
 
-This fix does **not** support the *fix* keyword io the :doc:`dump image
+This fix does **not** support the *fix* keyword of the :doc:`dump image
 <dump_image>` command.  Instead the region used by the fix can be
 visualized using the *region* keyword of *dump image*.
 
