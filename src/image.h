@@ -58,6 +58,8 @@ class Image : protected Pointers {
                      double opacity = 1.0);
   void draw_box(double (*)[3], double, double opacity = 1.0);
   void draw_axes(double (*)[3], double, double opacity = 1.0);
+  void draw_pixmap(const double *, int, int, const unsigned char *, double *, double scale = 1.0,
+                   double opacity = 1.0);
 
   int map_dynamic(int);
   int map_reset(int, int, char **);

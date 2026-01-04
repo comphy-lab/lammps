@@ -149,6 +149,46 @@ constexpr double transthresh[TRANK][TRANK] = {
     {0.666015625, 0.416015625, 0.603515625, 0.353515625, 0.650390625, 0.400390625, 0.587890625,
      0.337890625, 0.662109375, 0.412109375, 0.599609375, 0.349609375, 0.646484375, 0.396484375,
      0.583984375, 0.333984375}};
+
+// function to apply bilinear scaling to pixmap
+void scale_pixmap(int ow, int oh, const unsigned char *opix, int nw, int nh, unsigned char *npix)
+{
+  double x_ratio = (double) (ow - 1) / nw;
+  double y_ratio = (double) (oh - 1) / nh;
+
+  for (int i = 0; i < nh; i++) {
+    for (int j = 0; j < nw; j++) {
+      int x = (int) (x_ratio * j);
+      int y = (int) (y_ratio * i);
+      double x_diff = (x_ratio * j) - x;
+      double y_diff = (y_ratio * i) - y;
+
+      // Get the four neighboring pixels in the original pixmap
+      int offs = y * 3 * ow + 3 * x;
+      unsigned char a[3] = {opix[offs], opix[offs + 1], opix[offs + 2]};
+      offs = y * 3 * ow + 3 * (x + 1);
+      unsigned char b[3] = {opix[offs], opix[offs + 1], opix[offs + 2]};
+      offs = (y + 1) * 3 * ow + 3 * x;
+      unsigned char c[3] = {opix[offs], opix[offs + 1], opix[offs + 2]};
+      offs = (y + 1) * 3 * ow + 3 * (x + 1);
+      unsigned char d[3] = {opix[offs], opix[offs + 1], opix[offs + 2]};
+
+      // interpolate R, G, and B channels separately with bilinear scaling
+      npix[i * 3 * nw + 3 * j] =
+          (unsigned char) (a[0] * (1 - x_diff) * (1 - y_diff) + b[0] * (x_diff) * (1 - y_diff) +
+                           c[0] * (y_diff) * (1 - x_diff) + d[0] * (x_diff * y_diff));
+
+      npix[i * 3 * nw + 3 * j + 1] =
+          (unsigned char) (a[1] * (1 - x_diff) * (1 - y_diff) + b[1] * (x_diff) * (1 - y_diff) +
+                           c[1] * (y_diff) * (1 - x_diff) + d[1] * (x_diff * y_diff));
+
+      npix[i * 3 * nw + 3 * j + 2] =
+          (unsigned char) (a[2] * (1 - x_diff) * (1 - y_diff) + b[2] * (x_diff) * (1 - y_diff) +
+                           c[2] * (y_diff) * (1 - x_diff) + d[2] * (x_diff * y_diff));
+    }
+  }
+}
+
 }    // namespace
 // clang-format off
 
@@ -532,6 +572,79 @@ void Image::draw_axes(double (*axes)[3], double diameter, double opacity)
   draw_cylinder(axes[0],axes[1],color2rgb("red"),diameter,3,opacity);
   draw_cylinder(axes[0],axes[2],color2rgb("green"),diameter,3,opacity);
   draw_cylinder(axes[0],axes[3],color2rgb("blue"),diameter,3,opacity);
+
+/* ----------------------------------------------------------------------
+   copy pixmap centered at location x into image with depth buffering
+   color is used for transparency and pixels in that color skipped
+------------------------------------------------------------------------- */
+
+void Image::draw_pixmap(const double *x, int pixwidth, int pixheight, const unsigned char *pixmap,
+                        double *background, double scale, double opacity)
+{
+  double xlocal[3];
+
+  xlocal[0] = x[0] - xctr;
+  xlocal[1] = x[1] - yctr;
+  xlocal[2] = x[2] - zctr;
+
+  double xmap = MathExtra::dot3(camRight,xlocal);
+  double ymap = MathExtra::dot3(camUp,xlocal);
+  double dist = MathExtra::dot3(camPos,camDir) - MathExtra::dot3(xlocal,camDir);
+
+  double pixelWidth = (tanPerPixel > 0) ? tanPerPixel * dist : -tanPerPixel / zoom;
+  double xf = xmap / pixelWidth;
+  double yf = ymap / pixelWidth;
+  int xc = static_cast<int>(xf);
+  int yc = static_cast<int>(yf);
+
+  // shift 0,0 to screen center (vs lower left)
+
+  xc += width / 2;
+  yc += height / 2;
+
+  const unsigned char *mypixmap = pixmap;
+  unsigned char *npixmap = nullptr;
+
+  // scale factor already accounts for FSAA
+  if (scale != 1.0) {
+    int nwidth = scale * pixwidth + 0.5;
+    int nheight = scale * pixheight + 0.5;
+    npixmap = new unsigned char[3*nwidth*nheight];
+    scale_pixmap(pixwidth, pixheight, pixmap, nwidth, nheight, npixmap);
+    mypixmap = npixmap;
+    pixwidth = nwidth;
+    pixheight = nheight;
+  }
+
+  int ylo = yc;
+  int xlo = xc;
+  double normal[3] = {0.0, 0.0, 1.0};
+
+  for (int j = 0; j < pixheight; ++j) {
+    for (int i = 0; i < pixwidth; ++i) {
+      int iy = ylo + j;
+      int ix = xlo + i;
+      if (iy < 0 || iy >= height || ix < 0 || ix >= width) continue;
+      if (((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity)) || (opacity <= 0.0))
+        continue;
+
+      double pixelcolor[3];
+      int offs = 3*j*pixwidth + 3*i;
+      pixelcolor[0] = (double)mypixmap[offs] / 255.0;
+      pixelcolor[1] = (double)mypixmap[offs + 1] / 255.0;
+      pixelcolor[2] = (double)mypixmap[offs + 2] / 255.0;
+
+      // check for transparent background color and skip if matches
+      // we allow for one step variance for each channel to account for rounding errors
+
+      if ((fabs(pixelcolor[0] - background[0]) < 0.005) &&
+          (fabs(pixelcolor[1] - background[1]) < 0.005) &&
+          (fabs(pixelcolor[2] - background[2]) < 0.005)) continue;
+
+      draw_pixel(ix, iy, dist, normal, pixelcolor);
+    }
+  }
+  delete[] npixmap;
 }
 
 /* ----------------------------------------------------------------------
