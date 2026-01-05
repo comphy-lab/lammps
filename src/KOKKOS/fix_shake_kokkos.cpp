@@ -32,6 +32,8 @@ using namespace LAMMPS_NS;
 using namespace FixConst;
 using namespace MathConst;
 
+static constexpr double BIG = 1.0e20; // Exact match to fix_shake.cpp
+
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
