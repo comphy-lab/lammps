@@ -32,7 +32,7 @@ namespace LAMMPS_NS {
 
 struct TagFixShakePreNeighbor{};
 
-template<int NEIGHFLAG>
+template<int NEIGHFLAG, int VFLAG>
 struct TagFixShakeMinPostForce{};
 
 template<int NEIGHFLAG, int EVFLAG>
@@ -84,13 +84,13 @@ class FixShakeKokkos : public FixShake, public KokkosBase {
   KOKKOS_INLINE_FUNCTION
   void operator()(TagFixShakePreNeighbor, const int&) const;
 
-  template<int NEIGHFLAG>
+  template<int NEIGHFLAG, int VFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagFixShakeMinPostForce<NEIGHFLAG>, const int &i, EV_FLOAT &ev) const;
+  void operator()(TagFixShakeMinPostForce<NEIGHFLAG,VFLAG>, const int&, EV_FLOAT&) const;
 
-  template<int NEIGHFLAG>
+  template<int NEIGHFLAG, int VFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagFixShakeMinPostForce<NEIGHFLAG>, const int &i) const;
+  void operator()(TagFixShakeMinPostForce<NEIGHFLAG,VFLAG>, const int&) const;
 
   template<int NEIGHFLAG, int EVFLAG>
   KOKKOS_INLINE_FUNCTION

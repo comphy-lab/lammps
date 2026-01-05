@@ -327,7 +327,11 @@ void FixShakeKokkos<DeviceType>::operator()(TagFixShakePreNeighbor, const int &i
 template<class DeviceType>
 void FixShakeKokkos<DeviceType>::min_post_force(int vflag)
 {
-  v_init(vflag); 
+  
+  int eflag = eflag_pre_reverse;
+  ev_init(eflag, vflag);
+  ebond = 0.0;
+
   atomKK->sync(execution_space, X_MASK | F_MASK);
   k_shake_flag.sync<DeviceType>();
   k_shake_type.sync<DeviceType>();
@@ -354,6 +358,8 @@ void FixShakeKokkos<DeviceType>::min_post_force(int vflag)
   else
     ndup_f = Kokkos::Experimental::create_scatter_view<Kokkos::Experimental::ScatterSum, Kokkos::Experimental::ScatterNonDuplicated>(d_f);
 
+  copymode = 1;
+  
   if (output_every) {
     d_b_stats = typename AT::t_double_2d("shake:b_stats", atom->nbondtypes + 1, 4);
     d_a_stats = typename AT::t_double_2d("shake:a_stats", atom->nangletypes + 1, 4);
@@ -372,39 +378,51 @@ void FixShakeKokkos<DeviceType>::min_post_force(int vflag)
   }
 
   EV_FLOAT ev;
-  copymode = 1;
-  if (neighflag == HALF)
-    Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALF>>(0, nlist), *this, ev);
-  else
-    Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALFTHREAD>>(0, nlist), *this, ev);
+  
+  utils::logmesg(lmp,"*** ev.evdwl {} eflag {} vflag {} \n", ev.evdwl, eflag, vflag);
+
+  if (neighflag == HALF) {
+    if(vflag)
+      Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALF,1>>(0, nlist), *this, ev);
+    else
+      Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALF,0>>(0, nlist), *this, ev);
+  } else {
+    if(vflag)
+      Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALFTHREAD,1>>(0, nlist), *this, ev);
+    else
+      Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALFTHREAD,1>>(0, nlist), *this, ev);
+  }
+  
   copymode = 0;
 
   if (need_dup) Kokkos::Experimental::contribute(d_f, dup_f);
   
-  this->ebond = ev.evdwl; 
-  atomKK->modified(execution_space, F_MASK);
-
-  if (output_every && update->ntimestep == next_output) {
-    auto h_b_stats_copy = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), d_b_stats);
-    auto h_a_stats_copy = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), d_a_stats);
-    for (int j = 1; j < atom->nbondtypes + 1; j++) {
-      b_count[j] = h_b_stats_copy(j,0); b_ave[j] = h_b_stats_copy(j,1);
-      b_max[j] = h_b_stats_copy(j,2); b_min[j] = h_b_stats_copy(j,3);
-    }
-    for (int j = 1; j < atom->nangletypes + 1; j++) {
-      a_count[j] = h_a_stats_copy(j,0); a_ave[j] = h_a_stats_copy(j,1);
-      a_max[j] = h_a_stats_copy(j,2); a_min[j] = h_a_stats_copy(j,3);
-    }
+  this->ebond = ev.evdwl;
+  
+  utils::logmesg(lmp,"*** ebond {} v {} {} {} {} {} {}\n", ebond, ev.v[0], ev.v[1], ev.v[2], ev.v[3], ev.v[4], ev.v[5]);
+  
+  if (vflag_global) {
+    virial[0] += static_cast<double>(ev.v[0]);
+    virial[1] += static_cast<double>(ev.v[1]);
+    virial[2] += static_cast<double>(ev.v[2]);
+    virial[3] += static_cast<double>(ev.v[3]);
+    virial[4] += static_cast<double>(ev.v[4]);
+    virial[5] += static_cast<double>(ev.v[5]);
   }
+
+  atomKK->modified(execution_space, F_MASK);
+  
+  //utils::logmesg(lmp,"*** output_every {} update->ntimestep {} next_output {}\n", output_every, update->ntimestep, next_output);
+
   if (need_dup) dup_f = {};
 }
 
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-template<int NEIGHFLAG>
+template<int NEIGHFLAG, int VFLAG>
 KOKKOS_INLINE_FUNCTION
-void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG>, const int &i, EV_FLOAT &ev) const
+void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG,VFLAG>, const int &i, EV_FLOAT &ev) const
 {
   auto v_f = ScatterViewHelper<NeedDup_v<NEIGHFLAG,DeviceType>, decltype(dup_f), decltype(ndup_f)>::get(dup_f, ndup_f);
   auto a_f = v_f.template access<AtomicDup_v<NEIGHFLAG,DeviceType>>();
@@ -414,6 +432,9 @@ void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG>, 
   const int i0 = d_closest_list(i, 0);
 
   auto apply_restraint = [&](int idx0, int idx1, int type_idx, bool is_angle) {
+  
+    if (idx0 < 0 || idx1 < 0) return 0.0;
+  
     const KK_FLOAT d0 = is_angle ? d_angle_distance[type_idx] : d_bond_distance[type_idx];
     
     const KK_FLOAT delx = d_x(idx0, 0) - d_x(idx1, 0);
@@ -438,6 +459,15 @@ void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG>, 
       a_f(idx1, 0) -= delx * fbond;
       a_f(idx1, 1) -= dely * fbond;
       a_f(idx1, 2) -= delz * fbond;
+    }
+    
+    if (VFLAG) {
+      ev.v[0] += static_cast<KK_ACC_FLOAT>(0.5 * delx * delx * fbond);
+      ev.v[1] += static_cast<KK_ACC_FLOAT>(0.5 * dely * dely * fbond);
+      ev.v[2] += static_cast<KK_ACC_FLOAT>(0.5 * delz * delz * fbond);
+      ev.v[3] += static_cast<KK_ACC_FLOAT>(0.5 * delx * dely * fbond);
+      ev.v[4] += static_cast<KK_ACC_FLOAT>(0.5 * delx * delz * fbond);
+      ev.v[5] += static_cast<KK_ACC_FLOAT>(0.5 * dely * delz * fbond);
     }
 
     if (output_every && !is_angle) {
@@ -480,11 +510,11 @@ void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG>, 
 }
 
 template<class DeviceType>
-template<int NEIGHFLAG>
+template<int NEIGHFLAG, int VFLAG>
 KOKKOS_INLINE_FUNCTION
-void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG>, const int &i) const {
+void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG,VFLAG>, const int &i) const {
   EV_FLOAT ev;
-  this->template operator()<NEIGHFLAG>(TagFixShakeMinPostForce<NEIGHFLAG>(), i, ev);
+  this->template operator()<NEIGHFLAG>(TagFixShakeMinPostForce<NEIGHFLAG,VFLAG>(), i, ev);
 }
 
 /* ----------------------------------------------------------------------
