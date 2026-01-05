@@ -280,11 +280,12 @@ FixGraphicsLabels::FixGraphicsLabels(LAMMPS *lmp, int narg, char **arg) :
                      utils::getsyserror());
 
         pix.pixmap = read_image(fp, pix.width, pix.height, fileinfo);
+        fclose(fp);
         if (!pix.pixmap)
           error->one(FLERR, iarg + 1,
-                     "Reading open fix graphics/labels image file {} failed.\n"
+                     "Reading fix graphics/labels image file {} failed.\n"
                      "                Unsupported file format or broken file",
-                     fileinfo);
+                     arg[iarg + 1]);
 
         utils::logmesg(lmp, "Read image from {} file: {} format\n", arg[iarg + 1], fileinfo);
       }
