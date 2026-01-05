@@ -106,8 +106,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
   int i, j, ii, jj, inum, jnum;
   double xtmp, ytmp, ztmp, delx, dely, delz, fx, fy, fz;
   double radi, radj, radsum, rsq, r, rinv, rsqinv, factor_lj;
-  double vr1, vr2, vr3, vnnr, vn1, vn2, vn3, vt1, vt2, vt3;
-  double wr1, wr2, wr3;
+  double vr1, vr2, vr3, vnnr, vn1, vn2, vn3;
   double vtr1, vtr2, vtr3, vrel;
   double mi, mj, meff, damp, ccel, tor1, tor2, tor3;
   double fn, fs, fs1, fs2, fs3;
@@ -115,10 +114,6 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
   int *ilist, *jlist, *numneigh, **firstneigh;
   int *touch, **firsttouch;
   double *shear, *X0_prev, *separating_axis, *history, *allhistory, **firsthistory;
-
-  double shapex, shapey, shapez; // ellipsoid shape params
-  double quat1, quat2, quat3, quat4;
-  double block1, block2;
 
   double X0[4], nij[3], shapei[3], blocki[3], shapej[3], blockj[3], Ri[3][3], Rj[3][3], overlap1, overlap2, omegai[3], omegaj[3];
   AtomVecEllipsoid::BlockType flagi, flagj;
@@ -216,7 +211,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
         MathExtra::quat_to_mat(bonus[ellipsoid[i]].quat, Ri);
         MathExtra::quat_to_mat(bonus[ellipsoid[j]].quat, Rj);
         bool skip_contact_detection(false);
-        if(bounding_box) {
+        if (bounding_box) {
           separating_axis = &allhistory[7 + size_history * jj];
           skip_contact_detection = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
                                        x[i], Ri, shapei, x[j], Rj, shapej, separating_axis);
@@ -240,7 +235,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
                                                                            X0, nij);
             if (status == 0)
               touching = true;
-            else if(status == 1)
+            else if (status == 1)
               touching = false;
             else // TODO: Consider making an else if and print warning if LAPACK ok, but NR not converged, instead of error and fail the run ?
               error->all(FLERR, "Ellipsoid contact detection failed with status {} ", status);
@@ -277,7 +272,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
                                                                              X0, nij);
               if (status == 0)
                 touching = true;
-              else if(status == 1)
+              else if (status == 1)
                 touching = false;
               else // TODO: Consider making an else if and print warning if LAPACK ok, but NR not converged, instead of error and fail the run ?
                 error->all(FLERR, "Ellipsoid contact detection failed with status {} ", status);
@@ -467,7 +462,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
           torque[j][2] -= tor3;
         }
 
-        if (evflag) ev_tally_xyz(i, j, nlocal, newton_pair, 0.0, 0.0, fx, fy, fz, delx, dely, delz); // need to check this, it is for virial stress, but needs some tweaking for non-spherical particles
+        if (evflag) ev_tally_xyz(i, j, nlocal, newton_pair, 0.0, 0.0, fx, fy, fz, delx, dely, delz); // TODO: is this correct for non-spherical particles? I don't think so, how to correct it?
       }
     }
   }

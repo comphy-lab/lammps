@@ -184,7 +184,7 @@ void PairGranHertzHistoryEllipsoid::compute(int eflag, int vflag)
                                                                            X0, nij);
             if (status == 0)
               touching = true;
-            else if(status == 1)
+            else if (status == 1)
               touching = false;
             else // TODO: Consider making an else if and print warning if LAPACK ok, but NR not converged, instead of error and fail the run ?
               error->all(FLERR, "Ellipsoid contact detection failed with status {} ", status);
@@ -221,7 +221,7 @@ void PairGranHertzHistoryEllipsoid::compute(int eflag, int vflag)
                                                                              X0, nij);
               if (status == 0)
                 touching = true;
-              else if(status == 1)
+              else if (status == 1)
                 touching = false;
               else // TODO: Consider making an else if and print warning if LAPACK ok, but NR not converged, instead of error and fail the run ?
                 error->all(FLERR, "Ellipsoid contact detection failed with status {} ", status);
@@ -420,7 +420,7 @@ void PairGranHertzHistoryEllipsoid::compute(int eflag, int vflag)
           torque[j][2] -= tor3;
         }
 
-        if (evflag) ev_tally_xyz(i, j, nlocal, newton_pair, 0.0, 0.0, fx, fy, fz, delx, dely, delz); // need to check this, it is for virial stress, but needs some tweaking for non-spherical particles
+        if (evflag) ev_tally_xyz(i, j, nlocal, newton_pair, 0.0, 0.0, fx, fy, fz, delx, dely, delz); // TODO: is this correct for non-spherical particles? I don't think so, how to correct it?
       }
     }
   }
