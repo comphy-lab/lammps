@@ -1304,6 +1304,7 @@ fplo
 fprintf
 Fqq
 Fraige
+framecolor
 framerate
 Frauenheim
 Fraunhofer

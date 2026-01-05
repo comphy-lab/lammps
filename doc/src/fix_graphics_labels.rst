@@ -35,25 +35,31 @@ Syntax
         x, y, z  = position where the center of the text is located in the visualization
         any of x, y, or z can be a variable (see below)
 
-        keyword = *fontcolor* or *backcolor* or *transcolor* or *size*
+        keyword = *fontcolor* or *framecolor* or *backcolor* or *transcolor* or *size*
           *fontcolor* arg = select color for text: *white* (default) or *black* or *r/g/b*
-             *white* = uses white as color for the rendered text
-             *black* = uses black as color for the rendered text
-             *r/g/b* = provide three integers in the range 0 to 255 to select the color for the text in RGB color space
-          *backcolor* arg = select color for background of the text: *silver* (default) or *darkgray* or *r/g/b*
-             *silver* = uses a very light gray as the background color for the rendered text
-             *darkgray* = uses a very dark gray as the background color for the rendered text
-             *white* = uses white as the background color for the rendered text
-             *black* = uses black as the background color for the rendered text
-             *r/g/b* = provide three integers in the range 0 to 255 to select transparancy color in RGB color space
+             *white* = uses white
+             *black* = uses black
+             *r/g/b* = provide three integers in the range 0 to 255
+          *framecolor* arg = select color for frame around text: *silver* (default) or *darkgray* or *white* or *black* or *r/g/b*
+             *silver* = uses a very light gray
+             *darkgray* = uses a very dark gray
+             *white* = uses white
+             *black* = uses black
+             *r/g/b* = provide three integers in the range 0 to 255
+          *backcolor* arg = select color for background of the text: *silver* (default) or *darkgray* or *white* or *black* *r/g/b*
+             *silver* = uses a very light gray
+             *darkgray* = uses a very dark gray
+             *white* = uses white
+             *black* = uses black
+             *r/g/b* = provide three integers in the range 0 to 255
           *transcolor* arg = select color for transparency: *silver* (default) or *darkgray* or *white* or *black* or *none* or *r/g/b*
-             *silver* = uses a very light gray as the color for transparency
-             *darkgray* = uses a very dark gray as the color for transparency
-             *white* = uses white as the color for transparency
-             *black* = uses black as the color for transparency
+             *silver* = uses a very light gray
+             *darkgray* = uses a very dark gray
+             *white* = uses white
+             *black* = uses black
              *none* = disables transparency
-             *r/g/b* = provide three integers in the range 0 to 255 to select transparancy color in RGB color space
-          *size* value = set the size of the characters (default 12), can be a variable (see below)
+             *r/g/b* = provide three integers in the range 0 to 255
+          *size* value = set the size of the characters (default 24), can be a variable (see below)
 
 Examples
 """"""""
@@ -62,7 +68,7 @@ Examples
 
    fix pix all graphics/labels 100 image teapot.png 5.0 -1.0 -2.0 transcolor auto
    fix pot all graphics/labels 100 image teapot.ppm 1.0 v_ypos v_zpos scale v_prog transcolor 19/92/192
-   fix lbl all graphics/labels 1000 text "LAMMPS graphics demo" 5.0 -1.0 -2.0
+   fix lbl all graphics/labels 1000 text "LAMMPS graphics demo" 5.0 -1.0 -2.0 backcolor darkgray framecolor black
    fix info all graphics/labels 1000 text "Step: $(step)  Angle: ${rot}" 5.0 -1.0 -2.0 size 32
 
 Description
@@ -129,29 +135,31 @@ When using the *text* keyword, the text and its position in the "scene"
 are required arguments.  Optional keyword / value pairs may be added:
 
   The *size* value determines if the size of the letters in the text
-  in pixels.  Default value is 24.
+  in pixels.  Default value is 24. The maximum allowed value is 64.
+  This is a restriction of the font rasterizer used.
 
-  The *fontcolor* value selects a color for the text.
-  The color is specified as an R/G/B triple with values ranging from 0 to
-  255 for each channel.  There are also two special arguments: *white*
-  and *black*. The default *fontcolor* value is *white*.
+  There are four color settings: *fontcolor* or *framecolor* or
+  *backcolor* or *transcolor*\ .  The color can be specified for all of
+  those either as an R/G/B triple with values ranging from 0 to 255 for
+  each channel (e.g. yellow would be "255/255/0").  There are also a few
+  shortcuts for common choices: *silver*, *darkgray*, *white*, *black*.
+  The default *backcolor* value is *silver*.
 
-  The *backcolor* value selects a color for the background of the label.
-  The color is specified as an R/G/B triple with values ranging from 0 to
-  255 for each channel.  There are also four special arguments: *silver*,
-  *darkgray*, *white*, *black*. The default *backcolor* value is *silver*.
+  - *fontcolor* selects the color for the text, default is *white*
+  - *backcolor* selects the color for the background, default is
+    *silver*
+  - *framecolor* selects the color for the frame around the background,
+    default is *silver*.
+  - *transcolor* value selects a color for transparency, default is
+    *silver*.  If this color is the same as any of the other color
+    settings, those pixels are not drawn.  Thus with the default
+    settings, the text will be rendered in white without background or
+    frame.  The *none* setting for *transcolor* disables transparency
+    processing.
 
-  The *transcolor* value selects a color for transparency.  All pixels
-  in the image with that color will be skipped when the image is
-  rendered.  The color is specify as an R/G/B triple with values ranging
-  from 0 to 255 for each channel.  There are also five special arguments:
-  *silver*, *darkgray*, *white*, *black*, and *none*. The *none* setting
-  will disable all transparency processing. The default *transcolor*
-  value is *silver*.
-
-  For text with transparent background it is recommended to select a
-  similar color but slightly darker or brighter color.  This will reduce
-  unwanted discolorations at the edges due to anti-aliasing.
+  When rendering text with transparent background it is recommended to
+  select a similar color but slightly darker or brighter color as background.
+  This will reduce unwanted color effects at the edges due to anti-aliasing.
 
 There may be multiple *image* or *text* keywords with their arguments
 in a single fix *graphics/labels* command.
@@ -205,9 +213,10 @@ more information on how to do that.
 Related commands
 """"""""""""""""
 
-:doc:`fix graphics <fix_graphics>`, :doc:`fix graphics/arrows <fix_graphics_arrows>`
+:doc:`fix graphics <fix_graphics>`, :doc:`fix graphics/arrows <fix_graphics_arrows>`,
+:doc:`fix print <fix_print>`
 
 Default
 """""""
 
-transcolor = "none" for *image* and "silver" for *text*, scale = 1.0, fontcolor = white, backcolor = silver, size = 24
+transcolor = "none" for *image* and "silver" for *text*, scale = 1.0, fontcolor = white, backcolor = silver, framecolor = silver, size = 24

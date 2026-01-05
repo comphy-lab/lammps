@@ -58,6 +58,7 @@ class FixGraphicsLabels : public Fix {
     unsigned char *pixmap;
     double fontcolor[3];
     double backcolor[3];
+    double framecolor[3];
     double transcolor[3];
     double size;
     int xvar, yvar, zvar, svar;

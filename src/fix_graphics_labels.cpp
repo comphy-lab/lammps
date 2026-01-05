@@ -26,6 +26,7 @@
 #include "update.h"
 #include "variable.h"
 
+#include <algorithm>
 #include <cstring>
 
 #ifdef LAMMPS_JPEG
@@ -44,6 +45,33 @@ using namespace LAMMPS_NS;
 using namespace FixConst;
 
 namespace {
+
+void get_color(const std::string &color, double *rgb)
+{
+  if (color == "white") {
+    rgb[0] = 255.0;
+    rgb[1] = 255.0;
+    rgb[2] = 255.0;
+  } else if (color == "black") {
+    rgb[0] = 0.0;
+    rgb[1] = 0.0;
+    rgb[2] = 0.0;
+  } else if (color == "silver") {
+    rgb[0] = 192.0;
+    rgb[1] = 192.0;
+    rgb[2] = 192.0;
+  } else if (color == "darkgray") {
+    rgb[0] = 64.0;
+    rgb[1] = 64.0;
+    rgb[2] = 64.0;
+  } else {
+    auto val = ValueTokenizer(color, "/");
+    rgb[0] = val.next_int();
+    rgb[1] = val.next_int();
+    rgb[2] = val.next_int();
+    if (val.has_next()) throw TokenizerException("Extra token", val.next_string());
+  }
+}
 
 // read image into buffer that is locally allocated with new
 // return null pointer if incompatible format or not supported
@@ -359,15 +387,12 @@ FixGraphicsLabels::FixGraphicsLabels(LAMMPS *lmp, int narg, char **arg) :
       if (iarg + 5 > narg) utils::missing_cmd_args(FLERR, "fix graphics/labels", error);
 
       // clang-format off
-      TextInfo txt{"", {0.0, 0.0, 0.0}, 0, 0, nullptr,
-                   {255.0, 255.0, 255.0}, {192.0 , 192.0, 192.0}, {192.0, 192.0, 192.0},
+      TextInfo txt{"", {0.0, 0.0, 0.0}, 0, 0, nullptr, {255.0, 255.0, 255.0},
+                   {192.0, 192.0, 192.0}, {192.0, 192.0, 192.0}, {192.0, 192.0, 192.0},
                    48.0, -1, -1, -1, -1, nullptr, nullptr, nullptr, nullptr};
       // clang-format on
 
-      // add spaces before and after string to have a border
-      txt.text = "  ";
-      txt.text += arg[iarg + 1];
-      txt.text += "  ";
+      txt.text = arg[iarg + 1];
       if (txt.text.find('$') != std::string::npos) varflag = 1;
 
       if (strstr(arg[iarg + 2], "v_") == arg[iarg + 2]) {
@@ -403,107 +428,61 @@ FixGraphicsLabels::FixGraphicsLabels(LAMMPS *lmp, int narg, char **arg) :
             // text is rendered as 2x2 size pixmap and later scaled down for anti-aliasing
             txt.size = 2.0 * utils::numeric(FLERR, arg[iarg + 1], false, lmp);
           }
-          if (txt.size <= 0.0)
+          if ((txt.size <= 0.0) || (txt.size > 128.0))
             error->all(FLERR, iarg + 1, "Invalid fix graphics/labels text size value: {}",
-                       txt.size);
+                       txt.size * 0.5);
           iarg += 2;
         } else if (strcmp(arg[iarg], "fontcolor") == 0) {
           if (iarg + 2 > narg)
             utils::missing_cmd_args(FLERR, "fix graphics/labels text fontcolor", error);
-          if (strcmp(arg[iarg + 1], "white") == 0) {
-            txt.fontcolor[0] = 255.0;
-            txt.fontcolor[1] = 255.0;
-            txt.fontcolor[2] = 255.0;
-          } else if (strcmp(arg[iarg + 1], "black") == 0) {
-            txt.fontcolor[0] = 0.0;
-            txt.fontcolor[1] = 0.0;
-            txt.fontcolor[2] = 0.0;
+          try {
+            get_color(arg[iarg + 1], txt.fontcolor);
+          } catch (TokenizerException &e) {
+            error->all(FLERR, iarg + 1, "Error parsing RGB font color value {}: {}", arg[iarg + 1],
+                       e.what());
+          }
+          iarg += 2;
+        } else if (strcmp(arg[iarg], "backcolor") == 0) {
+          if (iarg + 2 > narg)
+            utils::missing_cmd_args(FLERR, "fix graphics/labels text backcolor", error);
+          try {
+            get_color(arg[iarg + 1], txt.backcolor);
+          } catch (TokenizerException &e) {
+            error->all(FLERR, iarg + 1, "Error parsing RGB font color value {}: {}", arg[iarg + 1],
+                       e.what());
+          }
+          iarg += 2;
+        } else if (strcmp(arg[iarg], "framecolor") == 0) {
+          if (iarg + 2 > narg)
+            utils::missing_cmd_args(FLERR, "fix graphics/labels text framecolor", error);
+          try {
+            get_color(arg[iarg + 1], txt.framecolor);
+          } catch (TokenizerException &e) {
+            error->all(FLERR, iarg + 1, "Error parsing RGB font color value {}: {}", arg[iarg + 1],
+                       e.what());
+          }
+          iarg += 2;
+        } else if (strcmp(arg[iarg], "transcolor") == 0) {
+          if (iarg + 2 > narg)
+            utils::missing_cmd_args(FLERR, "fix graphics/labels text transcolor", error);
+          if (strcmp(arg[iarg + 1], "none") == 0) {
+            txt.transcolor[0] = 255.0;
+            txt.transcolor[1] = 255.0;
+            txt.transcolor[2] = 255.0;
           } else {
-            auto rgb = ValueTokenizer(arg[iarg + 1], "/");
             try {
-              txt.fontcolor[0] = rgb.next_int();
-              txt.fontcolor[1] = rgb.next_int();
-              txt.fontcolor[2] = rgb.next_int();
-              if (rgb.has_next()) throw TokenizerException("Extra token", rgb.next_string());
+              get_color(arg[iarg + 1], txt.transcolor);
             } catch (TokenizerException &e) {
               error->all(FLERR, iarg + 1, "Error parsing RGB font color value {}: {}",
                          arg[iarg + 1], e.what());
             }
           }
           iarg += 2;
-        } else if (strcmp(arg[iarg], "backcolor") == 0) {
-          if (iarg + 2 > narg)
-            utils::missing_cmd_args(FLERR, "fix graphics/labels text backcolor", error);
-          if (strcmp(arg[iarg + 1], "white") == 0) {
-            txt.backcolor[0] = 255.0;
-            txt.backcolor[1] = 255.0;
-            txt.backcolor[2] = 255.0;
-          } else if (strcmp(arg[iarg + 1], "black") == 0) {
-            txt.backcolor[0] = 0.0;
-            txt.backcolor[1] = 0.0;
-            txt.backcolor[2] = 0.0;
-          } else if (strcmp(arg[iarg + 1], "silver") == 0) {
-            txt.backcolor[0] = 192.0;
-            txt.backcolor[1] = 192.0;
-            txt.backcolor[2] = 192.0;
-          } else if (strcmp(arg[iarg + 1], "darkgray") == 0) {
-            txt.backcolor[0] = 64.0;
-            txt.backcolor[1] = 64.0;
-            txt.backcolor[2] = 64.0;
-          } else {
-            auto rgb = ValueTokenizer(arg[iarg + 1], "/");
-            try {
-              txt.backcolor[0] = rgb.next_int();
-              txt.backcolor[1] = rgb.next_int();
-              txt.backcolor[2] = rgb.next_int();
-              if (rgb.has_next()) throw TokenizerException("Extra token", rgb.next_string());
-            } catch (TokenizerException &e) {
-              error->all(FLERR, iarg + 1, "Error parsing RGB back color value {}: {}",
-                         arg[iarg + 1], e.what());
-            }
-          }
-          iarg += 2;
-        } else if (strcmp(arg[iarg], "transcolor") == 0) {
-          if (iarg + 2 > narg)
-            utils::missing_cmd_args(FLERR, "fix graphics/labels text transcolor", error);
-          if (strcmp(arg[iarg + 1], "white") == 0) {
-            txt.transcolor[0] = 255.0;
-            txt.transcolor[1] = 255.0;
-            txt.transcolor[2] = 255.0;
-          } else if (strcmp(arg[iarg + 1], "black") == 0) {
-            txt.transcolor[0] = 0.0;
-            txt.transcolor[1] = 0.0;
-            txt.transcolor[2] = 0.0;
-          } else if (strcmp(arg[iarg + 1], "silver") == 0) {
-            txt.transcolor[0] = 192.0;
-            txt.transcolor[1] = 192.0;
-            txt.transcolor[2] = 192.0;
-          } else if (strcmp(arg[iarg + 1], "darkgray") == 0) {
-            txt.transcolor[0] = 64.0;
-            txt.transcolor[1] = 64.0;
-            txt.transcolor[2] = 64.0;
-          } else if (strcmp(arg[iarg + 1], "none") == 0) {
-            txt.transcolor[0] = -255.0;
-            txt.transcolor[1] = -255.0;
-            txt.transcolor[2] = -255.0;
-          } else {
-            auto rgb = ValueTokenizer(arg[iarg + 1], "/");
-            try {
-              txt.transcolor[0] = rgb.next_int();
-              txt.transcolor[1] = rgb.next_int();
-              txt.transcolor[2] = rgb.next_int();
-              if (rgb.has_next()) throw TokenizerException("Extra token", rgb.next_string());
-            } catch (TokenizerException &e) {
-              error->all(FLERR, iarg + 1, "Error parsing RGB color value {}: {}", arg[iarg + 1],
-                         e.what());
-            }
-          }
-          iarg += 2;
         } else {
           error->all(FLERR, iarg, "Unknown fix graphics/labels text keyword: {}", arg[iarg]);
         }
+        texts.emplace_back(txt);
       }
-      texts.emplace_back(txt);
     } else {
       error->all(FLERR, iarg, "Unknown fix graphics/labels keyword: {}", arg[iarg]);
     }
@@ -684,18 +663,16 @@ void FixGraphicsLabels::end_of_step()
     if (txt.xstr) txt.pos[0] = input->variable->compute_equal(txt.xvar);
     if (txt.ystr) txt.pos[1] = input->variable->compute_equal(txt.yvar);
     if (txt.zstr) txt.pos[2] = input->variable->compute_equal(txt.zvar);
-    // text is rasterized at twice the size for some anti-aliasing
-    if (txt.sstr) txt.size = 2.0 * input->variable->compute_equal(txt.svar);
+    // text is rasterized at twice the size for some anti-aliasing. clamp to avoid crashes.
+    if (txt.sstr)
+      txt.size = std::clamp(2.0 * input->variable->compute_equal(txt.svar), 1.0e-2, 128.0);
 
     SSFN::ssfn_select(&ctx, SSFN_FAMILY_SANS, nullptr, SSFN_STYLE_REGULAR, (int) (txt.size),
                       SSFN_MODE_BITMAP);
     if (ctx.err != SSFN_OK) continue;
 
-    // need to render the pixmap if none exists, the size is a variable, or we need to substitute variables
+    // need to render the pixmap if NULL, the size is a variable, or we need to substitute the text
     if (txt.sstr || !txt.pixmap || (txt.text.find('$') != std::string::npos)) {
-      // dry run to determine size of pixmap
-      int width = 0;
-      int height = 0;
       auto expanded = txt.text;
 
       // substitute variables in text
@@ -710,34 +687,67 @@ void FixGraphicsLabels::end_of_step()
         memory->sfree(work);
       }
 
-      for (auto c : expanded) {
+      // get a font size specific spacing for a border
+      g = SSFN::ssfn_render(&ctx, ' ');
+      int xspace = g->adv_x;
+      free(g);
+
+      // dry run to determine size of pixmap
+      int width = 0;
+      int miny = 1073741824;
+      int maxy = 0;
+      for (auto c : expanded + "gll") {    // append these characters for consistent spacing
+        if (c == '_') c = ' ';             // ugly hack to work around font issue
+
         g = SSFN::ssfn_render(&ctx, c);
-        height = MAX(height, g->h + g->baseline);
         width += g->adv_x;
+        // loop over bitmap to find minimum and maximum y position
+        for (int y = 0; y < g->h; ++y) {
+          const int ypos = g->h - 1 - y + g->baseline;
+          for (int x = 0, i = 0, m = 1; x < g->w; ++x, m <<= 1) {
+            if (m > 0x80) {
+              m = 1;
+              ++i;
+            }
+            if (g->data[y * g->pitch + i] & m) {
+              miny = MIN(miny, ypos);
+              maxy = MAX(maxy, ypos);
+            }
+          }
+        }
         free(g);
       }
+
       txt.width = width;
-      txt.height = height;
+      int height = txt.height = maxy - miny + 1 + 4 * xspace;
+      int xhalf = xspace / 2;
       delete[] txt.pixmap;
       txt.pixmap = new unsigned char[height * width * 3];
-      // fill with background color
+
+      // fill entire pixmap with background and frame color
       for (int y = 0; y < height; ++y) {
         int yoffs = 3 * y * width;
         for (int x = 0; x < width; ++x) {
-          txt.pixmap[yoffs + 3 * x] = txt.backcolor[0];
-          txt.pixmap[yoffs + 3 * x + 1] = txt.backcolor[1];
-          txt.pixmap[yoffs + 3 * x + 2] = txt.backcolor[2];
+          if ((y < xhalf) || (y >= height - xhalf) || (x < xhalf) || (x >= width - xhalf)) {
+            txt.pixmap[yoffs + 3 * x] = txt.framecolor[0];
+            txt.pixmap[yoffs + 3 * x + 1] = txt.framecolor[1];
+            txt.pixmap[yoffs + 3 * x + 2] = txt.framecolor[2];
+          } else {
+            txt.pixmap[yoffs + 3 * x] = txt.backcolor[0];
+            txt.pixmap[yoffs + 3 * x + 1] = txt.backcolor[1];
+            txt.pixmap[yoffs + 3 * x + 2] = txt.backcolor[2];
+          }
         }
       }
 
-      // now render each character and set pixels in pixmap with desired colors
-      int penx = 0;
+      // now render each character again and change the pixels in the pixmap accordingly
+      int penx = 2 * xspace;
       for (auto c : expanded) {
-        g = SSFN::ssfn_render(&ctx, c);
+        if (c == '_') c = ' ';    // ugly hack to work around font issue
 
-        // loop over bitmap
+        g = SSFN::ssfn_render(&ctx, c);
         for (int y = 0; y < g->h; ++y) {
-          const int yoffs = (g->h - 1 - y + g->baseline) * width * 3;
+          const int yoffs = (g->h - 1 - y + g->baseline - miny + 2 * xspace - xhalf) * width * 3;
           for (int x = 0, i = 0, m = 1; x < g->w; ++x, m <<= 1) {
             if (m > 0x80) {
               m = 1;
@@ -748,10 +758,6 @@ void FixGraphicsLabels::end_of_step()
               txt.pixmap[yoffs + xoffs] = txt.fontcolor[0];
               txt.pixmap[yoffs + xoffs + 1] = txt.fontcolor[1];
               txt.pixmap[yoffs + xoffs + 2] = txt.fontcolor[2];
-            } else {
-              txt.pixmap[yoffs + xoffs] = txt.backcolor[0];
-              txt.pixmap[yoffs + xoffs + 1] = txt.backcolor[1];
-              txt.pixmap[yoffs + xoffs + 2] = txt.backcolor[2];
             }
           }
         }
