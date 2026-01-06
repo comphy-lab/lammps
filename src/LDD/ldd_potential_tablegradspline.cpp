@@ -80,7 +80,8 @@ Copied from "Numerical Recipes in C" second edition.
 void LddPotentialTableGradSpline::spline(double x[], double y[], int n, double yp1, double ypn, double y2[])
 {
   int i, j;
-  double p, qn, sig, un, u[n];
+  double p, qn, sig, un;
+  std::vector<double> u(n);
   if (yp1 > 0.99e30) y2[0] = u[0] = 0.0;
   else { y2[0] = -0.5; u[0] = (3.0/(x[1]-x[0])) * ((y[1]-y[0])/(x[1]-x[0]) - yp1); }
 
