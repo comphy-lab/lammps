@@ -379,18 +379,16 @@ void FixShakeKokkos<DeviceType>::min_post_force(int vflag)
 
   EV_FLOAT ev;
   
-  utils::logmesg(lmp,"*** ev.evdwl {} eflag {} vflag {} \n", ev.evdwl, eflag, vflag);
-
   if (neighflag == HALF) {
     if(vflag)
       Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALF,1>>(0, nlist), *this, ev);
     else
-      Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALF,0>>(0, nlist), *this, ev);
+      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALF,0>>(0, nlist), *this);
   } else {
     if(vflag)
       Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALFTHREAD,1>>(0, nlist), *this, ev);
     else
-      Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALFTHREAD,1>>(0, nlist), *this, ev);
+      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagFixShakeMinPostForce<HALFTHREAD,0>>(0, nlist), *this);
   }
   
   copymode = 0;
@@ -434,7 +432,7 @@ void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG,VF
   auto apply_restraint = [&](int idx0, int idx1, int type_idx, bool is_angle) {
   
     if (idx0 < 0 || idx1 < 0) return 0.0;
-  
+      
     const KK_FLOAT d0 = is_angle ? d_angle_distance[type_idx] : d_bond_distance[type_idx];
     
     const KK_FLOAT delx = d_x(idx0, 0) - d_x(idx1, 0);
@@ -446,20 +444,14 @@ void FixShakeKokkos<DeviceType>::operator()(TagFixShakeMinPostForce<NEIGHFLAG,VF
     const KK_FLOAT rk = kbond * dr;
     const KK_FLOAT fbond = (r > 0.0) ? -2.0 * rk / r : 0.0;
     const KK_FLOAT eb = rk * dr;
-    
-    if (idx0 < nlocal) ev.evdwl += 0.5 * eb;
-    if (idx1 < nlocal) ev.evdwl += 0.5 * eb;
 
-    if (idx0 < nlocal) {
-      a_f(idx0, 0) += delx * fbond;
-      a_f(idx0, 1) += dely * fbond;
-      a_f(idx0, 2) += delz * fbond;
-    }
-    if (idx1 < nlocal) {
-      a_f(idx1, 0) -= delx * fbond;
-      a_f(idx1, 1) -= dely * fbond;
-      a_f(idx1, 2) -= delz * fbond;
-    }
+    a_f(idx0, 0) += static_cast<KK_ACC_FLOAT>(delx * fbond);
+    a_f(idx0, 1) += static_cast<KK_ACC_FLOAT>(dely * fbond);
+    a_f(idx0, 2) += static_cast<KK_ACC_FLOAT>(delz * fbond);
+    a_f(idx1, 0) -= static_cast<KK_ACC_FLOAT>(delx * fbond);
+    a_f(idx1, 1) -= static_cast<KK_ACC_FLOAT>(dely * fbond);
+    a_f(idx1, 2) -= static_cast<KK_ACC_FLOAT>(delz * fbond);
+    ev.evdwl += eb;
     
     if (VFLAG) {
       ev.v[0] += static_cast<KK_ACC_FLOAT>(0.5 * delx * delx * fbond);
