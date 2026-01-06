@@ -58,7 +58,7 @@ static constexpr int MAXLINE = 1024;
 #define GRADTYPE(a) (3*a)
 
 static const char cite_pair_ldd1_c[] =
-  "pair ldd command: doi:10.1063/1.512866\n\n"
+  "pair ldd command: doi:10.1063/1.5128665\n\n"
   "@Article{DeLyser1,\n"
   " author = {Michael R. DeLyser and W. G. Noid},\n"
   " title = {Analysis of local density potentials},\n"
@@ -491,17 +491,17 @@ LddPotential *PairLdd::potential_creator(LAMMPS *lmp)
 
 void PairLdd::ErrorDoubleKeyword(const char *keyword)
 {
-  char *errmsg = (char *) calloc(100,sizeof(char));
-  sprintf(errmsg,"Found keyword %s twice!\n"
-                 "Error: double keyword\n",keyword);
+//  char *errmsg = (char *) calloc(100,sizeof(char));
+//  sprintf(errmsg,"Found keyword %s twice!\n"
+//                 "Error: double keyword\n",keyword);
+  std::string errmsg = fmt::format("Found keyword {} twice!\nError: double keyword\n",
+		  keyword);
   error->all(FLERR,errmsg);
 }
 
 void PairLdd::ErrorNumKeywordArgs(const char *keyword, const char *arglist)
 {
-  char *errmsg = (char *) calloc(100,sizeof(char));
-  sprintf(errmsg,"Expected %s to be followed by: %s\n"
-                 "Error: Invalid arguments to keyword\n",keyword,arglist);
+  std::string errmsg = fmt::format("Expected {} to be followed by: {}\n Error: Invalid or missing arguments to keyword {}\n",keyword, arglist, keyword);
   error->all(FLERR,errmsg);
 }
 
@@ -579,10 +579,8 @@ void PairLdd::coeff_ldd(int narg, char **arg)
       else if (strcmp(arg[iarg+1],"no") == 0) bSelf = false;
       else
       {
-        char *errmsg = (char *) calloc(200,sizeof(char));
-        sprintf(errmsg,"Expected to find either \"yes\" or \"no\" to follow "
-                       "keyword %s\nInstead, we found %s\nError: Invalid "
-                       "argument to keyword\n",KEY_LDD_SELF,arg[iarg+1]);
+	      std::string errmsg = fmt::format("Expected to find either \"yes\"/\"no\" to follow keyword {} instead, we found {}\n Error: Invalid argument to keyword\n", 
+			      KEY_LDD_SELF, arg[iarg+1]);
         error->all(FLERR,errmsg);
       }
       iarg += 2;
@@ -631,11 +629,9 @@ void PairLdd::coeff_ldd(int narg, char **arg)
     }
     else
     {
-      char *errmsg = (char *) calloc(500,sizeof(char));
-      sprintf(errmsg,"Recognized keywords for pair_coeff ldd: %s %s %s %s %s\n"
-                     "However, we found unrecognized keyword: %s\n"
-                     "Invalid ldd keyword\n",KEY_LDD_IND,KEY_LDD_SELF,
-                     KEY_LDD_POTL,KEY_LDD_GRAD,KEY_LDD_IGNORE,arg[iarg]);
+      std::string errmsg = fmt::format("Recognized keywords for pair_coeff ldd: {} {} {} {} {}\n"
+                     "However, we found unrecognized keyword: {}\n"
+                     "Invalid ldd keyword\n", KEY_LDD_IND, KEY_LDD_SELF, KEY_LDD_POTL, KEY_LDD_GRAD, KEY_LDD_IGNORE, arg[iarg]);
       error->all(FLERR,errmsg);
     }
   }
@@ -651,29 +647,26 @@ void PairLdd::coeff_ldd(int narg, char **arg)
   if (! bIgnore)
   {
 // Error checks
-    if (Inds[ilo][jlo]->r0 >= Inds[ilo][jlo]->rc)
-    {
-      char *errmsg = (char *) calloc(150,sizeof(char));
-      sprintf(errmsg,"r0 must be less than rC. However, you specified r0 = %g,"
-                     " rC = %g\n",Inds[ilo][jlo]->r0,Inds[ilo][jlo]->rc);
-      error->all(FLERR,errmsg);
-    }
     if (! bkInd)
     {
-      char *errmsg = (char *) calloc(100,sizeof(char));
-      sprintf(errmsg,"We never found required keyword %s\n",KEY_LDD_IND);
+      std::string errmsg = std::string("We never found required keyword ") + std::string(KEY_LDD_IND) + std::string("\n");
       error->all(FLERR,errmsg);
     }
+    if (Inds[ilo][jlo]->r0 >= Inds[ilo][jlo]->rc)
+    {
+      std::string errmsg = fmt::format("r0 must be less than rC. However, you specified r0 = {},"
+                     " rC = {}\n", Inds[ilo][jlo]->r0,Inds[ilo][jlo]->rc);
+      error->all(FLERR,errmsg);
+    }
+
     if (! bkSelf)
     {
-      char *errmsg = (char *) calloc(100,sizeof(char));
-      sprintf(errmsg,"We never found required keyword %s\n",KEY_LDD_SELF);
+      std::string errmsg = std::string("We never found required keyword ") + std::string(KEY_LDD_SELF) + std::string("\n");
       error->all(FLERR,errmsg);
     }
     if (! bkPotl)
     {
-      char *errmsg = (char *) calloc(100,sizeof(char));
-      sprintf(errmsg,"We never found required keyword %s\n",KEY_LDD_POTL);
+      std::string errmsg = std::string("We never found required keyword ") + std::string(KEY_LDD_POTL) + std::string("\n");
       error->all(FLERR,errmsg);
     }
  for (i = ilo; i <= ihi; ++i)
@@ -686,13 +679,11 @@ void PairLdd::coeff_ldd(int narg, char **arg)
       if (i == j) { self_interaction[i][j] = true; }
       else
       {
-        char *warnmsg = (char *) calloc(200,sizeof(char));
-        sprintf(warnmsg,"WARNING: you said to include the self interaction "
-                        "for itype: %d jtype: %d\nHOWEVER, you can only include the "
+        std::string warnmsg = fmt::format("WARNING: you said to include the self interaction "
+                        "for itype: {} jtype: {}\nHOWEVER, you can only include the "
                         "self interaction for i == j\nAccordingly, we are "
                         "turning this off\n",i,j);
         error->warning(FLERR,warnmsg);
-        free(warnmsg);
       }
     }
    }
