@@ -230,7 +230,7 @@ class FixShakeKokkos : public FixShake, public KokkosBase {
   typename AT::t_int_1d d_exchange_sendlist;
   typename AT::t_int_1d d_copylist;
   typename AT::t_int_1d d_indices;
-  
+
   typename AT::t_double_2d d_b_stats;
   typename AT::t_double_2d d_a_stats;
 
