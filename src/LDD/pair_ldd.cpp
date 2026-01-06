@@ -495,7 +495,7 @@ void PairLdd::ErrorDoubleKeyword(const char *keyword)
 //  sprintf(errmsg,"Found keyword %s twice!\n"
 //                 "Error: double keyword\n",keyword);
   std::string errmsg = fmt::format("Found keyword {} twice!\nError: double keyword\n",
-		  keyword);
+                  keyword);
   error->all(FLERR,errmsg);
 }
 
@@ -579,8 +579,8 @@ void PairLdd::coeff_ldd(int narg, char **arg)
       else if (strcmp(arg[iarg+1],"no") == 0) bSelf = false;
       else
       {
-	      std::string errmsg = fmt::format("Expected to find either \"yes\"/\"no\" to follow keyword {} instead, we found {}\n Error: Invalid argument to keyword\n", 
-			      KEY_LDD_SELF, arg[iarg+1]);
+              std::string errmsg = fmt::format("Expected to find either \"yes\"/\"no\" to follow keyword {} instead, we found {}\n Error: Invalid argument to keyword\n",
+                              KEY_LDD_SELF, arg[iarg+1]);
         error->all(FLERR,errmsg);
       }
       iarg += 2;
@@ -1144,8 +1144,8 @@ void PairLdd::read_file(char * filename, int nelements)
                 else {ldd_arg_string = utils::split_words(line_buf);} // break line into args
                 if (! utils::strsame(ldd_arg_string[0].c_str(), "pair_coeff"))
                 {
-                error->warning(FLERR, "ldd input file {} only accepts lines leading with pair_coeff commands not: {}\
-                               	accordingly this line: {} in {} is ignored", filename, ldd_arg_string[0].c_str(), line_buf, filename);
+                error->all(FLERR, "ERROR:ldd input file {} only accepts lines leading with \"pair_coeff\" commands not: {}\
+                                adjust this line: {} in {}", filename, ldd_arg_string[0].c_str(), line_buf, filename);
                 num_words=0;
                 }
                 if (nelements > 0) // then the user is probably passing e.g. pair_coeff A B instead of 1 2
