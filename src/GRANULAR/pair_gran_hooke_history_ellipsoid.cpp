@@ -224,8 +224,6 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
           flagj = bonus[ellipsoid[j]].type;
           if (touch[jj] == 1) {
             // Continued contact: use grain true shape and last contact point
-            // TODO: move contact point with rigid body motion of the pair ?
-            //       not sure if enough information to do that
             X0[0] = X0_prev[0];
             X0[1] = X0_prev[1];
             X0[2] = X0_prev[2];

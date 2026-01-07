@@ -44,7 +44,7 @@ namespace MathExtraSuperellipsoids {
                                       const double* center_distance_box1, const double* center_distance_box2,
                                       const double* a, const double* b);
 
-  inline bool check_collision_and_get_seed(const double* xc1, const double R1[3][3], const double* shape1,
+  inline bool check_intersection_axis_and_get_seed(const double* xc1, const double R1[3][3], const double* shape1,
                                          const double* xc2, const double R2[3][3], const double* shape2,
                                         double* cached_axis, double* contact_point);
 
@@ -482,7 +482,7 @@ inline bool MathExtraSuperellipsoids::check_intersection_axis(
 }
 
 
-inline bool MathExtraSuperellipsoids::check_collision_and_get_seed(
+inline bool MathExtraSuperellipsoids::check_intersection_axis_and_get_seed(
     const double* xc1, const double R1[3][3], const double* shape1,
     const double* xc2, const double R2[3][3], const double* shape2, 
     double* cached_axis, double* contact_point

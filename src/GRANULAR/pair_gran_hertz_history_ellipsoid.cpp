@@ -253,8 +253,18 @@ void PairGranHertzHistoryEllipsoid::compute(int eflag, int vflag)
         MathExtra::scaleadd3(overlap1, nij, X0, surf_point_i);
         MathExtra::scaleadd3(overlap2, nji, X0, surf_point_j);
 
-        curvature_i = MathExtraSuperellipsoids::mean_curvature_superellipsoid(shapei, blocki, flagi, Ri, surf_point_i, x[i]);
-        curvature_j = MathExtraSuperellipsoids::mean_curvature_superellipsoid(shapej, blockj, flagj, Rj, surf_point_j, x[j]);
+        if (curvature_model == CURV_MEAN) {
+            curvature_i = MathExtraSuperellipsoids::mean_curvature_superellipsoid(
+                            shapei, blocki, flagi, Ri, surf_point_i, x[i]);
+            curvature_j = MathExtraSuperellipsoids::mean_curvature_superellipsoid(
+                            shapej, blockj, flagj, Rj, surf_point_j, x[j]);
+        } else {
+            curvature_i = MathExtraSuperellipsoids::gaussian_curvature_superellipsoid(
+                            shapei, blocki, flagi, Ri, surf_point_i, x[i]);
+            curvature_j = MathExtraSuperellipsoids::gaussian_curvature_superellipsoid(
+                            shapej, blockj, flagj, Rj, surf_point_j, x[j]);
+        }
+        
         polyhertz =  sqrt( (overlap1+overlap2) / (curvature_i + curvature_j)); // hertzian contact radius approximation
         
         // branch vectors 
@@ -454,11 +464,15 @@ void PairGranHertzHistoryEllipsoid::settings(int narg, char **arg)
 
   limit_damping = 0;
   bounding_box = 0;
+  curvature_model = CURV_MEAN; // Default to Mean curvature
+
   for (int iarg = 6 ; iarg < narg ; iarg++) {
     if (strcmp(arg[iarg], "limit_damping") == 0)
       limit_damping = 1;
     else if (strcmp(arg[iarg], "bounding_box") == 0)
       bounding_box = 1;
+    else if (strcmp(arg[iarg], "curvature_gaussian") == 0)
+      curvature_model = CURV_GAUSSIAN;
     else
       error->all(FLERR, "Illegal pair_style command");
   }
@@ -594,8 +608,18 @@ double PairGranHertzHistoryEllipsoid::single(int i, int j, int /*itype*/, int /*
   MathExtra::scaleadd3(overlap1, nij, X0, surf_point_i);
   MathExtra::scaleadd3(overlap2, nji, X0, surf_point_j);
 
-  curvature_i = MathExtraSuperellipsoids::mean_curvature_superellipsoid(shapei, blocki, flagi, Ri, surf_point_i, x[i]);
-  curvature_j = MathExtraSuperellipsoids::mean_curvature_superellipsoid(shapej, blockj, flagj, Rj, surf_point_j, x[j]);
+  if (curvature_model == CURV_MEAN) {
+    curvature_i = MathExtraSuperellipsoids::mean_curvature_superellipsoid(
+                    shapei, blocki, flagi, Ri, surf_point_i, x[i]);
+    curvature_j = MathExtraSuperellipsoids::mean_curvature_superellipsoid(
+                    shapej, blockj, flagj, Rj, surf_point_j, x[j]);
+  } else {
+    curvature_i = MathExtraSuperellipsoids::gaussian_curvature_superellipsoid(
+                    shapei, blocki, flagi, Ri, surf_point_i, x[i]);
+    curvature_j = MathExtraSuperellipsoids::gaussian_curvature_superellipsoid(
+                    shapej, blockj, flagj, Rj, surf_point_j, x[j]);
+  }
+
   polyhertz =  sqrt( (overlap1+overlap2) / (curvature_i + curvature_j)); // hertzian contact radius approximation
   
   double cr1[3], cr2[3];

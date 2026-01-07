@@ -30,6 +30,10 @@ class PairGranHertzHistoryEllipsoid : public PairGranHookeHistoryEllipsoid {
   void compute(int, int) override;
   void settings(int, char **) override;
   double single(int, int, int, int, double, double, double, double &) override;
+
+ protected:
+  int curvature_model; 
+  enum { CURV_MEAN, CURV_GAUSSIAN };
 };
 
 }    // namespace LAMMPS_NS

@@ -22,7 +22,7 @@ set             group all block 4.0 4.0
 # Rotation: Randomize orientation so we get Face-Face, Edge-Edge, and Corner-Corner
 set             group all quat/random 12345
 
-pair_style      gran/hooke/history/ellipsoid 1000.0 0.0 1.0 0.0 0.5 0
+pair_style      gran/hooke/history/ellipsoid 1000.0 0.0 1.0 0.0 0.5 0 bounding_box
 pair_coeff      * *
 
 # Neighbor list, need to check
