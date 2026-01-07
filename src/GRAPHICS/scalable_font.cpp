@@ -801,8 +801,7 @@ void _ssfn_g(ssfn_t *ctx, uint8_t *rg, int render)
 
 // include font file as constant in memory by sequence
 #include "scalable_sans_font.h"
-
-const ssfn_font_t *const ssfn_sans_font = (ssfn_font_t *) FreeSans_sfn;
+const ssfn_font_t *const ssfn_sans_font = (ssfn_font_t *) VeraR_sfn;
 
 /**
  * Decode a color map pixel into ARGB
