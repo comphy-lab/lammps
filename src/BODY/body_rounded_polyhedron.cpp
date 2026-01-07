@@ -20,8 +20,8 @@
 
 #include "atom.h"
 #include "atom_vec_body.h"
-#include "dump_image.h"
 #include "error.h"
+#include "graphics.h"
 #include "math_extra.h"
 #include "math_eigen.h"
 #include "memory.h"
@@ -607,7 +607,7 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double flag2,
 
   int nvertices = bonus->ivalue[0];
   if (nvertices == 1) { // special case: just one vertex -> one sphere
-    imflag[0] = DumpImage::SPHERE;
+    imflag[0] = Graphics::SPHERE;
     // transform body frame position to box frame
     MathExtra::matvec(p,&bonus->dvalue[0],imdata[0]);
     // translate and set diameter
@@ -631,7 +631,7 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double flag2,
     double *edge_ends = &bonus->dvalue[3*nvertices]; // skip over vertex positions in body data
     if (edgeflag || (nedges == 1)) {                 // always draw edge for rod
       for (int i = 0; i < nedges; i++) {
-        imflag[nelements] = DumpImage::LINE;
+        imflag[nelements] = Graphics::LINE;
 
         int pt1 = static_cast<int>(edge_ends[2*i]);
         int pt2 = static_cast<int>(edge_ends[2*i+1]);
@@ -666,7 +666,7 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double flag2,
         // quadrilateral face requires two triangles. triangle has fourth vertex index set to -1
         if (pt4 >= 0) {
           // first triangle
-          imflag[nelements] = DumpImage::TRI;
+          imflag[nelements] = Graphics::TRI;
           MathExtra::matvec(p,&bonus->dvalue[3*pt1],imdata[nelements]);
           MathExtra::matvec(p,&bonus->dvalue[3*pt2],&imdata[nelements][3]);
           MathExtra::matvec(p,&bonus->dvalue[3*pt3],&imdata[nelements][6]);
@@ -682,7 +682,7 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double flag2,
           ++nelements;
 
           // second triangle
-          imflag[nelements] = DumpImage::TRI;
+          imflag[nelements] = Graphics::TRI;
           MathExtra::matvec(p,&bonus->dvalue[3*pt3],imdata[nelements]);
           MathExtra::matvec(p,&bonus->dvalue[3*pt4],&imdata[nelements][3]);
           MathExtra::matvec(p,&bonus->dvalue[3*pt1],&imdata[nelements][6]);
@@ -733,7 +733,7 @@ int BodyRoundedPolyhedron::image(int ibonus, double flag1, double flag2,
 
           ++nelements;
         } else {
-          imflag[nelements] = DumpImage::TRI;
+          imflag[nelements] = Graphics::TRI;
           MathExtra::matvec(p,&bonus->dvalue[3*pt1],imdata[nelements]);
           MathExtra::matvec(p,&bonus->dvalue[3*pt2],&imdata[nelements][3]);
           MathExtra::matvec(p,&bonus->dvalue[3*pt3],&imdata[nelements][6]);

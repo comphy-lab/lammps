@@ -110,6 +110,7 @@ Dump::Dump(LAMMPS *lmp, int /*narg*/, char **arg) :
   compressed = 0;
   binary = 0;
   multifile = 0;
+  multifile_override = 0;
   size_one = 0;
 
   multiproc = 0;

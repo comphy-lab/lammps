@@ -18,9 +18,9 @@
 #include "comm.h"
 #include "compute.h"
 #include "domain.h"
-#include "dump_image.h"
 #include "error.h"
 #include "fix.h"
+#include "graphics.h"
 #include "input.h"
 #include "math_extra.h"
 #include "memory.h"
@@ -868,7 +868,7 @@ void FixGraphicsIsosurface::end_of_step()
       for (int j = 0; j < 3; ++j)
         if ((tri.triangle[i][j] < sublo[j]) || (tri.triangle[i][j] > subhi[j])) addme = false;
     if (addme) {
-      imgobjs[n] = DumpImage::TRI;
+      imgobjs[n] = Graphics::TRI;
       imgparms[n][0] = tri.type;
       imgparms[n][1] = tri.triangle[0][0];
       imgparms[n][2] = tri.triangle[0][1];

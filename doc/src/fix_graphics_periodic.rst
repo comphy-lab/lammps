@@ -101,9 +101,15 @@ None of the :doc:`fix_modify <fix_modify>` options apply to this fix.
 Restrictions
 """"""""""""
 
-Currently only periodic images of atoms and bonds can be displayed.
-Body particles or ellipsoids and similar are not supported; they would
-be shown as spheres with this fix.
+This fix is part of the GRAPHICS package.  It is only enabled if LAMMPS
+was built with that package.  See the :doc:`Build package
+<Build_package>` page for more info.
+
+Currently only periodic images of atoms and bonds in each direction can
+be displayed.
+
+Body particles or ellipsoids and similar are not fully supported; they are
+shown as spheres with this fix.
 
 Related commands
 """"""""""""""""
@@ -111,7 +117,7 @@ Related commands
 :doc:`fix graphics/arrows <fix_graphics_arrows>`,
 :doc:`fix graphics/labels <fix_graphics_labels>`,
 :doc:`fix graphics/isosurface <fix_graphics_isosurface>`,
-:doc:`fix graphics/objects <fix_graphics_objects>`,
+:doc:`fix graphics/objects <fix_graphics_objects>`
 
 Default
 """""""

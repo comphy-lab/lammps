@@ -241,7 +241,9 @@ None of the :doc:`fix_modify <fix_modify>` options apply to this fix.
 Restrictions
 """"""""""""
 
-None.
+This fix is part of the GRAPHICS package.  It is only enabled if LAMMPS
+was built with that package.  See the :doc:`Build package
+<Build_package>` page for more info.
 
 Related commands
 """"""""""""""""

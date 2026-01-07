@@ -538,9 +538,9 @@ styles:
 
    * :doc:`fix graphics/arrows <fix_graphics_arrows>`
    * :doc:`fix graphics/isosurface <fix_graphics_isosurface>`
-   * :doc:`fix graphics/labels <fix_graphics_labels>`,
-   * :doc:`fix graphics/objects <fix_graphics_objects>`,
-   * :doc:`fix graphics/periodic <fix_graphics_periodic>`,
+   * :doc:`fix graphics/labels <fix_graphics_labels>`
+   * :doc:`fix graphics/objects <fix_graphics_objects>`
+   * :doc:`fix graphics/periodic <fix_graphics_periodic>`
    * :doc:`fix indent <fix_indent>`
    * :doc:`fix reaxff/bonds <fix_reaxff_bonds>`
    * :doc:`fix smd/wall_surface <fix_smd_wall_surface>`

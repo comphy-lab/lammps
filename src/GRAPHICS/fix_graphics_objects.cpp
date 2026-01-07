@@ -15,8 +15,8 @@
 
 #include "comm.h"
 #include "domain.h"
-#include "dump_image.h"
 #include "error.h"
+#include "graphics.h"
 #include "input.h"
 #include "lattice.h"
 #include "math_extra.h"
@@ -277,7 +277,7 @@ void FixGraphicsObjects::init()
   int n = 0;
   for (auto &gi : items) {
     if (gi.style == SPHERE) {
-      imgobjs[n] = DumpImage::SPHERE;
+      imgobjs[n] = Graphics::SPHERE;
       imgparms[n][0] = gi.sphere.type;
       if (gi.sphere.xstr) {
         int ivar = input->variable->find(gi.sphere.xstr);
@@ -325,7 +325,7 @@ void FixGraphicsObjects::init()
       }
       ++n;
     } else if (gi.style == CYLINDER) {
-      imgobjs[n] = DumpImage::CYLINDER;
+      imgobjs[n] = Graphics::CYLINDER;
       imgparms[n][0] = gi.cylinder.type;
       if (gi.cylinder.x1str) {
         int ivar = input->variable->find(gi.cylinder.x1str);
@@ -406,7 +406,7 @@ void FixGraphicsObjects::init()
       }
       ++n;
     } else if (gi.style == ARROW) {
-      imgobjs[n] = DumpImage::ARROW;
+      imgobjs[n] = Graphics::ARROW;
       imgparms[n][0] = gi.arrow.type;
       if (gi.arrow.x1str) {
         int ivar = input->variable->find(gi.arrow.x1str);
@@ -487,7 +487,7 @@ void FixGraphicsObjects::init()
       imgparms[n][9] = gi.arrow.ratio;
       ++n;
     } else if (gi.style == PROGBAR) {
-      imgobjs[n] = DumpImage::CYLINDER;
+      imgobjs[n] = Graphics::CYLINDER;
       imgparms[n][0] = gi.progbar.type1;
       imgparms[n][1] = gi.progbar.pos[X];
       imgparms[n][2] = gi.progbar.pos[Y];
@@ -512,7 +512,7 @@ void FixGraphicsObjects::init()
         default:;    // do nothing
       }
       ++n;
-      imgobjs[n] = DumpImage::CYLINDER;
+      imgobjs[n] = Graphics::CYLINDER;
       imgparms[n][0] = gi.progbar.type2;
       imgparms[n][1] = gi.progbar.pos[X];
       imgparms[n][2] = gi.progbar.pos[Y];
@@ -547,7 +547,7 @@ void FixGraphicsObjects::init()
       double delta = gi.progbar.length / (double) (gi.progbar.tics - 1);
       double lo = gi.progbar.pos[gi.progbar.dim] - 0.5 * gi.progbar.length;
       for (int i = 0; i < gi.progbar.tics; ++i) {
-        imgobjs[n] = DumpImage::CYLINDER;
+        imgobjs[n] = Graphics::CYLINDER;
         imgparms[n][0] = gi.progbar.type1;
         imgparms[n][1] = gi.progbar.pos[X];
         imgparms[n][2] = gi.progbar.pos[Y];

@@ -28,6 +28,7 @@
 #include "error.h"
 #include "fix.h"
 #include "force.h"
+#include "graphics.h"
 #include "grid2d.h"
 #include "grid3d.h"
 #include "image.h"
@@ -1268,11 +1269,11 @@ void DumpImage::create_image()
       ibonus = body[j];
       n = bptr->image(ibonus,bodyflag1,bodyflag2,bodyvec,bodyarray);
       for (k = 0; k < n; k++) {
-        if (bodyvec[k] == SPHERE)
+        if (bodyvec[k] == Graphics::SPHERE)
           image->draw_sphere(bodyarray[k],color,bodyarray[k][3],opacity);
-        else if (bodyvec[k] == LINE)
+        else if (bodyvec[k] == Graphics::LINE)
           image->draw_cylinder(&bodyarray[k][0],&bodyarray[k][3],color,bodyarray[k][6],3,opacity);
-        else if (bodyvec[k] == TRI)
+        else if (bodyvec[k] == Graphics::TRI)
           image->draw_triangle(&bodyarray[k][0],&bodyarray[k][3],&bodyarray[k][6],color,opacity);
       }
 
@@ -1565,7 +1566,7 @@ void DumpImage::create_image()
         opacity = 1.0;
       }
 
-      if (fixvec[i] == SPHERE) {
+      if (fixvec[i] == Graphics::SPHERE) {
         diameter = fixarray[i][4];
         if (fixarray[i][4] < 0) {
           if (adiam == NUMERIC) {
@@ -1577,11 +1578,11 @@ void DumpImage::create_image()
           }
         }
         image->draw_sphere(&fixarray[i][1], color, diameter + ifix.flag2, opacity);
-      } else if (fixvec[i] == LINE) {
+      } else if (fixvec[i] == Graphics::LINE) {
         // @sjplimp for consistency this should be:
         // image->draw_cylinder(&fixarray[i][1],&fixarray[i][4],color,ifix.flag2,ifix.flag1);
         image->draw_cylinder(&fixarray[i][1], &fixarray[i][4], color, ifix.flag1, 3, opacity);
-      } else if (fixvec[i] == TRI) {    // don't render surface meshes in 2d
+      } else if (fixvec[i] == Graphics::TRI) {    // don't render surface meshes in 2d
         if (domain->dimension == 3) {
           p1 = &fixarray[i][1];
           p2 = &fixarray[i][4];
@@ -1594,22 +1595,22 @@ void DumpImage::create_image()
             image->draw_cylinder(p3, p1, color, ifix.flag2, 3, opacity);
           }
         }
-      } else if (fixvec[i] == CYLINDER) {
+      } else if (fixvec[i] == Graphics::CYLINDER) {
         image->draw_cylinder(&fixarray[i][1], &fixarray[i][4], color, fixarray[i][7] + ifix.flag2,
                              (int) ifix.flag1, opacity);
-      } else if (fixvec[i] == TRIANGLE) {
+      } else if (fixvec[i] == Graphics::TRIANGLE) {
         image->draw_triangle(&fixarray[i][1], &fixarray[i][4], &fixarray[i][7], color, opacity);
-      } else if (fixvec[i] == ARROW) {
+      } else if (fixvec[i] == Graphics::ARROW) {
         ArrowObj a(fixarray[i][9]);
         a.draw(image, color, &fixarray[i][1], fixarray[i][7], &fixarray[i][4], fixarray[i][8],
                opacity);
-      } else if (fixvec[i] == PIXMAP) {
+      } else if (fixvec[i] == Graphics::PIXMAP) {
         // get pointer to pixmap buffer and background transparency color
         auto *pixmap = (const unsigned char *) ubuf(fixarray[i][6]).i;
         double transcolor[3] = {fixarray[i][7], fixarray[i][8], fixarray[i][9]};
         image->draw_pixmap(&fixarray[i][1], fixarray[i][4], fixarray[i][5], pixmap, transcolor,
                            fixarray[i][10], opacity);
-      } else if (fixvec[i] == BOND) {
+      } else if (fixvec[i] == Graphics::BOND) {
         int type1 = static_cast<int>(fixarray[i][0] - 1.0) % ntypes + 1;
         int type2 = static_cast<int>(fixarray[i][1] - 1.0) % ntypes + 1;
         double *color1, *color2;

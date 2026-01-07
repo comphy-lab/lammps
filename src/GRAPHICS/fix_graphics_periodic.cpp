@@ -16,8 +16,8 @@
 #include "atom.h"
 #include "comm.h"
 #include "domain.h"
-#include "dump_image.h"
 #include "error.h"
+#include "graphics.h"
 #include "group.h"
 #include "memory.h"
 #include "modify.h"
@@ -174,7 +174,7 @@ void FixGraphicsPeriodic::end_of_step()
           for (int iz = pzlo ? -1 : 0; iz <= pzhi; ++iz) {
             if ((ix == 0) && (iy == 0) && (iz == 0)) continue;
             if (atomflag) {
-              imgobjs[n] = DumpImage::SPHERE;
+              imgobjs[n] = Graphics::SPHERE;
               imgparms[n][0] = type[i];
               imgparms[n][1] = x[i][0] + ix * prd[0];
               imgparms[n][2] = x[i][1] + iy * prd[1];
@@ -188,7 +188,7 @@ void FixGraphicsPeriodic::end_of_step()
                 m = domain->closest_image(i, m);
                 if (m < 0) continue;
                 if (mask[m] & groupbit) {
-                  imgobjs[n] = DumpImage::BOND;
+                  imgobjs[n] = Graphics::BOND;
                   imgparms[n][0] = type[i];
                   imgparms[n][1] = type[m];
                   imgparms[n][2] = x[i][0] + ix * prd[0];

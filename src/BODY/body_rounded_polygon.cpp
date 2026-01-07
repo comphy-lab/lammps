@@ -21,8 +21,8 @@
 #include "atom.h"
 #include "atom_vec_body.h"
 #include "domain.h"
-#include "dump_image.h"
 #include "error.h"
+#include "graphics.h"
 #include "math_extra.h"
 #include "math_eigen.h"
 #include "memory.h"
@@ -503,7 +503,7 @@ int BodyRoundedPolygon::image(int ibonus, double flag1, double flag2,
 
   int n = bonus->ivalue[0];
   if (n == 1) {                 // special case: one vertex -> one sphere
-    imflag[0] = DumpImage::SPHERE;
+    imflag[0] = Graphics::SPHERE;
     // transform body frame position to box frame
     MathExtra::matvec(p,&bonus->dvalue[0],imdata[0]);
     // translate and set diameter
@@ -535,7 +535,7 @@ int BodyRoundedPolygon::image(int ibonus, double flag1, double flag2,
     if (edgeflag || n == 1) {   // always draw line for rod
       for (int i = 0; i < n; i++) {
         // register element type and copy second coordinate
-        imflag[nelements] = DumpImage::LINE;
+        imflag[nelements] = Graphics::LINE;
         int next = nelements + 1;
         if (next == n) next = 0;
         imdata[nelements][3] = imdata[next][0];
@@ -567,7 +567,7 @@ int BodyRoundedPolygon::image(int ibonus, double flag1, double flag2,
       const int nmax = nelements + n;
       for (int i = 0; i < n; i++) {
         // register element type and copy second coordinate with wrap and center
-        imflag[nelements] = DumpImage::TRI;
+        imflag[nelements] = Graphics::TRI;
         int next = nelements + 1;
         if (next == nmax) next = nmax - n;
         imdata[nelements][3] = center[0];

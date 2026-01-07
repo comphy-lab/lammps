@@ -15,8 +15,8 @@
 
 #include "atom.h"
 #include "comm.h"
-#include "dump_image.h"
 #include "error.h"
+#include "graphics.h"
 #include "input.h"
 #include "memory.h"
 #include "modify.h"
@@ -645,7 +645,7 @@ void FixGraphicsLabels::end_of_step()
     if (pix.zstr) pix.pos[2] = input->variable->compute_equal(pix.zvar);
     if (pix.sstr) pix.scale = input->variable->compute_equal(pix.svar);
 
-    imgobjs[n] = DumpImage::PIXMAP;
+    imgobjs[n] = Graphics::PIXMAP;
     imgparms[n][0] = 1;
     imgparms[n][1] = pix.pos[0];
     imgparms[n][2] = pix.pos[1];
@@ -781,7 +781,7 @@ void FixGraphicsLabels::end_of_step()
         free(g);
       }
     }
-    imgobjs[n] = DumpImage::PIXMAP;
+    imgobjs[n] = Graphics::PIXMAP;
     imgparms[n][0] = 1;
     imgparms[n][1] = txt.pos[0];
     imgparms[n][2] = txt.pos[1];

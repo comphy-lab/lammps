@@ -23,6 +23,7 @@ class Compute;
 
 class Dump : protected Pointers {
   friend class Output;
+  friend class WriteDump;
 
  public:
   char *id;                // user-defined name of Dump
@@ -60,6 +61,7 @@ class Dump : protected Pointers {
   int compressed;          // 1 if dump file is written compressed, 0 no
   int binary;              // 1 if dump file is written binary, 0 no
   int multifile;           // 0 = one big file, 1 = one file per timestep
+  int multifile_override;  // 1 to override the "must have '*'" restriction in `write_dump`
   int multiproc;           // 0 = proc 0 writes for all,
                            // else # of procs writing files
   int nclusterprocs;       // # of procs in my cluster that write to one file

@@ -1109,17 +1109,19 @@ The arguments for the *gmap* keyword are identical to those for the
 Restrictions
 """"""""""""
 
+The *dump image* and *dump movie* commands are part of the GRAPHICS
+package.  They are only enabled if LAMMPS was built with that package.
+See the :doc:`Build package <Build_package>` page for more info.
+
 To write JPEG or PNG format images, support for the corresponding
 graphics libraries must have been compiled and linked into LAMMPS.
-Please see the :ref:`instructions for building LAMMPS <graphics>` for
-more information on how to do that.
+Please see the :ref:`instructions for building LAMMPS with the
+GRAPHICS package <graphics>` for more information on how to do that.
 
 To write *movie* dumps, you must use the -DLAMMPS_FFMPEG switch when
 building LAMMPS and have the FFmpeg executable available on the
 machine where LAMMPS is being run.  Typically its name is lowercase
 (i.e., "ffmpeg").
-
-See the :doc:`Build settings <Build_settings>` page for details.
 
 Note that since FFmpeg is run as an external program via a pipe,
 LAMMPS has limited control over its execution and no knowledge about
@@ -1151,7 +1153,12 @@ FFmpeg and which does not have this limitation (e.g., .avi, .mkv, mp4).
 Related commands
 """"""""""""""""
 
-:doc:`dump <dump>`, :doc:`dump_modify <dump_modify>`, :doc:`undump <undump>`
+:doc:`dump <dump>`, :doc:`dump_modify <dump_modify>`, :doc:`undump <undump>`,
+:doc:`fix graphics/arrows <fix_graphics_arrows>`,
+:doc:`fix graphics/isosurface <fix_graphics_isosurface>`,
+:doc:`fix graphics/labels <fix_graphics_labels>`,
+:doc:`fix graphics/objects <fix_graphics_objects>`,
+:doc:`fix graphics/periodic <fix_graphics_periodic>`
 
 Default
 """""""

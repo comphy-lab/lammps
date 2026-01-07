@@ -17,8 +17,8 @@
 #include "comm.h"
 #include "compute_chunk_atom.h"
 #include "domain.h"
-#include "dump_image.h"
 #include "error.h"
+#include "graphics.h"
 #include "group.h"
 #include "input.h"
 #include "math_extra.h"
@@ -333,7 +333,7 @@ void FixGraphicsArrows::end_of_step()
     n = 0;
     for (int i = 0; i < nlocal; ++i) {
       if (mask[i] & groupbit) {
-        imgobjs[n] = DumpImage::ARROW;
+        imgobjs[n] = Graphics::ARROW;
         imgparms[n][0] = type[i];
         imgparms[n][1] = x[i][0];
         imgparms[n][2] = x[i][1];
@@ -405,7 +405,7 @@ void FixGraphicsArrows::end_of_step()
         scale = 1.0;
     }
     for (int n = 0; n < numobjs; ++n) {
-      imgobjs[n] = DumpImage::ARROW;
+      imgobjs[n] = Graphics::ARROW;
       imgparms[n][0] = 1;
       imgparms[n][1] = pdata[n][0];
       imgparms[n][2] = pdata[n][1];

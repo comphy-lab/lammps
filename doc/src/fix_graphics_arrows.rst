@@ -174,6 +174,10 @@ The scalar value calculated by this fix is "intensive".
 Restrictions
 """"""""""""
 
+This fix is part of the GRAPHICS package.  It is only enabled if LAMMPS
+was built with that package.  See the :doc:`Build package
+<Build_package>` page for more info.
+
 The *dipole* mode requires the use of :doc:`atom style dipole
 <atom_style>` or a hybrid atom style that includes it.
 

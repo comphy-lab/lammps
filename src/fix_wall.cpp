@@ -14,8 +14,8 @@
 #include "fix_wall.h"
 
 #include "domain.h"
-#include "dump_image.h"
 #include "error.h"
+#include "graphics.h"
 #include "input.h"
 #include "lattice.h"
 #include "memory.h"
@@ -342,7 +342,7 @@ FixWall::FixWall(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg), nwall
     memory->create(imgobjs, nwall, "fix_wall:imgobjs");
     memory->create(imgparms, nwall, 8, "fix_wall:imgparms");
     for (int m = 0; m < nwall; ++m) {
-      imgobjs[m] = DumpImage::CYLINDER;
+      imgobjs[m] = Graphics::CYLINDER;
       imgparms[m][0] = 1;    // use color of first atom type by default
     }
   } else {
@@ -350,8 +350,8 @@ FixWall::FixWall(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg), nwall
     memory->create(imgobjs, 2 * nwall, "fix_wall:imgobjs");
     memory->create(imgparms, 2 * nwall, 10, "fix_wall:imgparms");
     for (int m = 0; m < nwall; ++m) {
-      imgobjs[2 * m] = DumpImage::TRIANGLE;
-      imgobjs[2 * m + 1] = DumpImage::TRIANGLE;
+      imgobjs[2 * m] = Graphics::TRIANGLE;
+      imgobjs[2 * m + 1] = Graphics::TRIANGLE;
       imgparms[2 * m][0] = 1;        // use color of first atom type by default
       imgparms[2 * m + 1][0] = 1;    // use color of first atom type by default
     }

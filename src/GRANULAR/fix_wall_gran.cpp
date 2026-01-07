@@ -23,9 +23,9 @@
 #include "granular_model.h"
 #include "gran_sub_mod.h"
 #include "domain.h"
-#include "dump_image.h"
 #include "error.h"
 #include "fix_wall.h"
+#include "graphics.h"
 #include "input.h"
 #include "math_const.h"
 #include "math_extra.h"
@@ -304,7 +304,7 @@ FixWallGran::FixWallGran(LAMMPS *lmp, int narg, char **arg) :
       memory->create(imgobjs, numwalls, "fix_wall:imgobjs");
       memory->create(imgparms, numwalls, 8, "fix_wall:imgparms");
       for (int m = 0; m < numwalls; ++m) {
-        imgobjs[m] = DumpImage::CYLINDER;
+        imgobjs[m] = Graphics::CYLINDER;
         imgparms[m][0] = 1;    // use color of first atom type by default
       }
     } else {
@@ -312,8 +312,8 @@ FixWallGran::FixWallGran(LAMMPS *lmp, int narg, char **arg) :
       memory->create(imgobjs, 2 * numwalls, "fix_wall:imgobjs");
       memory->create(imgparms, 2 * numwalls, 10, "fix_wall:imgparms");
       for (int m = 0; m < numwalls; ++m) {
-        imgobjs[2 * m] = DumpImage::TRIANGLE;
-        imgobjs[2 * m + 1] = DumpImage::TRIANGLE;
+        imgobjs[2 * m] = Graphics::TRIANGLE;
+        imgobjs[2 * m + 1] = Graphics::TRIANGLE;
         imgparms[2 * m][0] = 1;        // use color of first atom type by default
         imgparms[2 * m + 1][0] = 1;    // use color of first atom type by default
       }

@@ -21,8 +21,8 @@
 #include "atom.h"
 #include "comm.h"
 #include "error.h"
-#include "dump_image.h"
 #include "force.h"
+#include "graphics.h"
 #include "memory.h"
 #include "neigh_list.h"
 #include "update.h"
@@ -402,7 +402,7 @@ int FixReaxFFBonds::image(int *&objs, double **&parms)
         j = domain->closest_image(i,j);
         if (j < 0) continue;
         if (mask[j] & groupbit) {
-          imgobjs[n] = DumpImage::BOND;
+          imgobjs[n] = Graphics::BOND;
           imgparms[n][0] = type[i];
           imgparms[n][1] = type[j];
           imgparms[n][2] = x[i][0];

@@ -19,8 +19,8 @@
 
 #include "atom.h"
 #include "domain.h"
-#include "dump_image.h"
 #include "error.h"
+#include "graphics.h"
 #include "input.h"
 #include "lattice.h"
 #include "math_extra.h"
@@ -128,20 +128,20 @@ FixIndent::FixIndent(LAMMPS *lmp, int narg, char **arg) :
     // one sphere object to draw
     memory->create(imgobjs, 1, "fix_indent:imgobjs");
     memory->create(imgparms, 1, 5, "fix_indent:imgparms");
-    imgobjs[0] = DumpImage::SPHERE;
+    imgobjs[0] = Graphics::SPHERE;
     imgparms[0][0] = 1;    // use color of first atom type
   } else if (istyle == CYLINDER) {
     // one cylinder object to draw
     memory->create(imgobjs, 1, "fix_indent:imgobjs");
     memory->create(imgparms, 1, 8, "fix_indent:imgparms");
-    imgobjs[0] = DumpImage::CYLINDER;
+    imgobjs[0] = Graphics::CYLINDER;
     imgparms[0][0] = 1;    // use color of first atom type
   } else if (istyle == PLANE) {
     if (domain->dimension == 2) {
       // one cylinder object to draw in 2d
       memory->create(imgobjs, 1, "fix_indent:imgobjs");
       memory->create(imgparms, 1, 8, "fix_indent:imgparms");
-      imgobjs[0] = DumpImage::CYLINDER;
+      imgobjs[0] = Graphics::CYLINDER;
       // use color of first atom type with color style "type" or "element"
       // use color style "const" and dump_modify fcolor to override
       imgparms[0][0] = 1;
@@ -149,8 +149,8 @@ FixIndent::FixIndent(LAMMPS *lmp, int narg, char **arg) :
       // two triangle objects to draw in 3d
       memory->create(imgobjs, 2, "fix_indent:imgobjs");
       memory->create(imgparms, 2, 10, "fix_indent:imgparms");
-      imgobjs[0] = DumpImage::TRIANGLE;
-      imgobjs[1] = DumpImage::TRIANGLE;
+      imgobjs[0] = Graphics::TRIANGLE;
+      imgobjs[1] = Graphics::TRIANGLE;
       // use color of first atom type with color style "type" or "element"
       // use color style "const" and dump_modify fcolor to override
       imgparms[0][0] = 1;

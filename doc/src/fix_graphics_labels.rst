@@ -205,10 +205,14 @@ None of the :doc:`fix_modify <fix_modify>` options apply to this fix.
 Restrictions
 """"""""""""
 
+This fix is part of the GRAPHICS package.  It is only enabled if LAMMPS
+was built with that package.  See the :doc:`Build package
+<Build_package>` page for more info.
+
 To read JPEG or PNG format images, support for the corresponding
 graphics libraries must have been compiled and linked into LAMMPS.
-Please see the :ref:`instructions for building LAMMPS <graphics>` for
-more information on how to do that.
+Please see the :ref:`instructions for building LAMMPS with the GRAPHICS
+package <graphics>` for more information on how to do that.
 
 Related commands
 """"""""""""""""
@@ -217,7 +221,7 @@ Related commands
 :doc:`fix graphics/arrows <fix_graphics_arrows>`,
 :doc:`fix graphics/isosurface <fix_graphics_isosurface>`,
 :doc:`fix graphics/objects <fix_graphics_objects>`,
-:doc:`fix graphics/periodic <fix_graphics_periodic>`,
+:doc:`fix graphics/periodic <fix_graphics_periodic>`
 
 Default
 """""""
