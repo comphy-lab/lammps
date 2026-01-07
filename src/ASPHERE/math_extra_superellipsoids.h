@@ -121,14 +121,6 @@ inline double MathExtraSuperellipsoids::det4_M44_zero(const double m[4][4])
 
 inline bool MathExtraSuperellipsoids::solve_4x4_manual(double A[16], double b[4]) {
     
-    // Tikhonov regularization (avoiding the constraint on the last row)
-    // High blockiness grains can have zero curvature / singular Hessian
-    // along principal local axes (x=0, y=0, z=0)
-    const double diag_weight = TIKHONOV_SCALE * (A[0] + A[5] + A[10]);
-    A[0]  += diag_weight;
-    A[5]  += diag_weight;
-    A[10] += diag_weight;
-    
     // 1. Pivot 0 
     double inv0 = 1.0 / A[0];
     double m1 = A[4] * inv0;
@@ -165,14 +157,6 @@ inline bool MathExtraSuperellipsoids::solve_4x4_manual(double A[16], double b[4]
 inline bool MathExtraSuperellipsoids::solve_4x4_robust(double A[16], double b[4]) {
     // Helper lambda to access A[row, col]
     auto at = [&](int r, int c) -> double& { return A[r * 4 + c]; };
-
-    // Tikhonov regularization
-    // High blockiness grains can have zero curvature / singular Hessian
-    // along principal local axes (x=0, y=0, z=0)
-    const double diag_weight = TIKHONOV_SCALE * (A[0] + A[5] + A[10]);
-    A[0]  += diag_weight;
-    A[5]  += diag_weight;
-    A[10] += diag_weight;
 
     // --- FORWARD ELIMINATION with PARTIAL PIVOTING ---
     
@@ -229,14 +213,12 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust(double A[16], double b[4]
 
 inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], double b[4]) {
     
-    // Tikhonov regularization
-    // High blockiness grains can have zero curvature / singular Hessian
-    // along principal local axes (x=0, y=0, z=0)
-    const double diag_weight = TIKHONOV_SCALE * (A[0] + A[5] + A[10] );
-    A[0]  += diag_weight;
-    A[5]  += diag_weight;
-    A[10] += diag_weight;
-    
+    // // Tikhonov regularization could be applied here
+    // double trace = A[0] + A[5] + A[10];
+    // A[0]  += TIKHONOV_SCALE * trace;
+    // A[5]  += TIKHONOV_SCALE * trace;
+    // A[10] += TIKHONOV_SCALE * trace;
+
      // --- COLUMN 0 ---
     // 1. Find Pivot in Col 0
     int p = 0; 
