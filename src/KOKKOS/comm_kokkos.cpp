@@ -1011,7 +1011,6 @@ void CommKokkos::exchange_device()
                                    k_exchange_copylist_bonus,
                                    ExecutionSpaceFromDevice<DeviceType>::space);
       atom->nlocal = nlocal;
-      if (bonus_flag) atomKK->avecKK->set_status_nlocal_bonus(nlocal_bonus);
 
       // send/recv atoms in both directions
       // send size of message first so receiver can realloc buf_recv if needed
