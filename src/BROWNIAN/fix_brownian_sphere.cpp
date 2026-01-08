@@ -63,34 +63,32 @@ void FixBrownianSphere::initial_integrate(int /*vflag */)
 {
   if (rot_style == ROT_GEOMETRIC) {
 
+    // Geometric integrator (Tp_ROTGEOM = 1)
     if (domain->dimension == 2) {
 
-      // 2D translation + 2D rotation:
-      // Fallback to projection integrator (Tp_ROTGEOM = 0)
+      // pure 2D (2D translation + 2D rotation)
       if (!noise_flag) {
-        initial_integrate_templated<0, 0, 0, 1, 0>();
+        initial_integrate_templated<1, 0, 0, 1, 0>();
       } else if (gaussian_noise_flag) {
-        initial_integrate_templated<0, 0, 1, 1, 0>();
+        initial_integrate_templated<1, 0, 1, 1, 0>();
       } else {
-        initial_integrate_templated<0, 1, 0, 1, 0>();
+        initial_integrate_templated<1, 1, 0, 1, 0>();
       }
 
     } else if (planar_rot_flag) {
 
-      // 3D translation + planar_rotation:
-      // Fallback to projection integrator (Tp_ROTGEOM = 0)
+      // planar rotation (3D translation + 2D rotation)
       if (!noise_flag) {
-        initial_integrate_templated<0, 0, 0, 0, 1>();
+        initial_integrate_templated<1, 0, 0, 0, 1>();
       } else if (gaussian_noise_flag) {
-        initial_integrate_templated<0, 0, 1, 0, 1>();
+        initial_integrate_templated<1, 0, 1, 0, 1>();
       } else {
-        initial_integrate_templated<0, 1, 0, 0, 1>();
+        initial_integrate_templated<1, 1, 0, 0, 1>();
       }
 
     } else {
 
-      // Full 3D: 3D translation + 3D rotation:
-      // Geometric integrator (Tp_ROTGEOM = 1)
+      // full 3D (3D translation + 3D rotation)
       if (!noise_flag) {
         initial_integrate_templated<1, 0, 0, 0, 0>();
       } else if (gaussian_noise_flag) {
@@ -102,7 +100,7 @@ void FixBrownianSphere::initial_integrate(int /*vflag */)
 
   } else {
 
-    // Projection integrator (original behavior)
+    // Projection integrator (Tp_ROTGEOM = 0)
     if (domain->dimension == 2) {
 
       if (!noise_flag) {
@@ -239,50 +237,49 @@ void FixBrownianSphere::initial_integrate_templated()
 
       // unit vector u = mu / |mu| at time t
       double u[3];
-      MathExtra::scale3(1.0 / mulen, mu[i], u);
+      MathExtra::scale3(1 / mulen, mu[i], u);
 
       // effective angular velocity omega is denoted as w = (wx, wy, wz) (deterministic torque + noise)
       double w[3] = {wx, wy, wz};
 
       if (Tp_ROTGEOM) {
 
-        // --- Rotational update: Geometric integrator for 3D angular motion ----
-        // For Tp_2D and Tp_2Drot, we currently use two separate projection placeholders
+        // --- Rotational update: Geometric integrator for overdamped rotational Brownian motion ----
+        // Reference: F. Hoefling & A. V. Straube, Phys. Rev. Research 7, 043034 (2025); DOI: 10.1103/wzdn-29p4
 
-        if (Tp_2D) {
+        if (Tp_2D || Tp_2Drot) {
 
-          // 2D case: Projection integrator placeholder
+          // --- Rotational update, 2D case (geometric integrator) ----
 
-          // cross-product wxu = w × u
-          double wxu[3];
-          MathExtra::cross3(w, u, wxu);
+          // ----------------------------------------------------------------------
+          // Tp_2D (2D) and Tp_2Drot (planar rotation) constrain rotational dynamics to the x–y plane,
+          // i.e. a finite rotation about z by the angle theta = dt * wz. They differ only in translation.
+          // Geometric update corresponds to a 2D rotation in the x-y plane (about z) by
+          // the angle theta = dt * wz  (wx, wy play no role and only wz matters).
+          // Thus: ux_new = cos(theta) ux - sin(theta) uy
+          //       uy_new = sin(theta) ux + cos(theta) uy
+          // ----------------------------------------------------------------------
 
-          // un-normalized unit vector at time t + dt: u <- u + dt (w × u)
-          MathExtra::scaleadd3(dt, wxu, u, u);
+          // enforce planar angular increment about z (rotation angle theta = dt * wz)
+          const double theta = dt * w[2];
 
-          // normalize to |u| = 1 and rescale to |mu| = mulen
-          MathExtra::snormalize3(mulen, u, mu[i]);
+          const double c = cos(theta);
+          const double s = sin(theta);
+          const double ux = u[0];
+          const double uy = u[1];
 
-        } else if (Tp_2Drot) {
-
-          // planar (2D) rotation case: Projection integrator placeholder
-
-          // cross-product wxu = w × u
-          double wxu[3];
-          MathExtra::cross3(w, u, wxu);
-
-          // un-normalized unit vector at time t + dt: u <- u + dt (w × u)
-          MathExtra::scaleadd3(dt, wxu, u, u);
+          // planar rotation about z by theta = dt * wz
+          u[0] = c * ux - s * uy;
+          u[1] = s * ux + c * uy;
 
           // normalize to |u| = 1 and rescale to |mu| = mulen
           MathExtra::snormalize3(mulen, u, mu[i]);
 
         } else {
 
+          // --- Rotational update, 3D case (geometric integrator) ----
+
           // ----------------------------------------------------------------------
-          // 3D case, Rotational update: Geometric integrator for overdamped rotational Brownian motion
-          // Reference: F. Hoefling & A. V. Straube, Phys. Rev. Research 7, 043034 (2025); DOI: 10.1103/wzdn-29p4
-          //
           // Paper -> code notation:
           //   u            : unit orientation, u = mu / |mu|
           //   omega        : effective angular velocity (noise + deterministic torque) -> w
@@ -309,20 +306,18 @@ void FixBrownianSphere::initial_integrate_templated()
           // note: if omega_perp = 0, exact map leaves u unchanged (do nothing)
           if (wperplen > 0) {
 
-            // rotation angle theta = |omega_perp| * dt = |dOmega|
-            double theta = dt * wperplen;
-
-            double c = cos(theta);
-            double s = sin(theta);
-
             // axis n = omega_perp / |omega_perp|
             double n[3];
-            MathExtra::scale3(1.0 / wperplen, wperp, n);
+            MathExtra::scale3(1 / wperplen, wperp, n);
 
             // cross-product u × n 
             double uxn[3];
             MathExtra::cross3(u, n, uxn);
 
+            // rotation angle theta = |omega_perp| * dt = |dOmega|
+            double theta = dt * wperplen;
+            double c = cos(theta);
+            double s = sin(theta);
             // new rotated orientation u <- cos(theta) u - sin(theta) (u × n)
             MathExtra::scaleadd3(c, u, -s, uxn, u);
 
@@ -334,7 +329,7 @@ void FixBrownianSphere::initial_integrate_templated()
 
       } else {
 
-        // --- Rotational update: Projection integrator (original) ----
+        // --- Rotational update: Projection integrator ----
 
         // cross-product wxu = w × u
         double wxu[3];
