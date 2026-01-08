@@ -53,15 +53,15 @@ void TuneKokkos::allocate()
   team_sizes.clear();
   vector_sizes.clear();
 
-  for (int vs = 64; vs <= 512; vs += 32)
-    team_sizes.push_back(vs);
+  for (int ts = 64; ts <= 512; ts += 32)
+    team_sizes.push_back(ts);
 
-  for (int ts = 1; ts <= 32; ts *= 2)
-    vector_sizes.push_back(ts);
+  for (int vs = 1; vs <= 32; vs *= 2)
+    vector_sizes.push_back(vs);
 
   // compute the total number of parameter combinations
-  // cols = team sizes (vector sizes: 64, 96, ..., 512)
-  // rows = vector sizes (threads per atom: 1, 2, 4, 8, 16, 32)
+  // cols = team sizes (pair/team/size = 64, 96, ..., 512)
+  // rows = vector sizes (threads/per/atom = 1, 2, 4, 8, 16, 32)
 
   nparams = team_sizes.size() * vector_sizes.size();
 
@@ -82,7 +82,7 @@ double TuneKokkos::get_timing_info()
 {
   double dvalue;
   double new_cpu;
-  int new_step = update->ntimestep;
+  bigint new_step = update->ntimestep;
 
   if (firststep == 1) {
     new_cpu = 0.0;
@@ -91,7 +91,7 @@ double TuneKokkos::get_timing_info()
   } else {
     new_cpu = timer->elapsed(Timer::TOTAL);
     double cpu_diff = new_cpu - last_spcpu;
-    int step_diff = new_step - last_step;
+    bigint step_diff = new_step - last_step;
     if (step_diff > 0.0) dvalue = cpu_diff/step_diff;
     else dvalue = 0.0;
   }

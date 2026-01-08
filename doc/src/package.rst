@@ -667,6 +667,8 @@ The *bond/block/size* keyword sets the number of GPU threads per block
 used for launching the bond force kernel on the GPU.  The default value
 of this parameter is determined based on the GPU architecture at runtime.
 
+.. versionadded:: TBD
+
 The *auto/tuning* keyword enables the auto-tuning feature of
 the KOKKOS package.  When enabled, the KOKKOS pair style in use will scan
 through the possible values of the *pair/team/size* and *threads/per/atom*

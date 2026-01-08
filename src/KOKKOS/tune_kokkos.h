@@ -39,7 +39,7 @@ class TuneKokkos : protected Pointers {
   int scanning_completed;
   int allocated;
 
-  int last_step;
+  bigint last_step;
   double last_spcpu;
   int firststep;
   double get_timing_info();
