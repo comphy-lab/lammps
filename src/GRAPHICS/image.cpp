@@ -19,6 +19,7 @@
 #include "image.h"
 
 #include "error.h"
+#include "image_objects.h"
 #include "math_const.h"
 #include "math_extra.h"
 #include "memory.h"
@@ -707,25 +708,28 @@ void Image::draw_box(double (*corners)[3], double diameter, double opacity)
 /* ----------------------------------------------------------------------
    draw XYZ axes with X, Y, and Z labels in red/green/blue
    axes = 4 end points
+   user arrow image object to draw axes as arrows
 
    labels are created from 32x32 size bitmaps stored as string in an XPM-like format
-   convert the bitmap into an RGB pixmap with foreground and background color
-   where the background color is used as transparent color
-   choose text and background color to be somewhat similar to minimize artifacts from scaling
-   we switch from white/silver to black/darkgray depending on the luminance of the background
-   offset labels by a diameter in every direction to avoid them being obscured by the cylinders
-   scale pixmaps based on the smaller of image width or height
+   convert the bitmap into an RGB pixmap with foreground and transparent background
+      choose text and background color to be somewhat similar to minimize artifacts from scaling
+   switch colors from white/silver to black/darkgray depending on the luminance of the background
+   offset labels in every direction to avoid them being obscured by the arrows
+   scale letter pixmaps based on the smaller of image width or height
 ------------------------------------------------------------------------- */
 
 void Image::draw_axes(double (*axes)[3], double diameter, double opacity)
 {
-  draw_cylinder(axes[0],axes[1],color2rgb("red"),diameter,3,opacity);
-  draw_cylinder(axes[0],axes[2],color2rgb("green"),diameter,3,opacity);
-  draw_cylinder(axes[0],axes[3],color2rgb("blue"),diameter,3,opacity);
+  // draw arrows
+  const double radius = 0.5 * diameter;
+  ImageObjects::ArrowObj arrow;
+  arrow.draw(this, color2rgb("red"), axes[0], axes[1], radius, opacity);
+  arrow.draw(this, color2rgb("green"), axes[0], axes[2], radius, opacity);
+  arrow.draw(this, color2rgb("blue"), axes[0], axes[3], radius, opacity);
 
   // adjust size of labels based on image size,
   // with FSAA active, width and height are doubled; adjust the scale factor accordingly
-  double scale = static_cast<double>(MIN(width,height)) / 1440.0;
+  double scale = static_cast<double>(MIN(width, height)) / 1440.0;
   if (fsaa) scale *= 0.5;
 
   // select color of labels
@@ -733,32 +737,33 @@ void Image::draw_axes(double (*axes)[3], double diameter, double opacity)
   double *backcolor = color2rgb("silver");
   int bgyuv[3];
   rgb2yuv(background, bgyuv);
-  if (bgyuv[0] > 192) { // switch to black text only for very bright backgrounds
+  if (bgyuv[0] > 192) {    // switch to black text only for very bright backgrounds
     fontcolor = color2rgb("black");
     backcolor = color2rgb("darkgray");
   }
 
   // convert bitmap of letters to pixmap and scale/draw.
 
-  unsigned char rgbbuffer[32*32*3];
+  unsigned char rgbbuffer[32 * 32 * 3];
   double shiftedpos[3];
-  xpm2pix(32,32,letter_x,rgbbuffer,fontcolor,backcolor);
-  shiftedpos[0] = axes[1][0] + diameter;
-  shiftedpos[1] = axes[1][1] + diameter;
-  shiftedpos[2] = axes[1][2] - diameter; // moving in lower z-direction reduces overlap for X
-  draw_pixmap(shiftedpos,32,32,rgbbuffer,backcolor,scale,opacity);
+  constexpr double DIROFFS = 0.05;
+  xpm2pix(32, 32, letter_x, rgbbuffer, fontcolor, backcolor);
+  shiftedpos[0] = axes[1][0] + DIROFFS * (axes[1][0] - axes[0][0]);
+  shiftedpos[1] = axes[1][1] + radius;
+  shiftedpos[2] = axes[1][2] - radius;    // moving in lower z-direction reduces overlap for X
+  draw_pixmap(shiftedpos, 32, 32, rgbbuffer, backcolor, scale, opacity);
 
-  xpm2pix(32,32,letter_y,rgbbuffer,fontcolor,backcolor);
-  shiftedpos[0] = axes[2][0] + diameter;
-  shiftedpos[1] = axes[2][1] + diameter;
-  shiftedpos[2] = axes[2][2] + diameter;
-  draw_pixmap(shiftedpos,32,32,rgbbuffer,backcolor,scale,opacity);
+  xpm2pix(32, 32, letter_y, rgbbuffer, fontcolor, backcolor);
+  shiftedpos[0] = axes[2][0] + radius;
+  shiftedpos[1] = axes[2][1] + DIROFFS * (axes[2][1] - axes[0][1]);
+  shiftedpos[2] = axes[2][2] + radius;
+  draw_pixmap(shiftedpos, 32, 32, rgbbuffer, backcolor, scale, opacity);
 
-  xpm2pix(32,32,letter_z,rgbbuffer,fontcolor,backcolor);
-  shiftedpos[0] = axes[3][0] + diameter;
-  shiftedpos[1] = axes[3][1] + diameter;
-  shiftedpos[2] = axes[3][2] + diameter;
-  draw_pixmap(shiftedpos,32,32,rgbbuffer,backcolor,scale,opacity);
+  xpm2pix(32, 32, letter_z, rgbbuffer, fontcolor, backcolor);
+  shiftedpos[0] = axes[3][0] + radius;
+  shiftedpos[1] = axes[3][1] + radius;
+  shiftedpos[2] = axes[3][2] + DIROFFS * (axes[3][2] - axes[0][2]);
+  draw_pixmap(shiftedpos, 32, 32, rgbbuffer, backcolor, scale, opacity);
 }
 
 /* ----------------------------------------------------------------------
