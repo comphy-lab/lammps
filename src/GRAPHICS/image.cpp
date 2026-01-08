@@ -18,6 +18,7 @@
 
 #include "image.h"
 
+#include "domain.h"
 #include "error.h"
 #include "image_objects.h"
 #include "math_const.h"
@@ -722,10 +723,12 @@ void Image::draw_axes(double (*axes)[3], double diameter, double opacity)
 {
   // draw arrows
   const double radius = 0.5 * diameter;
+  draw_sphere(axes[0], color2rgb("gray"), radius, opacity);
   ImageObjects::ArrowObj arrow;
   arrow.draw(this, color2rgb("red"), axes[0], axes[1], radius, opacity);
   arrow.draw(this, color2rgb("green"), axes[0], axes[2], radius, opacity);
-  arrow.draw(this, color2rgb("blue"), axes[0], axes[3], radius, opacity);
+  if (domain->dimension == 3)
+    arrow.draw(this, color2rgb("blue"), axes[0], axes[3], radius, opacity);
 
   // adjust size of labels based on image size,
   // with FSAA active, width and height are doubled; adjust the scale factor accordingly
@@ -759,11 +762,13 @@ void Image::draw_axes(double (*axes)[3], double diameter, double opacity)
   shiftedpos[2] = axes[2][2] + radius;
   draw_pixmap(shiftedpos, 32, 32, rgbbuffer, backcolor, scale, opacity);
 
-  xpm2pix(32, 32, letter_z, rgbbuffer, fontcolor, backcolor);
-  shiftedpos[0] = axes[3][0] + radius;
-  shiftedpos[1] = axes[3][1] + radius;
-  shiftedpos[2] = axes[3][2] + DIROFFS * (axes[3][2] - axes[0][2]);
-  draw_pixmap(shiftedpos, 32, 32, rgbbuffer, backcolor, scale, opacity);
+  if (domain->dimension == 3) {
+    xpm2pix(32, 32, letter_z, rgbbuffer, fontcolor, backcolor);
+    shiftedpos[0] = axes[3][0] + radius;
+    shiftedpos[1] = axes[3][1] + radius;
+    shiftedpos[2] = axes[3][2] + DIROFFS * (axes[3][2] - axes[0][2]);
+    draw_pixmap(shiftedpos, 32, 32, rgbbuffer, backcolor, scale, opacity);
+  }
 }
 
 /* ----------------------------------------------------------------------
