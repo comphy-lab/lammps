@@ -34,13 +34,13 @@ template<class DeviceType>
 PairLJCutKokkos<DeviceType>::PairLJCutKokkos(LAMMPS *lmp) : PairLJCut(lmp)
 {
   respa_enable = 0;
+  tuner = nullptr;
 
   kokkosable = 1;
   atomKK = (AtomKokkos *) atom;
   execution_space = ExecutionSpaceFromDevice<DeviceType>::space;
   datamask_read = X_MASK | F_MASK | TYPE_MASK | ENERGY_MASK | VIRIAL_MASK;
   datamask_modify = F_MASK | ENERGY_MASK | VIRIAL_MASK;
-  tuner = nullptr;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -105,6 +105,8 @@ void PairLJCutKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   // loop over neighbors of my atoms
 
   copymode = 1;
+
+  if (lmp->kokkos->autotuning) tuner->tuning_kernel_params();
 
   EV_FLOAT ev = pair_compute<PairLJCutKokkos<DeviceType>,void >(this,(NeighListKokkos<DeviceType>*)list);
 
@@ -206,12 +208,11 @@ void PairLJCutKokkos<DeviceType>::init_style()
   request->set_kokkos_device(std::is_same_v<DeviceType,LMPDeviceType>);
   if (neighflag == FULL) request->enable_full();
 
-  if (lmp->kokkos->autotuning) {
+  // create the autotuner
+
+  if (lmp->kokkos->autotuning > 0) {
     if (tuner) delete tuner;
-    int nevery = lmp->kokkos->autotuning;
-    if (autotuning <= 0)
-      error->all(FLERR,"Invalid KOKKOS autotuning interval");
-    tuner =  TuneKokkos(lmp, nevery);
+    tuner = new TuneKokkos(lmp, lmp->kokkos->autotuning);
   }
 }
 

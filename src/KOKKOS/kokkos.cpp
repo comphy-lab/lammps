@@ -717,6 +717,13 @@ void KokkosLMP::accelerator(int narg, char **arg)
     }
   }
 
+  if (autotuning)
+    utils::logmesg(lmp,"  autotuning is enabled\n");
+
+#else  // LMP_KOKKOS_GPU not defined
+
+  if (autotuning) autotuning = 0;
+
 #endif
 
   // set newton flags
