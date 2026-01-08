@@ -149,14 +149,14 @@ of the ``peptide`` example bundled with LAMMPS this would be:
 Finally, atoms can be colored by the value of a per-atom property using
 a color map.  There are several variants of color maps.  Here is a
 simple example coloring the atoms in the ``peptide`` example by their
-charge with a continuous color map and also with a custom set of colors:
+charge with a continuous color map where white is neutral, red positive,
+blue negative, and the color intensity corresponds to the magnitude of
+the charge:
 
 .. code-block:: LAMMPS
 
    dump viz peptide image 1000 image-*.png q type size 600 600 zoom 2.0
-   dump_modify viz color cmap1 0.557 0.792 0.902 color cmap2 0.129 0.620 0.737 &
-       color cmap3 0.008 0.188 0.278 color cmap4 1.000 0.718 0.012 color cmap5 0.984 0.522 0.0 &
-       amap -1.0 1.0 ca 0 5 min cmap5 -0.5 cmap4 0.0 cmap3 0.5 cmap2 max cmap1
+   dump_modify amap -1.0 1.0 ca 0 3 min blue 0.0 white max red
 
 
 .. |colors1| image:: img/colors-default.png
@@ -175,7 +175,7 @@ charge with a continuous color map and also with a custom set of colors:
    <center>(Different colorization styles. Left to right: by default
    type map, by custom type map, by element, and by charge. Click to see
    the full-size images)</center>
-       
+
 --------------------
 
 Transparency
