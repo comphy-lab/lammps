@@ -2476,8 +2476,11 @@ int AtomVecKokkos::pack_exchange_kokkos(const int &nsend,DAT::tdual_double_2d_lr
                                                  DAT::tdual_int_1d k_copylist_bonus,
                                                  ExecutionSpace space)
 {
-  atomKK->sync(space,datamask_exchange);
   set_size_exchange();
+
+  if (!nsend) return 0;
+
+  atomKK->sync(space,datamask_exchange);
 
   if (nsend > (int) (k_buf.view_host().extent(0)*
               k_buf.view_host().extent(1))/size_exchange) {
