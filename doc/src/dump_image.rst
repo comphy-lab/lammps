@@ -56,7 +56,7 @@ Syntax
          level = mesh refinement level, value between 1 (low resolution) and 6 (ultra high resolution)
          width = diameter of wireframe edges (distance units) (ignored for triangles)
        *body* = color bflag1 bflag2
-         color = *type*
+         color = *type* or *index*
          bflag1,bflag2 = 2 numeric flags to affect how bodies are drawn
        *fix* = fixID color fflag1 fflag2
          fixID = ID of fix that generates objects to draw
@@ -571,9 +571,14 @@ passed to the body style to affect how the drawing of a body particle
 is done.  See the :doc:`Howto body <Howto_body>` page for a
 description of what these parameters mean for each body style.
 
-The only setting currently allowed for the *color* value is *type*,
-which will color the body particles according to the atom type of the
-particle.  By default the mapping of types to colors is as follows:
+.. versionchanged:: TDB
+
+The there are currently two supported settings for the *color* value:
+*type*, or *index*.  With the *type* setting the body particles will be
+colored according to the atom type of the particle.  With the *index*
+setting the coloring follows the body index instead.  For both settings,
+the value (type or index) is mapped to the colors of atom types.  The
+list of colors is by default as follows:
 
 * type 1 = red
 * type 2 = green
@@ -582,7 +587,11 @@ particle.  By default the mapping of types to colors is as follows:
 * type 5 = aqua
 * type 6 = cyan
 
-and repeats itself for types > 6.
+and repeats itself for types > 6.  This list can by changed with the
+:doc:`dump_modify acolor <dump_index>` command.  If more different
+colors than atom types are desired, the number of atom types must be
+increased when using either the :doc:`create_box <create_box>` or the
+:doc:`read_data <read_data>` command.
 
 ----------
 

@@ -69,7 +69,7 @@ using namespace ImageObjects;
 
 namespace {
 static constexpr double BIG = 1.0e20;
-enum { NUMERIC, ATOM, TYPE, ELEMENT, ATTRIBUTE, CONSTANT };
+enum { NUMERIC, ATOM, TYPE, ELEMENT, ATTRIBUTE, CONSTANT, INDEX };
 enum { STATIC, DYNAMIC };
 enum { NO = 0, YES = 1, AUTO = 2 };
 enum { FILLED, FRAME, POINTS, TRANSPARENT };
@@ -279,8 +279,10 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       if (iarg+4 > narg) utils::missing_cmd_args(FLERR,"dump image body", error);
       bodyflag = YES;
       if (strcmp(arg[iarg+1],"type") == 0) bodycolor = TYPE;
-      else error->all(FLERR, iarg+1, "Dump image body only supports color by type");
-      if (acolor != ATTRIBUTE)
+      else if (strcmp(arg[iarg+1],"index") == 0) bodycolor = INDEX;
+      else
+        error->all(FLERR, iarg+1, "Dump image body only supports color by type or index");
+      if (acolor != TYPE)
         error->all(FLERR, iarg+1, "Must color atoms by type with body particles");
       bodyflag1 = utils::numeric(FLERR,arg[iarg+2],false,lmp);
       bodyflag2 = utils::numeric(FLERR,arg[iarg+3],false,lmp);
@@ -1264,7 +1266,10 @@ void DumpImage::create_image()
 
       if (bodycolor == TYPE) {
         itype = static_cast<int>(buf[m]);
-        color = colortype[(itype % atom->ntypes) + 1];
+        color = colortype[itype];
+      } else if (bodycolor == INDEX) {
+        itype = (body[j] % atom->ntypes) + 1;
+        color = colortype[itype];
       } else {
         color = image->color2rgb("white");
       }
