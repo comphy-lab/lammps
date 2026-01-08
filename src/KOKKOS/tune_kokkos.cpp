@@ -12,6 +12,10 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------------
+   Contributing author: Trung Nguyen (U Chicago)
+------------------------------------------------------------------------- */
+
 #include "tune_kokkos.h"
 
 #include "comm.h"
@@ -23,7 +27,7 @@
 
 using namespace LAMMPS_NS;
 
-#define TUNE_DEBUG
+//#define TUNE_DEBUG
 
 /* ---------------------------------------------------------------------- */
 
