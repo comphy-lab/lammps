@@ -23,6 +23,7 @@
 #include "neigh_request.h"
 #include "neighbor.h"
 #include "respa.h"
+#include "tune_kokkos.h"
 #include "update.h"
 
 using namespace LAMMPS_NS;
@@ -39,6 +40,7 @@ PairLJCutKokkos<DeviceType>::PairLJCutKokkos(LAMMPS *lmp) : PairLJCut(lmp)
   execution_space = ExecutionSpaceFromDevice<DeviceType>::space;
   datamask_read = X_MASK | F_MASK | TYPE_MASK | ENERGY_MASK | VIRIAL_MASK;
   datamask_modify = F_MASK | ENERGY_MASK | VIRIAL_MASK;
+  tuner = nullptr;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -53,6 +55,8 @@ PairLJCutKokkos<DeviceType>::~PairLJCutKokkos()
     memoryKK->destroy_kokkos(k_vatom,vatom);
     memoryKK->destroy_kokkos(k_cutsq,cutsq);
   }
+
+  if (tuner) delete tuner;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -201,6 +205,14 @@ void PairLJCutKokkos<DeviceType>::init_style()
                            !std::is_same_v<DeviceType,LMPDeviceType>);
   request->set_kokkos_device(std::is_same_v<DeviceType,LMPDeviceType>);
   if (neighflag == FULL) request->enable_full();
+
+  if (lmp->kokkos->autotuning) {
+    if (tuner) delete tuner;
+    int nevery = lmp->kokkos->autotuning;
+    if (autotuning <= 0)
+      error->all(FLERR,"Invalid KOKKOS autotuning interval");
+    tuner =  TuneKokkos(lmp, nevery);
+  }
 }
 
 /* ----------------------------------------------------------------------

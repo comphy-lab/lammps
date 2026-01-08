@@ -20,6 +20,8 @@
 #include "memory_kokkos.h"
 #include "neigh_list_kokkos.h"
 #include "neighbor_kokkos.h"
+#include "timer.h"
+#include "tune_kokkos.h"
 
 #include <cstring>
 #include <cctype>
@@ -133,6 +135,7 @@ KokkosLMP::KokkosLMP(LAMMPS *lmp, int narg, char **arg) : Pointers(lmp)
   nbor_block_size_set = 0;
   bond_block_size = 128;
   bond_block_size_set = 0;
+  autotuning = 0;
 
   int iarg = 0;
   while (iarg < narg) {
@@ -621,6 +624,10 @@ void KokkosLMP::accelerator(int narg, char **arg)
       if (iarg+2 > narg) error->all(FLERR,"Illegal package kokkos command");
       bond_block_size = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
       bond_block_size_set = 1;
+      iarg += 2;
+    } else if (strcmp(arg[iarg],"auto/tuning") == 0) {
+      if (iarg+2 > narg) error->all(FLERR,"Illegal package kokkos command");
+      autotuning = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
       iarg += 2;
     } else error->all(FLERR,"Illegal package kokkos command");
   }
