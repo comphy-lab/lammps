@@ -1292,6 +1292,8 @@ void Image::draw_triangle(const double *x, const double *y, const double *z,
 void Image::draw_pixel(int ix, int iy, double depth,
                        const double *surface, const double *surfaceColor)
 {
+  if (!std::isfinite(depth)) return; // reject pixels with invalid depth buffer values
+
   double diffuseKey,diffuseFill,diffuseBack,specularKey;
   if (depth < 0 || (depthBuffer[ix + iy*width] >= 0 &&
                     depth >= depthBuffer[ix + iy*width])) return;
