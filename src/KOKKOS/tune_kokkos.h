@@ -26,8 +26,10 @@ class TuneKokkos : protected Pointers {
 
   TuneKokkos(class LAMMPS *, int);
   ~TuneKokkos() override;
-  void allocate();
-  void tuning_kernel_params();
+  void allocate(int);
+  void tuning_kernel_params(class Pair *);
+  void tuning_kernel_params(class Neighbor *);
+  void tuning_kernel_params(class Bond *);
 
   int interval;  // # of timesteps for measuring performance in TPS of a given parameter set
 

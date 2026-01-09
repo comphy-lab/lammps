@@ -124,7 +124,7 @@ void PairLJCutCoulLongKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
   copymode = 1;
 
-  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
+  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params(this);
 
   EV_FLOAT ev;
   if (ncoultablebits)
