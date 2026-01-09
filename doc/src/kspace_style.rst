@@ -294,7 +294,7 @@ Each inter-RK block communicator has one representative K process, with the rest
 The *pppm/rk* kspace style must be paired with an analogous *rk* type run style, e.g., *verlet/split/rk*.
 An error is generated otherwise. Also, *pppm/rk* does not currently support group/group computation (`group_group_enable==0`).
 
-This approach is based on the enhanced baseline decomposition of :ref:`(Dandurand) <Dandurand2025>` and works cited within.
+This approach is based on the enhanced baseline decomposition of :ref:`(Dandurand) <kspaceDandurand2025>` and works cited within.
 
 ----------
 
@@ -552,7 +552,8 @@ Default
    kspace_style none
 
 ----------
-.. _Dandurand:
+
+.. _kspaceDandurand2025:
 
 **(Dandurand)** Dandurand, Vandierendonck, de Supinski, 39th IEEE IPDPS,
 June 3-7, (2025).

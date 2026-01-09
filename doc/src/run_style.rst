@@ -154,7 +154,7 @@ options to support this, and strategies are discussed in :doc:`Section
 
 ----------
 
-The rationale and requirements for the run style *verlet/split/rk* is
+The rationale and requirements for the run style *verlet/split/rk* are
 similar to that of *verlet/split*, and much of what was written above
 about the latter applies to the former, including the partition requirements.
 
@@ -163,11 +163,57 @@ is restricted more specifically to the computation of 3d FFTs in solving
 the Poisson equations for computing the long-range forces via pppm.
 Conversely, the P1 processes carry out the other long-range force computations
 that the P2 processes would have done above for *verlet/split*. There are two
-rationales: 1) The main bottleneck to parallel scalability is really in the
-3d FFTs in solving the Poisson equation. The other steps (such as accumulating
-the charge densities and interpolating the long-range forces) scale well,
-and so their reallocation to the P1 processes usually results in improved parallel speedup.
-2) The approach *verlet/split/rk* avoids having to communicate atom-specific
+rationales: 
+
+1. One of the most significant bottlenecks to parallel scalability is due to the
+communication overhead for the 3d FFTs in solving the Poisson equation. 
+The other steps (such as accumulating the charge densities and interpolating 
+the long-range forces) have better parallel scaling, and so their reallocation to the 
+P1 processes may result in improved parallel speedup at large enough node counts
+where the speedup for solving the Poisson equation lags behind the speedup of
+the other computations so that the Poisson equation solution is a bottleneck
+in parallel execution.
+
+The following table demonstrates a comparison of run times for *example/VISCOSITY*
+modified with the use of the command ``replicate 4 4 4``.
+The number of P1 processes per node is 96, and the number of P2 processes *k* per node
+varies by *k=1,2,4,8,16,32*. The number of compute nodes used is 6,
+and each compute node may employ a maximum of 128 cores.
+For ``run_style verlet``, the number of processes per compute node is fixed at *96*.
+The run times are averages over five experiments. The average time using
+``run_style verlet`` was 17.9 seconds with standard deviation 0.66 seconds.
+The average run time using ``run_style verlet/split`` are indicated by the VS column.
+The average run time using ``run_style verlet/split/rk`` 
+and ``kspace_style pppm/rk`` are indicated by the VSRK column.
+The percentage change VS% and VSRK% in run times 
+over the baseline ``run_style verlet`` time of 17.9 seconds are given by
+*VS% = 100(VS - 17.9)/17.9* and *VSRK% = 100*(VSRK - 17.9)/17.9*. 
+
+  +------+-------+--------+-------+---------+
+  |      |   VS  |  VSRK  | VS%   |  VSRK%  |
+  +======+=======+========+=======+=========+
+  | k=1  |  67.2 |  39.9  | 275.5 | 122.8   |
+  +------+-------+--------+-------+---------+
+  | k=2  |  40.0 |  25.6  | 123.4 |  42.8   |
+  +------+-------+--------+-------+---------+
+  | k=4  |  23.9 |  18.5  |  33.6 |   3.2   |
+  +------+-------+--------+-------+---------+
+  | k=8  |  16.9 |  17.4  |  -5.7 |  -2.9   |
+  +------+-------+--------+-------+---------+
+  | k=16 |  13.6 |  17.2  | -24.0 |  -3.9   |
+  +------+-------+--------+-------+---------+
+  | k=32 |  13.4 |  17.2  | -25.3 |  -4.0   |
+  +------+-------+--------+-------+---------+
+
+Under conditions when K space computation times dominate during each iteration
+($k=1,2,4$), VSRK shows improved (less) run time over VS, but not so otherwise.
+Also, for $k=8,16,32$, the average VS and VSRK times are an improvement over the
+baseline Verlet times (indicated by the negative-valued VS% and VSRK%.)
+Nevertheless, the VS times are still more of an improvement over the baseline average Verlet time
+than are the VSRK times. For larger node counts and higher ratio of P1 to P2 processes,
+the VSRK times may show improvement over both the VS and baseline Verlet times.
+
+2. The approach *verlet/split/rk* avoids having to communicate atom-specific
 information between P1 and P2 processes.  Thus, re-neighboring, for example,
 stays confined to the P1 processes and does not require inter-P1/P2 communication,
 and so the communication overhead is reduced.
@@ -177,7 +223,7 @@ the computation of the long-range forces. Consequently, the use of *verlet/split
 requires the use of an *rk* type kspace style, e.g., *pppm/rk*.
 
 The contribution of run style *verlet/split/rk* coupled with kspace style *pppm/rk*
-suports the enhanced baseline described in `(Dandurand) <Dandurand2025>` and
+suports the enhanced baseline described in :ref:`(Dandurand) <runstyleDandurand2025>` and
 other works cited within.
 
 ----------
@@ -395,7 +441,7 @@ to rRESPA levels is as follows:
 
 ----------
 
-.. _Dandurand:
+.. _runstyleDandurand2025:
 
 **(Dandurand)** Dandurand, Vandierendonck, de Supinski, 39th IEEE IPDPS,
 June 3-7, (2025).
