@@ -62,11 +62,11 @@ void TuneKokkos::allocate(int num_params)
   for (int ts = 64; ts <= 512; ts += 32)
     team_sizes.push_back(ts);
 
-  if (num_params == 2) { 
+  if (num_params == 2) {
     for (int vs = 1; vs <= max_vectorsize; vs *= 2)
       vector_sizes.push_back(vs);
   }
-  
+
   // compute the total number of parameter combinations
   // cols = team sizes (pair/team/size = 64, 96, ..., 512)
   // rows = vector sizes (threads/per/atom = 1, 2, 4, 8, 16, max_vectorsize)
@@ -168,7 +168,7 @@ void TuneKokkos::tuning_kernel_params(class Pair *pair)
         best_idx = i;
       }
     }
-    
+
     int num_team_sizes = team_sizes.size();
     int pair_team_size_opt = team_sizes[best_idx % num_team_sizes];
     int threads_per_atom_opt = vector_sizes[best_idx / num_team_sizes];
@@ -181,7 +181,7 @@ void TuneKokkos::tuning_kernel_params(class Pair *pair)
     #ifdef TUNE_DEBUG
     if (update->ntimestep % interval == 0) {
       double tps = get_timing_info();
-      double perf = 1.0 / tps;  
+      double perf = 1.0 / tps;
       if (comm->me == 0)
         printf("optimal pair team size = %d: tpa = %d: tps = %f\n",
           lmp->kokkos->pair_team_size, lmp->kokkos->threads_per_atom, perf);
