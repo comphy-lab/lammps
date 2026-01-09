@@ -22,6 +22,7 @@
 #include "atom_masks.h"
 #include "comm.h"
 #include "force.h"
+#include "kokkos.h"
 #include "memory_kokkos.h"
 #include "neighbor_kokkos.h"
 
@@ -93,6 +94,10 @@ void BondHarmonicKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
   // loop over neighbors of my atoms
 
+  int bond_blocksize = 0;
+  if (lmp->kokkos->bond_block_size_set)
+    bond_blocksize = lmp->kokkos->bond_block_size;
+
   EV_FLOAT ev;
 
   if (evflag) {
@@ -103,9 +108,15 @@ void BondHarmonicKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
     }
   } else {
     if (newton_bond) {
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<1,0> >(0,nbondlist),*this);
+      if (bond_blocksize)
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<1,0> >(0,nbondlist,Kokkos::ChunkSize(bond_blocksize)),*this);
+      else
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<1,0> >(0,nbondlist),*this);
     } else {
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<0,0> >(0,nbondlist),*this);
+      if (bond_blocksize)
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<0,0> >(0,nbondlist,Kokkos::ChunkSize(bond_blocksize)),*this);
+      else
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<0,0> >(0,nbondlist),*this);
     }
   }
 

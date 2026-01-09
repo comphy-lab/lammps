@@ -28,8 +28,8 @@ class TuneKokkos : protected Pointers {
   ~TuneKokkos() override;
   void allocate(int);
   void tuning_kernel_params(class Pair *);
-  void tuning_kernel_params(class Neighbor *);
   void tuning_kernel_params(class Bond *);
+  void tuning_kernel_params(class Nbin *) {}
 
   int interval;  // # of timesteps for measuring performance in TPS of a given parameter set
 
@@ -45,6 +45,7 @@ class TuneKokkos : protected Pointers {
   double last_spcpu;
   int firststep;
   double get_timing_info();
+  int get_optimal_param_idx();
 };
 
 }
