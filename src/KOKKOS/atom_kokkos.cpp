@@ -226,6 +226,16 @@ void AtomKokkos::sort()
       }
       sort_legacy = true;
     }
+
+    int bonus_flag = (ellipsoid_flag || line_flag || tri_flag || body_flag);
+
+    if (bonus_flag) {
+      if (comm->me == 0) {
+        error->warning(FLERR,"Atom bonus data not compatible with Kokkos sorting on device, "
+                           "switching to legacy host sorting");
+      }
+      sort_legacy = true;
+    }
   }
 
   if (sort_legacy) {
