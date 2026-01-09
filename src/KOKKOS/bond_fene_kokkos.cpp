@@ -27,6 +27,7 @@
 #include "math_const.h"
 #include "memory_kokkos.h"
 #include "neighbor_kokkos.h"
+#include "tune_kokkos.h"
 
 #include <cmath>
 
@@ -39,6 +40,7 @@ template<class DeviceType>
 BondFENEKokkos<DeviceType>::BondFENEKokkos(LAMMPS *lmp) : BondFENE(lmp)
 {
   kokkosable = 1;
+  tuner = nullptr;
 
   atomKK = (AtomKokkos *) atom;
   neighborKK = (NeighborKokkos *) neighbor;
@@ -58,6 +60,8 @@ BondFENEKokkos<DeviceType>::~BondFENEKokkos()
   if (!copymode) {
     memoryKK->destroy_kokkos(k_eatom,eatom);
     memoryKK->destroy_kokkos(k_vatom,vatom);
+
+    if (tuner) delete tuner;
   }
 }
 
@@ -102,6 +106,8 @@ void BondFENEKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   copymode = 1;
 
   // loop over the bond list
+
+  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params(this);
 
   int bond_blocksize = 0;
   if (lmp->kokkos->bond_block_size_set)
@@ -261,6 +267,13 @@ void BondFENEKokkos<DeviceType>::allocate()
   d_r0 = k_r0.template view<DeviceType>();
   d_epsilon = k_epsilon.template view<DeviceType>();
   d_sigma = k_sigma.template view<DeviceType>();
+
+  // create the autotuner
+
+  if (lmp->kokkos->autotuning > 0) {
+    if (tuner) delete tuner;
+    tuner = new TuneKokkos(lmp, lmp->kokkos->autotuning);
+  }
 }
 
 /* ----------------------------------------------------------------------

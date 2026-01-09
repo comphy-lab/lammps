@@ -22,8 +22,10 @@
 #include "atom_masks.h"
 #include "comm.h"
 #include "force.h"
+#include "kokkos.h"
 #include "memory_kokkos.h"
 #include "neighbor_kokkos.h"
+#include "tune_kokkos.h"
 
 #include <cmath>
 
@@ -35,6 +37,7 @@ template<class DeviceType>
 BondClass2Kokkos<DeviceType>::BondClass2Kokkos(LAMMPS *lmp) : BondClass2(lmp)
 {
   kokkosable = 1;
+  tuner = nullptr;
 
   atomKK = (AtomKokkos *) atom;
   neighborKK = (NeighborKokkos *) neighbor;
@@ -51,6 +54,8 @@ BondClass2Kokkos<DeviceType>::~BondClass2Kokkos()
   if (!copymode) {
     memoryKK->destroy_kokkos(k_eatom,eatom);
     memoryKK->destroy_kokkos(k_vatom,vatom);
+
+    if (tuner) delete tuner;
   }
 }
 
@@ -94,7 +99,9 @@ void BondClass2Kokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
   copymode = 1;
 
-  // loop over neighbors of my atoms
+  // loop over the bond list
+
+  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params(this);
 
   EV_FLOAT ev;
 
@@ -211,6 +218,13 @@ void BondClass2Kokkos<DeviceType>::allocate()
   d_k3 = k_k3.template view<DeviceType>();
   d_k4 = k_k4.template view<DeviceType>();
   d_r0 = k_r0.template view<DeviceType>();
+
+  // create the autotuner
+
+  if (lmp->kokkos->autotuning > 0) {
+    if (tuner) delete tuner;
+    tuner = new TuneKokkos(lmp, lmp->kokkos->autotuning);
+  }
 }
 
 /* ----------------------------------------------------------------------

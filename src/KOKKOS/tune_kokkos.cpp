@@ -60,14 +60,17 @@ void TuneKokkos::allocate(int num_params)
   team_sizes.clear();
   vector_sizes.clear();
 
+  // maximum team size is often limited by the GPU architecture, 512 is a safe choice
+
+  int max_team_size = 512;
+  for (int ts = 64; ts <= max_team_size; ts += 32)
+    team_sizes.push_back(ts);
+
   #if defined(KOKKOS_ENABLE_HIP)
   int max_vectorsize = 64;
   #else
   int max_vectorsize = 32;
   #endif
-
-  for (int ts = 64; ts <= 512; ts += 32)
-    team_sizes.push_back(ts);
 
   if (num_params == 2) {
     for (int vs = 1; vs <= max_vectorsize; vs *= 2)
@@ -262,6 +265,15 @@ void TuneKokkos::tuning_kernel_params(class Bond *bond)
 
       performance[param_idx] = 1.0 / tps;
 
+      #ifdef TUNE_DEBUG
+      if (comm->me == 0) {
+        std::string mesg = fmt::format("param_idx {}: bond block size = {} ",
+                          param_idx, lmp->kokkos->bond_block_size);
+        mesg += fmt::format("perf = {:.1f} TPS\n", performance[param_idx]);
+        utils::logmesg(lmp,mesg);
+      }
+      #endif
+
       // move to the next parameter set
 
       param_idx++;
@@ -297,7 +309,7 @@ void TuneKokkos::tuning_kernel_params(class Bond *bond)
     double perf = 1.0 / tps;
 
     if (comm->me == 0) {
-      std::string mesg = fmt::format("Using the optimal param: bond block size = {}",
+      std::string mesg = fmt::format("Using the optimal param: bond block size = {} ",
                        lmp->kokkos->bond_block_size);
       mesg += fmt::format("perf = {:.1f} TPS\n", perf);
       utils::logmesg(lmp,mesg);

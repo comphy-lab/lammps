@@ -679,6 +679,8 @@ for the remaining part of the run.  The *nevery* keyword sets
 the interval used to estimate the performance for a combination
 of these two parameters.  This feature is disabled by default.
 
+Note that when *auto/tuning* is enabled, *neigh/thread* will be set to *on*
+internally.
 
 OPENMP package settings
 ^^^^^^^^^^^^^^^^^^^^^^^

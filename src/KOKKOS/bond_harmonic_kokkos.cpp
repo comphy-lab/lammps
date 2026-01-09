@@ -25,6 +25,7 @@
 #include "kokkos.h"
 #include "memory_kokkos.h"
 #include "neighbor_kokkos.h"
+#include "tune_kokkos.h"
 
 #include <cmath>
 
@@ -36,6 +37,7 @@ template<class DeviceType>
 BondHarmonicKokkos<DeviceType>::BondHarmonicKokkos(LAMMPS *lmp) : BondHarmonic(lmp)
 {
   kokkosable = 1;
+  tuner = nullptr;
 
   atomKK = (AtomKokkos *) atom;
   neighborKK = (NeighborKokkos *) neighbor;
@@ -52,6 +54,8 @@ BondHarmonicKokkos<DeviceType>::~BondHarmonicKokkos()
   if (!copymode) {
     memoryKK->destroy_kokkos(k_eatom,eatom);
     memoryKK->destroy_kokkos(k_vatom,vatom);
+
+    if (tuner) delete tuner;
   }
 }
 
@@ -92,7 +96,9 @@ void BondHarmonicKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
   copymode = 1;
 
-  // loop over neighbors of my atoms
+  // loop over the bond list
+
+  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params(this);
 
   int bond_blocksize = 0;
   if (lmp->kokkos->bond_block_size_set)
@@ -143,6 +149,8 @@ void BondHarmonicKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   copymode = 0;
 }
 
+/* ---------------------------------------------------------------------- */
+
 template<class DeviceType>
 template<int NEWTON_BOND, int EVFLAG>
 KOKKOS_INLINE_FUNCTION
@@ -187,6 +195,8 @@ void BondHarmonicKokkos<DeviceType>::operator()(TagBondHarmonicCompute<NEWTON_BO
   if (EVFLAG) ev_tally(ev,i1,i2,ebond,fbond,delx,dely,delz);
 }
 
+/* ---------------------------------------------------------------------- */
+
 template<class DeviceType>
 template<int NEWTON_BOND, int EVFLAG>
 KOKKOS_INLINE_FUNCTION
@@ -208,6 +218,13 @@ void BondHarmonicKokkos<DeviceType>::allocate()
 
   d_k = k_k.template view<DeviceType>();
   d_r0 = k_r0.template view<DeviceType>();
+
+  // create the autotuner
+
+  if (lmp->kokkos->autotuning > 0) {
+    if (tuner) delete tuner;
+    tuner = new TuneKokkos(lmp, lmp->kokkos->autotuning);
+  }
 }
 
 /* ----------------------------------------------------------------------
