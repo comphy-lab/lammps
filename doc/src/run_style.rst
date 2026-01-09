@@ -163,12 +163,12 @@ is restricted more specifically to the computation of 3d FFTs in solving
 the Poisson equations for computing the long-range forces via pppm.
 Conversely, the P1 processes carry out the other long-range force computations
 that the P2 processes would have done above for *verlet/split*. There are two
-rationales: 
+rationales:
 
 1. One of the most significant bottlenecks to parallel scalability is due to the
-communication overhead for the 3d FFTs in solving the Poisson equation. 
-The other steps (such as accumulating the charge densities and interpolating 
-the long-range forces) have better parallel scaling, and so their reallocation to the 
+communication overhead for the 3d FFTs in solving the Poisson equation.
+The other steps (such as accumulating the charge densities and interpolating
+the long-range forces) have better parallel scaling, and so their reallocation to the
 P1 processes may result in improved parallel speedup at large enough node counts
 where the speedup for solving the Poisson equation lags behind the speedup of
 the other computations so that the Poisson equation solution is a bottleneck
@@ -183,11 +183,11 @@ For ``run_style verlet``, the number of processes per compute node is fixed at *
 The run times are averages over five experiments. The average time using
 ``run_style verlet`` was 17.9 seconds with standard deviation 0.66 seconds.
 The average run time using ``run_style verlet/split`` are indicated by the VS column.
-The average run time using ``run_style verlet/split/rk`` 
+The average run time using ``run_style verlet/split/rk``
 and ``kspace_style pppm/rk`` are indicated by the VSRK column.
-The percentage change VS% and VSRK% in run times 
+The percentage change VS% and VSRK% in run times
 over the baseline ``run_style verlet`` time of 17.9 seconds are given by
-*VS% = 100(VS - 17.9)/17.9* and *VSRK% = 100*(VSRK - 17.9)/17.9*. 
+*VS% = 100(VS - 17.9)/17.9* and *VSRK% = 100*(VSRK - 17.9)/17.9*.
 
   +------+-------+--------+-------+---------+
   |      |   VS  |  VSRK  | VS%   |  VSRK%  |
