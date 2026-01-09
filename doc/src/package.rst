@@ -671,11 +671,13 @@ of this parameter is determined based on the GPU architecture at runtime.
 
 The *auto/tuning* keyword enables the auto-tuning feature of
 the KOKKOS package.  When enabled, the KOKKOS pair style in use will scan
-through the possible values of the *pair/team/size* and *threads/per/atom*
-parameters and choose the combination that gives the best performance during the first
-stage of the run.  The *nevery* keyword sets the interval used to estimate
-the performance of a combination of these two parameters.  This feature is
-disabled by default.
+through the possible values of the kernel parameters such as
+*pair/team/size* and *threads/per/atom* for pair styles and *bond/block/size*
+for bond styles, and find the combination that gives the best performance.
+The optimal combination of the kernel parameters are then fixed
+for the remaining part of the run.  The *nevery* keyword sets
+the interval used to estimate the performance for a combination
+of these two parameters.  This feature is disabled by default.
 
 
 OPENMP package settings
