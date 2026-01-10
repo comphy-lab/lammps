@@ -675,12 +675,19 @@ through the possible values of the kernel parameters such as
 *pair/team/size* and *threads/per/atom* for pair styles and *bond/block/size*
 for bond styles, and find the combination that gives the best performance.
 The optimal combination of the kernel parameters are then fixed
-for the remaining part of the run.  The *nevery* keyword sets
-the interval used to estimate the performance for a combination
-of these two parameters.  This feature is disabled by default.
+for the remaining part of the run, unless the performance drops below a certain
+relative threshold compared to the found optimal performance.
+When the degradation is detected, the scanning is re-triggered automatically.
 
-Note that when *auto/tuning* is enabled, *neigh/thread* will be set to *on*
-internally.
+The *nevery* keyword controls the interval used to estimate
+the overall performance for a combination of these two parameters.
+*nevery* needs to be large enough to have a stable estimate
+of the performance, to achive a sufficiently large number of kernel calls,
+while small enough to reduce the time required for scanning
+over all the combinations. *nevery* = 100 is usually a reasonable value.
+
+This feature is disabled by default.  When *auto/tuning* is enabled,
+*neigh/thread* will be set to *on* internally.
 
 OPENMP package settings
 ^^^^^^^^^^^^^^^^^^^^^^^

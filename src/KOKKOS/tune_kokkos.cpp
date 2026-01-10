@@ -37,6 +37,8 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int nevery) : Pointers(lmp),
   nparams = 0;
   allocated = 0;
   firststep = 1;
+  opt_perf = 0.0;
+  relative_tolerance = 0.20; // 20% performance degradation allowed
 }
 
 /* ---------------------------------------------------------------------- */
@@ -114,14 +116,14 @@ double TuneKokkos::get_timing_info()
     firststep = 0;
   } else {
     new_cpu = timer->elapsed(Timer::TOTAL);
-    double cpu_diff = new_cpu - last_spcpu;
+    double cpu_diff = new_cpu - last_cpu;
     bigint step_diff = new_step - last_step;
     if (step_diff > 0.0) dvalue = cpu_diff / step_diff;
     else dvalue = 0.0;
   }
 
   last_step = new_step;
-  last_spcpu = new_cpu;
+  last_cpu = new_cpu;
 
   return dvalue;
 }
@@ -209,22 +211,10 @@ void TuneKokkos::tuning_kernel_params(class Pair *pair)
     param_idx = 0;
   }
 
-  #ifdef TUNE_DEBUG
-  if (scanning_completed && update->ntimestep % interval == 0) {
-    double tps = get_timing_info();
-    if (tps == 0.0) return;
-    double perf = 1.0 / tps;
+  // check if the performance is within acceptable range of the optimal performance
+  // if not, re-trigger the scanning process
 
-    if (comm->me == 0) {
-      std::string mesg = fmt::format("Using the optimal params: ");
-      mesg += fmt::format("pair team size = {} threads per atom = {} ",
-                        lmp->kokkos->pair_team_size,
-                        lmp->kokkos->threads_per_atom);
-      mesg += fmt::format(" current perf = {:.1f} TPS\n", perf);
-      utils::logmesg(lmp,mesg);
-    }
-  }
-  #endif
+  regular_performance_check();
 }
 
 /* ----------------------------------------------------------------------
@@ -302,23 +292,62 @@ void TuneKokkos::tuning_kernel_params(class Bond *bond)
     param_idx = 0;
   }
 
-  #ifdef TUNE_DEBUG
-  if (scanning_completed && update->ntimestep % interval == 0) {
-    double tps = get_timing_info();
-    if (tps == 0.0) return;
-    double perf = 1.0 / tps;
+  // check if the performance is within acceptable range of the optimal performance
+  // if not, re-trigger the scanning process
 
-    if (comm->me == 0) {
-      std::string mesg = fmt::format("Using the optimal param: bond block size = {} ",
-                       lmp->kokkos->bond_block_size);
-      mesg += fmt::format("perf = {:.1f} TPS\n", perf);
-      utils::logmesg(lmp,mesg);
-    }
-  }
-  #endif
+  regular_performance_check();
 }
 
 /* ----------------------------------------------------------------------
+   regularly monitor the current performance
+   if performance degraded beyond acceptable threshold,
+     re-trigger the scanning process
+------------------------------------------------------------------------- */
+
+void TuneKokkos::regular_performance_check()
+{
+  if (!scanning_completed || update->ntimestep % interval != 0) return;
+
+  double tps = get_timing_info();
+  if (tps == 0.0) return;
+  double perf = 1.0 / tps;
+
+  #ifdef TUNE_DEBUG
+  if (comm->me == 0) {
+    std::string mesg = fmt::format("Using the optimal params: ");
+    mesg += fmt::format("pair team size = {} threads per atom = {} ",
+                      lmp->kokkos->pair_team_size,
+                      lmp->kokkos->threads_per_atom);
+    mesg += fmt::format(" current perf = {:.1f} TPS\n", perf);
+    utils::logmesg(lmp,mesg);
+  }
+  #endif
+
+  // compute the relative performance difference wrt the optimal performance
+
+  double diff;
+  if (opt_perf > 0.0)
+    diff = (opt_perf - perf) / opt_perf;
+  else
+    diff = 0.0;
+
+  if (diff > relative_tolerance) {
+    scanning_completed = 0;
+    param_idx = 0;
+    firststep = 1;
+
+    #ifdef TUNE_DEBUG
+    if (comm->me == 0) {
+      std::string mesg = fmt::format("Performance degraded by {:.2f}%, re-triggering scan\n",
+                        diff * 100.0);
+      utils::logmesg(lmp,mesg);
+    }
+    #endif
+  }
+}
+
+/* ----------------------------------------------------------------------
+   find the optimal performance
    return the index of the optimal parameter set
 ------------------------------------------------------------------------- */
 
@@ -327,11 +356,11 @@ int TuneKokkos::get_optimal_param_idx()
   if (nparams == 0 || performance == nullptr)
     error->all(FLERR,"No performance data available for Kokkos kernel tuning");
 
-  double max_perf = performance[0];
+  opt_perf = performance[0];
   int opt_idx = 0;
   for (int i = 1; i < nparams; i++) {
-    if (performance[i] > max_perf) {
-      max_perf = performance[i];
+    if (performance[i] > opt_perf) {
+      opt_perf = performance[i];
       opt_idx = i;
     }
   }
