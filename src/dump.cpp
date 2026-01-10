@@ -477,7 +477,8 @@ void Dump::write()
   // ping each proc in my cluster, receive its data, write data to file
   // else wait for ping from fileproc, send my data to fileproc
 
-  int tmp,nlines,nchars;
+  int tmp = 0;
+  int nlines,nchars;
   MPI_Status status;
   MPI_Request request;
 
