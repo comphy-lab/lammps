@@ -102,8 +102,8 @@ class FixSurface : public Fix {
     std::vector<int> caflag;
     std::vector<int> cwhich;
     int index, neigh_index, type, flag, nside, external, priority;
-    int convex_index;
-    double overlap, rsq_com, weight_contribution;
+    int convex_index, ck1, ck2, caflag1, caflag2;
+    double overlap, rsq_com, weight_contribution, rmag;
     double dr[3], surf_norm[3], dr_force[3];
   };
 

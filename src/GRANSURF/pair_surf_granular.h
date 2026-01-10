@@ -83,6 +83,8 @@ class PairSurfGranular : public PairGranular {
   double calculate_2d_forces(std::vector<int> *);
   double calculate_3d_forces(std::vector<int> *);
   void calculate_3d_edge_force(int, double *, double *, double *, double *);
+  double dist_away_from_edge(double *, double *, double *, double *, double *);
+  double dist_away_from_2_tris(double *, double *, double *);
 };
 
 }    // namespace LAMMPS_NS
