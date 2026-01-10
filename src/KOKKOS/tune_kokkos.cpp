@@ -140,7 +140,10 @@ void TuneKokkos::tuning_kernel_params(class Pair *pair)
 
   // ensure that relevant kokkos parameters are allowed to be specified
 
-  if (!lmp->kokkos->neigh_thread_set) lmp->kokkos->neigh_thread_set = 1;
+  if (!lmp->kokkos->neigh_thread_set) { 
+    lmp->kokkos->neigh_thread_set = 1;
+    lmp->kokkos->neigh_thread = 1;
+  }
   if (!lmp->kokkos->threads_per_atom_set) lmp->kokkos->threads_per_atom_set = 1;
   if (!lmp->kokkos->pair_team_size_set) lmp->kokkos->pair_team_size_set = 1;
 
