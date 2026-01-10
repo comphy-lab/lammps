@@ -681,8 +681,7 @@ void FixGraphicsLabels::end_of_step()
       }
     }
 
-    SSFN::ssfn_select(&ctx, SSFN_FAMILY_SANS, nullptr, SSFN_STYLE_REGULAR, (int) (txt.size),
-                      SSFN_MODE_BITMAP);
+    SSFN::ssfn_select(&ctx, SSFN_FAMILY_SANS, SSFN_STYLE_REGULAR, (int)txt.size);
     if (ctx.err != SSFN_OK) continue;
 
     // need to render the pixmap if NULL, the size is a variable, or we need to substitute the text

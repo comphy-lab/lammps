@@ -77,20 +77,6 @@ namespace SSFN {
 #define SSFN_FRAG_PIXMAP 2
 #define SSFN_FRAG_HINTING 3
 
-/* glyph variants */
-#define SSFN_VARIANT_DEFAULT 0 /* default, also isolated glyphs */
-#define SSFN_VARIANT_LOCAL0 0
-#define SSFN_VARIANT_INITIAL \
-  1 /* currently not needed because contextual glyphs has their own UNICODE code points, */
-#define SSFN_VARIANT_LOCAL1 1 /* so its only purpose is to store Serbian / Macedonian B D G P T */
-#define SSFN_VARIANT_MEDIAL 2
-#define SSFN_VARIANT_LOCAL2 2
-#define SSFN_VARIANT_FINAL 3
-#define SSFN_VARIANT_LOCAL3 3
-#define SSFN_VARIANT_LOCAL4 4
-#define SSFN_VARIANT_LOCAL5 5
-#define SSFN_VARIANT_LOCAL6 6
-
 /* main SSFN header */
 
 /***** renderer API *****/
@@ -120,8 +106,7 @@ const char *ssfn_errstr[] = {"",
                              "Invalid style",
                              "Invalid size",
                              "Invalid mode",
-                             "Glyph not found",
-                             "Glyph variant not found"};
+                             "Glyph not found"};
 
 /*** Private functions ***/
 namespace {
@@ -144,17 +129,17 @@ namespace {
 #define _ssfn_igi(y) ((((4096 << 4) - (y)) * ctx->m + (1 << (15 + 3))) >> (16 + 3))
 
   /* parse character table */
-  uint8_t *_ssfn_c(const ssfn_font_t *font, uint32_t unicode, int v)
+  uint8_t *_ssfn_c(const ssfn_font_t *font, uint32_t unicode)
   {
     uint32_t i, l;
     uint8_t *ptr;
 
-    if (!font->characters_offs[v]) return nullptr;
+    if (!font->characters_offs) return nullptr;
 
-    ptr = (uint8_t *) font + font->characters_offs[v];
-    l = (font->quality < 5 && font->characters_offs[v] < 65536)
+    ptr = (uint8_t *) font + font->characters_offs;
+    l = (font->quality < 5 && font->characters_offs < 65536)
         ? 4
-        : (font->characters_offs[v] < 1048576 ? 5 : 6);
+        : (font->characters_offs < 1048576 ? 5 : 6);
 
     for (i = 0; i < 0x110000; i++) {
       if (ptr[0] & 0x80) {
@@ -274,8 +259,7 @@ namespace {
         for (i = 0; i < n - 1; i += 2) {
           if (ctx->style & 0x100) {
             l = (r[i] + r[i + 1]) >> 9;
-            if (ctx->mode == SSFN_MODE_BITMAP ? (pix[k + (l >> 3)] & (1 << (l & 7)) ? 1 : 0)
-                                              : (pix[k + l] == 0xFF)) {
+            if (pix[k + (l >> 3)] & (1 << (l & 7)) ? 1 : 0) {
               if (r[i] + 256 > r[i + 1])
                 r[i] = r[i + 1] - 128;
               else
@@ -287,20 +271,7 @@ namespace {
           }
           l = ((r[i] + 128) >> 8);
           m = ((r[i + 1] + 128) >> 8);
-          if (ctx->mode != SSFN_MODE_BITMAP && l + 1 < m) l++;
-          for (; l < m; l++) {
-            switch (ctx->mode) {
-              case SSFN_MODE_BITMAP:
-                pix[k + (l >> 3)] ^= 1 << (l & 7);
-                break;
-              case SSFN_MODE_ALPHA:
-                pix[k + l] ^= 0xFF;
-                break;
-              case SSFN_MODE_CMAP:
-                pix[k + l] ^= 0x0F;
-                break;
-            }
-          }
+          for (; l < m; l++) pix[k + (l >> 3)] ^= 1 << (l & 7);
           if (l + 1 > ctx->ret->w) ctx->ret->w = l + 1;
         }
       }
@@ -312,63 +283,6 @@ namespace {
     }
   }
 
-  /* anti-alias a contour */
-  void _ssfn_a(ssfn_t *ctx)
-  {
-    int i, x, y, x0, y0, x1, y1, sx, sy, dx, dy, m, o, p = ctx->ret->pitch;
-    uint8_t *pix = ctx->ret->data, e;
-    uint16_t *r;
-
-    if (ctx->mode < SSFN_MODE_ALPHA || !ctx->p || ctx->np < 4) return;
-
-    for (y = o = 0; y < ctx->ret->h; y++, o += p) {
-      if (ctx->nr[y] && (r = ctx->r[y])) {
-        for (i = 0; i < ctx->nr[y] - 1; i += 2) {
-          x = (r[i] + 128) >> 8;
-          e = ~((r[i] + 128) & 0xFF);
-          if (e == 127)
-            e = 255;
-          else {
-            if (x && pix[o + x - 1] > e) e = pix[o + x - 1];
-            if (y && pix[o + x - p] > e) e = pix[o + x - p];
-          }
-          if (ctx->mode == SSFN_MODE_CMAP) e = (e >> 4) | 0xF0;
-          if (e > pix[o + x]) pix[o + x] = e;
-          e = ((r[i + 1] + 128) & 0xFF);
-          if (e == 128) e = 255;
-          pix[o + ((r[i + 1] + 128) >> 8)] = ctx->mode == SSFN_MODE_CMAP ? (e >> 4) | 0xF0 : e;
-        }
-      }
-    }
-
-    for (i = 0; i < ctx->np - 3; i += 2) {
-      if ((ctx->p[i] == 0xffff && ctx->p[i + 1] == 0xffff) ||
-          (ctx->p[i + 2] == 0xffff && ctx->p[i + 3] == 0xffff))
-        continue;
-
-      x0 = ctx->p[i] - ctx->ix;
-      y0 = ctx->p[i + 1];
-      x1 = ctx->p[i + 2] - ctx->ix;
-      y1 = ctx->p[i + 3];
-      sx = x1 >= x0 ? 1 : -1;
-      sy = y1 >= y0 ? 1 : -1;
-      dx = x1 - x0;
-      dy = y1 - y0;
-      if (sx * dx >= sy * dy && dx) {
-        for (x = x0, m = sx * dx; m > 0; m -= 16, x += sx * 16) {
-          y = _ssfn_g2oy(y0 + ((x - x0) * dy / dx));
-          y += 128;
-          e = ~(y & 0xFF);
-          y >>= 8;
-          e >>= 1;
-          o = y * p + ((_ssfn_g2ox(x) + 128) >> 8);
-          if (ctx->mode == SSFN_MODE_CMAP) e = (e >> 4) | 0xF0;
-          if (e > pix[o]) pix[o] = e;
-        }
-      }
-    }
-  }
-
   /* parse a glyph */
   void _ssfn_g(ssfn_t *ctx, uint8_t *rg, int render)
   {
@@ -376,9 +290,9 @@ namespace {
     uint8_t *raw, *ra, *re, *pix = ctx->ret->data;
 
     ctx->lx = ctx->ly = ctx->mx = ctx->my = -1;
-    ol = (ctx->f->quality < 5 && ctx->f->characters_offs[ctx->variant] < 65536)
+    ol = (ctx->f->quality < 5 && ctx->f->characters_offs < 65536)
         ? 4
-        : ((ctx->f->characters_offs[ctx->variant] < 1048576) ? 5 : 6);
+        : ((ctx->f->characters_offs < 1048576) ? 5 : 6);
     s = 16 - ctx->g;
     nf = rg[0];
     rg += 10;
@@ -452,26 +366,14 @@ namespace {
                   m = ((i << 8) * (a << 8) / (w << 8)) >> 8;
                   if (raw[o + (m >> 3)] & (1 << (m & 7))) {
                     d = n + ((ctx->style & 0x200) ? _ssfn_igi(oy + (j << s) + 127) : 0) + i;
-                    switch (ctx->mode) {
-                      case SSFN_MODE_BITMAP:
+                    pix[c + (d >> 3)] |= 1 << (d & 7);
+                    d++;
+                    if ((ctx->style & 0x100) && (d >> 3) < ctx->ret->pitch) {
+                      pix[c + (d >> 3)] |= 1 << (d & 7);
+                      d++;
+                      if (ctx->size > 127 && (d >> 3) < ctx->ret->pitch) {
                         pix[c + (d >> 3)] |= 1 << (d & 7);
-                        d++;
-                        if ((ctx->style & 0x100) && (d >> 3) < ctx->ret->pitch) {
-                          pix[c + (d >> 3)] |= 1 << (d & 7);
-                          d++;
-                          if (ctx->size > 127 && (d >> 3) < ctx->ret->pitch) {
-                            pix[c + (d >> 3)] |= 1 << (d & 7);
-                          }
-                        }
-                        break;
-                      case SSFN_MODE_CMAP:
-                      case SSFN_MODE_ALPHA:
-                        pix[c + (d++)] = 0xFF;
-                        if ((ctx->style & 0x100) && d < ctx->ret->pitch) {
-                          pix[c + (d++)] = 0xFF;
-                          if (ctx->size > 127 && d < ctx->ret->pitch) { pix[c + d] = 0xFF; }
-                        }
-                        break;
+                      }
                     }
                     if (d > ctx->ret->w) ctx->ret->w = d;
                     d = ox + _ssfn_i2g(d);
@@ -483,25 +385,6 @@ namespace {
                   }
                 }
                 c += ctx->ret->pitch;
-              }
-              if (ctx->mode != SSFN_MODE_BITMAP && h > y && w > 1) {
-                m = (ctx->mode == SSFN_MODE_CMAP) ? 0xF0 : 0;
-                x = h / y;
-                for (a = x; a; a--) {
-                  b = ctx->style & 0x100 ? (64 + (128 * a / x)) : (192 * a / x);
-                  if (ctx->mode == SSFN_MODE_CMAP) b = (b >> 4) | 0xF0;
-                  c = t + ctx->ret->pitch;
-                  for (j = 1; j < h - 1; j++) {
-                    for (i = 1; i < w - 1; i++) {
-                      d = n + ((ctx->style & 0x200) ? _ssfn_igi(oy + (j << s)) : 0) + i;
-                      if (pix[c + d] == m &&
-                          (pix[c + d - ctx->ret->pitch] > b || pix[c + d + ctx->ret->pitch] > b) &&
-                          (pix[c + d - 1] > b || pix[c + d + 1] > b))
-                        pix[c + d] = b;
-                    }
-                    c += ctx->ret->pitch;
-                  }
-                }
               }
             }
             h = 0;
@@ -550,19 +433,7 @@ namespace {
                   d = n + ((ctx->style & 0x200) ? _ssfn_igi(oy + (j << s) + 127) : 0) + i;
                   re = (uint8_t *) &ctx->ret->cmap[ra[o + m]];
                   a = (re[0] + re[1] + re[2] + 255) >> 2;
-                  switch (ctx->mode) {
-                    case SSFN_MODE_BITMAP:
-                      if (a > 127) pix[c + (d >> 3)] |= 1 << (d & 7);
-                      break;
-                    case SSFN_MODE_CMAP:
-                      pix[c + d] = ra[o + m];
-                      break;
-                    case SSFN_MODE_ALPHA:
-                      a >>= 1;
-                      a = ~a;
-                      pix[c + d] = a;
-                      break;
-                  }
+                  if (a > 127) pix[c + (d >> 3)] |= 1 << (d & 7);
                   if (d > ctx->ret->w) ctx->ret->w = d;
                 }
               }
@@ -870,8 +741,8 @@ int ssfn_load(ssfn_t *ctx, const ssfn_font_t *font)
     if (memcmp(font->magic, SSFN_MAGIC, 4) ||
         memcmp((uint8_t *) font + font->size - 4, SSFN_ENDMAGIC, 4) ||
         font->family > SSFN_FAMILY_HAND || font->fragments_offs > font->size ||
-        font->characters_offs[0] > font->size || font->kerning_offs > font->size ||
-        font->fragments_offs >= font->characters_offs[0] || font->quality > 8) {
+        font->characters_offs > font->size || font->kerning_offs > font->size ||
+        font->fragments_offs >= font->characters_offs || font->quality > 8) {
       ctx->err = SSFN_ERR_BADFILE;
     } else {
       ctx->len[font->family]++;
@@ -894,42 +765,16 @@ int ssfn_load(ssfn_t *ctx, const ssfn_font_t *font)
  * @param name NULL or UTF-8 string if family is SSFN_FAMILY_BYNAME
  * @param style OR'd values of SSFN_STYLE_*
  * @param size how big glyph it should render, 8 - 255
- * @param mode rendering mode, one of SSFN_MODE_*
  * @return error code
  */
-int ssfn_select(ssfn_t *ctx, int family, char *name, int style, int size, int mode)
+int ssfn_select(ssfn_t *ctx, int family, int style, int size)
 {
   int i, j, l;
 
   if (!ctx) return SSFN_ERR_INVINP;
   if ((style & ~0xCF)) return (ctx->err = SSFN_ERR_BADSTYLE);
   if (size < 8 || size > 255) return (ctx->err = SSFN_ERR_BADSIZE);
-  if (mode > SSFN_MODE_CMAP) return (ctx->err = SSFN_ERR_BADMODE);
 
-  if (family == SSFN_FAMILY_BYNAME) {
-    if (!name || !name[0]) {
-    invinp:
-      return (ctx->err = SSFN_ERR_INVINP);
-    }
-    for (l = 0; name[l]; l++);
-    for (i = 0; i < 5; i++) {
-      for (j = 0; j < ctx->len[i]; j++) {
-        if (!memcmp(name, (uint8_t *) &ctx->fnt[i][j]->magic + sizeof(ssfn_font_t), l)) {
-          ctx->s = ctx->fnt[i][j];
-          goto familyfound;
-        }
-      }
-    }
-  noface:
-    return (ctx->err = SSFN_ERR_NOFACE);
-  } else {
-    if (family != SSFN_FAMILY_ANY) {
-      if (family > SSFN_FAMILY_HAND) goto invinp;
-      if (!ctx->len[family]) goto noface;
-    }
-    ctx->s = nullptr;
-  }
-familyfound:
   ctx->np = ctx->mp = 0;
   if (ctx->p) {
     free(ctx->p);
@@ -939,24 +784,11 @@ familyfound:
   ctx->family = family;
   ctx->style = style;
   ctx->size = size;
-  ctx->mode = mode;
-  ctx->variant = 0;
+  ctx->mode = SSFN_MODE_BITMAP;
   return (ctx->err = SSFN_OK);
-}
 
-/**
- * Set glyph variant
- *
- * @param ctx rendering context
- * @param variant one of SSFN_VARIANT_* defines
- * @return error code
- */
-int ssfn_variant(ssfn_t *ctx, int variant)
-{
-  if (!ctx) return SSFN_ERR_INVINP;
-  if (variant < 0 || variant > SSFN_NUMVARIANTS - 1) return (ctx->err = SSFN_ERR_INVINP);
-  ctx->variant = variant;
-  return (ctx->err = SSFN_OK);
+invinp:
+  return (ctx->err = SSFN_ERR_INVINP);
 }
 
 /**
@@ -970,7 +802,7 @@ ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode)
 {
   ssfn_font_t **fl;
   int i, j, s, h, p, m, n, bt, bl;
-  int l, k, x, y;
+  int l, x, y;
   uint8_t *rg = nullptr, c, d;
 
   if (!ctx) return nullptr;
@@ -981,11 +813,10 @@ ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode)
   ctx->err = SSFN_OK;
   if (ctx->s) {
     ctx->f = (ssfn_font_t *) ctx->s;
-    rg = _ssfn_c(ctx->f, unicode, ctx->variant);
-    if (!rg) rg = _ssfn_c(ctx->f, unicode, 0);
+    rg = _ssfn_c(ctx->f, unicode);
+    if (!rg) rg = _ssfn_c(ctx->f, unicode);
   } else {
     p = ctx->family;
-    k = ctx->variant;
   again:
     if (p == SSFN_FAMILY_ANY) {
       n = 0;
@@ -997,14 +828,14 @@ ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode)
       if (ctx->style & 3) {
         /* check if we have a specific ctx->f for the requested style */
         for (i = 0; i < ctx->len[n]; i++)
-          if ((fl[i]->style & 3) == (ctx->style & 3) && (rg = _ssfn_c(fl[i], unicode, k))) {
+          if ((fl[i]->style & 3) == (ctx->style & 3) && (rg = _ssfn_c(fl[i], unicode))) {
             ctx->f = fl[i];
             break;
           }
         /* if bold italic was requested, check if we have at least bold or italic */
         if (!rg && (ctx->style & 3) == 3)
           for (i = 0; i < ctx->len[n]; i++)
-            if ((fl[i]->style & 3) && (rg = _ssfn_c(fl[i], unicode, k))) {
+            if ((fl[i]->style & 3) && (rg = _ssfn_c(fl[i], unicode))) {
               ctx->f = fl[i];
               break;
             }
@@ -1012,26 +843,22 @@ ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode)
       /* last resort, get the first ctx->f which has a glyph for this unicode, no matter style */
       if (!rg) {
         for (i = 0; i < ctx->len[n]; i++)
-          if ((rg = _ssfn_c(fl[i], unicode, k))) {
+          if ((rg = _ssfn_c(fl[i], unicode))) {
             ctx->f = fl[i];
             break;
           }
       }
     }
-    /* if glyph still not found, try any family group, finally only default variant */
+    /* if glyph still not found, try any family group */
     if (!rg) {
       if (p != SSFN_FAMILY_ANY) {
         p = SSFN_FAMILY_ANY;
         goto again;
       }
-      if (k) {
-        k = 0;
-        goto again;
-      }
     }
   }
   if (!rg) {
-    ctx->err = ctx->variant ? SSFN_ERR_NOVARIANT : SSFN_ERR_NOGLYPH;
+    ctx->err = SSFN_ERR_NOGLYPH;
     return nullptr;
   }
 
@@ -1072,7 +899,7 @@ ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode)
     ctx->h[4096] = 65535;
 
   ctx->h[0] = 0;
-  for (i = j = k = x = y = m = 0; i < 4096 && j < 4095; i++) {
+  for (i = j = x = y = m = 0; i < 4096 && j < 4095; i++) {
     y = ctx->h[4096 + i] == 65535 ? 4095 - j : ctx->h[4096 + i];
     j += y;
     if (j == x) {
@@ -1101,7 +928,7 @@ ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode)
     ctx->err = SSFN_ERR_ALLOC;
     return nullptr;
   }
-  memset(&ctx->ret->data, ctx->mode == SSFN_MODE_CMAP ? 0xF0 : 0, i);
+  memset(&ctx->ret->data, 0, i);
   ctx->ret->cmap = nullptr;
   ctx->ret->mode = ctx->mode;
   ctx->ret->pitch = p;
@@ -1137,7 +964,6 @@ ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode)
       if (!ctx->ret) goto erralloc;
     } else {
       _ssfn_r(ctx);
-      if (ctx->mode != SSFN_MODE_BITMAP) _ssfn_a(ctx);
       if (ctx->style & SSFN_STYLE_STHROUGH) {
         if (ctx->ret->w < ctx->ret->adv_x) ctx->ret->w = ctx->ret->adv_x;
         memset(&ctx->ret->data[(ctx->ret->baseline - (ctx->size >> 2)) * p], 0xFF,

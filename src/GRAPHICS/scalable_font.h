@@ -14,15 +14,12 @@
 #ifndef LMP_SCALABLE_FONT_H
 #define LMP_SCALABLE_FONT_H
 
-#define SSFN_NUMVARIANTS 7
 #define SSFN_DATA_MAX 65536
 
 /* rendering modes */
 #define SSFN_MODE_NONE 0    /* just select the font to get the glyph (for kerning) */
 #define SSFN_MODE_OUTLINE 1 /* return the glyph's outlines */
 #define SSFN_MODE_BITMAP 2  /* render into bitmap */
-#define SSFN_MODE_ALPHA 3   /* render into alpha channel */
-#define SSFN_MODE_CMAP 4    /* render into color map indexed buffer */
 
 /* font family group */
 #define SSFN_FAMILY_SERIF 0
@@ -46,7 +43,6 @@
 #define SSFN_ERR_BADSIZE 6   /* bad size */
 #define SSFN_ERR_BADMODE 7   /* bad mode */
 #define SSFN_ERR_NOGLYPH 8   /* glyph (or kerning info) not found */
-#define SSFN_ERR_NOVARIANT 9 /* no such glyph variant */
 
 namespace SSFN {
 
@@ -67,8 +63,7 @@ using ssfn_font_t = struct _ssfn_font_t {
   uint16_t bbox_right;
   uint16_t bbox_bottom;
   uint32_t fragments_offs; /* offset of fragments table relative to magic */
-  uint32_t characters_offs
-      [SSFN_NUMVARIANTS]; /* offset of characters tables per variant relative to magic */
+  uint32_t characters_offs; /* offset of characters tables relative to magic */
   uint32_t kerning_offs;  /* kerning table offset relative to magic */
 };
 
@@ -103,16 +98,13 @@ using ssfn_t = struct _ssfn_t {
   int style;                              /* required style */
   int size;                               /* required size */
   int mode;                               /* required mode */
-  int variant;                            /* required variant */
   int g;                                  /* shift value for grid size */
   int m, ix, u, uix, uax, lx, ly, mx, my; /* helper variables */
 };
 
 /* normal renderer */
-extern int ssfn_load(ssfn_t *ctx, const ssfn_font_t *font); /* add an SSFN to context */
-extern int ssfn_select(ssfn_t *ctx, int family, char *name, int style, int size,
-                       int mode);                  /* select font to use */
-extern int ssfn_variant(ssfn_t *ctx, int variant); /* select glyph variant (optional) */
+extern int ssfn_load(ssfn_t *ctx, const ssfn_font_t *font);           /* add an SSFN to context */
+extern int ssfn_select(ssfn_t *ctx, int family, int style, int size); /* select font to use */
 extern uint32_t ssfn_utf8(char **str);             /* decode UTF-8 sequence */
 extern ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode); /* return allocated glyph bitmap */
 extern int ssfn_kern(ssfn_t *ctx, uint32_t unicode, uint32_t nextunicode, int *x,
