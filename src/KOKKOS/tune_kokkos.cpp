@@ -140,7 +140,7 @@ void TuneKokkos::tuning_kernel_params(class Pair *pair)
 
   // ensure that relevant kokkos parameters are allowed to be specified
 
-  if (!lmp->kokkos->neigh_thread_set) { 
+  if (!lmp->kokkos->neigh_thread_set) {
     lmp->kokkos->neigh_thread_set = 1;
     lmp->kokkos->neigh_thread = 1;
   }
@@ -289,8 +289,7 @@ void TuneKokkos::tuning_kernel_params(class Bond *bond)
 
     lmp->kokkos->bond_block_size = bond_block_size;
 
-    // reset param_idx to zero to be ready for another scan if needed
-    // and to avoid repeating this block
+    // reset param_idx to zero to avoid repeating this block
 
     param_idx = 0;
   }
