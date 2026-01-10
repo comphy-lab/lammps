@@ -515,12 +515,13 @@ void EllipsoidObj::draw(Image *img, int flag, const double *color, const double 
   }
 }
 
-// refine triangle mesh by replacing each triangle with four triangles
-//
-//    /\            /\
-//   /  \          /__\
-//  /    \   -->  /\  /\
-// /______\      /__\/__\
+/***********************************************************************
+ * refine triangle mesh by replacing each triangle with four triangles
+ *    /\            /\
+ *   /  \          /__\
+ *  /    \   -->  /\  /\
+ * /______\      /__\/__\
+***********************************************************************/
 
 void PlaneObj::refine()
 {

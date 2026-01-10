@@ -146,7 +146,7 @@ namespace {
   /* parse character table */
   uint8_t *_ssfn_c(const ssfn_font_t *font, uint32_t unicode, int v)
   {
-    uint32_t i, j, l;
+    uint32_t i, l;
     uint8_t *ptr;
 
     if (!font->characters_offs[v]) return nullptr;
@@ -156,7 +156,7 @@ namespace {
         ? 4
         : (font->characters_offs[v] < 1048576 ? 5 : 6);
 
-    for (j = i = 0; i < 0x110000; i++) {
+    for (i = 0; i < 0x110000; i++) {
       if (ptr[0] & 0x80) {
         if (ptr[0] & 0x40) {
           i += ptr[1] | ((ptr[0] & 0x3f) << 8);
@@ -168,7 +168,6 @@ namespace {
       } else {
         if (i == unicode) return ptr;
         ptr += ptr[0] * l + 10;
-        j++;
       }
     }
     return nullptr;
