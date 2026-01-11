@@ -1374,8 +1374,8 @@ std::string utils::uppercase(const std::string &text)
 
 std::string utils::trim(const std::string &line)
 {
-  int beg = re_match(line.c_str(), "\\S+");
-  int end = re_match(line.c_str(), "\\s+$");
+  int beg = re_match(line.c_str(), R"(\S+)");
+  int end = re_match(line.c_str(), R"(\s+$)");
   if (beg < 0) beg = 0;
   if (end < 0) end = line.size();
 
@@ -1693,7 +1693,7 @@ bool utils::is_integer(const std::string &str)
 {
   if (str.empty()) return false;
 
-  return strmatch(str, "^[+-]?\\d+$");
+  return strmatch(str, R"(^[+-]?\d+$)");
 }
 
 /* ----------------------------------------------------------------------

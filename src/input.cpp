@@ -648,7 +648,7 @@ void Input::substitute(char *&str, char *&str2, int &max, int &max2, int flag)
 
         // quick check for proper format string
 
-        if (!utils::strmatch(fmtstr,"%[0-9 ]*\\.[0-9]+[efgEFG]"))
+        if (!utils::strmatch(fmtstr,R"(%[0-9 ]*\.[0-9]+[efgEFG])"))
           error->all(FLERR,"Incorrect conversion in format string");
 
         snprintf(immediate,256,fmtstr,variable->compute_equal(var));
@@ -1787,7 +1787,7 @@ void Input::pair_coeff()
   // if arg[1] < arg[0], and neither contain a wildcard, reorder
 
   int itype,jtype;
-  if (utils::strmatch(arg[0],"^\\d+$") && utils::strmatch(arg[1],"^\\d+$")) {
+  if (utils::strmatch(arg[0], R"(^\d+$)") && utils::strmatch(arg[1],R"(^\d+$)")) {
     itype = utils::inumeric(FLERR,arg[0],false,lmp);
     jtype = utils::inumeric(FLERR,arg[1],false,lmp);
     if (jtype < itype) {

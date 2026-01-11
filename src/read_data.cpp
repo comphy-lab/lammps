@@ -1285,7 +1285,7 @@ void ReadData::header(int firstpass)
 
     // check for units keyword in first line and print warning on mismatch
 
-    auto units = Tokenizer(utils::strfind(line, "units = \\w+")).as_vector();
+    auto units = Tokenizer(utils::strfind(line, R"(units = \w+)")).as_vector();
     if (units.size() > 2) {
       if (units[2] != update->unit_style)
         error->warning(FLERR, "Inconsistent units in data file: current = {}, data file = {}",

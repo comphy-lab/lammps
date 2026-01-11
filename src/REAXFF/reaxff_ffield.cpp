@@ -85,7 +85,7 @@ namespace ReaxFF {
         // check if header comment line is present
 
         auto *line = reader.next_line();
-        if (strmatch(line, "^\\s*[0-9]+\\s+!.*general parameters.*"))
+        if (strmatch(line, R"(^\s*[0-9]+\s+!.*general parameters.*)"))
           THROW_ERROR("First line of ReaxFF potential file must be a comment or empty");
         ++lineno;
 

@@ -158,7 +158,7 @@ void Molecule::command(int narg, char **arg, int &index)
   // JSON files must have the extension .json
 
   std::string filename = arg[fileiarg];
-  if (utils::strmatch(filename, "\\.json$")) {
+  if (utils::strmatch(filename, R"(\.json$)")) {
 
     json moldata;
     std::vector<std::uint8_t> jsondata;
@@ -2363,7 +2363,7 @@ void Molecule::read(int flag)
 
     // check for units keyword in first line and print warning on mismatch
 
-    auto units = Tokenizer(utils::strfind(line, "units = \\w+")).as_vector();
+    auto units = Tokenizer(utils::strfind(line, R"(units = \w+)")).as_vector();
     if ((flag == 0) && (units.size() > 2)) {
       if (units[2] != update->unit_style)
         error->warning(FLERR, "Inconsistent units in data file: current = {}, data file = {}",
@@ -2388,7 +2388,7 @@ void Molecule::read(int flag)
 
     auto text = utils::trim(utils::trim_comment(line));
     if (text.empty()) continue;
-    if (utils::strmatch(text, "^\\s*#")) continue;
+    if (utils::strmatch(text, R"(^\s*#)")) continue;
 
     // search line for header keywords and set corresponding variable
     try {
