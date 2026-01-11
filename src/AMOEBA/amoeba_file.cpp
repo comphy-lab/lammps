@@ -105,7 +105,7 @@ void PairAmoeba::read_prmfile(char *filename)
       section = END_OF_FILE;
       while (fgets(line, MAXLINE, fptr)) {
         ++nline;
-        if (utils::strmatch(line, "^\\s*##\\s+\\S+.*##\\s*$")) {
+        if (utils::strmatch(line, R"(^\s*##\s+\S+.*##\s*$)")) {
           auto trimmed = utils::trim(line);
           if (utils::strmatch(trimmed, "^##\\s*Force Field"))
             section = FFIELD;

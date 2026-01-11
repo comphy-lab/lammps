@@ -30,7 +30,7 @@ class FileWriter {
   virtual void close() = 0;
   virtual void flush() = 0;
   virtual size_t write(const void *buffer, size_t length) = 0;
-  virtual bool isopen() const = 0;
+  [[nodiscard]] virtual bool isopen() const = 0;
 };
 
 class FileWriterException : public std::exception {

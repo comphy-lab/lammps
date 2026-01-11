@@ -584,7 +584,7 @@ void FitPOD::read_exyz_file(double *lattice, double *stress, double *energy, dou
 
       int index = std::distance(words.begin(), it);
 
-      if (words[index].find("=") != std::string::npos) {
+      if (words[index].find('=') != std::string::npos) {
 
         // lattice numbers start at index + 1
 
@@ -612,11 +612,11 @@ void FitPOD::read_exyz_file(double *lattice, double *stress, double *energy, dou
 
         index = std::distance(words.begin(), it);
 
-        if (words[index].find("=") != std::string::npos) {
+        if (words[index].find('=') != std::string::npos) {
 
           // energy is after "=" inside this string
 
-          std::size_t found = words[index].find("=");
+          std::size_t found = words[index].find('=');
           energy[cfi] = utils::numeric(FLERR, words[index].substr(found + 1), false, lmp);
         } else {
 
@@ -636,7 +636,7 @@ void FitPOD::read_exyz_file(double *lattice, double *stress, double *energy, dou
         index = std::distance(words.begin(), it);
 
         if (index < std::distance(words.begin(), words.end())) {
-          if (words[index].find("=") != std::string::npos) {
+          if (words[index].find('=') != std::string::npos) {
 
             // stress numbers start at index + 1
 
