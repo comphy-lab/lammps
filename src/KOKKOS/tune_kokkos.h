@@ -24,7 +24,7 @@ namespace LAMMPS_NS {
 class TuneKokkos : protected Pointers {
  public:
 
-  TuneKokkos(class LAMMPS *, int);
+  TuneKokkos(class LAMMPS *, int nevery, int nparams=2);
   ~TuneKokkos() override;
   void allocate(int);
   void tuning_kernel_params(class Pair *);
@@ -38,9 +38,10 @@ class TuneKokkos : protected Pointers {
   std::vector<int> team_sizes;   // parameter values for the team size (typically, thread block size)
   std::vector<int> vector_sizes; // parameter values for the vector size (the 2nd dimension of thread block)
 
+  int num_params;            // number of parameters to tune: 1 (team size only) or 2 (team size and threads per atom)
   double* performance;       // array to store the performance data for each parameter set
-  int nparams;               // total number of parameter combinations
-  int param_idx;             // current parameter index during scanning
+  int ncombinations;         // total number of parameter combinations
+  int combination_idx;       // current combination index during scanning
   int scanning_completed;    // 0 if still scanning, 1 if scanning completed
   int allocated;             // 1 if the performance array is allocated and param values set up
 
@@ -52,7 +53,7 @@ class TuneKokkos : protected Pointers {
   int firststep;             // 1 if first timestep for timing info collection
 
   double get_timing_info();
-  int get_optimal_param_idx();
+  int get_optimal_combination_idx();
   void regular_performance_check();
 };
 

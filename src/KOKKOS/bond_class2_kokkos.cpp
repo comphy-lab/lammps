@@ -223,7 +223,7 @@ void BondClass2Kokkos<DeviceType>::allocate()
 
   if (lmp->kokkos->autotuning > 0) {
     if (tuner) delete tuner;
-    tuner = new TuneKokkos(lmp, lmp->kokkos->autotuning);
+    tuner = new TuneKokkos(lmp, lmp->kokkos->autotuning, 1);
   }
 }
 
