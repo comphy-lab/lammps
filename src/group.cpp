@@ -339,7 +339,7 @@ void Group::assign(int narg, char **arg)
                 stop = start;
               } else if (utils::strmatch(arg[iarg], "^-?\\d+:-?\\d+$")) {
                 stop = values.next_tagint();
-              } else if (utils::strmatch(arg[iarg], "^-?\\d+:-?\\d+:\\d+$")) {
+              } else if (utils::strmatch(arg[iarg], R"(^-?\d+:-?\d+:\d+$)")) {
                 stop = values.next_tagint();
                 delta = values.next_tagint();
               } else

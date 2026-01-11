@@ -803,9 +803,9 @@ void lammps_commands_string(void *handle, const char *str)
       else
         cmd = line;
 
-      if (utils::strmatch(line, "\"\"\".*\"\"\"")) {
+      if (utils::strmatch(line, R"(""".*""")")) {
         triple = false;
-      } else if (utils::strmatch(line, "\"\"\"")) {
+      } else if (utils::strmatch(line, R"(""")")) {
         triple = !triple;
       }
       if (triple) cmd += '\n';

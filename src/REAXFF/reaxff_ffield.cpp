@@ -237,7 +237,7 @@ namespace ReaxFF {
 
             // if line does not start with a floating point number, i.e. is the start
             // of the data for the next element, the file does not support lgflag != 0
-            if (!values.matches("^\\s*\\f+\\s*"))
+            if (!values.matches(R"(^\s*\f+\s*)"))
               THROW_ERROR("ReaxFF potential file is not compatible with 'lgvdw yes'");
 
             CHECK_COLUMNS(2);

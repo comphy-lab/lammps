@@ -461,8 +461,8 @@ void Input::parse()
         error->all(FLERR,"Unmatched single quote in command: {}",line);
       ptr = ptrmatch + 1;
     } else if (*ptr == '"') {
-      if (strstr(ptr,"\"\"\"") == ptr) {
-        ptrmatch = strstr(ptr+3,"\"\"\"");
+      if (strstr(ptr,R"(""")") == ptr) {
+        ptrmatch = strstr(ptr+3,R"(""")");
         if (ptrmatch == nullptr)
           error->all(FLERR,"Unmatched triple quote in command: {}",line);
         ptr = ptrmatch + 3;
@@ -542,8 +542,8 @@ char *Input::nextword(char *str, char **next)
   //   stop = first whitespace char after start
   //   next = char after stop, or stop itself if stop is null char
 
-  if (strstr(start,"\"\"\"") == start) {
-    stop = strstr(&start[3],"\"\"\"");
+  if (strstr(start,R"(""")") == start) {
+    stop = strstr(&start[3],R"(""")");
     if (!stop) error->all(FLERR,"Unbalanced quotes in input line");
     start += 3;
     *next = stop+3;
@@ -694,8 +694,8 @@ void Input::substitute(char *&str, char *&str2, int &max, int &max2, int flag)
       ptr += nchars;
       ptr2 += nchars;
     } else if (*ptr == '"') {
-      if (strstr(ptr,"\"\"\"") == ptr) {
-        ptrmatch = strstr(ptr+3,"\"\"\"");
+      if (strstr(ptr,R"(""")") == ptr) {
+        ptrmatch = strstr(ptr+3,R"(""")");
         if (ptrmatch == nullptr)
           error->all(FLERR,"Unmatched triple quote in command");
         nchars = ptrmatch+3 - ptr;
@@ -736,7 +736,7 @@ int Input::numtriple(char *line)
 {
   int count = 0;
   char *ptr = line;
-  while ((ptr = strstr(ptr,"\"\"\""))) {
+  while ((ptr = strstr(ptr,R"(""")"))) {
     ptr += 3;
     count++;
   }
@@ -938,7 +938,7 @@ void Input::ifthenelse()
   // bound "then" commands
 
   if (strcmp(arg[1],"then") != 0)
-    error->all(FLERR, 1, "Illegal if command: expected \"then\" but found \"{}\"", arg[1]);
+    error->all(FLERR, 1, R"(Illegal if command: expected "then" but found "{}")", arg[1]);
 
   int first = 2;
   int iarg = first;
