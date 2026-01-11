@@ -108,27 +108,32 @@ template<class Scalar>
 struct t_scalar3 {
   Scalar x,y,z;
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION
   t_scalar3() {
     x = 0; y = 0; z = 0;
   }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION
   t_scalar3(const t_scalar3& rhs) {
     x = rhs.x; y = rhs.y; z = rhs.z;
   }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION
   t_scalar3(const Scalar& x_, const Scalar& y_, const Scalar& z_ ) {
     x = x_; y = y_; z = z_;
   }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION
   t_scalar3 operator= (const t_scalar3& rhs) {
     x = rhs.x; y = rhs.y; z = rhs.z;
     return *this;
   }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION
   t_scalar3 operator+= (const t_scalar3& rhs) {
     x += rhs.x; y += rhs.y; z += rhs.z;
@@ -137,6 +142,7 @@ struct t_scalar3 {
 };
 
 template<class Scalar>
+// NOLINTNEXTLINE
 KOKKOS_FORCEINLINE_FUNCTION
 t_scalar3<Scalar> operator +
   (const t_scalar3<Scalar>& a, const t_scalar3<Scalar>& b) {
@@ -144,6 +150,7 @@ t_scalar3<Scalar> operator +
 }
 
 template<class Scalar>
+// NOLINTNEXTLINE
 KOKKOS_FORCEINLINE_FUNCTION
 t_scalar3<Scalar> operator *
   (const t_scalar3<Scalar>& a, const Scalar& b) {
@@ -151,6 +158,7 @@ t_scalar3<Scalar> operator *
 }
 
 template<class Scalar>
+// NOLINTNEXTLINE
 KOKKOS_FORCEINLINE_FUNCTION
 t_scalar3<Scalar> operator *
   (const Scalar& b, const t_scalar3<Scalar>& a) {
@@ -1418,35 +1426,44 @@ struct alignas(2*sizeof(real_type_)) SNAComplex
   using complex = SNAComplex<real_type>;
   real_type re,im;
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex()
    : re(static_cast<real_type>(0.)), im(static_cast<real_type>(0.)) { ; }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex(real_type re)
    : re(re), im(static_cast<real_type>(0.)) { ; }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex(real_type re, real_type im)
    : re(re), im(im) { ; }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex(const SNAComplex& other)
    : re(other.re), im(other.im) { ; }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex& operator=(const SNAComplex& other) {
     re = other.re; im = other.im;
     return *this;
   }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex(SNAComplex&& other)
    : re(other.re), im(other.im) { ; }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex& operator=(SNAComplex&& other) {
     re = other.re; im = other.im;
     return *this;
   }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex operator+(SNAComplex const& other) {
     return SNAComplex(re + other.re, im + other.im);
   }
 
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION SNAComplex& operator+=(SNAComplex const& other) {
     re += other.re; im += other.im;
     return *this;
@@ -1474,16 +1491,19 @@ struct alignas(2*sizeof(real_type_)) SNAComplex
 };
 
 template <typename real_type>
+// NOLINTNEXTLINE
 KOKKOS_FORCEINLINE_FUNCTION SNAComplex<real_type> operator*(const real_type& r, const SNAComplex<real_type>& self) {
   return SNAComplex<real_type>(r*self.re, r*self.im);
 }
 
 template <typename real_type>
+// NOLINTNEXTLINE
 KOKKOS_FORCEINLINE_FUNCTION SNAComplex<real_type> operator*(const SNAComplex<real_type>& self, const real_type& r) {
   return SNAComplex<real_type>(r*self.re, r*self.im);
 }
 
 template <typename real_type>
+// NOLINTNEXTLINE
 KOKKOS_FORCEINLINE_FUNCTION SNAComplex<real_type> operator*(const SNAComplex<real_type>& self, const SNAComplex<real_type>& cm2) {
   return SNAComplex<real_type>(self.re*cm2.re - self.im*cm2.im, self.re*cm2.im + self.im*cm2.re);
 }

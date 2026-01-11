@@ -385,6 +385,7 @@ namespace Kokkos {
   // reduction identity must be defined in Kokkos namespace
   template<>
   struct reduction_identity<KK_double2> {
+// NOLINTNEXTLINE
     KOKKOS_FORCEINLINE_FUNCTION static KK_double2 sum() {
       return KK_double2();
     }

@@ -80,6 +80,7 @@ class FixElectronStoppingKokkos : public FixElectronStopping {
 namespace Kokkos { //reduction identity must be defined in Kokkos namespace
    template<>
    struct reduction_identity<LAMMPS_NS::FixElectronStoppingErrorValue> {
+// NOLINTNEXTLINE
       KOKKOS_FORCEINLINE_FUNCTION static LAMMPS_NS::FixElectronStoppingErrorValue min() {
          return {INT_MAX, 0};
       }

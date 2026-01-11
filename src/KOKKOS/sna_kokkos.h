@@ -320,6 +320,7 @@ class SNAKokkos {
   // core "evaluation" functions that get plugged into "compute" functions
   // plugged into compute_ui_small, compute_ui_large
   template<bool chemsnap, int ui_batch>
+// NOLINTNEXTLINE
   KOKKOS_FORCEINLINE_FUNCTION
   void evaluate_ui_jbend(const MultiWignerWrapper<real_type, vector_length, ui_batch>&,
     const Kokkos::Array<complex, ui_batch>& a,
@@ -329,17 +330,21 @@ class SNAKokkos {
     const int&, const int&) const;
 
   // plugged into compute_zi, compute_yi; returns complex
+// NOLINTNEXTLINE
   template <int yi_batch> KOKKOS_FORCEINLINE_FUNCTION
   auto evaluate_zi(const int&, const int&, const int&, const int&, const int&, const int&, const int&, const int&, const int&,
                         const int&, const int&, const int&, const real_type*) const;
   // plugged into compute_bi
+// NOLINTNEXTLINE
   template <int yi_batch> KOKKOS_FORCEINLINE_FUNCTION
   auto evaluate_bi(const int&, const int&, const int&, const int&,
                           const int&, const int&, const int&) const;
   // plugged into compute_yi, compute_yi_with_zlist; returns real_type
+// NOLINTNEXTLINE
   template <bool chemsnap, int yi_batch> KOKKOS_FORCEINLINE_FUNCTION
   auto evaluate_beta_scaled(const int&, const int&, const int&, const int&, const int&, const int&, const int&) const;
   // plugged into compute_fused_deidrj_small, compute_fused_deidrj_large; returns real_type
+// NOLINTNEXTLINE
   template<int num_dims> KOKKOS_FORCEINLINE_FUNCTION
   auto evaluate_duidrj_jbend(const WignerWrapper<real_type, vector_length>&, const complex&, const complex&, const real_type&,
     const MultiWignerWrapper<real_type, vector_length, num_dims>&, const Kokkos::Array<complex, num_dims>&, const Kokkos::Array<complex, num_dims>&,
@@ -371,6 +376,7 @@ class SNAKokkos {
   void compute_s_dsfac(const real_type, const real_type, const real_type, const real_type, real_type&, real_type&) const; // compute_cayley_klein
 
   // special function that just does a "vectorized" loop
+// NOLINTNEXTLINE
   template<int batch, typename Functor> KOKKOS_FORCEINLINE_FUNCTION
   void register_loop(Functor&& f) const {
     #pragma unroll batch

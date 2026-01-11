@@ -590,6 +590,7 @@ void SNAKokkos<DeviceType, real_type, accum_type, vector_length>::compute_ui_lar
 // Core "evaluation" kernel that gets reused in `compute_ui_small` and `compute_ui_large`
 template<class DeviceType, typename real_type, typename accum_type, int vector_length>
 template<bool chemsnap, int ui_batch>
+// NOLINTNEXTLINE
 KOKKOS_FORCEINLINE_FUNCTION
 void SNAKokkos<DeviceType, real_type, accum_type, vector_length>::evaluate_ui_jbend(
           const MultiWignerWrapper<real_type, vector_length, ui_batch>& ulist_wrapper,
@@ -940,6 +941,7 @@ void SNAKokkos<DeviceType, real_type, accum_type, vector_length>::compute_zi(con
 ------------------------------------------------------------------------- */
 
 template<class DeviceType, typename real_type, typename accum_type, int vector_length>
+// NOLINTNEXTLINE
 template <int yi_batch> KOKKOS_FORCEINLINE_FUNCTION
 auto SNAKokkos<DeviceType, real_type, accum_type, vector_length>::evaluate_zi(const int& j1, const int& j2, const int& j,
         const int& ma1min, const int& ma2max, const int& mb1min, const int& mb2max, const int& na, const int& nb,
@@ -1345,6 +1347,7 @@ void SNAKokkos<DeviceType, real_type, accum_type, vector_length>::compute_yi_wit
 ------------------------------------------------------------------------- */
 
 template<class DeviceType, typename real_type, typename accum_type, int vector_length>
+// NOLINTNEXTLINE
 template <bool chemsnap, int yi_batch> KOKKOS_FORCEINLINE_FUNCTION
 auto SNAKokkos<DeviceType, real_type, accum_type, vector_length>::evaluate_beta_scaled(const int& j1, const int& j2, const int& j,
           const int& iatom, const int& elem1, const int& elem2, const int& elem3) const {
