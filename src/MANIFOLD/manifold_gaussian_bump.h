@@ -42,9 +42,9 @@
 
 #include "manifold.h"
 
-namespace LAMMPS_NS {
 
-namespace user_manifold {
+
+namespace LAMMPS_NS::user_manifold {
 
   // A Gaussian bump with a smoothed decay to flat 2D.
   class manifold_gaussian_bump : public manifold {
@@ -89,8 +89,8 @@ namespace user_manifold {
     double taper(double);
     double taper_der(double);
   };
-}    // namespace user_manifold
+} // namespace LAMMPS_NS::user_manifold
 
-}    // namespace LAMMPS_NS
+
 
 #endif    // LMP_MANIFOLD_GAUSSIAN_BUMP_H

@@ -30,8 +30,8 @@ GranSubModStyle(mindlin_rescale/force,GranSubModTangentialMindlinRescaleForce,TA
 
 #include "gran_sub_mod.h"
 
-namespace LAMMPS_NS {
-namespace Granular_NS {
+
+namespace LAMMPS_NS::Granular_NS {
 
   class GranSubModTangential : public GranSubMod {
    public:
@@ -128,8 +128,8 @@ namespace Granular_NS {
     GranSubModTangentialMindlinRescaleForce(class GranularModel *, class LAMMPS *);
   };
 
-}    // namespace Granular_NS
-}    // namespace LAMMPS_NS
+} // namespace LAMMPS_NS::Granular_NS
+
 
 #endif /*GRAN_SUB_MOD_TANGENTIAL_H */
 #endif /*GRAN_SUB_MOD_CLASS_H */

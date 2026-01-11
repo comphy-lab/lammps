@@ -28,8 +28,8 @@ GranSubModStyle(mdr,GranSubModDampingMDR,DAMPING);
 
 #include "gran_sub_mod.h"
 
-namespace LAMMPS_NS {
-namespace Granular_NS {
+
+namespace LAMMPS_NS::Granular_NS {
 
   class GranSubModDamping : public GranSubMod {
    public:
@@ -107,8 +107,8 @@ namespace Granular_NS {
 
   /* ---------------------------------------------------------------------- */
 
-}    // namespace Granular_NS
-}    // namespace LAMMPS_NS
+} // namespace LAMMPS_NS::Granular_NS
+
 
 #endif /*GRAN_SUB_MOD_DAMPING_H */
 #endif /*GRAN_SUB_MOD_CLASS_H */

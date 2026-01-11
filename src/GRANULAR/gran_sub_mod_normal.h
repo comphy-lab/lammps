@@ -28,8 +28,8 @@ GranSubModStyle(mdr,GranSubModNormalMDR,NORMAL);
 
 #include "gran_sub_mod.h"
 
-namespace LAMMPS_NS {
-namespace Granular_NS {
+
+namespace LAMMPS_NS::Granular_NS {
 
   class GranSubModNormal : public GranSubMod {
    public:
@@ -164,8 +164,8 @@ namespace Granular_NS {
     inline double round_up_negative_epsilon(double);
   };
 
-}    // namespace Granular_NS
-}    // namespace LAMMPS_NS
+} // namespace LAMMPS_NS::Granular_NS
+
 
 #endif /*GRAN_SUB_MOD_NORMAL_H */
 #endif /*GRAN_SUB_MOD_CLASS_H */
