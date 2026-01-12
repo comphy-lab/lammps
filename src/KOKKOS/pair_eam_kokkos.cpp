@@ -140,7 +140,7 @@ void PairEAMKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   rhomax_kk = static_cast<KK_FLOAT>(rhomax);
   copymode = 1;
 
-  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params(this);
+  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
 
   int pair_block_size = 0;
   if (lmp->kokkos->pair_team_size_set)
@@ -399,7 +399,7 @@ void PairEAMKokkos<DeviceType>::init_style()
 
   if (lmp->kokkos->autotuning > 0) {
     if (tuner) delete tuner;
-    tuner = new TuneKokkos(lmp, lmp->kokkos->autotuning, 1);
+    tuner = new TuneKokkos(lmp, TuneKokkos::PAIR, lmp->kokkos->autotuning, 1);
   }
 }
 

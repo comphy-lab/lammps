@@ -23,17 +23,17 @@ namespace LAMMPS_NS {
 
 class TuneKokkos : protected Pointers {
  public:
-
-  TuneKokkos(class LAMMPS *, int nevery, int nparams=2);
+  TuneKokkos(class LAMMPS *, int kernel_type, int nevery, int nparams=2);
   ~TuneKokkos() override;
   void allocate(int);
-  void tuning_kernel_params(class Pair *);
-  void tuning_kernel_params(class Bond *);
-  void tuning_kernel_params(class Nbin *) {}
+  void tuning_kernel_params();
 
-  int interval;  // # of timesteps to run the simulation with a given parameter set
-                 // should be sufficiently large (~100) for estimating the overall performance in TPS
-                 // should be small enough to avoid significant overhead during auto-tuning
+  enum { PAIR, BOND, NBIN, FIX, COMPUTE };
+
+  int kernel_type;  // type of kernel being tuned: PAIR, BOND, NBIN, FIX, COMPUTE
+  int interval;     // # of timesteps to run the simulation with a given parameter set
+                    //   should be sufficiently large (~100) for estimating the overall performance in TPS
+                    //   should be small enough to avoid significant overhead during auto-tuning
 
   std::vector<int> team_sizes;   // parameter values for the team size (typically, thread block size)
   std::vector<int> vector_sizes; // parameter values for the vector size (the 2nd dimension of thread block)
@@ -52,9 +52,11 @@ class TuneKokkos : protected Pointers {
   double last_cpu;           // last CPU time when timing info was collected
   int firststep;             // 1 if first timestep for timing info collection
 
-  double get_timing_info();
-  int get_optimal_combination_idx();
-  void regular_performance_check();
+  double get_timing_info();                  // get the elapsed time from the last call
+  void get_current_params(int, auto&, auto&);  // get the team size and vector size for a given combination index
+  void set_param_values(int);                // set the KOKKOS kernel parameters based on the combination index
+  int get_optimal_combination_idx();         // find the combination index with the best performance
+  void regular_performance_check();          // monitor the performance during normal simulation and re-trigger scanning if needed
 };
 
 }

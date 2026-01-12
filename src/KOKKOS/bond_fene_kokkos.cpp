@@ -107,7 +107,7 @@ void BondFENEKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
   // loop over the bond list
 
-  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params(this);
+  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
 
   int bond_blocksize = 0;
   if (lmp->kokkos->bond_block_size_set)
@@ -272,7 +272,7 @@ void BondFENEKokkos<DeviceType>::allocate()
 
   if (lmp->kokkos->autotuning > 0) {
     if (tuner) delete tuner;
-    tuner = new TuneKokkos(lmp, lmp->kokkos->autotuning, 1);
+    tuner = new TuneKokkos(lmp, TuneKokkos::BOND, lmp->kokkos->autotuning, 1);
   }
 }
 

@@ -31,13 +31,14 @@ using namespace LAMMPS_NS;
 
 /* ---------------------------------------------------------------------- */
 
-TuneKokkos::TuneKokkos(LAMMPS *lmp, int nevery, int _nparams) : Pointers(lmp),
-  performance(nullptr), interval(nevery), scanning_completed(0)
+TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery, int _nparams) : Pointers(lmp),
+  kernel_type(_kernel_type), interval(nevery), performance(nullptr)
 {
   ncombinations = 0;
   allocated = 0;
   firststep = 1;
   opt_perf = 0.0;
+  scanning_completed = 0;
   relative_tolerance = 0.20; // 20% performance degradation allowed
 
   num_params = _nparams;
@@ -62,6 +63,8 @@ void TuneKokkos::allocate(int num_params)
   if (num_params < 1 || num_params > 2)
     error->all(FLERR,"Illegal number of parameters for Kokkos kernel tuning");
 
+  // initialize the possible values of the parameters to scan
+
   team_sizes.clear();
   vector_sizes.clear();
 
@@ -76,7 +79,6 @@ void TuneKokkos::allocate(int num_params)
   #else
   int max_vectorsize = 32;
   #endif
-
   if (num_params == 2) {
     for (int vs = 1; vs <= max_vectorsize; vs *= 2)
       vector_sizes.push_back(vs);
@@ -88,22 +90,110 @@ void TuneKokkos::allocate(int num_params)
   }
 
   // compute the total number of parameter combinations
-  // cols = team sizes (pair/team/size = 64, 96, ..., 512)
-  // rows = vector sizes (threads/per/atom = 1, 2, 4, 8, 16, max_vectorsize)
 
   int num_team_sizes = team_sizes.size();
   int num_vector_sizes = vector_sizes.size();
 
   ncombinations = num_team_sizes * num_vector_sizes;
 
-  // allocate performance array
+  // allocate the 2-d performance as a 1-d array
+  //   cols = team sizes (pair/team/size or bond/block/size = 64, 96, ..., 512)
+  //   rows = vector sizes (threads/per/atom = 1, 2, 4, 8, .., max_vectorsize)
 
   if (performance) delete[] performance;
   performance = new double[ncombinations];
-  combination_idx = 0;
+
+  // ensure that relevant kokkos parameters are allowed to be specified
+
+  if (kernel_type == PAIR) {
+    if (!lmp->kokkos->neigh_thread_set) {
+      lmp->kokkos->neigh_thread_set = 1;
+      lmp->kokkos->neigh_thread = 1;
+    }
+    if (!lmp->kokkos->threads_per_atom_set) lmp->kokkos->threads_per_atom_set = 1;
+    if (!lmp->kokkos->pair_team_size_set) lmp->kokkos->pair_team_size_set = 1;
+
+  } else if (kernel_type == BOND) {
+    if (!lmp->kokkos->bond_block_size_set) lmp->kokkos->bond_block_size_set = 1;
+
+  } else
+    error->all(FLERR,"Kokkos tuning_kernel_params: kernel type not yet supported");
 
   scanning_completed = 0;
+  combination_idx = 0;
   allocated = 1;
+}
+
+/* ----------------------------------------------------------------------
+   tuning the pair compute kernel parameters
+   this function is called by the /kk pair style at every timestep
+   if auto-tuning is enabled
+------------------------------------------------------------------------- */
+
+void TuneKokkos::tuning_kernel_params()
+{
+  // retrieve the current parameter set from combination_idx
+
+  int current_team_size, current_vector_size;
+  get_current_params(combination_idx, current_team_size, current_vector_size);
+
+  if (!scanning_completed) {
+
+    // set the KOKKOS kernel parameters
+
+    set_param_values(combination_idx);
+
+    // wait for interval timesteps to collect timing info
+
+    if ((update->ntimestep - update->beginstep) % interval == 0) {
+
+      double tps = get_timing_info();
+
+      // skip for the first call when no timing info is available
+
+      if (tps == 0.0) return;
+
+      // store the performance of the current parameter set
+
+      performance[combination_idx] = 1.0 / tps;
+
+      #ifdef TUNE_DEBUG
+      if (comm->me == 0) {
+        std::string mesg = fmt::format("combination_idx {}: team size = {} ",
+                          combination_idx, current_team_size);
+        mesg += fmt::format("vector size = {} ", current_vector_size);
+        mesg += fmt::format("perf = {:.1f} TPS\n", performance[combination_idx]);
+        utils::logmesg(lmp, mesg);
+      }
+      #endif
+
+      // move to the next parameter set
+
+      combination_idx++;
+
+      // suppose that interval is sufficiently long to get a stable TPS
+      // so that we only need a single pass over all the parameter combinations
+
+      if (combination_idx >= ncombinations) scanning_completed = 1;
+    }
+  }
+
+  // if scanning just completed, find the parameter set with the optimal performance
+
+  if (scanning_completed && combination_idx == ncombinations) {
+    int opt_idx = get_optimal_combination_idx();
+    set_param_values(opt_idx);
+
+    // reset combination_idx to zero to be ready for another scan if needed
+    // and to avoid repeating this block
+
+    combination_idx = 0;
+  }
+
+  // check if the performance is within acceptable range of the optimal performance
+  // if not, re-trigger the scanning process
+
+  regular_performance_check();
 }
 
 /* ----------------------------------------------------------------------
@@ -135,171 +225,65 @@ double TuneKokkos::get_timing_info()
 }
 
 /* ----------------------------------------------------------------------
-   tuning the pair compute kernel parameters
-   this function is called by the /kk pair style at every timestep
-   if auto-tuning is enabled
+   get the current params based on the combination index
+   NOTE: using auto& with an eye toward supporting different types of params
+   in the future, not restricted to int's
 ------------------------------------------------------------------------- */
 
-void TuneKokkos::tuning_kernel_params(class Pair *pair)
+void TuneKokkos::get_current_params(int cidx, auto& team_size, auto& vector_size)
 {
-  // ensure that relevant kokkos parameters are allowed to be specified
-
-  if (!lmp->kokkos->neigh_thread_set) {
-    lmp->kokkos->neigh_thread_set = 1;
-    lmp->kokkos->neigh_thread = 1;
-  }
-  if (!lmp->kokkos->threads_per_atom_set) lmp->kokkos->threads_per_atom_set = 1;
-  if (!lmp->kokkos->pair_team_size_set) lmp->kokkos->pair_team_size_set = 1;
-
-  if (!scanning_completed) {
-
-    // retrieve the current parameter set from combination_idx
-
-    int num_team_sizes = team_sizes.size();
-    int pair_team_size = team_sizes[combination_idx % num_team_sizes];
-    int threads_per_atom = vector_sizes[combination_idx / num_team_sizes];
-
-    // set the KOKKOS kernel parameters
-
-    lmp->kokkos->pair_team_size = pair_team_size;
-    lmp->kokkos->threads_per_atom = threads_per_atom;
-
-    // wait for interval timesteps to collect timing info
-
-    if (update->ntimestep % interval == 0) {
-
-      double tps = get_timing_info();
-
-      // skip for the first call when no timing info is available
-
-      if (tps == 0.0) return;
-
-      // store the performance of the current parameter set
-
-      performance[combination_idx] = 1.0 / tps;
-
-      #ifdef TUNE_DEBUG
-      if (comm->me == 0) {
-        std::string mesg = fmt::format("combination_idx {}: pair team size = {} threads per atom = {} ",
-                          combination_idx, lmp->kokkos->pair_team_size, lmp->kokkos->threads_per_atom);
-        mesg += fmt::format("perf = {:.1f} TPS\n", performance[combination_idx]);
-        utils::logmesg(lmp,mesg);
-      }
-      #endif
-
-      // move to the next parameter set
-
-      combination_idx++;
-
-      // suppose that interval is sufficiently long to get a stable TPS
-      // so that we only need a single pass over all the parameter combinations
-
-      if (combination_idx >= ncombinations) scanning_completed = 1;
-    }
-  }
-
-  // if scanning just completed, find the parameter set with the optimal performance
-
-  if (scanning_completed && combination_idx == ncombinations) {
-
-    int opt_idx = get_optimal_combination_idx();
-    int num_team_sizes = team_sizes.size();
-    int pair_team_size_opt = team_sizes[opt_idx % num_team_sizes];
-    int threads_per_atom_opt = vector_sizes[opt_idx / num_team_sizes];
-
-    // set the optimal kernel parameters
-
-    lmp->kokkos->pair_team_size = pair_team_size_opt;
-    lmp->kokkos->threads_per_atom = threads_per_atom_opt;
-
-    // reset combination_idx to zero to be ready for another scan if needed
-    // and to avoid repeating this block
-
-    combination_idx = 0;
-  }
-
-  // check if the performance is within acceptable range of the optimal performance
-  // if not, re-trigger the scanning process
-
-  regular_performance_check();
+  int num_team_sizes = team_sizes.size();
+  team_size = team_sizes[cidx % num_team_sizes];
+  vector_size = vector_sizes[cidx / num_team_sizes];
 }
 
 /* ----------------------------------------------------------------------
-   tuning the bond compute kernel parameters
-   this function is called by the /kk bond style at every timestep
-   if auto-tuning is enabled
+   set the kernel parameters based on the combination index and kernel type
 ------------------------------------------------------------------------- */
 
-void TuneKokkos::tuning_kernel_params(class Bond *bond)
+void TuneKokkos::set_param_values(int cidx)
 {
-  // ensure that relevant kokkos parameters are allowed to be specified
+  int num_team_sizes = team_sizes.size();
+  int current_team_size = team_sizes[cidx % num_team_sizes];
+  int current_vector_size = vector_sizes[cidx / num_team_sizes];
 
-  if (!lmp->kokkos->bond_block_size_set) lmp->kokkos->bond_block_size_set = 1;
+  if (kernel_type == PAIR) {
+    lmp->kokkos->pair_team_size = current_team_size;
+    lmp->kokkos->threads_per_atom = current_vector_size;
 
-  if (!scanning_completed) {
+  } else if (kernel_type == BOND) {
+    lmp->kokkos->bond_block_size = current_team_size;
 
-    // retrieve the current parameter set from combination_idx
+  } else if (kernel_type == NBIN) {
 
-    int bond_block_size = team_sizes[combination_idx];
+  } else if (kernel_type == FIX) {
 
-    // set the KOKKOS kernel parameters
+  } else if (kernel_type == COMPUTE) {
 
-    lmp->kokkos->bond_block_size = bond_block_size;
+  }
 
-    // wait for interval timesteps to collect timing info
+}
 
-    if (update->ntimestep % interval == 0) {
+/* ----------------------------------------------------------------------
+   find the optimal performance
+   return the index of the optimal parameter set
+------------------------------------------------------------------------- */
 
-      double tps = get_timing_info();
+int TuneKokkos::get_optimal_combination_idx()
+{
+  if (ncombinations == 0 || performance == nullptr)
+    error->all(FLERR,"No performance data available for Kokkos kernel tuning");
 
-      // skip for the first call when no timing info is available
-
-      if (tps == 0.0) return;
-
-      // store the performance of the current parameter set
-
-      performance[combination_idx] = 1.0 / tps;
-
-      #ifdef TUNE_DEBUG
-      if (comm->me == 0) {
-        std::string mesg = fmt::format("combination_idx {}: bond block size = {} ",
-                          combination_idx, lmp->kokkos->bond_block_size);
-        mesg += fmt::format("perf = {:.1f} TPS\n", performance[combination_idx]);
-        utils::logmesg(lmp,mesg);
-      }
-      #endif
-
-      // move to the next parameter set
-
-      combination_idx++;
-
-      // suppose that interval is sufficiently long to get a stable TPS
-      // so that we only need a single pass over all the parameter combinations
-
-      if (combination_idx >= ncombinations) scanning_completed = 1;
+  opt_perf = performance[0];
+  int opt_idx = 0;
+  for (int i = 1; i < ncombinations; i++) {
+    if (performance[i] > opt_perf) {
+      opt_perf = performance[i];
+      opt_idx = i;
     }
   }
 
-  // if scanning just completed, find the parameter set with the optimal performance
-
-  if (scanning_completed && combination_idx == ncombinations) {
-
-    int opt_idx = get_optimal_combination_idx();
-    int bond_block_size = team_sizes[opt_idx];
-
-    // set the optimal kernel parameters
-
-    lmp->kokkos->bond_block_size = bond_block_size;
-
-    // reset combination_idx to zero to avoid repeating this block
-
-    combination_idx = 0;
-  }
-
-  // check if the performance is within acceptable range of the optimal performance
-  // if not, re-trigger the scanning process
-
-  regular_performance_check();
+  return opt_idx;
 }
 
 /* ----------------------------------------------------------------------
@@ -322,11 +306,13 @@ void TuneKokkos::regular_performance_check()
   #ifdef TUNE_DEBUG
   if (comm->me == 0) {
     std::string mesg = fmt::format("Using the optimal params: ");
-    mesg += fmt::format("pair team size = {} threads per atom = {} ",
-                      lmp->kokkos->pair_team_size,
-                      lmp->kokkos->threads_per_atom);
+    int opt_ts = 0, opt_vs = 0;
+    int opt_idx = get_optimal_combination_idx();
+    get_current_params(opt_idx, opt_ts, opt_vs);
+    mesg += fmt::format("team size = {} vector size = {} ",
+                      opt_ts, opt_vs);
     mesg += fmt::format(" current perf = {:.1f} TPS\n", perf);
-    utils::logmesg(lmp,mesg);
+    utils::logmesg(lmp, mesg);
   }
   #endif
 
@@ -347,34 +333,10 @@ void TuneKokkos::regular_performance_check()
     if (comm->me == 0) {
       std::string mesg = fmt::format("Performance degraded by {:.2f}%, re-triggering scan\n",
                         diff * 100.0);
-      utils::logmesg(lmp,mesg);
+      utils::logmesg(lmp, mesg);
     }
     #endif
   }
 }
-
-/* ----------------------------------------------------------------------
-   find the optimal performance
-   return the index of the optimal parameter set
-------------------------------------------------------------------------- */
-
-int TuneKokkos::get_optimal_combination_idx()
-{
-  if (ncombinations == 0 || performance == nullptr)
-    error->all(FLERR,"No performance data available for Kokkos kernel tuning");
-
-  opt_perf = performance[0];
-  int opt_idx = 0;
-  for (int i = 1; i < ncombinations; i++) {
-    if (performance[i] > opt_perf) {
-      opt_perf = performance[i];
-      opt_idx = i;
-    }
-  }
-  return opt_idx;
-}
-
-
-
 
 
