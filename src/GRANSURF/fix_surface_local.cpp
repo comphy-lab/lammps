@@ -3683,7 +3683,7 @@ void FixSurfaceLocal::check3d()
   double *c1,*c2,*c3;
 
   int flag = 0;
-  for (int i = 0; i < ntris; i++) {
+  for (int i = 0; i < nlocal; i++) {
     if (tri[i] < 0) continue;
     c1 = bonus[tri[i]].c1;
     c2 = bonus[tri[i]].c2;

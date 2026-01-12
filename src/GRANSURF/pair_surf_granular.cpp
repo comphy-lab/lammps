@@ -905,7 +905,7 @@ void PairSurfGranular::prewalk_connections2d()
       }
       k = atom->map(ktag);
       if (k == -1)
-        error->one(FLERR, "Bad atom index");
+        error->one(FLERR, "Surface mesh atom {} missing at step {}", ktag, update->ntimestep);
 
       // Skip if not in contact
       if (contacts_map.find(k) == contacts_map.end())
