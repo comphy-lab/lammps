@@ -143,7 +143,7 @@ unsigned char *read_image(FILE *fp, int &width, int &height, std::string &filein
     }
 
     // set up error handling
-    if (setjmp(png_jmpbuf(png_ptr))) { // NOLINT
+    if (setjmp(png_jmpbuf(png_ptr))) {    // NOLINT
       png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
       delete[] pixmap;
       return nullptr;
@@ -651,7 +651,7 @@ void FixGraphicsLabels::end_of_step()
       }
     }
 
-    SSFN::ssfn_select(&ctx, SSFN_FAMILY_SANS, SSFN_STYLE_REGULAR, (int)txt.size);
+    SSFN::ssfn_select(&ctx, SSFN_FAMILY_SANS, SSFN_STYLE_REGULAR, (int) txt.size);
     if (ctx.err != SSFN_OK) continue;
 
     // need to render the pixmap if NULL, the size is a variable, or we need to substitute the text
@@ -712,13 +712,13 @@ void FixGraphicsLabels::end_of_step()
         int yoffs = 3 * y * width;
         for (int x = 0; x < width; ++x) {
           if ((y < xhalf) || (y >= height - xhalf) || (x < xhalf) || (x >= width - xhalf)) {
-            txt.pixmap[yoffs + 3 * x] = (int)txt.framecolor[0];
-            txt.pixmap[yoffs + 3 * x + 1] = (int)txt.framecolor[1];
-            txt.pixmap[yoffs + 3 * x + 2] = (int)txt.framecolor[2];
+            txt.pixmap[yoffs + 3 * x] = (int) txt.framecolor[0];
+            txt.pixmap[yoffs + 3 * x + 1] = (int) txt.framecolor[1];
+            txt.pixmap[yoffs + 3 * x + 2] = (int) txt.framecolor[2];
           } else {
-            txt.pixmap[yoffs + 3 * x] = (int)txt.backcolor[0];
-            txt.pixmap[yoffs + 3 * x + 1] = (int)txt.backcolor[1];
-            txt.pixmap[yoffs + 3 * x + 2] = (int)txt.backcolor[2];
+            txt.pixmap[yoffs + 3 * x] = (int) txt.backcolor[0];
+            txt.pixmap[yoffs + 3 * x + 1] = (int) txt.backcolor[1];
+            txt.pixmap[yoffs + 3 * x + 2] = (int) txt.backcolor[2];
           }
         }
       }
@@ -738,9 +738,9 @@ void FixGraphicsLabels::end_of_step()
             }
             const int xoffs = (penx + x) * 3;
             if (g->data[y * g->pitch + i] & m) {
-              txt.pixmap[yoffs + xoffs] = (int)txt.fontcolor[0];
-              txt.pixmap[yoffs + xoffs + 1] = (int)txt.fontcolor[1];
-              txt.pixmap[yoffs + xoffs + 2] = (int)txt.fontcolor[2];
+              txt.pixmap[yoffs + xoffs] = (int) txt.fontcolor[0];
+              txt.pixmap[yoffs + xoffs + 1] = (int) txt.fontcolor[1];
+              txt.pixmap[yoffs + xoffs + 2] = (int) txt.fontcolor[2];
             }
           }
         }
