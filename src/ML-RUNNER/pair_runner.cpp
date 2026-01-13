@@ -145,7 +145,7 @@ PairRuNNer::PairRuNNer(LAMMPS *lmp) :
   // We generally calculate the virial ourselves
   // and do not need to call virial_fdotr().
   // In case of 2G HDNNP, we call virial_fdotr()
-  // for performace reasons.
+  // for performance reasons.
   // flag is then overwritten in init_style().
   no_virial_fdotr_compute = 1;
 
@@ -241,7 +241,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   // Set additional per-atom arrays to zero
   memset(atomic_charge, 0, nmax * (sizeof *atomic_charge));
-  memset(hirshfeld_volume, 0, nmax * (sizeof *atomic_charge));
+  memset(hirshfeld_volume, 0, nmax * (sizeof *hirshfeld_volume));
   memset(electronegativity, 0, nmax * (sizeof *electronegativity));
   memset(lagrange_charges, 0, nmax * (sizeof *lagrange_charges));
   memset(de_dq, 0, nmax * (sizeof *de_dq));
@@ -618,7 +618,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 3,
                                        elec_force_global.data(), runner_elec_forces.data());
 
-        // Apply remaining force contributions from predicited
+        // Apply remaining force contributions from predicted
         // electronegativities and lagrange charges to
         // electrostatic forces.
         runner_interface_evaluate_electrostatics_4g_part_2(
@@ -693,13 +693,13 @@ void PairRuNNer::compute(int eflag, int vflag)
   }
 
   // Write committee energies into pair compute vector
-  memset(pvector, 0, num_committee_members);
+  memset(pvector, 0, num_committee_members * (sizeof *pvector));
   for (i = 0; i < num_committee_members; i++) pvector[i] = committee_energy[i] / cfenergy;
 
   // Charges if charge atom style is used
   if (q != NULL) {
     // The q array does not seem to get reset to zero every timestep by LAMMPS
-    memset(q, 0,nmax * (sizeof *q));
+    memset(q, 0, nmax * (sizeof *q));
     for (ii = 0; ii < nall; ii++) {
       for (jj = 0; jj < num_committee_members; jj++) {
         q[ii] += committee_atomic_charge[ii + jj * nmax] / num_committee_members;
@@ -712,7 +712,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   // Virial is -1.0 * d_energy_d_strain
   if (vflag_global) {
-    memset(virial, 0, 9);
+    memset(virial, 0, 9 * (sizeof *virial));
     for (i = 0; i < num_committee_members; i++) {
       virial[0] -= committee_d_energy_d_strain[0 + 9 * i] / cfenergy / num_committee_members;
       virial[1] -= committee_d_energy_d_strain[4 + 9 * i] / cfenergy / num_committee_members;
@@ -788,8 +788,8 @@ void PairRuNNer::compute(int eflag, int vflag)
     bool lreset = false;
     if (reset_ew_freq > 0 && timestep % reset_ew_freq == 0 && timestep > 0) { lreset = true; }
 
-    // Retrive the number of extrapolations during this timestep and during the whole simulation
-    // on each process 1and reset the latter if `lreset` is true.
+    // Retrieve the number of extrapolations during this timestep and during the whole simulation
+    // on each process and reset the latter if `lreset` is true.
     runner_interface_extrapolation_count(&extrap_count_timestep, &local_extrap_count_total,
                                          &lreset);
 
@@ -810,7 +810,7 @@ void PairRuNNer::compute(int eflag, int vflag)
           double(global_extrap_count_total));
     }
 
-    // Prints a summary of the recorded extrapolations at every intervall until the timestep is
+    // Prints a summary of the recorded extrapolations at every interval until the timestep is
     // a multiple of `sum_ew_freq` and larger than 0.
     if (sum_ew_freq > 0 && timestep % sum_ew_freq == 0 && timestep > 0) {
       long global_extrap_sum = 0;
