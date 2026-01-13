@@ -390,7 +390,7 @@ TEST(Platform, file_write_time)
     auto ref_not_modified = platform::file_write_time("file_is_not_modified.txt");
     auto ref_modified = platform::file_write_time("file_is_modified.txt");
 
-    platform::usleep(10);
+    platform::usleep(1000000);
     fp = fopen("file_is_modified.txt", "w");
     fputs("some text\n", fp);
     fclose(fp);
