@@ -105,6 +105,14 @@ all variants of those file formats are compatible with image reader code
 in LAMMPS.  If LAMMPS encounters an incompatible or unrecognizable file
 format or a corrupted file, it will stop with an error.
 
+If LAMMPS detects during a run that the file has been changed, it will
+re-read it.  This allows for instance to create a plot using internal
+LAMMPS data or from processing an output file during the simulation with
+the `matplotlib <https://matplotlib.org>`_ python module using a
+:doc:`python <python>` command and :doc:`fix python/invoke
+<fix_python_invoke>` and then embed the resulting image into the
+dump image output.  See below for a minimal example for such a setup.
+
 When using the *image* keyword, the name of the image file and its position
 in the "scene" are required arguments.  Optional keyword / value pairs
 may be added:
@@ -193,6 +201,83 @@ transparency is by default fully opaque and can be changed with
 *dump\_modify ftrans*\ .
 
 The *fflag1* and *fflag2* settings of *dump image fix* are ignored.
+
+--------------
+
+Including a "dynamic" image
+"""""""""""""""""""""""""""
+
+The LAMMPS input commands below provide a demonstration for creating and
+updating a plot during a run and importing it into a visualization.
+This requires to compile LAMMPS with the :ref:`PYTHON <pkg-python>`
+package and also compile and install the :doc:`LAMMPS Python module
+<Python_install>`.
+
+The first :doc:`python <python>` command loads the `matplotlib <https://matplotlib.org>`_
+and LAMMPS Python modules and configures *matplotlib* to use the `non-interactive 'agg'
+backend <https://matplotlib.org/stable/users/explain/figure/backends.html#backends>`_
+for creating image files.
+
+The second :doc:`python <python>` command defines the ``myplot()``
+Python function that is supposed to be called regularly during the run
+from :doc:`fix python/invoke <fix_python_invoke>`.  This function has to
+accept two arguments, the LAMMPS object pointer and an integer as
+required by the fix.  The LAMMPS object pointer can be utilized to query
+the running LAMMPS instance about internal data.  In this example, we
+only retrieve the LAMMPS version and add it to the plot title.  By
+default, plots have an opaque white background and black lines and text.
+In order to overlay the plot as a transparent image, all lines and text
+are set to use the color white, while backgrounds are set to use a very
+bright gray (to minimize anti-aliasing artifacts when deleting the
+background pixels).
+
+The two fix commands invoke the python function and read and make the
+resulting PNG format image available to dump image.  The plot is updated
+only for every 10th dumped image.
+
+The final lines are :doc:`dump image <dump_image>` commands for integrating
+the generated plot into the visualization of the atom.
+
+.. code-block:: LAMMPS
+
+   python source here """
+   import matplotlib
+   matplotlib.use('agg')
+   import matplotlib.pyplot as plt
+   from lammps import lammps
+   """
+
+   python myplot input 2 SELF 0 format pi here """
+   def myplot(lmpptr, vflag):
+      lmp = lammps(ptr=lmpptr)
+      fig, ax = plt.subplots(facecolor=(0.9,0.9,0.9),edgecolor='white')
+      ax.set_facecolor((0.9,0.9,0.9))
+      ax.set_title('Demo Plot: LAMMPS version ' + str(lmp.version()) ,color='white')
+      ax.set_xlabel('Time',color='white')
+      ax.set_ylabel('Value',color='white')
+      ax.tick_params(colors='white')
+      for spine in ax.spines.values():
+          spine.set_edgecolor('white')
+      ax.plot([1,2,3,4,5,6],[2,3,2.5,3.1,2.8,3.0],color='white', linestyle='--')
+      fname = 'myplot.png'
+      plt.savefig(fname,dpi=180)
+      plt.close()
+   """
+
+   fix plot all python/invoke 1000 post_force myplot
+   fix label all graphics/labels 100 image myplot.png 20.0 9.0 10.0 transcolor auto scale 0.5
+
+   dump viz all image 100 image-*.png type type size 800 800 view 80 10 box yes 0.02 &
+                fsaa yes shiny 0.1 ssao yes 23154 0.8 zoom 1.4 fix label type 0 0
+   dump_modify viz pad 6 backcolor2 gray backcolor darkgray boxcolor silver
+
+.. figure:: JPG/fix_graphics_labels_plot.png
+   :align: center
+   :scale: 50%
+
+   Example image output for adding the above commands to the ``melt`` example.
+
+---------
 
 Restart, fix_modify, output, run start/stop, minimize info
 ==========================================================
