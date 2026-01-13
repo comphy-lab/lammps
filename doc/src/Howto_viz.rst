@@ -337,7 +337,7 @@ currently three approaches to make those bonds visible.
    the computation of the model.  This is currently only available for
    ReaxFF by using :doc:`fix reaxff/bonds <fix_reaxff_bonds>`.
 
-   #. Use the *autobonds* keyword of :doc:`dump image <dump_image>` to
+#. Use the *autobonds* keyword of :doc:`dump image <dump_image>` to
    approximate the bonds based on a simple distance heuristic.  This is
    similar to the *Dynamic Bonds* representation in `VMD
    <https://www.ks.uiuc.edu/Research/vmd/>`_.  How accurate this option
