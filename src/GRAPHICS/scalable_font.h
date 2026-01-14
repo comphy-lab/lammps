@@ -14,6 +14,9 @@
 #ifndef LMP_SCALABLE_FONT_H
 #define LMP_SCALABLE_FONT_H
 
+#include <exception>
+#include <string>
+
 #define SSFN_DATA_MAX 65536
 
 /* rendering modes */
@@ -33,17 +36,6 @@
 #define SSFN_STYLE_BOLD 1
 #define SSFN_STYLE_ITALIC 2
 
-/* error codes */
-#define SSFN_OK 0            /* success */
-#define SSFN_ERR_ALLOC 1     /* allocation error */
-#define SSFN_ERR_NOFACE 2    /* no font face selected */
-#define SSFN_ERR_INVINP 3    /* invalid input */
-#define SSFN_ERR_BADFILE 4   /* bad SSFN file format */
-#define SSFN_ERR_BADSTYLE 5  /* bad style */
-#define SSFN_ERR_BADSIZE 6   /* bad size */
-#define SSFN_ERR_BADMODE 7   /* bad mode */
-#define SSFN_ERR_NOGLYPH 8   /* glyph (or kerning info) not found */
-
 namespace SSFN {
 
 using ssfn_font_t = struct _ssfn_font_t {
@@ -62,9 +54,9 @@ using ssfn_font_t = struct _ssfn_font_t {
   uint16_t bbox_top;
   uint16_t bbox_right;
   uint16_t bbox_bottom;
-  uint32_t fragments_offs; /* offset of fragments table relative to magic */
+  uint32_t fragments_offs;  /* offset of fragments table relative to magic */
   uint32_t characters_offs; /* offset of characters tables relative to magic */
-  uint32_t kerning_offs;  /* kerning table offset relative to magic */
+  uint32_t kerning_offs;    /* kerning table offset relative to magic */
 };
 
 /* returned bitmap struct */
@@ -81,6 +73,7 @@ using ssfn_glyph_t = struct _ssfn_glyph_t {
 };
 
 /* renderer context */
+
 using ssfn_t = struct _ssfn_t {
   const ssfn_font_t **fnt[5];             /* font registry */
   const ssfn_font_t *s;                   /* explicitly selected font */
@@ -93,7 +86,6 @@ using ssfn_t = struct _ssfn_t {
   int mp;                                 /* memory allocated for points */
   int np;                                 /* how many points actually are there */
   int nr[256];                            /* number of coordinates in each raster line */
-  int err;                                /* returned error code */
   int family;                             /* required family */
   int style;                              /* required style */
   int size;                               /* required size */
@@ -102,21 +94,43 @@ using ssfn_t = struct _ssfn_t {
   int m, ix, u, uix, uax, lx, ly, mx, my; /* helper variables */
 };
 
-/* normal renderer */
-extern int ssfn_load(ssfn_t *ctx, const ssfn_font_t *font);           /* add an SSFN to context */
-extern int ssfn_select(ssfn_t *ctx, int family, int style, int size); /* select font to use */
-extern uint32_t ssfn_utf8(char **str);             /* decode UTF-8 sequence */
-extern ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode); /* return allocated glyph bitmap */
-extern int ssfn_kern(ssfn_t *ctx, uint32_t unicode, uint32_t nextunicode, int *x,
-                     int *y); /* get kerning values */
-extern int ssfn_bbox(ssfn_t *ctx, char *str, int usekern, int *w,
-                     int *h);                   /* get bounding box of a rendered string */
-extern int ssfn_mem(ssfn_t *ctx);               /* return how much memory is used */
-extern void ssfn_free(ssfn_t *ctx);             /* free context */
-#define ssfn_lasterr(ctx) ((ssfn_t *) ctx)->err /* return last error code */
-#define ssfn_error(err) \
-  (err >= 0 && err <= 9 ? ssfn_errstr[err] : "Unknown error") /* return string for error code */
-extern const char *ssfn_errstr[];
+/* normal font renderer API */
+// add SSFN font to context
+extern void ssfn_load(ssfn_t *ctx, const ssfn_font_t *font);
+// select font to use
+extern void ssfn_select(ssfn_t *ctx, int family, int style, int size);
+// return allocated glyph bitmap
+extern ssfn_glyph_t *ssfn_render(ssfn_t *ctx, uint32_t unicode);
+// get kerning values
+extern int ssfn_kern(ssfn_t *ctx, uint32_t unicode, uint32_t nextunicode, int *x, int *y);
+// get bounding box of a rendered string
+extern void ssfn_bbox(ssfn_t *ctx, char *str, int usekern, int *w, int *h);
+// free context
+extern void ssfn_free(ssfn_t *ctx);
+
+/** Font renderer exception class */
+class SSFNException : public std::exception {
+ public:
+  SSFNException() = delete;
+  /** Thrown during font processing
+   *
+   * \param   file    source file where exception was thrown
+   * \param   line    line in source file where exception was thrown
+   * \param   flag    select error message */
+  explicit SSFNException(const std::string &file, int line, int flag);
+
+  /** Retrieve message describing the thrown exception
+   *
+   * This function provides the message that can be retrieved when the corresponding
+   * exception is caught.
+   *
+   * \return  String with error message */
+  const char *what() const noexcept override { return message.c_str(); }
+
+ private:
+  std::string message;
+};
+
 extern const ssfn_font_t *const ssfn_sans_font;
 }    // namespace SSFN
 

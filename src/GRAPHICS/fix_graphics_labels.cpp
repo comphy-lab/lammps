@@ -659,138 +659,143 @@ void FixGraphicsLabels::end_of_step()
     ++n;
   }
 
-  // initialize font rendered and load in-memory font
-  SSFN::ssfn_t ctx;
-  SSFN::ssfn_glyph_t *g;
-  memset(&ctx, 0, sizeof(SSFN::ssfn_t));
-  SSFN::ssfn_load(&ctx, SSFN::ssfn_sans_font);
-  for (auto &txt : texts) {
-    if (txt.xstr) txt.pos[0] = input->variable->compute_equal(txt.xvar);
-    if (txt.ystr) txt.pos[1] = input->variable->compute_equal(txt.yvar);
-    if (txt.zstr) txt.pos[2] = input->variable->compute_equal(txt.zvar);
-    // text is rasterized at twice the size for some anti-aliasing. clamp to avoid crashes.
-    if (txt.sstr) {
-      txt.size = 2.0 * input->variable->compute_equal(txt.svar);
-      if (txt.size > 128.0) {
-        txt.scale = txt.size / 256.0;
-        txt.size = 128.0;
-      } else {
-        txt.size = MAX(txt.size, 8.0);
-        txt.scale = 0.5;
-      }
-    }
+  // initialize font renderer and load in-memory font
 
-    SSFN::ssfn_select(&ctx, SSFN_FAMILY_SANS, SSFN_STYLE_REGULAR, (int) txt.size);
-    if (ctx.err != SSFN_OK) continue;
-
-    // need to render the pixmap if NULL, the size is a variable, or we need to substitute the text
-    if (txt.sstr || !txt.pixmap || (txt.text.find('$') != std::string::npos)) {
-      auto expanded = txt.text;
-
-      // substitute variables in text
-      if (expanded.find('$') != std::string::npos) {
-        int ncopy = expanded.length() + 1;
-        int nwork = ncopy;
-        char *copy = (char *) memory->smalloc(ncopy * sizeof(char), "fix/graphics/labels:copy");
-        char *work = (char *) memory->smalloc(nwork * sizeof(char), "fix/graphics/labels:work");
-        strncpy(copy, expanded.c_str(), ncopy);
-        input->substitute(copy, work, ncopy, nwork, 0);
-        expanded = copy;
-        memory->sfree(copy);
-        memory->sfree(work);
-      }
-
-      // get a font size specific spacing for a border
-      g = SSFN::ssfn_render(&ctx, ' ');
-      int xspace = g->adv_x;
-      free(g);
-
-      // dry run to determine size of pixmap
-      int width = 0;
-      int miny = 1073741824;
-      int maxy = 0;
-      for (auto c : expanded + "gll") {    // append these characters for consistent spacing
-        if (c == '_') c = ' ';             // ugly hack to work around font issue
-
-        g = SSFN::ssfn_render(&ctx, c);
-        width += g->adv_x;
-        // loop over bitmap to find minimum and maximum y position
-        for (int y = 0; y < g->h; ++y) {
-          const int ypos = g->h - 1 - y + g->baseline;
-          for (int x = 0, i = 0, m = 1; x < g->w; ++x, m <<= 1) {
-            if (m > 0x80) {
-              m = 1;
-              ++i;
-            }
-            if (g->data[y * g->pitch + i] & m) {
-              miny = MIN(miny, ypos);
-              maxy = MAX(maxy, ypos);
-            }
-          }
+  try {
+    SSFN::ssfn_t ctx;
+    SSFN::ssfn_glyph_t *g;
+    memset(&ctx, 0, sizeof(SSFN::ssfn_t));
+    SSFN::ssfn_load(&ctx, SSFN::ssfn_sans_font);
+    for (auto &txt : texts) {
+      if (txt.xstr) txt.pos[0] = input->variable->compute_equal(txt.xvar);
+      if (txt.ystr) txt.pos[1] = input->variable->compute_equal(txt.yvar);
+      if (txt.zstr) txt.pos[2] = input->variable->compute_equal(txt.zvar);
+      // text is rasterized at twice the size for some anti-aliasing. clamp to avoid crashes.
+      if (txt.sstr) {
+        txt.size = 2.0 * input->variable->compute_equal(txt.svar);
+        if (txt.size > 128.0) {
+          txt.scale = txt.size / 256.0;
+          txt.size = 128.0;
+        } else {
+          txt.size = MAX(txt.size, 8.0);
+          txt.scale = 0.5;
         }
+      }
+
+      SSFN::ssfn_select(&ctx, SSFN_FAMILY_SANS, SSFN_STYLE_REGULAR, (int) txt.size);
+
+      // need to render the pixmap if NULL, the size is a variable, or we need to substitute the text
+      if (txt.sstr || !txt.pixmap || (txt.text.find('$') != std::string::npos)) {
+        auto expanded = txt.text;
+
+        // substitute variables in text
+        if (expanded.find('$') != std::string::npos) {
+          int ncopy = expanded.length() + 1;
+          int nwork = ncopy;
+          char *copy = (char *) memory->smalloc(ncopy * sizeof(char), "fix/graphics/labels:copy");
+          char *work = (char *) memory->smalloc(nwork * sizeof(char), "fix/graphics/labels:work");
+          strncpy(copy, expanded.c_str(), ncopy);
+          input->substitute(copy, work, ncopy, nwork, 0);
+          expanded = copy;
+          memory->sfree(copy);
+          memory->sfree(work);
+        }
+
+        // get a font size specific spacing for a border
+        g = SSFN::ssfn_render(&ctx, ' ');
+        int xspace = g->adv_x;
         free(g);
-      }
 
-      int xhalf = xspace / 2;
-      txt.width = width;
-      int height = txt.height = maxy - miny + 1 + 3 * xspace;
-      delete[] txt.pixmap;
-      txt.pixmap = new unsigned char[height * width * 3];
+        // dry run to determine size of pixmap
+        int width = 0;
+        int miny = 1073741824;
+        int maxy = 0;
+        for (auto c : expanded + "gll") {    // append these characters for consistent spacing
+          if (c == '_') c = ' ';             // ugly hack to work around font issue
 
-      // fill entire pixmap with background and frame color
-      for (int y = 0; y < height; ++y) {
-        int yoffs = 3 * y * width;
-        for (int x = 0; x < width; ++x) {
-          if ((y < xhalf) || (y >= height - xhalf) || (x < xhalf) || (x >= width - xhalf)) {
-            txt.pixmap[yoffs + 3 * x] = (int) txt.framecolor[0];
-            txt.pixmap[yoffs + 3 * x + 1] = (int) txt.framecolor[1];
-            txt.pixmap[yoffs + 3 * x + 2] = (int) txt.framecolor[2];
-          } else {
-            txt.pixmap[yoffs + 3 * x] = (int) txt.backcolor[0];
-            txt.pixmap[yoffs + 3 * x + 1] = (int) txt.backcolor[1];
-            txt.pixmap[yoffs + 3 * x + 2] = (int) txt.backcolor[2];
-          }
-        }
-      }
-
-      // now render each character again and change the pixels in the pixmap accordingly
-      int penx = 2 * xspace;
-      for (auto c : expanded) {
-        if (c == '_') c = ' ';    // ugly hack to work around font issue
-
-        g = SSFN::ssfn_render(&ctx, c);
-        for (int y = 0; y < g->h; ++y) {
-          const int yoffs = (g->h - 1 - y + g->baseline - miny + xspace + xhalf / 2) * width * 3;
-          for (int x = 0, i = 0, m = 1; x < g->w; ++x, m <<= 1) {
-            if (m > 0x80) {
-              m = 1;
-              ++i;
-            }
-            const int xoffs = (penx + x) * 3;
-            if (g->data[y * g->pitch + i] & m) {
-              txt.pixmap[yoffs + xoffs] = (int) txt.fontcolor[0];
-              txt.pixmap[yoffs + xoffs + 1] = (int) txt.fontcolor[1];
-              txt.pixmap[yoffs + xoffs + 2] = (int) txt.fontcolor[2];
+          g = SSFN::ssfn_render(&ctx, c);
+          width += g->adv_x;
+          // loop over bitmap to find minimum and maximum y position
+          for (int y = 0; y < g->h; ++y) {
+            const int ypos = g->h - 1 - y + g->baseline;
+            for (int x = 0, i = 0, m = 1; x < g->w; ++x, m <<= 1) {
+              if (m > 0x80) {
+                m = 1;
+                ++i;
+              }
+              if (g->data[y * g->pitch + i] & m) {
+                miny = MIN(miny, ypos);
+                maxy = MAX(maxy, ypos);
+              }
             }
           }
+          free(g);
         }
-        penx += g->adv_x;
-        free(g);
+
+        int xhalf = xspace / 2;
+        txt.width = width;
+        int height = txt.height = maxy - miny + 1 + 3 * xspace;
+        delete[] txt.pixmap;
+        txt.pixmap = new unsigned char[height * width * 3];
+
+        // fill entire pixmap with background and frame color
+        for (int y = 0; y < height; ++y) {
+          int yoffs = 3 * y * width;
+          for (int x = 0; x < width; ++x) {
+            if ((y < xhalf) || (y >= height - xhalf) || (x < xhalf) || (x >= width - xhalf)) {
+              txt.pixmap[yoffs + 3 * x] = (int) txt.framecolor[0];
+              txt.pixmap[yoffs + 3 * x + 1] = (int) txt.framecolor[1];
+              txt.pixmap[yoffs + 3 * x + 2] = (int) txt.framecolor[2];
+            } else {
+              txt.pixmap[yoffs + 3 * x] = (int) txt.backcolor[0];
+              txt.pixmap[yoffs + 3 * x + 1] = (int) txt.backcolor[1];
+              txt.pixmap[yoffs + 3 * x + 2] = (int) txt.backcolor[2];
+            }
+          }
+        }
+
+        // now render each character again and change the pixels in the pixmap accordingly
+        int penx = 2 * xspace;
+        for (auto c : expanded) {
+          if (c == '_') c = ' ';    // ugly hack to work around font issue
+
+          g = SSFN::ssfn_render(&ctx, c);
+          for (int y = 0; y < g->h; ++y) {
+            const int yoffs = (g->h - 1 - y + g->baseline - miny + xspace + xhalf / 2) * width * 3;
+            for (int x = 0, i = 0, m = 1; x < g->w; ++x, m <<= 1) {
+              if (m > 0x80) {
+                m = 1;
+                ++i;
+              }
+              const int xoffs = (penx + x) * 3;
+              if (g->data[y * g->pitch + i] & m) {
+                txt.pixmap[yoffs + xoffs] = (int) txt.fontcolor[0];
+                txt.pixmap[yoffs + xoffs + 1] = (int) txt.fontcolor[1];
+                txt.pixmap[yoffs + xoffs + 2] = (int) txt.fontcolor[2];
+              }
+            }
+          }
+          penx += g->adv_x;
+          free(g);
+        }
       }
+      imgobjs[n] = Graphics::PIXMAP;
+      imgparms[n][0] = 1;
+      imgparms[n][1] = txt.pos[0];
+      imgparms[n][2] = txt.pos[1];
+      imgparms[n][3] = txt.pos[2];
+      imgparms[n][4] = txt.width;
+      imgparms[n][5] = txt.height;
+      imgparms[n][6] = ubuf((int64_t) txt.pixmap).d;
+      imgparms[n][7] = txt.transcolor[0] / 255.0;
+      imgparms[n][8] = txt.transcolor[1] / 255.0;
+      imgparms[n][9] = txt.transcolor[2] / 255.0;
+      imgparms[n][10] = txt.scale;
+      ++n;
     }
-    imgobjs[n] = Graphics::PIXMAP;
-    imgparms[n][0] = 1;
-    imgparms[n][1] = txt.pos[0];
-    imgparms[n][2] = txt.pos[1];
-    imgparms[n][3] = txt.pos[2];
-    imgparms[n][4] = txt.width;
-    imgparms[n][5] = txt.height;
-    imgparms[n][6] = ubuf((int64_t) txt.pixmap).d;
-    imgparms[n][7] = txt.transcolor[0] / 255.0;
-    imgparms[n][8] = txt.transcolor[1] / 255.0;
-    imgparms[n][9] = txt.transcolor[2] / 255.0;
-    imgparms[n][10] = txt.scale;
-    ++n;
+    ssfn_free(&ctx);
+  } catch (const SSFN::SSFNException &e) {
+    error->all(FLERR, Error::NOLASTLINE, "Error during font rendering: {}", e.what());
   }
 
   if (varflag) modify->addstep_compute((update->ntimestep / nevery) * nevery + nevery);
