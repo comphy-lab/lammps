@@ -19,6 +19,7 @@
 namespace LAMMPS_NS {
 namespace Graphics {
   enum {
+    NONE,
     SPHERE,    // a single sphere with radius provided
     LINE,      // a cylinder with diameter given through fflag2
     TRI,       // a surface mesh as triangles or cylinder mesh based on fflag1, fflag2 sets diameter
