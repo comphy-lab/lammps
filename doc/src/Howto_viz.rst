@@ -715,7 +715,7 @@ styles:
 There is no support for :doc:`fix wall/region <fix_wall_region>` and
 :doc:`fix wall/gran/region <fix_wall_gran_region>`, since regions can be
 visualized with the *region* keyword of :doc:`dump image <dump_image>`
-already (see discussion above).
+(see discussion above).
 
 .. |fix1| image:: img/fix-graphics.png
    :width: 19%
@@ -736,6 +736,8 @@ already (see discussion above).
 
 Below are discussions about some aspects of specific fix commands and some input examples.
 
+-------------
+
 Fix graphics/objects
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -752,9 +754,22 @@ pixmaps to the visualization.  These can be either images or text that
 is rendered internally into a pixmap with a background and a frame.
 Those pixmaps can be scaled, moved, made transparent, and updated during
 the simulation and then integrated into the :doc:`dump image
-<dump_image>` output.  In both cases a "transparency" color can be chosen
-to skip copying any pixels of that color to make parts of the pixmap
-transparent.
+<dump_image>` output.  In both cases a "transparency" color can be
+chosen to skip copying any pixels of that color to make parts of the
+pixmap transparent.  The text labels can contain :doc:`variables
+<variable>` that will be expanded in the same was as with :doc:`fix
+print <fix_print>` so they can report values of computed properties.
+Label positions are provided in the frame of reference of the simulation
+box and thus they can obscure other objects in then visualization or be
+obscured by objects.
+
+.. figure:: JPG/fix-graphics-labels-objects.png
+   :align: center
+
+   Example image using graphics objects and labels that are updated during
+   the simulation.
+
+-----------------------
 
 Fix graphics/arrows
 ^^^^^^^^^^^^^^^^^^^
@@ -854,7 +869,6 @@ and a transparent white triangle surface to represent those molecules.
 .. raw:: html
 
    <center>(Isosurface graphics visualization example. Click to see the full-size images)</center><br>
-
 
 Fix reaxff/bonds
 ^^^^^^^^^^^^^^^^
