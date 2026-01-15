@@ -89,7 +89,6 @@ class AtomVecEllipsoidKokkos : public AtomVecKokkos, public AtomVecEllipsoid {
   void pack_exchange_bonus_kokkos(const int &nsend, DAT::tdual_double_2d_lr &buf,
                                   DAT::tdual_int_1d k_sendlist,
                                   DAT::tdual_int_1d k_copylist,
-                                  DAT::tdual_int_1d k_sendlist_bonus,
                                   DAT::tdual_int_1d k_copylist_bonus,
                                   ExecutionSpace space) override;
 

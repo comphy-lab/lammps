@@ -2474,7 +2474,6 @@ struct AtomVecKokkos_PackExchangeFunctor {
 int AtomVecKokkos::pack_exchange_kokkos(const int &nsend,DAT::tdual_double_2d_lr &k_buf,
                                                  DAT::tdual_int_1d k_sendlist,
                                                  DAT::tdual_int_1d k_copylist,
-                                                 DAT::tdual_int_1d k_sendlist_bonus,
                                                  DAT::tdual_int_1d k_copylist_bonus,
                                                  ExecutionSpace space)
 {
@@ -2514,7 +2513,7 @@ int AtomVecKokkos::pack_exchange_kokkos(const int &nsend,DAT::tdual_double_2d_lr
 
   if (bonus_flag) pack_exchange_bonus_kokkos(nsend,k_buf,
                                              k_sendlist, k_copylist,
-                                             k_sendlist_bonus, k_copylist_bonus,
+                                             k_copylist_bonus,
                                              space);
 
   atomKK->modified(space,datamask_exchange);
