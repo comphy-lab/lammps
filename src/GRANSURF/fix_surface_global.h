@@ -145,6 +145,8 @@ class FixSurfaceGlobal : public FixSurface {
   int nedges;                 // count of unique tri edges
   int maxpoints;              // allocated length of points
   int nsurf;                  // count of lines or tris for 2d/3d
+  int nsurf_ghost;            // count of ghost lines or tris for 2d/3d
+  int *idsurf;                // id of corresponding local lines or tris
 
   // ragged 2d arrays for 2d connectivity
 

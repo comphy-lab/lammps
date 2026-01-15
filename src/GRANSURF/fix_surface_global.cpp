@@ -349,6 +349,9 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
 
   xsurf = vsurf = omegasurf = nullptr;
   radsurf = nullptr;
+  idsurf = nullptr;
+
+  nsurf_ghost = -1;
 
   nmax = 0;
   mass_rigid = nullptr;
@@ -470,6 +473,7 @@ FixSurfaceGlobal::~FixSurfaceGlobal()
   memory->destroy(vsurf);
   memory->destroy(omegasurf);
   memory->destroy(radsurf);
+  memory->destroy(idsurf);
 
   memory->destroy(mass_rigid);
 
@@ -734,7 +738,7 @@ void FixSurfaceGlobal::initial_integrate(int vflag)
 
 void FixSurfaceGlobal::pre_neighbor()
 {
-  int i,j,k,m,n,nn,dnum,dnumbytes;
+  int i,j,j2,k,m,n,nn,dnum,dnumbytes;
   double xtmp,ytmp,ztmp,delx,dely,delz;
   double radi,rsq,radsum,cutsq;
   int *neighptr,*touchptr;
@@ -796,10 +800,6 @@ void FixSurfaceGlobal::pre_neighbor()
 
 
   if (nb == nullptr) {
-    nb = new NBinManual(lmp);
-    ns = new NStencilManual(lmp);
-    ns->nb = nb;
-
     double rmax_surf = 0.0;
     for (j = 0; j < nsurf; j++)
       rmax_surf = MAX(rmax_surf, radsurf[j]);
@@ -813,6 +813,80 @@ void FixSurfaceGlobal::pre_neighbor()
 
     //cutneighmax equiv
     double cutoff = skin + rmax_atom + rmax_surf;
+
+    if (nsurf_ghost == -1) {
+      nsurf_ghost = 0;
+
+      if (domain->triclinic)
+        error->all(FLERR, "Need to add support for triclinc");
+
+      // get limits for creating ghosts
+      int a;
+      double *boxlo = domain->boxlo;
+      double *boxhi = domain->boxhi;
+      double limitlo[3], limithi[3];
+      for (a = 0; a < 3; a++) {
+        limitlo[a] = boxlo[a] + cutoff;
+        limithi[a] = boxhi[a] - cutoff;
+      }
+
+      // count number of ghosts and allocate room
+      int ix, iy, iz;
+      int imin[3], imax[3];
+      int dimension = domain->dimension;
+      int *periodicity = domain->periodicity;
+      double *prd = domain->prd;
+      for (i = 0; i < nsurf; i++) {
+        for (a = 0; a < 3; a++) {
+          imin[a] = imax[a] = 0;
+          if (periodicity[a] && xsurf[i][a] < limitlo[a]) imax[a] = +1;
+          if (periodicity[a] && xsurf[i][a] > limithi[a]) imin[a] = -1;
+        }
+
+        if (dimension == 2) imin[2] = imax[2] = 0;
+
+        for (ix = imin[0]; ix <= imax[0]; ix++)
+          for (iy = imin[1]; iy <= imax[1]; iy++)
+            for (iz = imin[2]; iz <= imax[2]; iz++)
+              nsurf_ghost += 1;
+      }
+
+      memory->grow(xsurf, nsurf + nsurf_ghost, 3, "surface/global:xsurf");
+      memory->create(idsurf, nsurf + nsurf_ghost, "surface/global:idsurf");
+
+      // add ghost coordinates
+      j = nsurf;
+      double ximage[3];
+      for (i = 0; i < nsurf; i++) {
+        idsurf[i] = i;
+
+        for (a = 0; a < 3; a++) {
+          imin[a] = imax[a] = 0;
+          if (periodicity[a] && xsurf[i][a] < limitlo[a]) imax[a] = +1;
+          if (periodicity[a] && xsurf[i][a] > limithi[a]) imin[a] = -1;
+        }
+
+        if (dimension == 2) imin[2] = imax[2] = 0;
+
+        for (ix = imin[0]; ix <= imax[0]; ix++) {
+          for (iy = imin[1]; iy <= imax[1]; iy++) {
+            for (iz = imin[2]; iz <= imax[2]; iz++) {
+              xsurf[j][0] = xsurf[i][0] + ix * prd[0];
+              xsurf[j][1] = xsurf[i][1] + iy * prd[1];
+              xsurf[j][2] = xsurf[i][2] + iz * prd[2];
+              idsurf[j] = i;
+              // Todo: edit for triclinic
+              j += 1;
+            }
+          }
+        }
+      }
+    }
+
+    nb = new NBinManual(lmp);
+    ns = new NStencilManual(lmp);
+    ns->nb = nb;
+
     nb->assign_neighbor_info(cutoff);
     ns->assign_neighbor_info(cutoff);
   }
@@ -823,11 +897,11 @@ void FixSurfaceGlobal::pre_neighbor()
     ns->create();
     last_setup_bins = update->ntimestep;
 
-    nb->bin_custom_setup(xsurf, nsurf);
-    nb->bin_custom(xsurf, nsurf);
+    nb->bin_custom_setup(xsurf, nsurf + nsurf_ghost);
+    nb->bin_custom(xsurf, nsurf + nsurf_ghost);
   } else if (anymove) {
-    nb->bin_custom_setup(xsurf, nsurf);
-    nb->bin_custom(xsurf, nsurf);
+    nb->bin_custom_setup(xsurf, nsurf + nsurf_ghost);
+    nb->bin_custom(xsurf, nsurf + nsurf_ghost);
   }
 
   nb->bin_atoms_setup(nlocal);
@@ -866,35 +940,36 @@ void FixSurfaceGlobal::pre_neighbor()
     for (k = 0; k < nstencil; k++) {
       bin_start = binhead_surf[ibin + stencil[k]];
       for (j = bin_start; j >= 0; j = bins_surf[j]) {
+        j2 = idsurf[j]; // maps ghosts back to local
 
         // Skip if already added surface, can happen due to minimum image
-        if (jadded.find(j) != jadded.end()) continue;
+        if (jadded.find(j2) != jadded.end()) continue;
 
-        delx = xtmp - xsurf[j][0];
-        dely = ytmp - xsurf[j][1];
-        delz = ztmp - xsurf[j][2];
+        delx = xtmp - xsurf[j2][0];
+        dely = ytmp - xsurf[j2][1];
+        delz = ztmp - xsurf[j2][2];
         domain->minimum_image(FLERR, delx, dely, delz);
         rsq = delx * delx + dely * dely + delz * delz;
-        radsum = radi + radsurf[j] + skin;
+        radsum = radi + radsurf[j2] + skin;
         cutsq = radsum * radsum;
 
         if (rsq <= cutsq) {
           // since lines/tris flat, separately check distance along normal
           //   should reduce a lot of potential neighbors
           if (dimension == 2) {
-            dot = lines[j].norm[0] * delx + lines[j].norm[1] * dely + lines[j].norm[2] * delz;
-            MathExtra::scale3(dot, lines[j].norm, dx_proj);
+            dot = lines[j2].norm[0] * delx + lines[j2].norm[1] * dely + lines[j2].norm[2] * delz;
+            MathExtra::scale3(dot, lines[j2].norm, dx_proj);
           } else {
-            dot = tris[j].norm[0] * delx + tris[j].norm[1] * dely + tris[j].norm[2] * delz;
-            MathExtra::scale3(dot, tris[j].norm, dx_proj);
+            dot = tris[j2].norm[0] * delx + tris[j2].norm[1] * dely + tris[j2].norm[2] * delz;
+            MathExtra::scale3(dot, tris[j2].norm, dx_proj);
           }
 
           rsq = MathExtra::lensq3(dx_proj);
           if (rsq < cutsq_proj) {
             // Note: saves index of surf (like its tag) so will not work
             //       with default FixNeighHist methods that grab partner tags
-            neighptr[n] = j;
-            jadded.insert(j);
+            neighptr[n] = idsurf[j2];
+            jadded.insert(idsurf[j2]);
             n++;
           }
         }

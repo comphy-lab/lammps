@@ -150,7 +150,7 @@ void NBinManual::bin_custom_setup(double **xcustom, int ncustom)
 void NBinManual::setup_bins(int style)
 {
   // bbox = size of bbox of entire domain
-  // bsubbox lo/hi = bounding box of my subdomain extended by comm->cutghost
+  // bsubbox lo/hi = bounding box of my subdomain extended by cutghost or cutneighmax
   // for triclinic:
   //   bbox bounds all 8 corners of tilted box
   //   subdomain is in lamda coords
@@ -160,21 +160,38 @@ void NBinManual::setup_bins(int style)
   double bbox[3],bsubboxlo[3],bsubboxhi[3];
   double *cutghost = comm->cutghost;
 
+  // cutneighmax can be larger than cut ghost, so take max to calculate bins
+
+  double cut_limit[3];
   if (triclinic == 0) {
-    bsubboxlo[0] = domain->sublo[0] - cutghost[0];
-    bsubboxlo[1] = domain->sublo[1] - cutghost[1];
-    bsubboxlo[2] = domain->sublo[2] - cutghost[2];
-    bsubboxhi[0] = domain->subhi[0] + cutghost[0];
-    bsubboxhi[1] = domain->subhi[1] + cutghost[1];
-    bsubboxhi[2] = domain->subhi[2] + cutghost[2];
+    cut_limit[0] = MAX(cutneighmax, cutghost[0]);
+    cut_limit[1] = MAX(cutneighmax, cutghost[1]);
+    cut_limit[2] = MAX(cutneighmax, cutghost[2]);
+
+    bsubboxlo[0] = domain->sublo[0] - cut_limit[0];
+    bsubboxlo[1] = domain->sublo[1] - cut_limit[1];
+    bsubboxlo[2] = domain->sublo[2] - cut_limit[2];
+    bsubboxhi[0] = domain->subhi[0] + cut_limit[0];
+    bsubboxhi[1] = domain->subhi[1] + cut_limit[1];
+    bsubboxhi[2] = domain->subhi[2] + cut_limit[2];
   } else {
+    double *h_inv = domain->h_inv;
+    double length0,length1,length2;
+    length0 = sqrt(h_inv[0]*h_inv[0] + h_inv[5]*h_inv[5] + h_inv[4]*h_inv[4]);
+    length1 = sqrt(h_inv[1]*h_inv[1] + h_inv[3]*h_inv[3]);
+    length2 = h_inv[2];
+
+    cut_limit[0] = MAX(cutneighmax * length0, cutghost[0]);
+    cut_limit[1] = MAX(cutneighmax * length1, cutghost[1]);
+    cut_limit[2] = MAX(cutneighmax * length2, cutghost[2]);
+
     double lo[3],hi[3];
-    lo[0] = domain->sublo_lamda[0] - cutghost[0];
-    lo[1] = domain->sublo_lamda[1] - cutghost[1];
-    lo[2] = domain->sublo_lamda[2] - cutghost[2];
-    hi[0] = domain->subhi_lamda[0] + cutghost[0];
-    hi[1] = domain->subhi_lamda[1] + cutghost[1];
-    hi[2] = domain->subhi_lamda[2] + cutghost[2];
+    lo[0] = domain->sublo_lamda[0] - cut_limit[0];
+    lo[1] = domain->sublo_lamda[1] - cut_limit[1];
+    lo[2] = domain->sublo_lamda[2] - cut_limit[2];
+    hi[0] = domain->subhi_lamda[0] + cut_limit[0];
+    hi[1] = domain->subhi_lamda[1] + cut_limit[1];
+    hi[2] = domain->subhi_lamda[2] + cut_limit[2];
     domain->bbox(lo,hi,bsubboxlo,bsubboxhi);
   }
 
@@ -286,70 +303,23 @@ void NBinManual::setup_bins(int style)
 
 void NBinManual::bin_custom(double **xcustom, int ncustom)
 {
-  int i, a, ibin;
+  int i, ibin;
 
   last_bin = update->ntimestep;
   for (i = 0; i < mbins; i++) binhead_custom[i] = -1;
 
-  int dim = domain->dimension;
-  double *boxlo = domain->boxlo;
-  double *boxhi = domain->boxhi;
-  double limitlo[3], limithi[3];
-  for (a = 0; a < dim; a++) {
-    limitlo[a] = boxlo[a] + cutneighmax;
-    limithi[a] = boxhi[a] - cutneighmax;
-  }
-
   // bin in reverse order so linked list will be in forward order
+  // also puts ghost objects (assumed to be at end of xcustom) at end of list
 
-  double *prd = domain->prd;
-  double ximage[3];
-  std::set<int> ibins;
   for (i = ncustom-1; i >= 0; i--) {
     ibin = coord2bin(xcustom[i]);
 
+    // check within bin limits (does not require for ghosts)
     if (ibin >= 0 && ibin < maxbin_custom) {
-      if (ibins.find(ibin) == ibins.end()) {
-        custom2bin[i] = ibin;
-        bins_custom[i] = binhead_custom[ibin];
-        binhead_custom[ibin] = i;
-        ibins.insert(ibin);
-      }
+      custom2bin[i] = ibin;
+      bins_custom[i] = binhead_custom[ibin];
+      binhead_custom[ibin] = i;
     }
-
-    // Check if copy needed across PBC
-    for (a = 0; a < dim; a++) {
-      if (!domain->periodicity[a]) continue;
-      if (xcustom[i][a] < limitlo[a]) {
-        MathExtra::copy3(xcustom[i], ximage);
-        ximage[a] += prd[a];
-        ibin = coord2bin(ximage);
-        if (ibin >= 0 && ibin < maxbin_custom) {
-          if (ibins.find(ibin) == ibins.end()) {
-            custom2bin[i] = ibin;
-            bins_custom[i] = binhead_custom[ibin];
-            binhead_custom[ibin] = i;
-            ibins.insert(ibin);
-          }
-        }
-      }
-
-      if (xcustom[i][a] > limithi[a]) {
-        MathExtra::copy3(xcustom[i], ximage);
-        ximage[a] -= prd[a];
-        ibin = coord2bin(ximage);
-        if (ibin >= 0 && ibin < maxbin_custom) {
-          if (ibins.find(ibin) == ibins.end()) {
-            custom2bin[i] = ibin;
-            bins_custom[i] = binhead_custom[ibin];
-            binhead_custom[ibin] = i;
-            ibins.insert(ibin);
-          }
-        }
-      }
-    }
-
-    ibins.clear();
   }
 }
 
