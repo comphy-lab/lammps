@@ -2782,6 +2782,12 @@ void FixSurfaceLocal::assign2d()
   memory->destroy(neigh_p1);
   memory->destroy(neigh_p2);
 
+  // set new total # of atoms and error check
+
+  atom->natoms += nlines;
+  if ((atom->natoms < 0) || (atom->natoms >= MAXBIGINT))
+    error->all(FLERR, Error::NOLASTLINE, "Too many total atoms");
+
   // recreate atom map that includes added lines
 
   if (atom->map_style) {
@@ -3108,6 +3114,12 @@ void FixSurfaceLocal::assign3d()
   memory->destroy(neigh_c2);
   memory->destroy(neigh_c3);
 
+  // set new total # of atoms and error check
+
+  atom->natoms += ntris;
+  if ((atom->natoms < 0) || (atom->natoms >= MAXBIGINT))
+    error->all(FLERR, Error::NOLASTLINE, "Too many total atoms");
+
   // recreate atom map that includes added tris
 
   if (atom->map_style) {
@@ -3193,6 +3205,8 @@ void FixSurfaceLocal::connectivity2d_complete()
     for (m = 0; m < connect2d[iconnect].np1; m++) {
       jtag = connect2d[iconnect].neigh_p1[m];
       j = atom->map(jtag);
+      if (j == -1)
+        error->one(FLERR, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       inorm = normals[iconnect];
@@ -3218,6 +3232,8 @@ void FixSurfaceLocal::connectivity2d_complete()
     for (m = 0; m < connect2d[iconnect].np2; m++) {
       jtag = connect2d[iconnect].neigh_p2[m];
       j = atom->map(jtag);
+      if (j == -1)
+        error->one(FLERR, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       inorm = normals[iconnect];
@@ -3339,6 +3355,8 @@ void FixSurfaceLocal::connectivity3d_complete()
     for (m = 0; m < connect3d[iconnect].ne1; m++) {
       jtag = connect3d[iconnect].neigh_e1[m];
       j = atom->map(jtag);
+      if (j == -1)
+        error->one(FLERR, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       if (same_point(cpts[iconnect][0],cpts[jconnect][0])) jpfirst = 1;
@@ -3382,6 +3400,8 @@ void FixSurfaceLocal::connectivity3d_complete()
     for (m = 0; m < connect3d[iconnect].ne2; m++) {
       jtag = connect3d[iconnect].neigh_e2[m];
       j = atom->map(jtag);
+      if (j == -1)
+        error->one(FLERR, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       if (same_point(cpts[iconnect][1],cpts[jconnect][0])) jpfirst = 1;
@@ -3424,6 +3444,8 @@ void FixSurfaceLocal::connectivity3d_complete()
     for (m = 0; m < connect3d[iconnect].ne3; m++) {
       jtag = connect3d[iconnect].neigh_e3[m];
       j = atom->map(jtag);
+      if (j == -1)
+        error->one(FLERR, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       if (same_point(cpts[iconnect][2],cpts[jconnect][0])) jpfirst = 1;
@@ -3476,6 +3498,8 @@ void FixSurfaceLocal::connectivity3d_complete()
     for (m = 0; m < connect3d[iconnect].nc1; m++) {
       jtag = connect3d[iconnect].neigh_c1[m];
       j = atom->map(jtag);
+      if (j == -1)
+        error->one(FLERR, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
       if (same_point(cpts[iconnect][0],cpts[jconnect][0]))
         connect3d[iconnect].cwhich_c1[m] = 0;
@@ -3500,6 +3524,8 @@ void FixSurfaceLocal::connectivity3d_complete()
     for (m = 0; m < connect3d[iconnect].nc2; m++) {
       jtag = connect3d[iconnect].neigh_c2[m];
       j = atom->map(jtag);
+      if (j == -1)
+        error->one(FLERR, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
       if (same_point(cpts[iconnect][1],cpts[jconnect][0]))
         connect3d[iconnect].cwhich_c2[m] = 0;
@@ -3524,6 +3550,8 @@ void FixSurfaceLocal::connectivity3d_complete()
     for (m = 0; m < connect3d[iconnect].nc3; m++) {
       jtag = connect3d[iconnect].neigh_c3[m];
       j = atom->map(jtag);
+      if (j == -1)
+        error->one(FLERR, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
       if (same_point(cpts[iconnect][2],cpts[jconnect][0]))
         connect3d[iconnect].cwhich_c3[m] = 0;
