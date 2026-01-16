@@ -26,6 +26,7 @@ namespace LAMMPS_NS {
 
 // forward declarations
 class AtomVecBody;
+class AtomVecEllipsoid;
 class AtomVecLine;
 class AtomVecTri;
 class Compute;
@@ -38,20 +39,12 @@ class Region;
 
 class DumpImage : public DumpCustom {
  public:
-  int multifile_override;    // used by write_dump command
-  enum {
-    SPHERE,    // a single sphere with radius provided
-    LINE,      // a cylinder with diameter given through fflag2
-    TRI,       // a surface mesh as triangles or cylinder mesh based on fflag1, fflag2 sets diameter
-    CYLINDER,    // a cylinder with diameter given by fix, fflag1 choose caps, fflag2 adjusts diameter
-    TRIANGLE,    // a regular triangle, no settings apply
-    BOND    // two connected cylinders with bond diameter, colored by atom types, fflag1 sets cap
-  };    // used by some Body and Fix child classes
-
   DumpImage(LAMMPS *, int, char **);
   ~DumpImage() override;
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
+
+  void *extract(const char *, int &) override;
 
  protected:
   int filetype;
@@ -67,6 +60,10 @@ class DumpImage : public DumpCustom {
   int triflag;                    // 0/1 for draw atoms as triangles
   int tcolor, tstyle;             // what determines color/style of tris
   double tdiamvalue;              // tri edge diameter value
+  int ellipsoidflag;              // 0/1 for draw atoms as ellipsoids
+  int ecolor, estyle;             // what determines color/style of ellipsoid
+  int elevel;                     // mesh refinement level 1, 2, 3, or 4
+  double ediamvalue;              // ellipsoid edge diameter value
   int bodyflag;                   // 0/1 for draw atoms as bodies
   int bodycolor;                  // what determines color of bodies
   double bodyflag1, bodyflag2;    // user-specified params for drawing bodies
@@ -76,20 +73,20 @@ class DumpImage : public DumpCustom {
   double bdiamvalue;    // bond diameter value
   double bondcutoff;    // autobond cutoff
 
-  int extraflag;                        // 0/1 for any of line/tri/body flag set
-  char *thetastr, *phistr;              // variables for view theta,phi
-  int thetavar, phivar;                 // index to theta,phi vars
-  int cflag;                            // static/dynamic box center
-  double cx, cy, cz;                    // fractional box center
-  char *cxstr, *cystr, *czstr;          // variables for box center
-  int cxvar, cyvar, czvar;              // index to box center vars
-  char *upxstr, *upystr, *upzstr;       // view up vector variables
-  int upxvar, upyvar, upzvar;           // index to up vector vars
-  char *zoomstr;                        // view zoom variable name
-  int zoomvar;                          // index to zoom variable
-  int boxflag, axesflag;                // 0/1 for draw box and axes
-  double boxdiam, axeslen, axesdiam;    // params for drawing box and axes
-  double boxopacity, axesopacity, subboxopacity; // opacity for box, subbox, axes
+  int extraflag;                                    // 0/1 for any of line/tri/body flag set
+  char *thetastr, *phistr;                          // variables for view theta,phi
+  int thetavar, phivar;                             // index to theta,phi vars
+  int cflag;                                        // static/dynamic box center
+  double cx, cy, cz;                                // fractional box center
+  char *cxstr, *cystr, *czstr;                      // variables for box center
+  int cxvar, cyvar, czvar;                          // index to box center vars
+  char *upxstr, *upystr, *upzstr;                   // view up vector variables
+  int upxvar, upyvar, upzvar;                       // index to up vector vars
+  char *zoomstr;                                    // view zoom variable name
+  int zoomvar;                                      // index to zoom variable
+  int boxflag, axesflag;                            // 0/1 for draw box and axes
+  double boxdiam, axeslen, axesdiam;                // params for drawing box and axes
+  double boxopacity, axesopacity, subboxopacity;    // opacity for box, subbox, axes
   int subboxflag;
   double subboxdiam;
 
@@ -114,22 +111,25 @@ class DumpImage : public DumpCustom {
 
   AtomVecLine *avec_line;    // ptrs to atom style (sub)classes
   AtomVecTri *avec_tri;
+  AtomVecEllipsoid *avec_ellipsoid;
   AtomVecBody *avec_body;
 
   struct FixInfo {
     FixInfo() = delete;
     FixInfo(const std::string &_id, Fix *_ptr, int _colorstyle, double _flag1, double _flag2,
-            double *_rgb) :
-        id(_id), ptr(_ptr), colorstyle(_colorstyle), flag1(_flag1), flag2(_flag2), rgb(_rgb)
+            double *_rgb, double _opacity = 1.0) :
+        id(_id), ptr(_ptr), colorstyle(_colorstyle), flag1(_flag1), flag2(_flag2), rgb(_rgb),
+        opacity(_opacity)
     {
     }
 
-    Fix *ptr;
     std::string id;
+    Fix *ptr;
     int colorstyle;
     double flag1;
     double flag2;
     double *rgb;
+    double opacity;
   };
 
   std::vector<FixInfo> fixes;
