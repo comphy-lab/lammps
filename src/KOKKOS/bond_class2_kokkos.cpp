@@ -219,11 +219,9 @@ void BondClass2Kokkos<DeviceType>::allocate()
   d_k4 = k_k4.template view<DeviceType>();
   d_r0 = k_r0.template view<DeviceType>();
 
-  // create the autotuner
-
-  if (lmp->kokkos->autotuning > 0) {
-    if (tuner) delete tuner;
-    tuner = new TuneKokkos(lmp, TuneKokkos::BOND, lmp->kokkos->autotuning, 1);
+  if (lmp->kokkos->autotuning > 0 && !tuner) {
+    tuner = new TuneKokkos(lmp, TuneKokkos::BOND, lmp->kokkos->autotuning,
+      1, "bond-class2");
   }
 }
 

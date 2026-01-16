@@ -40,6 +40,7 @@
 #include "neigh_request.h"
 #include "neighbor.h"
 #include "suffix.h"
+#include "tune_kokkos.h"
 
 #include <cmath>
 
@@ -65,6 +66,7 @@ template<class DeviceType>
 PairTersoffKokkos<DeviceType>::PairTersoffKokkos(LAMMPS *lmp) : PairTersoff(lmp)
 {
   respa_enable = 0;
+  tuner = nullptr;
   suffix_flag |= Suffix::KOKKOS;
 
   kokkosable = 1;
@@ -129,6 +131,15 @@ void PairTersoffKokkos<DeviceType>::init_style()
 
   if (neighflag == FULL)
     error->all(FLERR,"Must use half neighbor list style with pair tersoff/kk");
+
+  if (lmp->kokkos->autotuning > 0 && !tuner) {
+
+    // tuner varies 2 params lmp->kokkos->pair_team_size and lmp->kokkos->threads_per_atom
+    // it is up to tersoff kernels to use these values (whenever applicable)
+
+    tuner = new TuneKokkos(lmp, TuneKokkos::PAIR, lmp->kokkos->autotuning,
+      2, "pair-tersoff");
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -223,6 +234,12 @@ void PairTersoffKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   EV_FLOAT ev;
   EV_FLOAT ev_all;
 
+  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
+
+  int chunk_size = 0;
+  if (lmp->kokkos->threads_per_atom_set)
+    chunk_size = lmp->kokkos->threads_per_atom;
+
   // build short neighbor list
 
   int max_neighs = d_neighbors.extent(1);
@@ -233,13 +250,21 @@ void PairTersoffKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   }
   if ((int)d_numneigh_short.extent(0) < ignum)
     d_numneigh_short = typename AT::t_int_1d("Tersoff::numneighs_short",ignum*1.2);
-  Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType,TagPairTersoffComputeShortNeigh>(0,inum), *this);
+  if (chunk_size)
+    Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType,TagPairTersoffComputeShortNeigh>(0,inum,Kokkos::ChunkSize(chunk_size)), *this);
+  else
+    Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType,TagPairTersoffComputeShortNeigh>(0,inum), *this);
 
   if (neighflag == HALF) {
     if (evflag)
       Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagPairTersoffCompute<HALF,1> >(0,inum),*this,ev);
-    else
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairTersoffCompute<HALF,0> >(0,inum),*this);
+    else {
+      if (chunk_size)
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairTersoffCompute<HALF,0> >(0,inum,Kokkos::ChunkSize(chunk_size)),*this);
+      else
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairTersoffCompute<HALF,0> >(0,inum),*this);
+    }
+
     ev_all += ev;
   } else if (neighflag == HALFTHREAD) {
     if (evflag)
@@ -1132,6 +1157,8 @@ KOKKOS_INLINE_FUNCTION
 int PairTersoffKokkos<DeviceType>::sbmask(const int& j) const {
   return j >> SBBITS & 3;
 }
+
+/* ---------------------------------------------------------------------- */
 
 namespace LAMMPS_NS {
 template class PairTersoffKokkos<LMPDeviceType>;

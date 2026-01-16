@@ -395,11 +395,9 @@ void PairEAMKokkos<DeviceType>::init_style()
   request->set_kokkos_device(std::is_same_v<DeviceType,LMPDeviceType>);
   if (neighflag == FULL) request->enable_full();
 
-  // create the autotuner
-
-  if (lmp->kokkos->autotuning > 0) {
-    if (tuner) delete tuner;
-    tuner = new TuneKokkos(lmp, TuneKokkos::PAIR, lmp->kokkos->autotuning, 1);
+  if (lmp->kokkos->autotuning > 0 && !tuner) {
+    tuner = new TuneKokkos(lmp, TuneKokkos::PAIR, lmp->kokkos->autotuning,
+      1, "pair-eam");
   }
 }
 

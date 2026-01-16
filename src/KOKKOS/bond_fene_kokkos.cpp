@@ -268,11 +268,9 @@ void BondFENEKokkos<DeviceType>::allocate()
   d_epsilon = k_epsilon.template view<DeviceType>();
   d_sigma = k_sigma.template view<DeviceType>();
 
-  // create the autotuner
-
-  if (lmp->kokkos->autotuning > 0) {
-    if (tuner) delete tuner;
-    tuner = new TuneKokkos(lmp, TuneKokkos::BOND, lmp->kokkos->autotuning, 1);
+  if (lmp->kokkos->autotuning > 0 && !tuner) {
+    tuner = new TuneKokkos(lmp, TuneKokkos::BOND, lmp->kokkos->autotuning,
+      1, "bond-fene");
   }
 }
 

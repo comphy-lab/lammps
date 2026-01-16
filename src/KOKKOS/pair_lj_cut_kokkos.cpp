@@ -208,11 +208,11 @@ void PairLJCutKokkos<DeviceType>::init_style()
   request->set_kokkos_device(std::is_same_v<DeviceType,LMPDeviceType>);
   if (neighflag == FULL) request->enable_full();
 
-  // create the autotuner
-
-  if (lmp->kokkos->autotuning > 0) {
-    if (tuner) delete tuner;
-    tuner = new TuneKokkos(lmp, TuneKokkos::PAIR, lmp->kokkos->autotuning);
+  if (lmp->kokkos->autotuning > 0 && !tuner) {
+    if (force->newton)
+      error->all(FLERR,"Kokkos autotuning requires 'newton off' for this pair style");
+    tuner = new TuneKokkos(lmp, TuneKokkos::PAIR, lmp->kokkos->autotuning,
+      2, "pair-lj-cut");
   }
 }
 

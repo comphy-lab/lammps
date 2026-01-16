@@ -23,10 +23,16 @@ namespace LAMMPS_NS {
 
 class TuneKokkos : protected Pointers {
  public:
-  TuneKokkos(class LAMMPS *, int kernel_type, int nevery, int nparams=2);
+  TuneKokkos(class LAMMPS *, int kernel_type, int nevery, int nparams=2, const char* name=nullptr);
   ~TuneKokkos() override;
   void allocate(int);
   void tuning_kernel_params();
+  int get_current_combination_idx() { return combination_idx; }
+  void set_relative_tolerance(double tol) { relative_tolerance = tol; }
+
+  // override the default parameter value sets
+  void set_team_size_values(const std::vector<int>& tsizes);
+  void set_vector_size_values(const std::vector<int>& vsizes);
 
   enum { PAIR, BOND, NBIN, FIX, COMPUTE };
 
@@ -51,6 +57,9 @@ class TuneKokkos : protected Pointers {
   bigint last_step;          // last timestep when timing info was collected
   double last_cpu;           // last CPU time when timing info was collected
   int firststep;             // 1 if first timestep for timing info collection
+
+  FILE *logfile;             // logfile
+  std::string name;          // name of the tuner instance
 
   double get_timing_info();                  // get the elapsed time from the last call
   void get_current_params(int, auto&, auto&);  // get the team size and vector size for a given combination index
