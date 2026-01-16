@@ -41,7 +41,7 @@ compute      p2 all pressure 1_temp
 
 dump         2 all image 1000 image-bodies.*.png type type size 600 600 shiny 0.4 box yes 0.025 &
              zoom 2.0 view 80 15 fsaa yes ssao yes 315123 0.8  body type 0.2 3
-             
+
 dump_modify  2 pad 6 backcolor darkgray backcolor2 gray boxcolor silver &
                      acolor 1 steelblue acolor 2 orange
 thermo_style custom step ke pe etotal c_p2 c_1_temp

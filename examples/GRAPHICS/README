@@ -8,4 +8,7 @@ The simulation can then be conveniently started with CTRL-Enter and
 stopped with CTRL-\ and the slideshow viewer will display the images
 automatically as they are created.
 
-- in.cubes-and-pyramids:  visualization of body particles
+Here is a list of the inputs and which graphics features they demonstrate
+
+- in.cubes-and-pyramids:    visualization of body particles
+- in.breakable:             using autobond, color-by-property, adding objects and text
