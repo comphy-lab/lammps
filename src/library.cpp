@@ -1512,8 +1512,14 @@ internally by the :doc:`Fortran interface <Fortran>` and are not likely to be us
      - 1 if the atom style includes per-atom masses, 0 if there are per-type masses. See :doc:`atom_style`.
    * - radius_flag
      - 1 if the atom style includes a per-atom radius. See :doc:`atom_style`.
+   * - body_flag
+     - 1 if the atom style describes body particles. See :doc:`atom_style`.
    * - ellipsoid_flag
      - 1 if the atom style describes extended particles that may be ellipsoidal. See :doc:`atom_style`.
+   * - line_flag
+     - 1 if the atom style describes line particles. See :doc:`atom_style`.
+   * - tri_flag
+     - 1 if the atom style describes tri particles. See :doc:`atom_style`.
    * - omega_flag
      - 1 if the atom style can store per-atom rotational velocities. See :doc:`atom_style`.
    * - torque_flag
@@ -1617,7 +1623,11 @@ int lammps_extract_setting(void *handle, const char *keyword)
   if (strcmp(keyword,"rmass_flag") == 0) return lmp->atom->rmass_flag;
   if (strcmp(keyword,"radius_flag") == 0) return lmp->atom->radius_flag;
 
+  if (strcmp(keyword,"body_flag") == 0) return lmp->atom->body_flag;
   if (strcmp(keyword,"ellipsoid_flag") == 0) return lmp->atom->ellipsoid_flag;
+  if (strcmp(keyword,"line_flag") == 0) return lmp->atom->line_flag;
+  if (strcmp(keyword,"tri_flag") == 0) return lmp->atom->tri_flag;
+
   if (strcmp(keyword,"omega_flag") == 0) return lmp->atom->omega_flag;
   if (strcmp(keyword,"torque_flag") == 0) return lmp->atom->torque_flag;
   if (strcmp(keyword,"angmom_flag") == 0) return lmp->atom->angmom_flag;
