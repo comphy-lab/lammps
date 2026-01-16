@@ -2218,117 +2218,102 @@ ColorMap::~ColorMap()
 /* ----------------------------------------------------------------------
    redefine color map
    args = lo hi style delta N entry1 entry2 ... entryN as defined by caller
-   return 1 if any error in args, else return 0
+   return > 0 if any error in args, else return 0
+   return value is position of failed arg, i.e. array index+1
 ------------------------------------------------------------------------- */
 
 int ColorMap::reset(int narg, char **arg)
 {
-  if (!islower(arg[0][0])) {
+  if (utils::is_double(arg[0])) {
     mlo = NUMERIC;
     mlovalue = utils::numeric(FLERR,arg[0],false,lmp);
   } else if (strcmp(arg[0],"min") == 0) mlo = MINVALUE;
   else return 1;
 
-  if (!islower(arg[1][0])) {
+  if (utils::is_double(arg[1])) {
     mhi = NUMERIC;
     mhivalue = utils::numeric(FLERR,arg[1],false,lmp);
   } else if (strcmp(arg[1],"max") == 0) mhi = MAXVALUE;
-  else return 1;
+  else return 2;
 
-  if (mlo == NUMERIC && mhi == NUMERIC && mlovalue >= mhivalue) return 1;
+  if ((mlo == NUMERIC) && (mhi == NUMERIC) && (mlovalue >= mhivalue)) return 1;
 
-  if (mlo == MINVALUE || mhi == MAXVALUE) dynamic = 1;
+  if ((mlo == MINVALUE) || (mhi == MAXVALUE)) dynamic = 1;
   else dynamic = 0;
 
-  if (strlen(arg[2]) != 2) return 1;
+  if (strlen(arg[2]) != 2) return 3;
   if (arg[2][0] == 'c') mstyle = CONTINUOUS;
   else if (arg[2][0] == 'd') mstyle = DISCRETE;
   else if (arg[2][0] == 's') mstyle = SEQUENTIAL;
-  else return 1;
+  else return 3;
   if (arg[2][1] == 'a') mrange = ABSOLUTE;
   else if (arg[2][1] == 'f') mrange = FRACTIONAL;
-  else return 1;
+  else return 3;
 
   if (mstyle == SEQUENTIAL) {
     mbinsize = utils::numeric(FLERR,arg[3],false,lmp);
-    if (mbinsize <= 0.0) return 1;
+    if (mbinsize <= 0.0) return 4;
     mbinsizeinv = 1.0/mbinsize;
   }
 
   nentry = utils::inumeric(FLERR,arg[4],false,lmp);
-  if (nentry < 1) return 1;
+  if (nentry < 1) return 5;
   delete [] mentry;
   mentry = new MapEntry[nentry];
 
   int expandflag = 0;
-
   int n = 5;
   for (int i = 0; i < nentry; i++) {
     if (mstyle == CONTINUOUS) {
-      if (n+2 > narg) return 1;
-      if (!islower(arg[n][0])) {
+      if (n+2 > narg) return n;
+      if (utils::is_double(arg[n])) {
         mentry[i].single = NUMERIC;
         mentry[i].svalue = utils::numeric(FLERR,arg[n],false,lmp);
       } else if (strcmp(arg[n],"min") == 0) mentry[i].single = MINVALUE;
       else if (strcmp(arg[n],"max") == 0) mentry[i].single = MAXVALUE;
-      else return 1;
+      else return n+1;
       mentry[i].color = image->color2rgb(arg[n+1]);
       n += 2;
     } else if (mstyle == DISCRETE) {
-      if (n+3 > narg) return 1;
-      if (!islower(arg[n][0])) {
+      if (n+3 > narg) return n+1;
+      if (utils::is_double(arg[n])) {
         mentry[i].lo = NUMERIC;
         mentry[i].lvalue = utils::numeric(FLERR,arg[n],false,lmp);
       } else if (strcmp(arg[n],"min") == 0) mentry[i].lo = MINVALUE;
       else if (strcmp(arg[n],"max") == 0) mentry[i].lo = MAXVALUE;
-      else return 1;
-      if (!islower(arg[n+1][0])) {
+      else return n+1;
+      if (utils::is_double(arg[n+1])) {
         mentry[i].hi = NUMERIC;
         mentry[i].hvalue = utils::numeric(FLERR,arg[n+1],false,lmp);
       } else if (strcmp(arg[n+1],"min") == 0) mentry[i].hi = MINVALUE;
       else if (strcmp(arg[n+1],"max") == 0) mentry[i].hi = MAXVALUE;
-      else return 1;
+      else return n+2;
       mentry[i].color = image->color2rgb(arg[n+2]);
       n += 3;
     } else if (mstyle == SEQUENTIAL) {
-      // NOTE: this is unfinished code, not sure how useful it is
-      // idea is to allow a list of colors to be specified with a single arg
-      // problem is that sequential colors in ALL are not very different
-      // e.g. ALL or USER or ALL5:10 or USER1:10:2
-      // current code is just 1st nentry values of ALL or USER
-      // need to comment out error check in DumpImage::modify_param()
-      //   for amap check on (narg < n) to get it to work
-      // need to add extra logic here to check not accessing undefined colors
-      if (i == 0) {
-        if (n+1 > narg) return 1;
-        if (strcmp(arg[n],"ALL") == 0) expandflag = 1;
-        if (strcmp(arg[n],"USER") == 0) expandflag = 2;
-      }
-      if (expandflag == 0) {
-        if (n+1 > narg) return 1;
-        mentry[i].color = image->color2rgb(arg[n]);
-      } else if (expandflag == 1) {
-        mentry[i].color = image->color2rgb(nullptr,i+1);
-      } else if (expandflag == 2) {
-        mentry[i].color = image->color2rgb(nullptr,-(i+1));
-      }
+      if (n+1 > narg) return n+1;
+      mentry[i].color = image->color2rgb(arg[n]);
       n += 1;
     }
-    if (mentry[i].color == nullptr) return 1;
+    if (mentry[i].color == nullptr) return n;
   }
 
   if (mstyle == CONTINUOUS) {
-    if (nentry < 2) return 1;
-    if (mentry[0].single != MINVALUE || mentry[nentry-1].single != MAXVALUE)
-      return 1;
+    if (nentry < 2) return 5;
+    if (mentry[0].single != MINVALUE)
+      return 6;
+    if (mentry[nentry-1].single != MAXVALUE)
+      return 4 + nentry*2;
     for (int i = 2; i < nentry-1; i++)
-      if (mentry[i].svalue <= mentry[i-1].svalue) return 1;
+      if (mentry[i].svalue <= mentry[i-1].svalue) return 4 + 2*(i+1);
   } else if (mstyle == DISCRETE) {
-    if (nentry < 1) return 1;
-    if (mentry[nentry-1].lo != MINVALUE || mentry[nentry-1].hi != MAXVALUE)
-      return 1;
+    if (nentry < 1) return 5;
+    if (mentry[nentry-1].lo != MINVALUE)
+      return 3 + nentry*3;
+    if (mentry[nentry-1].hi != MAXVALUE)
+      return 4 + nentry*3;
   } else if (mstyle == SEQUENTIAL) {
-    if (nentry < 1) return 1;
+    if (nentry < 1) return 5;
   }
 
   // one-time call to minmax if color map is static

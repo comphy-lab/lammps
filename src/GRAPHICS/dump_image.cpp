@@ -2265,20 +2265,24 @@ int DumpImage::modify_param(int narg, char **arg)
 
   if ((strcmp(arg[0],"amap") == 0) || (strcmp(arg[0],"gmap") == 0)) {
     if (narg < 6) utils::missing_cmd_args(FLERR, "dump_modify amap/gmap", error);
-    if (strlen(arg[3]) != 2) error->all(FLERR,"Illegal dump_modify amap/gmap command");
+    if (strlen(arg[3]) != 2)
+      error->all(FLERR,argoff + 3, "Incorrect dump_modify amap/gmap colormap style {}", arg[3]);
     int factor = 0;
     if (arg[3][0] == 's') factor = 1;
     else if (arg[3][0] == 'c') factor = 2;
     else if (arg[3][0] == 'd') factor = 3;
-    else error->all(FLERR,"Illegal dump_modify command");
+    else error->all(FLERR,argoff+3, "Unknown dump_modify amap/gmap color map type {}", arg[3][0]);
     int nentry = utils::inumeric(FLERR,arg[5],false,lmp);
-    if (nentry < 1) error->all(FLERR,"Illegal dump_modify command");
+    if (nentry < 1)
+      error->all(FLERR, argoff+5, "Must have at least 1 color map entry for dump_modify amap/gmap");
     n = 6 + factor*nentry;
-    if (narg < n) error->all(FLERR,"Illegal dump_modify command");
+    if (narg < n)  utils::missing_cmd_args(FLERR, "dump_modify amap/gmap", error);
     int flag = 0;
-    if (strcmp(arg[0],"amap") == 0) flag = image->map_reset(0,n-1,&arg[1]);
-    if (strcmp(arg[0],"gmap") == 0) flag = image->map_reset(1,n-1,&arg[1]);
-    if (flag) error->all(FLERR, "Illegal dump_modify command");
+    if (strcmp(arg[0], "amap") == 0) flag = image->map_reset(0, n-1, &arg[1]);
+    if (strcmp(arg[0], "gmap") == 0) flag = image->map_reset(1, n-1, &arg[1]);
+    if (flag)
+      error->all(FLERR, argoff+flag, "Invalid map settings in dump_modify amap/gmap command");
+
     return n;
   }
 
