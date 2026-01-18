@@ -262,7 +262,7 @@ determines whether a JPEG, PNG, TGA, or PPM file is created with the
 *image* dump style.  If the suffix is ".jpg" or ".jpeg", then a `JPEG
 format <jpeg_format_>`_ file is created, if the suffix is ".png", then a
 `PNG format <png_format_>`_ file is created, if the suffix is ".tga",
-then an compressed 24-bit RGB `TGA or TARGA format <tga_format_>`_
+then a compressed 24-bit RGB `TGA or TARGA format <tga_format_>`_
 file is created, else a `PPM (aka NETPBM) format <ppm_format_>`_ file is
 created.  The JPEG, PNG, and TGA files are binary; PPM has a text mode
 header followed by binary data. JPEG images have lossy compression, PNG
