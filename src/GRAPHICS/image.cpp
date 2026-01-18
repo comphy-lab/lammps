@@ -1617,7 +1617,7 @@ void Image::write_PNG(FILE *fp)
 
 /* ---------------------------------------------------------------------- */
 
-void Image::write_TGA(FILE *fp)
+void Image::write_TGA(FILE *fp, bool compressed)
 {
   if (!fp) return;
 
@@ -1627,25 +1627,65 @@ void Image::write_TGA(FILE *fp)
 
   TGAHeader header;
   memset(&header, 0, sizeof(header));
-  header.datatypecode = 2;    // uncompressed RGB
   header.width[0] = static_cast<unsigned char>(tgawidth & 0xFF);
   header.width[1] = static_cast<unsigned char>((tgawidth & 0xFF00) >> 8);
   header.height[0] = static_cast<unsigned char>(tgaheight & 0xFF);
   header.height[1] = static_cast<unsigned char>((tgaheight & 0xFF00) >> 8);
   header.bitsperpixel = 3 * 8 * sizeof(unsigned char);
-  fwrite(&header, sizeof(header), 1, fp);
 
-  unsigned char *pix;
-  for (int i=0; i < tgaheight; ++i) {
-    for (int j = 0; j < tgawidth; ++j) {
-      pix = &writeBuffer[i*3*tgawidth + 3*j];
-      // TGA stores RGB as BGR
-      fputc(pix[2], fp);
-      fputc(pix[1], fp);
-      fputc(pix[0], fp);
+  if (compressed) {
+    header.datatypecode = 10;    // RLE compressed RGB
+    fwrite(&header, sizeof(header), 1, fp);
+
+    unsigned char *pix;
+    unsigned char old[3];
+    unsigned char len;
+    for (int i=0; i < tgaheight; ++i) {
+      len = 0;
+      for (int j = 0; j < tgawidth; ++j) {
+        pix = &writeBuffer[i*3*tgawidth + 3*j];
+        if (len == 0) {
+          old[0] = pix[0];
+          old[1] = pix[1];
+          old[2] = pix[2];
+        }
+
+        if ((old[0] != pix[0]) || (old[1] != pix[1]) || (old[2] != pix[2]) || (len == 127)) {
+          --len;
+          len |= 0x80U;
+          fputc(len, fp);
+          // TGA stores RGB as BGR
+          fputc(old[2], fp);
+          fputc(old[1], fp);
+          fputc(old[0], fp);
+          old[0] = pix[0];
+          old[1] = pix[1];
+          old[2] = pix[2];
+          len = 1;
+        } else ++len;
+      }
+      --len;
+      len |= 0x80U;
+      fputc(len, fp);
+      fputc(old[2], fp);
+      fputc(old[1], fp);
+      fputc(old[0], fp);
+    }
+  } else {
+    header.datatypecode = 2;    // uncompressed RGB
+    fwrite(&header, sizeof(header), 1, fp);
+
+    unsigned char *pix;
+    for (int i=0; i < tgaheight; ++i) {
+      for (int j = 0; j < tgawidth; ++j) {
+        pix = &writeBuffer[i*3*tgawidth + 3*j];
+        // TGA stores RGB as BGR
+        fputc(pix[2], fp);
+        fputc(pix[1], fp);
+        fputc(pix[0], fp);
+      }
     }
   }
-
   TGAFooter footer{0, 0, "TRUEVISION-XFILE."};
   fwrite(&footer, sizeof(footer), 1, fp);
 }

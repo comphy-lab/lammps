@@ -258,11 +258,11 @@ determines whether a JPEG, PNG, TGA, or PPM file is created with the
 *image* dump style.  If the suffix is ".jpg" or ".jpeg", then a `JPEG
 format <jpeg_format_>`_ file is created, if the suffix is ".png", then a
 `PNG format <png_format_>`_ file is created, if the suffix is ".tga",
-then an uncompressed 24-bit RGB `TGA or TARGA format <tga_format_>`_
+then an compressed 24-bit RGB `TGA or TARGA format <tga_format_>`_
 file is created, else a `PPM (aka NETPBM) format <ppm_format_>`_ file is
 created.  The JPEG, PNG, and TGA files are binary; PPM has a text mode
 header followed by binary data. JPEG images have lossy compression, PNG
-has lossless compression, and TGA and PPM files are uncompressed but can
+and TGA have lossless compression, and PPM files are uncompressed but can
 be compressed with a supported compression program, if LAMMPS has been
 compiled with :ref:`compression support <gzip>` and a supported suffix
 is used.
