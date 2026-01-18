@@ -1650,8 +1650,8 @@ void Image::write_TGA(FILE *fp, bool compressed)
           old[2] = pix[2];
         }
 
-        if ((old[0] != pix[0]) || (old[1] != pix[1]) || (old[2] != pix[2]) || (len == 127)) {
-          --len;
+        if (memcmp(old, pix, 3) || (len == 127) || (j == tgawidth - 1)) {
+          if (j != tgawidth - 1) --len;
           len |= 0x80U;
           fputc(len, fp);
           // TGA stores RGB as BGR
@@ -1664,12 +1664,6 @@ void Image::write_TGA(FILE *fp, bool compressed)
           len = 1;
         } else ++len;
       }
-      --len;
-      len |= 0x80U;
-      fputc(len, fp);
-      fputc(old[2], fp);
-      fputc(old[1], fp);
-      fputc(old[0], fp);
     }
   } else {
     header.datatypecode = 2;    // uncompressed RGB
