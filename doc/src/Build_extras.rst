@@ -1525,9 +1525,9 @@ details please see ``lib/hdnnp/README`` and the `n2p2 build documentation
 .. _ml-runner:
 
 ML-RUNNER package
-----------------
+-----------------
 To build with this package you need the external
-`RuNNer https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en`_
+`RuNNer <https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en>`_
 library. By default, the LAMMPS build process automatically downloads and
 compiles the latest version of `RuNNer`. Alternatively, you may choose the
 path and name of a manually compiled RuNNer library. Please see the box below for

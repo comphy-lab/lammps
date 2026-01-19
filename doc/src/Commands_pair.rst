@@ -260,6 +260,7 @@ OPT.
    * :doc:`resquared (go) <pair_resquared>`
    * :doc:`rheo <pair_rheo>`
    * :doc:`rheo/solid <pair_rheo_solid>`
+   * :doc:`runner <pair_runner>`
    * :doc:`saip/metal (t) <pair_saip_metal>`
    * :doc:`saip/metal/tmd (t) <pair_saip_metal>`
    * :doc:`sdpd/taitwater/isothermal <pair_sdpd_taitwater_isothermal>`
