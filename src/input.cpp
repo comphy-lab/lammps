@@ -599,9 +599,16 @@ void Input::substitute(char *&str, char *&str2, int &max, int &max2, int flag)
 
   while (*ptr) {
 
+    // if this is not the first character and the character before ptr is a backslash
+    // do *not* expand as variable but overwrite the backslash with the $
+
+    if ((*ptr == '$') && (ptr > str) && (ptr[- 1] == '\\')) {
+
+      ptr2[-1] = *ptr++;
+
     // variable substitution
 
-    if (*ptr == '$') {
+    } else if (*ptr == '$') {
 
       // value = ptr to expanded variable
       // variable name between curly braces, e.g. ${a}
