@@ -107,6 +107,7 @@ FixBondReact::FixBondReact(LAMMPS *lmp, int narg, char **arg) :
 
   newton_bond = force->newton_bond;
 
+  thermo_modify_colname = 1;
   restart_global = 1;
   force_reneighbor = 1;
   next_reneighbor = -1;
@@ -2212,14 +2213,14 @@ void FixBondReact::customvarnames()
           }
           if (pos1 == std::string::npos) break;
 
-          pos2 = varstr.find("(",pos1);
-          pos3 = varstr.find(")",pos2);
+          pos2 = varstr.find('(',pos1);
+          pos3 = varstr.find(')',pos2);
           if (pos2 == std::string::npos || pos3 == std::string::npos)
             error->all(FLERR,"Fix bond/react: Illegal rxn function syntax\n");
           prev3 = (int)pos3;
           argstr = varstr.substr(pos2+1,pos3-pos2-1);
           argstr.erase(remove_if(argstr.begin(), argstr.end(), isspace), argstr.end()); // remove whitespace
-          pos2 = argstr.find(",");
+          pos2 = argstr.find(',');
           if (pos2 != std::string::npos) varid = argstr.substr(0,pos2);
           else varid = argstr;
           // check if we already know about this variable
@@ -2305,15 +2306,15 @@ bool FixBondReact::custom_constraint(const std::string &varstr, Reaction &rxn, s
     if (pos1 == std::string::npos) break;
 
     fragid = "all"; // operate over entire reaction site by default
-    pos2 = varstr.find("(",pos1);
-    pos3 = varstr.find(")",pos2);
+    pos2 = varstr.find('(',pos1);
+    pos3 = varstr.find(')',pos2);
     if (pos2 == std::string::npos || pos3 == std::string::npos)
       error->one(FLERR,"Fix bond/react: Illegal rxn function syntax\n");
     evlstr.push_back(varstr.substr(prev3+1,pos1-(prev3+1)));
     prev3 = pos3;
     argstr = varstr.substr(pos2+1,pos3-pos2-1);
     argstr.erase(remove_if(argstr.begin(), argstr.end(), isspace), argstr.end()); // remove whitespace
-    pos2 = argstr.find(",");
+    pos2 = argstr.find(',');
     if (pos2 != std::string::npos) {
       varid = argstr.substr(0,pos2);
       fragid = argstr.substr(pos2+1);
@@ -4414,6 +4415,13 @@ double FixBondReact::compute_vector(int n)
   // now we print just the totals for each reaction instance
   return (double) rxns[n].reaction_count_total;
 
+}
+
+/* ---------------------------------------------------------------------- */
+
+std::string FixBondReact::get_thermo_colname(int n)
+{
+  return fmt::format("f_{}:{}", id, rxns[n].name);
 }
 
 /* ---------------------------------------------------------------------- */
