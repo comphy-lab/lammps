@@ -136,8 +136,8 @@ class AtomVecKokkos : virtual public AtomVec {
                                             DAT::tdual_int_1d &k_indices) {}
 
 
-  // TODO: Think of a way to not have these nlocal_bonus functions
-  // Used in CommKokkos::exchange_device() for avecKKEllipsoid
+  // Used in CommKokkos::exchange_device() for bonus data
+
   virtual int get_status_nlocal_bonus() { return 0; }
   virtual void set_status_nlocal_bonus(int) {}
 

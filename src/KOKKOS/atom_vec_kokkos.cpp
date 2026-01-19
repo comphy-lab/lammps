@@ -864,7 +864,7 @@ struct AtomVecKokkos_PackCommVel {
       }
     }
 
-    // ANGMOM - included for avecEllipsoid
+    // angmom: included for ellipsoid
 
     if (_datamask & ANGMOM_MASK) {
       _buf(i,m++) = _angmom(j,0);
@@ -1091,7 +1091,7 @@ struct AtomVecKokkos_UnpackCommVel {
 
     if constexpr (!DEFAULT) {
 
-      // ANGMOM - included for avecEllipsoid
+      // angmom: included for ellipsoid
 
       if (_datamask & ANGMOM_MASK) {
         _angmom(i+_first,0) = _buf(i,m++);
@@ -1839,7 +1839,7 @@ struct AtomVecKokkos_PackBorderVel {
       _buf(i,m++) = _v(j,2);
     }
 
-    // ANGMOM - included for avecEllipsoid
+    // angmom: included for ellipsoid
 
     if (_datamask & ANGMOM_MASK) {
       _buf(i,m++) = _angmom(j,0);
@@ -2042,7 +2042,7 @@ struct AtomVecKokkos_UnpackBorderVel {
 
     if constexpr (!DEFAULT) {
 
-      // ANGMOM - included for avecEllipsoid
+      // angmom: included for ellipsoid
 
       if (_datamask & ANGMOM_MASK) {
         _angmom(i+_first,0) = _buf(i,m++);
@@ -2340,7 +2340,7 @@ struct AtomVecKokkos_PackExchangeFunctor {
         _buf(mysend,m++) = _omega(i,2);
       }
 
-      // ANGMOM - included for avecEllipsoid
+      // angmom: included for ellipsoid
 
       if (_datamask & ANGMOM_MASK) {
         _buf(mysend,m++) = _angmom(i,0);
