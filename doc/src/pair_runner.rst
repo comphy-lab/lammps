@@ -66,45 +66,68 @@ Examples
 Description
 """""""""""
 
-This pair style provides an interface to the **RuNNer** (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) as decribed in :ref: `(Behler and Parrinello 2007)` <_Behler_Parrinello_2007>. HDNNPs represent the total energy of a system as a sum of environment-dependent atomic contributions.
+This pair style provides an interface to the `**RuNNer 2** <https://gitlab.com/runner-suite/runner2>` (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) as introduced in :ref:`(Behler and Parrinello 2007) <Behler_Parrinello_2007>`. HDNNPs are machine learning potentials, which represent the total energy of a system as a sum of environment-dependent atomic contributions.
 
-The pair style supports several "generations" of HDNNPs as defined in :ref: `(Behler 2021)` <Behler_2021>.
+The pair style supports several "generations" of HDNNPs as proposed in :ref:`(Behler 2021) <Behler_2021>`.
 
-* **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments :ref: `(Behler and Parrinello 2007)` <_Behler_Parrinello_2007>.
-* **Third-generation (3G):** Extends 2Gs by adding explicit long-range electrostatic interactions based on environment-dependent atomic charges :ref: `(Artrith, Morawietz and Behler 2011)` <Artrith_Morawietz_Behler_2011>.
-* **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities (and optionally hardness). These charges are fed back into the energy model, providing a global descriptor for the atomic energies :ref: `(Ko et al 2021)` <Ko_Finkler_Goedecker_Behler_2021>.
+* **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments :ref:`(Behler and Parrinello 2007) <Behler_Parrinello_2007>`.
+* **Third-generation (3G):** Extends 2Gs by adding explicit long-range electrostatic interactions based on environment-dependent atomic charges :ref:`(Artrith, Morawietz and Behler 2011) <Artrith_Morawietz_Behler_2011>`.
+* **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities (and optionally hardness). These charges are fed back into the energy model, providing a global descriptor for the atomic energies :ref:`(Ko et al 2021) <Ko_Finkler_Goedecker_Behler_2021>`.
 
 Additionally, all generations can be augmented with:
 
-* **Hirshfeld-based dispersion:** Long-range dispersion interactions based on the Tkatchenko-Scheffler dispersion model :ref: `(Tkatchenko and Scheffler 2009)` <Tkatchenko_Scheffler_2009>.
+* **Hirshfeld-based dispersion:** Long-range dispersion interactions based on the Tkatchenko-Scheffler dispersion model :ref:`(Tkatchenko and Scheffler 2009) <Tkatchenko_Scheffler_2009>`.
 * **Repulsive potentials:** Ziegler-Biersack-Littmark-based short-range pairwise repulsive potential.
 
----
+Only a single *pair_coeff* command with two asterisk wild-cards is used with this
+pair style. Its additional arguments define the mapping of LAMMPS atom types to
+RuNNer atomic number.
 
-**Committee Approach:**
+.. code-block:: LAMMPS
 
-The pair style supports running multiple neural network models simultaneously. The forces, energies, and virials propagated in the simulation are the average of all committee members. This is useful for active learning and uncertainty estimation.
+   pair_coeff * * 1 8
 
-**Energy Output (via Compute):**
-The individual potential energies of each committee member are accessed using the :doc:`compute pair <compute_pair>` command.
+maps atom types 1 and 2 to the atomic number 1 ("H") and 8 ("O") in RuNNer.
 
-* Example: `compute ec all pair runner`
-* Access: The energies are stored in a global vector of length `committee_size`. They are accessed as `c_ec[1]`, `c_ec[2]`, up to `c_ec[N]`.
-* In `thermo_style`, these represent the potential energy of the system according to each specific model in the committee.
+----
 
-**Force Output (via Fix Property/Atom):**
-To export forces of individual committee members (e.g., to compute force variance per atom), you must define a custom per-atom array **before** the `pair_style` command.
+Committees
+"""""""""""
 
-* **Name:** Must be `f_comm`.
-* **Size:** Must be exactly $3 \times committee\_size$. (e.g., for a size 8 committee, the size is 24).
-* **Ghost:** Must set `ghost yes` to ensure forces are correctly communicated.
-* **Indexing:** The forces are stored sequentially. 
-    * `f_comm[1], f_comm[2], f_comm[3]` = x, y, z forces for Member 1.
-    * `f_comm[4], f_comm[5], f_comm[6]` = x, y, z forces for Member 2.
-* **Example Dump:** `dump 1 all custom 100 out.dump id f_comm[1] f_comm[2] f_comm[3] f_comm[4] f_comm[5] f_comm[6]`
+The pair style supports **Committees** where multiple HDNNPs, sharing atomic descriptors, are evaluated simultaneously. The forces, energies, and virials used to propagate the simulation are the average of all committee members.
+This is useful for Query-by-Committee-based Active Learning approaches and uncertainty estimation of production MDs.
 
-**Charge Output (4G only):**
-If `q_comm` is set to `yes`, a per-atom array `fix q_comm all property/atom q_comm N ghost yes` (where N is `committee_size`) can be used to extract individual member charges.
+The individual potential energies of each committee member can be accessed using the :doc:`compute pair <compute_pair>` command.
+
+.. code-block:: LAMMPS
+
+   compute e_comm all pair runner
+
+The energies are stored in the global `e_comm` vector of length `committee_size`. They can be accessed as `c_ec[1]`, `c_ec[2]`, up to `c_ec[N]`.
+
+The individual forces of the committee members (e.g., to compute force variance per atom) can be accessed by defining a custom per-atom array using the `fix property/atom` command **before** the `pair_style` command.
+The array **must** be a floating-point array `d2_name` with name `f_comm` and three times `committee_size` columns called `f_comm`. It is necessary for ghost atom info to be communicated.
+
+.. code-block:: LAMMPS
+
+   fix 1 all property/atom d2_f_comm 24 ghost yes
+
+This creates the custom per-atom array for a committee size of 8.
+The forces are stored sequentially and can be accessed as 
+
+.. code-block:: LAMMPS
+
+   d2_f_comm[1] # fx member 1
+   d2_f_comm[2] # fy member 1
+   d2_f_comm[3] # fz member 1
+   d2_f_comm[4] # fx member 2
+
+For 4G potentials `q_comm` can be set to `yes` to extract individual member charges. A custom per-atom array `q_comm` needs to specified **before** the `pair_style` command. The array **must** be a floating-point array `d2_name` with name `q_comm` and `committee_size` columns. It is necessary for ghost atom info to be communicated.
+
+.. code-block :: LAMMPS
+
+   d2_q_comm[1] # q member 1
+   d2_q_comm[2] # q member 2
 
 ---
 
@@ -173,4 +196,4 @@ Related commands
 
 .. _Behler_2021:
 
-**(Behler 2021)** Behler, J., Chem. Rev. 2021, 121, 16, 10037–10072
+**(Behler 2021)** Behler, J., Chem. Rev. 2021, 121, 16, 10037–10072.
