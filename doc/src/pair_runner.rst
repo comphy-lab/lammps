@@ -112,8 +112,8 @@ General
 Use the *dir* keyword to specify the directory containing the RuNNer configuration files. The directory must contain:
 
 * ``input.nn``: The HDNNP architecture and feature map specifications.
-* ``scaling_?.data``: Feature map scaling data for each element.
-* ``weights_?.???.data``: Neural network parameters (weights and biases) for each element.
+* ``scaling_?.data``: Feature map scaling data for the model.
+* ``weights_?.???.data``: Neural network parameters (weights and biases) for each element and model.
 
 The RuNNer library is unit-agnostic. Use *cflength* and *cfenergy* to scale LAMMPS coordinates and energies to the units in which the potential was trained (typically Bohr and Hartree). If the HDNNP was trained in Bohr/Hartree and the LAMMPS simulation uses *metal* units (Angstroms, eV), then *cflength* and *cfenergy* must be the multiplicative factors required to convert LAMMPS units to the respective quantities in native HDNNP units:
 
@@ -189,7 +189,7 @@ For forces, set *f_comm* to *yes*. The array **must** be a floating-point array 
    fix 1 all property/atom d2_f_comm 24 ghost yes
    pair_style runner committee_size 8 f_comm yes
 
-Forces are stored sequentially by member and dimension ($fx_1, fy_1, fz_1, fx_2,$ ...):
+Forces are stored sequentially by member and dimension ($fx_1, fy_1, fz_1, fx_2,$ ...) and can be accessed by subsequent commands (like :doc:`dump <dump>`) as:
 
 * ``d2_f_comm[1]``, ``d2_f_comm[2]``, ``d2_f_comm[3]``: Force (x,y,z) for member 1
 * ``d2_f_comm[4]``, ``d2_f_comm[5]``, ``d2_f_comm[6]``: Force (x,y,z) for member 2
