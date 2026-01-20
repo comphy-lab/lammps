@@ -385,6 +385,9 @@ bool LabelMap::is_complete(int mode) const
 
 int LabelMap::infer_bondtype(int type1, int type2)
 {
+  // check for out of range input
+  if ((type1 < 1) || (type1 > natomtypes) || (type2 < 1) || (type2 > natomtypes)) return -1;
+
   std::vector<std::string> mytypes(2);
   mytypes[0] = typelabel[type1-1];
   mytypes[1] = typelabel[type2-1];
@@ -421,6 +424,10 @@ int LabelMap::infer_bondtype(const std::vector<std::string> &mytypes)
 
 int LabelMap::infer_angletype(int type1, int type2, int type3)
 {
+  // check for out of range input
+  if ((type1 < 1) || (type1 > natomtypes) || (type2 < 1) || (type2 > natomtypes) || (type3 < 1) ||
+      (type3 > natomtypes))
+    return -1;
   // convert numeric atom types to type label
 
   std::vector<std::string> mytypes(3);
@@ -463,6 +470,10 @@ int LabelMap::infer_angletype(const std::vector<std::string> &mytypes)
 
 int LabelMap::infer_dihedraltype(int type1, int type2, int type3, int type4)
 {
+  // check for out of range input
+  if ((type1 < 1) || (type1 > natomtypes) || (type2 < 1) || (type2 > natomtypes) || (type3 < 1) ||
+      (type3 > natomtypes) || (type4 < 1) || (type4 > natomtypes))
+    return -1;
   // convert numeric atom types to type label
 
   std::vector<std::string> mytypes(4);
@@ -508,6 +519,10 @@ int LabelMap::infer_dihedraltype(const std::vector<std::string> &mytypes)
 
 int LabelMap::infer_impropertype(int type1, int type2, int type3, int type4)
 {
+  // check for out of range input
+  if ((type1 < 1) || (type1 > natomtypes) || (type2 < 1) || (type2 > natomtypes) || (type3 < 1) ||
+      (type3 > natomtypes) || (type4 < 1) || (type4 > natomtypes))
+    return -1;
   // convert numeric atom types to type label
 
   std::vector<std::string> mytypes(4);
