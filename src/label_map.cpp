@@ -390,7 +390,7 @@ int LabelMap::infer_bondtype(int type1, int type2)
   mytypes[1] = typelabel[type2-1];
   if (mytypes[0].empty() || mytypes[1].empty()) return -1;
 
-  return infer_bondtype(mytypes);
+  return infer_bondtype(std::move(mytypes));
 }
 
 /* ----------------------------------------------------------------------
@@ -430,7 +430,7 @@ int LabelMap::infer_angletype(int type1, int type2, int type3)
   for (size_t i = 0; i < 3; i++)
     if (mytypes[i].empty()) return -1;
 
-  return infer_angletype(mytypes);
+  return infer_angletype(std::move(mytypes));
 }
 
 /* ----------------------------------------------------------------------
@@ -473,7 +473,7 @@ int LabelMap::infer_dihedraltype(int type1, int type2, int type3, int type4)
   for (size_t i = 0; i < 4; i++)
     if (mytypes[i].empty()) return -1;
 
-  return infer_dihedraltype(mytypes);
+  return infer_dihedraltype(std::move(mytypes));
 }
 
 /* ----------------------------------------------------------------------
@@ -518,7 +518,7 @@ int LabelMap::infer_impropertype(int type1, int type2, int type3, int type4)
   for (int i = 0; i < 4; i++)
     if (mytypes[i].empty()) return -1;
 
-  return infer_impropertype(mytypes);
+  return infer_impropertype(std::move(mytypes));
 }
 
 /* ----------------------------------------------------------------------
@@ -580,7 +580,7 @@ int LabelMap::parse_typelabel(int ntypes, std::string label, std::vector<std::st
       start = label.find_first_not_of('-', end);
   }
   if (out.size() != ntypes) return -1;
-  types = out;
+  types = std::move(out);
   return 1;
 }
 
