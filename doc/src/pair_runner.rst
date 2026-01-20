@@ -41,7 +41,7 @@ Syntax
      - Write individual committee charges to per-atom array
    * - *total_charge*
      - Q
-     - Total system charge for 4G/QEq
+     - Total system charge
    * - *use_prev_q*
      - *yes* or *no*
      - Use charges from previous step as QEq guess
