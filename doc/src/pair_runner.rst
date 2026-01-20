@@ -109,9 +109,13 @@ The example above maps LAMMPS atom types 1 and 2 to atomic numbers 1 ("H") and 8
 General
 ^^^^^^^
 
-Use the *dir* keyword to specify the directory containing the RuNNer configuration files. The directory must contain ``input.nn`` with the HDNNP architecture and feature map info, ``scaling_?.data`` with feature map scaling data, and ``weights_?.???.data`` with parameters for each element.
+Use the *dir* keyword to specify the directory containing the RuNNer configuration files. The directory must contain:
 
-The RuNNer library is unit-agnostic. Use *cflength* and *cfenergy* to scale LAMMPS coordinates and energies to the units in which the potential was trained. If the HDNNP was trained in Bohr and Hartree and the LAMMPS simulation uses *metal* units (Angstroms, eV), then *cflength* and *cfenergy* must be the multiplicative factors required to convert LAMMPS units to the respective quantities in native HDNNP units:
+* ``input.nn``: The HDNNP architecture and feature map specifications.
+* ``scaling_?.data``: Feature map scaling data for each element.
+* ``weights_?.???.data``: Neural network parameters (weights and biases) for each element.
+
+The RuNNer library is unit-agnostic. Use *cflength* and *cfenergy* to scale LAMMPS coordinates and energies to the units in which the potential was trained (typically Bohr and Hartree). If the HDNNP was trained in Bohr/Hartree and the LAMMPS simulation uses *metal* units (Angstroms, eV), then *cflength* and *cfenergy* must be the multiplicative factors required to convert LAMMPS units to the respective quantities in native HDNNP units:
 
 .. math::
 
@@ -121,14 +125,31 @@ The RuNNer library is unit-agnostic. Use *cflength* and *cfenergy* to scale LAMM
 
    E_{\text{native}} = E_{\text{LAMMPS}} \times \text{cfenergy}
 
-Since machine learning potentials are most reliable within their training data range, the *runner* pair style can monitor whether the features representing the local atomic environments extrapolate beyond their training range. Set *check_extrap* to *yes* to enable monitoring. The keyword *show_ew* enables the writing of extrapolation warnings (EWs) to the log. With *sum_ew_freq*, you can specify whether a summary should be written at specific intervals instead of writing each EW to the log as it occurs. The *max_extrap* threshold allows termination of a simulation when the provided number of EWs is exceeded. Setting *max_extrap* to a negative number disables the termination threshold. With *reset_ew_freq*, the EW counters can be reset at specific intervals.
+
+
+Example for *metal* units to a Bohr/Hartree potential:
+
+.. code-block:: LAMMPS
+
+   cflength 1.8897261328   # Angstrom to Bohr
+   cfenergy 0.0367493254   # eV to Hartree
+
+Since machine learning potentials are most reliable within their training data range, the *runner* pair style can monitor whether the features representing local atomic environments extrapolate beyond the training range. 
+
+* Set *check_extrap* to *yes* to enable monitoring. 
+* The keyword *show_ew* enables writing individual extrapolation warnings (EWs) to the log file. 
+* Use *sum_ew_freq* to write a summary of EW counts at specific intervals instead of logging every occurrence. 
+* The *max_extrap* threshold allows termination of a simulation if the total EW count exceeds this value. Setting *max_extrap* to a negative number disables the termination threshold. 
+* Use *reset_ew_freq* to reset the EW counters at specific intervals.
 
 Committees
 ^^^^^^^^^^
 
 The pair style supports **Committees**, where multiple HDNNPs sharing atomic descriptors are evaluated simultaneously. The forces, energies, and virials used to propagate the simulation are the average of all committee members. This is useful for Query-by-Committee-based Active Learning approaches and uncertainty estimation for production simulations.
 
-In the case of a *committee_size* greater than 1, *dir* must point to a directory that contains ``input.nn`` and ``scaling_?.data``, as well as *committee_size* many subdirectories named 1 to *N*, which contain the ``weights_?.???.data`` of the respective members.
+
+
+In the case of a *committee_size* greater than 1, the *dir* keyword must point to a directory that contains the global configuration files (``input.nn`` and ``scaling_?.data``) and a set of subdirectories named **1** to **N** (where N is the *committee_size*). Each subdirectory must contain the ``weights_?.???.data`` files for that specific committee member.
 
 .. code-block:: text
 
@@ -142,49 +163,49 @@ In the case of a *committee_size* greater than 1, *dir* must point to a director
    ├── input.nn
    └── scaling.data
 
+**Accessing Member Energies**
+
 The individual potential energies of each committee member can be accessed using the :doc:`compute pair <compute_pair>` command:
 
 .. code-block:: LAMMPS
 
    compute e_comm all pair runner
 
-Here, the energies are stored in a global vector *e_comm* of length *committee_size*. They can be accessed as follows:
+The energies are stored in a global vector *e_comm* of length *committee_size*. They can be accessed in subsequent commands (like :doc:`thermo_style <thermo_style>`) as:
+
+* ``c_e_comm[1]``: Total energy of member 1
+* ``c_e_comm[2]``: Total energy of member 2
+* ``c_e_comm[N]``: Total energy of member N
+
+**Accessing Member Forces and Charges**
+
+To extract individual member forces or charges (e.g., to compute per-atom variance), you must define a custom per-atom array using the :doc:`fix property/atom <fix_property_atom>` command **before** the *pair_style* command.
+
+For forces, set *f_comm* to *yes*. The array **must** be a floating-point array (type ``d2``) named *f_comm* with 3 times *committee_size* columns. Ghost atom communication must be enabled.
 
 .. code-block:: LAMMPS
 
-   c_e_comm[1] # total energy member 1
-   c_e_comm[2] # total energy member 2
-   c_e_comm[N] # total energy member N
-
-The individual forces of the committee members (e.g., to compute force variance per atom) can be accessed by defining a custom per-atom array using the :doc:`fix property/atom <fix_property_atom>` command **before** the *pair_style* command. The array **must** be a floating-point array (type ``d2``) with the name *f_comm* and 3 times *committee_size* columns. It is necessary for ghost atom info to be communicated.
-
-.. code-block:: LAMMPS
-
-   # Define custom per-atom force array for committee_size 8 (8 * 3 = 24 columns)
+   # Example: committee_size 8 requires 8 * 3 = 24 columns
    fix 1 all property/atom d2_f_comm 24 ghost yes
+   pair_style runner committee_size 8 f_comm yes
 
-The committee forces are stored sequentially and can be accessed as:
+Forces are stored sequentially by member and dimension ($fx_1, fy_1, fz_1, fx_2,$ ...):
 
-.. code-block:: LAMMPS
+* ``d2_f_comm[1]``, ``d2_f_comm[2]``, ``d2_f_comm[3]``: Force (x,y,z) for member 1
+* ``d2_f_comm[4]``, ``d2_f_comm[5]``, ``d2_f_comm[6]``: Force (x,y,z) for member 2
 
-   d2_f_comm[1] # fx member 1
-   d2_f_comm[2] # fy member 1
-   d2_f_comm[3] # fz member 1
-   d2_f_comm[4] # fx member 2
-
-For 3G and 4G potentials, *q_comm* can be set to *yes* to extract individual member charges. A custom per-atom array *q_comm* must be specified **before** the *pair_style* command. The array **must** be a floating-point array (type ``d2``) with the name *q_comm* and *committee_size* columns. Ghost atom communication must be enabled.
+For 3G and 4G potentials, set *q_comm* to *yes* to extract individual member charges. The array **must** be a floating-point array (type ``d2``) named *q_comm* with *committee_size* columns.
 
 .. code-block:: LAMMPS
 
-   # Define custom per-atom charge array for committee_size 2
-   fix 2 all property/atom d2_q_comm 2 ghost yes 
+   # Example: committee_size 2
+   fix 2 all property/atom d2_q_comm 2 ghost yes
+   pair_style runner committee_size 2 q_comm yes
 
-The committee charges can be accessed as:
+The committee charges are accessed as:
 
-.. code-block:: LAMMPS
-
-   d2_q_comm[1] # q member 1
-   d2_q_comm[2] # q member 2
+* ``d2_q_comm[1]``: Charge of member 1
+* ``d2_q_comm[2]``: Charge of member 2
 
 
 3G / 4G only
@@ -192,49 +213,72 @@ The committee charges can be accessed as:
 
 For 3G and 4G HDNNPs, the total charge of the system can be specified with the *total_charge* keyword. For periodic systems, the system must be charge neutral.
 
-For 4G HDNNPs only, when setting *use_prev_q* to *yes*, the predicted charges from the previous time step are used as an initial guess for QEq in the current time step.
+For 4G HDNNPs only, the *use_prev_q* keyword controls the initial guess for the iterative Charge Equilibration (QEq) solver. Setting this to *yes* uses the predicted charges from the previous time step as the starting point for the current time step, which can reduce the number of iterations required for convergence.
 
 .. note::
 
-   3G and 4G HDNNPs require either full 3D periodicity or no periodicity. Partial periodicity (e.g., ``boundary p p f``) is not supported for long-range electrostatics.
+   3G and 4G HDNNPs require either full 3D periodicity (``boundary p p p``) or no periodicity (``boundary f f f``). Partial periodicity (e.g., ``boundary p p f``) is currently not supported for long-range electrostatics.
 
 .. note::
 
-   Long-range electrostatics in RuNNer currently require global structure 
-   collection. To avoid MPI bottlenecks, it is highly recommended to use 
-   **OpenMP threading** (few MPI tasks, many OpenMP threads).
+   3G and 4G HDNNPs require a global collection of the atomic structure on a single process to perform long-range electrostatics and global QEq calculations. This creates an MPI bottleneck that leads to suboptimal scaling as the number of MPI tasks increases. Since 3G and 4G HDNNPs are heavily optimized for OpenMP in RuNNer, it is highly recommended to use a small number of MPI tasks and a large number of OpenMP threads per task to achieve the best performance.
 
 ----
 
 Mixing, shift, table, tail correction, restart, rRESPA info
 -----------------------------------------------------------
 
-This style does not support mixing. The :doc:`pair_coeff <pair_coeff>` command should only be invoked with asterisk wildcards (as shown above).
+This style does not support mixing. The :doc:`pair_coeff <pair_coeff>` command 
+should only be invoked with asterisk wildcards to define the mapping for 
+all atom types.
 
-This style does not support the :doc:`pair_modify <pair_modify>` shift, table, and tail options.
+This style does not support the :doc:`pair_modify <pair_modify>` 
+shift, table, and tail options.
 
-This style does not write information to :doc:`binary restart files <restart>`. Thus, you must re-specify the *pair_style* and *pair_coeff* commands in any input script that reads a restart file.
+This style does not write information to :doc:`binary restart files <restart>`. 
+You must re-specify the *pair_style* and *pair_coeff* commands in any input 
+script that reads a restart file.
 
-This style can only be used via the *pair* keyword of the :doc:`run_style respa <run_style>` command. It does not support the *inner*, *middle*, or *outer* keywords.
+This style can only be used via the *pair* keyword of the :doc:`run_style respa <run_style>` 
+command. It does not support the *inner*, *middle*, or *outer* keywords.
 
 Restrictions
 ------------
 
-This pair style is part of the ML-RUNNER package. It is only enabled if LAMMPS was built with that package. See the :doc:`Build package <Build_packages>` page for more info.
+This pair style is part of the ML-RUNNER package. It is only enabled if LAMMPS 
+was built with that package. See the :doc:`Build package <Build_package>` 
+doc page for more info.
 
-Currently, only one instance of ``pair_style runner`` can be initialized per simulation.
+Currently, only one instance of ``pair_style runner`` can be initialized per 
+simulation. The style does not support the use of :doc:`pair_style hybrid <pair_hybrid>` 
+where multiple ``runner`` instances are defined.
 
 Related commands
 ----------------
 
-:doc:`pair_coeff <pair_coeff>`, :doc:`fix property/atom <fix_property_atom>`, :doc:`compute pair <compute_pair>`
+:doc:`pair_coeff <pair_coeff>`, :doc:`fix property/atom <fix_property_atom>`, 
+:doc:`compute pair <compute_pair>`
 
 Default
 -------
 
-The default options are *dir* = "./", *cflength* = 1.0, *cfenergy* = 1.0, *committee_size* = 1, *f_comm* = no, *q_comm* = no, *total_charge* = 0.0, *use_prev_q* = no, *check_extrap* = no, *max_extrap* = 100, *show_ew* = no, *sum_ew_freq* = 0, and *reset_ew_freq* = 0.
+The default options are:
 
----
+* *dir* = "./"
+* *cflength* = 1.0
+* *cfenergy* = 1.0
+* *committee_size* = 1
+* *f_comm* = no
+* *q_comm* = no
+* *total_charge* = 0.0
+* *use_prev_q* = no
+* *check_extrap* = no
+* *max_extrap* = 100
+* *show_ew* = no
+* *sum_ew_freq* = 0
+* *reset_ew_freq* = 0
+
+----
 
 References
 ----------
