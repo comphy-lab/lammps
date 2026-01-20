@@ -103,16 +103,21 @@ The individual potential energies of each committee member can be accessed using
 
    compute e_comm all pair runner
 
-The energies are stored in the global `e_comm` vector of length `committee_size`. They can be accessed as `c_ec[1]`, `c_ec[2]`, up to `c_ec[N]`.
-
-The individual forces of the committee members (e.g., to compute force variance per atom) can be accessed by defining a custom per-atom array using the `fix property/atom` command **before** the `pair_style` command.
-The array **must** be a floating-point array `d2_name` with name `f_comm` and three times `committee_size` columns called `f_comm`. It is necessary for ghost atom info to be communicated.
+Here, the energies are stored in the global *e_comm* vector of length *committee_size*. They can be accessed as
 
 .. code-block:: LAMMPS
 
-   fix 1 all property/atom d2_f_comm 24 ghost yes
+   c_ec[1] # total energy member 1
+   c_ec[2] # total energy member 1
+   c_ec[N] # total energy member N
 
-This creates the custom per-atom array for a committee size of 8.
+The individual forces of the committee members (e.g., to compute force variance per atom) can be accessed by defining a custom per-atom array using the *fix property/atom* command **before** the *pair_style* command.
+The array **must** be a floating-point array *d2_name* with name *f_comm* and three times *committee_size* columns. It is necessary for ghost atom info to be communicated.
+
+.. code-block:: LAMMPS
+
+   fix 1 all property/atom d2_f_comm 24 ghost yes # define custom per-atom force array for committee_size 8
+
 The forces are stored sequentially and can be accessed as 
 
 .. code-block:: LAMMPS
@@ -122,7 +127,7 @@ The forces are stored sequentially and can be accessed as
    d2_f_comm[3] # fz member 1
    d2_f_comm[4] # fx member 2
 
-For 4G potentials `q_comm` can be set to `yes` to extract individual member charges. A custom per-atom array `q_comm` needs to specified **before** the `pair_style` command. The array **must** be a floating-point array `d2_name` with name `q_comm` and `committee_size` columns. It is necessary for ghost atom info to be communicated.
+For 4G potentials *q_comm* can be set to *yes* to extract individual member charges. A custom per-atom array *q_comm* needs to specified **before** the *pair_style* command. The array **must** be a floating-point array *d2_name* with name *q_comm* and *committee_size* columns. It is necessary for ghost atom info to be communicated.
 
 .. code-block :: LAMMPS
 
