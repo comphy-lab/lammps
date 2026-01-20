@@ -31,15 +31,38 @@ Syntax
 Examples
 --------
 
+**Basic usage (2G Potential):**
+
 .. code-block:: lammps
 
-   pair_style runner dir ./potential_files/ committee_size 4 check_extrap yes
-   pair_coeff * * 1 8 14
+   pair_style runner dir "./model_files"
+   pair_coeff * * 1 6 8
 
+**4G potential:**
+.. code-block:: lammps
    # Using 4G-HDNNP with charge equilibration and committee force output
    fix 1 all property/atom ghost f_comm 12 # 4 committee members * 3 components
    pair_style runner dir ./nnp_model/ committee_size 4 f_comm yes total_charge 0.0
    pair_coeff * * 1 6 8
+
+
+**Active Learning Setup (8-member Committee with output):**
+
+.. code-block:: lammps
+
+   # 1. Define storage for individual committee forces (8 members * 3 components = 24)
+   fix 1 all property/atom f_comm 24 ghost yes
+
+   # 2. Setup potential with units conversion (e.g., metal to atomic)
+   pair_style runner dir "pot" cflength 1.8897 cfenergy 0.0367 committee_size 8 f_comm yes
+   pair_coeff * * 1 8 14 26
+
+   # 3. Define compute to access individual member energies
+   compute e_comm all pair runner
+
+   # 4. Output results
+   thermo_style custom step temp epair c_e_comm[1] c_e_comm[2] c_e_comm[3]
+   dump 1 all custom 1000 run.lammpstrj id element x y z fx fy fz f_comm[1] f_comm[2] f_comm[3]
 
 Description
 -----------
@@ -62,7 +85,28 @@ Additionally, all generations can be augmented with:
 
 The pair style supports running multiple neural network models simultaneously. The forces, energies, and virials propagated in the simulation are the average of all committee members. This is useful for active learning and uncertainty estimation.
 
-If `f_comm` or `q_comm` are set to `yes`, the individual forces or charges for every committee member can be stored. This requires the user to define a custom per-atom array using :doc:`fix property/atom <fix_property_atom>` with the name `f_comm` (size ``3 * committee_size``) or `q_comm` (size ``committee_size``).
+**Energy Output (via Compute):**
+The individual potential energies of each committee member are accessed using the :doc:`compute pair <compute_pair>` command.
+
+* Example: `compute ec all pair runner`
+* Access: The energies are stored in a global vector of length `committee_size`. They are accessed as `c_ec[1]`, `c_ec[2]`, up to `c_ec[N]`.
+* In `thermo_style`, these represent the potential energy of the system according to each specific model in the committee.
+
+**Force Output (via Fix Property/Atom):**
+To export forces of individual committee members (e.g., to compute force variance per atom), you must define a custom per-atom array **before** the `pair_style` command.
+
+* **Name:** Must be `f_comm`.
+* **Size:** Must be exactly $3 \times committee\_size$. (e.g., for a size 8 committee, the size is 24).
+* **Ghost:** Must set `ghost yes` to ensure forces are correctly communicated.
+* **Indexing:** The forces are stored sequentially. 
+    * `f_comm[1], f_comm[2], f_comm[3]` = x, y, z forces for Member 1.
+    * `f_comm[4], f_comm[5], f_comm[6]` = x, y, z forces for Member 2.
+* **Example Dump:** `dump 1 all custom 100 out.dump id f_comm[1] f_comm[2] f_comm[3] f_comm[4] f_comm[5] f_comm[6]`
+
+**Charge Output (4G only):**
+If `q_comm` is set to `yes`, a per-atom array `fix q_comm all property/atom q_comm N ghost yes` (where N is `committee_size`) can be used to extract individual member charges.
+
+---
 
 **Extrapolation Monitoring:**
 
@@ -71,7 +115,10 @@ Since machine learning potentials are most reliable within their training data r
 * `show_ew`: Logs specific atoms and timesteps where extrapolation occurs.
 * `max_extrap`: Provides a safety shutoff if the potential becomes unreliable.
 
-**Unit Conversion:**
+---
+
+Unit Conversion
+---------------
 
 The RuNNer library is unit-agnostic. Use `cflength` and `cfenergy` to scale LAMMPS coordinates and energies to the units the potential was trained in. For example, if your LAMMPS simulation uses `metal` units (Angstroms, eV) and your RuNNer model was trained in Bohr and Hartrees:
 * `cflength`: 1.889726 (Angstrom to Bohr)
@@ -79,10 +126,11 @@ The RuNNer library is unit-agnostic. Use `cflength` and `cfenergy` to scale LAMM
 
 ---
 
-Mixing, shift, table, tail correction, restart, r_cut
------------------------------------------------------
+Parallelization and Performance
+-------------------------------
 
-This pair style does not support mixing. It does not support `pair_modify` shift, table, or tail options. It does not write its own restart files; the potential is re-initialized from the input files in the specified directory.
+*   **MPI:** 2G models scale linearly. 3G/4G models require global structure collection on a single process for electrostatic/QEq calculations, which creates an MPI bottleneck.
+*   **OpenMP:** RuNNer is heavily optimized for OpenMP. For 3G and 4G potentials, it is highly recommended to use a small number of MPI tasks and a large number of OpenMP threads per task.
 
 Restrictions
 ------------
@@ -92,6 +140,9 @@ Restrictions
 * **Single Instance:** Currently, only one instance of `pair_style runner` can be initialized per simulation.
 * **Periodicity:** 3G and 4G HDNNPs require either full 3D periodicity or no periodicity. Partial periodicity (e.g., `boundary p p f`) is not supported for long-range electrostatics.
 * **Charge Neutrality:** For periodic systems using 3G/4G models, the system must be charge neutral (`total_charge 0.0`).
+* **mixing: ** This pair style does not support mixing.
+* **pair_modify:** This style does not support `pair_modify` shift, table, or tail options.
+* **Restart:** This pair style does not require its own restart files; the potential is re-initialized from the input files in the specified directory.
 
 Related commands
 ----------------
