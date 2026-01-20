@@ -1522,43 +1522,76 @@ details please see ``lib/hdnnp/README`` and the `n2p2 build documentation
 
 ----------
 
+
 .. _ml-runner:
 
 ML-RUNNER package
-----------------
-To build with this package you need the external
-`RuNNer <https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en>`_
-library. By default, the LAMMPS build process automatically downloads and
-compiles the latest version of `RuNNer`. Alternatively, you may choose the
-path and name of a manually compiled RuNNer library. Please see the box below for
-a detailed list of CMake build options.
+-----------------
 
-In case of manual compilation, RuNNer offers a make and cmake-based build system.
-Please refer to the RuNNer documentation for detailed build options of the
-library itself.
+The ML-RUNNER package provides an interface to the
+`RuNNer <https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en>`_ (Ruhr University Neural Network Energy Representation) 
+library for high-dimensional neural network potentials.
+
+**Prerequisites**
+
+* **Fortran Compiler:** Since the RuNNer library is written in Fortran, a working Fortran compiler must be available on your system and detectable by CMake.
+* **BLAS/LAPACK:** RuNNer requires BLAS and LAPACK libraries for linear algebra operations.
+* **FFT Library:** RuNNer optionally uses an FFT library. The build system will
+   attempt to auto-detect one, but you can specify a preference.
+**Building RuNNer**
+
+By default, the LAMMPS build process automatically downloads and compiles the
+RuNNer library as a static library. Alternatively, you can point LAMMPS to a
+pre-compiled version on your system.
 
 .. tabs::
 
    .. tab:: CMake build
 
+      **Basic Options:**
+
       .. code-block:: bash
 
-         -D DOWNLOAD_RUNNER=value   # Force download and automatic build of RuNNer.
-                                    # value = yes (default) or no
-         -D RUNNER_LIB_DIR=path     # Directory containing a manually compiled
-                                    # RuNNer library. Only considered if
-                                    # `DOWNLOAD_RUNNER=no`.
-                                    # value = $ENV{HOME}/.local/lib (default)
-         -D RUNNER_LIB_NAME=name    # Filename without suffix of the RuNNer
-                                    # library in `RUNNER_LIB_DIR`.
-                                    # value = libRuNNer (default)
-         -D RUNNER_SHARED_LIB=value # Whether we look for the dynamic (.so, default)
-                                    # or static (.a) library in `RUNNER_LIB_DIR`.
-                                    # value = yes (default) or no
+         -D PKG_ML-RUNNER=yes
+         -D DOWNLOAD_RUNNER=value    # yes (default): Download and build RuNNer automatically.
+                                     # no: Use a pre-compiled RuNNer library.
+
+      **Manual Library Configuration (if DOWNLOAD_RUNNER=no):**
+
+      .. code-block:: bash
+
+         -D RUNNER_LIB_DIR=path      # Directory containing the RuNNer library.
+                                     # (default: $ENV{HOME}/.local/lib)
+         -D RUNNER_LIB_NAME=name     # Filename of the library (without extension).
+                                     # (default: libRuNNer_mpi)
+         -D RUNNER_SHARED_LIB=value  # yes (default): Look for shared library (.so).
+                                     # no: Look for static library (.a).
+
+      **FFT Library Selection:**
+
+      RuNNer uses an FFT library for electrostatic calculations (3G/4G). The build system searches in the following priority: 1. MKL, 2. FFTW3, 3. KISSFFT (fallback).
+
+      .. code-block:: bash
+
+         -D FFT=value                # KISS, FFTW3, MKL, or NVPL.
+         -D FFT_MKL_THREADS=value    # yes (default) or no. Use threaded MKL FFT.
+         -D FFT_FFTW_THREADS=value   # yes (default) or no. Use threaded FFTW.
 
    .. tab:: Traditional make
-      The ML-RUNNER package does not support the traditional make
-      build. You need to build LAMMPS with CMake.
+
+      The ML-RUNNER package does not support the traditional make build system. You must build LAMMPS with CMake.
+
+**Detailed Option Table**
+
+| Option | Description | Default |
+| :--- | :--- | :--- |
+| ``DOWNLOAD_RUNNER`` | Download and build RuNNer from source | ``yes`` |
+| ``RUNNER_LIB_DIR`` | Path to a pre-installed RuNNer library | ``$HOME/.local/lib`` |
+| ``RUNNER_LIB_NAME`` | Name of the RuNNer library file | ``libRuNNer_mpi`` |
+| ``RUNNER_SHARED_LIB`` | Link against a shared RuNNer library | ``yes`` |
+| ``FFT`` | FFT library to use (KISS, FFTW3, MKL, NVPL) | ``auto-detected`` |
+| ``FFT_MKL_THREADS`` | Use multi-threaded MKL FFT | ``yes`` |
+| ``FFT_FFTW_THREADS`` | Use multi-threaded FFTW | ``yes`` (if found) |
 
 ----------
 
