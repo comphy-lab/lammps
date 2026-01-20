@@ -1,39 +1,55 @@
+.. index:: pair_style runner
 
-`pair_style runner` command
+pair_style runner command
 ===========================
 
 Syntax
 ------
 
-.. code-block:: lammps
+.. code-block:: LAMMPS
 
    pair_style runner keyword value ...
 
-* one or more keywords must be appended
+* zero or more keyword/value pairs may be appended
 * keyword = *dir* or *cflength* or *cfenergy* or *f_comm* or *q_comm* or *committee_size* or *total_charge* or *use_prev_q* or *check_extrap* or *max_extrap* or *show_ew* or *sum_ew_freq* or *reset_ew_freq*
+* value depends on the preceding keyword:
 
-.. code-block:: lammps
+.. parsed-literal::
 
-    dir path = path to the directory containing RuNNer potential files (default: ./)
-    cflength value = length unit conversion factor (default: 1.0)
-    cfenergy value = energy unit conversion factor (default: 1.0)
-    f_comm yes/no = optionally write individual committee forces to a custom per-atom array (default: no)
-    q_comm yes/no = optionally write individual committee charges to a custom per-atom array (default: no)
-    committee_size value = number of models in the committee (default: 1)
-    total_charge value = total system charge for electrostatics/QEq (default: 0.0)
-    use_prev_q yes/no = use charges from previous step as starting guess for QEq (default: no)
-    check_extrap yes/no = enable monitoring of feature extrapolation (default: no)
-    max_extrap value = stop simulation if extrapolation count exceeds this value (default: 100)
-    show_ew yes/no = print extrapolation warning messages to the log (default: no)
-    sum_ew_freq value = frequency to print summary of extrapolations (default: 0)
-    reset_ew_freq value = frequency to reset extrapolation counters (default: 0)
+    *dir* value = Path to RuNNer configuration files (default: *./*)
+
+    *cflength* value = length
+          Length unit conversion factor (default: *1.0*)
+    *cfenergy* value = energy
+          Unit conversion factor (default: *1.0*)
+
+    *committee_size* value = number
+          number = Number of committee members (default: *1*)
+    *f_comm* value = *yes* or *no* 
+          Write individual committee forces to a custom per-atom array (default: *no*)
+    *q_comm* value = *yes* or *no* 
+          Write individual committee charges to a custom per-atom array (default: *no*)
+
+    *total_charge* value = charge
+          charge = Total system charge for electrostatics/QEq (default: *0.0*)
+    *use_prev_q* value = *yes* or *no* 
+          Use predicted charges from previous time step as initial guess for QEq (default: *no*)
+
+    *check_extrap* value = *yes* or *no*
+          Enable monitoring of feature extrapolation (default: *no*)
+    *max_extrap* value = threshold
+          threshold = Stop simulation if EW count exceeds this value (default: *100*)
+    *show_ew* value = *yes* or *no*
+          Write EWs to the log (default: *no*)
+    *sum_ew_freq* value = summary
+          summary = Write EW summary every this many time steps (default: *0*)
+    *reset_ew_freq* value = frequency
+          frequency = Reset extrapolation counters every this many steps (default: *0*)
 
 Examples
---------
+""""""""
 
-**Basic usage (2G Potential):**
-
-.. code-block:: lammps
+.. code-block:: LAMMPS
 
    pair_style runner dir "./model_files"
    pair_coeff * * 1 6 8
