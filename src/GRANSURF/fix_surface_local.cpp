@@ -3790,6 +3790,9 @@ void FixSurfaceLocal::stats2d()
     utils::logmesg(lmp,fmt::format("  {} min line length\n",allminsize));
     utils::logmesg(lmp,fmt::format("  {} max line length\n",allmaxsize));
   }
+
+  max_radius = maxsize * 0.5;
+  MPI_Bcast(&max_radius, 1, MPI_DOUBLE, 0, world);
 }
 
 /* ----------------------------------------------------------------------
@@ -3919,4 +3922,7 @@ void FixSurfaceLocal::stats3d()
     utils::logmesg(lmp,fmt::format("  {} min tri area\n",allminarea));
     utils::logmesg(lmp,fmt::format("  {} max tri area\n",allmaxarea));
   }
+
+  max_radius = allmaxedge * 0.5;
+  MPI_Bcast(&max_radius, 1, MPI_DOUBLE, 0, world);
 }

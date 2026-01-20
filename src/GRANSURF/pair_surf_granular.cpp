@@ -334,6 +334,9 @@ void PairSurfGranular::compute(int eflag, int vflag)
       MathExtra::copy3(dr, mycontact.dr_force);
 
       contact_surfs.push_back(mycontact);
+
+      if (0 && comm->me == 16 && update->ntimestep > 136106)
+        printf("i %d contacting j %d\n", i, j);
     }
 
     if (contact_surfs.size() == 0)
@@ -741,6 +744,20 @@ void PairSurfGranular::init_style()
 }
 
 /* ----------------------------------------------------------------------
+   init for one type pair i,j and corresponding j,i
+------------------------------------------------------------------------- */
+
+double PairSurfGranular::init_one(int i, int j)
+{
+  // Calculate regular sphere based cutoff
+  double cutoff = PairGranular::init_one(i, j);
+
+  // Needs to extend far enough to check connections
+  cutoff += fsl->max_radius;
+  return cutoff;
+}
+
+/* ----------------------------------------------------------------------
    memory usage of local atom-based arrays
 ------------------------------------------------------------------------- */
 
@@ -1012,8 +1029,10 @@ void PairSurfGranular::prewalk_connections3d()
       }
 
       k = atom->map(ktag);
-      if (k == -1)
+      if (k == -1) {
+        printf("Proc %d, j %d %d\n", comm->me, j, atom->tag[j]);
         error->one(FLERR, "Surface mesh atom {} missing at step {}", ktag, update->ntimestep);
+      }
 
       // Skip if not in contact
       if (contacts_map.find(k) == contacts_map.end())

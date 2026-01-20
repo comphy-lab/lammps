@@ -477,6 +477,8 @@ void AtomVecTri::data_atom_bonus(int m, const std::vector<std::string> &values)
 {
   if (tri[m]) error->one(FLERR, "Assigning tri parameters to non-tri atom");
 
+  x = atom->x; // Check with Steve...
+
   if (nlocal_bonus == nmax_bonus) grow_bonus();
 
   double c1[3], c2[3], c3[3];

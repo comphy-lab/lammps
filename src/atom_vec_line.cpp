@@ -344,6 +344,8 @@ void AtomVecLine::data_atom_bonus(int m, const std::vector<std::string> &values)
 {
   if (line[m]) error->one(FLERR, "Assigning line parameters to non-line atom");
 
+  x = atom->x; // Check with Steve...
+
   if (nlocal_bonus == nmax_bonus) grow_bonus();
 
   int ivalue = 1;

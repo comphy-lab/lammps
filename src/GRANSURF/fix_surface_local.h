@@ -36,6 +36,7 @@ class FixSurfaceLocal : public FixSurface {
   Connect3d *connect3d;         // 3d connection info
   int nmax_connect;             // allocated size of connect2d/3d
   int *atom2connect;            // per-atom index into connect 2d/3d vecs, -1 if none
+  double max_radius;             // maximum radius of a surface
 
   FixSurfaceLocal(class LAMMPS *, int, char **);
   virtual ~FixSurfaceLocal();
