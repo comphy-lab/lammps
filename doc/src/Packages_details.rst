@@ -1798,7 +1798,7 @@ your system.
 This package has :ref:`specific installation instructions <ml-runner>` on the
 :doc:`Build extras <Build_extras>` page.
 
-.. versionadded:: 31Oct2025
+.. versionadded:: TBD
 
 **Supporting info:**
 
