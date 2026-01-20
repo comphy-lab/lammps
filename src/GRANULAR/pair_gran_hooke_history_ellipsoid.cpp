@@ -243,7 +243,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
             else if (status == 1)
               touching = false;
             else // TODO: Consider making an else if and print warning if LAPACK ok, but NR not converged, instead of error and fail the run ?
-              error->all(FLERR, "Ellipsoid contact detection (old contact) failed with status {} betwen particle {} and particle {} ", status, atom->tag[i], atom->tag[j]);
+              error->one(FLERR, "Ellipsoid contact detection (old contact) failed with status {} betwen particle {} and particle {} ", status, atom->tag[i], atom->tag[j]);
           } else {
             // New contact: Build initial guess incrementally by morphing the particles from spheres to actual shape
 
@@ -279,8 +279,10 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
                 touching = true;
               else if (status == 1)
                 touching = false;
-              else // TODO: Consider making an else if and print warning if LAPACK ok, but NR not converged, instead of error and fail the run ?
-                error->all(FLERR, "Ellipsoid contact detection (new contact) failed with status {} betwen particle {} and particle {} at iteration morph {}", status, atom->tag[i], atom->tag[j], iter_ig);
+              else if (iter_ig == NUMSTEP_INITIAL_GUESS){
+                // keep trying until last iteration to avoid erroring out too early
+                error->warning(FLERR, "Ellipsoid contact detection (new contact) failed with status {} betwen particle {} and particle {}", status, atom->tag[i], atom->tag[j]);
+              }
             }
           }
         }
@@ -845,7 +847,7 @@ double PairGranHookeHistoryEllipsoid::single(int i, int j, int /*itype*/, int /*
         return 0.0;
     }
     if (status != 0)
-        error->all(FLERR, "Ellipsoid contact detection failed with status {} ", status);
+        error->one(FLERR, "Ellipsoid contact detection failed with status {} ", status);
   } else {
     double reqi = std::cbrt(shapei[0] * shapei[1] * shapei[2]);
     double reqj = std::cbrt(shapej[0] * shapej[1] * shapej[2]);
@@ -873,7 +875,7 @@ double PairGranHookeHistoryEllipsoid::single(int i, int j, int /*itype*/, int /*
         return 0.0;
       }
       if (status != 0)
-        error->all(FLERR, "Ellipsoid contact detection failed with status {} ", status);
+        error->one(FLERR, "Ellipsoid contact detection failed with status {} ", status);
     }
   }
   double overlap1, overlap2, omegai[3], omegaj[3];

@@ -305,18 +305,49 @@ double shape_and_derivatives_global(const double* xc, const double R[3][3],
   return shapefunc;
 }
 
-double compute_residual(const double shapefunci, const double* gradi_global, const double shapefuncj, const double* gradj_global, const double mu2, double* residual) {
-  // Equation (23)
+// double compute_residual(const double shapefunci, const double* gradi_global, const double shapefuncj, const double* gradj_global, const double mu2, double* residual) {
+//   // Equation (23)
+//   MathExtra::scaleadd3(mu2, gradj_global, gradi_global, residual);
+//   residual[3] = shapefunci - shapefuncj;
+//   // Normalize residual Equation (23)
+//   // shape functions and gradients dimensions are not homogeneous
+//   // Gradient equality F1' + mu2 * F2' evaluated relative to magnitude of gradient ||F1'|| = ||mu2 * F2'||
+//   // Shape function equality F1 - F2 evaluated relative to magnitude of shape function + 1
+//   //    the shift f = polynomial - 1 is not necessary and cancels out in F1 - F2
+//   // Last component homogeneous to shape function
+//   return MathExtra::lensq3(residual) / MathExtra::lensq3(gradi_global) +
+//          residual[3] * residual[3] / ((shapefunci + 1) * (shapefunci + 1));
+// }
+
+double compute_residual(const double shapefunci, const double* gradi_global, 
+                        const double shapefuncj, const double* gradj_global, 
+                        const double mu2, double* residual, 
+                        const int formulation, const double radius_scale) {
+
+  // Equation (23): Spatial residual (Gradient match)
   MathExtra::scaleadd3(mu2, gradj_global, gradi_global, residual);
   residual[3] = shapefunci - shapefuncj;
-  // Normalize residual Equation (23)
-  // shape functions and gradients dimensions are not homogeneous
-  // Gradient equality F1' + mu2 * F2' evaluated relative to magnitude of gradient ||F1'|| = ||mu2 * F2'||
-  // Shape function equality F1 - F2 evaluated relative to magnitude of shape function + 1
-  //    the shift f = polynomial - 1 is not necessary and cancels out in F1 - F2
-  // Last component homogeneous to shape function
-  return MathExtra::lensq3(residual) / MathExtra::lensq3(gradi_global) +
-         residual[3] * residual[3] / ((shapefunci + 1) * (shapefunci + 1));
+
+  // --- Spatial Normalization ---
+  // Algebraic: Gradients are ~1/R. Dividing by lensq3 normalizes this.
+  // Geometric: Gradients are unit vectors. lensq3 is 1.0. This works for both.
+  double spatial_norm = MathExtra::lensq3(residual) / MathExtra::lensq3(gradi_global);
+
+  // --- Scalar Normalization ---
+  double scalar_denom;
+
+  if (formulation == FORMULATION_GEOMETRIC) {
+      // GEOMETRIC: F is a distance (Length).
+      scalar_denom = radius_scale; 
+  } else {
+      // ALGEBRAIC: F is dimensionless (approx 0 at surface).
+      scalar_denom = shapefunci + 1.0;
+  }
+  
+  // Prevent division by zero in weird edge cases (e.g. very negative shape function)
+  if (fabs(scalar_denom) < 1e-12) scalar_denom = 1.0;
+
+  return spatial_norm + (residual[3] * residual[3]) / (scalar_denom * scalar_denom);
 }
 
 void compute_jacobian(const double* gradi_global, const double hessi_global[3][3], const double* gradj_global, const double hessj_global[3][3], const double mu2, double* jacobian) {
@@ -342,7 +373,7 @@ double compute_residual_and_jacobian(const double* xci, const double Ri[3][3], c
   shapefunc[0] = shape_and_derivatives_global(xci, Ri, shapei, blocki, flagi, X, gradi, hessi, formulation, avg_radius_i);
   shapefunc[1] = shape_and_derivatives_global(xcj, Rj, shapej, blockj, flagj, X, gradj, hessj, formulation, avg_radius_j);
   compute_jacobian(gradi, hessi, gradj, hessj, X[3], jacobian);
-  return compute_residual(shapefunc[0], gradi, shapefunc[1], gradj, X[3], residual);
+  return compute_residual(shapefunc[0], gradi, shapefunc[1], gradj, X[3], residual, formulation, (avg_radius_i + avg_radius_j)/2.0);
 }
 
 
@@ -533,7 +564,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
 
 
 
-      norm = compute_residual(shapefunc[0], gradi, shapefunc[1], gradj, X_line[3], residual);
+      norm = compute_residual(shapefunc[0], gradi, shapefunc[1], gradj, X_line[3], residual, formulation, (avg_radius_i + avg_radius_j)/2.0);
 
       if ((norm <= TOL_NR_RES) &&
           (MathExtra::lensq3(rhs) * a * a <= TOL_NR_POS * lsq)) {
@@ -622,6 +653,10 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
   // 0 = converged and grains touching
   if (!converged){
     if (shapefunc[0] > 0.0 || shapefunc[1] > 0.0) return 1;
+    std::cout << "Current residual norm: " << norm << std::endl;
+    std::cout << "Shape functions: " << shapefunc[0] << ", " << shapefunc[1] << std::endl;
+    std::cout << "Positions X0: " << X0[0] << ", " << X0[1] << ", " << X0[2] << ", mu2: " << X0[3] << std::endl;
+    std::cout << "Normal nij: " << nij[0] << ", " << nij[1] << ", " << nij[2] << std::endl;
     return 2;} // not failing if not converged but shapefuncs positive (i.e., no contact)
               // might be risky to assume no contact if not converged, NR might have gone to a far away point
               // but no guarantee there is no contact

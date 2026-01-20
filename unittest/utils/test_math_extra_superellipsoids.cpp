@@ -226,52 +226,10 @@ TEST(ContactPointAndNormal, sphere_geometric)
 
 }
 
-// TEST(ContactPointAndNormal, supersphere_mono_geometric)
-// {
-//   double r = 3.456;
-//   double overlap = -r / 5.0;
-//   double xci[3] = {-(r - overlap/2.0), 0.0, 0.0};
-//   double xcj[3] = {r - overlap/2.0, 0.0, 0.0};
-//   double shape[3] = {r, r, r};
-//   double R[3][3] = {{1.0, 0.0, 0.0},
-//                     {0.0, 1.0, 0.0},
-//                     {0.0, 0.0, 1.0}};
-
-//   std::vector<double> blocks = {2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0};
-//   int method = MathExtraSuperellipsoids::FORMULATION_GEOMETRIC;
-  
-//   // Analytical solution
-//   double nij_analytical[3] = {1.0, 0.0, 0.0};
-//   double X0_analytical[4] = {0.0, 0.0, 0.0, 1.0};    
-  
-//   for (auto n : blocks) {
-//     double block[2] = {n, n};
-//     int flag =  (n < 2.01) ? 0 : 1;
-
-//     // Contact detection
-//     // Some starting point away from (0,0,0). Possibly bad initial guess so test is demanding
-//     double X0[4] = {overlap, overlap, 2*overlap, 1.0}, nij[3];
-
-//     int status = MathExtraSuperellipsoids::determine_contact_point(xci, R, shape, block, flag,
-//                                                                   xcj, R, shape, block, flag,
-//                                                                   X0, nij, method);
-
-//     std::cout<<n<<" "<<status<<" "<<X0[0]<<" "<<X0[1]<<" "<<X0[2]<<" "<<X0[3]<<std::endl;
-//     ASSERT_NEAR(X0[0], X0_analytical[0], EPSILON) << "Method: " << method;
-//     ASSERT_NEAR(X0[1], X0_analytical[1], EPSILON) << "Method: " << method;
-//     ASSERT_NEAR(X0[2], X0_analytical[2], EPSILON) << "Method: " << method;
-//     ASSERT_NEAR(X0[3], X0_analytical[3], EPSILON) << "Method: " << method;
-
-//     ASSERT_NEAR(nij[0], nij_analytical[0], EPSILON);
-//     ASSERT_NEAR(nij[1], nij_analytical[1], EPSILON);
-//     ASSERT_NEAR(nij[2], nij_analytical[2], EPSILON);
-//   }
-// }
-
 TEST(ContactPointAndNormal, supersphere_poly_geometric)
 {
   double r1 = 3.456;
-  double r2 = 3.0 * r1; // Polydisperse: radius 2 = 3 * radius 1
+  double r2 = 3.0 * r1; // Polydisperse: radius_2 = 3 * radius_1
   double overlap = r1 / 5.0; 
   double xci[3] = {-(r1 - overlap/2.0), 0.0, 0.0};
   double xcj[3] = {  r2 - overlap/2.0 , 0.0, 0.0}; 
@@ -295,7 +253,7 @@ TEST(ContactPointAndNormal, supersphere_poly_geometric)
     int flag =  (n < 2.01) ? 0 : 1;
 
     // Initial Guess: Offset from 0 to test convergence
-    double X0[4] = {overlap, overlap, overlap, 1.0}, nij[3]; 
+    double X0[4] = {overlap/80, overlap/80, overlap/80, 1.0}, nij[3]; 
 
     int status = MathExtraSuperellipsoids::determine_contact_point(xci, R, shapei, block, flag,
                                                                   xcj, R, shapej, block, flag,
@@ -303,6 +261,7 @@ TEST(ContactPointAndNormal, supersphere_poly_geometric)
 
     std::cout << "n=" << n << " Status=" << status << " Res: " 
               << X0[0] << " " << X0[1] << " " << X0[2] << " mu=" << X0[3] << std::endl;
+    
 
     ASSERT_EQ(status, 0) << "Failed to converge/detect contact for n=" << n;
     
