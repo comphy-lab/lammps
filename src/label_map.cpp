@@ -584,7 +584,7 @@ int LabelMap::infer_impropertype(const std::vector<std::string> &mytypes)
 int LabelMap::parse_typelabel(int ntypes, const std::string &label, std::vector<std::string> &types)
 {
   auto out = Tokenizer(label,"-").as_vector();
-  if (out.size() != ntypes) return -1;
+  if ((int)out.size() != ntypes) return -1;
   types = std::move(out);
   return 1;
 }
