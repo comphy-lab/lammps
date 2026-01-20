@@ -38,62 +38,46 @@ Syntax
     *check_extrap* value = *yes* or *no*
           Enable monitoring of feature extrapolation (default: *no*)
     *max_extrap* value = threshold
-          threshold = Stop simulation if EW count exceeds this value (default: *100*)
+          threshold = Stop simulation if EW count exceeds this value (default: *100*; *-1* turns threshold off)
     *show_ew* value = *yes* or *no*
           Write EWs to the log (default: *no*)
     *sum_ew_freq* value = summary
           summary = Write EW summary every this many time steps (default: *0*)
     *reset_ew_freq* value = frequency
-          frequency = Reset extrapolation counters every this many steps (default: *0*)
+          frequency = Reset EW counters every this many steps (default: *0*)
 
 Examples
 """"""""
 
 .. code-block:: LAMMPS
 
-   pair_style runner dir "./model_files"
-   pair_coeff * * 1 6 8
+   pair_style runner dir "./potential_files"
+   pair_coeff * * 1 8
 
-**4G potential:**
-.. code-block:: lammps
-   # Using 4G-HDNNP with charge equilibration and committee force output
-   fix 1 all property/atom ghost f_comm 12 # 4 committee members * 3 components
-   pair_style runner dir ./nnp_model/ committee_size 4 f_comm yes total_charge 0.0
-   pair_coeff * * 1 6 8
+   fix 1 all property/atom d2_f_comm 24 ghost yes
+   pair_style runner dir "./potential_files" cflength 1.889726124626 &
+      cfenergy 0.036749322175655 committee_size 8 f_comm yes
+   pair_coeff * * 1 3 8 25
 
-
-**Active Learning Setup (8-member Committee with output):**
-
-.. code-block:: lammps
-
-   # 1. Define storage for individual committee forces (8 members * 3 components = 24)
-   fix 1 all property/atom f_comm 24 ghost yes
-
-   # 2. Setup potential with units conversion (e.g., metal to atomic)
-   pair_style runner dir "pot" cflength 1.8897 cfenergy 0.0367 committee_size 8 f_comm yes
-   pair_coeff * * 1 8 14 26
-
-   # 3. Define compute to access individual member energies
-   compute e_comm all pair runner
-
-   # 4. Output results
-   thermo_style custom step temp epair c_e_comm[1] c_e_comm[2] c_e_comm[3]
-   dump 1 all custom 1000 run.lammpstrj id element x y z fx fy fz f_comm[1] f_comm[2] f_comm[3]
+   fix 1 all property/atom d2_q_comm 4 ghost yes
+   pair_style runner dir "./potential_files" committee_size 4 q_comm yes total_charge 0.0
+   pair_coeff * * 1 8 78
 
 Description
------------
+"""""""""""
 
-The *runner* pair style provides an interface to the **RuNNer** (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) that represent the total energy of a system as a sum of environment-dependent atomic contributions.
+This pair style provides an interface to the **RuNNer** (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) as decribed in :ref: `(Behler and Parrinello 2007)` <_Behler_Parrinello_2007>. HDNNPs represent the total energy of a system as a sum of environment-dependent atomic contributions.
 
-RuNNer supports several "generations" of HDNNPs:
+The pair style supports several "generations" of HDNNPs as defined in :ref: `(Behler 2021)` <Behler_2021>.
 
-* **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments.
-* **Third-generation (3G):** Extends 2G by adding long-range electrostatic interactions based on environment-dependent atomic charges.
-* **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities (and optionally hardness). These charges are fed back into the energy model, providing a global descriptor for the atomic energies.
+* **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments :ref: `(Behler and Parrinello 2007)` <_Behler_Parrinello_2007>.
+* **Third-generation (3G):** Extends 2Gs by adding explicit long-range electrostatic interactions based on environment-dependent atomic charges :ref: `(Artrith, Morawietz and Behler 2011)` <Artrith_Morawietz_Behler_2011>.
+* **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities (and optionally hardness). These charges are fed back into the energy model, providing a global descriptor for the atomic energies :ref: `(Ko et al 2021)` <Ko_Finkler_Goedecker_Behler_2021>.
 
 Additionally, all generations can be augmented with:
-* **Hirshfeld-based dispersion:** Long-range vdW interactions.
-* **Repulsive potentials:** Short-range pairwise repulsive terms.
+
+* **Hirshfeld-based dispersion:** Long-range dispersion interactions based on the Tkatchenko-Scheffler dispersion model :ref: `(Tkatchenko and Scheffler 2009)` <Tkatchenko_Scheffler_2009>.
+* **Repulsive potentials:** Ziegler-Biersack-Littmark-based short-range pairwise repulsive potential.
 
 ---
 
@@ -165,9 +149,28 @@ Related commands
 
 :doc:`pair_coeff <pair_coeff>`, :doc:`fix property/atom <fix_property_atom>`
 
-References
-----------
+----
 
-**(Behler)** J. Behler and M. Parrinello, Phys. Rev. Lett. 98, 146401 (2007).
-**(Behler)** J. Behler, J. Chem. Phys. 134, 074106 (2011).
-**(Ko)** T. W. Ko, J. A. Finkler, S. Goedecker, and J. Behler, Nat. Commun. 12, 398 (2021). (4G-HDNNPs)
+.. _Behler_Parrinello_2007:
+
+**(Behler and Parrinello 2007)** Behler, J.; Parrinello, M. Phys. Rev. Lett. 2007, 98 (14), 146401.
+
+.. _Tkatchenko_Scheffler_2009:
+
+**(Tkatchenko and Scheffler 2009)** Tkatchenko, A.; Scheffler, M., Phys. Rev. Lett. 2009, 102, 073005.
+
+.. _Behler_2011:
+
+**(Behler 2011)** Behler, J., J. Chem. Phys. 2011, 134, 074106.
+
+.. _Artrith_Morawietz_Behler_2011:
+
+**(Artrith, Morawietz and Behler 2011)** Artrith, N.; Morawietz, T.; Behler, J., Phys. Rev. B 2011 83, 153101.
+
+.. _Ko_Finkler_Goedecker_Behler_2021:
+
+**(Ko et al 2021)** Ko, T. W.; Finkler, J. A.; Goedecker, S.; Behler, J, Nat. Commun. 2021 12, 398.
+
+.. _Behler_2021:
+
+**(Behler 2021)** Behler, J., Chem. Rev. 2021, 121, 16, 10037–10072
