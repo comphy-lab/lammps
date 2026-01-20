@@ -85,16 +85,16 @@ This pair style provides an interface to the `RuNNer 2 <https://gitlab.com/runne
 
 
 
-The pair style supports several "generations" of HDNNPs as proposed in :ref:`(Behler 2021) <Behler_2021>`:
+The pair style supports several "generations" of HDNNPs as categorized in :ref:`(Behler 2021) <Behler_2021>`:
 
 * **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments :ref:`(Behler and Parrinello 2007) <Behler_Parrinello_2007>`.
-* **Third-generation (3G):** Extends 2Gs by adding explicit long-range electrostatic interactions based on environment-dependent atomic charges :ref:`(Artrith, Morawietz and Behler 2011) <Artrith_Morawietz_Behler_2011>`.
-* **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities (and optionally hardness). These charges are fed back into the energy model, providing a global descriptor for the atomic energies :ref:`(Ko et al 2021) <Ko_Finkler_Goedecker_Behler_2021>`.
+* **Third-generation (3G):** Extends 2G by adding explicit long-range electrostatic interactions based on environment-dependent atomic partial charges :ref:`(Artrith, Morawietz and Behler 2011) <Artrith_Morawietz_Behler_2011>`.
+* **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities. These charges are used to calculate long-range electrostatics and serve as a global descriptor for the atomic energies, allowing for the description of nonlocal charge transfer :ref:`(Ko et al 2021) <Ko_Finkler_Goedecker_Behler_2021>`.
 
 Additionally, all generations can be augmented with:
 
-* **Hirshfeld-based dispersion:** Long-range dispersion interactions based on the Tkatchenko-Scheffler dispersion model :ref:`(Tkatchenko and Scheffler 2009) <Tkatchenko_Scheffler_2009>`.
-* **Repulsive potentials:** Ziegler-Biersack-Littmark-based short-range pairwise repulsive potential.
+* **Hirshfeld-based dispersion:** Long-range van der Waals interactions based on the Tkatchenko-Scheffler dispersion model :ref:`(Tkatchenko and Scheffler 2009) <Tkatchenko_Scheffler_2009>`.
+* **Repulsive potentials:** Screened nuclear repulsion at short interatomic distances based on the Ziegler-Biersack-Littmark (ZBL) model.
 
 Only a single :doc:`pair_coeff <pair_coeff>` command with two asterisk wildcards is used with this pair style. Its additional arguments define the mapping of LAMMPS atom types to RuNNer atomic numbers.
 
@@ -113,10 +113,13 @@ Use the *dir* keyword to specify the directory containing the RuNNer configurati
 
 The RuNNer library is unit-agnostic. Use *cflength* and *cfenergy* to scale LAMMPS coordinates and energies to the units in which the potential was trained. If the HDNNP was trained in Bohr and Hartree and the LAMMPS simulation uses *metal* units (Angstroms, eV), then *cflength* and *cfenergy* must be the multiplicative factors required to convert LAMMPS units to the respective quantities in native HDNNP units:
 
-.. code-block:: LAMMPS
+.. math::
 
-   cflength 1.8897261328
-   cfenergy 0.0367493254
+   R_{\text{native}} = R_{\text{LAMMPS}} \times \text{cflength}
+
+.. math::
+
+   E_{\text{native}} = E_{\text{LAMMPS}} \times \text{cfenergy}
 
 Since machine learning potentials are most reliable within their training data range, the *runner* pair style can monitor whether the features representing the local atomic environments extrapolate beyond their training range. Set *check_extrap* to *yes* to enable monitoring. The keyword *show_ew* enables the writing of extrapolation warnings (EWs) to the log. With *sum_ew_freq*, you can specify whether a summary should be written at specific intervals instead of writing each EW to the log as it occurs. The *max_extrap* threshold allows termination of a simulation when the provided number of EWs is exceeded. Setting *max_extrap* to a negative number disables the termination threshold. With *reset_ew_freq*, the EW counters can be reset at specific intervals.
 
@@ -129,7 +132,7 @@ In the case of a *committee_size* greater than 1, *dir* must point to a director
 
 .. code-block:: text
 
-   dir/
+   potential_files/
    ├── 1/
    │   ├── weights_short.001.data
    │   └── weights_short.008.data
@@ -201,6 +204,8 @@ For 4G HDNNPs only, when setting *use_prev_q* to *yes*, the predicted charges fr
    collection. To avoid MPI bottlenecks, it is highly recommended to use 
    **OpenMP threading** (few MPI tasks, many OpenMP threads).
 
+----
+
 Mixing, shift, table, tail correction, restart, rRESPA info
 -----------------------------------------------------------
 
@@ -215,7 +220,7 @@ This style can only be used via the *pair* keyword of the :doc:`run_style respa 
 Restrictions
 ------------
 
-This pair style is part of the ML-RUNNER package. It is only enabled if LAMMPS was built with that package. See the :doc:`Build package <Build_package>` page for more info.
+This pair style is part of the ML-RUNNER package. It is only enabled if LAMMPS was built with that package. See the :doc:`Build package <Build_packages>` page for more info.
 
 Currently, only one instance of ``pair_style runner`` can be initialized per simulation.
 
@@ -240,20 +245,20 @@ References
 
 .. _Tkatchenko_Scheffler_2009:
 
-**(Tkatchenko and Scheffler 2009)** Tkatchenko, A.; Scheffler, M., Phys. Rev. Lett. 2009, 102, 073005.
+**(Tkatchenko and Scheffler 2009)** Tkatchenko, A.; Scheffler, M., Phys. Rev. Lett. 2009, 102 (7), 073005.
 
 .. _Behler_2011:
 
-**(Behler 2011)** Behler, J., J. Chem. Phys. 2011, 134, 074106.
+**(Behler 2011)** Behler, J., J. Chem. Phys. 2011, 134 (7), 074106.
 
 .. _Artrith_Morawietz_Behler_2011:
 
-**(Artrith, Morawietz and Behler 2011)** Artrith, N.; Morawietz, T.; Behler, J., Phys. Rev. B 2011 83, 153101.
+**(Artrith, Morawietz and Behler 2011)** Artrith, N.; Morawietz, T.; Behler, J., Phys. Rev. B 2011, 83 (15), 153101.
 
 .. _Ko_Finkler_Goedecker_Behler_2021:
 
-**(Ko et al 2021)** Ko, T. W.; Finkler, J. A.; Goedecker, S.; Behler, J, Nat. Commun. 2021 12, 398.
+**(Ko et al 2021)** Ko, T. W.; Finkler, J. A.; Goedecker, S.; Behler, J, Nat. Commun. 2021, 12, 398.
 
 .. _Behler_2021:
 
-**(Behler 2021)** Behler, J., Chem. Rev. 2021, 121, 16, 10037–10072.
+**(Behler 2021)** Behler, J., Chem. Rev. 2021, 121 (16), 10037–10072.
