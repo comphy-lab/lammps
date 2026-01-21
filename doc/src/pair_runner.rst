@@ -285,13 +285,13 @@ The default options are:
 References
 ----------
 
-.. _Behler_Parrinello_2007:
-
-**(Behler and Parrinello 2007)** Behler, J.; Parrinello, M. Phys. Rev. Lett. 2007, 98 (14), 146401.
-
 .. _Tkatchenko_Scheffler_2009:
 
 **(Tkatchenko and Scheffler 2009)** Tkatchenko, A.; Scheffler, M., Phys. Rev. Lett. 2009, 102 (7), 073005.
+
+.. _Behler_Parrinello_2007:
+
+**(Behler and Parrinello 2007)** Behler, J.; Parrinello, M. Phys. Rev. Lett. 2007, 98 (14), 146401.
 
 .. _Behler_2011:
 
