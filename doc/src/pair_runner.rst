@@ -70,8 +70,8 @@ Examples
    pair_coeff * * 1 8
 
    fix 1 all property/atom d2_f_comm 24 ghost yes
-   pair_style runner dir "./potential_files" cflength 1.889726124626 &
-      cfenergy 0.036749322175655 committee_size 8 f_comm yes
+   pair_style runner dir "./potential_files" cflength 1.8897261328 &
+      cfenergy 0.0367493254 committee_size 8 f_comm yes
    pair_coeff * * 1 3 8 25
 
    fix 1 all property/atom d2_q_comm 4 ghost yes
