@@ -173,15 +173,15 @@ The individual potential energies of each committee member can be accessed using
 
 The energies are stored in a global vector *e_comm* of length *committee_size*. They can be accessed in subsequent commands (like :doc:`thermo_style <thermo_style>`) as:
 
-* ``c_e_comm[1]``: Total energy of member 1
-* ``c_e_comm[2]``: Total energy of member 2
-* ``c_e_comm[N]``: Total energy of member N
+* ``c_e_comm[1]``: Potential energy of member 1
+* ``c_e_comm[2]``: Potential energy of member 2
+* ``c_e_comm[N]``: Potential energy of member N
 
 **Accessing Member Forces and Charges**
 
 To extract individual member forces or charges (e.g., to compute per-atom variance), you must define a custom per-atom array using the :doc:`fix property/atom <fix_property_atom>` command **before** the *pair_style* command.
 
-For forces, set *f_comm* to *yes*. The array **must** be a floating-point array (type ``d2``) named *f_comm* with 3 times *committee_size* columns. Ghost atom communication must be enabled.
+For forces, set *f_comm* to *yes*. The array **must** be a floating-point array (type ``d2``) named *f_comm* with three times *committee_size* columns. Ghost atom communication must be enabled.
 
 .. code-block:: LAMMPS
 
@@ -189,10 +189,10 @@ For forces, set *f_comm* to *yes*. The array **must** be a floating-point array 
    fix 1 all property/atom d2_f_comm 24 ghost yes
    pair_style runner committee_size 8 f_comm yes
 
-Forces are stored sequentially by member and dimension ($fx_1, fy_1, fz_1, fx_2,$ ...) and can be accessed by subsequent commands (like :doc:`dump <dump>`) as:
+Forces are stored sequentially by member and dimension (*fx1*, *fy1*, *fz1*, *fx2*, ...) and can be accessed by subsequent commands (like :doc:`dump <dump>`) as:
 
-* ``d2_f_comm[1]``, ``d2_f_comm[2]``, ``d2_f_comm[3]``: Force (x,y,z) for member 1
-* ``d2_f_comm[4]``, ``d2_f_comm[5]``, ``d2_f_comm[6]``: Force (x,y,z) for member 2
+* ``d2_f_comm[1]``, ``d2_f_comm[2]``, ``d2_f_comm[3]``: Atomic forces (x,y,z) for member 1
+* ``d2_f_comm[4]``, ``d2_f_comm[5]``, ``d2_f_comm[6]``: Atomic forces (x,y,z) for member 2
 
 For 3G and 4G potentials, set *q_comm* to *yes* to extract individual member atomic charges. The array **must** be a floating-point array (type ``d2``) named *q_comm* with *committee_size* columns.
 
@@ -204,8 +204,9 @@ For 3G and 4G potentials, set *q_comm* to *yes* to extract individual member ato
 
 The committee atomic charges can be accessed by subsequent commands (like :doc:`dump <dump>`) as:
 
-* ``d2_q_comm[1]``: Atomic charges of member 1
-* ``d2_q_comm[2]``: Atomic charges of member 2
+* ``d2_q_comm[1]``: Atomic charges for member 1
+* ``d2_q_comm[2]``: Atomic charges for member 2
+* ``d2_q_comm[N]``: Atomic charges for member N
 
 
 3G / 4G only
@@ -287,7 +288,7 @@ References
 
 .. _Behler_2007:
 
-**(Behler and Parrinello 2007)** Behler, J.; Parrinello, M. Phys. Rev. Lett. 2007, 98 (14), 146401.
+**(Behler and Parrinello 2007)** Behler, J.; Parrinello, M., Phys. Rev. Lett. 2007, 98 (14), 146401.
 
 .. _Tkatchenko_Scheffler_2009:
 
@@ -303,7 +304,7 @@ References
 
 .. _Ko_Finkler_Goedecker_Behler_2021:
 
-**(Ko et al 2021)** Ko, T. W.; Finkler, J. A.; Goedecker, S.; Behler, J, Nat. Commun. 2021, 12, 398.
+**(Ko et al 2021)** Ko, T. W.; Finkler, J. A.; Goedecker, S.; Behler, J., Nat. Commun. 2021, 12, 398.
 
 .. _Behler_2021:
 
