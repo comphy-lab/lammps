@@ -76,7 +76,7 @@ Examples
 
    fix 1 all property/atom d2_q_comm 4 ghost yes
    pair_style runner dir "./potential_files" committee_size 4 q_comm yes total_charge 0.0
-   pair_coeff * * 1 8 78
+   pair_coeff * * 8 12 79
 
 Description
 -----------
@@ -134,12 +134,12 @@ Example for *metal* units to a Bohr/Hartree potential:
    cflength 1.8897261328   # Angstrom to Bohr
    cfenergy 0.0367493254   # eV to Hartree
 
-Since machine learning potentials are most reliable within their training data range, the *runner* pair style can monitor whether the features representing local atomic environments extrapolate beyond the training range. 
+Since machine learning potentials are most reliable within their training data range, the *runner* pair style can monitor whether the features representing local atomic environments extrapolate beyond the training range.
 
-* Set *check_extrap* to *yes* to enable monitoring. 
-* The keyword *show_ew* enables writing individual extrapolation warnings (EWs) to the log file. 
-* Use *sum_ew_freq* to write a summary of EW counts at specific intervals instead of logging every occurrence. 
-* The *max_extrap* threshold allows termination of a simulation if the total EW count exceeds this value. Setting *max_extrap* to a negative number disables the termination threshold. 
+* Set *check_extrap* to *yes* to enable monitoring.
+* The keyword *show_ew* enables writing individual extrapolation warnings (EWs) to the log file.
+* Use *sum_ew_freq* to write a summary of EW counts at specific intervals instead of logging every occurrence.
+* The *max_extrap* threshold allows termination of a simulation if the total EW count exceeds this value. Setting *max_extrap* to a negative number disables the termination threshold.
 * Use *reset_ew_freq* to reset the EW counters at specific intervals.
 
 Committees
@@ -231,35 +231,35 @@ For 4G HDNNPs only, the *use_prev_q* keyword controls the initial guess for the 
 Mixing, shift, table, tail correction, restart, rRESPA info
 -----------------------------------------------------------
 
-This style does not support mixing. The :doc:`pair_coeff <pair_coeff>` command 
-should only be invoked with asterisk wildcards to define the mapping for 
+This style does not support mixing. The :doc:`pair_coeff <pair_coeff>` command
+should only be invoked with asterisk wildcards to define the mapping for
 all atom types.
 
-This style does not support the :doc:`pair_modify <pair_modify>` 
+This style does not support the :doc:`pair_modify <pair_modify>`
 shift, table, and tail options.
 
-This style does not write information to :doc:`binary restart files <restart>`. 
-You must re-specify the *pair_style* and *pair_coeff* commands in any input 
+This style does not write information to :doc:`binary restart files <restart>`.
+You must re-specify the *pair_style* and *pair_coeff* commands in any input
 script that reads a restart file.
 
-This style can only be used via the *pair* keyword of the :doc:`run_style respa <run_style>` 
+This style can only be used via the *pair* keyword of the :doc:`run_style respa <run_style>`
 command. It does not support the *inner*, *middle*, or *outer* keywords.
 
 Restrictions
 ------------
 
-This pair style is part of the ML-RUNNER package. It is only enabled if LAMMPS 
-was built with that package. See the :doc:`Build package <Build_package>` 
+This pair style is part of the ML-RUNNER package. It is only enabled if LAMMPS
+was built with that package. See the :doc:`Build package <Build_package>`
 doc page for more info.
 
-Currently, only one instance of ``pair_style runner`` can be initialized per 
-simulation. The style does not support the use of :doc:`pair_style hybrid <pair_hybrid>` 
+Currently, only one instance of ``pair_style runner`` can be initialized per
+simulation. The style does not support the use of :doc:`pair_style hybrid <pair_hybrid>`
 where multiple ``runner`` instances are defined.
 
 Related commands
 ----------------
 
-:doc:`pair_coeff <pair_coeff>`, :doc:`fix property/atom <fix_property_atom>`, 
+:doc:`pair_coeff <pair_coeff>`, :doc:`fix property/atom <fix_property_atom>`,
 :doc:`compute pair <compute_pair>`
 
 Default
