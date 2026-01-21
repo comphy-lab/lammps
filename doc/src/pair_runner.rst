@@ -153,15 +153,15 @@ In the case of a *committee_size* greater than 1, the *dir* keyword must point t
 
 .. code-block:: text
 
-   potential_files/
-   ├── 1/
-   │   ├── weights_short.001.data
-   │   └── weights_short.008.data
-   ├── 2/
-   │   ├── weights_short.001.data
-   │   └── weights_short.008.data
-   ├── input.nn
-   └── scaling.data
+  potential_files/
+  |-- 1/
+  |   |-- weights_short.001.data
+  |   `-- weights_short.008.data
+  |-- 2/
+  |   |-- weights_short.001.data
+  |   `-- weights_short.008.data
+  |-- input.nn
+  `-- scaling.data
 
 **Accessing Member Energies**
 
@@ -307,4 +307,4 @@ References
 
 .. _Behler_2021:
 
-**(Behler 2021)** Behler, J., Chem. Rev. 2021, 121 (16), 10037–10072.
+**(Behler 2021)** Behler, J., Chem. Rev. 2021, 121 (16), 10037-10072.

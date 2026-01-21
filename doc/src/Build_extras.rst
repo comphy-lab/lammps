@@ -1538,6 +1538,7 @@ library for high-dimensional neural network potentials.
 * **BLAS/LAPACK:** RuNNer requires BLAS and LAPACK libraries for linear algebra operations.
 * **FFT Library:** RuNNer optionally uses an FFT library. The build system will
    attempt to auto-detect one, but you can specify a preference.
+
 **Building RuNNer**
 
 By default, the LAMMPS build process automatically downloads and compiles the
