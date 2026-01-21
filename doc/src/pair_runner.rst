@@ -215,11 +215,13 @@ For 3G and 4G HDNNPs, the total charge of the system can be specified with the *
 
 For 4G HDNNPs only, the *use_prev_q* keyword controls the initial guess for the iterative Charge Equilibration (QEq) solver. Setting this to *yes* uses the predicted charges from the previous time step as the starting point for the current time step, which can reduce the number of iterations required for convergence.
 
-.. note::
+.. admonition:: Periodicity limitations
+   :class: note
 
    3G and 4G HDNNPs require either full 3D periodicity (``boundary p p p``) or no periodicity (``boundary f f f``). Partial periodicity (e.g., ``boundary p p f``) is currently not supported for long-range electrostatics.
 
-.. note::
+.. admonition:: MPI scaling
+   :class: note
 
    3G and 4G HDNNPs require a global collection of the atomic structure on a single process to perform long-range electrostatics and global QEq calculations. This creates an MPI bottleneck that leads to suboptimal scaling as the number of MPI tasks increases. Since 3G and 4G HDNNPs are heavily optimized for OpenMP in RuNNer, it is highly recommended to use a small number of MPI tasks and a large number of OpenMP threads per task to achieve the best performance.
 
