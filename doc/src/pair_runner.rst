@@ -111,7 +111,7 @@ General
 
 Use the *dir* keyword to specify the directory containing the RuNNer configuration files. The directory must contain:
 
-* ``input.nn``: The HDNNP architecture and feature map specifications.
+* ``input.nn``: The HDNNP generation, architecture and feature map specifications.
 * ``scaling_?.data``: Feature map scaling data for the model.
 * ``weights_?.???.data``: Neural network parameters (weights and biases) for each element and model.
 
