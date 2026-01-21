@@ -23,28 +23,23 @@
 namespace LAMMPS_NS {
 
 /*! \class LabelMap
- *  \brief Manage type labels for atoms and bonded interactions (bonds, angles, dihedrals, impropers)
+ *  \brief Manage type labels for atoms, bonds, angles, dihedrals, and impropers
  *
  * The LabelMap class provides functionality to map between string labels and
  * numeric type indices for atoms, bonds, angles, dihedrals, and impropers in LAMMPS.
  * This enables users to reference types by symbolic names (e.g., "C", "H", "C-H")
  * instead of numeric indices, improving readability and maintainability of input scripts.
  *
- * Type labels for bonded interactions *may* use (but are not required to use) a
+ * Type labels for bonded interactions *may* (but are not required to) use a
  * hyphen-delimited format indicating the types of the constituent atoms.  Examples:
  * - Bond types: "atom1-atom2" (e.g., "C-H", "N-O")
  * - Angle types: "atom1-atom2-atom3" (e.g., "H-C-H", "C-N-C")
  * - Dihedral types: "atom1-atom2-atom3-atom4" (e.g., "C-C-N-H")
  * - Improper types: "atom1-atom2-atom3-atom4" (e.g., "C-N-C-C")
  *
- * The class supports bidirectional lookup (label ↔ type) and can infer bonded
- * interaction types from constituent atom types when using the hyphen-delimited format.
- *
- * Related utilities in the utils namespace:
- * - utils::is_type() - Validate type label strings
- * - utils::expand_type() - Convert type labels to numeric types
- * - utils::bounds_typelabel() - Process type range wildcards with type label support
- */
+ * The class supports bidirectional lookup (label <-> type) and can infer bonded
+ * interaction types from constituent atom types when using a hyphen-delimited
+ * format convention. */
 
 class LabelMap : protected Pointers {
   friend class AtomVec;
@@ -67,12 +62,12 @@ class LabelMap : protected Pointers {
 
   /*! Process labelmap command from input script
    *
-\verbatim embed:rst
+   \verbatim embed:rst
 
 Add or modify type label mappings from the LAMMPS
 :doc:`labelmap <labelmap>` input command.
 
-\endverbatim
+   \endverbatim
    *
    * \param  narg  Number of arguments
    * \param  arg   Array of argument strings */
@@ -80,14 +75,14 @@ Add or modify type label mappings from the LAMMPS
 
   /*! Copy another LabelMap into this one
    *
-\verbatim embed:rst
+   \verbatim embed:rst
 
 Merge type labels from another LabelMap instance into the current one.
 Currently used when combining data from multiple sources with
 :doc:`read_data add <read_data>` or when replicating the system with
 :doc:`replicate <replicate>`.
 
-\endverbatim
+   \endverbatim
    *
    * \param  lmap  Pointer to source LabelMap
    * \param  mode  Merge mode flag */
@@ -134,16 +129,16 @@ Currently used when combining data from multiple sources with
   /*! \name Interaction type inference from hyphen-delimited labels
    *
    * These methods infer bonded interaction types (bonds, angles, dihedrals, impropers)
-   * from constituent atom types using a hyphen-delimited format. They support
-   * bidirectional matching for symmetric interactions.
+   * from constituent atom types using a hyphen-delimited format.  This requires that
+   * type labels for bonded interactions were entered following this convention.
+   * The inference functions consider the symmetry of the interaction and thus atom
+   * types may be swapped accordingly and the bonded type will still be matched.
    * @{ */
 
   /*! Infer bond type from two numeric atom types
    *
    * Look up or create a bond type from two atom type indices by constructing
    * a hyphen-delimited label (e.g., "C-H") and searching the bond type labels.
-   * Since bonded interactions are symmetric, atype1 and atype2 may be swapped
-   * and still match the same bond type.
    *
    * \param  atype1  First atom type index
    * \param  atype2  Second atom type index
@@ -152,8 +147,9 @@ Currently used when combining data from multiple sources with
 
   /*! Infer bond type from atom type labels
    *
-   * Look up a bond type from a vector of two atom type label strings.
-   * Handles symmetric matching (e.g., "C-H" matches "H-C").
+   * \overload
+   *
+   * Look up a bond type from two atom type labels.
    *
    * \param  labels  Vector of two atom type label strings
    * \return         Bond type index, or -1 if not found */
@@ -163,8 +159,6 @@ Currently used when combining data from multiple sources with
    *
    * Look up or create an angle type from three atom type indices by
    * constructing a hyphen-delimited label (e.g., "H1-C1-H2").
-   * The first and the third atom types may be swapped and still
-   * match the same angle type.
    *
    * \param  atype1  First atom type index
    * \param  atype2  Second atom type index (center atom)
@@ -172,10 +166,11 @@ Currently used when combining data from multiple sources with
    * \return         Angle type index, or -1 if not found */
   int infer_angletype(int, int, int);
 
-  /*! Infer angle type from atom type labels
+  /*! Infer angle type from three atom type labels
    *
-   * Look up an angle type from a vector of three atom type label strings.
-   * Handles symmetric matching (e.g., "H1-C-H2" matches "H2-C-H1" in reverse).
+   * \overload
+   *
+   * Look up an angle type from three atom type labels.
    *
    * \param  labels  Vector of three atom type label strings
    * \return         Angle type index, or -1 if not found */
@@ -185,8 +180,6 @@ Currently used when combining data from multiple sources with
    *
    * Look up a dihedral type from four atom type indices by
    * constructing a hyphen-delimited label (e.g., "C-C-N-H").
-   * Atom types may be mirrored (i.e. swap atype1 with atype4
-   * and atype2 with atype3) and still match the same dihedral type.
    *
    * \param  atype1  First atom type index
    * \param  atype2  Second atom type index
@@ -197,8 +190,9 @@ Currently used when combining data from multiple sources with
 
   /*! Infer dihedral type from atom type labels
    *
-   * Look up a dihedral type from a vector of four atom type label strings.
-   * Handles bidirectional matching (forward and reverse sequences).
+   * \overload
+   *
+   * Look up a dihedral type from four atom type labels.
    *
    * \param  labels  Vector of four atom type label strings
    * \return         Dihedral type index, or -1 if not found */
@@ -206,7 +200,7 @@ Currently used when combining data from multiple sources with
 
   /*! Infer improper type from four numeric atom types
    *
-   * Look up or create an improper type from four atom type indices by
+   * Look up an improper type from four atom type indices by
    * constructing a hyphen-delimited label (e.g., "C-N-C-C").
    *
    * \param  atype1  First atom type index (center atom)
@@ -218,7 +212,9 @@ Currently used when combining data from multiple sources with
 
   /*! Infer improper type from atom type labels
    *
-   * Look up an improper type from a vector of four atom type label strings.
+   * \overload
+   *
+   * Look up an improper type from four atom type labels.
    *
    * \param  labels  Vector of four atom type label strings
    * \return         Improper type index, or -1 if not found */

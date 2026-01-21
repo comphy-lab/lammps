@@ -561,6 +561,9 @@ A file that would be parsed by the reader code fragment looks like this:
 Type label support
 ------------------
 
+Overview
+^^^^^^^^
+
 The :cpp:class:`LabelMap <LAMMPS_NS::LabelMap>` class provides a two way
 mapping between symbolic type labels in input and output files and
 numeric types as they are used by LAMMPS internally.  Instead of
@@ -572,11 +575,12 @@ constituent atom types with hyphens, this can significantly improve
 readability, maintainability, and re-usability of inputs and reduces the
 chance of errors.
 
-The LabelMap class supports lookups from symbolic to numeric and vice
-versa.  It also provides automatic type inference for interactions based
-on their constituent atom types.  For instance, based on the atom type
-labels, the corresponding bond, angle, dihedral, or improper types can
-be inferred.
+The LabelMap class also provides automatic type inference for bonded
+interactions based on their constituent atom types.  For instance, based
+on the atom type labels, the corresponding bond, angle, dihedral, or
+improper types can be inferred provided the corresponding type lables
+follow the convention that they are composed of the symbolic atom types
+connected by hyphens.
 
 Integration with utils namespace
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -597,7 +601,7 @@ interact with the LabelMap class:
 
 These functions enable seamless integration of type labels throughout LAMMPS,
 allowing commands that accept type specifications to work with both numeric
-indices and symbolic labels.
+indices and symbolic labels. Below are some code examples.
 
 Finding types from labels and vice versa
 """"""""""""""""""""""""""""""""""""""""
@@ -607,7 +611,7 @@ Finding types from labels and vice versa
    #include "label_map.h"
    #include "atom.h"
 
-   // Access the label map (assumes atom->lmap exists and is initialized)
+   // assuming this code is used inside a class that is derived from LAMMPS_NS::Pointers
    LabelMap *lmap = atom->lmap;
 
    // Forward lookup: Get numeric type from label
@@ -638,7 +642,7 @@ Inferring bonded types from atom types
    // Infer bond type from numeric atom types
    int bt1 = lmap->infer_bondtype(1, 2);  // Returns 1 (C-H bond)
    int bt2 = lmap->infer_bondtype(1, 1);  // Returns 2 (C-C bond)
-   int bt3 = lmap->infer_bondtype(1, 3);  // Returns 3 (C-N bond)
+   int bt3 = lmap->infer_bondtype(3, 1);  // Returns 3 (C-N bond, symmetric match)
 
    // Infer bond type from atom type labels (handles symmetry automatically)
    int bt4 = lmap->infer_bondtype({"C", "H"});  // Returns 1 (C-H)
