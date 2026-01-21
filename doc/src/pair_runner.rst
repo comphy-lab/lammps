@@ -194,7 +194,7 @@ Forces are stored sequentially by member and dimension ($fx_1, fy_1, fz_1, fx_2,
 * ``d2_f_comm[1]``, ``d2_f_comm[2]``, ``d2_f_comm[3]``: Force (x,y,z) for member 1
 * ``d2_f_comm[4]``, ``d2_f_comm[5]``, ``d2_f_comm[6]``: Force (x,y,z) for member 2
 
-For 3G and 4G potentials, set *q_comm* to *yes* to extract individual member charges. The array **must** be a floating-point array (type ``d2``) named *q_comm* with *committee_size* columns.
+For 3G and 4G potentials, set *q_comm* to *yes* to extract individual member atomic charges. The array **must** be a floating-point array (type ``d2``) named *q_comm* with *committee_size* columns.
 
 .. code-block:: LAMMPS
 
@@ -202,10 +202,10 @@ For 3G and 4G potentials, set *q_comm* to *yes* to extract individual member cha
    fix 2 all property/atom d2_q_comm 2 ghost yes
    pair_style runner committee_size 2 q_comm yes
 
-The committee charges are accessed as:
+The committee atomic charges can be accessed by subsequent commands (like :doc:`dump <dump>`) as:
 
-* ``d2_q_comm[1]``: Charge of member 1
-* ``d2_q_comm[2]``: Charge of member 2
+* ``d2_q_comm[1]``: Atomic charges of member 1
+* ``d2_q_comm[2]``: Atomic charges of member 2
 
 
 3G / 4G only
