@@ -81,13 +81,13 @@ Examples
 Description
 -----------
 
-This pair style provides an interface to the `RuNNer 2 <https://gitlab.com/runner-suite/runner2>`_ (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) as introduced in :ref:`(Behler and Parrinello 2007) <Behler_Parrinello_2007>`. HDNNPs are machine learning potentials that represent the total energy of a system as a sum of environment-dependent atomic contributions.
+This pair style provides an interface to the `RuNNer 2 <https://gitlab.com/runner-suite/runner2>`_ (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) as introduced in :ref:`(Behler and Parrinello 2007) <Behler_2007>`. HDNNPs are machine learning potentials that represent the total energy of a system as a sum of environment-dependent atomic contributions.
 
 
 
 The pair style supports several "generations" of HDNNPs as categorized in :ref:`(Behler 2021) <Behler_2021>`:
 
-* **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments :ref:`(Behler and Parrinello 2007) <Behler_Parrinello_2007>`.
+* **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments :ref:`(Behler and Parrinello 2007) <Behler_2007>`.
 * **Third-generation (3G):** Extends 2G by adding explicit long-range electrostatic interactions based on environment-dependent atomic partial charges :ref:`(Artrith, Morawietz and Behler 2011) <Artrith_Morawietz_Behler_2011>`.
 * **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities. These charges are used to calculate long-range electrostatics and serve as a global descriptor for the atomic energies, allowing for the description of nonlocal charge transfer :ref:`(Ko et al 2021) <Ko_Finkler_Goedecker_Behler_2021>`.
 
@@ -285,13 +285,13 @@ The default options are:
 References
 ----------
 
+.. _Behler_2007:
+
+**(Behler and Parrinello 2007)** Behler, J.; Parrinello, M. Phys. Rev. Lett. 2007, 98 (14), 146401.
+
 .. _Tkatchenko_Scheffler_2009:
 
 **(Tkatchenko and Scheffler 2009)** Tkatchenko, A.; Scheffler, M., Phys. Rev. Lett. 2009, 102 (7), 073005.
-
-.. _Behler_Parrinello_2007:
-
-**(Behler and Parrinello 2007)** Behler, J.; Parrinello, M. Phys. Rev. Lett. 2007, 98 (14), 146401.
 
 .. _Behler_2011:
 
