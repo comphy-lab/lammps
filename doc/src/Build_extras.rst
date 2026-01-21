@@ -1529,21 +1529,23 @@ ML-RUNNER package
 -----------------
 
 The ML-RUNNER package provides an interface to the
-`RuNNer <https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en>`_ (Ruhr University Neural Network Energy Representation) 
-library for high-dimensional neural network potentials.
+`RuNNer <https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en>`_ 
+(Ruhr University Neural Network Energy Representation) library for 
+high-dimensional neural network potentials (HDNNP).
+
+
 
 **Prerequisites**
 
 * **Fortran Compiler:** Since the RuNNer library is written in Fortran, a working Fortran compiler must be available on your system and detectable by CMake.
 * **BLAS/LAPACK:** RuNNer requires BLAS and LAPACK libraries for linear algebra operations.
-* **FFT Library:** RuNNer optionally uses an FFT library. The build system will
-   attempt to auto-detect one, but you can specify a preference.
+* **FFT Library:** RuNNer uses an FFT library for electrostatic calculations (3G/4G). The build system will attempt to auto-detect one, but you can specify a preference.
 
 **Building RuNNer**
 
 By default, the LAMMPS build process automatically downloads and compiles the
 RuNNer library as a static library. Alternatively, you can point LAMMPS to a
-pre-compiled version on your system.
+pre-compiled version already present on your system.
 
 .. tabs::
 
@@ -1553,46 +1555,65 @@ pre-compiled version on your system.
 
       .. code-block:: bash
 
-         -D PKG_ML-RUNNER=yes
-         -D DOWNLOAD_RUNNER=value    # yes (default): Download and build RuNNer automatically.
-                                     # no: Use a pre-compiled RuNNer library.
+         -D PKG_ML-RUNNER=yes       # yes (default): Download and build RuNNer automatically.
+         -D DOWNLOAD_RUNNER=yes     # no: Use a pre-compiled RuNNer library.
 
       **Manual Library Configuration (if DOWNLOAD_RUNNER=no):**
 
       .. code-block:: bash
 
          -D RUNNER_LIB_DIR=path      # Directory containing the RuNNer library.
-                                     # (default: $ENV{HOME}/.local/lib)
+                                     # (default: $HOME/.local/lib)
          -D RUNNER_LIB_NAME=name     # Filename of the library (without extension).
                                      # (default: libRuNNer_mpi)
-         -D RUNNER_SHARED_LIB=value  # yes (default): Look for shared library (.so).
+         -D RUNNER_SHARED_LIB=yes    # yes (default): Look for shared library (.so).
                                      # no: Look for static library (.a).
 
       **FFT Library Selection:**
 
-      RuNNer uses an FFT library for electrostatic calculations (3G/4G). The build system searches in the following priority: 1. MKL, 2. FFTW3, 3. KISSFFT (fallback).
+      The build system searches in the following priority: 1. MKL, 2. FFTW3, 3. NVPL, 4. KISSFFT (fallback).
 
       .. code-block:: bash
 
          -D FFT=value                # KISS, FFTW3, MKL, or NVPL.
-         -D FFT_MKL_THREADS=value    # yes (default) or no. Use threaded MKL FFT.
-         -D FFT_FFTW_THREADS=value   # yes (default) or no. Use threaded FFTW.
+         -D FFT_MKL_THREADS=yes      # yes (default) or no. Use threaded MKL FFT.
+         -D FFT_FFTW_THREADS=yes     # yes (default) or no. Use threaded FFTW.
 
    .. tab:: Traditional make
 
-      The ML-RUNNER package does not support the traditional make build system. You must build LAMMPS with CMake.
+      The ML-RUNNER package does not support the traditional make build system.
+      You must build LAMMPS with CMake.
 
 **Detailed Option Table**
 
-| Option | Description | Default |
-| :--- | :--- | :--- |
-| ``DOWNLOAD_RUNNER`` | Download and build RuNNer from source | ``yes`` |
-| ``RUNNER_LIB_DIR`` | Path to a pre-installed RuNNer library | ``$HOME/.local/lib`` |
-| ``RUNNER_LIB_NAME`` | Name of the RuNNer library file | ``libRuNNer_mpi`` |
-| ``RUNNER_SHARED_LIB`` | Link against a shared RuNNer library | ``yes`` |
-| ``FFT`` | FFT library to use (KISS, FFTW3, MKL, NVPL) | ``auto-detected`` |
-| ``FFT_MKL_THREADS`` | Use multi-threaded MKL FFT | ``yes`` |
-| ``FFT_FFTW_THREADS`` | Use multi-threaded FFTW | ``yes`` (if found) |
+.. list-table::
+   :widths: 25 50 25
+   :header-rows: 1
+
+   * - Option
+     - Description
+     - Default
+   * - ``DOWNLOAD_RUNNER``
+     - Download and build RuNNer from source
+     - ``yes``
+   * - ``RUNNER_LIB_DIR``
+     - Path to a pre-installed RuNNer library
+     - ``$HOME/.local/lib``
+   * - ``RUNNER_LIB_NAME``
+     - Name of the RuNNer library file
+     - ``libRuNNer_mpi``
+   * - ``RUNNER_SHARED_LIB``
+     - Link against a shared RuNNer library
+     - ``yes``
+   * - ``FFT``
+     - FFT library to use (KISS, FFTW3, MKL, NVPL)
+     - ``auto-detected``
+   * - ``FFT_MKL_THREADS``
+     - Use multi-threaded MKL FFT
+     - ``yes``
+   * - ``FFT_FFTW_THREADS``
+     - Use multi-threaded FFTW
+     - ``yes`` (if found)
 
 ----------
 

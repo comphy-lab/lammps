@@ -81,19 +81,19 @@ Examples
 Description
 -----------
 
-This pair style provides an interface to the `RuNNer 2 <https://gitlab.com/runner-suite/runner2>`_ (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) as introduced in :ref:`(Behler and Parrinello 2007) <Behler_2007>`. HDNNPs are machine learning potentials that represent the total energy of a system as a sum of environment-dependent atomic contributions.
+This pair style provides an interface to the `RuNNer 2 <https://gitlab.com/runner-suite/runner2>`_ (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) as introduced in (:ref:`Behler and Parrinello 2007 <Behler_2007>`). HDNNPs are machine learning potentials that represent the total energy of a system as a sum of environment-dependent atomic contributions.
 
 
 
-The pair style supports several "generations" of HDNNPs as categorized in :ref:`(Behler 2021) <Behler_2021>`:
+The pair style supports several "generations" of HDNNPs as categorized in (:ref:`Behler 2021 <Behler_2021>`):
 
-* **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments :ref:`(Behler and Parrinello 2007) <Behler_2007>`.
-* **Third-generation (3G):** Extends 2G by adding explicit long-range electrostatic interactions based on environment-dependent atomic partial charges :ref:`(Artrith, Morawietz and Behler 2011) <Artrith_Morawietz_Behler_2011>`.
-* **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities. These charges are used to calculate long-range electrostatics and serve as a global descriptor for the atomic energies, allowing for the description of nonlocal charge transfer :ref:`(Ko et al 2021) <Ko_Finkler_Goedecker_Behler_2021>`.
+* **Second-generation (2G):** Short-range many-body potentials where the total energy is the sum of atomic energies predicted from local chemical environments (:ref:`Behler and Parrinello 2007 <Behler_2007>`).
+* **Third-generation (3G):** Extends 2G by adding explicit long-range electrostatic interactions based on environment-dependent atomic partial charges (:ref:`Artrith, Morawietz and Behler 2011 <Artrith_Morawietz_Behler_2011>`).
+* **Fourth-generation (4G):** Includes global charge equilibration (QEq) based on environment-dependent electronegativities. These charges are used to calculate long-range electrostatics and serve as a global descriptor for the atomic energies, allowing for the description of nonlocal charge transfer (:ref:`Ko et al 2021 <Ko_Finkler_Goedecker_Behler_2021>`; :ref:`Gubler et al 2024 <Gubler_Schaefer_Behler_Goedecker>`).
 
 Additionally, all generations can be augmented with:
 
-* **Hirshfeld-based dispersion:** Long-range van der Waals interactions based on the Tkatchenko-Scheffler dispersion model :ref:`(Tkatchenko and Scheffler 2009) <Tkatchenko_Scheffler_2009>`.
+* **Hirshfeld-based dispersion:** Long-range van der Waals interactions based on the Tkatchenko-Scheffler dispersion model (:ref:`Tkatchenko and Scheffler 2009 <Tkatchenko_Scheffler_2009>`).
 * **Repulsive potentials:** Screened nuclear repulsion at short interatomic distances based on the Ziegler-Biersack-Littmark (ZBL) model.
 
 Only a single :doc:`pair_coeff <pair_coeff>` command with two asterisk wildcards is used with this pair style. Its additional arguments define the mapping of LAMMPS atom types to RuNNer atomic numbers.
@@ -112,8 +112,8 @@ General
 Use the *dir* keyword to specify the directory containing the RuNNer configuration files. The directory must contain:
 
 * ``input.nn``: The HDNNP generation, architecture and feature map specifications.
-* ``scaling_?.data``: Feature map scaling data for the model.
-* ``weights_?.???.data``: Neural network parameters (weights and biases) for each element and model.
+* ``scaling_*.data``: Feature map scaling data for the model.
+* ``weights_*.???.data``: Neural network parameters (weights and biases) for each element and model.
 
 The RuNNer library is unit-agnostic. Use *cflength* and *cfenergy* to scale LAMMPS coordinates and energies to the units in which the potential was trained (typically Bohr and Hartree). If the HDNNP was trained in Bohr/Hartree and the LAMMPS simulation uses *metal* units (Angstroms, eV), then *cflength* and *cfenergy* must be the multiplicative factors required to convert LAMMPS units to the respective quantities in native HDNNP units:
 
@@ -149,7 +149,7 @@ The pair style supports **Committees**, where multiple HDNNPs sharing atomic des
 
 
 
-In the case of a *committee_size* greater than 1, the *dir* keyword must point to a directory that contains the global configuration files (``input.nn`` and ``scaling_?.data``) and a set of subdirectories named **1** to **N** (where N is the *committee_size*). Each subdirectory must contain the ``weights_?.???.data`` files for that specific committee member.
+In the case of a *committee_size* greater than 1, the *dir* keyword must point to a directory that contains the global configuration files (``input.nn`` and ``scaling_*.data``) and a set of subdirectories named **1** to **N** (where N is the *committee_size*). Each subdirectory must contain the ``weights_*.???.data`` files for that specific committee member.
 
 .. code-block:: text
 
@@ -309,3 +309,7 @@ References
 .. _Behler_2021:
 
 **(Behler 2021)** Behler, J., Chem. Rev. 2021, 121 (16), 10037-10072.
+
+.. _Gubler_Schaefer_Behler_Goedecker:
+
+**(Gubler et al 2024)** Gubler, M.; Finkler, J. A.; Schaefer, M. R.; Behler, J.; Goedecker S., J. Chem. Theory Comput. 2024, 20 (16), 7264-7271.
