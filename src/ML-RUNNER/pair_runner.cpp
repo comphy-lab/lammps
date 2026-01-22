@@ -32,6 +32,7 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
+#include <iostream>
 
 // External RuNNer library interface
 extern "C" {
@@ -97,7 +98,7 @@ void runner_interface_hirshfeld_vdw(int *nlocal, int *nghost, int *inum, int *il
 void runner_interface_two_body(int *nlocal, int *nghost, double *energy, double *forces,
                                double *d_energy_d_strain);
 
-void runner_interface_extrapolation_warnings(char **c_ptr_extrap_msg, long *len_extrap_msg);
+void runner_interface_extrapolation_warnings(char **c_ptr_extrap_msg, long *len_extrap_msg, int *global_atom_ids, int *nlocal);
 
 void runner_interface_dealloc_extrapolation_warnings();
 
@@ -208,7 +209,10 @@ void PairRuNNer::compute(int eflag, int vflag)
   // Total number of atoms in the simulation box.
   int natoms = static_cast<int>(atom->natoms);
   int *type = atom->type;
+  // Global Atom-IDs which are needed to for the extrapolation warnings.
   tagint *tag = atom->tag;
+  std::vector<int> global_atom_ids(nlocal);
+  for (i = 0; i < nlocal; i++) global_atom_ids[i] = static_cast<int>(tag[i]);
 
   // Interface variables
   bool lperiodic;
@@ -740,7 +744,7 @@ void PairRuNNer::compute(int eflag, int vflag)
       char *c_ptr_extrap_msg = nullptr;
       long len_extrap_msg = 0;
 
-      runner_interface_extrapolation_warnings(&c_ptr_extrap_msg, &len_extrap_msg);
+      runner_interface_extrapolation_warnings(&c_ptr_extrap_msg, &len_extrap_msg, global_atom_ids.data(), &nlocal);
 
       if (rank == 0) {
         // Write extrapolation message owned by rank 0
