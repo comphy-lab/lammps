@@ -1790,8 +1790,8 @@ potentials (HDNNPs).
 To use this package you must have the `RuNNer <runner_>`_ library compiled on
 your system.
 
-**Authors:** Knut Nikolas Lausch, Alexander L. M. Knoll, Moritz R. Schäfer,
-             Gunnar Schmitz, Jörg Behler (Ruhr-University Bochum)
+**Authors:** K. Nikolas Lausch, Alexander L. M. Knoll, Moritz R. Schaefer,
+             Gunnar Schmitz, Joerg Behler (Ruhr-University Bochum)
 
 **Install:**
 
