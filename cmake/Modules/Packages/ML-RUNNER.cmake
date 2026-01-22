@@ -9,7 +9,7 @@ option(DOWNLOAD_RUNNER "Force download and build of RuNNer. If this is OFF\
 option(RUNNER_SHARED_LIB "Use pre-compiled shared/dynamic RuNNer library. Only \
   considered if DOWNLOAD_RUNNER is OFF." ON
 )
-set(RUNNER_LIB_DIR "$ENV{HOME}/.local/lib" CACHE STRING "Directory containing \
+set(RUNNER_LIB_DIR "" CACHE PATH "Directory containing \
   the RuNNer library. Only considered if DOWNLOAD_RUNNER is OFF."
 )
 set(RUNNER_LIB_NAME "libRuNNer_mpi" CACHE STRING "Name of the RuNNer library \
@@ -171,8 +171,11 @@ else()
   # Find the RuNNer library in the specified path
   find_library(RuNNer_LIBRARY
     NAMES ${RUNNER_LIB_FULL_NAME}
-    HINTS "${RUNNER_LIB_DIR}"
-    NO_DEFAULT_PATH
+    HINTS 
+      "${RUNNER_LIB_DIR}"       # 1st priority: User's manual cache variable
+      ENV LD_LIBRARY_PATH       # 2nd priority: Search the shell's LD_LIBRARY_PATH
+      ENV LIBRARY_PATH          # 3rd priority: Search the compiler's link path
+    PATH_SUFFIXES lib lib64     # Automatically look in <hint>/lib if not found in <hint>
   )
 
   if(RuNNer_LIBRARY)
