@@ -180,11 +180,15 @@ FixBrownianBase::FixBrownianBase(LAMMPS *lmp, int narg, char **arg) :
       iarg = iarg + 1;
 
     } else if (strcmp(arg[iarg], "rotation_style") == 0) {
-      if (narg == iarg + 1) { error->all(FLERR, "Fix brownian rotation_style requires a value."); }
+
+      if (strcmp(style, "brownian/sphere") != 0)
+        error->all(FLERR, "Fix {} rotation_style is only supported for brownian/sphere", style);
+
+      if (narg == iarg + 1) utils::missing_cmd_args(FLERR, "fix brownian rotation_style", error);
 
       if (strcmp(arg[iarg + 1], "projection") == 0) rot_style = ROT_PROJECTION;
       else if (strcmp(arg[iarg + 1], "geometric") == 0) rot_style = ROT_GEOMETRIC;
-      else error->all(FLERR, "Fix brownian rotation_style must be projection or geometric.");
+      else error->all(FLERR, iarg + 1, "Fix {} rotation_style must be 'projection' or 'geometric'", style);
       iarg = iarg + 2;
 
     } else {

@@ -27,7 +27,6 @@
 #include "random_mars.h"
 
 #include <cmath>
-#include <cassert>
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -231,9 +230,8 @@ void FixBrownianSphere::initial_integrate_templated()
       // then back again
 
       mulen = MathExtra::len3(mu[i]);
-
-      // assertion generates exception and stops in Debug mode, not seen in Release
-      assert(mulen > 0);
+      if (!(mulen > 0))
+        error->one(FLERR, "Fix brownian/sphere dipole moment must have positive length");
 
       // unit vector u = mu / |mu| at time t
       double u[3];
