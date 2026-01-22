@@ -1556,7 +1556,8 @@ pre-compiled version already present on your system.
       .. code-block:: bash
 
          -D PKG_ML-RUNNER=yes       # yes (default): Download and build RuNNer automatically.
-         -D DOWNLOAD_RUNNER=yes     # no: Use a pre-compiled RuNNer library.
+         -D DOWNLOAD_RUNNER=yes     # yes (default): clone the stable version of the official RuNNer repo.
+                                    # no: Use a pre-compiled RuNNer library.
 
       **Manual Library Configuration (if DOWNLOAD_RUNNER=no):**
 
@@ -1600,7 +1601,7 @@ pre-compiled version already present on your system.
      - Path to a pre-installed RuNNer library
      - ``$HOME/.local/lib``
    * - ``RUNNER_LIB_NAME``
-     - Name of the RuNNer library file
+     - Name of the RuNNer library file without extension
      - ``libRuNNer_mpi``
    * - ``RUNNER_SHARED_LIB``
      - Link against a shared RuNNer library
