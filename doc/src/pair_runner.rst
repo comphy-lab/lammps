@@ -109,6 +109,8 @@ The example above maps LAMMPS atom types 1 and 2 to atomic numbers 1 ("H") and 8
 General
 ^^^^^^^
 
+For more information on the options of RuNNer, `visit the official RuNNer documentation. <https://runner-suite.gitlab.io/runner2/>`_.
+
 Use the *dir* keyword to specify the directory containing the RuNNer configuration files. The directory must contain:
 
 * ``input.nn``: The HDNNP generation, architecture and feature map specifications.
