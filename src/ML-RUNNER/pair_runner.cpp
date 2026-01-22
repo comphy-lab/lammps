@@ -208,7 +208,8 @@ void PairRuNNer::compute(int eflag, int vflag)
   // Total number of atoms in the simulation box.
   int natoms = static_cast<int>(atom->natoms);
   int *type = atom->type;
-  // Global Atom-IDs which are needed to for the extrapolation warnings.
+  // Global atom-ids. Used for correct mapping of extrapolation warnings and
+  // sorting of global properties.
   tagint *tag = atom->tag;
   std::vector<int> global_atom_ids(nlocal);
   for (i = 0; i < nlocal; i++) global_atom_ids[i] = static_cast<int>(tag[i]);
