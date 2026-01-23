@@ -1529,8 +1529,8 @@ ML-RUNNER package
 -----------------
 
 The ML-RUNNER package provides an interface to the
-`RuNNer <https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en>`_ 
-(Ruhr University Neural Network Energy Representation) library for 
+`RuNNer <https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en>`_
+(Ruhr University Neural Network Energy Representation) library for
 high-dimensional neural network potentials (HDNNP).
 
 
