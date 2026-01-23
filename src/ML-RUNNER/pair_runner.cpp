@@ -28,6 +28,7 @@
 #include "neighbor.h"
 #include "potential_file_reader.h"
 #include "update.h"
+#include "lmptype.h"
 
 #include <cmath>
 #include <cstring>
@@ -97,11 +98,11 @@ void runner_interface_hirshfeld_vdw(int *nlocal, int *nghost, int *inum, int *il
 void runner_interface_two_body(int *nlocal, int *nghost, double *energy, double *forces,
                                double *d_energy_d_strain);
 
-void runner_interface_extrapolation_warnings(char **c_ptr_extrap_msg, long *len_extrap_msg, int *global_atom_ids, int *nlocal);
+void runner_interface_extrapolation_warnings(char **c_ptr_extrap_msg, int *len_extrap_msg, int *global_atom_ids, int *nlocal);
 
 void runner_interface_dealloc_extrapolation_warnings();
 
-void runner_interface_extrapolation_count(long *extraplation_count, long *total_extrapolation_count,
+void runner_interface_extrapolation_count(int64_t *extraplation_count, int64_t *total_extrapolation_count,
                                           bool *lreset);
 }
 
@@ -737,12 +738,12 @@ void PairRuNNer::compute(int eflag, int vflag)
   // a multiple of `sum_ew_freq` and larger than 0.
   if (lcheck_extrap) {
 
-    long timestep = update->ntimestep;
+    bigint timestep = update->ntimestep;
 
     // Add extrapolation warnings to log
     if (lshow_ew) {
       char *c_ptr_extrap_msg = nullptr;
-      long len_extrap_msg = 0;
+      int len_extrap_msg = 0;
 
       runner_interface_extrapolation_warnings(&c_ptr_extrap_msg, &len_extrap_msg, global_atom_ids.data(), &nlocal);
 
@@ -757,10 +758,10 @@ void PairRuNNer::compute(int eflag, int vflag)
       }
 
       // Gather and print warnings from other ranks
-      std::vector<long> len_extrap_msg_array;
+      std::vector<int> len_extrap_msg_array;
       if (rank == 0) len_extrap_msg_array.resize(size);
 
-      MPI_Gather(&len_extrap_msg, 1, MPI_LONG, len_extrap_msg_array.data(), 1, MPI_LONG, 0, world);
+      MPI_Gather(&len_extrap_msg, 1, MPI_INT, len_extrap_msg_array.data(), 1, MPI_INT, 0, world);
 
       if (rank == 0) {
         for (int irank = 1; irank < size; irank++) {
@@ -784,9 +785,9 @@ void PairRuNNer::compute(int eflag, int vflag)
     }
 
     // Total number of extrapolation accumulated on this process during the simulation
-    long local_extrap_count_total = 0;
+    bigint local_extrap_count_total = 0;
     // Number of extrapolation accumulated on this process during this this timestep
-    long extrap_count_timestep = 0;
+    bigint extrap_count_timestep = 0;
     // Sets the flag `lreset` to reset the total extrapolation count if the timestep
     // is a multiple of reset_ew_freq and larger than zero
     bool lreset = false;
@@ -801,8 +802,8 @@ void PairRuNNer::compute(int eflag, int vflag)
     local_extrap_sum += extrap_count_timestep;
 
     // Total number of extrapolation accumulated across all processes
-    long global_extrap_count_total = 0;
-    MPI_Reduce(&local_extrap_count_total, &global_extrap_count_total, 1, MPI_LONG, MPI_SUM, 0,
+    bigint global_extrap_count_total = 0;
+    MPI_Reduce(&local_extrap_count_total, &global_extrap_count_total, 1, MPI_LMP_BIGINT, MPI_SUM, 0,
                world);
 
     // Abort simulation if the total number of extrapolations across all processes exceeds `max_extrap`
@@ -811,14 +812,14 @@ void PairRuNNer::compute(int eflag, int vflag)
           FLERR,
           "Maximal number of allowed extrapolations have been exceeded during the simulation!\n"
           "Current extrapolation count: {:10.3e}",
-          double(global_extrap_count_total));
+          (bigint) global_extrap_count_total);
     }
 
     // Prints a summary of the recorded extrapolations at every interval until the timestep is
     // a multiple of `sum_ew_freq` and larger than 0.
     if (sum_ew_freq > 0 && timestep % sum_ew_freq == 0 && timestep > 0) {
-      long global_extrap_sum = 0;
-      MPI_Reduce(&local_extrap_sum, &global_extrap_sum, 1, MPI_LONG, MPI_SUM, 0, world);
+      bigint global_extrap_sum = 0;
+      MPI_Reduce(&local_extrap_sum, &global_extrap_sum, 1, MPI_LMP_BIGINT, MPI_SUM, 0, world);
 
       if (rank == 0) {
         utils::logmesg(lmp,
