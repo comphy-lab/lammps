@@ -157,16 +157,20 @@ using ssfn_t = struct _ssfn_t {
 /*** normal renderer (ca. 22k, fully featured with error checking) ***/
 
 namespace {
-/* error codes */
-#define SSFN_OK 0           /* success */
-#define SSFN_ERR_ALLOC 1    /* allocation error */
-#define SSFN_ERR_NOFACE 2   /* no font face selected */
-#define SSFN_ERR_INVINP 3   /* invalid input */
-#define SSFN_ERR_BADFILE 4  /* bad SSFN file format */
-#define SSFN_ERR_BADSTYLE 5 /* bad style */
-#define SSFN_ERR_BADSIZE 6  /* bad size */
-#define SSFN_ERR_BADMODE 7  /* bad mode */
-#define SSFN_ERR_NOGLYPH 8  /* glyph (or kerning info) not found */
+  /* error codes */
+  enum {
+    SSFN_OK = 0,       /* success */
+    SSFN_ERR_ALLOC,    /* allocation error */
+    SSFN_ERR_NOFACE,   /* no font face selected */
+    SSFN_ERR_INVINP,   /* invalid input */
+    SSFN_ERR_BADFILE,  /* bad SSFN file format */
+    SSFN_ERR_BADSTYLE, /* bad style */
+    SSFN_ERR_BADSIZE,  /* bad size */
+    SSFN_ERR_BADMODE,  /* bad mode */
+    SSFN_ERR_NOGLYPH,  /* glyph (or kerning info) not found */
+    SSFN_ERR_NOMAP,    /* could not access color map information */
+    SSFN_ERR_LAST
+  };
 
   /**
    * Error code strings
@@ -179,7 +183,8 @@ namespace {
                                "Invalid style",
                                "Invalid size",
                                "Invalid mode",
-                               "Glyph not found"};
+                               "Glyph not found",
+                               "Color map not available"};
 
 // include font data as constant in memory byte sequence
 #include "scalable_sans_font.h"
@@ -1215,7 +1220,8 @@ unsigned char *ScalableFont::create_colorscale(const std::string &text, int &wid
 
   if (minwidth > width) {
     int wextra = (minwidth - width) / xfill / 4;
-    newtext = fmt::format("{:3.3} {:<<{}} {} {:>>{}} {:3.3}", lo, '<', wextra, text, '>', wextra, hi);
+    newtext =
+        fmt::format("{:3.3} {:<<{}} {} {:>>{}} {:3.3}", lo, '<', wextra, text, '>', wextra, hi);
     width = minwidth;
   }
 
@@ -1267,27 +1273,43 @@ unsigned char *ScalableFont::create_colorscale(const std::string &text, int &wid
 
   // draw colormap
   double delta = (hi - lo) / (width - 2 * xspace);
-  int ticinc = tics ? (width - xspace) / tics : 1 << 31;
-  int ticmin = ticinc + xhalf;
+  int ticinc = tics ? (width - 2 * xspace) / (tics + 1) : 1 << 31;
+  int ticmin = ticinc + xspace + 1;
   int ticmax = ticmin + xhalf;
   for (int x = xspace; x < width - xspace; ++x) {
-    for (int y = xspace; y < height - 4 * xspace - xhalf; ++y) {
+    for (int y = xhalf + xhalf / 2; y < height - 4 * xspace - xhalf; ++y) {
       int offs = 3 * y * width + 3 * x;
       double val = lo + delta * static_cast<double>(x - xspace);
       auto *color = image->map_value2color(mapidx, val);
       if (color) {
-        if ((x > ticmin) && (x < ticmax)) {
-          pixmap[offs] = font[0];
-          pixmap[offs + 1] = font[1];
-          pixmap[offs + 2] = font[2];
+        if (tics > 0) {
+          if ((((x >= ticmin) && (x <= ticmax)) || (x <= xspace + xhalf) ||
+               (x >= width - xspace - xhalf)) ||
+              (y <= xspace + xhalf / 2) || (y >= height - 5 * xspace)) {
+
+            pixmap[offs] = font[0];
+            pixmap[offs + 1] = font[1];
+            pixmap[offs + 2] = font[2];
+          } else {
+            pixmap[offs] = color[0] * 255;
+            pixmap[offs + 1] = color[1] * 255;
+            pixmap[offs + 2] = color[2] * 255;
+          }
+          if (x == ticmax) {
+            ticmin += ticinc;
+            ticmax += ticinc;
+          }
         } else {
-          pixmap[offs] = color[0] * 255;
-          pixmap[offs + 1] = color[1] * 255;
-          pixmap[offs + 2] = color[2] * 255;
-        }
-        if (x == ticmax) {
-          ticmin += ticinc;
-          ticmax += ticinc;
+          if ((x <= xspace + xhalf) || (x >= width - xspace - xhalf) || (y <= xspace + xhalf / 2) ||
+              (y >= height - 5 * xspace)) {
+            pixmap[offs] = font[0];
+            pixmap[offs + 1] = font[1];
+            pixmap[offs + 2] = font[2];
+          } else {
+            pixmap[offs] = color[0] * 255;
+            pixmap[offs + 1] = color[1] * 255;
+            pixmap[offs + 2] = color[2] * 255;
+          }
         }
       }
     }
@@ -1339,7 +1361,7 @@ unsigned char *ScalableFont::create_colorscale(const std::string &text, int &wid
 SSFNException::SSFNException(const std::string &file, int line, int flag)
 {
   message = fmt::format("In file {}:{} ", truncpath(file), line);
-  if ((flag < SSFN_OK) || (flag > SSFN_ERR_NOGLYPH)) {
+  if ((flag < SSFN_OK) || (flag >= SSFN_ERR_LAST)) {
     message.append("Unknown Error");
   } else {
     message.append(ssfn_errstr[flag]);
