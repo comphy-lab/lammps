@@ -21,6 +21,7 @@ PairStyle(runner,PairRuNNer);
 #define LMP_PAIR_RUNNER_H
 
 #include "pair.h"
+#include "lmptype.h"
 
 namespace LAMMPS_NS {
 
@@ -59,11 +60,11 @@ class PairRuNNer : public Pair {
   bool lwrite_f_comm;       // Write committee forces into f_comm array
   bool lwrite_q_comm;       // Write committee charges into q_comm array
   bool lcheck_extrap;       // Flag enabling checks for feature extrapolation
-  long max_extrap;          // Maximal number of allowed timesteps with feature extrapolations
+  bigint max_extrap;          // Maximal number of allowed timesteps with feature extrapolations
   bool lshow_ew;            // Flag enabling output of extrapolation warnings to log file
-  long sum_ew_freq;         // Frequency where extrapolation warning summary is printed to log file
-  long reset_ew_freq;       // Frequency where extrapolation count is reseted to 0
-  long local_extrap_sum;    // Sum of recorded extrapolations per process over multiple time steps
+  bigint sum_ew_freq;         // Frequency where extrapolation warning summary is printed to log file
+  bigint reset_ew_freq;       // Frequency where extrapolation count is reseted to 0
+  bigint local_extrap_sum;    // Sum of recorded extrapolations per process over multiple time steps
   double cutoff;            // Max feature map cutoff.
   double total_charge;      // The total charge of the structure. Must be 0 for periodic systems.
   char *directory;          // directory containing RuNNer potential files
