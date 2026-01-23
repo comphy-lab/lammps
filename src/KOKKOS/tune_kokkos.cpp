@@ -57,7 +57,7 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
     if (!lmp->kokkos->pair_team_size_set) lmp->kokkos->pair_team_size_set = 1;
 
   } else if (kernel_type == BOND) {
-    if (!lmp->kokkos->bond_block_size_set) lmp->kokkos->bond_block_size_set = 1;
+    if (!lmp->kokkos->bond_chunk_size_set) lmp->kokkos->bond_chunk_size_set = 1;
 
   } else
     error->all(FLERR,"Kokkos tuning_kernel_params: kernel type not yet supported");
@@ -332,7 +332,7 @@ void TuneKokkos::set_param_values(int cidx)
     lmp->kokkos->threads_per_atom = current_vector_size;
 
   } else if (kernel_type == BOND) {
-    lmp->kokkos->bond_block_size = current_team_size;
+    lmp->kokkos->bond_chunk_size = current_team_size;
 
   } else if (kernel_type == NBIN) {
 

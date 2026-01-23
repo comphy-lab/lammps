@@ -658,13 +658,13 @@ The *nbin/atoms/per/bin* keyword sets the number of atoms per bin
 used for the neighbor list builds on the GPU, which then determines
 the number of GPU threads per bin.  The default value of this parameter is 16.
 
-The *nbor/block/size* keyword sets the number of GPU threads per block
-used for the neighbor list builds on the GPU using the flat method (i.e.,
-each thread finds the neighbor list of an atom).  If not specified, then
-the GPU threads are assigned to the bins.
+The *nbor/chunk/size* keyword sets the number of iterations that a work item
+is scheduled for the neighbor list builds on the GPU using the flat method (i.e.,
+each thread finds the neighbor list of an atom).  If not specified, the default value
+of this parameter is determined based on the GPU architecture at runtime.
 
-The *bond/block/size* keyword sets the number of GPU threads per block
-used for launching the bond force kernel on the GPU.  The default value
+The *bond/chunk/size* keyword sets the number of iterations that a work item
+is scheduled used for launching the bond force kernel on the GPU.  The default value
 of this parameter is determined based on the GPU architecture at runtime.
 
 .. versionadded:: TBD
@@ -672,7 +672,7 @@ of this parameter is determined based on the GPU architecture at runtime.
 The *auto/tuning* keyword enables the auto-tuning feature of
 the KOKKOS package.  When enabled, the KOKKOS pair style in use will scan
 through the possible values of the kernel parameters such as
-*pair/team/size* and *threads/per/atom* for pair styles and *bond/block/size*
+*pair/team/size* and *threads/per/atom* for pair styles and *bond/chunk/size*
 for bond styles, and find the combination that gives the best performance.
 The optimal combination of the kernel parameters are then fixed
 for the remaining part of the run, unless the performance drops below a certain

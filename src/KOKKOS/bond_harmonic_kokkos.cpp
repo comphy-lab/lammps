@@ -100,9 +100,9 @@ void BondHarmonicKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
   if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
 
-  int bond_blocksize = 0;
-  if (lmp->kokkos->bond_block_size_set)
-    bond_blocksize = lmp->kokkos->bond_block_size;
+  int bond_chunk_size = 0;
+  if (lmp->kokkos->bond_chunk_size_set)
+    bond_chunk_size = lmp->kokkos->bond_chunk_size;
 
   EV_FLOAT ev;
 
@@ -114,13 +114,13 @@ void BondHarmonicKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
     }
   } else {
     if (newton_bond) {
-      if (bond_blocksize)
-        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<1,0> >(0,nbondlist,Kokkos::ChunkSize(bond_blocksize)),*this);
+      if (bond_chunk_size)
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<1,0> >(0,nbondlist,Kokkos::ChunkSize(bond_chunk_size)),*this);
       else
         Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<1,0> >(0,nbondlist),*this);
     } else {
-      if (bond_blocksize)
-        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<0,0> >(0,nbondlist,Kokkos::ChunkSize(bond_blocksize)),*this);
+      if (bond_chunk_size)
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<0,0> >(0,nbondlist,Kokkos::ChunkSize(bond_chunk_size)),*this);
       else
         Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondHarmonicCompute<0,0> >(0,nbondlist),*this);
     }

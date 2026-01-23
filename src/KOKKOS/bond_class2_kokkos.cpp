@@ -103,6 +103,10 @@ void BondClass2Kokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
   if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
 
+  int bond_chunk_size = 0;
+  if (lmp->kokkos->bond_chunk_size_set)
+    bond_chunk_size = lmp->kokkos->bond_chunk_size;
+
   EV_FLOAT ev;
 
   if (evflag) {
@@ -113,9 +117,15 @@ void BondClass2Kokkos<DeviceType>::compute(int eflag_in, int vflag_in)
     }
   } else {
     if (newton_bond) {
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondClass2Compute<1,0> >(0,nbondlist),*this);
+      if (bond_chunk_size)
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondClass2Compute<1,0> >(0,nbondlist,Kokkos::ChunkSize(bond_chunk_size)),*this);
+      else
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondClass2Compute<1,0> >(0,nbondlist),*this);
     } else {
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondClass2Compute<0,0> >(0,nbondlist),*this);
+      if (bond_chunk_size)
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondClass2Compute<0,0> >(0,nbondlist,Kokkos::ChunkSize(bond_chunk_size)),*this);
+      else
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagBondClass2Compute<0,0> >(0,nbondlist),*this);
     }
   }
 

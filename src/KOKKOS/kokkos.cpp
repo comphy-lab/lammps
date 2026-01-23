@@ -131,10 +131,10 @@ KokkosLMP::KokkosLMP(LAMMPS *lmp, int narg, char **arg) : Pointers(lmp)
   pair_team_size_set = 0;
   nbin_atoms_per_bin_set = 0;
   nbin_atoms_per_bin = 16;
-  nbor_block_size = 128;
-  nbor_block_size_set = 0;
-  bond_block_size = 128;
-  bond_block_size_set = 0;
+  nbor_chunk_size = 128;
+  nbor_chunk_size_set = 0;
+  bond_chunk_size = 128;
+  bond_chunk_size_set = 0;
   autotuning = 0;
 
   int iarg = 0;
@@ -615,15 +615,15 @@ void KokkosLMP::accelerator(int narg, char **arg)
       nbin_atoms_per_bin = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
       nbin_atoms_per_bin_set = 1;
       iarg += 2;
-    } else if (strcmp(arg[iarg],"nbor/block/size") == 0) {
+    } else if (strcmp(arg[iarg],"nbor/chunk/size") == 0) {
       if (iarg+2 > narg) error->all(FLERR,"Illegal package kokkos command");
-      nbor_block_size = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
-      nbor_block_size_set = 1;
+      nbor_chunk_size = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
+      nbor_chunk_size_set = 1;
       iarg += 2;
-    } else if (strcmp(arg[iarg],"bond/block/size") == 0) {
+    } else if (strcmp(arg[iarg],"bond/chunk/size") == 0) {
       if (iarg+2 > narg) error->all(FLERR,"Illegal package kokkos command");
-      bond_block_size = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
-      bond_block_size_set = 1;
+      bond_chunk_size = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
+      bond_chunk_size_set = 1;
       iarg += 2;
     } else if (strcmp(arg[iarg],"auto/tuning") == 0) {
       if (iarg+2 > narg) error->all(FLERR,"Illegal package kokkos command");
@@ -752,12 +752,6 @@ void KokkosLMP::newton_check()
       error->all(FLERR,"Must use KOKKOS package option 'neigh/thread on' with 'threads/per/atom'");
     if (pair_team_size_set)
       error->all(FLERR,"Must use KOKKOS package option 'neigh/thread on' with 'pair/team/size'");
-    if (nbin_atoms_per_bin_set)
-      error->all(FLERR,"Must use KOKKOS package option 'neigh/thread on' with 'nbin/atoms/per/bin'");
-    if (nbor_block_size_set)
-      error->all(FLERR,"Must use KOKKOS package option 'neigh/thread on' with 'nbor/block/size'");
-    if (bond_block_size_set)
-      error->all(FLERR,"Must use KOKKOS package option 'neigh/thread on' with 'bond/block/size'");
   }
 }
 
