@@ -56,16 +56,16 @@ message(STATUS "Using ${FFT_UPPER} for FFT calculations.")
 
 if(FFT_UPPER STREQUAL "MKL")
   find_package(MKL REQUIRED)
-  target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_MKL)
+  target_compile_definitions(lammps PRIVATE -DFFT_MKL)
   option(FFT_MKL_THREADS "Use threaded MKL FFT" ON)
   if(FFT_MKL_THREADS)
-    target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_MKL_THREADS)
+    target_compile_definitions(lammps PRIVATE -DFFT_MKL_THREADS)
   endif()
   target_link_libraries(lammps PRIVATE MKL::MKL)
 
 elseif(FFT_UPPER STREQUAL "FFTW3")
   find_package(FFTW3 REQUIRED)
-  target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_FFTW3)
+  target_compile_definitions(lammps PRIVATE -DFFT_FFTW3)
   target_link_libraries(lammps PRIVATE FFTW3::FFTW3)
 
   # Check for OpenMP support in the found FFTW3 library
@@ -77,7 +77,7 @@ elseif(FFT_UPPER STREQUAL "FFTW3")
 
   if(FFT_FFTW_THREADS)
     if(FFTW3_OMP_LIBRARIES OR FFTW3F_OMP_LIBRARIES)
-      target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_FFTW_THREADS)
+      target_compile_definitions(lammps PRIVATE -DFFT_FFTW_THREADS)
       target_link_libraries(lammps PRIVATE FFTW3::FFTW3_OMP)
     else()
       message(FATAL_ERROR "FFT_FFTW_THREADS is ON, but an OpenMP-enabled FFTW3 library was not found.")
@@ -86,14 +86,14 @@ elseif(FFT_UPPER STREQUAL "FFTW3")
 
 elseif(FFT_UPPER STREQUAL "NVPL")
   find_package(nvpl_fft REQUIRED)
-  target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_NVPL)
+  target_compile_definitions(lammps PRIVATE -DFFT_NVPL)
   target_link_libraries(lammps PRIVATE nvpl::fftw)
 
 else() # Fallback to KISSFFT
   if(NOT FFT_UPPER STREQUAL "KISS")
      message(WARNING "FFT option '${FFT}' not recognized. Falling back to KISSFFT.")
   endif()
-  target_compile_definitions(lammps PRIVATE RuNNer::RuNNer -DFFT_KISS)
+  target_compile_definitions(lammps PRIVATE -DFFT_KISS)
 endif()
 
 if(DOWNLOAD_RUNNER)
@@ -171,7 +171,7 @@ else()
   # Find the RuNNer library in the specified path
   find_library(RuNNer_LIBRARY
     NAMES ${RUNNER_LIB_FULL_NAME}
-    HINTS 
+    HINTS
       "${RUNNER_LIB_DIR}"       # 1st priority: User's manual cache variable
       ENV LD_LIBRARY_PATH       # 2nd priority: Search the shell's LD_LIBRARY_PATH
       ENV LIBRARY_PATH          # 3rd priority: Search the compiler's link path
