@@ -115,7 +115,8 @@ class KSpace : protected Pointers {
 
   // Parameters required for ESP methods (automatically determined based on the user-specified force accuracy)
 
-  double *force_poly_coeff, *energy_poly_coeff, *fourier_split_poly_coeff;    // polynomial coefficients
+  double *force_poly_coeff, *energy_poly_coeff,
+      *fourier_split_poly_coeff;    // polynomial coefficients
   int num_of_force_poly, num_of_energy_poly,
       num_of_Fourier_poly;    // order of polynomial approximations
   double select_c;            // the c value for ESP
@@ -144,11 +145,11 @@ class KSpace : protected Pointers {
   uint64_t datamask_read, datamask_modify;
   int copymode;
 
-  int compute_flag;       // 0 if skip compute()
-  int fftbench;           // 0 if skip FFT timing
-  int collective_flag;    // 1 if use MPI collectives for FFT/remap
-  int nonblocking_flag;   // 1 if use MPI_Isend for FFT/remap
-  int stagger_flag;       // 1 if using staggered PPPM grids
+  int compute_flag;        // 0 if skip compute()
+  int fftbench;            // 0 if skip FFT timing
+  int collective_flag;     // 1 if use MPI collectives for FFT/remap
+  int nonblocking_flag;    // 1 if use MPI_Isend for FFT/remap
+  int stagger_flag;        // 1 if using staggered PPPM grids
 
   double splittol;    // tolerance for when to truncate splitting
 

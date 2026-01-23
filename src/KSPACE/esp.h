@@ -171,7 +171,7 @@ class ESP : public KSpace {
   }
 
   void poly_and_deriv_horner(const double x, const double *coeff, const int n, double &p,
-                                    double &dp) const
+                             double &dp) const
   {
     // p(x) and dp/dx, Horner form
     p = coeff[n - 1];
@@ -200,7 +200,7 @@ class ESP : public KSpace {
   }
 
   double gf_denom_psw(const double &kx, const double &ky, const double &kz, const double &hx,
-                             const double &hy, const double &hz) const
+                      const double &hy, const double &hz) const
   {
     int Nmax = (differentiation_flag == 0) ? 2 : 0;
 
