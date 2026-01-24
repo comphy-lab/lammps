@@ -46,15 +46,17 @@ step is usually necessary, since the LAMMPS dump files do not contain
 information about the molecular topology and elements and that
 information can be obtained from the data file.  There also is the
 `pbctools plugin
-<https://www.ks.uiuc.edu/Research/vmd/plugins/pbctools/>`_ that
-"repairing" bonds that are broken because one of its atom passed through
-a periodic boundary.  Because of using the plugins, the following
-commands need to be typed into the VMD console to read a trajectory.
-The following commands are based on the ``peptide`` example to which the
-command ``dump 1 all atom 10 dump.peptide`` (note the use of the group
-"all" to match the number of atoms in the data file. VMD does not
-support cases where the number of atoms change or you are trying to read
-in a subset of a system unless *all* files contain the same subset.
+<https://www.ks.uiuc.edu/Research/vmd/plugins/pbctools/>`_ that can be
+used for "repairing" bonds that are broken because one of its atom
+passed through a periodic boundary.  Because of using the plugins, the
+following commands need to be typed into the VMD console to read a
+trajectory.  The following commands are based on the ``peptide`` example
+to which the command ``dump 1 all atom 10 dump.peptide`` was added.
+Note the use of the group "all" in contrast to the commented out dump
+commands that use the group "peptide".  This is to match the number of
+atoms in the data file.  VMD does not support cases where the number of
+atoms change or you are trying to read in a subset of a system unless
+*all* files contain the same subset.
 
 .. code-block:: Tcl
 

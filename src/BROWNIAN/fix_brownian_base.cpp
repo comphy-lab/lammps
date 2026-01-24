@@ -98,7 +98,7 @@ FixBrownianBase::FixBrownianBase(LAMMPS *lmp, int narg, char **arg) :
       } else {
         gamma_t_tmp[2] = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
       }
-      if ((gamma_t_tmp[0] <= 0.0) || (gamma_t_tmp[1] <= 0.0) || (gamma_t_tmp[2] < -0))
+      if ((gamma_t_tmp[0] <= 0.0) || (gamma_t_tmp[1] <= 0.0) || (gamma_t_tmp[2] <= 0.0))
         error->all(FLERR, iarg, "Fix {} gamma_t_eigen values must be > 0", style);
 
       gamma_t_eigen_flag = 1;

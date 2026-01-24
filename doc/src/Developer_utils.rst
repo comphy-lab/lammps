@@ -615,13 +615,13 @@ Finding types from labels and vice versa
    LabelMap *lmap = atom->lmap;
 
    // Forward lookup: Get numeric type from label
-   int ctype = lmap->find("C", Atom::ATOM);    // Returns atom type for "C"
-   int htype = lmap->find("H", Atom::ATOM);    // Returns atom type for "H"
-   int missing = lmap->find("X", Atom::ATOM);  // Returns -1 (not found)
+   int ctype = lmap->find_type("C", Atom::ATOM);    // Returns atom type for "C"
+   int htype = lmap->find_type("H", Atom::ATOM);    // Returns atom type for "H"
+   int missing = lmap->find_type("X", Atom::ATOM);  // Returns -1 (not found)
 
    // Reverse lookup: Get label from numeric type
-   const std::string &label1 = lmap->find(1, Atom::ATOM);  // Returns label for type 1
-   const std::string &label2 = lmap->find(2, Atom::BOND);  // Returns bond label for type 2
+   const std::string &label1 = lmap->find_label(1, Atom::ATOM);  // Returns label for type 1
+   const std::string &label2 = lmap->find_label(2, Atom::BOND);  // Returns bond label for type 2
 
    // Check if all types have labels
    bool complete = lmap->is_complete(Atom::ATOM);  // Returns true if all atom types labeled
