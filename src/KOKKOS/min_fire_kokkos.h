@@ -36,7 +36,6 @@ class MinFireKokkos : public MinKokkos {
   int iterate(int) override;
   
 private:
-  double dt, dtmax, dtmin;
   double alpha;
   bigint last_negative, ntimestep_start;
   int vdotf_negatif, flagv0;
