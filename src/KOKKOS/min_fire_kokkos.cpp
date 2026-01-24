@@ -19,12 +19,13 @@
 #include "min_fire_kokkos.h"
 #include "atom_kokkos.h"
 #include "atom_masks.h"
-#include "force.h"
-#include "update.h"
-#include "timer.h"
+#include "comm.h"
 #include "error.h"
+#include "force.h"
 #include "output.h"
+#include "timer.h"
 #include "universe.h"
+#include "update.h"
 #include <cmath>
 
 using namespace LAMMPS_NS;
