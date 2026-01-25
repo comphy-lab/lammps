@@ -56,7 +56,7 @@ void MinFireKokkos::setup_style() {
   atomKK->sync(Device, V_MASK);
   auto l_v = atomKK->k_v.view_device();
   int nlocal = atom->nlocal;
-  
+
   // print the parameters used within fire/abcfire into the log
 
   const char *integrator_names[] = {"eulerimplicit", "verlet", "leapfrog", "eulerexplicit"};
@@ -73,7 +73,7 @@ void MinFireKokkos::setup_style() {
                    integrator_names[integrator], yesno[halfstepback_flag], yesno[abcflag]);
 
   // initialize the velocities
-  
+
   Kokkos::parallel_for("min_fire/zero_v", nlocal, LAMMPS_LAMBDA(const int i) {
     l_v(i,0) = l_v(i,1) = l_v(i,2) = 0.0;
   });
@@ -108,10 +108,9 @@ int MinFireKokkos::run_iterate(int maxiter) {
   double vdotf_local, vdotfall, vdotv_local, vdotvall, fdotf_local, fdotfall;
   KK_FLOAT scale1 = 0.0, scale2 = 0.0; // Initialize to zero
   KK_FLOAT dtv;
-
   alpha_final = 0.0;
   int flagv0 = 1;
-  
+
   atomKK->sync(Device, X_MASK | V_MASK | F_MASK | RMASS_MASK | TYPE_MASK);
   auto l_x = atomKK->k_x.view_device();
   auto l_v = atomKK->k_v.view_device();
@@ -216,7 +215,6 @@ int MinFireKokkos::run_iterate(int maxiter) {
     if (!ABCFLAG && flagv0) {
       energy_force(0);
       neval++;
-      
       double dtf_init = dt * force->ftm2v;
       Kokkos::parallel_for("min_fire/v_init", nlocal, LAMMPS_LAMBDA(const int i) {
         KK_FLOAT dtfm = dtf_init / (l_rmass.data() ? l_rmass(i) : l_mass(l_type(i)));
@@ -228,7 +226,6 @@ int MinFireKokkos::run_iterate(int maxiter) {
 
     double dtvone = dt;
     auto l_dmax = dmax;
-    
     if constexpr (!ABCFLAG) {
       Kokkos::parallel_reduce("min_fire/dtv_limit", nlocal, LAMMPS_LAMBDA(const int i, KK_FLOAT &dtmin_local) {
         KK_FLOAT vmax = fmax(fabs(l_v(i,0)), fmax(fabs(l_v(i,1)), fabs(l_v(i,2))));
@@ -250,12 +247,10 @@ int MinFireKokkos::run_iterate(int maxiter) {
 
     KK_FLOAT dtf_final = dtv * force->ftm2v;
     KK_FLOAT dtf_half = 0.5 * dtf_final;
-
     Kokkos::parallel_for("min_fire/integrate", nlocal, LAMMPS_LAMBDA(const int i) {
       KK_FLOAT mass_val = (l_rmass.data() ? l_rmass(i) : l_mass(l_type(i)));
       KK_FLOAT dtfm = dtf_final / mass_val;
       KK_FLOAT dtfm_half = dtf_half / mass_val;
-
       if constexpr (INTEGRATOR == EULERIMPLICIT || INTEGRATOR == LEAPFROG) {
         l_v(i,0) += dtfm * l_f(i,0);
         l_v(i,1) += dtfm * l_f(i,1);
@@ -328,9 +323,8 @@ int MinFireKokkos::run_iterate(int maxiter) {
       });
       atomKK->modified(Device, V_MASK);
     }
-
     flagv0 = 0;
-    
+
     // -------------------------------------------------
     // Corrected ETOL Check
     // -------------------------------------------------
@@ -345,7 +339,6 @@ int MinFireKokkos::run_iterate(int maxiter) {
         int local_flag = local_converged ? 0 : 1;
         int global_flag;
         MPI_Allreduce(&local_flag, &global_flag, 1, MPI_INT, MPI_SUM, universe->uworld);
-        
         // Only return if EVERYONE (sum=0) is converged
         if (global_flag == 0) return ETOL;
       }
@@ -365,7 +358,6 @@ int MinFireKokkos::run_iterate(int maxiter) {
         int local_flag = local_converged ? 0 : 1;
         int global_flag;
         MPI_Allreduce(&local_flag, &global_flag, 1, MPI_INT, MPI_SUM, universe->uworld);
-        
         if (global_flag == 0) return FTOL;
       }
     }
@@ -375,9 +367,7 @@ int MinFireKokkos::run_iterate(int maxiter) {
       output->write(ntimestep);
       timer->stamp(Timer::OUTPUT);
     }
-    
   }
-  
   atomKK->modified(Device, X_MASK | V_MASK | F_MASK);
   return MAXITER;
 }

@@ -34,7 +34,7 @@ class MinFireKokkos : public MinKokkos {
   void setup_style() override;
   void reset_vectors() override;
   int iterate(int) override;
-  
+
 private:
   double dt, dtmax, dtmin;
   double alpha;
