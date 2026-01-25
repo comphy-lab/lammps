@@ -438,10 +438,11 @@ void PairLJCutCoulLongKokkos<DeviceType>::init_style()
   if (neighflag == FULL) request->enable_full();
 
   if (lmp->kokkos->autotuning > 0 && !tuner) {
-    if (force->newton)
-      error->all(FLERR,"Kokkos autotuning requires 'newton off' for this pair style");
-    tuner = new TuneKokkos(lmp, TuneKokkos::PAIR, lmp->kokkos->autotuning,
-      2, "pair-lj-cut-coul-long");
+    if (!force->newton_pair)
+      tuner = new TuneKokkos(lmp, TuneKokkos::PAIR, lmp->kokkos->autotuning,
+        2, "pair-lj-cut-coul-long");
+    else
+      error->warning(FLERR,"Autotuner for pair lj/cut/coul/long/kk is disabled with 'newton on'");
   }
 }
 

@@ -34,7 +34,7 @@ class TuneKokkos : protected Pointers {
   void set_team_size_values(const std::vector<int>& tsizes);
   void set_vector_size_values(const std::vector<int>& vsizes);
 
-  enum { PAIR, BOND, NBIN, FIX, COMPUTE };
+  enum { PAIR, BOND, NBIN, FIX, COMPUTE, GENERIC };
 
   int kernel_type;  // type of kernel being tuned: PAIR, BOND, NBIN, FIX, COMPUTE
   int interval;     // # of timesteps to run the simulation with a given parameter set
@@ -61,11 +61,12 @@ class TuneKokkos : protected Pointers {
   FILE *logfile;             // logfile
   std::string name;          // name of the tuner instance
 
-  double get_timing_info();                  // get the elapsed time from the last call
-  void get_current_params(int, auto&, auto&);  // get the team size and vector size for a given combination index
-  void set_param_values(int);                // set the KOKKOS kernel parameters based on the combination index
-  int get_optimal_combination_idx();         // find the combination index with the best performance
-  void regular_performance_check();          // monitor the performance during normal simulation and re-trigger scanning if needed
+  double get_timing_info();                   // get the elapsed time from the last call
+  int get_current_team_size();                // get the team size for the current combination index
+  void get_current_params(int, auto&, auto&); // get the team size and vector size for a given combination index
+  void set_param_values(int);                 // set the KOKKOS kernel parameters based on the combination index
+  int get_optimal_combination_idx();          // find the combination index with the best performance
+  void regular_performance_check();           // monitor the performance during normal simulation and re-trigger scanning if needed
 };
 
 }

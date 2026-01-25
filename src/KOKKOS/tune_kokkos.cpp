@@ -59,6 +59,10 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
   } else if (kernel_type == BOND) {
     if (!lmp->kokkos->bond_chunk_size_set) lmp->kokkos->bond_chunk_size_set = 1;
 
+  } else if (kernel_type == GENERIC) {
+    // no specific kokkos parameters to set for generic kernels
+    // leaving it for the pair/bond/fix/compute style to decide
+
   } else
     error->all(FLERR,"Kokkos tuning_kernel_params: kernel type not yet supported");
 
@@ -71,6 +75,8 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
   } else {
     logfile = nullptr;
   }
+
+  allocate(num_params);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -158,17 +164,28 @@ void TuneKokkos::allocate(int num_params)
 /* ----------------------------------------------------------------------
    tuning the pair compute kernel parameters
    this function is called by the /kk pair style at every timestep
-   if auto-tuning is enabled
+   if auto-tuning is enabled.
+
+   NOTE: For pair hybrid, each kk pair style creates its own TuneKokkos object,
+   which sets lmp->kokkos->pair_team_size and lmp->kokkos->threads_per_atom.
+   This is possible because these parameters are effective right before
+   the pair's own pair compute kernel is launched in compute().
 ------------------------------------------------------------------------- */
 
 void TuneKokkos::tuning_kernel_params()
 {
-  if (!allocated) allocate(num_params);
-
   // retrieve the current parameter set from combination_idx
 
   int current_team_size, current_vector_size;
   get_current_params(combination_idx, current_team_size, current_vector_size);
+
+  bigint elapsed_steps = update->ntimestep - update->beginstep;
+  if (elapsed_steps == 0) {
+    if (logfile) {
+      utils::print(logfile, "A new run starts...\n");
+      fflush(logfile);
+    }
+  }
 
   if (!scanning_completed) {
 
@@ -178,7 +195,7 @@ void TuneKokkos::tuning_kernel_params()
 
     // wait for interval timesteps to collect timing info
 
-    if ((update->ntimestep - update->beginstep) % interval == 0) {
+    if (elapsed_steps % interval == 0) {
 
       double tps = get_timing_info();
 
@@ -219,6 +236,17 @@ void TuneKokkos::tuning_kernel_params()
   if (scanning_completed && combination_idx == ncombinations) {
     int opt_idx = get_optimal_combination_idx();
     set_param_values(opt_idx);
+
+    if (logfile) {
+      int opt_ts = 0, opt_vs = 0;
+      get_current_params(opt_idx, opt_ts, opt_vs);
+      std::string mesg = fmt::format("Finished tuning. Found the optimal params: ");
+      mesg += fmt::format("team size = {} vector size = {} ",
+                      opt_ts, opt_vs);
+      mesg += fmt::format(" perf = {:.1f} TPS\n", opt_perf);
+      utils::print(logfile, "{}", mesg.c_str());
+      fflush(logfile);
+    }
 
     // reset combination_idx to zero to be ready for another scan if needed
     // and to avoid repeating this block
@@ -305,6 +333,17 @@ double TuneKokkos::get_timing_info()
 }
 
 /* ----------------------------------------------------------------------
+   get the current team size based on the combination index
+------------------------------------------------------------------------- */
+
+int TuneKokkos::get_current_team_size()
+{
+  int num_team_sizes = team_sizes.size();
+  int current_team_size = team_sizes[combination_idx % num_team_sizes];
+  return current_team_size;
+}
+
+/* ----------------------------------------------------------------------
    get the current params based on the combination index
    NOTE: using auto& with an eye toward supporting different types of params
    in the future, not restricted to int's
@@ -339,6 +378,8 @@ void TuneKokkos::set_param_values(int cidx)
   } else if (kernel_type == FIX) {
 
   } else if (kernel_type == COMPUTE) {
+
+  } else if (kernel_type == GENERIC) {
 
   }
 
