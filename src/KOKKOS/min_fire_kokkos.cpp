@@ -145,13 +145,10 @@ int MinFireKokkos::run_iterate(int maxiter) {
     }, vdotf_local);
     MPI_Allreduce(&vdotf_local, &vdotfall, 1, MPI_DOUBLE, MPI_SUM, world);
 
-    Kokkos::printf("*** ok 1\n");
     if (update->multireplica == 1) {
       vdotf_local = vdotfall;
       MPI_Allreduce(&vdotf_local, &vdotfall, 1, MPI_DOUBLE, MPI_SUM, universe->uworld);
     }
-    Kokkos::printf("*** ok 2\n");
-
 
     if (vdotfall > 0.0) {
       vdotv_local = 0.0;
@@ -166,16 +163,11 @@ int MinFireKokkos::run_iterate(int maxiter) {
       MPI_Allreduce(&vdotv_local, &vdotvall, 1, MPI_DOUBLE, MPI_SUM, world);
       MPI_Allreduce(&fdotf_local, &fdotfall, 1, MPI_DOUBLE, MPI_SUM, world);
 
-
       if (update->multireplica == 1) {
         double dot_tmp = vdotvall;
-        Kokkos::printf("*** [replica %i rank %i] ok 3\n", universe->iworld, comm->me);
         MPI_Allreduce(&dot_tmp, &vdotvall, 1, MPI_DOUBLE, MPI_SUM, universe->uworld);
-        Kokkos::printf("*** [replica %i rank %i] ok 4\n", universe->iworld, comm->me);
         dot_tmp = fdotfall;
         MPI_Allreduce(&dot_tmp, &fdotfall, 1, MPI_DOUBLE, MPI_SUM, universe->uworld);
-        Kokkos::printf("*** [replica %i rank %i] ok 5\n", universe->iworld, comm->me);
-
       }
 
       if constexpr (ABCFLAG) {
