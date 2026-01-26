@@ -244,7 +244,7 @@ Assuming ``ethanol.pdb`` is your structure:
       SUS = loadmol2 ethanol.mol2
       check SUS
       loadamberparams ethanol.frcmod
-      saveamberparm SUS ethanol.prmtop 
+      saveamberparm SUS ethanol.prmtop
       quit
 
 4. Run tleap and inspect ``leap.log`` for errors:
