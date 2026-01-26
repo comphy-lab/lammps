@@ -177,6 +177,7 @@ void CommKokkos::forward_comm_device()
           if (size_forward_recv[iswap]) {
             buf = (double*)atomKK->k_x.view<DeviceType>().data() +
               firstrecv[iswap]*atomKK->k_x.view<DeviceType>().extent(1);
+            DeviceType().fence();
             MPI_Irecv(buf,size_forward_recv[iswap],MPI_DOUBLE,
                       recvproc[iswap],0,world,&request);
           }
@@ -196,6 +197,7 @@ void CommKokkos::forward_comm_device()
 
         } else if (ghost_velocity) {
           if (size_forward_recv[iswap]) {
+            DeviceType().fence();
             MPI_Irecv(k_buf_recv.view<DeviceType>().data(),
                       size_forward_recv[iswap],MPI_DOUBLE,
                       recvproc[iswap],0,world,&request);
@@ -214,10 +216,12 @@ void CommKokkos::forward_comm_device()
           }
           atomKK->avecKK->unpack_comm_vel_kokkos(recvnum[iswap],firstrecv[iswap],k_buf_recv);
         } else {
-          if (size_forward_recv[iswap])
+          if (size_forward_recv[iswap]) {
+            DeviceType().fence();
             MPI_Irecv(k_buf_recv.view<DeviceType>().data(),
                       size_forward_recv[iswap],MPI_DOUBLE,
                       recvproc[iswap],0,world,&request);
+          }
           auto k_sendlist_iswap = Kokkos::subview(k_sendlist,iswap,Kokkos::ALL);
           n = atomKK->avecKK->pack_comm_kokkos(sendnum[iswap],k_sendlist_iswap,
                                      k_buf_send,pbc_flag[iswap],pbc[iswap]);
@@ -288,9 +292,11 @@ void CommKokkos::reverse_comm_device()
   for (int iswap = nswap-1; iswap >= 0; iswap--) {
     if (sendproc[iswap] != me) {
       if (comm_f_only && !atomKK->k_f.NEED_TRANSFORM) {
-        if (size_reverse_recv[iswap])
-            MPI_Irecv(k_buf_recv.view<DeviceType>().data(),size_reverse_recv[iswap],MPI_DOUBLE,
+        if (size_reverse_recv[iswap]) {
+          DeviceType().fence();
+          MPI_Irecv(k_buf_recv.view<DeviceType>().data(),size_reverse_recv[iswap],MPI_DOUBLE,
                     sendproc[iswap],0,world,&request);
+        }
         if (size_reverse_send[iswap]) {
           buf = (double*)atomKK->k_f.view<DeviceType>().data() +
             firstrecv[iswap]*atomKK->k_f.view<DeviceType>().extent(1);
@@ -305,10 +311,12 @@ void CommKokkos::reverse_comm_device()
         }
 
       } else {
-        if (size_reverse_recv[iswap])
+        if (size_reverse_recv[iswap]) {
+          DeviceType().fence();
           MPI_Irecv(k_buf_recv.view<DeviceType>().data(),
                     size_reverse_recv[iswap],MPI_DOUBLE,
                     sendproc[iswap],0,world,&request);
+        }
         n = atomKK->avecKK->pack_reverse_kokkos(recvnum[iswap],firstrecv[iswap],k_buf_send);
         if (n) {
           DeviceType().fence();
@@ -398,6 +406,7 @@ void CommKokkos::forward_comm_device(Fix *fix, int size)
       }
 
       if (recvnum[iswap]) {
+        DeviceType().fence();
         MPI_Irecv(buf_recv_fix,nsize*recvnum[iswap],MPI_DOUBLE,
                   recvproc[iswap],0,world,&request);
       }
@@ -579,6 +588,7 @@ void CommKokkos::forward_comm_device(Pair *pair, int size)
       }
 
       if (recvnum[iswap]) {
+        DeviceType().fence();
         MPI_Irecv(buf_recv_pair,nsize*recvnum[iswap],MPI_DOUBLE,
                   recvproc[iswap],0,world,&request);
       }
@@ -678,8 +688,10 @@ void CommKokkos::reverse_comm_device(Pair *pair, int size)
     }
 
     if (sendproc[iswap] != me) {
-      if (sendnum[iswap])
+      if (sendnum[iswap]) {
+        DeviceType().fence();
         MPI_Irecv(buf_recv_pair,nsize*sendnum[iswap],MPI_DOUBLE,sendproc[iswap],0,world,&request);
+      }
       if (recvnum[iswap]) {
         DeviceType().fence();
         MPI_Send(buf_send_pair,n,MPI_DOUBLE,recvproc[iswap],0,world);
@@ -806,6 +818,7 @@ struct BuildExchangeListFunctor {
                 _sendlist_bonus(sendlist_bonus.template view<DeviceType>()),
                 _bonus_flags(bonus_flags.template view<DeviceType>()) { }
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (int i) const {
     if (_x(i,_dim) < _lo || _x(i,_dim) >= _hi) {
@@ -1048,6 +1061,7 @@ void CommKokkos::exchange_device()
         }
         if (nrecv > maxrecv) grow_recv_kokkos(nrecv);
 
+        DeviceType().fence();
         MPI_Irecv(k_buf_recv.view<DeviceType>().data(),nrecv1,
                   MPI_DOUBLE,procneigh[dim][1],0,
                   world,&request);
@@ -1117,6 +1131,7 @@ void CommKokkos::exchange_device()
 
             if (nextrarecv > maxrecv) grow_recv_kokkos(nextrarecv);
 
+            DeviceType().fence();
             MPI_Irecv(k_buf_recv.view<DeviceType>().data(),nextrarecv1,
                       MPI_DOUBLE,procneigh[dim][1],0,
                       world,&request);
@@ -1233,6 +1248,7 @@ struct BuildBorderListFunctor {
     nsend(_nsend.template view<DeviceType>()) {}
 
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (typename Kokkos::TeamPolicy<DeviceType>::member_type dev) const {
     const int chunk = ((nlast - nfirst + dev.league_size() - 1 ) /
@@ -1255,7 +1271,7 @@ struct BuildBorderListFunctor {
     }
   }
 
-  size_t shmem_size(const int team_size) const { (void) team_size; return 1000u;}
+  [[nodiscard]] size_t shmem_size(const int team_size) const { (void) team_size; return 1000u;}
 };
 
 /* ---------------------------------------------------------------------- */
@@ -1426,9 +1442,12 @@ void CommKokkos::borders_device() {
         MPI_Sendrecv(&nsend,1,MPI_INT,sendproc[iswap],0,
                      &nrecv,1,MPI_INT,recvproc[iswap],0,world,MPI_STATUS_IGNORE);
         if (nrecv*size_border > maxrecv) grow_recv_kokkos(nrecv*size_border);
-        if (nrecv) MPI_Irecv(k_buf_recv.view<DeviceType>().data(),
-                             nrecv*size_border,MPI_DOUBLE,
-                             recvproc[iswap],0,world,&request);
+        if (nrecv) {
+          DeviceType().fence();
+          MPI_Irecv(k_buf_recv.view<DeviceType>().data(),
+                    nrecv*size_border,MPI_DOUBLE,
+                    recvproc[iswap],0,world,&request);
+        }
         if (n) {
           DeviceType().fence();
           MPI_Send(k_buf_send.view<DeviceType>().data(),n,

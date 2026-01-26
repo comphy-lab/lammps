@@ -94,6 +94,7 @@ struct AtomVecKokkos_PackComm {
       _pbc[3] = pbc[3]; _pbc[4] = pbc[4]; _pbc[5] = pbc[5];
     };
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     const int j = _list(i);
@@ -306,6 +307,7 @@ struct AtomVecKokkos_UnpackComm {
         buffer_view<DeviceType>(_buf,buf,maxsend,elements);
       };
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     int m = 0;
@@ -410,6 +412,7 @@ struct AtomVecKokkos_PackCommSelf {
       _pbc[3] = pbc[3]; _pbc[4] = pbc[4]; _pbc[5] = pbc[5];
   };
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     const int j = _list(i);
@@ -633,6 +636,7 @@ struct AtomVecKokkos_PackCommSelfFused {
       _xprd(xprd),_yprd(yprd),_zprd(zprd),
       _xy(xy),_xz(xz),_yz(yz),_datamask(datamask) {};
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& ii) const {
 
@@ -825,6 +829,7 @@ struct AtomVecKokkos_PackCommVel {
     _h_rate[3] = h_rate[3]; _h_rate[4] = h_rate[4]; _h_rate[5] = h_rate[5];
   }
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     int m = 0;
@@ -1079,6 +1084,7 @@ struct AtomVecKokkos_UnpackCommVel {
     buffer_view<DeviceType>(_buf,buf,maxsend,elements);
   };
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     int m = 0;
@@ -1191,6 +1197,7 @@ struct AtomVecKokkos_PackReverse {
         buffer_view<DeviceType>(_buf,buf,maxsend,elements);
       };
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     int m = 0;
@@ -1279,6 +1286,7 @@ struct AtomVecKokkos_UnPackReverse {
         buffer_view<DeviceType>(_buf,buf,maxsend,elements);
       };
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     int m = 0;
@@ -1369,6 +1377,7 @@ struct AtomVecKokkos_UnPackReverseSelf {
       _nfirst(nfirst),_list(list.view<DeviceType>()),
       _datamask(datamask) {};
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     const int j = _list(i);
@@ -1476,6 +1485,7 @@ struct AtomVecKokkos_PackBorder {
       _uCGnew(atomKK->k_uCGnew.view<DeviceType>()),
       _dx(dx),_dy(dy),_dz(dz),_datamask(datamask) {}
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     const int j = _list(i);
@@ -1660,6 +1670,7 @@ struct AtomVecKokkos_UnpackBorder {
     _first(first),_datamask(datamask) {
   };
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     int m = 0;
@@ -1810,6 +1821,7 @@ struct AtomVecKokkos_PackBorderVel {
         _buf = typename AT::t_double_2d_lr_um(buf.data(),maxsend,elements);
       }
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     int m = 0;
@@ -2027,6 +2039,7 @@ struct AtomVecKokkos_UnpackBorderVel {
     _buf = typename AT::t_double_2d_lr_const_um(buf.data(),maxsend,elements);
   };
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int& i) const {
     int m = 0;
@@ -2241,6 +2254,7 @@ struct AtomVecKokkos_PackExchangeFunctor {
         buffer_view<DeviceType>(_buf,buf,maxsendlist,_size_exchange);
       }
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int &mysend) const {
     const int i = _sendlist(mysend);
@@ -2634,6 +2648,7 @@ struct AtomVecKokkos_UnpackExchangeFunctor {
     buffer_view<DeviceType>(_buf,buf,maxsendlist,_size_exchange);
   }
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator() (const int &myrecv) const {
     double x = _buf(myrecv,_dim+1);
