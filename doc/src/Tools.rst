@@ -60,11 +60,6 @@ Pre-processing tools
    * :ref:`tinker <tinker>`
    * :doc:`AMBER2LAMMPS <Howto_amber2lammps>`
 
-External tools
-==============
-
-The following external tools are commonly used with LAMMPS for specific file format conversions:
-
 Post-processing tools
 =====================
 
