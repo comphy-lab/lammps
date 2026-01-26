@@ -351,17 +351,17 @@ void AtomVecEllipsoidKokkos::pack_comm_self_bonus_kokkos(const int &n,
   // Choose correct forward PackComm kernel
 
   if (lmp->kokkos->forward_comm_on_host) {
-    atomKK->sync(HostKK,datamask_comm);
+    atomKK->sync(HostKK,datamask_bonus);
     struct AtomVecEllipsoidKokkos_PackCommSelfBonus<LMPHostType> f(
       atomKK,k_bonus,nfirst,list);
     Kokkos::parallel_for(n,f);
-    atomKK->modified(HostKK,datamask_comm);
+    atomKK->modified(HostKK,datamask_bonus);
   } else {
-    atomKK->sync(Device,datamask_comm);
+    atomKK->sync(Device,datamask_bonus);
     struct AtomVecEllipsoidKokkos_PackCommSelfBonus<LMPDeviceType> f(
       atomKK,k_bonus,nfirst,list);
     Kokkos::parallel_for(n,f);
-    atomKK->modified(Device,datamask_comm);
+    atomKK->modified(Device,datamask_bonus);
   }
 }
 
@@ -427,17 +427,17 @@ void AtomVecEllipsoidKokkos::pack_comm_self_fused_bonus_kokkos(const int &n,
                                const DAT::tdual_int_1d &firstrecv,
                                const DAT::tdual_int_1d &g2l) {
   if (lmp->kokkos->forward_comm_on_host) {
-    atomKK->sync(HostKK,datamask_comm);
+    atomKK->sync(HostKK,datamask_bonus);
     struct AtomVecEllipsoidKokkos_PackCommSelfFusedBonus<LMPHostType> f(
       atomKK,k_bonus,list,firstrecv,sendnum_scan,g2l);
     Kokkos::parallel_for(n,f);
-    atomKK->modified(HostKK,datamask_comm);
+    atomKK->modified(HostKK,datamask_bonus);
   } else {
-    atomKK->sync(Device,datamask_comm);
+    atomKK->sync(Device,datamask_bonus);
     struct AtomVecEllipsoidKokkos_PackCommSelfFusedBonus<LMPDeviceType> f(
       atomKK,k_bonus,list,firstrecv,sendnum_scan,g2l);
     Kokkos::parallel_for(n,f);
-    atomKK->modified(Device,datamask_comm);
+    atomKK->modified(Device,datamask_bonus);
   }
 }
 
