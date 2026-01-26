@@ -19,6 +19,10 @@
 
 #include "kokkos_type.h"
 
+// NOTE: 'double' is still used in various quaternion related functions below.
+// This is temporary to support current atom_vec_ellipsoid_kokkos bonus struct
+// which still uses double for shape and quat and doesn't (yet) support KK_FLOAT. 
+
 namespace MathExtraKokkos {
 
   // 3 vector operations
@@ -65,17 +69,17 @@ namespace MathExtraKokkos {
   KOKKOS_INLINE_FUNCTION void vecmat(const KK_FLOAT *v, const KK_FLOAT m[3][3], KK_FLOAT *ans);
   KOKKOS_INLINE_FUNCTION void scalar_times3(const KK_FLOAT f, KK_FLOAT m[3][3]);
 
-  KOKKOS_INLINE_FUNCTION void richardson(KK_FLOAT *q, KK_FLOAT *m, KK_FLOAT *w, KK_FLOAT *moments, KK_FLOAT dtq);
+  KOKKOS_INLINE_FUNCTION void richardson(double *q, KK_FLOAT *m, KK_FLOAT *w, KK_FLOAT *moments, KK_FLOAT dtq);
 
   // quaternion operations
-  KOKKOS_INLINE_FUNCTION void qnormalize(KK_FLOAT *q);
+  KOKKOS_INLINE_FUNCTION void qnormalize(double *q);
   KOKKOS_INLINE_FUNCTION void qconjugate(KK_FLOAT *q, KK_FLOAT *qc);
-  KOKKOS_INLINE_FUNCTION void vecquat(KK_FLOAT *a, KK_FLOAT *b, KK_FLOAT *c);
+  KOKKOS_INLINE_FUNCTION void vecquat(KK_FLOAT *a, double *b, KK_FLOAT *c);
   KOKKOS_INLINE_FUNCTION void axisangle_to_quat(const KK_FLOAT *v, const KK_FLOAT angle,
                                 KK_FLOAT *quat);
 
-  KOKKOS_INLINE_FUNCTION void mq_to_omega(KK_FLOAT *m, KK_FLOAT *q, KK_FLOAT *moments, KK_FLOAT *w);
-  KOKKOS_INLINE_FUNCTION void quat_to_mat(const KK_FLOAT *quat, KK_FLOAT mat[3][3]);
+  KOKKOS_INLINE_FUNCTION void mq_to_omega(KK_FLOAT *m, double *q, KK_FLOAT *moments, KK_FLOAT *w);
+  KOKKOS_INLINE_FUNCTION void quat_to_mat(const double *quat, KK_FLOAT mat[3][3]);
 }
 
 /* ----------------------------------------------------------------------
@@ -450,14 +454,14 @@ void MathExtraKokkos::scalar_times3(const KK_FLOAT f, KK_FLOAT m[3][3])
    also returns updated omega at 1/2 step
 ------------------------------------------------------------------------- */
 KOKKOS_INLINE_FUNCTION
-void MathExtraKokkos::richardson(KK_FLOAT *q, KK_FLOAT *m, KK_FLOAT *w, KK_FLOAT *moments, KK_FLOAT dtq)
+void MathExtraKokkos::richardson(double *q, KK_FLOAT *m, KK_FLOAT *w, KK_FLOAT *moments, KK_FLOAT dtq)
 {
   // full update from dq/dt = 1/2 w q
 
   KK_FLOAT wq[4];
   MathExtraKokkos::vecquat(w,q,wq);
 
-  KK_FLOAT qfull[4];
+  double qfull[4];
   qfull[0] = q[0] + dtq * wq[0];
   qfull[1] = q[1] + dtq * wq[1];
   qfull[2] = q[2] + dtq * wq[2];
@@ -466,7 +470,7 @@ void MathExtraKokkos::richardson(KK_FLOAT *q, KK_FLOAT *m, KK_FLOAT *w, KK_FLOAT
 
   // 1st half update from dq/dt = 1/2 w q
 
-  KK_FLOAT qhalf[4];
+  double qhalf[4];
   qhalf[0] = q[0] + 0.5*dtq * wq[0];
   qhalf[1] = q[1] + 0.5*dtq * wq[1];
   qhalf[2] = q[2] + 0.5*dtq * wq[2];
@@ -500,7 +504,7 @@ void MathExtraKokkos::richardson(KK_FLOAT *q, KK_FLOAT *m, KK_FLOAT *w, KK_FLOAT
    normalize a quaternion
 ------------------------------------------------------------------------- */
 KOKKOS_INLINE_FUNCTION
-void MathExtraKokkos::qnormalize(KK_FLOAT *q)
+void MathExtraKokkos::qnormalize(double *q)
 {
   KK_FLOAT norm = 1.0 / sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
   q[0] *= norm;
@@ -526,7 +530,7 @@ void MathExtraKokkos::qconjugate(KK_FLOAT *q, KK_FLOAT *qc)
    vector-quaternion multiply: c = a*b, where a = (0,a)
 ------------------------------------------------------------------------- */
 KOKKOS_INLINE_FUNCTION
-void MathExtraKokkos::vecquat(KK_FLOAT *a, KK_FLOAT *b, KK_FLOAT *c)
+void MathExtraKokkos::vecquat(KK_FLOAT *a, double *b, KK_FLOAT *c)
 {
   c[0] = -a[0] * b[1] - a[1] * b[2] - a[2] * b[3];
   c[1] = b[0] * a[0] + a[1] * b[3] - a[2] * b[2];
@@ -558,7 +562,7 @@ void MathExtraKokkos::axisangle_to_quat(const KK_FLOAT *v, const KK_FLOAT angle,
      and divide by principal moments
 ------------------------------------------------------------------------- */
 KOKKOS_INLINE_FUNCTION
-void MathExtraKokkos::mq_to_omega(KK_FLOAT *m, KK_FLOAT *q, KK_FLOAT *moments, KK_FLOAT *w)
+void MathExtraKokkos::mq_to_omega(KK_FLOAT *m, double *q, KK_FLOAT *moments, KK_FLOAT *w)
 {
   KK_FLOAT wbody[3];
   KK_FLOAT rot[3][3];
@@ -579,7 +583,7 @@ void MathExtraKokkos::mq_to_omega(KK_FLOAT *m, KK_FLOAT *q, KK_FLOAT *moments, K
    quat = [w i j k]
 ------------------------------------------------------------------------- */
 KOKKOS_INLINE_FUNCTION
-void MathExtraKokkos::quat_to_mat(const KK_FLOAT *quat, KK_FLOAT mat[3][3])
+void MathExtraKokkos::quat_to_mat(const double *quat, KK_FLOAT mat[3][3])
 {
   KK_FLOAT w2 = quat[0]*quat[0];
   KK_FLOAT i2 = quat[1]*quat[1];

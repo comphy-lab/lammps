@@ -88,8 +88,8 @@ double ComputeERotateAsphereKokkos<DeviceType>::compute_scalar()
         // Vanilla has if statements here checking for ellipsoid, line, tri
         // Kokkos version only supports ellipsoid this now, so this part of the if statement is not needed
         if (l_ellipsoid(i) >= 0) {
-          double inertia[3], wbody[3];
-          double rot[3][3];
+          KK_FLOAT inertia[3], wbody[3];
+          KK_FLOAT rot[3][3];
           auto shape = l_bonus(l_ellipsoid(i)).shape;
           auto quat = l_bonus(l_ellipsoid(i)).quat;
 
@@ -102,7 +102,7 @@ double ComputeERotateAsphereKokkos<DeviceType>::compute_scalar()
           // wbody = angular velocity in body frame
           
           MathExtraKokkos::quat_to_mat(quat,rot);
-          double angmom_vec[3] = {l_angmom(i,0), l_angmom(i,1), l_angmom(i,2)};
+          KK_FLOAT angmom_vec[3] = {l_angmom(i,0), l_angmom(i,1), l_angmom(i,2)};
           MathExtraKokkos::transpose_matvec(rot,angmom_vec,wbody);
           wbody[0] /= inertia[0];
           wbody[1] /= inertia[1];

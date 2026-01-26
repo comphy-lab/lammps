@@ -94,7 +94,7 @@ void FixNVEAsphereKokkos<DeviceType>::initial_integrate_item(const int i) const
 
   const KK_FLOAT dtq = 0.5 * dtv;
   KK_FLOAT inertia[3], omega[3];
-  KK_FLOAT *shape, *quat;
+  double *shape, *quat;
   KK_FLOAT angm[3];
 
   if (mask(i) & groupbit) {
@@ -214,7 +214,7 @@ void FixNVEAsphereKokkos<DeviceType>::fused_integrate_item(const int i) const
 {
   const KK_FLOAT dtq = 0.5 * dtv;
   KK_FLOAT inertia[3], omega[3];
-  KK_FLOAT *shape, *quat;
+  double *shape, *quat;
   KK_FLOAT angm[3];
 
   if (mask(i) & groupbit) {
