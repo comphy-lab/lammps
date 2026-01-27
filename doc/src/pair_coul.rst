@@ -314,7 +314,7 @@ AlO.eam.alloy and AlO.streitz potential files used by the example.
 
 In older versions of LAMMPS, the real-space summations of Coulomb interactions were done by replacing *1/r* using a damped potential *erfc(alpha*r)/r* with the parameter *alpha* controlling the rate of decay. However, any finite value of *alpha* leads to a jump at the cutoff, which interferes with equilibration if atoms move across the cutoff. The charge-neutralized potential of :ref:`(Wolf et al.) <Wolf1>` (*wolf*) and its extension by :ref:`(Fennell and Gezelter) <Fennell1>` (*dsf*) solve this problem. An extension was implemented to specify the width of taper (see ref:`(Mei et al.) <Mei1>`) to smoothly terminate the Coulomb integrals at the cutoff. This is done by specifying the optional arguments *wolf* and *dsf* with the value representing the width of taper that smoothly terminates the Coulomb integrals. For example, if the cutoff is 8 A and the taper width is 2 A, the Coulomb integrals are smoothly rescaled from their actual value at r=6 A to zero at r=8 A. For backward compatibility, the default taper width is zero.
 
-Note that the Streiz-Mintmire potential is generally used for oxides,
+Note that the Streitz-Mintmire potential is generally used for oxides,
 but there is no conceptual problem with extending it to nitrides and
 carbides (such as SiC, TiN).  Pair coul/streitz used by itself or with
 any other pair style such as EAM, MEAM, Tersoff, or LJ in
