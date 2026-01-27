@@ -34,16 +34,16 @@ using namespace FixConst;
 FixMomentum::FixMomentum(LAMMPS *lmp, int narg, char **arg) :
   Fix(lmp, narg, arg)
 {
-  if (narg < 4) error->all(FLERR,"Illegal fix momentum command");
+  if (narg < 4) error->all(FLERR,"Fix momentum command requires at least 4 arguments", Error::NOLASTLINE);
   nevery = utils::inumeric(FLERR,arg[3],false,lmp);
-  if (nevery <= 0) error->all(FLERR,"Illegal fix momentum command");
+  if (nevery <= 0) error->all(FLERR,"Fix momentum nevery value must be > 0", Error::NOLASTLINE);
 
   dynamic = linear = angular = rescale = 0;
 
   int iarg = 4;
   while (iarg < narg) {
     if (strcmp(arg[iarg],"linear") == 0) {
-      if (iarg+4 > narg) error->all(FLERR,"Illegal fix momentum command");
+      if (iarg+4 > narg) error->all(FLERR,"Fix momentum linear keyword requires 3 arguments", Error::NOLASTLINE);
       linear = 1;
       xflag = utils::inumeric(FLERR,arg[iarg+1],false,lmp);
       yflag = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
@@ -55,16 +55,17 @@ FixMomentum::FixMomentum(LAMMPS *lmp, int narg, char **arg) :
     } else if (strcmp(arg[iarg],"rescale") == 0) {
       rescale = 1;
       iarg += 1;
-    } else error->all(FLERR,"Illegal fix momentum command");
+    } else error->all(FLERR,"Unknown fix momentum style", Error::NOLASTLINE);
   }
 
   if (linear == 0 && angular == 0)
-    error->all(FLERR,"Illegal fix momentum command");
+    error->all(FLERR,"Fix momentum command requires 'linear' or 'angular' keyword", Error::NOLASTLINE);
+
 
   if (linear)
     if (xflag < 0 || xflag > 1 || yflag < 0 || yflag > 1 ||
         zflag < 0 || zflag > 1)
-      error->all(FLERR,"Illegal fix momentum command");
+      error->all(FLERR,"Fix momentum linear flags must be 0 or 1", Error::NOLASTLINE);
 
   dynamic_group_allow = 1;
 }
