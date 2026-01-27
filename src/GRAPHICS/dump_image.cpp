@@ -101,23 +101,23 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
 
   // set filetype based on filename suffix
 
-  if (utils::strmatch(filename, "\\.jpg$") || utils::strmatch(filename, "\\.JPG$")
-      || utils::strmatch(filename, "\\.jpeg$") || utils::strmatch(filename, "\\.JPEG$"))
+  if (utils::strmatch(filename, R"(\.jpg$)") || utils::strmatch(filename, R"(\.JPG$)") ||
+      utils::strmatch(filename, R"(\.jpeg$)") || utils::strmatch(filename, R"(\.JPEG$)"))
     filetype = JPG;
-  else if (utils::strmatch(filename, "\\.png$") || utils::strmatch(filename, "\\.PNG$"))
+  else if (utils::strmatch(filename, R"(\.png$)") || utils::strmatch(filename, R"(\.PNG$)"))
     filetype = PNG;
-  else if (utils::strmatch(filename, "\\.tga$") || utils::strmatch(filename, "\\.TGA$"))
+  else if (utils::strmatch(filename, R"(\.tga$)") || utils::strmatch(filename, R"(\.TGA$)"))
     filetype = TGA;
-  else if (compressed && (utils::strmatch(filename, "\\.jpg\\.\\w+$") ||
-                          utils::strmatch(filename, "\\.JPG\\.\\w+$") ||
-                          utils::strmatch(filename, "\\.jpeg\\.\\w+$") ||
-                          utils::strmatch(filename, "\\.JPEG\\.\\w+$")))
+  else if (compressed && (utils::strmatch(filename, R"(\.jpg\.\w+$)") ||
+                          utils::strmatch(filename, R"(\.JPG\.\w+$)") ||
+                          utils::strmatch(filename, R"(\.jpeg\.\w+$)") ||
+                          utils::strmatch(filename, R"(\.JPEG\.\w+$)")))
     error->all(FLERR, Error::NOLASTLINE, "Cannot use compression with JPEG images");
-  else if (compressed && (utils::strmatch(filename, "\\.png\\.\\w+$") ||
-                           utils::strmatch(filename, "\\.PNG\\.\\w+$")))
+  else if (compressed && (utils::strmatch(filename, R"(\.png\.\w+$)") ||
+                           utils::strmatch(filename, R"(\.PNG\.\w+$)")))
     error->all(FLERR, Error::NOLASTLINE, "Cannot use compression with PNG images");
-  else if (compressed && (utils::strmatch(filename, "\\.tga\\.\\w+$") ||
-                          utils::strmatch(filename, "\\.TGA\\.\\w+$")))
+  else if (compressed && (utils::strmatch(filename, R"(\.tga\.\w+$)") ||
+                          utils::strmatch(filename, R"(\.TGA\.\w+$)")))
     error->all(FLERR, Error::NOLASTLINE, "Cannot use compression with TGA images");
   else filetype = PPM;
 

@@ -118,6 +118,7 @@ anglegrad
 anglelist
 angleoffset
 angletangrad
+angletype
 angmom
 angmomx
 angmomy
@@ -856,6 +857,7 @@ diffusivity
 dihedral
 dihedrallist
 dihedrals
+dihedraltype
 Dihedrals
 dihydride
 Dij
@@ -2114,6 +2116,7 @@ llammps
 lld
 LLVM
 lm
+lmap
 lmp
 lmpptr
 lmpqst
