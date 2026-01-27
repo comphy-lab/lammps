@@ -1466,25 +1466,27 @@ void FixPIMDLangevin::ring_collect(const std::vector<tagint> &miss_tag,
                                             std::vector<tagint> &rep_tag,
                                             std::vector<double> &rep_val)
 {
+  // ring-collection: collect missing atoms from other ranks in this world
+  // by passing missing tag lists and found values in a ring
   const int me = comm->me;
   const int P  = comm->nprocs;
   const int next = (me + 1) % P;
   const int prev = (me - 1 + P) % P;
   const int nlocal = atom->nlocal;
 
-  // Token state for *this rank's* missing tags
+  // Token state for this rank's missing tags
   std::vector<tagint> tok_missing = miss_tag;
   std::vector<tagint> tok_found_tags;
   std::vector<double> tok_found_vals;   // 3 per found tag
 
-  // If missing is tiny (expected), reserve to reduce realloc
+  // If missing is tiny as expected, reserve to reduce realloc
   tok_found_tags.reserve(tok_missing.size());
   tok_found_vals.reserve(3 * tok_missing.size());
 
   // Move one hop per iteration; after P hops, your token returns to you.
   for (int hop = 0; hop < P; hop++) {
 
-    // --- 1) exchange sizes
+    // 1) exchange sizes
     int sm = (int) tok_missing.size();
     int sf = (int) tok_found_tags.size();
     int rm = 0, rf = 0;
@@ -1497,12 +1499,12 @@ void FixPIMDLangevin::ring_collect(const std::vector<tagint> &miss_tag,
                  &rf, 1, MPI_INT, prev, 401,
                  world, MPI_STATUS_IGNORE);
 
-    // --- 2) prepare recv buffers
+    // 2) prepare recv buffers
     std::vector<tagint> in_missing(rm);
     std::vector<tagint> in_found_tags(rf);
     std::vector<double> in_found_vals(3 * (size_t)rf);
 
-    // --- 3) exchange payloads
+    // 3) exchange payloads
     MPI_Sendrecv(tok_missing.data(), sm, MPI_LMP_TAGINT, next, 402,
                  in_missing.data(), rm, MPI_LMP_TAGINT, prev, 402,
                  world, MPI_STATUS_IGNORE);
@@ -1515,7 +1517,7 @@ void FixPIMDLangevin::ring_collect(const std::vector<tagint> &miss_tag,
                  in_found_vals.data(), 3*rf, MPI_DOUBLE, prev, 404,
                  world, MPI_STATUS_IGNORE);
 
-    // --- 4) process received token: claim only if LOCAL owner
+    // 4) process received token: claim only if local owner
     std::vector<tagint> out_missing;
     out_missing.reserve(in_missing.size());
 
@@ -1533,18 +1535,18 @@ void FixPIMDLangevin::ring_collect(const std::vector<tagint> &miss_tag,
       }
     }
 
-    // --- 5) forward updated token
+    // 5) forward updated token
     tok_missing.swap(out_missing);
     tok_found_tags.swap(in_found_tags);
     tok_found_vals.swap(in_found_vals);
   }
 
   // After full ring, the token for this rank should be back here.
-  // What we have now is the resolved list for this rank.
+  // Now we have the resolved list for this rank.
   rep_tag.swap(tok_found_tags);
   rep_val.swap(tok_found_vals);
 
-  // Optional: if anything still missing, it's a real error (tag not present in this world)
+  // If anything still missing, it's a real error (tag not present in this world).
   if (!tok_missing.empty()) {
     // Print a small sample to help debug
     const tagint t0 = tok_missing[0];
