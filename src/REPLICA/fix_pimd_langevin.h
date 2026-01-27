@@ -82,7 +82,6 @@ class FixPIMDLangevin : public Fix {
 
   // inter-partition communication
 
-  int nmiss;
   MPI_Comm rootworld;
   int me, nprocs, ireplica, nreplica, nprocs_universe;
   int ntotal, maxlocal;
