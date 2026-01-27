@@ -174,11 +174,6 @@ void FixNeighHistory::init()
   // setup data structs
 
   allocate_pages();
-
-  // check for missing list pointer
-
-  if (surface_global && !otherlist)
-    error->all(FLERR, "Cannot find neighbor list for use with fix surface/global");
 }
 
 /* ----------------------------------------------------------------------
@@ -277,10 +272,13 @@ void FixNeighHistory::pre_exchange_onesided()
 
   tagint *tag = atom->tag;
   NeighList *list;
-  if (surface_global)
+  if (surface_global) {
+    if (!otherlist)
+      error->all(FLERR, "Cannot find fix surface/global neighbor list");
     list = otherlist;
-  else
+  } else {
     list = pair->list;
+  }
   inum = list->inum;
   ilist = list->ilist;
   numneigh = list->numneigh;

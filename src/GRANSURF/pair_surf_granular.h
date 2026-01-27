@@ -35,7 +35,6 @@ class PairSurfGranular : public PairGranular {
   ~PairSurfGranular() override;
   void compute(int, int) override;
   void init_style() override;
-  double init_one(int, int) override;
   double memory_usage() override;
 
  protected:

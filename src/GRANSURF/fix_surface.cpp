@@ -193,7 +193,11 @@ void FixSurface::extract_from_stlfile(char *filename, int stype,
                                       Point *&points, int &ntris, Tri *&tris)
 {
   if (domain->dimension == 2)
-    error->all(FLERR,"Fix surface cannot use an STL file for 2d simulations");
+    error->all(FLERR, "Fix surface cannot use an STL file for 2d simulations");
+
+  if (tris)
+    error->all(FLERR, "Cannot currently load more than 1 STL file per fix\n");
+
 
   // read tris from STL file
   // stltris = tri coords internal to STL reader

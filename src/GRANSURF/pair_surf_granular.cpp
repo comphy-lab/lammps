@@ -721,6 +721,7 @@ void PairSurfGranular::init_style()
   int *type = atom->type;
   int nlocal = atom->nlocal;
 
+double maxrad = 0.0;
   for (int i = 0; i < nlocal; i++) {
     if ((style == LINE) && line[i] >= 0)
       onerad_dynamic[type[i]] = MAX(onerad_dynamic[type[i]], radius[i]);
@@ -732,26 +733,13 @@ void PairSurfGranular::init_style()
       else
         onerad_dynamic[type[i]] = MAX(onerad_dynamic[type[i]], radius[i]);
     }
+    maxrad = MAX(maxrad, radius[i]);
   }
 
   MPI_Allreduce(&onerad_dynamic[1], &maxrad_dynamic[1], atom->ntypes,
                 MPI_DOUBLE, MPI_MAX, world);
   MPI_Allreduce(&onerad_frozen[1], &maxrad_frozen[1], atom->ntypes,
                 MPI_DOUBLE, MPI_MAX, world);
-}
-
-/* ----------------------------------------------------------------------
-   init for one type pair i,j and corresponding j,i
-------------------------------------------------------------------------- */
-
-double PairSurfGranular::init_one(int i, int j)
-{
-  // Calculate regular sphere based cutoff
-  double cutoff = PairGranular::init_one(i, j);
-
-  // Needs to extend far enough to check connections
-  cutoff += fsl->max_radius;
-  return cutoff;
 }
 
 /* ----------------------------------------------------------------------

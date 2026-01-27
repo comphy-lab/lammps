@@ -23,6 +23,7 @@
 #include "math_extra.h"
 #include "memory.h"
 #include "molecule.h"
+#include "neighbor.h"
 #include "stl_reader.h"
 
 #include "update.h"
@@ -440,6 +441,13 @@ void FixSurfaceLocal::setup_pre_neighbor()
 {
   if (atom->map_style == Atom::MAP_NONE)
     error->all(FLERR,"Fix surface/local requires an atom map");
+
+  // check ghost cutoff large enough to walk all possible connections, > 2x max radius
+  //  not perfect (doesn't check multi), but at least a warning
+
+  const double cutghost = MAX(neighbor->cutneighmax, comm->cutghostuser);
+  if (cutghost < 2 * max_radius)
+    error->warning(FLERR, "Maximum triangle diameter {} may be less than ghost cutoff {}", 2 * max_radius, cutghost);
 
   // one-time calculation of remaining fields in Connect2d/3d
   // cannot do until now, b/c need ghost connection info via border comm
