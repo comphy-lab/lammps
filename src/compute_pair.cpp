@@ -51,7 +51,7 @@ ComputePair::ComputePair(LAMMPS *lmp, int narg, char **arg) :
     if (isdigit(arg[iarg][0])) {
       nsub = utils::inumeric(FLERR, arg[iarg], false, lmp);
       ++iarg;
-      if (nsub <= 0) error->all(FLERR, "Illegal compute pair command");
+      if (nsub <= 0) error->all(FLERR, "Compute pair nsub must be > 0", Error::NOLASTLINE);
     }
   }
 

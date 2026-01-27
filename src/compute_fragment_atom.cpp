@@ -54,10 +54,10 @@ ComputeFragmentAtom::ComputeFragmentAtom(LAMMPS *lmp, int narg, char **arg) :
   int iarg = 3;
   while (iarg < narg) {
     if (strcmp(arg[iarg],"single") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal compute fragment/atom command");
+      if (iarg+2 > narg) error->all(FLERR,"Compute fragment/atom arguments missing", Error::NOLASTLINE);
       singleflag = utils::logical(FLERR,arg[iarg+1],false,lmp);
       iarg += 2;
-    } else error->all(FLERR,"Illegal compute fragment/atom command");
+    } else error->all(FLERR,"Unknown compute fragment/atom style", Error::NOLASTLINE);
   }
 
   nmax = 0;

@@ -37,7 +37,7 @@ static constexpr double SMALL = 0.001;
 ComputeImproperLocal::ComputeImproperLocal(LAMMPS *lmp, int narg, char **arg) :
     Compute(lmp, narg, arg), vlocal(nullptr), alocal(nullptr)
 {
-  if (narg < 4) error->all(FLERR, "Illegal compute improper/local command");
+  if (narg < 4) error->all(FLERR, "Compute improper/local command requires at least 4 arguments", Error::NOLASTLINE);
 
   if (atom->avec->impropers_allow == 0)
     error->all(FLERR, "Compute improper/local used when impropers are not allowed");

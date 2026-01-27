@@ -33,7 +33,7 @@ ImbalanceStore::~ImbalanceStore()
 
 int ImbalanceStore::options(int narg, char **arg)
 {
-  if (narg < 1) error->all(FLERR, "Illegal balance weight command");
+  if (narg < 1) error->all(FLERR, "Balance weight command requires at least 1 argument", Error::NOLASTLINE);
   name = utils::strdup(arg[0]);
 
   return 1;
