@@ -141,7 +141,7 @@ if((PKG_KOKKOS) AND (Kokkos_ENABLE_CUDA) AND (LAMMPS_CXX_COMPILER_NAME STREQUAL 
 endif()
 
 # we *require* C++17 without extensions
-# Kokkos also requires at least C++17 (currently)
+# Kokkos also requires at least C++20 (currently)
 if(NOT CMAKE_CXX_STANDARD)
 # uncomment in case we plan to switch to C++20 as minimum standard
 #  if(cxx_std_20 IN_LIST CMAKE_CXX_COMPILE_FEATURES)
@@ -153,8 +153,8 @@ endif()
 if(CMAKE_CXX_STANDARD LESS 17)
   message(FATAL_ERROR "C++ standard must be set to at least 17")
 endif()
-if(PKG_KOKKOS AND (CMAKE_CXX_STANDARD LESS 17))
-  set(CMAKE_CXX_STANDARD 17)
+if(PKG_KOKKOS AND (CMAKE_CXX_STANDARD LESS 20))
+  set(CMAKE_CXX_STANDARD 20)
 endif()
 # turn off C++20 check in lmptype.h
 #if(LAMMPS_CXX17)
@@ -292,6 +292,7 @@ set(STANDARD_PACKAGES
   EXTRA-MOLECULE
   EXTRA-PAIR
   FEP
+  GRAPHICS
   GRANULAR
   H5MD
   INTERLAYER
@@ -533,29 +534,6 @@ if(PKG_ML-QUIP OR PKG_ML-POD OR PKG_ELECTRODE OR PKG_RHEO OR BUILD_TOOLS)
   endif()
 endif()
 
-# tweak jpeg library names to avoid linker errors with MinGW cross-compilation
-set(JPEG_NAMES libjpeg libjpeg-62)
-find_package(JPEG QUIET)
-option(WITH_JPEG "Enable JPEG support" ${JPEG_FOUND})
-if(WITH_JPEG)
-  find_package(JPEG REQUIRED)
-  target_compile_definitions(lammps PRIVATE -DLAMMPS_JPEG)
-  target_link_libraries(lammps PRIVATE JPEG::JPEG)
-endif()
-
-find_package(PNG QUIET)
-find_package(ZLIB QUIET)
-if(PNG_FOUND AND ZLIB_FOUND)
-  option(WITH_PNG "Enable PNG support" ON)
-else()
-  option(WITH_PNG "Enable PNG support" OFF)
-endif()
-if(WITH_PNG)
-  find_package(PNG REQUIRED)
-  find_package(ZLIB REQUIRED)
-  target_link_libraries(lammps PRIVATE PNG::PNG ZLIB::ZLIB)
-  target_compile_definitions(lammps PRIVATE -DLAMMPS_PNG)
-endif()
 
 find_program(GZIP_EXECUTABLE gzip)
 find_package_handle_standard_args(GZIP REQUIRED_VARS GZIP_EXECUTABLE)
@@ -568,16 +546,6 @@ if(WITH_GZIP)
   endif()
 endif()
 
-find_program(FFMPEG_EXECUTABLE ffmpeg)
-find_package_handle_standard_args(FFMPEG REQUIRED_VARS FFMPEG_EXECUTABLE)
-option(WITH_FFMPEG "Enable FFMPEG support" ${FFMPEG_FOUND})
-if(WITH_FFMPEG)
-  if(FFMPEG_FOUND OR ((CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING))
-    target_compile_definitions(lammps PRIVATE -DLAMMPS_FFMPEG)
-  else()
-    message(FATAL_ERROR "ffmpeg executable not found")
-  endif()
-endif()
 
 if(BUILD_SHARED_LIBS)
   set(CONFIGURE_REQUEST_PIC "--with-pic")
@@ -589,7 +557,7 @@ else()
   set(CUDA_REQUEST_PIC)
 endif()
 
-foreach(PKG_WITH_INCL KSPACE PYTHON ML-IAP VORONOI COLVARS ML-HDNNP MDI MOLFILE NETCDF
+foreach(PKG_WITH_INCL GRAPHICS KSPACE PYTHON ML-IAP VORONOI COLVARS ML-HDNNP MDI MOLFILE NETCDF
         PLUMED QMMM ML-QUIP SCAFACOS MACHDYN VTK KIM COMPRESS ML-PACE LEPTON EXTRA-COMMAND)
   if(PKG_${PKG_WITH_INCL})
     include(Packages/${PKG_WITH_INCL})
