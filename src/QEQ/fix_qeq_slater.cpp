@@ -57,14 +57,16 @@ FixQEqSlater::FixQEqSlater(LAMMPS *lmp, int narg, char **arg) : FixQEq(lmp, narg
         if (strcmp(arg[iarg],"wolf") == 0) { // type of potential (0=erfc(r)/r, 1=Wolf, 2=Fennell & Gezelter)
           vtype = 1;
           iarg++;
-          if (iarg < narg) {
+          // optional taper width; do not treat following keyword (e.g. "warn") as numeric
+          if (iarg < narg && strcmp(arg[iarg], "warn") != 0) {
             drtap = utils::numeric(FLERR, arg[iarg], false, lmp);
             iarg++;
           }
         } else if (strcmp(arg[iarg],"dsf") == 0) {
           vtype = 2;
           iarg++;
-          if (iarg < narg) {
+          // optional taper width; do not treat following keyword (e.g. "warn") as numeric
+          if (iarg < narg && strcmp(arg[iarg], "warn") != 0) {
             drtap = utils::numeric(FLERR, arg[iarg], false, lmp);
             iarg++;
           }
