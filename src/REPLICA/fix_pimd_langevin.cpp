@@ -1245,6 +1245,9 @@ void FixPIMDLangevin::spring_force()
 
 void FixPIMDLangevin::comm_init()
 {
+  if (np != universe->nworlds)
+  error->all(FLERR, "Fix pimd/langevin: np must equal universe->nworlds");
+
   int nlocal = atom->nlocal;
   if (cmode == SINGLE_PROC) {
     memory->create(counts, nreplica, "FixPIMDLangevin:counts");
