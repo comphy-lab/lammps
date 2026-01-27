@@ -1528,8 +1528,8 @@ void FixPIMDLangevin::ring_collect(const std::vector<tagint> &miss_tag,
       const int idx = atom->map(t);
 
       // local-only claim (ignore ghosts)
-      // When excecuting this function at the end of initial_integrate, 
-      // where the coordinates of local atoms are updated while those of ghost atoms are not, 
+      // When excecuting this function at the end of initial_integrate,
+      // where the coordinates of local atoms are updated while those of ghost atoms are not,
       // considering ghost atoms lead to incorrect coordinates.
       if (idx >= 0 && idx < nlocal) {
         in_found_tags.push_back(t);
