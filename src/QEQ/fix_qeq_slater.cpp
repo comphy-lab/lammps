@@ -58,7 +58,7 @@ FixQEqSlater::FixQEqSlater(LAMMPS *lmp, int narg, char **arg) : FixQEq(lmp, narg
           vtype = 1;
           iarg++;
           // optional taper width; do not treat following keyword (e.g. "warn") as numeric
-          if (iarg < narg && strcmp(arg[iarg], "warn") != 0) {
+          if (iarg < narg && utils::is_double(arg[iarg])) {
             drtap = utils::numeric(FLERR, arg[iarg], false, lmp);
             iarg++;
           }
@@ -66,7 +66,7 @@ FixQEqSlater::FixQEqSlater(LAMMPS *lmp, int narg, char **arg) : FixQEq(lmp, narg
           vtype = 2;
           iarg++;
           // optional taper width; do not treat following keyword (e.g. "warn") as numeric
-          if (iarg < narg && strcmp(arg[iarg], "warn") != 0) {
+          if (iarg < narg && utils::is_double(arg[iarg])) {
             drtap = utils::numeric(FLERR, arg[iarg], false, lmp);
             iarg++;
           }
