@@ -39,6 +39,9 @@ class FixNVTSllod : public FixNH {
 
   void nh_v_temp() override;
   void nve_x() override;
+  int size_restart_global() override;
+  int pack_restart_data(double *list) override;
+  void restart(char *buf) override;
   int modify_param(int narg, char **arg) override;
 };
 

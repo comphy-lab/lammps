@@ -359,6 +359,38 @@ void FixNVTSllod::nh_v_temp()
   }
 }
 
+/* ----------------------------------------------------------------------
+    calculate the number of data to be packed
+------------------------------------------------------------------------- */
+
+int FixNVTSllod::size_restart_global()
+{
+  return FixNH::size_restart_global() + 1;
+}
+
+/* ----------------------------------------------------------------------
+   pack restart data
+------------------------------------------------------------------------- */
+
+int FixNVTSllod::pack_restart_data(double *list)
+{
+  list[0] = kick_flag;
+  int n = 1 + FixNH::pack_restart_data(&list[1]);
+
+  return n;
+}
+
+/* ----------------------------------------------------------------------
+   use state info from restart file to restart the Fix
+------------------------------------------------------------------------- */
+
+void FixNVTSllod::restart(char *buf)
+{
+  auto *list = (double *) buf;
+  kick_flag = static_cast<int>(list[0]);
+  FixNH::restart(buf + sizeof(double));
+}
+
 /* ---------------------------------------------------------------------- */
 
 int FixNVTSllod::modify_param(int narg, char **arg)
