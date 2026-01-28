@@ -6,6 +6,10 @@ if(POLICY CMP0135)
   cmake_policy(SET CMP0135 OLD)
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  message(FATAL_ERROR "Compiling the MBX package for Windows is currently not supported")
+endif()
+
 # for supporting multiple concurrent mbx installations for debugging and testing
 set(MBX_SUFFIX "" CACHE STRING "Suffix for MBX library")
 mark_as_advanced(MBX_SUFFIX)
