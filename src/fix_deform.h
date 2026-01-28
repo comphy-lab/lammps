@@ -90,6 +90,7 @@ class FixDeform : public Fix {
 
   // allow fix nvt/sllod to check deform parameters for correctness
   friend class FixNVTSllod;
+  friend class FixNVTSllodOMP;
 };
 
 }    // namespace LAMMPS_NS

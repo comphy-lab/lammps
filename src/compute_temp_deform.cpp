@@ -391,11 +391,23 @@ void ComputeTempDeform::apply_deform_bias_all(double dtv)
 
   for (int i = 0; i < nlocal; i++)
     if (mask[i] & groupbit) {
-      v[i][0] += (x[i][0] - xmid[0]) * grad_u[0] + (x[i][1] - ylo) * grad_u[5] + (x[i][2] - zlo) * grad_u[4];
-      v[i][1] += (x[i][1] - xmid[1]) * grad_u[1] + (x[i][2] - zlo) * grad_u[3];
-      v[i][2] += (x[i][2] - xmid[2]) * grad_u[2];
+      apply_deform_bias(v[i], x[i], grad_u, xmid, ylo, zlo);
     }
 }
+
+/* ----------------------------------------------------------------------
+   add in deform velocity bias to v based on x, grad_u, xmid, ylo and zlo
+   does not require remove_deform_bias_all() to be previously called
+   box may not have been updated yet, so get flow tensor as input
+------------------------------------------------------------------------- */
+
+void ComputeTempDeform::apply_deform_bias(double *v, double *x, double *grad_u, double *xmid, double ylo, double zlo)
+{
+  v[0] += (x[0] - xmid[0]) * grad_u[0] + (x[1] - ylo) * grad_u[5] + (x[2] - zlo) * grad_u[4];
+  v[1] += (x[1] - xmid[1]) * grad_u[1] + (x[2] - zlo) * grad_u[3];
+  v[2] += (x[2] - xmid[2]) * grad_u[2];
+}
+
 /* ---------------------------------------------------------------------- */
 
 double ComputeTempDeform::memory_usage()
