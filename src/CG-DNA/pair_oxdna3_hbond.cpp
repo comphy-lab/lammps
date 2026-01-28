@@ -49,19 +49,19 @@ PairOxdna3Hbond::PairOxdna3Hbond(LAMMPS *lmp) : PairOxdnaHbond(lmp)
   alpha_hb[0][0] = 1.00000;
   alpha_hb[0][1] = 1.00000;
   alpha_hb[0][2] = 1.00000;
-  alpha_hb[0][3] = 0.7802615690353366;
+  alpha_hb[0][3] = 0.6493620379646540;
 
   alpha_hb[1][0] = 1.00000;
   alpha_hb[1][1] = 1.00000;
-  alpha_hb[1][2] = 1.1239661354569166;
+  alpha_hb[1][2] = 1.1999420813642658;
   alpha_hb[1][3] = 1.00000;
 
   alpha_hb[2][0] = 1.00000;
-  alpha_hb[2][1] = 1.1239661354569166;
+  alpha_hb[2][1] = 1.1999420813642658;
   alpha_hb[2][2] = 1.00000;
   alpha_hb[2][3] = 1.00000;
 
-  alpha_hb[3][0] = 0.7802615690353366;
+  alpha_hb[3][0] = 0.6493620379646540;
   alpha_hb[3][1] = 1.00000;
   alpha_hb[3][2] = 1.00000;
   alpha_hb[3][3] = 1.00000;
