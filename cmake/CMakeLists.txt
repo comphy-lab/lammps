@@ -193,7 +193,10 @@ endif()
 
 # do not include the (obsolete) MPI C++ bindings which makes for leaner object files
 # and avoids namespace conflicts. Put this early to increase its visbility.
-set(MPI_CXX_SKIP_MPICXX TRUE CACHE BOOL "Skip MPI C++ Bindings" FORCE)
+# do not apply when compiling SCAFACOS since it uses the obsolete bindings
+if (NOT PKG_SCAFACOS)
+  set(MPI_CXX_SKIP_MPICXX TRUE CACHE BOOL "Skip MPI C++ Bindings" FORCE)
+endif()
 
 ########################################################################
 # User input options                                                   #

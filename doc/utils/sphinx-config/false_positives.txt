@@ -118,6 +118,7 @@ anglegrad
 anglelist
 angleoffset
 angletangrad
+angletype
 angmom
 angmomx
 angmomy
@@ -585,6 +586,9 @@ coleman
 Colliex
 collinear
 collisional
+colorbar
+colormap
+colorscale
 Columic
 colvars
 Colvars
@@ -856,6 +860,7 @@ diffusivity
 dihedral
 dihedrallist
 dihedrals
+dihedraltype
 Dihedrals
 dihydride
 Dij
@@ -2116,6 +2121,7 @@ llammps
 lld
 LLVM
 lm
+lmap
 lmp
 lmpptr
 lmpqst
