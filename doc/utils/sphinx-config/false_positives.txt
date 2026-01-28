@@ -2104,6 +2104,7 @@ Likhtman
 limegreen
 linalg
 Lindahl
+linearized
 lineflag
 lineforce
 linesearch
@@ -4477,6 +4478,7 @@ zstd
 Zstd
 zsu
 zu
+Zuse
 zx
 zy
 Zybin

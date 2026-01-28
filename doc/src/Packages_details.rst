@@ -364,7 +364,7 @@ fix brownian/asphere <fix_brownian>` as well as
 Dynamics time integration of point, spherical and aspherical particles
 and also support self-propelled particles.
 
-**Authors:** Sam Cameron (University of Bristol),
+**Authors:** Sam Cameron (University of Bristol), Arthur Straube (Zuse Institute Berlin),
 Stefan Paquay (while at Brandeis University) (initial version of fix propel/self)
 
 .. versionadded:: 14May2021
