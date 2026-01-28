@@ -26,19 +26,16 @@ mark_as_advanced(MBX_URL)
 mark_as_advanced(MBX_SHA256)
 
 
-
-set(MBX_MODE "static" CACHE STRING "Linkage mode for MBX library")
-set(MBX_MODE_VALUES static shared runtime)
-set_property(CACHE MBX_MODE PROPERTY STRINGS ${MBX_MODE_VALUES})
-validate_option(MBX_MODE MBX_MODE_VALUES)
-string(TOUPPER ${MBX_MODE} MBX_MODE)
-
 set(MBX_LINK_LIBS)
-if(MBX_MODE STREQUAL "STATIC")
-  find_package(FFTW3 QUIET)
-  if(FFTW3_FOUND)
-    list(APPEND MBX_LINK_LIBS FFTW3::FFTW3)
-  endif()
+if (FFT_SINGLE)
+  message(FATAL_ERROR, "MBX package requires using double precision FFT")
+endif()
+
+find_package(FFTW3 REQUIRED)
+if(FFTW3_FOUND)
+  list(APPEND MBX_LINK_LIBS FFTW3::FFTW3)
+else()
+  message(FATAL_ERROR, "Must compile LAMMPS with FFTW3 with MBX package")
 endif()
 
 find_package(PkgConfig QUIET)
@@ -69,6 +66,7 @@ if(DOWNLOAD_MBX)
                       ${MBX_CONFIG_MPI}
                       CXX=${MBX_CONFIG_CXX}
                       CC=${MBX_CONFIG_CC}
+                      CPPFLAGS=-I${FFTW3_INCLUDE_DIRS}
     BUILD_BYPRODUCTS ${MBX_BUILD_BYPRODUCTS}
   )
   ExternalProject_get_property(mbx_build INSTALL_DIR)
