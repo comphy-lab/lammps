@@ -53,7 +53,6 @@ inline bool operator>(const CSPpairAPIP & pl, const CSPpairAPIP & pr) { return p
 
 class FixLambdaLACSPAPIP : public Fix {
  public:
-  friend class PairLACSPAPIP;
 
   FixLambdaLACSPAPIP(class LAMMPS *, int, char **);
   ~FixLambdaLACSPAPIP() override;

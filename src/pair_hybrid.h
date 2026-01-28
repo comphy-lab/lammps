@@ -37,7 +37,6 @@ class PairHybrid : public Pair {
   friend class Info;
   friend class Neighbor;
   friend class PairDeprecated;
-  friend class PairLACSPAPIP;
   friend class Respa;
   friend class Scafacos;
 
