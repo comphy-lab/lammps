@@ -49,6 +49,7 @@ This is the list of packages that may require additional steps.
    * :ref:`KOKKOS <kokkos>`
    * :ref:`LEPTON <lepton>`
    * :ref:`MACHDYN <machdyn>`
+   * :ref:`MBX <mbx>`
    * :ref:`MDI <mdi>`
    * :ref:`MISC <misc>`
    * :ref:`ML-HDNNP <ml-hdnnp>`
@@ -1230,6 +1231,46 @@ This package depends on the KSPACE package.
 
       The ELECTRODE package no longer supports the traditional make
       build.  You need to build LAMMPS with CMake.
+
+----------
+
+.. _mbx:
+
+MBX package
+-----------
+
+.. versionadded:: TBD
+
+This package requires the MBX library that can be downloaded and built
+either before LAMMPS is built or as part of the LAMMPS compilation.  The
+code for the library can be found at:
+`https://github.com/paesanilab/MBX/
+<https://github.com/paesanilab/MBX/>`_
+
+.. Instead of including the MBX package directly into LAMMPS, it
+.. is also possible to skip this step and build the MBX package as
+.. a plugin using the CMake script files in the ``examples/PACKAGE/mbx/plugin``
+.. folder and then load this plugin at runtime with the :doc:`plugin command <plugin>`.
+
+.. tabs::
+
+   .. tab:: CMake build
+
+      By default the MBX library will be downloaded from the git repository
+      and built automatically when the MBX package is enabled with
+      ``-D PKG_MBX=yes``.  The location for the sources may be
+      customized by setting the variable ``MBXLIB_URL`` when
+      configuring with CMake (e.g. to use a local archive on machines
+      without internet access).  Since CMake checks the validity of the
+      archive with ``md5sum`` you may also need to set ``MBXLIB_MD5``
+      if you provide a different library version than what is downloaded
+      automatically.
+
+
+   .. tab:: Traditional make
+
+      The MBX package does not support the traditional make
+      build.  You need to build LAMMPS with CMake to use it.
 
 ----------
 

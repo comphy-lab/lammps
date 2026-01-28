@@ -917,6 +917,7 @@ doxygenclass
 doxygenfunction
 Doye
 Doyl
+dp
 dpd
 DPD
 dpdTheta

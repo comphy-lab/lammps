@@ -1557,6 +1557,11 @@ include: Marc Riera, Christopher Knight, Ethan Bull-Vulpe, and Henry Agnew.
 
 .. versionadded:: TBD
 
+**Install:**
+
+This package has :ref:`specific installation instructions <mbx>` on the
+:doc:`Build extras <Build_extras>` page.
+
 **Supporting info:**
 
 * ``src/MBX``: filenames -> commands
