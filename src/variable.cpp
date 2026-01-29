@@ -340,6 +340,7 @@ void Variable::set(int narg, char **arg)
         error->all(FLERR, 1, "Cannot redefine variable {} with a different style", arg[0]);
       delete[] data[ivar][0];
       copy(1, &scopy, data[ivar]);
+      eval_in_progress[ivar] = 0;
       replaceflag = 1;
     } else {
       if (nvar == maxvar) grow();
@@ -442,6 +443,7 @@ void Variable::set(int narg, char **arg)
       delete[] data[ivar][1];
       data[ivar][0] = utils::strdup(arg[2]);
       data[ivar][1] = utils::strdup(arg[3]);
+      eval_in_progress[ivar] = 0;
       replaceflag = 1;
     } else {
       if (nvar == maxvar) grow();
@@ -478,6 +480,7 @@ void Variable::set(int narg, char **arg)
         error->all(FLERR, 1, "Cannot redefine variable {} with a different style", arg[0]);
       delete[] data[ivar][0];
       data[ivar][0] = utils::strdup(combined);
+      eval_in_progress[ivar] = 0;
       replaceflag = 1;
     } else {
       if (nvar == maxvar) grow();
@@ -512,6 +515,7 @@ void Variable::set(int narg, char **arg)
         error->all(FLERR, 1, "Cannot redefine variable {} with a different style", arg[0]);
       delete[] data[ivar][0];
       data[ivar][0] = utils::strdup(combined);
+      eval_in_progress[ivar] = 0;
       replaceflag = 1;
     } else {
       if (nvar == maxvar) grow();
@@ -555,6 +559,7 @@ void Variable::set(int narg, char **arg)
         std::vector<double> vec(vecs[ivar].values, vecs[ivar].values + vecs[ivar].n);
         data[ivar][1] = utils::strdup(fmt::format("[{}]", fmt::join(vec, ",")));
       }
+      eval_in_progress[ivar] = 0;
       replaceflag = 1;
     } else {
       if (nvar == maxvar) grow();
@@ -591,6 +596,7 @@ void Variable::set(int narg, char **arg)
         error->all(FLERR, 1, "Cannot redefine variable {} with a different style", arg[0]);
       delete[] data[ivar][0];
       data[ivar][0] = utils::strdup(arg[2]);
+      eval_in_progress[ivar] = 0;
       replaceflag = 1;
     } else {
       if (nvar == maxvar) grow();
@@ -620,6 +626,7 @@ void Variable::set(int narg, char **arg)
       if (style[ivar] != TIMER)
         error->all(FLERR, 1, "Cannot redefine variable {} with a different style", arg[0]);
       dvalue[ivar] = platform::walltime();
+      eval_in_progress[ivar] = 0;
       replaceflag = 1;
     } else {
       if (nvar == maxvar) grow();
@@ -645,7 +652,8 @@ void Variable::set(int narg, char **arg)
     if (ivar >= 0) {
       if (style[ivar] != INTERNAL)
         error->all(FLERR, 1, "Cannot redefine variable {} with a different style", arg[0]);
-      dvalue[nvar] = utils::numeric(FLERR, arg[2], false, lmp);
+      dvalue[ivar] = utils::numeric(FLERR, arg[2], false, lmp);
+      eval_in_progress[ivar] = 0;
       replaceflag = 1;
     } else {
       if (nvar == maxvar) grow();
@@ -671,6 +679,7 @@ void Variable::set(int narg, char **arg)
   if (!utils::is_id(arg[0]))
     error->all(FLERR, "Variable name '{}' must have only letters, numbers, or underscores", arg[0]);
   names[nvar] = utils::strdup(arg[0]);
+  eval_in_progress[nvar] = 0;
   nvar++;
 }
 
@@ -1139,8 +1148,10 @@ char *Variable::retrieve(const char *name)
 
 double Variable::compute_equal(int ivar)
 {
-  if (eval_in_progress[ivar])
-    print_var_error(FLERR,"has a circular dependency",ivar);
+  // do nothing for out of range index
+  if ((ivar < 0) || (ivar >= nvar)) return 0.0;
+
+  if (eval_in_progress[ivar]) print_var_error(FLERR,"has a circular dependency",ivar);
 
   eval_in_progress[ivar] = 1;
 
@@ -1183,8 +1194,10 @@ void Variable::compute_atom(int ivar, int igroup, double *result, int stride, in
   Tree *tree = nullptr;
   double *vstore;
 
-  if (eval_in_progress[ivar])
-    print_var_error(FLERR,"has a circular dependency",ivar);
+  // index out of range. do nothing.
+  if ((ivar < 0) || (ivar >= maxvar)) return;
+
+  if (eval_in_progress[ivar]) print_var_error(FLERR, "has a circular dependency",ivar);
 
   eval_in_progress[ivar] = 1;
 
@@ -1255,6 +1268,10 @@ int Variable::compute_vector(int ivar, double **result)
 {
   Tree *tree = nullptr;
 
+  // index is out-of-range. do nothing
+
+  if ((ivar < 0) || (ivar >= nvar)) return 0;
+
   // if vector is not dynamic, just return stored values
 
   if (!vecs[ivar].dynamic) {
@@ -1271,8 +1288,7 @@ int Variable::compute_vector(int ivar, double **result)
 
   // evaluate vector variable afresh
 
-  if (eval_in_progress[ivar])
-    print_var_error(FLERR,"has a circular dependency",ivar);
+  if (eval_in_progress[ivar]) print_var_error(FLERR,"has a circular dependency",ivar);
 
   eval_in_progress[ivar] = 1;
 
@@ -1280,10 +1296,8 @@ int Variable::compute_vector(int ivar, double **result)
   evaluate(data[ivar][0],&tree,ivar);
   collapse_tree(tree);
   int nlen = size_tree_vector(tree);
-  if (nlen == 0)
-    print_var_error(FLERR,"Vector-style variable has zero length",ivar);
-  if (nlen < 0)
-    print_var_error(FLERR,"Inconsistent lengths in vector-style variable",ivar);
+  if (nlen == 0) print_var_error(FLERR,"Vector-style variable has zero length",ivar);
+  if (nlen < 0) print_var_error(FLERR,"Inconsistent lengths in vector-style variable",ivar);
 
   // (re)allocate space for results if necessary
 
@@ -1362,6 +1376,7 @@ void Variable::remove(int n)
     reader[i-1] = reader[i];
     data[i-1] = data[i];
     dvalue[i-1] = dvalue[i];
+    eval_in_progress[i-1] = eval_in_progress[i];
 
     // copy VecVar struct from vecs[i] to vecs[i-1]
 
@@ -4528,15 +4543,15 @@ int Variable::special_function(const std::string &word, char *contents, Tree **t
 
     int value = -1;
     if (kind == "atom") {
-      value = atom->lmap->find(typestr,Atom::ATOM);
+      value = atom->lmap->find_type(typestr,Atom::ATOM);
     } else if (kind == "bond") {
-      value = atom->lmap->find(typestr,Atom::BOND);
+      value = atom->lmap->find_type(typestr,Atom::BOND);
     } else if (kind == "angle") {
-      value = atom->lmap->find(typestr,Atom::ANGLE);
+      value = atom->lmap->find_type(typestr,Atom::ANGLE);
     } else if (kind == "dihedral") {
-      value = atom->lmap->find(typestr,Atom::DIHEDRAL);
+      value = atom->lmap->find_type(typestr,Atom::DIHEDRAL);
     } else if (kind == "improper") {
-      value = atom->lmap->find(typestr,Atom::IMPROPER);
+      value = atom->lmap->find_type(typestr,Atom::IMPROPER);
     } else {
       print_var_error(FLERR, fmt::format("Invalid kind {} in {}() in variable", kind, word),ivar);
     }
@@ -4683,8 +4698,7 @@ int Variable::special_function(const std::string &word, char *contents, Tree **t
         print_var_error(FLERR,"Invalid special function in variable formula",ivar);
       if (style[ivar] != VECTOR)
         print_var_error(FLERR,"Mis-matched special function variable in variable formula",ivar);
-      if (eval_in_progress[ivar])
-        print_var_error(FLERR,"has a circular dependency",ivar);
+      if (eval_in_progress[ivar]) print_var_error(FLERR,"has a circular dependency",ivar);
 
       double *vec;
       nvec = compute_vector(ivar,&vec);

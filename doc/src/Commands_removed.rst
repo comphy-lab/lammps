@@ -2,6 +2,7 @@ Removed commands and packages
 =============================
 
 .. contents::
+   :local:
 
 ------
 
@@ -23,6 +24,13 @@ started to create problems with modern C++ compilers.  LAMMPS version
 22 July 2025 is the last version that contains them.  You have to
 download and compile this version, if you want to use any of these
 packages.
+
+.. toctree::
+   :maxdepth: 0
+   :hidden:
+   :glob:
+
+   atc_*
 
 Neighbor style and comm mode multi/old
 --------------------------------------

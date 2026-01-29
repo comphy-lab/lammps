@@ -348,6 +348,9 @@ void FixLangevinKokkos<DeviceType>::post_force(int /*vflag*/)
             Kokkos::parallel_for(nlocal,post_functor);
           }
 
+  // f is modified by post_force functor
+  atomKK->modified(execution_space,datamask_modify);
+
   if (tbiasflag == BIAS) {
     if (temperature->kokkosable) temperature->restore_bias_all();
     else {
@@ -374,7 +377,7 @@ void FixLangevinKokkos<DeviceType>::post_force(int /*vflag*/)
     FixLangevinKokkosZeroForceFunctor<DeviceType> zero_functor(this);
     Kokkos::parallel_for(nlocal,zero_functor);
   }
-  // f is modified by both post_force and zero_force functors
+  // f is modified by zero_force functor
   atomKK->modified(execution_space,datamask_modify);
 
   // thermostat omega and angmom
@@ -387,6 +390,7 @@ void FixLangevinKokkos<DeviceType>::post_force(int /*vflag*/)
 
 template<class DeviceType>
 template<int Tp_TSTYLEATOM, int Tp_TALLY, int Tp_BIAS, int Tp_RMASS, int Tp_ZERO>
+// NOLINTNEXTLINE
 KOKKOS_INLINE_FUNCTION
 FSUM FixLangevinKokkos<DeviceType>::post_force_item(int i) const
 {
@@ -450,6 +454,7 @@ FSUM FixLangevinKokkos<DeviceType>::post_force_item(int i) const
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
+// NOLINTNEXTLINE
 KOKKOS_INLINE_FUNCTION
 void FixLangevinKokkos<DeviceType>::zero_force_item(int i) const
 {
@@ -556,6 +561,7 @@ double FixLangevinKokkos<DeviceType>::compute_scalar()
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
+// NOLINTNEXTLINE
 KOKKOS_INLINE_FUNCTION
 KK_FLOAT FixLangevinKokkos<DeviceType>::compute_energy_item(int i) const
 {
@@ -601,6 +607,7 @@ void FixLangevinKokkos<DeviceType>::end_of_step()
 }
 
 template<class DeviceType>
+// NOLINTNEXTLINE
 KOKKOS_INLINE_FUNCTION
 void FixLangevinKokkos<DeviceType>::end_of_step_item(int i) const {
   KK_FLOAT tmp[3];
@@ -621,6 +628,7 @@ void FixLangevinKokkos<DeviceType>::end_of_step_item(int i) const {
 }
 
 template<class DeviceType>
+// NOLINTNEXTLINE
 KOKKOS_INLINE_FUNCTION
 void FixLangevinKokkos<DeviceType>::end_of_step_rmass_item(int i) const
 {
