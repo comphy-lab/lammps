@@ -1444,7 +1444,7 @@ gpu
 gpuID
 gpus
 gradgradflag
-gradnrgn
+gradnrg
 gradV
 gradx
 gradxn
@@ -2047,7 +2047,7 @@ lddensn
 lddttlnrg
 ldfftw
 ldg
-ldnrgn
+ldnrg
 lebedeva
 Lebedeva
 Lebold

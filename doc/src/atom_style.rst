@@ -178,7 +178,7 @@ the Additional Information section below.
      - 2-d rigid body particles
    * - *ldd*
      - *atom* + local densities + gradients of local densities + ldd energies
-     - :ref:`LDD <PKG-LDD>`
+     - :ref:`BOCS <PKG-BOCS>`
      - Local Density / Gradient Dependent Potentials
    * - *mdpd*
      - *atomic* + rho, drho, vest

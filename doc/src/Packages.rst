@@ -84,8 +84,8 @@ whether an extra library is needed to build and use the package:
      - ellipse
      - no
    * - :ref:`BOCS <PKG-BOCS>`
-     - BOCS bottom up coarse graining
-     - :doc:`fix bocs <fix_bocs>`
+     - BOCS bottom up coarse graining and Local Density Dependent potentials
+     - :doc:`fix bocs <fix_bocs>`, :doc:`pair_ldd <pair_ldd>`, :doc:`LDD Howto <Howto_ldd>`
      - ``PACKAGES/bocs``
      - no
    * - :ref:`BODY <PKG-BODY>`
@@ -272,11 +272,6 @@ whether an extra library is needed to build and use the package:
      - Lattice Boltzmann fluid
      - :doc:`fix lb/fluid <fix_lb_fluid>`
      - ``PACKAGES/latboltz``
-     - no
-   * - :ref:`LDD <PKG-LDD>`
-     - Local Density Dependent potentials
-     - :doc:`pair_ldd <pair_ldd>`, :doc:`LDD Howto <Howto_ldd>`
-     - ``PACKAGES/ldd``
      - no
    * - :ref:`LEPTON <PKG-LEPTON>`
      - evaluate strings as potential function

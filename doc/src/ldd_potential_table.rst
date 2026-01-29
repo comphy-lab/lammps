@@ -41,7 +41,7 @@ Following the *gradient* keyword, these options control the functional form for 
 
 All table commands use either a 4th order (*table/spline* and *table/gradspline*) or a second order (*table/lin* and *table/gradlin*) spline in order to represent the function :math:`U_X`.
 
-In principle, if :math:`U_X` is an :math:`n^{\text{th}}` order polynmomial in :math:`\rho`, then :math:`F_{X} = -\frac{dU_{X}}{d\rho}` should be an :math:`n - 1` order polynomial.
+In principle, if :math:`U_X` is an :math:`n^{\text{th}}` order polynomial in :math:`\rho`, then :math:`F_{X} = -\frac{dU_{X}}{d\rho}` should be an :math:`n - 1` order polynomial.
 
 In the case of LD potentials :math:`U_X = U_{\rho}`, :math:`U_{\rho}` does not appear in the pair additive force expression (See DeLyser 2019), and therefore does not influence the forces or sampling.
 Consequently, it does not influence sampling if :math:`U_\rho` and :math:`F_\rho` are described by polynomials of the same order. (args *table/lin* and *table/spline* do this.)

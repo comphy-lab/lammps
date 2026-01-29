@@ -30,10 +30,14 @@ where :math:`m` and :math:`b` are the slope and intercept of the relevant LDD fu
 
 Description
 """""""""""
-This option can follow the *gradient* or *potential* keywords in the ldd pair_coeff command.
-Following the *potential* keyword, it controls the functional form for :math:`U_{\rho}` and :math:`F_{\rho}  = -\frac{dU_{\rho}}{d\rho}`
-Following the *gradient* keyword, it controls the function form for :math:`U_{\nabla}` and :math:`F_{\nabla}  = -\frac{dU_{\nabla}}{d\rho}`.
-For generality we note each case with a dummy :math:`X` below.
+
+This option can follow the *gradient* or *potential* keywords in the ldd
+pair_coeff command.  Following the *potential* keyword, it controls the
+functional form for :math:`U_{\rho}` and :math:`F_{\rho} =
+-\frac{dU_{\rho}}{d\rho}` Following the *gradient* keyword, it controls
+the function form for :math:`U_{\nabla}` and :math:`F_{\nabla} =
+-\frac{dU_{\nabla}}{d\rho}`.  For generality we note each case with a
+dummy :math:`X` below.
 
 Style *linear* applies the form:
 
