@@ -90,6 +90,8 @@ FixColvars::FixColvars(LAMMPS *lmp, int narg, char **arg) :
   ++instances;
 
   scalar_flag = 1;
+  vector_flag = 1;
+  size_vector = 1;
   global_freq = 1;
   nevery = 1;
   extscalar = 1;
@@ -919,6 +921,13 @@ void FixColvars::post_run()
 double FixColvars::compute_scalar()
 {
   return energy;
+}
+
+/* ---------------------------------------------------------------------- */
+
+double FixColvars::compute_vector(int i)
+{
+  return 99.0;
 }
 
 /* ---------------------------------------------------------------------- */

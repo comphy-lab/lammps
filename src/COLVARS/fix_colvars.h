@@ -59,6 +59,7 @@ class FixColvars : public Fix {
   void end_of_step() override;
   void post_run() override;
   double compute_scalar() override;
+  double compute_vector(int) override;
   double memory_usage() override;
 
   void write_restart(FILE *) override;
