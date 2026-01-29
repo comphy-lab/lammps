@@ -7,16 +7,6 @@
 static constexpr int MAX_CHEB_ORDER = 40;
 static constexpr int MAX_MONO_ORDER = 40;
 
-// blas, lapack math functions used
-extern "C" {
-void dgesvd_(char *jobu, char *jobvt, int *m, int *n, double *a, int *lda, double *s, double *u,
-             int *ldu, double *vt, int *ldvt, double *work, int *lwork, int *info);
-void dgesdd_(char *jobz, int *m, int *n, double *a, int *lda, double *s, double *u, int *ldu,
-             double *vt, int *ldvt, double *work, int *lwork, int *iwork, int *info);
-void dgemm_(char *TransA, char *TransB, int *M, int *N, int *K, double *alpha, double *A, int *lda,
-            double *B, int *ldb, double *beta, double *C, int *ldc);
-}
-
 // prolate functions
 void prolc180(double eps, double &c);
 void prolc180_der3(double eps, double &der3);

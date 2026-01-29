@@ -336,95 +336,6 @@ static inline void gaussian_quadrature(int n, double *nodes, double *weights)
 }
 // end of legendre functions
 
-// Custom hash function for std::pair
-struct pair_hash {
-  template <class T1, class T2> std::size_t operator()(const std::pair<T1, T2> &p) const
-  {
-    auto hash1 = std::hash<T1>{}(p.first);
-    auto hash2 = std::hash<T2>{}(p.second);
-    return hash1 ^ (hash2 << 1);    // Combine the two hash values
-  }
-};
-
-// Custom equality function for std::pair
-struct pair_equal {
-  template <class T1, class T2>
-  bool operator()(const std::pair<T1, T2> &p1, const std::pair<T1, T2> &p2) const
-  {
-    return p1.first == p2.first && p1.second == p2.second;
-  }
-};
-
-/**
- * Computes the gemm operation C = A * B.
- * A is NxK, B is KxM, C is NxM.
- * Using BLAS interface.
- */
-static inline void gemm(int M, int N, int K, double *A, double *B, double *C)
-{
-  char trans = 'N';
-  double alpha = 1.0;
-  double beta = 0.0;
-  int lda = M;
-  int ldb = K;
-  int ldc = M;
-  dgemm_(&trans, &trans, &M, &N, &K, &alpha, B, &lda, A, &ldb, &beta, C, &ldc);
-}
-
-/**
- * Computes the pseudo inverse of matrix M(n1xn2) (in row major form)
- * and returns the output M_(n2xn1). Original contents of M are destroyed.
- */
-static inline void pseudo_inv(double *M, int n1, int n2, double eps, double *M_)
-{
-  // int alignment = 1024;
-  if (n1 * n2 == 0) return;
-  int m = n2;
-  int n = n1;
-  int k = (m < n ? m : n);
-
-  double *tU = (double *) malloc(m * std::max<int>(m, n) * sizeof(double));
-  double *tS = (double *) malloc(k * sizeof(double));
-  double *tVT = (double *) malloc(k * n * sizeof(double));
-  //int* iwork = (int*)malloc(8 * k * sizeof(int));
-  int *iwork = (int *) malloc(8 * std::max<int>(m, n) * sizeof(int));
-
-  // SVD
-  int INFO = 0;
-  char JOBZ = 'S';
-
-  int wssize = -1;
-  double wkopt{0};
-  dgesdd_(&JOBZ, &m, &n, M, &m, tS, tU, &m, tVT, &k, &wkopt, &wssize, iwork, &INFO);
-  wssize = (int) wkopt;
-
-  double *wsbuf = (double *) malloc(wssize * sizeof(double));
-  dgesdd_(&JOBZ, &m, &n, M, &m, tS, tU, &m, tVT, &k, wsbuf, &wssize, iwork, &INFO);
-  free(wsbuf);
-
-  double max_S = std::abs(tS[0]);
-
-  double eps_ = max_S * eps;
-  for (int i = 0; i < k; i++)
-    if (tS[i] < eps_)
-      tS[i] = 0;
-    else
-      tS[i] = 1 / tS[i];
-
-  for (int i = 0; i < m; i++) {
-    for (int j = 0; j < k; j++) { tU[i + j * m] *= tS[j]; }
-  }
-
-  double alpha = 1.0, beta = 0.0;
-  char trans = 'T';
-  dgemm_(&trans, &trans, &n, &m, &k, &alpha, tVT, &k, tU, &m, &beta, M_, &n);
-  free(tU);
-  free(tS);
-  free(tVT);
-  free(iwork);
-}
-// end of math utils
-
 // start of monomial utils
 static inline void monomial_nodes_1d(int nnodes, std::vector<double> &nodes, double a = 0,
                                      double b = 1)
@@ -496,22 +407,6 @@ static inline void monomial_interp_1d(int nnodes, std::vector<double> &fn_v,
   }
 }
 
-static inline void monomial_interp_1d(int order, int nnodes, std::vector<double> &fn_v,
-                                      std::vector<double> &coeff, double a = 0, double b = 1)
-{
-  std::vector<double> x, p, Mp(order * nnodes);
-  // monomial_nodes_1d(nnodes, x, a, b);
-  cheb_nodes_1d(nnodes, x, a, b);
-  monomial_basis_1d(order, x, p);
-  // TODO: check solve in lsq sense, i.e., mul order matters (us)(v^t x)
-  pseudo_inv(p.data(), order, nnodes, std::numeric_limits<double>::epsilon(), Mp.data());
-  size_t dof = fn_v.size() / nnodes;
-  assert(fn_v.size() == dof * nnodes);
-  if (coeff.size() != dof * order) coeff.resize(dof * order);
-  gemm(order, dof, nnodes, fn_v.data(), Mp.data(), coeff.data());
-}
-// end of monomial utils
-
 static inline void cheb_basis_1d(int order, const std::vector<double> &x, std::vector<double> &y,
                                  double a = 0, double b = 1)
 {
@@ -533,12 +428,6 @@ static inline void cheb_basis_1d(int order, const std::vector<double> &x, std::v
 
 void cheb_interp_1d(int order, std::vector<double> &fn_v, std::vector<double> &coeff)
 {
-  // static unordered_map<pair<double, double>, AlignedVector<AlignedVector<double>>, pair_hash, pair_equal>
-  // precomp_map; pair<double, double> key = make_pair(a, b); if (precomp_map.find(key) ==
-  // precomp_map.end()) {
-  //     precomp_map.emplace(key, AlignedVector<AlignedVector<double>>(1000));
-  // }
-  // AlignedVector<AlignedVector<double>> &precomp = precomp_map[key];
   static std::vector<std::vector<double>> precomp(1000);
   {    // Precompute
     assert(order < precomp.size());
@@ -546,22 +435,31 @@ void cheb_interp_1d(int order, std::vector<double> &fn_v, std::vector<double> &c
 #pragma omp critical(CHEB_BASIS_APPROX)
       if (precomp[order].size() == 0) {
         std::vector<double> x, p;
-        cheb_nodes_1d(order, x, 0, 1);
-        cheb_basis_1d(order, x, p);
-        std::vector<double> Mp1(order * order);
-        pseudo_inv(p.data(), order, order, std::numeric_limits<double>::epsilon(), Mp1.data());
-        precomp[order].swap(Mp1);
+        cheb_nodes_1d(order, x, -1, 1);
+        cheb_basis_1d(order, x, p, -1, 1);
+        precomp[order].swap(p);
       }
     }
   }
-  std::vector<double> &Mp = precomp[order];
+  std::vector<double> &p = precomp[order];
 
   size_t dof = fn_v.size() / order;
   assert(fn_v.size() == dof * order);
   if (coeff.size() != dof * order) coeff.resize(dof * order);
 
-  gemm(order, dof, order, fn_v.data(), Mp.data(), coeff.data());
+  const double inv_order = 1.0 / static_cast<double>(order);
+  const double two_inv_order = 2.0 * inv_order;
+  for (std::size_t id = 0; id < dof; ++id) {
+    const std::size_t base = id * order;
+    for (std::size_t k = 0; k < order; ++k) {
+      double sum = 0.0;
+      const double *pk = &p[k * order];
+      for (std::size_t j = 0; j < order; ++j) { sum += fn_v[base + j] * pk[j]; }
+      coeff[base + k] = (k == 0) ? (sum * inv_order) : (sum * two_inv_order);
+    }
+  }
 }
+// end of monomial utils
 
 // start of prolate functions
 void prolc180_der3(double eps, double &der3)
