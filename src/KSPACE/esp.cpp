@@ -1542,15 +1542,15 @@ void ESP::compute_gf_ad()
   double c0=0.0, c1=0.0, c2=0.0, c3=0.0, c4=0.0, c5=0.0;
 
   // pointers (helps compiler)
-  double * __restrict__ g1 = greensfn;
-  double * __restrict__ g2 = greensfn2;
+  double *g1 = greensfn;
+  double *g2 = greensfn2;
 
-  const double * __restrict__ p1 = sf_precoeff1;
-  const double * __restrict__ p2 = sf_precoeff2;
-  const double * __restrict__ p3 = sf_precoeff3;
-  const double * __restrict__ p4 = sf_precoeff4;
-  const double * __restrict__ p5 = sf_precoeff5;
-  const double * __restrict__ p6 = sf_precoeff6;
+  const double *p1 = sf_precoeff1;
+  const double *p2 = sf_precoeff2;
+  const double *p3 = sf_precoeff3;
+  const double *p4 = sf_precoeff4;
+  const double *p5 = sf_precoeff5;
+  const double *p6 = sf_precoeff6;
 
   // --- main loops (k is inner, contiguous n) ---
   int n = 0;
