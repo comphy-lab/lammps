@@ -917,6 +917,7 @@ doxygenclass
 doxygenfunction
 Doye
 Doyl
+dp
 dpd
 DPD
 dpdTheta
@@ -1169,6 +1170,7 @@ excitations
 excv
 exe
 executables
+eXpansion
 extep
 extractable
 extrema
@@ -1778,6 +1780,7 @@ ixz
 Ixz
 iy
 iycm
+Iyer
 iyy
 Iyy
 iyz
@@ -2282,6 +2285,7 @@ Mayergoyz
 Mayoral
 mbt
 MBytes
+mbx
 mc
 mcmoves
 McLachlan
@@ -2428,6 +2432,7 @@ molindex
 MolPairStyle
 moltemplate
 momb
+mon
 Monaghan
 Monaghans
 monodisperse
@@ -2771,6 +2776,7 @@ Nrecent
 Nrecompute
 Nrepeat
 nreset
+nrg
 Nrho
 Nroff
 nrow
@@ -2929,6 +2935,7 @@ oxRNA
 packings
 padua
 Padua
+Paesani
 pafi
 PairIJ
 palegoldenrod
@@ -3396,6 +3403,7 @@ ri
 Ri
 Ribiere
 richard
+Riera
 rigidID
 rigidify
 rij
@@ -3543,6 +3551,7 @@ Schulten
 Schunk
 Schuring
 Schwen
+Schwenke
 Sci
 scp
 screenshot
@@ -3628,6 +3637,7 @@ Sikandar
 Silbert
 Silling
 Sim
+Simmonett
 Simov
 Simul
 simulations
@@ -4257,6 +4267,7 @@ vtr
 vtu
 Vu
 Vuilleumier
+Vulpe
 vv
 vx
 Vx
