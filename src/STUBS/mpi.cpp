@@ -210,6 +210,8 @@ static int stubtypesize(MPI_Datatype datatype)
     return sizeof(uint64_t);
   else if (datatype == MPI_DOUBLE_INT)
     return sizeof(double_int);
+  else if (datatype == MPI_CXX_BOOL)
+    return sizeof(bool);
   else {
     int i;
     for (i = 0; i < nextra_datatype; i++)

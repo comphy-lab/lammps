@@ -41,6 +41,7 @@
 #define MPI_LONG 6
 #define MPI_LONG_LONG 7
 #define MPI_DOUBLE_INT 8
+#define MPI_CXX_BOOL 9
 
 #define MPI_SUM 1
 #define MPI_MAX 2
