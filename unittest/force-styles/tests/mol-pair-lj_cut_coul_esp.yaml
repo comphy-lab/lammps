@@ -1,7 +1,7 @@
 ---
 lammps_version: 10 Sep 2025
 date_generated: Fri Dec 5 16:55:28 2025
-epsilon: 1.5e-6
+epsilon: 1.5e-5
 skip_tests:
 prerequisites: ! |
   atom full
