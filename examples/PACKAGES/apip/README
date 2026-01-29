@@ -16,3 +16,5 @@ David Immel, Ralf Drautz, Godehard Sutmann; Conservative adaptive-precision inte
 
 and demonstrated with in.surface.la.cons , where the descriptor is calculated using the differentiable centro-symmetry parameter.
 When the original CSP is used, the potential is not conservative any more when CSP-pairs change between timesteps as demonstrated with in.surface.la.nocons .
+A load-balancing example for conservative adaptive-precision potentials is provided with in.surface.la.cons.balance .
+Note that the switching parameter and the differentiation of the switching parameter are performed by a fix and, thus, cannot be included in the load balancing.
