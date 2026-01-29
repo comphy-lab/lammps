@@ -188,6 +188,7 @@ class ESP : public KSpace {
     // returns ( (order/2 * poly(2t-1))^2 ), or 0 if t>1
     if (t > 1.0) return 0.0;
     const double x = 2.0 * t - 1.0;
+    // apply Horner rule for polynomial evaluation
     const double appx = poly_horner(x, fourier_spread_poly_coeff, fourier_spreading_order);
     const double w = 0.5 * order * appx;
     return w * w;

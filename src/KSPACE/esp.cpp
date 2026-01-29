@@ -14,7 +14,7 @@
 
 /* ----------------------------------------------------------------------
    Contributing authors: Jiuyang Liang, Libin Lu, Shidong Jiang (Flatiron)
-     analytic diff (2 FFT) option is set to default and highly recommended
+     analytic diff (2 FFT) option is set to default and recommended
 ------------------------------------------------------------------------- */
 
 #include "esp.h"
