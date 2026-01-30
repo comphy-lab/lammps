@@ -40,15 +40,19 @@ AtomVecApipLa::AtomVecApipLa(LAMMPS *lmp) : AtomVec(lmp)
   // except: fields_data_atom & fields_data_vel must match data file
 
   // The full list of fields is in atom_vec.cpp
-  fields_copy = {"apip_lambda", "apip_lambda_required", "apip_la_inp", "apip_la_avg", "apip_la_norm"};
-  fields_comm = {"apip_lambda", "apip_lambda_required", "apip_la_inp", "apip_la_avg", "apip_la_norm"};
+  fields_copy = {"apip_lambda", "apip_lambda_required", "apip_la_inp", "apip_la_avg",
+                 "apip_la_norm"};
+  fields_comm = {"apip_lambda", "apip_lambda_required", "apip_la_inp", "apip_la_avg",
+                 "apip_la_norm"};
   fields_comm_vel = {};
-  fields_border = {"apip_lambda", "apip_lambda_required", "apip_la_inp", "apip_la_avg", "apip_la_norm"};
+  fields_border = {"apip_lambda", "apip_lambda_required", "apip_la_inp", "apip_la_avg",
+                   "apip_la_norm"};
   fields_border_vel = {};
   fields_exchange = {"apip_lambda", "apip_lambda_required"};
   fields_restart = {"apip_lambda", "apip_lambda_required"};
   fields_create = {};
-  fields_grow = {"apip_lambda",   "apip_lambda_required", "apip_e_fast", "apip_e_precise", "apip_la_inp", "apip_la_avg", "apip_la_norm"};    // allocates memory
+  fields_grow = {"apip_lambda", "apip_lambda_required", "apip_e_fast", "apip_e_precise",
+                 "apip_la_inp", "apip_la_avg",          "apip_la_norm"};    // allocates memory
   fields_reverse = {};    // communication of force after calculation
   fields_data_atom = {"id", "type", "x"};
   fields_data_vel = {"id", "v"};

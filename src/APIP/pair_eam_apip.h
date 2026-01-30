@@ -115,7 +115,7 @@ class PairEAMAPIP : public Pair {
   void calculate_time_per_atom();
 
   bool lambda_thermostat;    // true/false there is one/no fix lambda_thermostat/apip
-  bool lambda_la;        // true/false there is one/no fix lambda/la/apip
+  bool lambda_la;            // true/false there is one/no fix lambda/la/apip
 };
 
 }    // namespace LAMMPS_NS

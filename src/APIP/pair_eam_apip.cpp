@@ -578,7 +578,8 @@ void PairEAMAPIP::setup()
   } else {
     lambda_la = true;
     if (comm->me == 0)
-      utils::logmesg(lmp, "  eam/apip      : compute potential energies for local-averaging forces\n");
+      utils::logmesg(lmp,
+                     "  eam/apip      : compute potential energies for local-averaging forces\n");
   }
 
   if (modify->get_fix_by_style("^lambda_thermostat/apip$").size() == 0) {

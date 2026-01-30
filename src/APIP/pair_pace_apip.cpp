@@ -45,8 +45,8 @@ Copyright 2021 Yury Lysogorskiy^1, Cas van der Oord^2, Anton Bochkarev^1,
 #include "neighbor.h"
 #include "update.h"
 
-#include <exception>
 #include <cstring>
+#include <exception>
 
 #include "ace-evaluator/ace_c_basis.h"
 #include "ace-evaluator/ace_evaluator.h"
@@ -536,7 +536,8 @@ void PairPACEAPIP::setup()
   } else {
     lambda_la = true;
     if (comm->me == 0)
-      utils::logmesg(lmp, "  pace/apip     : compute potential energies for local-averaging forces\n");
+      utils::logmesg(lmp,
+                     "  pace/apip     : compute potential energies for local-averaging forces\n");
   }
 
   if (modify->get_fix_by_style("^lambda_thermostat/apip$").size() == 0) {

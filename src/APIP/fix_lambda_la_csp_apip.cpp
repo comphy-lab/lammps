@@ -22,12 +22,12 @@
 #include "error.h"
 #include "fix_store_atom.h"
 #include "force.h"
+#include "math_const.h"
 #include "memory.h"
+#include "modify.h"
 #include "neigh_list.h"
 #include "neigh_request.h"
 #include "neighbor.h"
-#include "math_const.h"
-#include "modify.h"
 #include "pair.h"
 
 #include <algorithm>
@@ -39,9 +39,8 @@ using namespace MathConst;
 /* ---------------------------------------------------------------------- */
 
 FixLambdaLACSPAPIP::FixLambdaLACSPAPIP(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), ngh_pairs(nullptr), list(nullptr), distsq(nullptr),
-    nearest(nullptr), fixstore(nullptr), f_lambda(nullptr),
-    prefactor1(nullptr), prefactor2(nullptr)
+    Fix(lmp, narg, arg), ngh_pairs(nullptr), list(nullptr), distsq(nullptr), nearest(nullptr),
+    fixstore(nullptr), f_lambda(nullptr), prefactor1(nullptr), prefactor2(nullptr)
 {
   comm_reverse = 2;
   comm_forward = 2;
@@ -58,7 +57,7 @@ FixLambdaLACSPAPIP::FixLambdaLACSPAPIP(LAMMPS *lmp, int narg, char **arg) :
   // set defaults
   cut_lo = cut_hi = -1;
   threshold_lo = threshold_hi = -1;
-  lambda_non_group = 1; // fast
+  lambda_non_group = 1;    // fast
   const_ngh_flag = true;
   calculate_forces_flag = true;
   csp_cutsq = 25;
@@ -86,30 +85,39 @@ FixLambdaLACSPAPIP::FixLambdaLACSPAPIP(LAMMPS *lmp, int narg, char **arg) :
 
   for (int i = 8; i < narg; i++) {
     if (strcmp(arg[i], "csp_mode") == 0) {
-      if (i+1 == narg) error->all(FLERR, "the csp_mode option of fix lambda/la/csp/apip requires an additional argument");
-      if (strcmp(arg[i+1], "dynamic") == 0)
+      if (i + 1 == narg)
+        error->all(FLERR,
+                   "the csp_mode option of fix lambda/la/csp/apip requires an additional argument");
+      if (strcmp(arg[i + 1], "dynamic") == 0)
         const_ngh_flag = false;
-      else if (strcmp(arg[i+1], "static") == 0)
+      else if (strcmp(arg[i + 1], "static") == 0)
         const_ngh_flag = true;
       else
-        error->all(FLERR, "expected dynamic or static instead of {}", arg[i+1]);
+        error->all(FLERR, "expected dynamic or static instead of {}", arg[i + 1]);
       i++;
     } else if (strcmp(arg[i], "csp_cut") == 0) {
-      if (i+1 == narg) error->all(FLERR, "the csp_cut option of fix lambda/la/csp/apip requires an additional argument");
-      csp_cutsq = pow(utils::numeric(FLERR, arg[i+1], false, lmp), 2);
+      if (i + 1 == narg)
+        error->all(FLERR,
+                   "the csp_cut option of fix lambda/la/csp/apip requires an additional argument");
+      csp_cutsq = pow(utils::numeric(FLERR, arg[i + 1], false, lmp), 2);
       i++;
     } else if (strcmp(arg[i], "forces") == 0) {
-      if (i+1 == narg) error->all(FLERR, "the forces option of fix lambda/la/csp/apip requires an additional argument");
-      calculate_forces_flag = utils::logical(FLERR, arg[i+1], false, lmp);
+      if (i + 1 == narg)
+        error->all(FLERR,
+                   "the forces option of fix lambda/la/csp/apip requires an additional argument");
+      calculate_forces_flag = utils::logical(FLERR, arg[i + 1], false, lmp);
       i++;
     } else if (strcmp(arg[i], "lambda_non_group") == 0) {
-      if (i+1 == narg) error->all(FLERR, "the lambda_non_group option of fix lambda/la/csp/apip requires an additional argument");
-      if (strcmp(arg[i+1], "fast") == 0)
+      if (i + 1 == narg)
+        error->all(FLERR,
+                   "the lambda_non_group option of fix lambda/la/csp/apip requires an additional "
+                   "argument");
+      if (strcmp(arg[i + 1], "fast") == 0)
         lambda_non_group = 1;
-      else if (strcmp(arg[i+1], "precise") == 0)
+      else if (strcmp(arg[i + 1], "precise") == 0)
         lambda_non_group = 0;
       else
-        lambda_non_group = utils::numeric(FLERR, arg[i+1], false, lmp);
+        lambda_non_group = utils::numeric(FLERR, arg[i + 1], false, lmp);
       i++;
     } else {
       error->all(FLERR, "unknown argument {}", arg[i]);
@@ -118,27 +126,33 @@ FixLambdaLACSPAPIP::FixLambdaLACSPAPIP(LAMMPS *lmp, int narg, char **arg) :
 
   // verify arguments
   if (cut_lo > cut_hi || cut_lo < 0) error->all(FLERR, "0 <= cut_lo <= cut_hi required");
-  if (threshold_lo > threshold_hi || threshold_lo < 0) error->all(FLERR, "0 <= threshold_lo <= threshold_hi required");
-  if (lambda_non_group < 0 || lambda_non_group > 1) error->all(FLERR, "0 <= lambda_non_group <= 1 required");
-  if (!const_ngh_flag) { scalar_flag = 1; extscalar = 1; }
+  if (threshold_lo > threshold_hi || threshold_lo < 0)
+    error->all(FLERR, "0 <= threshold_lo <= threshold_hi required");
+  if (lambda_non_group < 0 || lambda_non_group > 1)
+    error->all(FLERR, "0 <= lambda_non_group <= 1 required");
+  if (!const_ngh_flag) {
+    scalar_flag = 1;
+    extscalar = 1;
+  }
 
   cutsq_combined = csp_cutsq > cut_hi_sq ? csp_cutsq : cut_hi_sq;
 
-  if (calculate_forces_flag) {
-    virial_global_flag = virial_peratom_flag = thermo_virial = 1;
+  if (calculate_forces_flag) { virial_global_flag = virial_peratom_flag = thermo_virial = 1; }
+
+  if (!atom->apip_lambda_flag) {
+    error->all(FLERR, "fix lambda/la/csp/apip requires atomic style with lambda.");
   }
-
-
-  if (!atom->apip_lambda_flag) { error->all(FLERR, "fix lambda/la/csp/apip requires atomic style with lambda."); }
-  if (!atom->apip_la_inp_flag || !atom->apip_la_avg_flag || !atom->apip_la_norm_flag) { error->all(FLERR, "fix lambda/la/csp/apip requires atomic style with csp, csp_avg and csp_norm."); }
+  if (!atom->apip_la_inp_flag || !atom->apip_la_avg_flag || !atom->apip_la_norm_flag) {
+    error->all(FLERR,
+               "fix lambda/la/csp/apip requires atomic style with csp, csp_avg and csp_norm.");
+  }
 
   size_f_lambda = atom->nlocal;
   memory->create(f_lambda, size_f_lambda, size_peratom_cols, "pair:lambda:la:csp:apip:f:lambda");
   array_atom = f_lambda;
   for (int i = 0; i < atom->nlocal; i++) {
-    for (int j = 0; j < size_peratom_cols; j ++) f_lambda[i][j] = 0;
+    for (int j = 0; j < size_peratom_cols; j++) f_lambda[i][j] = 0;
   }
-
 }
 
 /* ---------------------------------------------------------------------- */
@@ -177,8 +191,8 @@ void FixLambdaLACSPAPIP::post_constructor()
 
   // arguments of peratom:
   cmd += " all STORE/ATOM ";
-  cmd += str_values;      // n1
-  cmd += " 0 0 1";                // n2 gflag rflag
+  cmd += str_values;    // n1
+  cmd += " 0 0 1";      // n2 gflag rflag
   fixstore = dynamic_cast<FixStoreAtom *>(modify->add_fix(cmd));
 
   // do not carry the CSP-pairs with atoms during normal atom migration yet
@@ -205,8 +219,7 @@ void FixLambdaLACSPAPIP::init()
   auto *req = neighbor->add_request(this, NeighConst::REQ_FULL);
   req->set_cutoff(sqrt(cutsq_combined));
 
-  if (atom->tag_enable == 0)
-    error->all(FLERR, "fix lambda/la/csp/apip requires atom IDs");
+  if (atom->tag_enable == 0) error->all(FLERR, "fix lambda/la/csp/apip requires atom IDs");
 
   // only one fix lambda/la/csp/apip
   int count = 0;
@@ -216,11 +229,14 @@ void FixLambdaLACSPAPIP::init()
   if (count > 1) error->all(FLERR, "More than one fix lambda/la/csp/apip.");
 
   if (force->pair->cutforce < cut_hi)
-    error->all(FLERR, "cutoff of potential ({}) smaller than cutoff of weighting function ({})", force->pair->cutforce, cut_hi);
-  if (force->pair->cutforce*force->pair->cutforce < csp_cutsq)
-    error->all(FLERR, "cutoff of potential ({}) smaller than cutoff of the CSP ({})", force->pair->cutforce, sqrt(csp_cutsq));
+    error->all(FLERR, "cutoff of potential ({}) smaller than cutoff of weighting function ({})",
+               force->pair->cutforce, cut_hi);
+  if (force->pair->cutforce * force->pair->cutforce < csp_cutsq)
+    error->all(FLERR, "cutoff of potential ({}) smaller than cutoff of the CSP ({})",
+               force->pair->cutforce, sqrt(csp_cutsq));
 
-  if (strcmp(atom->atom_style, "apip/la")) error->all(FLERR, "fix lambda/la/csp/apip requires atom style apip/la");
+  if (strcmp(atom->atom_style, "apip/la"))
+    error->all(FLERR, "fix lambda/la/csp/apip requires atom style apip/la");
 }
 
 /**
@@ -262,16 +278,21 @@ void FixLambdaLACSPAPIP::post_neighbor()
 
 void FixLambdaLACSPAPIP::setup_pre_force(int vflag)
 {
-  if (!const_ngh_flag || !tags_stored) pre_force_dyn_pairs();
-  else pre_force_const_pairs();
+  if (!const_ngh_flag || !tags_stored)
+    pre_force_dyn_pairs();
+  else
+    pre_force_const_pairs();
 
   comm_forward_flag = FORWARD_INP_LAMBDA;
   comm->forward_comm(this);
 }
 
-void FixLambdaLACSPAPIP::pre_force(int /*vflag*/) {
-  if (const_ngh_flag) pre_force_const_pairs();
-  else pre_force_dyn_pairs();
+void FixLambdaLACSPAPIP::pre_force(int /*vflag*/)
+{
+  if (const_ngh_flag)
+    pre_force_const_pairs();
+  else
+    pre_force_dyn_pairs();
 }
 
 /**
@@ -304,7 +325,7 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
     memory->create(ngh_pairs, ngh_pairs_size, nnn, "fix_lambda_la_csp_apip:ngh_pairs");
   }
 
-  double ** stored_tags = fixstore->astore;
+  double **stored_tags = fixstore->astore;
 
   inum = list->inum;
   ilist = list->ilist;
@@ -333,9 +354,7 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
 
-
     // 1. compute csp[i]
-
 
     xtmp = x[i][0];
     ytmp = x[i][1];
@@ -373,7 +392,8 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
     }
 
     if (n_nearest < nnn) {
-      error->all(FLERR, "Atom has only {} neighbours, but {} are required to calculate the CSP.", n_nearest, nnn);
+      error->all(FLERR, "Atom has only {} neighbours, but {} are required to calculate the CSP.",
+                 n_nearest, nnn);
     }
 
     // store nnn nearest neighs in 1st nnn locations of distsq and nearest
@@ -412,8 +432,7 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
       ngh_pairs[i][j + nhalf] = pairs_k[pairs_index[j]];
 
       // get new tags
-      pairs_used_now[j] =  CSPpairAPIP(tag[ngh_pairs[i][j]], tag[ngh_pairs[i][j + nhalf]]);
-
+      pairs_used_now[j] = CSPpairAPIP(tag[ngh_pairs[i][j]], tag[ngh_pairs[i][j + nhalf]]);
     }
 
     csp[i] = value;
@@ -421,7 +440,8 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
     // get previous tags
     if (tags_stored) {
       for (j = 0; j < nhalf; j++) {
-        pairs_used_prev[j] = CSPpairAPIP((tagint) stored_tags[i][j], (tagint) stored_tags[i][j + nhalf]);
+        pairs_used_prev[j] =
+            CSPpairAPIP((tagint) stored_tags[i][j], (tagint) stored_tags[i][j + nhalf]);
       }
 
       // sort tag arrays
@@ -438,9 +458,7 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
     }
 
     // store current tags
-    for (j = 0; j < nnn; j++) {
-      stored_tags[i][j] = tag[ngh_pairs[i][j]];
-    }
+    for (j = 0; j < nnn; j++) { stored_tags[i][j] = tag[ngh_pairs[i][j]]; }
 
     // 2. compute csp avg
     // csp_avg_i += csp_i * w(r_ij)
@@ -460,13 +478,11 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
         csp_norm[jj] += weight;
       }
     }
-
   }
   tags_stored = true;
 
   // carry the CSP-pairs with atoms during normal atom migration
   fixstore->disable = 0;
-
 
   // reverse communication of csp_norm and csp_avgs of ghost atoms
   comm->reverse_comm(this);
@@ -496,7 +512,8 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
 {
   int i, j, ii, jj, kk, inum, jnum;
   int *ilist, *jlist, *numneigh, **firstneigh, *mask;
-  double xtmp, ytmp, ztmp, delx, dely, delz, rsq, value, weight, delx_j, dely_j, delz_j, delx_k, dely_k, delz_k;
+  double xtmp, ytmp, ztmp, delx, dely, delz, rsq, value, weight, delx_j, dely_j, delz_j, delx_k,
+      dely_k, delz_k;
   double *lambda, *csp, *csp_avg, *csp_norm, **x, **stored_tags;
 
   int nlocal = atom->nlocal;
@@ -541,14 +558,17 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
     for (j = 0; j < nhalf; j++) {
 
       jj = atom->map((tagint) stored_tags[i][j]);
-      if (jj == -1) error->one(FLERR, "atom ID {} csp neighbour with ID {} not present", atom->tag[i], stored_tags[i][j]);
+      if (jj == -1)
+        error->one(FLERR, "atom ID {} csp neighbour with ID {} not present", atom->tag[i],
+                   stored_tags[i][j]);
       while (jj >= 0) {
         // calculate distance to jj
         delx_j = x[jj][0] - xtmp;
         dely_j = x[jj][1] - ytmp;
         delz_j = x[jj][2] - ztmp;
         // correct periodic image?
-        if (fabs(delx_j) < domain->prd_half[0] && fabs(dely_j) < domain->prd_half[1] && fabs(delz_j) < domain->prd_half[2]) {
+        if (fabs(delx_j) < domain->prd_half[0] && fabs(dely_j) < domain->prd_half[1] &&
+            fabs(delz_j) < domain->prd_half[2]) {
           // correct periodic image
           break;
         } else {
@@ -558,25 +578,31 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
       }
       if (jj == -1) {
         printf("own atom i % x %f %f %f\n", i, xtmp, ytmp, ztmp);
-        printf("nlocal %i nghost %i nall %i\n", atom->nlocal, atom->nghost, atom->nlocal + atom->nghost);
+        printf("nlocal %i nghost %i nall %i\n", atom->nlocal, atom->nghost,
+               atom->nlocal + atom->nghost);
         for (jj = atom->map((tagint) stored_tags[i][j]); jj >= 0; jj = atom->sametag[jj])
           printf("possible pair ngh jj %i x %f %f %f\n", jj, x[jj][0], x[jj][1], x[jj][2]);
-        for(jj = atom->nlocal; jj < atom->nlocal+atom->nghost; jj++) {
-          if (atom->tag[jj] == (tagint) stored_tags[i][j]) printf("atom with same tag jj %i x %f %f %f\n", jj, x[jj][0], x[jj][1], x[jj][2]);
+        for (jj = atom->nlocal; jj < atom->nlocal + atom->nghost; jj++) {
+          if (atom->tag[jj] == (tagint) stored_tags[i][j])
+            printf("atom with same tag jj %i x %f %f %f\n", jj, x[jj][0], x[jj][1], x[jj][2]);
         }
-        error->one(FLERR, "atom ID {} no correct image of csp neighbour with ID {} found", atom->tag[i], stored_tags[i][j]);
+        error->one(FLERR, "atom ID {} no correct image of csp neighbour with ID {} found",
+                   atom->tag[i], stored_tags[i][j]);
       }
       ngh_pairs[i][j] = jj;
 
       kk = atom->map((tagint) stored_tags[i][j + nhalf]);
-      if (kk == -1) error->one(FLERR, "atom ID {} csp neighbour with ID {} not present", atom->tag[i], stored_tags[i][j + nhalf]);
+      if (kk == -1)
+        error->one(FLERR, "atom ID {} csp neighbour with ID {} not present", atom->tag[i],
+                   stored_tags[i][j + nhalf]);
       while (kk >= 0) {
         // calculate distance to kk
         delx_k = x[kk][0] - xtmp;
         dely_k = x[kk][1] - ytmp;
         delz_k = x[kk][2] - ztmp;
         // correct periodic image?
-        if (fabs(delx_k) < domain->prd_half[0] && fabs(dely_k) < domain->prd_half[1] && fabs(delz_k) < domain->prd_half[2]) {
+        if (fabs(delx_k) < domain->prd_half[0] && fabs(dely_k) < domain->prd_half[1] &&
+            fabs(delz_k) < domain->prd_half[2]) {
           // correct periodic image
           break;
         } else {
@@ -586,13 +612,16 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
       }
       if (kk == -1) {
         printf("own atom i %i x %f %f %f\n", i, xtmp, ytmp, ztmp);
-        printf("nlocal %i nghost %i nall %i\n", atom->nlocal, atom->nghost, atom->nlocal + atom->nghost);
-        for(kk = atom->map((tagint) stored_tags[i][j + nhalf]); kk >= 0; kk = atom->sametag[kk])
+        printf("nlocal %i nghost %i nall %i\n", atom->nlocal, atom->nghost,
+               atom->nlocal + atom->nghost);
+        for (kk = atom->map((tagint) stored_tags[i][j + nhalf]); kk >= 0; kk = atom->sametag[kk])
           printf("possible pair ngh kk %i x %f %f %f\n", kk, x[kk][0], x[kk][1], x[kk][2]);
-        for(kk = atom->nlocal; kk < atom->nlocal+atom->nghost; kk++) {
-          if (atom->tag[kk] == (tagint) stored_tags[i][j + nhalf]) printf("atom with same tag kk %i x %f %f %f\n", kk, x[kk][0], x[kk][1], x[kk][2]);
+        for (kk = atom->nlocal; kk < atom->nlocal + atom->nghost; kk++) {
+          if (atom->tag[kk] == (tagint) stored_tags[i][j + nhalf])
+            printf("atom with same tag kk %i x %f %f %f\n", kk, x[kk][0], x[kk][1], x[kk][2]);
         }
-        error->one(FLERR, "atom ID {} no correct image of csp neighbour with ID {} found", atom->tag[i], stored_tags[i][j + nhalf]);
+        error->one(FLERR, "atom ID {} no correct image of csp neighbour with ID {} found",
+                   atom->tag[i], stored_tags[i][j + nhalf]);
       }
       ngh_pairs[i][j + nhalf] = kk;
 
@@ -603,7 +632,6 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
       value += delx * delx + dely * dely + delz * delz;
     }
     csp[i] = value;
-
   }
 
   // 2. compute csp avg
@@ -680,7 +708,8 @@ void FixLambdaLACSPAPIP::pre_reverse(int /*eflag*/, int vflag)
   int i, j, ii, jj, inum, jnum, i_pair, i1, i2, i3;
   int *ilist, *jlist, *numneigh, **firstneigh, *mask;
   double **x, **f, *lambda, *csp, *csp_avg, *csp_norm, *e_fast, *e_precise;
-  double xtmp, ytmp, ztmp, lambdatmp, fpair, delx, dely, delz, r, rsq, cspavgtmp, prefactortmp, delx1, dely1, delz1, delx2, dely2, delz2, tmp, ftmp[3];
+  double xtmp, ytmp, ztmp, lambdatmp, fpair, delx, dely, delz, r, rsq, cspavgtmp, prefactortmp,
+      delx1, dely1, delz1, delx2, dely2, delz2, tmp, ftmp[3];
 
   int nlocal = atom->nlocal;
   int nhalf = nnn / 2;
@@ -702,24 +731,22 @@ void FixLambdaLACSPAPIP::pre_reverse(int /*eflag*/, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-
   if (atom->nmax > prefactor1_size) {
     memory->destroy(prefactor1);
     prefactor1_size = atom->nmax;
-    memory->create(prefactor1,prefactor1_size,"pair:la:csp:apip:prefactor1");
+    memory->create(prefactor1, prefactor1_size, "pair:la:csp:apip:prefactor1");
   }
   if (nlocal > prefactor2_size) {
     memory->destroy(prefactor2);
     prefactor2_size = nlocal;
-    memory->create(prefactor2,prefactor2_size,"pair:la:csp:apip:prefactor2");
+    memory->create(prefactor2, prefactor2_size, "pair:la:csp:apip:prefactor2");
   }
-
 
   // e_fast and e_precise are known only for own atoms
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
     // the derivative must be calculated from the switching function defined in FixLambdaLACSPAPIP::switching_function_poly
-    if (lambda[i] != 0 && lambda [i] != 1 && (mask[i] & groupbit)) {
+    if (lambda[i] != 0 && lambda[i] != 1 && (mask[i] & groupbit)) {
       // calculate derviative of lambda
       tmp = 1 - 2 * (1 + (csp_avg[i] - threshold_hi) / threshold_width);
       prefactor1[i] = -1.875 / threshold_width * (1 - 2 * tmp * tmp + pow(tmp, 4));
@@ -738,10 +765,8 @@ void FixLambdaLACSPAPIP::pre_reverse(int /*eflag*/, int vflag)
   comm_forward_flag = FORWARD_PREFACTOR;
   comm->forward_comm(this);
 
-
   // store all forces before force computation
   store_f_lambda_before();
-
 
   // compute derivative of the radial weight function first
   for (ii = 0; ii < inum; ii++) {
@@ -786,7 +811,6 @@ void FixLambdaLACSPAPIP::pre_reverse(int /*eflag*/, int vflag)
     }
   }
 
-
   // compute derivative of the CSP
   for (ii = 0; ii < inum; ii++) {
     i2 = ilist[ii];
@@ -798,7 +822,6 @@ void FixLambdaLACSPAPIP::pre_reverse(int /*eflag*/, int vflag)
     xtmp = x[i2][0];
     ytmp = x[i2][1];
     ztmp = x[i2][2];
-
 
     for (i_pair = 0; i_pair < nhalf; i_pair++) {
       i1 = ngh_pairs[i2][i_pair];
@@ -829,7 +852,6 @@ void FixLambdaLACSPAPIP::pre_reverse(int /*eflag*/, int vflag)
       f[i3][2] += ftmp[2];
 
       if (vflag_either) ev_tally3(i1, i2, i3, ftmp, delx1, dely1, delz1, delx2, dely2, delz2);
-
     }
   }
 
@@ -962,7 +984,7 @@ void *FixLambdaLACSPAPIP::extract(const char *str, int &dim)
 /* ---------------------------------------------------------------------- */
 int FixLambdaLACSPAPIP::pack_reverse_comm(int n, int first, double *buf)
 {
-  int i,m,last;
+  int i, m, last;
   double *avg = atom->apip_la_avg;
   double *norm = atom->apip_la_norm;
 
@@ -979,7 +1001,7 @@ int FixLambdaLACSPAPIP::pack_reverse_comm(int n, int first, double *buf)
 
 void FixLambdaLACSPAPIP::unpack_reverse_comm(int n, int *list, double *buf)
 {
-  int i,j,m;
+  int i, j, m;
   double *avg = atom->apip_la_avg;
   double *norm = atom->apip_la_norm;
 
@@ -995,7 +1017,8 @@ void FixLambdaLACSPAPIP::unpack_reverse_comm(int n, int *list, double *buf)
   * Send lambda/la_inp or prefactor to neighbours.
   */
 
-int FixLambdaLACSPAPIP::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, int * /*pbc*/)
+int FixLambdaLACSPAPIP::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/,
+                                          int * /*pbc*/)
 {
   int i, j, m;
   m = 0;
@@ -1017,7 +1040,6 @@ int FixLambdaLACSPAPIP::pack_forward_comm(int n, int *list, double *buf, int /*p
       j = list[i];
       buf[m++] = prefactor1[j];
     }
-
   }
 
   return m;
@@ -1029,7 +1051,7 @@ int FixLambdaLACSPAPIP::pack_forward_comm(int n, int *list, double *buf, int /*p
 
 void FixLambdaLACSPAPIP::unpack_forward_comm(int n, int first, double *buf)
 {
-  int i,m,last;
+  int i, m, last;
 
   m = 0;
   last = first + n;
@@ -1045,10 +1067,8 @@ void FixLambdaLACSPAPIP::unpack_forward_comm(int n, int first, double *buf)
   } else if (comm_forward_flag == FORWARD_PREFACTOR) {
 
     for (i = first; i < last; i++) prefactor1[i] = buf[m++];
-
   }
 }
-
 
 /**
   * Initial f_lambda.
@@ -1068,9 +1088,9 @@ void FixLambdaLACSPAPIP::store_f_lambda_before()
   }
 
   for (int i = 0; i < nlocal; i++) {
-    f_lambda[i][0] = - f[i][0];
-    f_lambda[i][1] = - f[i][1];
-    f_lambda[i][2] = - f[i][2];
+    f_lambda[i][0] = -f[i][0];
+    f_lambda[i][1] = -f[i][1];
+    f_lambda[i][2] = -f[i][2];
   }
 }
 
@@ -1091,10 +1111,9 @@ void FixLambdaLACSPAPIP::store_f_lambda_after()
   }
 }
 
-
-
-CSPpairAPIP::CSPpairAPIP(tagint i0, tagint i1) {
-  if (i0 < i1 ) {
+CSPpairAPIP::CSPpairAPIP(tagint i0, tagint i1)
+{
+  if (i0 < i1) {
     tag_smaller = i0;
     tag_larger = i1;
   } else {
@@ -1150,15 +1169,14 @@ void FixLambdaLACSPAPIP::restart(char *buf)
 
   // simple comparisons first
   if (nnn_tmp != nnn)
-    error->all(FLERR, "fix lambda/la/csp/apip: nnn = {} != {} = nnn in restart file",
-               nnn_tmp, nnn);
+    error->all(FLERR, "fix lambda/la/csp/apip: nnn = {} != {} = nnn in restart file", nnn_tmp, nnn);
   if (const_ngh_flag_tmp != const_ngh_flag)
-    error->all(FLERR, "fix lambda/la/csp/apip: const_ngh_flag = {} != {} = const_ngh_flag in restart file",
+    error->all(FLERR,
+               "fix lambda/la/csp/apip: const_ngh_flag = {} != {} = const_ngh_flag in restart file",
                const_ngh_flag_tmp, const_ngh_flag);
 
   if (tags_stored) fixstore->disable = 0;
 }
-
 
 /**
   * compute the virial similar to Pair::ev_tally
@@ -1166,17 +1184,17 @@ void FixLambdaLACSPAPIP::restart(char *buf)
   * newton_pair is true since there are no double computations on different processors.
   */
 
-void FixLambdaLACSPAPIP::ev_tally2(int i, int j, double fpair,
-                    double delx, double dely, double delz)
+void FixLambdaLACSPAPIP::ev_tally2(int i, int j, double fpair, double delx, double dely,
+                                   double delz)
 {
   double v[6];
 
-  v[0] = delx*delx*fpair;
-  v[1] = dely*dely*fpair;
-  v[2] = delz*delz*fpair;
-  v[3] = delx*dely*fpair;
-  v[4] = delx*delz*fpair;
-  v[5] = dely*delz*fpair;
+  v[0] = delx * delx * fpair;
+  v[1] = dely * dely * fpair;
+  v[2] = delz * delz * fpair;
+  v[3] = delx * dely * fpair;
+  v[4] = delx * delz * fpair;
+  v[5] = dely * delz * fpair;
 
   if (vflag_global) {
     virial[0] += v[0];
@@ -1188,19 +1206,19 @@ void FixLambdaLACSPAPIP::ev_tally2(int i, int j, double fpair,
   }
 
   if (vflag_atom) {
-    vatom[i][0] += 0.5*v[0];
-    vatom[i][1] += 0.5*v[1];
-    vatom[i][2] += 0.5*v[2];
-    vatom[i][3] += 0.5*v[3];
-    vatom[i][4] += 0.5*v[4];
-    vatom[i][5] += 0.5*v[5];
+    vatom[i][0] += 0.5 * v[0];
+    vatom[i][1] += 0.5 * v[1];
+    vatom[i][2] += 0.5 * v[2];
+    vatom[i][3] += 0.5 * v[3];
+    vatom[i][4] += 0.5 * v[4];
+    vatom[i][5] += 0.5 * v[5];
 
-    vatom[j][0] += 0.5*v[0];
-    vatom[j][1] += 0.5*v[1];
-    vatom[j][2] += 0.5*v[2];
-    vatom[j][3] += 0.5*v[3];
-    vatom[j][4] += 0.5*v[4];
-    vatom[j][5] += 0.5*v[5];
+    vatom[j][0] += 0.5 * v[0];
+    vatom[j][1] += 0.5 * v[1];
+    vatom[j][2] += 0.5 * v[2];
+    vatom[j][3] += 0.5 * v[3];
+    vatom[j][4] += 0.5 * v[4];
+    vatom[j][5] += 0.5 * v[5];
   }
 }
 
@@ -1213,9 +1231,8 @@ void FixLambdaLACSPAPIP::ev_tally2(int i, int j, double fpair,
   * 3. f1 = f3
   */
 
-void FixLambdaLACSPAPIP::ev_tally3(int i, int j, int k, double *f,
-                     double delx1, double dely1, double delz1, double delx2,
-                     double dely2, double delz2)
+void FixLambdaLACSPAPIP::ev_tally3(int i, int j, int k, double *f, double delx1, double dely1,
+                                   double delz1, double delx2, double dely2, double delz2)
 {
   double v[6];
 
