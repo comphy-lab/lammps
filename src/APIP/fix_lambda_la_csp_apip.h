@@ -31,10 +31,10 @@ class CSPpairAPIP {
 
  public:
   CSPpairAPIP() { tag_smaller = tag_larger = 0; };
-  CSPpairAPIP(int, int);
+  CSPpairAPIP(tagint, tagint);
 
-  int tag_smaller;
-  int tag_larger;
+  tagint tag_smaller;
+  tagint tag_larger;
 
 };
 
@@ -57,7 +57,7 @@ class FixLambdaLACSPAPIP : public Fix {
   FixLambdaLACSPAPIP(class LAMMPS *, int, char **);
   ~FixLambdaLACSPAPIP() override;
   void init() override;
-  void init_list(int, NeighList *);
+  void init_list(int, NeighList *) override;
   void post_constructor() override;
   void setup_post_neighbor() override;
   void post_neighbor() override;
@@ -69,7 +69,7 @@ class FixLambdaLACSPAPIP : public Fix {
   void unpack_reverse_comm(int, int *, double *) override;
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
-  double compute_scalar();
+  double compute_scalar() override;
   void write_restart(FILE *) override;
   void restart(char *) override;
   void setup_pre_reverse(int, int) override;

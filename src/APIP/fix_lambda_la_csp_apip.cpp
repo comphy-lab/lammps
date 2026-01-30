@@ -181,8 +181,9 @@ void FixLambdaLACSPAPIP::post_constructor()
   cmd += " 0 0 1";                // n2 gflag rflag
   fixstore = dynamic_cast<FixStoreAtom *>(modify->add_fix(cmd));
 
-  // carry weights with atoms during normal atom migration
-  fixstore->disable = 0;
+  // do not carry the CSP-pairs with atoms during normal atom migration yet
+  // activate after the CSP-pairs are calculated
+  fixstore->disable = 1;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -201,7 +202,7 @@ int FixLambdaLACSPAPIP::setmask()
 void FixLambdaLACSPAPIP::init()
 {
   // full neighbour list for thermostating
-  auto req = neighbor->add_request(this, NeighConst::REQ_FULL);
+  auto *req = neighbor->add_request(this, NeighConst::REQ_FULL);
   req->set_cutoff(sqrt(cutsq_combined));
 
   if (atom->tag_enable == 0)
@@ -261,7 +262,7 @@ void FixLambdaLACSPAPIP::post_neighbor()
 
 void FixLambdaLACSPAPIP::setup_pre_force(int vflag)
 {
-  if (!const_ngh_flag || (const_ngh_flag && !tags_stored)) pre_force_dyn_pairs();
+  if (!const_ngh_flag || !tags_stored) pre_force_dyn_pairs();
   else pre_force_const_pairs();
 
   comm_forward_flag = FORWARD_INP_LAMBDA;
@@ -314,12 +315,12 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
 
   int nhalf = nnn / 2;
   int npairs = nnn * (nnn - 1) / 2;
-  auto pairs_value = new double[npairs];
-  auto pairs_j = new int[npairs];
-  auto pairs_k = new int[npairs];
-  auto pairs_index = new int[npairs];
-  auto pairs_used_now = new CSPpairAPIP[nhalf];
-  auto pairs_used_prev = new CSPpairAPIP[nhalf];
+  auto *pairs_value = new double[npairs];
+  auto *pairs_j = new int[npairs];
+  auto *pairs_k = new int[npairs];
+  auto *pairs_index = new int[npairs];
+  auto *pairs_used_now = new CSPpairAPIP[nhalf];
+  auto *pairs_used_prev = new CSPpairAPIP[nhalf];
 
   // compute centro-symmetry parameter for each atom in group
 
@@ -420,7 +421,7 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
     // get previous tags
     if (tags_stored) {
       for (j = 0; j < nhalf; j++) {
-        pairs_used_prev[j] = CSPpairAPIP(stored_tags[i][j], stored_tags[i][j + nhalf]);
+        pairs_used_prev[j] = CSPpairAPIP((tagint) stored_tags[i][j], (tagint) stored_tags[i][j + nhalf]);
       }
 
       // sort tag arrays
@@ -463,6 +464,9 @@ void FixLambdaLACSPAPIP::pre_force_dyn_pairs()
   }
   tags_stored = true;
 
+  // carry the CSP-pairs with atoms during normal atom migration
+  fixstore->disable = 0;
+
 
   // reverse communication of csp_norm and csp_avgs of ghost atoms
   comm->reverse_comm(this);
@@ -498,8 +502,6 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
   int nlocal = atom->nlocal;
   int nmax = atom->nmax;
   int nhalf = nnn / 2;
-
-  tagint *tag = atom->tag;
 
   mask = atom->mask;
   lambda = atom->apip_lambda;
@@ -560,7 +562,7 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
         for (jj = atom->map((tagint) stored_tags[i][j]); jj >= 0; jj = atom->sametag[jj])
           printf("possible pair ngh jj %i x %f %f %f\n", jj, x[jj][0], x[jj][1], x[jj][2]);
         for(jj = atom->nlocal; jj < atom->nlocal+atom->nghost; jj++) {
-          if (atom->tag[jj] == stored_tags[i][j]) printf("atom with same tag jj %i x %f %f %f\n", jj, x[jj][0], x[jj][1], x[jj][2]);
+          if (atom->tag[jj] == (tagint) stored_tags[i][j]) printf("atom with same tag jj %i x %f %f %f\n", jj, x[jj][0], x[jj][1], x[jj][2]);
         }
         error->one(FLERR, "atom ID {} no correct image of csp neighbour with ID {} found", atom->tag[i], stored_tags[i][j]);
       }
@@ -588,7 +590,7 @@ void FixLambdaLACSPAPIP::pre_force_const_pairs()
         for(kk = atom->map((tagint) stored_tags[i][j + nhalf]); kk >= 0; kk = atom->sametag[kk])
           printf("possible pair ngh kk %i x %f %f %f\n", kk, x[kk][0], x[kk][1], x[kk][2]);
         for(kk = atom->nlocal; kk < atom->nlocal+atom->nghost; kk++) {
-          if (atom->tag[kk] == stored_tags[i][j + nhalf]) printf("atom with same tag kk %i x %f %f %f\n", kk, x[kk][0], x[kk][1], x[kk][2]);
+          if (atom->tag[kk] == (tagint) stored_tags[i][j + nhalf]) printf("atom with same tag kk %i x %f %f %f\n", kk, x[kk][0], x[kk][1], x[kk][2]);
         }
         error->one(FLERR, "atom ID {} no correct image of csp neighbour with ID {} found", atom->tag[i], stored_tags[i][j + nhalf]);
       }
@@ -675,13 +677,12 @@ void FixLambdaLACSPAPIP::setup_pre_reverse(int eflag, int vflag)
 
 void FixLambdaLACSPAPIP::pre_reverse(int /*eflag*/, int vflag)
 {
-  int i, j, ii, jj, inum, jnum, k, i_pair, i1, i2, i3;
+  int i, j, ii, jj, inum, jnum, i_pair, i1, i2, i3;
   int *ilist, *jlist, *numneigh, **firstneigh, *mask;
   double **x, **f, *lambda, *csp, *csp_avg, *csp_norm, *e_fast, *e_precise;
   double xtmp, ytmp, ztmp, lambdatmp, fpair, delx, dely, delz, r, rsq, cspavgtmp, prefactortmp, delx1, dely1, delz1, delx2, dely2, delz2, tmp, ftmp[3];
 
   int nlocal = atom->nlocal;
-  int newton_pair = force->newton_pair;
   int nhalf = nnn / 2;
 
   v_init(vflag);
@@ -1092,7 +1093,7 @@ void FixLambdaLACSPAPIP::store_f_lambda_after()
 
 
 
-CSPpairAPIP::CSPpairAPIP(int i0, int i1) {
+CSPpairAPIP::CSPpairAPIP(tagint i0, tagint i1) {
   if (i0 < i1 ) {
     tag_smaller = i0;
     tag_larger = i1;
@@ -1154,6 +1155,8 @@ void FixLambdaLACSPAPIP::restart(char *buf)
   if (const_ngh_flag_tmp != const_ngh_flag)
     error->all(FLERR, "fix lambda/la/csp/apip: const_ngh_flag = {} != {} = const_ngh_flag in restart file",
                const_ngh_flag_tmp, const_ngh_flag);
+
+  if (tags_stored) fixstore->disable = 0;
 }
 
 
