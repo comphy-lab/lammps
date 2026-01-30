@@ -179,6 +179,7 @@ Default
 """""""
 
 *forces* = *yes*,
+*csp_cut* = 5.0,
 *csp_mode* = *static*,
 *lambda_non_group* = 1
 
