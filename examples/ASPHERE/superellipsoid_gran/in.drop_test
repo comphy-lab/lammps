@@ -85,6 +85,6 @@ fix             2 mobile gravity 9.81 vector 0 0 -1
 fix             3 mobile nve/asphere
 
 # 9. Run
-thermo          1000
+thermo          100
 timestep        0.001
 run             300000

@@ -33,7 +33,7 @@ extern "C" { // General Matrices
 namespace MathExtraSuperellipsoids {
 
 static constexpr int ITERMAX_NR = 100;
-static constexpr double TOL_NR_RES = 1e-5 * 1e-5;
+static constexpr double TOL_NR_RES = 1e-10 * 1e-10;
 static constexpr double TOL_NR_POS = 1e-6 * 1e-6;
 
 static constexpr int ITERMAX_LS = 10;
@@ -337,7 +337,7 @@ double compute_residual(const double shapefunci, const double* gradi_global,
   double scalar_denom;
 
   if (formulation == FORMULATION_GEOMETRIC) {
-      // GEOMETRIC: F is a distance (Length).
+      // GEOMETRIC: G is a distance (Length).
       scalar_denom = radius_scale; 
   } else {
       // ALGEBRAIC: F is dimensionless (approx 0 at surface).
@@ -410,15 +410,20 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
   if (norm < TOL_NR_RES) {
     
     //  must compute the normal vector nij before returning since the Newton loop normally handles this upon convergence.
-    double xilocal[3], tmp_v[3], gradi[3], hess_dummy[3][3];
+    double xilocal[3], tmp_v[3], gradi[3], val_dummy;
 
     // Transform global X0 to local frame of particle I
     MathExtra::sub3(X0, xci, tmp_v);
     MathExtra::transpose_matvec(Ri, tmp_v, xilocal);
 
-    // Compute local gradient (we could ignore the Hessian here)
+    // Compute local gradient
     // Algebraic gradient is fine for direction even if we used Geometric for solving
-    shape_and_derivatives_local(xilocal, shapei, blocki, flagi, tmp_v, hess_dummy);
+    // TODO: might use a simpler function to simply compute the gradient, to 
+    // avoid computing quantities already computed in compute_residual_and_jacobian
+    if (flagi <= 1)
+      val_dummy = shape_and_gradient_local_n1equaln2_surfacesearch(xilocal, shapei, blocki[0], gradi);
+    else
+      val_dummy = shape_and_gradient_local_superquad_surfacesearch(xilocal, shapei, blocki, gradi);
 
     // Rotate gradient back to global frame to get normal
     MathExtra::matvec(Ri, tmp_v, gradi);
@@ -449,7 +454,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
     b_fast[0] = -residual[0]; b_fast[1] = -residual[1]; 
     b_fast[2] = -residual[2]; b_fast[3] = -residual[3];
 
-    // 2. Try Fast Solver
+    // Try Fast Solver
     if (MathExtraSuperellipsoids::solve_4x4_robust_unrolled(A_fast, b_fast)) {
         rhs[0] = b_fast[0]; rhs[1] = b_fast[1]; 
         rhs[2] = b_fast[2]; rhs[3] = b_fast[3];
@@ -497,24 +502,24 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
     double a(multiplicity), X_line[4];
     int iter_ls;
 
+    if (formulation == FORMULATION_GEOMETRIC) {
+      a = 1.0; // no need for multiplicity scaling 
+      // Limit the max step size to avoid jumping too far
+      // normalize residual vector if step was limited
+      double spatial_residual_norm = std::sqrt(rhs[0]*rhs[0] + rhs[1]*rhs[1] + rhs[2]*rhs[2]);
+      if (spatial_residual_norm > max_step) {
+          double scale = max_step / spatial_residual_norm;
+          rhs[0] *= scale;
+          rhs[1] *= scale;
+          rhs[2] *= scale;
+      }
+    }
+
     for (iter_ls = 0 ; iter_ls < ITERMAX_LS ; iter_ls++) {
       X_line[0] = X0[0] + a * rhs[0];
       X_line[1] = X0[1] + a * rhs[1];
       X_line[2] = X0[2] + a * rhs[2];
       X_line[3] = X0[3] + a * rhs[3];
-
-      if (formulation == FORMULATION_GEOMETRIC) {
-          // Limit the max step size to avoid jumping too far
-          // normalize residual vector if step was limited
-          double spatial_residual_norm = std::sqrt(residual[0]*residual[0] + residual[1]*residual[1] + residual[2]*residual[2]);
-          a = 1; // reset a to 1 for proper step size in geometric formulation
-          if (spatial_residual_norm > max_step) {
-              double scale = max_step / spatial_residual_norm;
-              rhs[0] *= scale;
-              rhs[1] *= scale;
-              rhs[2] *= scale;
-          }
-      }
 
       // Line search iterates not selected for the next Newton iteration
       // do not need to compute the expensive Jacobian, only the residual.
@@ -623,26 +628,6 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
 
     if (converged)
       break;
-  }
-
-  // If we ran out of iterations, check if the residual is acceptable.
-  // We ignore the "step size" check here because sliding on flat faces (N=6,8)
-  // often keeps moving while maintaining a perfect residual.
-  if (!converged && norm < TOL_NR_RES) {
-       converged = true;
-       
-       // Re-compute the normal 'nij' for this final point
-       // because the loop broke without updating it for the final X0.
-       double xilocal[3], tmp_v[3], gradi[3], hess_dummy[3][3];
-       MathExtra::sub3(X0, xci, tmp_v);
-       MathExtra::transpose_matvec(Ri, tmp_v, xilocal);
-       
-       shape_and_derivatives_local(xilocal, shapei, blocki, flagi, tmp_v, hess_dummy);
-       if (formulation == FORMULATION_GEOMETRIC) {
-           apply_regularization_shape_function(blocki[0], avg_radius_i, &shapefunc[0], tmp_v, hess_dummy);
-       }
-       MathExtra::matvec(Ri, tmp_v, gradi);
-       MathExtra::normalize3(gradi, nij);
   }
 
   // LAPACK dgetrs() error values are negative, return values:
