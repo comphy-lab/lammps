@@ -2793,6 +2793,7 @@ void FixSurfaceLocal::assign2d()
   // set new total # of atoms and error check
 
   atom->natoms += nlines;
+  atom->nlines += nlines;
   if ((atom->natoms < 0) || (atom->natoms >= MAXBIGINT))
     error->all(FLERR, Error::NOLASTLINE, "Too many total atoms");
 
@@ -3125,6 +3126,7 @@ void FixSurfaceLocal::assign3d()
   // set new total # of atoms and error check
 
   atom->natoms += ntris;
+  atom->ntris += ntris;
   if ((atom->natoms < 0) || (atom->natoms >= MAXBIGINT))
     error->all(FLERR, Error::NOLASTLINE, "Too many total atoms");
 
