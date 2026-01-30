@@ -298,12 +298,12 @@ molecules and 2.) solvent density around solute molecules)
 The local density potentials implemented define "local density" flexibly
 with different choices of indicator weighting functions and asymmetry in
 interactions as generically described in: Michael R. DeLyser
-and W. G. Noid (2019). “Analysis of local density potentials” The
+and W. G. Noid (2019). "Analysis of local density potentials" The
 Journal of Chemical Physics 151, : 224106 DOI: 10.1063/1.512866
 
 The square gradient potential implementation is described in:
-Michael R. DeLyser and W. G. Noid (2021) “Coarse-grained models for
-local density gradients” The Journal of Chemical Physics, 156, 034106
+Michael R. DeLyser and W. G. Noid (2021) "Coarse-grained models for
+local density gradients" The Journal of Chemical Physics, 156, 034106
 DOI: 10.1063/5.0075291
 
 
