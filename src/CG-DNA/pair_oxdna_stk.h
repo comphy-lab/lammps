@@ -47,7 +47,7 @@ class PairOxdnaStk : public Pair {
   // stacking interaction
   double eta_st[4][4];
   double stacking_strength(double, double, double);
-  double ****epsilon_st, **a_st;
+  double **epsilon_st, **a_st;
   double ****cut_st_0, ****cut_st_c, ****cut_st_lo, ****cut_st_hi; 
   double ****cut_st_lc, ****cut_st_hc, **b_st_lo, **b_st_hi, ****shift_st;
   double ****cutsq_st_hc;

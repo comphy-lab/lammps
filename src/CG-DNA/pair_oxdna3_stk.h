@@ -38,10 +38,6 @@ class PairOxdna3Stk : public PairOxdnaStk {
   };
   void coeff(int, char **) override;
 
- protected:
-  double eta_st[5][5][5][5];
-
-
 };
 
 }    // namespace LAMMPS_NS

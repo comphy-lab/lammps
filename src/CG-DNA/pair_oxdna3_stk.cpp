@@ -40,6 +40,29 @@ using namespace MFOxdna;
 
 PairOxdna3Stk::PairOxdna3Stk(LAMMPS *lmp) : PairOxdnaStk(lmp)
 {
+  // sequence-specific stacking strength
+  // A:0 C:1 G:2 T:3, 3'- [i][j] -5'
+
+  eta_st[0][0] = 1.1217958408368172;
+  eta_st[1][0] = 1.0712851690057155;
+  eta_st[2][0] = 1.1161603311902566;
+  eta_st[3][0] = 1.0052361315065244;
+
+  eta_st[0][1] = 1.1217958408368172;
+  eta_st[1][1] = 0.7892685731520542;
+  eta_st[2][1] = 1.1022201982984874;
+  eta_st[3][1] = 0.8658975520778347;
+
+  eta_st[0][2] = 1.1217958408368172;
+  eta_st[1][2] = 0.9896542231533637;
+  eta_st[2][2] = 1.108839260816948;
+  eta_st[3][2] = 1.1217958408368172;
+
+  eta_st[0][3] = 0.9300223683636719;
+  eta_st[1][3] = 0.7694592613578328;
+  eta_st[2][3] = 1.0007533199170144;
+  eta_st[3][3] = 0.859398379155222;
+
   single_enable = 0;
   writedata = 0;
   trim_flag = 0;
@@ -91,7 +114,6 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
     for (int j = 0; j <= nhi; j++) {
       for (int k = 0; k <= nhi; k++) {
         for (int l = 0; l <= nhi; l++) {
-          eta_st[i][j][k][l] = 0.0;
           cut_st_0[i][j][k][l] = 0.0;
           cut_st_c[i][j][k][l] = 0.0;
           cut_st_lo[i][j][k][l] = 0.0;
@@ -119,19 +141,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
           xi_st_one = values.next_double(); 
           kappa_st_one = values.next_double();
-
-          for (int i = nlo; i <= nhi; i++) {
-            for (int j = nlo; j <= nhi; j++) {
-              for (int k = nlo; k <= nhi; k++) {
-                for (int l = nlo; l <= nhi; l++) {
-                  eta_st[i][j][k][l] = values.next_double();
-                  eta_st[i][j][k][0] += eta_st[i][j][k][l];
-                  eta_st[0][j][k][l] += eta_st[i][j][k][l];
-                  eta_st[0][j][k][0] += eta_st[i][j][k][l];
-                }
-              }
-            }
-          }
+          epsilon_st_one = stacking_strength(xi_st_one, kappa_st_one, T);
 
           a_st_one = values.next_double();
 
@@ -232,13 +242,12 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
       error->one(FLERR, "No corresponding stk potential found in file {} for pair type {} {}",
                  arg[4], arg[0], arg[1]);
 
-    epsilon_st_one = stacking_strength(xi_st_one, kappa_st_one, T);
+
 
     // calculate sequence-averaged parameters for terminal base step j-k
     for (int i = nlo; i <= nhi; i++) {
       for (int j = nlo; j <= nhi; j++) {
         for (int k = nlo; k <= nhi; k++) {
-          eta_st[i][j][k][0] /= nhi;
           cut_st_0[i][j][k][0] /= nhi;
           cut_st_c[i][j][k][0] /= nhi;
           cut_st_lo[i][j][k][0] /= nhi;
@@ -251,7 +260,6 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
         for (int l = nlo; l <= nhi; l++) {
-          eta_st[0][j][k][l] /= nhi;
           cut_st_0[0][j][k][l] /= nhi;
           cut_st_c[0][j][k][l] /= nhi;
           cut_st_lo[0][j][k][l] /= nhi;
@@ -263,7 +271,6 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
     } 
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
-        eta_st[0][j][k][0] /= pow(nhi,2);
         cut_st_0[0][j][k][0] /= pow(nhi,2);
         cut_st_c[0][j][k][0] /= pow(nhi,2);
         cut_st_lo[0][j][k][0] /= pow(nhi,2);
@@ -278,7 +285,6 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   MPI_Bcast(&epsilon_st_one, 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&a_st_one, 1, MPI_DOUBLE, 0, world);
 
-  MPI_Bcast(&eta_st[0][0][0][0], 625, MPI_DOUBLE, 0, world);
   MPI_Bcast(&cut_st_0[0][0][0][0], 625, MPI_DOUBLE, 0, world);
   MPI_Bcast(&cut_st_c[0][0][0][0], 625, MPI_DOUBLE, 0, world);
   MPI_Bcast(&cut_st_lo[0][0][0][0], 625, MPI_DOUBLE, 0, world);
@@ -343,6 +349,8 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   for (int i = nlo; i <= nhi; i++) {
     for (int j = nlo; j <= nhi; j++) {
 
+      epsilon_st[i][j] = epsilon_st_one * eta_st[i-1][j-1];
+
       a_st[i][j] = a_st_one;
       b_st_lo[i][j] = b_st_lo_one;
       b_st_hi[i][j] = b_st_hi_one;
@@ -390,13 +398,8 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
           cutsq_st_hc[i][j][k][l] = cut_st_hc[i][j][k][l]*cut_st_hc[i][j][k][l];
 
-          epsilon_st[i][j][k][l] = epsilon_st_one;
-
           tmp = 1 - exp(-(cut_st_c[i][j][k][l]-cut_st_0[i][j][k][l]) * a_st_one);
-          shift_st[i][j][k][l] = epsilon_st_one * tmp * tmp;
-
-          epsilon_st[i][j][k][l] *= eta_st[0][j][k][0];
-          shift_st[i][j][k][l] *= eta_st[0][j][k][0];
+          shift_st[i][j][k][l] = epsilon_st_one * eta_st[j-1][k-1] * tmp * tmp;
 
           b_st4[i][j][k][l] = a_st4[i][j][k][l]*a_st4[i][j][k][l]*dtheta_st4_ast[i][j][k][l]*
                 dtheta_st4_ast[i][j][k][l]/(1-a_st4[i][j][k][l]*dtheta_st4_ast[i][j][k][l]*dtheta_st4_ast[i][j][k][l]);
