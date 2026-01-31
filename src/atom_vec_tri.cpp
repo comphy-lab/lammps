@@ -661,10 +661,13 @@ void AtomVecTri::data_atom_post(int ilocal)
 
   if (rmass[ilocal] <= 0.0) error->one(FLERR, "Invalid density in Atoms section of data file");
 
+  // Radius may be set by other atom styles (e.g. sphere) w/ hybrid
   if (tri_flag < 0) {
-    double radius_one = 0.5;
-    radius[ilocal] = radius_one;
-    rmass[ilocal] *= 4.0 * MY_PI / 3.0 * radius_one * radius_one * radius_one;
+    if (radius[ilocal] < (EPSILON * EPSILON)) {
+      double radius_one = 0.5;
+      radius[ilocal] = radius_one;
+      rmass[ilocal] *= 4.0 * MY_PI / 3.0 * radius_one * radius_one * radius_one;
+    }
   } else
     radius[ilocal] = 0.0;
 
