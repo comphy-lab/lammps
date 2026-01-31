@@ -380,6 +380,7 @@ void FixColvars::setup(int vflag)
   MPI_Status status;
   MPI_Request request;
   if (me == 0) setup_io();
+  update_colvars();
   init_taglist();
   // determine size of comm buffer
   nme=0;
@@ -487,7 +488,6 @@ void FixColvars::setup(int vflag)
     post_force_respa(vflag,nlevels_respa-1,0);
     ((Respa *) update->integrate)->copy_f_flevel(nlevels_respa-1);
   }
-  update_colvars();
 }
 
 /* ---------------------------------------------------------------------- */
