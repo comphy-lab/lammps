@@ -758,22 +758,22 @@ Below is an example input deck for visualizing *cone* and *cylinder* regions:
 
 -------------
 
-Visualizing graphics provided by fix commands
----------------------------------------------
+Visualizing graphics provided by compute or fix commands
+--------------------------------------------------------
 
 LAMMPS can display additional graphics objects in the :doc:`dump image
-<dump_image>` output that are added by fix styles.  These fall in two
-categories: fixes that were written with the specific purpose of adding
-graphics to the visualization and fixes that make objects or data
-visible that they maintain internally.  Examples for the latter case are
-visualizing the indenter object from :doc:`fix indent <fix_indent>` or
-the wall position from one of the wall fixes.  The details of what kind
-of graphics is added and how it can be configured is described in a
-section titled **Dump image info** in the documentation of the
-individual fix commands.
+<dump_image>` output that are added by compute or fix styles.  These
+fall in two categories: fixes that were written with the specific
+purpose of adding graphics to the visualization and computes or fixes
+that make objects or data visible that they maintain internally.
+Examples for the latter case are visualizing the indenter object from
+:doc:`fix indent <fix_indent>` or the wall position from one of the wall
+fixes.  The details of what kind of graphics is added and how it can be
+configured is described in a section titled **Dump image info** in the
+documentation of the individual fix commands.
 
-Below is a table with links to the documentation of supported fix
-styles:
+Below is a table with links to the documentation of supported compute
+and fix styles:
 
 .. table_from_list::
    :columns: 4
