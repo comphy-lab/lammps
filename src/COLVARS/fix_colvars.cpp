@@ -51,6 +51,7 @@
 #include "colvarscript.h"
 #include "colvar.h"
 
+#include <algorithm> // for std::max
 #include <cstring>
 
 /* struct for packed data communication of coordinates and forces. */
@@ -764,12 +765,24 @@ double FixColvars::compute_scalar()
 
 void FixColvars::update_colvars()
 {
+  int sizes_array[2];
   if (comm->me == 0) {
     proxy->parse_module_config();
     const auto& variables = *proxy->colvars->variables();
     size_array_rows = variables.size();
+    size_array_cols = 0;
+    for ( int m=0 ; m<size_array_rows; m++ ) {
+      int variable_size = static_cast<int>(variables[m]->value().size());
+      size_array_cols = std::max<int>(size_array_cols, variable_size);
+    }
+    sizes_array[0] = size_array_rows;
+    sizes_array[1] = size_array_cols;
   }
-  MPI_Bcast(&size_array_rows, 1, MPI_INT, 0, world);
+  MPI_Bcast(sizes_array, 2, MPI_INT, 0, world);
+  if (comm->me > 0) {
+    size_array_rows = sizes_array[0];
+    size_array_cols = sizes_array[1];
+  }
   output->thermo->colname_auto();
 }
 
