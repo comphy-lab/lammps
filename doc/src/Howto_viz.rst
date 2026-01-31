@@ -778,6 +778,7 @@ and fix styles:
 .. table_from_list::
    :columns: 4
 
+   * :doc:`compute hbond/local <compute_hbond_local>`
    * :doc:`fix graphics/arrows <fix_graphics_arrows>`
    * :doc:`fix graphics/isosurface <fix_graphics_isosurface>`
    * :doc:`fix graphics/labels <fix_graphics_labels>`
@@ -960,6 +961,14 @@ and a transparent white triangle surface to represent those molecules.
 .. raw:: html
 
    <center>(Isosurface graphics visualization example. Click to see the full-size images)</center><br>
+
+Compute hbond/local
+^^^^^^^^^^^^^^^^^^^
+
+Compute :doc:`hbond/local <compute_hbond_local>` of the
+:ref:`EXTRA-COMPUTE package <pkg-extra-compute>` provides access to the
+list of hydrogen bonds as they are dynamically computed by the compute
+style.
 
 Fix reaxff/bonds
 ^^^^^^^^^^^^^^^^

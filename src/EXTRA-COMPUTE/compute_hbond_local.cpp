@@ -19,8 +19,10 @@
 #include "domain.h"
 #include "error.h"
 #include "force.h"
+#include "graphics.h"
 #include "group.h"
 #include "math_const.h"
+#include "math_extra.h"
 #include "memory.h"
 #include "molecule.h"
 #include "neigh_list.h"
@@ -46,18 +48,19 @@ enum { DONOR = 0, ACCEPTOR, HYDROGEN, DIST, ANGLE, HDIST, ENGPOT, FORCE, MAXVAL 
 /* ---------------------------------------------------------------------- */
 
 ComputeHBondLocal::ComputeHBondLocal(LAMMPS *lmp, int narg, char **arg) :
-    Compute(lmp, narg, arg), list(nullptr), alocal(nullptr)
+    Compute(lmp, narg, arg), list(nullptr), alocal(nullptr), imgobjs(nullptr), imgparms(nullptr)
 {
   if (atom->molecular == Atom::ATOMIC)
-    error->all(FLERR, "Cannot use compute hbond/local with non-molecular system");
+    error->all(FLERR, "Cannot (yet) use compute hbond/local with non-molecular system");
+  if (atom->map_style == Atom::MAP_NONE)
+    error->all(FLERR, "Compute hbond/local requires an atom map, see atom_modify");
 
   if (narg < 8) utils::missing_cmd_args(FLERR, "compute hbond/local", error);
 
-  local_flag = 1;
-  scalar_flag = 1;
+  local_flag = scalar_flag = image_flag = 1;
   extscalar = 1;
 
-  ncount = singleflag = hdistflag = 0;
+  ncount = singleflag = hdistflag = numobjs = 0;
   hydrogenmask = donormask = acceptormask = 0;
 
   distcutoff = utils::numeric(FLERR, arg[3], false, lmp);
@@ -72,10 +75,11 @@ ComputeHBondLocal::ComputeHBondLocal(LAMMPS *lmp, int narg, char **arg) :
   acceptormask = group->get_bitmask_by_id(FLERR, arg[6], "compute hbond/local acceptor");
   hydrogenmask = group->get_bitmask_by_id(FLERR, arg[7], "compute hbond/local hydrogen");
 
+  // fist three elements of a local vector row are always set
   vflag.resize(MAXVAL);
-  vflag[0] = DONOR;
-  vflag[1] = ACCEPTOR;
-  vflag[2] = HYDROGEN;
+  vflag[DONOR] = DONOR;
+  vflag[ACCEPTOR] = ACCEPTOR;
+  vflag[HYDROGEN] = HYDROGEN;
 
   int nvalues = 3;    // always store 3 atom IDs
   for (int iarg = 8; iarg < narg; iarg++) {
@@ -116,6 +120,8 @@ ComputeHBondLocal::ComputeHBondLocal(LAMMPS *lmp, int narg, char **arg) :
 ComputeHBondLocal::~ComputeHBondLocal()
 {
   memory->destroy(alocal);
+  memory->destroy(imgobjs);
+  memory->destroy(imgparms);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -136,7 +142,7 @@ void ComputeHBondLocal::init()
   const auto *const mask = atom->mask;
   const auto nlocal = atom->nlocal;
   for (int i = 0; i < nlocal; ++i) {
-    if (mask[i] & donormask) ncount += 2;
+    if ((mask[i] & groupbit) && (mask[i] & donormask)) ncount += 2;
   }
 
   if (ncount > nmax) reallocate(ncount);
@@ -176,6 +182,52 @@ void ComputeHBondLocal::compute_local()
   ncount = compute_hbonds(1);
 }
 
+/* ---------------------------------------------------------------------- */
+
+int ComputeHBondLocal::compute_image(int *&objs, double **&parms)
+{
+  if (invoked_image != update->ntimestep) {
+    invoked_image = update->ntimestep;
+    if (invoked_local != update->ntimestep) compute_local();
+
+    memory->destroy(imgobjs);
+    memory->destroy(imgparms);
+    memory->create(imgobjs, ncount, "hbond/local:imgobjs");
+    memory->create(imgparms, ncount, 10, "hbond/local:imgparms");
+
+    const auto *const *const x = atom->x;
+    const auto *const type = atom->type;
+    double mid[3], vec[3];
+    numobjs = 0;
+    for (int i = 0; i < ncount; ++i) {
+      int idonor = atom->map(alocal[i][DONOR]);    // always a local atom
+      int iacceptor = domain->closest_image(idonor, atom->map(alocal[i][ACCEPTOR]));
+      int ihydrogen = domain->closest_image(idonor, atom->map(alocal[i][HYDROGEN]));
+      // this should not happen, but better safe than sorry and create a crash
+      if ((idonor < 0) || (iacceptor < 0) || (ihydrogen < 0)) continue;
+
+      imgobjs[numobjs] = Graphics::ARROW;
+      imgparms[numobjs][0] = type[idonor];
+      imgparms[numobjs][8] = 0.0;
+      imgparms[numobjs][9] = 0.2;
+      MathExtra::add3(x[iacceptor], x[ihydrogen], vec);
+      MathExtra::scale3(0.5, vec, mid);
+      MathExtra::sub3(x[iacceptor], x[ihydrogen], vec);
+      imgparms[numobjs][7] = MathExtra::len3(vec);
+      MathExtra::norm3(vec);
+      imgparms[numobjs][1] = mid[0];
+      imgparms[numobjs][2] = mid[1];
+      imgparms[numobjs][3] = mid[2];
+      imgparms[numobjs][4] = vec[0];
+      imgparms[numobjs][5] = vec[1];
+      imgparms[numobjs][6] = vec[2];
+      ++numobjs;
+    }
+  }
+  objs = imgobjs;
+  parms = imgparms;
+  return numobjs;
+}
 /* ----------------------------------------------------------------------
    determine hydrogen bonds and compute hbond info on this proc
 ------------------------------------------------------------------------- */
@@ -205,7 +257,7 @@ int ComputeHBondLocal::compute_hbonds(int flag)
 
   for (int ii = 0; ii < inum; ++ii) {
     int i = ilist[ii];
-    if (mask[i] & donormask) {
+    if ((mask[i] & groupbit) && (mask[i] & donormask)) {
       int numbonds = 0;
       int imol = -1;
       int iatom = -1;
@@ -232,7 +284,7 @@ int ComputeHBondLocal::compute_hbonds(int flag)
           k = atom->map(onemols[imol]->bond_atom[iatom][kk] + tagprev);
         }
         k = domain->closest_image(i, k);
-        if ((k < 0) || !(mask[k] & hydrogenmask)) continue;        
+        if ((k < 0) || !((mask[k] & groupbit) && (mask[k] & hydrogenmask))) continue;
 
         const auto xtmp = x[i][0];
         const auto ytmp = x[i][1];
@@ -241,7 +293,7 @@ int ComputeHBondLocal::compute_hbonds(int flag)
         const auto jnum = numneigh[i];
         for (int jj = 0; jj < jnum; ++jj) {
           int j = NEIGHMASK & jlist[jj];
-          if (mask[j] & acceptormask) {
+          if ((mask[j] & groupbit) && (mask[j] & acceptormask)) {
             double dx1 = x[j][0] - xtmp;
             double dy1 = x[j][1] - ytmp;
             double dz1 = x[j][2] - ztmp;

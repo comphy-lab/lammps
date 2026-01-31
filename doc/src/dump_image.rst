@@ -643,7 +643,7 @@ type 1.  For the *const* type a constant color will be used that can be
 changed with a *dump_modify ccolor* or *dump_modify fcolor* command (see
 below).  By default the constant color will be "white".
 
-The cfflag1* and *cflag2* or *fflag1* and *fflag2* settings are
+The cflag1* and *cflag2* or *fflag1* and *fflag2* settings are
 numerical values which are used by *dump image* to adjust how the
 drawing of the objects communicated by the fix is done.  See the
 documentation of the individual computes and fixes for a description of

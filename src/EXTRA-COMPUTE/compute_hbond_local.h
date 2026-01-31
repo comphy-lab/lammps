@@ -31,6 +31,7 @@ class ComputeHBondLocal : public Compute {
   void init() override;
   void init_list(int, class NeighList *) override;
   double compute_scalar() override;
+  int compute_image(int *&, double **&) override;
   void compute_local() override;
   double memory_usage() override;
 
@@ -43,6 +44,12 @@ class ComputeHBondLocal : public Compute {
   std::vector<int> vflag;    // value flags
   double **alocal;           // local array storage
   class NeighList *list;     // full neighbor list
+
+  // arrays for dump image rendering
+
+  int numobjs;
+  int *imgobjs;
+  double **imgparms;
 
   int compute_hbonds(int);
   void reallocate(int);
