@@ -44,7 +44,7 @@ class Edge:                  # unique tri edges
     self.p2 = p2
     self.neigh = []
     self.which = []
-  
+
 class Tri:
   def __init__(self,point1,point2,point3):
     self.active = 1
@@ -52,7 +52,7 @@ class Tri:
     self.point2 = point2
     self.point3 = point3
     self.p1 = self.p2 = self.p3 = -1
-    
+
 # ----------
 # functions
 # ----------
@@ -136,12 +136,13 @@ def print_tris(txt,tris):
 # read a molecule file with lines
 
 def read_molfile_2d(filename):
-  filelines = open(filename,"r").readlines()[1:]
+   with open(filename,"r") as f:
+     filelines = f.readlines()[1:]
 
   nlines = 0
 
   # read header of molecule file
-  
+
   for i,oneline in enumerate(filelines):
     oneline = oneline.strip()
     if not oneline: continue
@@ -156,7 +157,7 @@ def read_molfile_2d(filename):
   section_word = 0
   count = 0
   lines = []
-  
+
   for oneline in filelines[i:]:
     oneline = oneline.strip()
     if not oneline: continue
@@ -175,18 +176,19 @@ def read_molfile_2d(filename):
 
   if count != nlines:
     error("Molecule file section is invalid for 2d lines")
-    
+
   return lines
 
 # read a molecule file with tris
 
 def read_molfile_3d(filename):
-  filelines = open(filename,"r").readlines()[1:]
+   with open(filename,"r") as f:
+     filelines = f.readlines()[1:]
 
   ntris = 0
 
   # read header of molecule file
-  
+
   for i,oneline in enumerate(filelines):
     oneline = oneline.strip()
     if not oneline: continue
@@ -201,7 +203,7 @@ def read_molfile_3d(filename):
   section_word = 0
   count = 0
   tris = []
-  
+
   for oneline in filelines[i:]:
     oneline = oneline.strip()
     if not oneline: continue
@@ -221,13 +223,14 @@ def read_molfile_3d(filename):
 
   if count != ntris:
     error("Molecule file section is invalid for 3d triangles")
-    
+
   return tris
-  
+
 # read an STL file with tris
 
 def read_stlfile(filename):
-  filelines = open(filename,"r").readlines()
+   with open(filename, "r") as f:
+     filelines = f.readlines()
 
   if not filelines[0].startswith("solid "):
     error("STL file first line is invalid")
@@ -252,7 +255,7 @@ def read_stlfile(filename):
               (float(v3[1]),float(v3[2]),float(v3[3])))
     tris.append(tri)
     iline += 7
-    
+
   return tris
 
 # create list of unique line end points
@@ -333,7 +336,7 @@ def edges_3d(points,tris):
   ehash = {}
   for iedge,edge in enumerate(edges):
     ehash[(edge.p1,edge.p2)] = iedge
-    
+
   return edges,ehash
 
 # successively refine lines which are too long
@@ -345,7 +348,7 @@ def refine_2d(points,lines):
   sizes = sorted(sizes,key=itemgetter(1),reverse=True)
 
   # loop until no line is too long
-  
+
   while sizes[0][1] > thresh:
     #print(sizes)
     iline = sizes[0][0]
@@ -357,7 +360,7 @@ def refine_2d(points,lines):
     point = Point(middle[0],middle[1],0.0)
     points.append(point)
     npoints = len(points)
-    
+
     # mark split line as inactive
     # add 2 new lines from split line
 
@@ -397,7 +400,7 @@ def refine_3d(points,edges,ehash,tris):
   for iedge,edge in enumerate(edges):
     sizes.append((iedge,distance(points[edge.p1].x,points[edge.p2].x)))
   sizes = sorted(sizes,key=itemgetter(1),reverse=True)
-  
+
   # loop until no tri edge is too long
 
   while sizes[0][1] > thresh:
@@ -418,17 +421,17 @@ def refine_3d(points,edges,ehash,tris):
     #   add new edge between pair of new tris
     #   reset neighs of non-split and non-new edge for each tri in pair
     # prev_nedges/ntris = number of edges and tris before adding new ones
-    
+
     neigh = edges[iedge].neigh
     which = edges[iedge].which
     nedges_prev = len(edges)
     ntris_prev = len(tris)
-    
+
     for itri,iwhich in zip(neigh,which):
       tris[itri].active = 0
 
       # NOTE:are not updating neighs in edge correctly
-      
+
       if iwhich == 0:
         newtri = Tri(tris[itri].point1,middle,tris[itri].point3)
         newtri.p1 = tris[itri].p1
@@ -442,7 +445,7 @@ def refine_3d(points,edges,ehash,tris):
         index = edges[jedge].neigh.index(itri)
         edges[jedge].neigh[index] = len(tris)-1
         edges[jedge].which[index] = 2
-        
+
         newtri = Tri(tris[itri].point2,middle,tris[itri].point3)
         newtri.p1 = tris[itri].p2
         newtri.p2 = npoints - 1
@@ -514,7 +517,7 @@ def refine_3d(points,edges,ehash,tris):
         newtri.p2 = npoints - 1
         newtri.p3 = tris[itri].p2
         tris.append(newtri)
-        
+
         if (tris[itri].p1,tris[itri].p2) in ehash:
           jedge = ehash[(tris[itri].p1,tris[itri].p2)]
         else: jedge = ehash[(tris[itri].p2,tris[itri].p1)]
@@ -548,7 +551,7 @@ def refine_3d(points,edges,ehash,tris):
     ehash[(newedge1.p1,newedge1.p2)] = len(edges)-1
     edges.append(newedge2)
     ehash[(newedge2.p1,newedge2.p2)] = len(edges)-1
-    
+
     # remove split edge from sorted list
     # add all new edges to sorted list in appropriate locations
 
@@ -585,7 +588,7 @@ def write_molfile_2d(outfile,lines,infile,thresh):
                                     line.point1[0],line.point1[1],
                                     line.point2[0],line.point2[1]),file=fp)
   fp.close()
-  
+
 # write a new molecule file with tris
 
 def write_molfile_3d(outfile,tris,infile,thresh):
@@ -638,7 +641,7 @@ def write_stlfile(outfile,tris,infile,thresh):
   print("endsolid STL version of %s with threshold %g" %
         (infile,thresh),file=fp)
   fp.close()
-  
+
 # ----------
 # main program
 # ----------
@@ -658,7 +661,7 @@ outsource = args[4]
 outfile = args[5]
 
 if dim != 2 and dim != 3: error("Involid dim argument")
-    
+
 # read input file
 # lines/tris = list of lines or tris
 
@@ -691,7 +694,7 @@ if dim == 3: edges,ehash = edges_3d(points,tris)
 
 if dim == 2: refine_2d(points,lines)
 if dim == 3: refine_3d(points,edges,ehash,tris)
-  
+
 # write output file
 
 if outsource == "mol" and dim == 2:
