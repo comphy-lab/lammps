@@ -316,24 +316,24 @@ int FixColvars::modify_param(int narg, char **arg)
     // A fix colvars argument was detected, return directly
     return return_code;
   }
+  for (int i = 0; i < narg; i++) {
+    // Substitute LAMMPS variables on all ranks to avoid mpi deadlock
+    char *new_arg = arg[i];
+    int ncopy = strlen(new_arg) + 1;
+    int nwork = ncopy;
+    auto *copy = (char *) memory->smalloc(ncopy * sizeof(char), "fix/colvar:copy");
+    auto *work = (char *) memory->smalloc(ncopy * sizeof(char), "fix/colvar:work");
+    strncpy(copy, new_arg, ncopy);
+    lmp->input->substitute(copy,work,ncopy,nwork,0);
+    memory->sfree(work);
+    new_arg = copy;
+    script_args[i+1] = reinterpret_cast<unsigned char *>(new_arg);
+  }
   // Any unknown arguments will go through the Colvars scripting interface
   if (comm->me == 0) {
     int error_code = COLVARSCRIPT_OK;
     colvarscript *script = proxy->script;
     script->set_cmdline_main_cmd("fix_modify " + std::string(id));
-    for (int i = 0; i < narg; i++) {
-      // Substitute LAMMPS variables
-      char *new_arg = arg[i];
-      int ncopy = strlen(new_arg) + 1;
-      int nwork = ncopy;
-      auto *copy = (char *) memory->smalloc(ncopy * sizeof(char), "fix/colvar:copy");
-      auto *work = (char *) memory->smalloc(ncopy * sizeof(char), "fix/colvar:work");
-      strncpy(copy, new_arg, ncopy);
-      lmp->input->substitute(copy,work,ncopy,nwork,0);
-      memory->sfree(work);
-      new_arg = copy;
-      script_args[i+1] = reinterpret_cast<unsigned char *>(new_arg);
-    }
     // Run the command through Colvars
     error_code |= script->run(narg+1, script_args);
     std::string const result = proxy->get_error_msgs() + script->str_result();
