@@ -234,8 +234,8 @@ int FixColvars::setmask()
 
 void FixColvars::post_constructor()
 {
-  if (comm->me == 0) proxy->parse_module_config();
-  update_colvars();
+  //if (comm->me == 0) proxy->parse_module_config();
+  //update_colvars();
 }
 
 void FixColvars::init()
@@ -358,11 +358,12 @@ int FixColvars::modify_param(int narg, char **arg)
     error_code |= script->run(narg+1, script_args);
     std::string const result = proxy->get_error_msgs() + script->str_result();
     if (result.size()) utils::logmesg(lmp, result);
-    const auto& variables = *proxy->colvars->variables();
+    update_colvars();
     // free allocated memory
     for (int i = 0; i < narg; i++) memory->sfree(script_args[i+1]);
     return (error_code == COLVARSCRIPT_OK) ? narg : 0;
   } else {
+    update_colvars();
     // Return without error, don't block Fix::modify_params()
     return narg;
   }
@@ -507,6 +508,7 @@ void FixColvars::setup(int vflag)
     post_force_respa(vflag,nlevels_respa-1,0);
     ((Respa *) update->integrate)->copy_f_flevel(nlevels_respa-1);
   }
+  update_colvars();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -784,10 +786,14 @@ double FixColvars::compute_scalar()
 void FixColvars::update_colvars()
 {
   if (comm->me == 0) {
+    proxy->parse_module_config();
     const auto& variables = *proxy->colvars->variables();
     size_array_rows = variables.size();
   }
   MPI_Bcast(&size_array_rows, 1, MPI_INT, 0, world);
+  
+  utils::logmesg(lmp, "*** [rank {}] update_colvars() size_array_rows {} size_array_cols {}\n", comm->me, size_array_rows, size_array_cols);
+    
   output->thermo->colname_auto();
 }
 
