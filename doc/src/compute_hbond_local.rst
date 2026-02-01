@@ -48,8 +48,8 @@ To be counted as a hydrogen bond the following conditions have to be met
 - the donor atom has to be in the group *dgroup-ID*
 - the acceptor atom has to be in the group *agroup-ID*
 - the hydrogen atom has to be in the group *hgroup-ID*
-- the hydrogen atom has to be connect to the donor with a bond
 - all three atoms have to be in the compute group
+- the hydrogen atom has to be connected to the donor with a bond
 - the donor - acceptor distance has to be less than *rcut*
 - the hydrogen - donor - acceptor angle has to be less than *acut*
 
@@ -151,15 +151,43 @@ will be in force :doc:`units <units>`.  In case a :doc:`kspace solver
 <kspace_style>`, the force and energy values **only** contain the
 real-space contributions.
 
+-----------
+
+Dump image info
+"""""""""""""""
+
+Compute *hbond/local* can be used with the *compute* keyword of
+:doc:`dump image <dump_image>`.  The compute will add arrows based on
+the detected hydrogen bonds in the compute group to *dump image* so that
+they are included in the rendered image.
+
+The color of the arrows is by default that of the hydrogen bond donor
+atom when using color styles "type" or "element".  With color style
+"const" the default value of "white" can be changed using
+:doc:`dump_modify ccolor <dump_image>`.  The transparency is by default
+fully opaque and can be changed with *dump\_modify ctrans*\ .
+
+The *fflag1* setting allows to adjust the length of the arrow.  This
+allows for example to shrink the arrows so that the tip would otherwise
+be (partially) obscured by the sphere representing the hydrogen bond
+acceptor atom.  Thus it is recommended to use a negative value of at
+least the atom diameter.
+
+The *fflag2* setting allows you to adjust the radius of the rendered
+arrows.  Since the radius of the arrows is not known by the compute and
+thus set to 0, it is recommended to set this flag to a value > 0.
+
+-----------
+
 Restrictions
 """"""""""""
 
-This fix is part of the EXTRA-COMPUTE package.  It is only enabled if
-LAMMPS was built with that package.  See the :doc:`Build package
+This compute is part of the EXTRA-COMPUTE package.  It is only enabled
+if LAMMPS was built with that package.  See the :doc:`Build package
 <Build_package>` page for more info.
 
-This fix requires that the hydrogen atom of a hydrogen bond is bound to
-the donor atom with an explicit bond.  It cannot be used with pair
+This compute requires that the hydrogen atom of a hydrogen bond is bound
+to the donor atom with an explicit bond.  It cannot be used with pair
 styles like :doc:`reaxff <pair_reaxff>` where bonds are implicit.
 
 To compute potential energy and force of the hydrogen bonds the

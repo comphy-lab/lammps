@@ -154,7 +154,7 @@ The transparency is by default fully opaque and can be changed with
 *dump\_modify ftrans*\ .
 
 The *fflag1* setting of *dump image fix* allows to adjust the length of
-the arrow.  Since that value is already set or computed by the fix,
+the arrows.  Since that value is already set or computed by the fix,
 *fflag1* should be set to 0.0.
 
 The *fflag2* setting allows you to adjust the radius of the rendered
@@ -162,7 +162,7 @@ arrows.  Since the radius of the arrows is an input parameter for this
 fix, it is recommended to set this flag to 0.0.
 
 Restart, fix_modify, output, run start/stop, minimize info
-==========================================================
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 No information about this fix is written to :doc:`binary restart files
 <restart>`.
