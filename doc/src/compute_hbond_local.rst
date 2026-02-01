@@ -8,7 +8,7 @@ Syntax
 
 .. code-block:: LAMMPS
 
-   compute ID group-ID bond/hlocal rcut acut dgroup-ID agroup-ID hgroup-ID value1 value2 ...
+   compute ID group-ID hbond/local rcut acut dgroup-ID agroup-ID hgroup-ID value1 value2 ...
 
 * ID, group-ID are documented in :doc:`compute <compute>` command
 * hbond/local = style name of this compute command
@@ -41,8 +41,8 @@ Description
 
 .. versionadded:: TBD
 
-Define a computation that the determines the number of hydrogen bonds
-and computes some related properties according to the provided parameters.
+Define a computation that determines the number of hydrogen bonds and
+computes some related properties according to the provided parameters.
 To be counted as a hydrogen bond the following conditions have to be met
 
 - the donor atom has to be in the group *dgroup-ID*
@@ -134,7 +134,7 @@ the hydrogen atom group, the inner loop is over all non-bonded neighbors
 of the potential donor atoms that also match the compute group and the
 acceptor atom group.  For any atom triple that matches all conditions,
 the donor-acceptor distance is computed and the hydrogen-donor-acceptor
-angle and it those are smaller than the corresponding cutoff values from
+angle and if both are smaller than the corresponding cutoff values from
 the command line, the hydrogen bond is counted and its information
 stored.  If requested, additional properties are computed and stored in
 the local array.  Both atoms of each non-bonded pair are tried for being
@@ -147,9 +147,9 @@ timestep to the next.
 The output for *dist* and *hdist* will be in distance :doc:`units
 <units>`.  The output for *angle* will be in degrees.  The output for
 *engpot* will be in energy :doc:`units <units>`.  The output for *force*
-will be in force :doc:`units <units>`.  In case a :doc:`kspace solver
-<kspace_style>`, the force and energy values **only** contain the
-real-space contributions.
+will be in force :doc:`units <units>`.  If a :doc:`kspace solver
+<kspace_style>` is used, the force and energy values **only** contain
+the real-space contributions.
 
 -----------
 
@@ -167,13 +167,13 @@ atom when using color styles "type" or "element".  With color style
 :doc:`dump_modify ccolor <dump_image>`.  The transparency is by default
 fully opaque and can be changed with *dump\_modify ctrans*\ .
 
-The *fflag1* setting allows to adjust the length of the arrow.  This
+The *cflag1* setting allows to adjust the length of the arrow.  This
 allows for example to shrink the arrows so that the tip would otherwise
 be (partially) obscured by the sphere representing the hydrogen bond
 acceptor atom.  Thus it is recommended to use a negative value of at
 least the atom diameter.
 
-The *fflag2* setting allows you to adjust the radius of the rendered
+The *cflag2* setting allows you to adjust the radius of the rendered
 arrows.  Since the radius of the arrows is not known by the compute and
 thus set to 0, it is recommended to set this flag to a value > 0.
 

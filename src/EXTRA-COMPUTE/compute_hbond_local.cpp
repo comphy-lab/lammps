@@ -198,11 +198,10 @@ int ComputeHBondLocal::compute_image(int *&objs, double **&parms)
     double mid[3], vec[3];
     numobjs = 0;
     for (int i = 0; i < ncount; ++i) {
-      int idonor = atom->map(alocal[i][DONOR]);    // always a local atom
+      int idonor = atom->map(alocal[i][DONOR]);
       int iacceptor = domain->closest_image(idonor, atom->map(alocal[i][ACCEPTOR]));
       int ihydrogen = domain->closest_image(idonor, atom->map(alocal[i][HYDROGEN]));
-      // this should not happen, but better safe than sorry and create a crash
-      if ((idonor < 0) || (iacceptor < 0) || (ihydrogen < 0)) continue;
+      if ((idonor < 0) || (iacceptor < 0) || (ihydrogen < 0)) continue;    // paranoia
 
       imgobjs[numobjs] = Graphics::ARROW;
       imgparms[numobjs][0] = type[idonor];
@@ -289,7 +288,7 @@ int ComputeHBondLocal::compute_hbonds(int flag)
               double r2 = sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
               if ((r1 < EPSILON) || (r2 < EPSILON)) continue;
 
-              double c = std::clamp((dx1 * dx2 + dy1 * dy2 + dz1 * dz2) / r1 * r2, -1.0, 1.0);
+              double c = std::clamp((dx1 * dx2 + dy1 * dy2 + dz1 * dz2) / (r1 * r2), -1.0, 1.0);
               double theta = acos(c);
               if (theta < anglecutoff) {
                 if (flag) {
@@ -370,6 +369,8 @@ void ComputeHBondLocal::reallocate(int n)
 
 double ComputeHBondLocal::memory_usage()
 {
-  double bytes = (double) nmax * vflag.size() * sizeof(double);
+  double bytes = (double) nmax * (sizeof(double *) + vflag.size() * sizeof(double));    // alocal
+  bytes += (double) nmax * sizeof(int);                                                 // imgobjs
+  bytes += (double) nmax * (sizeof(double *) + 10 * sizeof(double));                    // imgparms
   return bytes;
 }

@@ -1610,7 +1610,6 @@ void DumpImage::create_image()
 
       // set color and transparency
       double opacity = iobj.opacity;
-      if (objvec[i] == Graphics::ARROW)
       if (iobj.colorstyle == TYPE) {
         itype = static_cast<int>(objarray[i][0]) % ntypes;
         if (!itype) itype = ntypes;

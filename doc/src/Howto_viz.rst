@@ -756,7 +756,7 @@ Below is an example input deck for visualizing *cone* and *cylinder* regions:
 
    run 500
 
--------------
+-----------------------
 
 Visualizing graphics provided by compute or fix commands
 --------------------------------------------------------
@@ -828,7 +828,7 @@ visualized with the *region* keyword of :doc:`dump image <dump_image>`
 
 Below are discussions about some aspects of specific fix commands and some input examples.
 
--------------
+-----------------------
 
 Fix graphics/objects
 ^^^^^^^^^^^^^^^^^^^^
