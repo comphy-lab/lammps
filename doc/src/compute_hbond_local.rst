@@ -75,17 +75,17 @@ Output info
 """""""""""
 
 This compute calculates a global scalar (the number of detected hydrogen
-bonds summed over all MPI processes) and a local array containing the
-atom-ID of the hydrogen bond donor atom, the atom-ID of the hydrogen
-bond acceptor atom, the atom-ID of the hydrogen bond hydrogen atom
-followed by the properties in the order they were selected in the
-compute command line.  To avoid double counting, hydrogen bonds are
-counted and their information stored on the MPI process where the
-hydrogen bond donor atom is a local atom; hydrogen and acceptor atoms
-may be ghost atoms.  The number of rows in the local array is the number
-of hydrogen bonds; the number of columns is three plus the number of
-selected value to compute and store.  The array can be accessed by any
-command that uses local data.
+bonds summed over all MPI processes) and a local array containing in its
+columns in this order: the atom-ID of the hydrogen bond hydrogen atom,
+the atom-ID of the hydrogen bond donor atom, the atom-ID of the hydrogen
+bond acceptor atom, followed by the properties in the order they were
+selected in the compute command line.  To avoid double counting,
+hydrogen bonds are counted and their information stored on the MPI
+process where the hydrogen bond donor atom is a local atom; hydrogen and
+acceptor atoms may be ghost atoms.  The number of rows in the local
+array is the number of hydrogen bonds; the number of columns is three
+plus the number of selected value to compute and store.  The array can
+be accessed by any command that uses local data.
 
 As an example, these commands can be added to the
 ``examples/rdf-adf/in.spce`` example input file to compute and output
@@ -99,7 +99,7 @@ the hydrogen bond information of the bulk water system in multiple ways.
 
    compute   hb all hbond/local 3.3 30.0 ogroup ogroup hgroup dist angle hdist engpot force
 
-   # output all hydrogen bonds. each line contains: donor-ID acceptor-ID hydrogen-ID r_DA theta_HDA rHA pe fpair
+   # output all hydrogen bonds. each line contains: hydrogen-ID donor-ID acceptor-ID r_DA theta_HDA r_HA pe fpair
    dump      hb all local 100 hbonds.dump  c_hb[*]
 
    # for the number of hydrogen bonds per molecule we must multiply by 2
@@ -108,8 +108,12 @@ the hydrogen bond information of the bulk water system in multiple ways.
 
    # get average values for distances and angles for the current step
    compute   avg all reduce ave c_hb[4] c_hb[5] c_hb[6] inputs local
-   # get running average average of those values to data analysis
+   # get running average average of those values for data analysis
    fix       ave all ave/time 100 1 100 v_nhb_mol c_avg[1] c_avg[2] c_avg[3] ave running
+   # get histogram of O-O distance
+   fix       dhist all ave/histo 100 100 10000 2.4  3.5 30 c_hb[4] kind local mode vector file hbond_histo_dist.dat
+   # get histogram of angle
+   fix       ahist all ave/histo 100 100 10000 0.0 30.0 30 c_hb[5] kind local mode vector file hbond_histo_angle.dat
 
    # output computed global data as thermo output first for step then averaged
    thermo_style   custom step temp press v_nhb_mol c_avg[*] f_avg[*]

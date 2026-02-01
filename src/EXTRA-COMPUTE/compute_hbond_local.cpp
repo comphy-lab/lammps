@@ -41,7 +41,7 @@ using MathConst::RAD2DEG;
 static constexpr int DELTA = 10000;
 static constexpr double EPSILON = 1.0e-10;
 
-enum { DONOR = 0, ACCEPTOR, HYDROGEN, DIST, ANGLE, HDIST, ENGPOT, FORCE, MAXVAL };
+enum { HYDROGEN = 0, DONOR, ACCEPTOR, DIST, ANGLE, HDIST, ENGPOT, FORCE, MAXVAL };
 
 /* ---------------------------------------------------------------------- */
 
@@ -75,9 +75,9 @@ ComputeHBondLocal::ComputeHBondLocal(LAMMPS *lmp, int narg, char **arg) :
 
   // fist three elements of a local vector row are always set
   vflag.resize(MAXVAL);
+  vflag[HYDROGEN] = HYDROGEN;
   vflag[DONOR] = DONOR;
   vflag[ACCEPTOR] = ACCEPTOR;
-  vflag[HYDROGEN] = HYDROGEN;
 
   int nvalues = 3;    // always store 3 atom IDs
   for (int iarg = 8; iarg < narg; iarg++) {
