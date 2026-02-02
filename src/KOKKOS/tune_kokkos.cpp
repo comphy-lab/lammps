@@ -344,6 +344,18 @@ int TuneKokkos::get_current_team_size()
 }
 
 /* ----------------------------------------------------------------------
+   get the current vector size based on the combination index
+------------------------------------------------------------------------- */
+
+int TuneKokkos::get_current_vector_size()
+{
+  int num_team_sizes = team_sizes.size();
+  int current_vector_size = team_sizes[combination_idx / num_team_sizes];
+  return current_vector_size;
+}
+
+
+/* ----------------------------------------------------------------------
    get the current params based on the combination index
    NOTE: using auto& with an eye toward supporting different types of params
    in the future, not restricted to int's

@@ -32,6 +32,7 @@
 #include "update.h"
 #include "atom_masks.h"
 #include "kokkos.h"
+#include "tune_kokkos.h"
 
 #include <cmath>
 
@@ -55,6 +56,8 @@ PairDPDKokkos<DeviceType>::PairDPDKokkos(class LAMMPS *_lmp) :
 
   datamask_read = EMPTY_MASK;
   datamask_modify = EMPTY_MASK;
+
+  tuner = nullptr;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -71,6 +74,8 @@ PairDPDKokkos<DeviceType>::~PairDPDKokkos() {
   memoryKK->destroy_kokkos(k_vatom,vatom);
 
   memoryKK->destroy_kokkos(k_cutsq,cutsq);
+
+  if (tuner) delete tuner;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -98,6 +103,11 @@ void PairDPDKokkos<DeviceType>::init_style()
   request->set_kokkos_host(std::is_same_v<DeviceType,LMPHostType> &&
                            !std::is_same_v<DeviceType,LMPDeviceType>);
   request->set_kokkos_device(std::is_same_v<DeviceType,LMPDeviceType>);
+
+  if (lmp->kokkos->autotuning > 0 && !tuner) {
+    tuner = new TuneKokkos(lmp, TuneKokkos::GENERIC, lmp->kokkos->autotuning,
+        2, "pair-dpd");
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -163,9 +173,27 @@ void PairDPDKokkos<DeviceType>::compute(int eflagin, int vflagin)
   int inum = list->inum;
   EV_FLOAT ev;
   copymode = 1;
+
+  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
+
+  int _team_size = 0;
+  int _vector_size = 0;
+  if (tuner) {
+     _team_size = tuner->get_current_team_size();
+     _vector_size = tuner->get_current_vector_size();
+  }
+
   if (neighflag == HALF) {
     if (evflag) Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagDPDKokkos<HALF,1> >(0,inum),*this,ev);
-    else Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagDPDKokkos<HALF,0> >(0,inum),*this);
+    else {
+      if (tuner) {
+        typename Kokkos::TeamPolicy<DeviceType, TagDPDKokkos<HALF,0> > policy_force(inum,
+          _team_size, _vector_size);
+        Kokkos::parallel_for("force",policy_force,*this);
+      }
+      else
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagDPDKokkos<HALF,0> >(0,inum),*this);
+    }
   } else if (neighflag == HALFTHREAD) {
     if (evflag) Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagDPDKokkos<HALFTHREAD,1> >(0,inum),*this,ev);
     else Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagDPDKokkos<HALFTHREAD,0> >(0,inum),*this);
@@ -307,6 +335,118 @@ void PairDPDKokkos<DeviceType>::operator() (TagDPDKokkos<NEIGHFLAG,EVFLAG>, cons
   a_f(i,0) += fx;
   a_f(i,1) += fy;
   a_f(i,2) += fz;
+  rand_pool.free_state(rand_gen);
+}
+
+template<class DeviceType>
+template<int NEIGHFLAG, int EVFLAG>
+KOKKOS_INLINE_FUNCTION
+void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
+    const typename Kokkos::TeamPolicy<DeviceType>::member_type &team) const 
+{
+  EV_FLOAT ev;
+  this->template operator()<NEIGHFLAG,EVFLAG>(TagDPDKokkos<NEIGHFLAG,EVFLAG>(), team, ev);
+}
+
+template<class DeviceType>
+template<int NEIGHFLAG, int EVFLAG>
+KOKKOS_INLINE_FUNCTION
+void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
+    const typename Kokkos::TeamPolicy<DeviceType>::member_type &team, EV_FLOAT &ev) const 
+{
+  const int ii = team.league_rank(); // Get the team index
+  // Your existing per-atom logic here
+  // Or use Kokkos::parallel_for(Kokkos::TeamThreadRange(team, ...)) for nested parallelism
+
+  // The f array is duplicated for OpenMP, atomic for GPU, and neither for Serial
+
+  auto v_f = ScatterViewHelper<NeedDup_v<NEIGHFLAG,DeviceType>,decltype(dup_f),decltype(ndup_f)>::get(dup_f,ndup_f);
+  auto a_f = v_f.template access<AtomicDup_v<NEIGHFLAG,DeviceType>>();
+
+  int i,j,jnum,itype,jtype;
+  KK_FLOAT xtmp,ytmp,ztmp,delx,dely,delz,fpair;
+  KK_FLOAT vxtmp,vytmp,vztmp,delvx,delvy,delvz;
+  KK_FLOAT rsq,r,rinv,dot,wd,randnum,factor_dpd,factor_sqrt;
+  KK_FLOAT evdwl = 0;
+  i = d_ilist[ii];
+  xtmp = x(i,0);
+  ytmp = x(i,1);
+  ztmp = x(i,2);
+  vxtmp = v(i,0);
+  vytmp = v(i,1);
+  vztmp = v(i,2);
+  itype = type(i);
+  jnum = d_numneigh[i];
+  rand_type rand_gen = rand_pool.get_state();
+
+  KK_FLOAT fxtmp = 0.0;
+  KK_FLOAT fytmp = 0.0;
+  KK_FLOAT fztmp = 0.0;
+
+  Kokkos::parallel_reduce(Kokkos::TeamThreadRange(team, jnum), 
+    [&] (const int &jj, KK_FLOAT &fx, KK_FLOAT &fy, KK_FLOAT &fz) {
+  
+    j = d_neighbors(i,jj);
+    factor_dpd = special_lj[sbmask(j)];
+    factor_sqrt = special_rf[sbmask(j)];
+    j &= NEIGHMASK;
+
+    delx = xtmp - x(j,0);
+    dely = ytmp - x(j,1);
+    delz = ztmp - x(j,2);
+    rsq = delx*delx + dely*dely + delz*delz;
+    jtype = type(j);
+    if (rsq < d_cutsq(itype,jtype)) {
+      r = sqrt(rsq);
+      if (r < EPSILON) return;     // r can be 0.0 in DPD systems
+      rinv = 1.0/r;
+      delvx = vxtmp - v(j,0);
+      delvy = vytmp - v(j,1);
+      delvz = vztmp - v(j,2);
+      dot = delx*delvx + dely*delvy + delz*delvz;
+
+      wd = 1.0 - r/params(itype,jtype).cut;
+
+      randnum = rand_gen.normal();
+
+      // conservative force
+      fpair = params(itype,jtype).a0*wd;
+
+      // drag force - parallel
+      fpair -= params(itype,jtype).gamma*wd*wd*dot*rinv;
+      fpair *= factor_dpd;
+
+      // random force - parallel
+      fpair += factor_sqrt*params(itype,jtype).sigma*wd*randnum*dtinvsqrt;
+      fpair *= rinv;
+
+      fx += fpair*delx;
+      fy += fpair*dely;
+      fz += fpair*delz;
+
+      a_f(j,0) -= fpair*delx;
+      a_f(j,1) -= fpair*dely;
+      a_f(j,2) -= fpair*delz;
+
+      if (EVFLAG && eflag_global) {
+        // unshifted eng of conservative term:
+        // evdwl = -a0[itype][jtype]*r * (1.0-0.5*r/cut[itype][jtype]);
+        // eng shifted to 0.0 at cutoff
+        evdwl = 0.5*params(itype,jtype).a0*params(itype,jtype).cut* wd*wd;
+        evdwl *= factor_dpd;
+        ev.evdwl += evdwl;
+      }
+      if (EVFLAG && (eflag_atom || vflag_either))
+        this->template ev_tally<NEIGHFLAG>(ev,i,j,evdwl,fpair,delx,dely,delz);
+    }
+  }, fxtmp, fytmp, fztmp);
+
+  Kokkos::single(Kokkos::PerTeam(team), [&] () {
+    a_f(i,0) += fxtmp;
+    a_f(i,1) += fytmp;
+    a_f(i,2) += fztmp;
+  });
+
   rand_pool.free_state(rand_gen);
 }
 

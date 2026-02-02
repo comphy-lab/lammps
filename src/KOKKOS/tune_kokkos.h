@@ -63,6 +63,7 @@ class TuneKokkos : protected Pointers {
 
   double get_timing_info();                   // get the elapsed time from the last call
   int get_current_team_size();                // get the team size for the current combination index
+  int get_current_vector_size();              // get the vector size for the current combination index
   void get_current_params(int, auto&, auto&); // get the team size and vector size for a given combination index
   void set_param_values(int);                 // set the KOKKOS kernel parameters based on the combination index
   int get_optimal_combination_idx();          // find the combination index with the best performance
