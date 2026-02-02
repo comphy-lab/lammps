@@ -67,6 +67,8 @@ class FixSurfaceGlobal : public FixSurface {
   int tvar;
   char *tstr;
 
+  std::string id_fix;
+
   // per-surf properties
 
   int maxsurftype;

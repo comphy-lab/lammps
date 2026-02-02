@@ -500,7 +500,7 @@ FixSurfaceGlobal::~FixSurfaceGlobal()
   delete ns;
 
   if (use_history)
-    modify->delete_fix("NEIGH_HISTORY_SURFACE_GLOBAL_" + std::to_string(instance_me));
+    modify->delete_fix(id_fix);
 
   memory->destroy(imflag);
   memory->destroy(imdata);
@@ -514,7 +514,8 @@ FixSurfaceGlobal::~FixSurfaceGlobal()
 void FixSurfaceGlobal::post_constructor()
 {
   if (use_history) {
-    auto cmd = fmt::format("NEIGH_HISTORY_SURFACE_GLOBAL_" + std::to_string(instance_me) + " all NEIGH_HISTORY {} onesided surface/global", size_history);
+    id_fix = std::string("NEIGH_HISTORY_SURFACE_GLOBAL_") + id;
+    auto cmd = fmt::format(id_fix  + " all NEIGH_HISTORY {} onesided surface/global", size_history);
     fix_history = dynamic_cast<FixNeighHistory *>(modify->add_fix(cmd));
   } else
     fix_history = nullptr;
