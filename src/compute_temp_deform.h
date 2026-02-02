@@ -41,6 +41,7 @@ class ComputeTempDeform : public Compute {
   void restore_bias_thr(int, double *, double *) override;
   void restore_bias_all() override;
   double memory_usage() override;
+  int modify_param(int, char **) override;
 
   void remove_deform_bias(int, double *);
   void remove_deform_bias_thr(int, double *, double *);

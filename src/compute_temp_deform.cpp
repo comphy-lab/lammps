@@ -415,3 +415,25 @@ double ComputeTempDeform::memory_usage()
   double bytes = 3 * maxbias * sizeof(double);
   return bytes;
 }
+
+/* ---------------------------------------------------------------------- */
+
+int ComputeTempDeform::modify_param(int narg, char **arg) {
+  if (strcmp(arg[0],"temp") == 0) {
+    if (narg < 2) error->all(FLERR,"Illegal compute_modify command");
+    if (tcomputeflag) modify->delete_compute(id_temp);
+    delete [] id_temp;
+    tcomputeflag = 0;
+    id_temp = utils::strdup(arg[1]);
+    return 2;
+  } else if (strcmp(arg[0],"extra/dof") == 0) {
+    error->warning(FLERR, "compute_modify extra/dof ignored by compute {}. "
+                   "To adjust extra/dof, use compute_modify on the internal temperature compute \"{}\".",
+                   style, id_temp);
+  } else if (strcmp(arg[0],"dynamic/dof") == 0) {
+    error->warning(FLERR, "compute_modify dynamic/dof ignored by compute {}. "
+                   "To adjust dynamic/dof, use compute_modify on the internal temperature compute \"{}\".",
+                   style, id_temp);
+  }
+  return 0;
+}
