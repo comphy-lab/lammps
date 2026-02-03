@@ -428,12 +428,12 @@ int ComputeTempDeform::modify_param(int narg, char **arg) {
     id_temp = utils::strdup(arg[1]);
     return 2;
   } else if (strcmp(arg[0],"extra/dof") == 0) {
-    error->warning(FLERR, "compute_modify extra/dof ignored by compute {}. "
-                   "To adjust extra/dof, use compute_modify on the internal temperature compute \"{}\".",
-                   style, id_temp);
+    // Can't set extra/dof of internal temp compute directly,
+    // so pass through the modify call
+    temperature->modify_params(MIN(narg, 2), arg);
   } else if (strcmp(arg[0],"dynamic/dof") == 0) {
-    // Can't set dynamic_user flag directly, so pass through the modify call
-
+    // Can't set dynamic_user flag of internal temp compute directly,
+    // so pass through the modify call
     temperature->modify_params(MIN(narg, 2), arg);
   }
   return 0;
