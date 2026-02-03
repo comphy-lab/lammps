@@ -324,7 +324,7 @@ void FixSurfaceLocal::post_constructor()
           fprintf(screen,"Reading STL file for triangle particles ...\n");
       }
 
-      // read in lines/tris from appropriate sourrce
+      // read in lines/tris from appropriate source
       // each proc builds global data structs of all points/lines/tris
 
       if (mode == MOLTEMPLATE)
@@ -2690,6 +2690,9 @@ void FixSurfaceLocal::assign2d()
         coord[1] >= sublo[1] && coord[1] < subhi[1] &&
         coord[2] >= sublo[2] && coord[2] < subhi[2]) {
 
+      if (lines[i].type < 1 || lines[i].type > atom->ntypes)
+        error->all(FLERR, "Invalid line type {} in fix surface/local", lines[i].type);
+
       // create a default particle of correct style
 
       avec->create_atom(lines[i].type,xmid);
@@ -2922,6 +2925,9 @@ void FixSurfaceLocal::assign3d()
     if (coord[0] >= sublo[0] && coord[0] < subhi[0] &&
         coord[1] >= sublo[1] && coord[1] < subhi[1] &&
         coord[2] >= sublo[2] && coord[2] < subhi[2]) {
+
+      if (tris[i].type < 1 || tris[i].type > atom->ntypes)
+        error->all(FLERR, "Invalid triangle type {} in fix surface/local", tris[i].type);
 
       // create a default particle of correct style
 
@@ -3182,6 +3188,7 @@ void FixSurfaceLocal::connectivity2d_complete()
     dy = 0.5*length*sin(theta);
 
     iconnect = atom2connect[i];
+    // This fails at restart... Need to deal with existing atoms
 
     endpts[iconnect][0][0] = x[i][0] - dx;
     endpts[iconnect][0][1] = x[i][1] - dy;
