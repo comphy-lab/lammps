@@ -46,6 +46,8 @@ Examples
 Description
 """""""""""
 
+.. versionadded:: TBD
+
 The potential energy :math:`E_i` of an atom :math:`i` according to an
 adaptive-precision potential is given by :ref:`(Immel2025) <Immel2025_8>`
 

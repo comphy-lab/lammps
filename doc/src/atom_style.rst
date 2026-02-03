@@ -121,7 +121,7 @@ the Additional Information section below.
    * - *apip thermostat*
      - *atomic* + apip_lambda, apip_lambda_required, apip_lambda_input, apip_lambda_const, apip_lambda_input_ta, apip_e_fast, apip_e_precise, apip_f_const_lambda, apip_f_dyn_lambda
      - :ref:`APIP <PKG-APIP>`
-     - adaptive-precision interatomic potentials(APIP), see :doc:`APIP howto <Howto_apip>`
+     - adaptive-precision interatomic potentials(APIP) with a :doc:`lambda thermostat <fix_lambda_thermostat_apip>`, see :doc:`APIP howto <Howto_apip>`
    * - *apip conservative*
      - *atomic* + apip_lambda, apip_lambda_required, apip_la_inp, apip_la_avg, apip_la_norm, apip_e_fast, apip_e_precise
      - :ref:`APIP <PKG-APIP>`
@@ -277,6 +277,14 @@ with both flavors of mass.
 
 Additional information about specific atom styles
 """""""""""""""""""""""""""""""""""""""""""""""""
+
+.. versionchanged:: TBD
+
+For the *apip* style, one can choose between the style for
+conservative potentials and the style for the
+:doc:`lambda thermostat <fix_lambda_thermostat_apip>`.
+The :doc:`Howto apip <Howto_apip>` describes the differences between
+both use cases.
 
 For the *body* style, the particles are arbitrary bodies with internal
 attributes defined by the "style" of the bodies, which is specified by
