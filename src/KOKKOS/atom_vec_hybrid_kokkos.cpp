@@ -83,7 +83,7 @@ void AtomVecHybridKokkos::sort_kokkos(Kokkos::BinSort<KeyViewType, BinOp> &Sorte
 /* ---------------------------------------------------------------------- */
 
 void AtomVecHybridKokkos::pack_comm_bonus_kokkos(const int &n, const DAT::tdual_int_1d &list,
-                                                 const DAT::tdual_double_2d_lr &buf, bool vel_flag)
+                                                 const DAT::tdual_double_2d_lr &buf, int vel_flag)
 {
   // TODO: set up an stylesKK_bonus for only bonus atom_style functions?
   for (int k = 0; k < nstyles; k++)
@@ -93,7 +93,7 @@ void AtomVecHybridKokkos::pack_comm_bonus_kokkos(const int &n, const DAT::tdual_
 /* ---------------------------------------------------------------------- */
 
 void AtomVecHybridKokkos::unpack_comm_bonus_kokkos(const int &n, const int &nfirst,
-                                                   const DAT::tdual_double_2d_lr &buf, bool vel_flag)
+                                                   const DAT::tdual_double_2d_lr &buf, int vel_flag)
 {
   for (int k = 0; k < nstyles; k++)
     stylesKK[k]->unpack_comm_bonus_kokkos(n,nfirst,buf,vel_flag);
@@ -123,20 +123,20 @@ void AtomVecHybridKokkos::pack_comm_self_fused_bonus_kokkos(const int &n,
 
 void AtomVecHybridKokkos::pack_border_bonus_kokkos(int n, DAT::tdual_int_1d k_sendlist,
                                                    DAT::tdual_double_2d_lr &buf,
-                                                   ExecutionSpace space)
+                                                   ExecutionSpace space, int vel_flag)
 {
   for (int k = 0; k < nstyles; k++)
-    stylesKK[k]->pack_border_bonus_kokkos(n,k_sendlist,buf,space);
+    stylesKK[k]->pack_border_bonus_kokkos(n,k_sendlist,buf,space,vel_flag);
 }
 
 /* ---------------------------------------------------------------------- */
 
 void AtomVecHybridKokkos::unpack_border_bonus_kokkos(const int &n, const int &nfirst,
                                                      const DAT::tdual_double_2d_lr &buf,
-                                                     ExecutionSpace space)
+                                                     ExecutionSpace space, int vel_flag)
 {
   for (int k = 0; k < nstyles; k++)
-    stylesKK[k]->unpack_border_bonus_kokkos(n,nfirst,buf,space);
+    stylesKK[k]->unpack_border_bonus_kokkos(n,nfirst,buf,space,vel_flag);
 }
 
 /* ---------------------------------------------------------------------- */

@@ -269,10 +269,7 @@ int AtomVecKokkos::pack_comm_kokkos(const int &n,
     }
   }
 
-  if (bonus_flag) {
-    bool vel_flag = false;
-    pack_comm_bonus_kokkos(n, list, buf, vel_flag);
-  }
+  if (bonus_flag) pack_comm_bonus_kokkos(n, list, buf);
 
   return n*size_forward;
 }
@@ -375,10 +372,7 @@ void AtomVecKokkos::unpack_comm_kokkos(const int &n, const int &first,
     atomKK->modified(Device,datamask_comm);
   }
 
-  if (bonus_flag) {
-    bool vel_flag = false;
-    unpack_comm_bonus_kokkos(n, first, buf, vel_flag);
-  }
+  if (bonus_flag) unpack_comm_bonus_kokkos(n, first, buf);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1049,10 +1043,7 @@ int AtomVecKokkos::pack_comm_vel_kokkos(
     }
   }
 
-  if (bonus_flag) {
-    bool vel_flag = true;
-    pack_comm_bonus_kokkos(n, list, buf, vel_flag);
-  }
+  if (bonus_flag) pack_comm_bonus_kokkos(n, list, buf, 1);
 
   return n*(size_forward + size_velocity);
 }
@@ -1181,10 +1172,7 @@ void AtomVecKokkos::unpack_comm_vel_kokkos(const int &n, const int &first,
     atomKK->modified(Device,datamask_comm_vel);
   }
 
-  if (bonus_flag) {
-    bool vel_flag = true;
-    unpack_comm_bonus_kokkos(n, first, buf, vel_flag);
-  }
+  if (bonus_flag) unpack_comm_bonus_kokkos(n, first, buf, 1);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1997,6 +1985,8 @@ int AtomVecKokkos::pack_border_vel_kokkos(
     }
   }
 
+  if (bonus_flag) pack_border_bonus_kokkos(n, k_sendlist, buf, space, 1);
+
   return n*(size_border + size_velocity);
 }
 
@@ -2165,6 +2155,8 @@ void AtomVecKokkos::unpack_border_vel_kokkos(
       Kokkos::parallel_for(n,f);
     }
   }
+
+  if (bonus_flag) unpack_border_bonus_kokkos(n, first, buf, space, 1);
 
   atomKK->modified(space,datamask_border_vel);
 }
@@ -2854,8 +2846,7 @@ int AtomVecKokkos::unpack_exchange_kokkos(DAT::tdual_double_2d_lr &k_buf, int nr
     k_count.sync_host();
   }
 
-  if (bonus_flag)
-    unpack_exchange_bonus_kokkos(k_buf,nrecv,space,k_indices);
+  if (bonus_flag) unpack_exchange_bonus_kokkos(k_buf,nrecv,space,k_indices);
 
   atomKK->modified(space,datamask_exchange);
 

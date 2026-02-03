@@ -234,14 +234,10 @@ struct AtomVecEllipsoidKokkos_PackCommBonus {
 /* ------------------------------------------------------------------------- */
 
 void AtomVecEllipsoidKokkos::pack_comm_bonus_kokkos(const int &n, const DAT::tdual_int_1d &list,
-                                                    const DAT::tdual_double_2d_lr &buf, bool vel_flag)
+                                                    const DAT::tdual_double_2d_lr &buf, int vel_flag)
 {
-  int offset;
-  if (!vel_flag)
-    offset = size_forward - size_forward_bonus;
-  else {
-    offset = size_forward + size_velocity - size_forward_bonus;
-  }
+  int offset = size_forward - size_forward_bonus;
+  if (vel_flag) offset += size_velocity;
 
   if (lmp->kokkos->forward_comm_on_host) {
     atomKK->sync(HostKK,datamask_bonus);
@@ -298,14 +294,10 @@ struct AtomVecEllipsoidKokkos_UnpackCommBonus {
 /* ---------------------------------------------------------------------- */
 
 void AtomVecEllipsoidKokkos::unpack_comm_bonus_kokkos(const int &n, const int &first,
-                                                      const DAT::tdual_double_2d_lr &buf, bool vel_flag)
+                                                      const DAT::tdual_double_2d_lr &buf, int vel_flag)
 {
-  int offset;
-  if (!vel_flag) {
-    offset = size_forward - size_forward_bonus;
-  } else {
-    offset = size_forward + size_velocity - size_forward_bonus;
-  }
+  int offset = size_forward - size_forward_bonus;
+  if (vel_flag) offset += size_velocity;
 
   if (lmp->kokkos->forward_comm_on_host) {
     atomKK->sync(HostKK,datamask_bonus);
@@ -502,9 +494,10 @@ struct AtomVecEllipsoidKokkos_PackBorderBonus {
 
 void AtomVecEllipsoidKokkos::pack_border_bonus_kokkos(int n, DAT::tdual_int_1d k_sendlist,
                                                       DAT::tdual_double_2d_lr &buf,
-                                                      ExecutionSpace space)
+                                                      ExecutionSpace space, int vel_flag)
 {
   int offset = size_border - size_border_bonus;
+  if (vel_flag) offset += size_velocity;
 
   atomKK->sync(space,datamask_bonus);
 
@@ -577,13 +570,14 @@ struct AtomVecEllipsoidKokkos_UnpackBorderBonus {
 
 void AtomVecEllipsoidKokkos::unpack_border_bonus_kokkos(const int &n, const int &first,
                                                         const DAT::tdual_double_2d_lr &buf,
-                                                        ExecutionSpace space) {
+                                                        ExecutionSpace space, int vel_flag) {
   while (first+n >= nmax) grow(0);
   while (n+nlocal_bonus+nghost_bonus >= nmax_bonus) grow_bonus();
 
   atomKK->sync(space,datamask_bonus);
 
   int offset = size_border - size_border_bonus;
+  if (vel_flag) offset += size_velocity;
 
   if (space == HostKK) {
     k_nghost_bonus.view_host()() = nghost_bonus;
