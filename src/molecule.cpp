@@ -134,6 +134,19 @@ void Molecule::command(int narg, char **arg, int &index)
       sizescale = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
       if (sizescale <= 0.0) error->all(FLERR, iarg + 1, "Illegal scale factor {}", sizescale);
       iarg += 2;
+    } else if (strcmp(arg[iarg], "auto") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "molecule auto", error);
+      char *auto_arg = arg[iarg + 1];
+      if (strcmp(auto_arg, "angle") == 0) {
+        // set auto angle flag
+      } else if (strcmp(auto_arg, "dihedral") == 0) {
+        // set auto dihedral flag
+      } else if (strcmp(auto_arg, "improper") == 0) {
+        // set auto improper flag
+      } else {
+        error->all(FLERR, iarg + 1, "Illegal argument '{}' for molecule auto", auto_arg);
+      }
+      iarg += 2;
     } else
       break;
   }
@@ -3513,7 +3526,7 @@ void Molecule::special_read(char *line)
   }
   for (int i = 0; i < natoms; i++) {
     if (count[i] == 0)
-      error->all(FLERR, fileiarg, "Atom {} missing in Special Bonds section of molecule file",
+      error->all(FLERR, fileiarg, "Atom {} missing in Special Bonds section of molecule file",x
                  i + 1);
   }
 }
