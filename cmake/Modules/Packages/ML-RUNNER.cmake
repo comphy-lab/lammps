@@ -151,9 +151,18 @@ if(DOWNLOAD_RUNNER)
 else()
   message(STATUS "DOWNLOAD_RUNNER is OFF. Looking for a pre-compiled RuNNer.")
 
-  # Check if the directory specified by RUNNER_LIB_DIR exists
-  if(NOT IS_DIRECTORY ${RUNNER_LIB_DIR})
-    message(FATAL_ERROR "The directory specified by RUNNER_LIB_DIR does not exist: ${RUNNER_LIB_DIR}")
+  # Check if the directory specified by RUNNER_LIB_DIR exists, if the
+  # user defined it.
+  if(DEFINED RUNNER_LIB_DIR AND NOT RUNNER_LIB_DIR STREQUAL "")
+    message(STATUS "RUNNER_LIB_DIR is set to: ${RUNNER_LIB_DIR}")
+
+    if(NOT IS_DIRECTORY "${RUNNER_LIB_DIR}")
+      message(FATAL_ERROR
+        "The directory specified by RUNNER_LIB_DIR does not exist: ${RUNNER_LIB_DIR}"
+      )
+    endif()
+  else()
+    message(STATUS "RUNNER_LIB_DIR not set or empty; using default behaviour")
   endif()
 
   # Determine the correct file extension based on whether the library is shared or not.
