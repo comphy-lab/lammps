@@ -1491,7 +1491,7 @@ void ESP::compute_gf_ad()
   const int ny = nyhi_fft - nylo_fft + 1;
   const int nz = nzhi_fft - nzlo_fft + 1;
 
-  // --- precompute per-dimension tables (removes integer division from inner loop) ---
+  // --- precompute per-dimension tables
   std::vector<int>    kper(nx), lper(ny), mper(nz);
   std::vector<double> qx(nx), qy(ny), qz(nz);
   std::vector<double> qx2(nx), qy2(ny), qz2(nz);
@@ -1534,14 +1534,13 @@ void ESP::compute_gf_ad()
     qz[mm]  = q;
     qz2[mm] = q * q;
 
-    // base wz: matches your compute_gf_ad (uses zprd/nz_pppm but kz uses slab)
     wz_denom[mm] = spreading_weight2_from_abs_index(std::abs(mp), scale_z);
   }
 
-  // local accumulators (less traffic on sf_coeff[])
+  // local accumulators
   double c0=0.0, c1=0.0, c2=0.0, c3=0.0, c4=0.0, c5=0.0;
 
-  // pointers (helps compiler)
+  // pointers
   double *g1 = greensfn;
   double *g2 = greensfn2;
 
@@ -1552,7 +1551,6 @@ void ESP::compute_gf_ad()
   const double *p5 = sf_precoeff5;
   const double *p6 = sf_precoeff6;
 
-  // --- main loops (k is inner, contiguous n) ---
   int n = 0;
   for (int mm = 0; mm < nz; ++mm) {
     const double wz = wz_denom[mm];
@@ -1575,11 +1573,10 @@ void ESP::compute_gf_ad()
         if (sqk == 0.0) continue;
 
         // denom = (sumx*sumy*sumz)^2  (sumx=denomx[ii], etc.)
-        const double d1 = wx * wyz;
-        const double denom = d1 * d1;
+        const double denom = wxyz;
         if (denom == 0.0) continue;
 
-        // outside cutoff => dot2=0, greensfn stays 0 (same behavior as your code)
+        // outside cutoff => dot2=0, greensfn stays 0
         if (sqk > sqk_cut2) continue;
 
         // k_rc_c_old in [0,1], then map to x in [-1,1]
@@ -1589,16 +1586,14 @@ void ESP::compute_gf_ad()
         double poly, dpoly_dx;
         poly_and_deriv_horner(x, fourier_split_poly_coeff, num_of_Fourier_poly, poly, dpoly_dx);
 
-        // Your original virial construction equals: poly_virial = 2*krc_old * dpoly/dx
         const double poly_virial = 2.0 * krc_old * dpoly_dx;
 
         const double invden = 1.0 / denom;
 
-        // dot1 == sqk  (because qx=unitkx*kper, etc.), so sum1 = 2pi * poly * wxyz
-        g1[n] = (MY_2PI * poly) * wxyz * invden / sqk;
+        g1[n] = (MY_2PI * poly) * invden / sqk;
 
         const double sqk2 = sqk * sqk;
-        g2[n] = (MY_2PI * poly_virial) * wxyz * invden / sqk2;
+        g2[n] = (MY_2PI * poly_virial) * invden / sqk2;
 
         const double gg = g1[n];
         c0 += p1[n] * gg;  c1 += p2[n] * gg;
