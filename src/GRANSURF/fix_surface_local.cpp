@@ -310,8 +310,8 @@ void FixSurfaceLocal::post_constructor()
     lines = nullptr;
     tris = nullptr;
 
-    std::map<std::tuple<double,double,double>,int> *hash =
-      new std::map<std::tuple<double,double,double>,int>();
+    std::map<std::tuple<double,double,double,int>,int> *hash =
+      new std::map<std::tuple<double,double,double,int>,int>();
 
     for (int i = 0; i < ninput; i++) {
       int mode = input_modes[i];
@@ -448,6 +448,19 @@ void FixSurfaceLocal::setup_pre_neighbor()
   const double cutghost = MAX(neighbor->cutneighmax, comm->cutghostuser);
   if (cutghost < 2 * max_radius)
     error->warning(FLERR, "Maximum triangle diameter {} may be less than ghost cutoff {}", 2 * max_radius, cutghost);
+
+  // confirm all tri/line atoms are defined by this fix
+  //   TODO: save atom2connect to maintain old atoms
+
+  for (int i = 0; i < atom->nlocal + atom->nghost; i++) {
+    if (domain->dimension == 2) {
+      if (atom->line[i] >= 0 && atom2connect[i] == -1)
+        error->one(FLERR, "Unassociated line atom {} identified by fix surface/local", atom->tag[i]);
+    } else {
+      if (atom->tri[i] >= 0 && atom2connect[i] == -1)
+        error->one(FLERR, "Unassociated tri atom {} identified by fix surface/local", atom->tag[i]);
+    }
+  }
 
   // one-time calculation of remaining fields in Connect2d/3d
   // cannot do until now, b/c need ghost connection info via border comm
@@ -1574,6 +1587,7 @@ void FixSurfaceLocal::connectivity2d_local()
   int me = comm->me;
   int nprocs = comm->nprocs;
 
+  int *type = atom->type;
   tagint *tag = atom->tag;
 
   int *proclist = nullptr;
@@ -1602,6 +1616,7 @@ void FixSurfaceLocal::connectivity2d_local()
         inbuf[ncount].ibin = indices[k];
         inbuf[ncount].ilocal = i;
         inbuf[ncount].ipoint = ipoint;
+        inbuf[ncount].type = type[i];
         inbuf[ncount].atomID = tag[i];
         inbuf[ncount].x[0] = endpts[m][2*ipoint];
         inbuf[ncount].x[1] = endpts[m][2*ipoint+1];
@@ -1872,6 +1887,7 @@ void FixSurfaceLocal::connectivity3d_local()
   int me = comm->me;
   int nprocs = comm->nprocs;
 
+  int *type = atom->type;
   tagint *tag = atom->tag;
 
   int *proclist = nullptr;
@@ -1900,6 +1916,7 @@ void FixSurfaceLocal::connectivity3d_local()
         inbuf[ncount].ibin = indices[k];
         inbuf[ncount].ilocal = i;
         inbuf[ncount].ipoint = ipoint;
+        inbuf[ncount].type = type[i];
         inbuf[ncount].atomID = tag[i];
         inbuf[ncount].x[0] = corners[m][3*ipoint];
         inbuf[ncount].x[1] = corners[m][3*ipoint+1];
@@ -2380,7 +2397,7 @@ int FixSurfaceLocal::point_match(int n, char *inbuf,
         dy = in[i].x[1] - in[j].x[1];
         dz = in[i].x[2] - in[j].x[2];
         rsq = dx*dx + dy*dy + dz*dz;
-        if (rsq < epssq) {
+        if (rsq < epssq && in[i].type == in[j].type) {
           if (ncount+2 > maxcount) {
             maxcount += DELTA_RVOUS;
             memory->grow(proclist,maxcount,"surface/local:proclist");
@@ -3188,7 +3205,6 @@ void FixSurfaceLocal::connectivity2d_complete()
     dy = 0.5*length*sin(theta);
 
     iconnect = atom2connect[i];
-    // This fails at restart... Need to deal with existing atoms
 
     endpts[iconnect][0][0] = x[i][0] - dx;
     endpts[iconnect][0][1] = x[i][1] - dy;

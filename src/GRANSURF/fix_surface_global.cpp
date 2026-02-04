@@ -124,8 +124,8 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
   last_setup_bins = -1;
 
   int ninput = 0;
-  std::map<std::tuple<double,double,double>,int> *hash =
-    new std::map<std::tuple<double,double,double>,int>();
+  std::map<std::tuple<double,double,double,int>,int> *hash =
+    new std::map<std::tuple<double,double,double,int>,int>();
 
   int iarg = 3;
   while (iarg < narg) {
@@ -178,7 +178,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
       models[nmodel] = model = new GranularModel(lmp);
 
       // assign range of particle and surf types to this model
-      // ues MAXSURFTYPE for now, in case smax keyword extends input surf types
+      // use MAXSURFTYPE for now, in case smax keyword extends input surf types
 
       utils::bounds(FLERR, arg[iarg+1], 1, atom->ntypes,
                     modeltypes[nmodel].plo, modeltypes[nmodel].phi, error);
@@ -374,6 +374,8 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
   imdata = nullptr;
 
   type2motion = new int[maxsurftype+1];
+  for (int i = 0; i <= maxsurftype; i++)
+    type2motion[i] = -1;
 
   firsttime = 1;
 

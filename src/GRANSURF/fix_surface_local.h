@@ -129,6 +129,7 @@ class FixSurfaceLocal : public FixSurface {
     int ibin;                 // bin assignment
     int ilocal;               // index of line/tri particle
     int ipoint;               // 0/1 for line endpt, 0/1/2 for tri corner pt
+    int type;                 // type of line/tri particle
     tagint atomID;            // ID of line/tri particle
     double x[3];              // coords of endpt or corner pt
   };
