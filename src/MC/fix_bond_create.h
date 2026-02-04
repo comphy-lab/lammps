@@ -38,7 +38,7 @@ class FixBondCreate : public Fix {
   void setup(int) override;
   void post_integrate() override;
   void post_integrate_respa(int, int) override;
-  int modify_param(int, char **);
+  int modify_param(int, char **) override;
 
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;

@@ -42,7 +42,7 @@ class FixBondBreak : public Fix {
   int pack_reverse_comm(int, int, double *) override;
   void unpack_reverse_comm(int, int *, double *) override;
   double compute_vector(int) override;
-  int modify_param(int, char **);
+  int modify_param(int, char **) override;
   double memory_usage() override;
 
   int image(int *&, double **&) override;

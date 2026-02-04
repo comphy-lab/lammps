@@ -37,7 +37,7 @@ class FixAtomSwap : public Fix {
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
   double compute_vector(int) override;
-  int modify_param(int, char **);
+  int modify_param(int, char **) override;
   double memory_usage() override;
   void write_restart(FILE *) override;
   void restart(char *) override;
