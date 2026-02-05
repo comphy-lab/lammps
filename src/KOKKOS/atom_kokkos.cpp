@@ -47,6 +47,7 @@ AtomKokkos::AtomKokkos(LAMMPS *lmp) : Atom(lmp)
   h_tag_max = Kokkos::subview(h_tag_min_max,1);
 
   nprop_atom = 0;
+  hybrid_flag = 0;
   fix_prop_atom = nullptr;
 }
 
