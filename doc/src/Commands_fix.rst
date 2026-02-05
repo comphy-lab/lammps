@@ -83,6 +83,11 @@ OPT.
    * :doc:`gjf <fix_gjf>`
    * :doc:`gld <fix_gld>`
    * :doc:`gle <fix_gle>`
+   * :doc:`graphics/arrows <fix_graphics_arrows>`
+   * :doc:`graphics/isosurface <fix_graphics_isosurface>`
+   * :doc:`graphics/labels <fix_graphics_labels>`
+   * :doc:`graphics/objects <fix_graphics_objects>`
+   * :doc:`graphics/periodic <fix_graphics_periodic>`
    * :doc:`gravity (ko) <fix_gravity>`
    * :doc:`grem <fix_grem>`
    * :doc:`halt <fix_halt>`
@@ -274,6 +279,7 @@ OPT.
    * :doc:`wall/gran (k) <fix_wall_gran>`
    * :doc:`wall/gran/region <fix_wall_gran_region>`
    * :doc:`wall/harmonic <fix_wall>`
+   * :doc:`wall/harmonic/outside <fix_wall>`
    * :doc:`wall/lj1043 <fix_wall>`
    * :doc:`wall/lj126 <fix_wall>`
    * :doc:`wall/lj93 (k) <fix_wall>`

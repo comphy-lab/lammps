@@ -64,7 +64,7 @@ Syntax
        *com* value = *yes* or *no*
        *thresh* args = variable operator value
          variable = equal style or compatible variable reference
-         operator = "<" or "<=" or ">" or ">=" or "==" or "!=" or "|^"
+         operator = "<" or "<=" or ">" or ">=" or "==" or "!=" or "\|^"
          value = numeric value to compare to
 
 
@@ -111,7 +111,7 @@ If the *com* keyword is set to *yes* then the *xu*, *yu*, and *zu*
 inputs store the position of each atom relative to the center-of-mass
 of the group of atoms, instead of storing the absolute position.
 
-.. versionadded:: TBD
+.. versionadded:: 10Dec2025
 
 If the *thresh* keyword is used, data is only stored on steps where also
 the threshold condition following the keyword is met.  The first
@@ -163,7 +163,7 @@ the :doc:`run <run>` command.  This fix is not invoked during
 
 Restrictions
 """"""""""""
- none
+none
 
 Related commands
 """"""""""""""""

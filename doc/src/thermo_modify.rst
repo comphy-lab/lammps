@@ -171,6 +171,8 @@ column/keyword), or a thermo keyword (or compute, fix, property, or
 variable reference) and then it replaces the string for that specific
 thermo keyword.
 
+.. versionadded:: 10Dec2025
+
 With a setting of *auto*, certain fixes or computes will
 generate more descriptive strings as their thermo keywords, which are
 described in the 'output' section of their documentation.  Current commands

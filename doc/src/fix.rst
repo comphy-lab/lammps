@@ -262,6 +262,11 @@ accelerated styles exist.
 * :doc:`gjf <fix_gjf>` - statistically correct Langevin temperature control using the GJ methods
 * :doc:`gld <fix_gld>` - generalized Langevin dynamics integrator
 * :doc:`gle <fix_gle>` - generalized Langevin equation thermostat
+* :doc:`graphics/arrows <fix_graphics_arrows>` - add arrow graphics objects to :doc:`dump image <dump_image>` output
+* :doc:`graphics/isosurface <fix_graphics_isosurface>` - add an isosurface for a group of atoms to :doc:`dump image <dump_image>` output
+* :doc:`graphics/labels <fix_graphics_labels>` - add images or text as graphics objects to :doc:`dump image <dump_image>` output
+* :doc:`graphics/objects <fix_graphics_objects>` - add graphics objects to :doc:`dump image <dump_image>` output
+* :doc:`graphics/periodic <fix_graphics_periodic>` - add selected periodic images of atoms and bonds to :doc:`dump image <dump_image>` output
 * :doc:`gravity <fix_gravity>` - add gravity to atoms in a granular simulation
 * :doc:`grem <fix_grem>` - implements the generalized replica exchange method
 * :doc:`halt <fix_halt>` - terminate a dynamics run or minimization
@@ -453,6 +458,7 @@ accelerated styles exist.
 * :doc:`wall/gran <fix_wall_gran>` - frictional wall(s) for granular simulations
 * :doc:`wall/gran/region <fix_wall_gran_region>` - :doc:`fix wall/region <fix_wall_region>` equivalent for use with granular particles
 * :doc:`wall/harmonic <fix_wall>` - harmonic spring wall
+* :doc:`wall/harmonic/outside <fix_wall>` - harmonic spring wall for containing particles
 * :doc:`wall/lj1043 <fix_wall>` - Lennard-Jones 10--4--3 wall
 * :doc:`wall/lj126 <fix_wall>` - Lennard-Jones 12--6 wall
 * :doc:`wall/lj93 <fix_wall>` - Lennard-Jones 9--3 wall
