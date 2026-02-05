@@ -43,6 +43,12 @@ is computed from its angular momentum if needed.
    treated as ellipsoids, not ellipses, meaning their moments of inertia
    will be the same as in 3d.
 
+----------
+
+.. include:: accel_styles.rst
+
+----------
+
 Output info
 """""""""""
 
