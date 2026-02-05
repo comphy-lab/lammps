@@ -1,7 +1,10 @@
 .. index:: compute erotate/asphere
+.. index:: compute erotate/asphere/kk
 
 compute erotate/asphere command
 ===============================
+
+Accelerator Variants: *erotate/asphere/kk*
 
 Syntax
 """"""
