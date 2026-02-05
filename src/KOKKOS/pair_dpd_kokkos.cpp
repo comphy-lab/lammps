@@ -355,8 +355,6 @@ void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
     const typename Kokkos::TeamPolicy<DeviceType>::member_type &team, EV_FLOAT &ev) const 
 {
   const int ii = team.league_rank(); // Get the team index
-  // Your existing per-atom logic here
-  // Or use Kokkos::parallel_for(Kokkos::TeamThreadRange(team, ...)) for nested parallelism
 
   // The f array is duplicated for OpenMP, atomic for GPU, and neither for Serial
 

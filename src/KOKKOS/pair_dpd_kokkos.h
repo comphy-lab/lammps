@@ -75,18 +75,16 @@ class PairDPDKokkos : public PairDPD {
   KOKKOS_INLINE_FUNCTION
   void operator () (TagDPDKokkos<NEIGHFLAG,EVFLAG>, const int &i, EV_FLOAT&) const;
 
-  // Add these new TeamPolicy versions alongside your existing RangePolicy versions
-template<int NEIGHFLAG, int EVFLAG>
-KOKKOS_INLINE_FUNCTION
-void operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
-                const typename Kokkos::TeamPolicy<DeviceType>::member_type &team) const;
-
-// If you have the version with EV_FLOAT, add this too:
-template<int NEIGHFLAG, int EVFLAG>
-KOKKOS_INLINE_FUNCTION
-void operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
-                const typename Kokkos::TeamPolicy<DeviceType>::member_type &team,
-                EV_FLOAT& ev) const;
+  template<int NEIGHFLAG, int EVFLAG>
+  KOKKOS_INLINE_FUNCTION
+  void operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
+                  const typename Kokkos::TeamPolicy<DeviceType>::member_type &team) const;
+  
+  template<int NEIGHFLAG, int EVFLAG>
+  KOKKOS_INLINE_FUNCTION
+  void operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
+                  const typename Kokkos::TeamPolicy<DeviceType>::member_type &team,
+                  EV_FLOAT& ev) const;
 
   template<int NEIGHFLAG>
   KOKKOS_INLINE_FUNCTION

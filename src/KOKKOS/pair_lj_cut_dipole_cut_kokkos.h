@@ -48,12 +48,25 @@ class PairLJCutDipoleCutKokkos : public PairLJCutDipoleCut {
   void init_style() override;
   double init_one(int, int) override;
 
+  class TuneKokkos* tuner;
+
   template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG, bool STACKPARAMS>
   KOKKOS_INLINE_FUNCTION
   void operator()(TagPairLJCutDipoleCutKernel<NEIGHFLAG,NEWTON_PAIR,EVFLAG,STACKPARAMS>, const int, EV_FLOAT &ev) const;
   template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG, bool STACKPARAMS>
   KOKKOS_INLINE_FUNCTION
   void operator()(TagPairLJCutDipoleCutKernel<NEIGHFLAG,NEWTON_PAIR,EVFLAG,STACKPARAMS>, const int) const;
+
+  template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG, bool STACKPARAMS>
+  KOKKOS_INLINE_FUNCTION
+  void operator()(TagPairLJCutDipoleCutKernel<NEIGHFLAG,NEWTON_PAIR,EVFLAG,STACKPARAMS>,
+                  const typename Kokkos::TeamPolicy<DeviceType>::member_type &team) const;
+  
+  template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG, bool STACKPARAMS>
+  KOKKOS_INLINE_FUNCTION
+  void operator()(TagPairLJCutDipoleCutKernel<NEIGHFLAG,NEWTON_PAIR,EVFLAG,STACKPARAMS>,
+                  const typename Kokkos::TeamPolicy<DeviceType>::member_type &team,
+                  EV_FLOAT& ev) const;
 
   template<int NEIGHFLAG, int NEWTON_PAIR>
   KOKKOS_INLINE_FUNCTION
@@ -95,9 +108,8 @@ class PairLJCutDipoleCutKokkos : public PairLJCutDipoleCut {
   DAT::ttransform_kkfloat_2d k_cut_coulsq;
   typename AT::t_kkfloat_2d d_cut_coulsq;
 
-
   int neighflag,newton_pair;
-  int nlocal,nall,eflag,vflag;
+  int nlocal,nall,eflag,vflag,inum;
 
   KK_FLOAT special_coul[4];
   KK_FLOAT special_lj[4];
