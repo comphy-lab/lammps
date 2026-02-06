@@ -205,6 +205,8 @@ void FixGraphicsLines::end_of_step()
   memory->create(imgparms, numobjs, 8, "fix_graphics_lines:imgparms");
 
   n = 0;
+  double zoffs = 0.0;
+  if (domain->dimension == 2) zoffs = prd_half[2];
   for (int i = 0; i < nlocal; ++i) {
     if (mask[i] & groupbit) {
       int j1, j2 = (ivalue - 1 + nvalues) % nvalues;
@@ -218,10 +220,10 @@ void FixGraphicsLines::end_of_step()
         imgparms[n][0] = type[i];
         imgparms[n][1] = xstore[i][j2][0];
         imgparms[n][2] = xstore[i][j2][1];
-        imgparms[n][3] = xstore[i][j2][2];
+        imgparms[n][3] = xstore[i][j2][2] + zoffs;
         imgparms[n][4] = x[i][0];
         imgparms[n][5] = x[i][1];
-        imgparms[n][6] = x[i][2];
+        imgparms[n][6] = x[i][2] + zoffs;
         imgparms[n][7] = 0.0;
         ++n;
       }
@@ -237,10 +239,10 @@ void FixGraphicsLines::end_of_step()
           imgparms[n][0] = type[i];
           imgparms[n][1] = xstore[i][j1][0];
           imgparms[n][2] = xstore[i][j1][1];
-          imgparms[n][3] = xstore[i][j1][2];
+          imgparms[n][3] = xstore[i][j1][2] + zoffs;
           imgparms[n][4] = xstore[i][j2][0];
           imgparms[n][5] = xstore[i][j2][1];
-          imgparms[n][6] = xstore[i][j2][2];
+          imgparms[n][6] = xstore[i][j2][2] + zoffs;
           imgparms[n][7] = 0.0;
           ++n;
         }
