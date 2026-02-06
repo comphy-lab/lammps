@@ -596,7 +596,7 @@ passed to the body style to affect how the drawing of a body particle
 is done.  See the :doc:`Howto body <Howto_body>` page for a
 description of what these parameters mean for each body style.
 
-.. versionchanged:: TDB
+.. versionchanged:: TBD
 
 The there are currently two supported settings for the *color* value:
 *type*, or *index*.  With the *type* setting the body particles will be
