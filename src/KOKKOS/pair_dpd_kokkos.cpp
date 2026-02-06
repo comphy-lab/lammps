@@ -341,8 +341,8 @@ void PairDPDKokkos<DeviceType>::operator() (TagDPDKokkos<NEIGHFLAG,EVFLAG>, cons
 template<class DeviceType>
 template<int NEIGHFLAG, int EVFLAG>
 KOKKOS_INLINE_FUNCTION
-void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
-    const typename Kokkos::TeamPolicy<DeviceType>::member_type &team) const 
+void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
+    const typename Kokkos::TeamPolicy<DeviceType>::member_type &team) const
 {
   EV_FLOAT ev;
   this->template operator()<NEIGHFLAG,EVFLAG>(TagDPDKokkos<NEIGHFLAG,EVFLAG>(), team, ev);
@@ -351,8 +351,8 @@ void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
 template<class DeviceType>
 template<int NEIGHFLAG, int EVFLAG>
 KOKKOS_INLINE_FUNCTION
-void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
-    const typename Kokkos::TeamPolicy<DeviceType>::member_type &team, EV_FLOAT &ev) const 
+void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
+    const typename Kokkos::TeamPolicy<DeviceType>::member_type &team, EV_FLOAT &ev) const
 {
   const int ii = team.league_rank(); // Get the team index
 
@@ -381,9 +381,9 @@ void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
   KK_FLOAT fytmp = 0.0;
   KK_FLOAT fztmp = 0.0;
 
-  Kokkos::parallel_reduce(Kokkos::TeamThreadRange(team, jnum), 
+  Kokkos::parallel_reduce(Kokkos::TeamThreadRange(team, jnum),
     [&] (const int &jj, KK_FLOAT &fx, KK_FLOAT &fy, KK_FLOAT &fz) {
-  
+
     j = d_neighbors(i,jj);
     factor_dpd = special_lj[sbmask(j)];
     factor_sqrt = special_rf[sbmask(j)];

@@ -195,13 +195,10 @@ void PairLJCutDipoleCutKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
           const unsigned int atoms_per_team = team_size/vectorsize;
           const unsigned int num_teams = inum / atoms_per_team + (inum % atoms_per_team ? 1 : 0);
 
-          //const unsigned int num_teams = (inum + team_size - 1) / team_size;
-          //typename Kokkos::TeamPolicy<DeviceType, TagPairLJCutDipoleCutKernel<FULL,0,0,true>> team_policy(num_teams, team_size, vectorsize);
-
           typename Kokkos::TeamPolicy<DeviceType, TagPairLJCutDipoleCutKernel<FULL,0,0,true>> team_policy(num_teams,atoms_per_team,vectorsize);
           Kokkos::parallel_for("force", team_policy, *this);
         }
-        
+
       }
     }
   }
@@ -472,7 +469,7 @@ template<class DeviceType>
 template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG, bool STACKPARAMS>
 KOKKOS_INLINE_FUNCTION
 void PairLJCutDipoleCutKokkos<DeviceType>::operator()(TagPairLJCutDipoleCutKernel<NEIGHFLAG,NEWTON_PAIR,EVFLAG,STACKPARAMS>,
-    const typename Kokkos::TeamPolicy<DeviceType>::member_type &team, EV_FLOAT &ev) const 
+    const typename Kokkos::TeamPolicy<DeviceType>::member_type &team, EV_FLOAT &ev) const
 {
   //const int ii = team.league_rank(); // Get the team index
   const int ii = team.league_rank() * team.team_size() + team.team_rank(); // Get the team index
@@ -537,7 +534,7 @@ void PairLJCutDipoleCutKokkos<DeviceType>::operator()(TagPairLJCutDipoleCutKerne
       KK_FLOAT tjxcoul = 0;
       KK_FLOAT tjycoul = 0;
       KK_FLOAT tjzcoul = 0;
-      
+
 
       // lj term
 
@@ -642,7 +639,7 @@ void PairLJCutDipoleCutKokkos<DeviceType>::operator()(TagPairLJCutDipoleCutKerne
         KK_FLOAT fq = factor_coul*qqrd2e;
         fx = fq*forcecoulx + delx*forcelj;
         fy = fq*forcecouly + dely*forcelj;
-        fz = fq*forcecoulz + delz*forcelj;              
+        fz = fq*forcecoulz + delz*forcelj;
         tx = fq*tixcoul;
         ty = fq*tiycoul;
         tz = fq*tizcoul;

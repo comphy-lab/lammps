@@ -61,7 +61,7 @@ class PairLJCutDipoleCutKokkos : public PairLJCutDipoleCut {
   KOKKOS_INLINE_FUNCTION
   void operator()(TagPairLJCutDipoleCutKernel<NEIGHFLAG,NEWTON_PAIR,EVFLAG,STACKPARAMS>,
                   const typename Kokkos::TeamPolicy<DeviceType>::member_type &team) const;
-  
+
   template<int NEIGHFLAG, int NEWTON_PAIR, int EVFLAG, bool STACKPARAMS>
   KOKKOS_INLINE_FUNCTION
   void operator()(TagPairLJCutDipoleCutKernel<NEIGHFLAG,NEWTON_PAIR,EVFLAG,STACKPARAMS>,

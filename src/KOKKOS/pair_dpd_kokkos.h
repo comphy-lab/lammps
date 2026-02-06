@@ -77,12 +77,12 @@ class PairDPDKokkos : public PairDPD {
 
   template<int NEIGHFLAG, int EVFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
+  void operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
                   const typename Kokkos::TeamPolicy<DeviceType>::member_type &team) const;
-  
+
   template<int NEIGHFLAG, int EVFLAG>
   KOKKOS_INLINE_FUNCTION
-  void operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>, 
+  void operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
                   const typename Kokkos::TeamPolicy<DeviceType>::member_type &team,
                   EV_FLOAT& ev) const;
 
