@@ -493,7 +493,7 @@ Enabling the extra unit tests have some requirements,
 
   * ``EAM_Dynamo_MendelevAckland_2007v3_Zr__MO_004835508849_001``
   * ``EAM_Dynamo_ErcolessiAdams_1994_Al__MO_123629422045_006``
-  * ``LennardJones612_UniversalShifted__MO_959249795837_003``
+  * ``LennardJones612_UniversalShifted__MO_959249795837_003`` (this model is an example model automatically built with the API unless explicitly disabled)
 
   See `Obtaining KIM Models <https://openkim.org/doc/usage/obtaining-models>`_
   to learn how to install a pre-built binary of the OpenKIM Repository of
