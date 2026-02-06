@@ -295,7 +295,7 @@ void CommKokkos::reverse_comm_device()
                     sendproc[iswap],0,world,&request);
         }
         if (size_reverse_send[iswap]) {
-          buf = (double*)atomKK->k_f.view<DeviceType>().data() +
+          buf = (double *)atomKK->k_f.view<DeviceType>().data() +
             firstrecv[iswap]*atomKK->k_f.view<DeviceType>().extent(1);
 
           DeviceType().fence();

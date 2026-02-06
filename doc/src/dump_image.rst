@@ -332,6 +332,10 @@ prefixed by "c\_", "f\_", or "v\_", respectively.  Note that the
 *diameter* setting can be overridden with a numeric value applied to all
 atoms by the optional *adiam* keyword.
 
+.. versionchanged:: TBD
+
+   Replaced colors "aqua" and "cyan" with "cyan" and "magenta"
+
 If *type* is specified for the *color* setting, then the color of each
 atom is determined by its atom type.  By default the mapping of types
 to colors is as follows:
@@ -340,8 +344,8 @@ to colors is as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types :math:`> 6`.  This mapping can be changed by the
 "dump_modify acolor" command, as described below.
@@ -443,12 +447,16 @@ If *type* is specified for the *color* value, then the color of each
 bond is determined by its bond type.  By default the mapping of bond
 types to colors is as follows:
 
+.. versionchanged:: TBD
+
+   Replaced colors "aqua" and "cyan" with "cyan" and "magenta"
+
 * type 1 = red
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for bond types > 6.  This mapping can be changed by
 the "dump_modify bcolor" command, as described below.
@@ -483,8 +491,8 @@ mapping of types to colors is as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types > 6.  There is not yet an option to
 change this via the dump_modify command.
@@ -510,8 +518,8 @@ default the mapping of types to colors is as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types > 6.
 
@@ -533,8 +541,8 @@ particle.  By default the mapping of types to colors is as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types > 6.
 
@@ -591,8 +599,8 @@ list of colors is by default as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types > 6.  This list can by changed with the
 :doc:`dump_modify acolor <dump_image>` command.  If more different
@@ -1252,13 +1260,13 @@ The defaults for the dump image and dump movie keywords are as follows:
 
 The defaults for the dump_modify keywords specific to dump image and dump movie are as follows:
 
-* acolor = \* red/green/blue/yellow/aqua/cyan
+* acolor = \* red/green/blue/yellow/cyan/magenta
 * adiam = \* 1.0
 * amap = min max cf 0.0 2 min blue max red
 * atrans = 1.0
 * backcolor = black
 * backcolor2 = none
-* bcolor = \* red/green/blue/yellow/aqua/cyan
+* bcolor = \* red/green/blue/yellow/cyan/magenta
 * bdiam = \* 0.5
 * btrans = 1.0
 * boxcolor = yellow
