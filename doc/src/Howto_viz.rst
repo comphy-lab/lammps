@@ -1015,8 +1015,8 @@ and the surrounding water molecules in both directions.
     variable  comx equal xcm(peptide,x)
     variable  comy equal xcm(peptide,y)
     variable  comz equal xcm(peptide,z)
-    region    shell ellipsoid v_comx v_comy v_comz 8.5 8.5 17.0
-    group     viz dynamic all region shell
+    region    shell ellipsoid v_comx v_comy v_comz 7.0 8.0 16.0
+    group     viz dynamic all region shell include molecule
 
     # define groups of donor and acceptor atoms for peptide and water
     group           pdonor    type 5
