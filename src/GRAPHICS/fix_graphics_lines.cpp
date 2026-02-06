@@ -160,7 +160,6 @@ void FixGraphicsLines::end_of_step()
         imgparms[n][7] = 0.0;
         ++n;
       }
-
       // draw cylinders for the available stored averaged history
       // skip if there is a jump across periodic boundaries in any direction
       for (int jj = 1; jj < nvalues; ++jj) {
