@@ -226,8 +226,8 @@ with six colors as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types :math:`> 6`.  This mapping can be changed by the
 "dump_modify acolor" command, though.  If you want to change the color of a
@@ -783,6 +783,7 @@ styles:
    * :doc:`fix graphics/labels <fix_graphics_labels>`
    * :doc:`fix graphics/objects <fix_graphics_objects>`
    * :doc:`fix graphics/periodic <fix_graphics_periodic>`
+   * :doc:`fix bond/react <fix_bond_react>`
    * :doc:`fix indent <fix_indent>`
    * :doc:`fix reaxff/bonds <fix_reaxff_bonds>`
    * :doc:`fix smd/wall_surface <fix_smd_wall_surface>`
