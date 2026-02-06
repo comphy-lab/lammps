@@ -149,10 +149,6 @@ void PairSNAPKokkos<DeviceType, real_type, accum_type, vector_length>::compute(i
 
   if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
 
-  int _chunk_size = 0;
-  if (tuner)
-    _chunk_size = tuner->get_current_team_size();
-
   atomKK->sync(execution_space,X_MASK|F_MASK|TYPE_MASK);
   x = atomKK->k_x.view<DeviceType>();
   f = atomKK->k_f.view<DeviceType>();
@@ -197,9 +193,6 @@ void PairSNAPKokkos<DeviceType, real_type, accum_type, vector_length>::compute(i
 
 
   chunk_size = MIN(chunksize, inum); // "chunksize" variable is set by user
-  if (_chunk_size > 0)
-    chunk_size = MIN(chunk_size, _chunk_size);
-
   // pad chunksize to be a multiple of vector_length * padding_factor
   chunk_size = (chunk_size + (vector_length * padding_factor) - 1) / (vector_length * padding_factor);
   chunk_size *= vector_length * padding_factor;
