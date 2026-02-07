@@ -60,6 +60,8 @@ class FixSurfaceGlobal : public FixSurface {
   int image(int *&, double **&) override;
 
  private:
+  int neigh_style;
+
   int dimension,firsttime,use_history;
   double dt,skin;
   double flatthresh;
