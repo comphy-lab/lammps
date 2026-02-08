@@ -1406,7 +1406,7 @@ double PairSurfGranular::calculate_2d_forces(std::vector<int> *composite_surfs)
 
 double PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
 {
-  int n, m, i, j, k, external, flag;
+  int n, m, i, j, jc, k, external, flag;
   double dot, dist, rmag, overlap;
   double jnorm[3], knorm[3], dr[3];
   int *tri = atom->tri;
@@ -1540,23 +1540,24 @@ double PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
       MathExtra::copy3(contact_surfs[n].surf_norm, jnorm);
 
       if (contact_surfs[n].external == UNCONNECTED) {
+        jc = atom2connect[j];
 
-        if (flag < -3 && connect3d[j].external_edge[which1] == UNCONNECTED && connect3d[j].external_edge[which2] == UNCONNECTED) {
+        if (flag < -3 && connect3d[jc].external_edge[which1] == UNCONNECTED && connect3d[jc].external_edge[which2] == UNCONNECTED) {
           // if a corner with 2 unconnected edges, just use distance
           max_dist_uc = MAX(max_dist_uc, rmag);
         } else {
           // else get distance along edge normal pointing outward
-          if (connect3d[j].external_edge[0] == UNCONNECTED && (flag == -1 || flag == -4 || flag == -5)) {
+          if (connect3d[jc].external_edge[0] == UNCONNECTED && (flag == -1 || flag == -4 || flag == -5)) {
             dist = dist_away_from_edge(&corners[tri[j]][0], &corners[tri[j]][3], &corners[tri[j]][6], jnorm, dr);
             if (dist != -1) max_dist_uc = MAX(max_dist_uc, dist * rmag);
           }
 
-          if (connect3d[j].external_edge[1] == UNCONNECTED && (flag == -2 || flag == -5 || flag == -6)) {
+          if (connect3d[jc].external_edge[1] == UNCONNECTED && (flag == -2 || flag == -5 || flag == -6)) {
             dist = dist_away_from_edge(&corners[tri[j]][3], &corners[tri[j]][6], &corners[tri[j]][0], jnorm, dr);
             if (dist != -1) max_dist_uc = MAX(max_dist_uc, dist * rmag);
           }
 
-          if (connect3d[j].external_edge[2] == UNCONNECTED && (flag == -3 || flag == -4 || flag == -6)) {
+          if (connect3d[jc].external_edge[2] == UNCONNECTED && (flag == -3 || flag == -4 || flag == -6)) {
             dist = dist_away_from_edge(&corners[tri[j]][0], &corners[tri[j]][6], &corners[tri[j]][3], jnorm, dr);
             if (dist != -1) max_dist_uc = MAX(max_dist_uc, dist * rmag);
           }
@@ -1668,8 +1669,9 @@ double PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
         which2 = 1;
       }
 
-      external1 = connect3d[j].external_edge[which1];
-      external2 = connect3d[j].external_edge[which2];
+      jc = atom2connect[j];
+      external1 = connect3d[jc].external_edge[which1];
+      external2 = connect3d[jc].external_edge[which2];
 
       pt_x = &corners[tri[j]][pt];
       pt1_x = &corners[tri[j]][pt1];
