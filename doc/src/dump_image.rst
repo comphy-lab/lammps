@@ -83,7 +83,7 @@ Syntax
          yes/no = do or do not draw simulation box lines
          diam = diameter of box lines as fraction of shortest box length
        *axes* values = axes length diam = draw xyz axes
-         axes = *yes* or *no* = do or do not draw xyz axes lines next to simulation box
+         axes = *yes* or *no* or *center* or *lowerleft* or *lowerright* or *upperleft* or *upperright* = do or do not draw xyz axes arrows and select location
          length = length of axes lines as fraction of respective box lengths
          diam = diameter of axes lines as fraction of shortest box length
        *region* values = region-ID color drawstyle [opacity (optional) npoints (optional) diameter (optional)]
@@ -748,16 +748,23 @@ is a fraction of the shortest box length in x,y,z (for 3d) or x,y (for
 2d).  The color of the box boundaries can be set with the "dump_modify
 boxcolor" command.
 
+.. versionchanged:: TBD
+
 The *axes* keyword determines if and how the coordinate axes are
-rendered as thin cylinders in the image.  If *no* is set, then the
-axes are not drawn and the *length* and *diam* settings are ignored.
-If *yes* is set, 3 thin cylinders are drawn to represent the x,y,z
-axes in colors red,green,blue.  The origin of these cylinders will be
-offset from the lower left corner of the box by 10%.  The *length*
-setting determines how long the cylinders will be as a fraction of the
-respective box lengths.  The *diam* setting determines their thickness
-as a fraction of the shortest box length in x,y,z (for 3d) or x,y (for
-2d).
+rendered in the image as arrows with the letters 'X', 'Y', and 'Z' to
+indicate the direction.  If *no* is set, then the axes are not drawn and
+the *length* and *diam* settings are ignored.  If *yes* or *lowerleft*
+is set, 3 arrows are drawn to represent the x,y,z axes in colors red,
+green, and blue, respectively.  The origin of these arrows will be
+offset from the lower left corner of the box by 10%.  If *center* is set
+the origin of the arrows will be in the center of the box. If
+*lowerright* is set, the origin of the arrows will be offset by 20% of
+the lower right corner of the box. If *upperleft* or *upperight* are set
+the origin of the arrows will be placed similar to the lower corner
+arrows, but offset by 20% from the top.  The *length* setting determines
+how long the cylinders will be as a fraction of the respective box
+lengths.  The *diam* setting determines their thickness as a fraction of
+the shortest box length in x,y,z (for 3d) or x,y (for 2d).
 
 The *subbox* keyword determines if and how processor subdomain
 boundaries are rendered as thin cylinders in the image.  If *no* is

@@ -73,7 +73,7 @@ enum { NUMERIC, ATOM, TYPE, ELEMENT, ATTRIBUTE, CONSTANT, INDEX };
 enum { STATIC, DYNAMIC };
 enum { NO = 0, YES = 1, AUTO = 2 };
 enum { FILLED, FRAME, POINTS, TRANSPARENT };
-enum { OFF = 0, ORIGIN, LOWERLEFT, LOWERRIGHT, UPPERLEFT, UPPERRIGHT };
+enum { OFF = 0, CENTER, LOWERLEFT, LOWERRIGHT, UPPERLEFT, UPPERRIGHT };
 
 }    // namespace
 // clang-format off
@@ -454,21 +454,13 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
 
     } else if (strcmp(arg[iarg],"axes") == 0) {
       if (iarg+3 > narg) utils::missing_cmd_args(FLERR,"dump image axes", error);
-      if (strcmp(arg[iarg+1],"off") == 0) {
+      if (strcmp(arg[iarg+1],"no") == 0) {
         axesflag = OFF;
-      } else if (strcmp(arg[iarg+1],"no") == 0) {
-        axesflag = OFF;
-      } else if (strcmp(arg[iarg+1],"0") == 0) {
-        axesflag = OFF;
-      } else if (strcmp(arg[iarg+1],"origin") == 0) {
-        axesflag = ORIGIN;
+      } else if (strcmp(arg[iarg+1],"center") == 0) {
+        axesflag = CENTER;
       } else if (strcmp(arg[iarg+1],"lowerleft") == 0) {
         axesflag = LOWERLEFT;
       } else if (strcmp(arg[iarg+1],"yes") == 0) {
-        axesflag = LOWERLEFT;
-      } else if (strcmp(arg[iarg+1],"on") == 0) {
-        axesflag = LOWERLEFT;
-      } else if (strcmp(arg[iarg+1],"1") == 0) {
         axesflag = LOWERLEFT;
       } else if (strcmp(arg[iarg+1],"lowerright") == 0) {
         axesflag = LOWERRIGHT;
@@ -2110,11 +2102,11 @@ void DumpImage::create_image()
     double offset = MAX(boxxhi-boxxlo,boxyhi-boxylo);
     if (domain->dimension == 3) offset = MAX(offset,boxzhi-boxzlo);
 
-    if (axesflag == ORIGIN)
+    if (axesflag == CENTER)
       offset *= 0.5;
     else
       offset *= 0.1;
-    if ((axesflag == ORIGIN) || (axesflag == LOWERLEFT)) {
+    if (axesflag == CENTER) {
       axes[0][0] += offset; axes[0][1] += offset; axes[0][2] += offset;
       axes[1][0] += offset; axes[1][1] += offset; axes[1][2] += offset;
       axes[2][0] += offset; axes[2][1] += offset; axes[2][2] += offset;
