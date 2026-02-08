@@ -3375,9 +3375,9 @@ void FixBondReact::update_everything()
               if (rxn.atoms[jj].wildcard || rxn.atoms[ibatom].wildcard) {
                 int blocal = atom->map(btag);
                 if (blocal < 0) error->one(FLERR,"Bond/react: Fix bond/react needs ghost atoms from further away");
-                int btype = atom->lmap->infer_bondtype(type[jjlocal],type[blocal]);
-                if (btype == -1) error->one(FLERR,"Bond/react: Unable to infer bond type from wildcard atoms");
-                bond_type[jjlocal][p] = btype;
+                int signed_btype = atom->lmap->infer_bondtype(type[jjlocal],type[blocal]);
+                if (!signed_btype) error->one(FLERR,"Bond/react: Unable to infer bond type from wildcard atoms");
+                bond_type[jjlocal][p] = std::abs(signed_btype);
               } else {
                 bond_type[jjlocal][p] = rxn.product->bond_type[j][p];
               }
