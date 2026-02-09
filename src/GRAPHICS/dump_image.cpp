@@ -472,12 +472,14 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
         error->all(FLERR, iarg+1, "Unknown axes location {}", arg[iarg+1]);
       }
 
-      axeslen = utils::numeric(FLERR,arg[iarg+2],false,lmp);
-      axesdiam = utils::numeric(FLERR,arg[iarg+3],false,lmp);
-      if (axeslen <= 0.0)
-        error->all(FLERR, iarg+2, "Invalid dump image axes length {}", axeslen);
-      if (axesdiam <= 0.0)
-        error->all(FLERR,"Invalid dump image axes diameter {}", axesdiam);
+      if (axesflag) {
+        axeslen = utils::numeric(FLERR,arg[iarg+2],false,lmp);
+        axesdiam = utils::numeric(FLERR,arg[iarg+3],false,lmp);
+        if (axeslen <= 0.0)
+          error->all(FLERR, iarg+2, "Invalid dump image axes length {}", axeslen);
+        if (axesdiam <= 0.0)
+          error->all(FLERR,"Invalid dump image axes diameter {}", axesdiam);
+      }
       iarg += 4;
 
     } else if (strcmp(arg[iarg],"subbox") == 0) {
