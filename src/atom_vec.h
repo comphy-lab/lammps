@@ -159,6 +159,7 @@ class AtomVec : protected Pointers {
 
   virtual double memory_usage();
   virtual double memory_usage_bonus() { return 0; }
+  double **x, **v, **f;  // Note, these pointers will be undefined by default in hybridized child classes
 
  protected:
   int nmax;             // local copy of atom->nmax
@@ -166,10 +167,10 @@ class AtomVec : protected Pointers {
   int deform_groupbit;
   double *h_rate;
 
+  // Note, these pointers will be undefined by default in hybridized child classes
   tagint *tag;    // peratom fields common to all styles
   int *type, *mask;
   imageint *image;
-  double **x, **v, **f;
 
   // copies of original unrotated fields for write_data for general triclinic
 

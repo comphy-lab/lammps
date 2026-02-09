@@ -64,6 +64,7 @@ class AtomVecLine : public AtomVec {
   void set_length(int, double);
 
   int nlocal_bonus;
+  int skip_radius;
 
  private:
   int *line;

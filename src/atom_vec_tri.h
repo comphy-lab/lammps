@@ -66,6 +66,7 @@ class AtomVecTri : public AtomVec {
   void set_equilateral(int, double);
 
   int nlocal_bonus;
+  int skip_radius;
 
  private:
   int *tri;

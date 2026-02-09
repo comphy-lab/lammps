@@ -51,6 +51,8 @@ AtomVecTri::AtomVecTri(LAMMPS *lmp) : AtomVec(lmp)
   nlocal_bonus = nghost_bonus = nmax_bonus = 0;
   bonus = nullptr;
 
+  skip_radius = 0;
+
   // strings with peratom variables to include in each AtomVec method
   // strings cannot contain fields in corresponding AtomVec default strings
   // order of fields in a string does not matter
@@ -477,7 +479,8 @@ void AtomVecTri::data_atom_bonus(int m, const std::vector<std::string> &values)
 {
   if (tri[m]) error->one(FLERR, "Assigning tri parameters to non-tri atom");
 
-  x = atom->x; // Check with Steve...
+  // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
+  x = atom->x;
 
   if (nlocal_bonus == nmax_bonus) grow_bonus();
 
@@ -663,7 +666,7 @@ void AtomVecTri::data_atom_post(int ilocal)
 
   // Radius may be set by other atom styles (e.g. sphere) w/ hybrid
   if (tri_flag < 0) {
-    if (radius[ilocal] < (EPSILON * EPSILON)) {
+    if (!skip_radius) {
       double radius_one = 0.5;
       radius[ilocal] = radius_one;
       rmass[ilocal] *= 4.0 * MY_PI / 3.0 * radius_one * radius_one * radius_one;
@@ -734,7 +737,8 @@ int AtomVecTri::pack_data_bonus(double *buf, int /*flag*/)
   if (triclinic_general) x_bonus = x_hold;
   else x_bonus = x;
 
-  tagint *tag = atom->tag;
+  // // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
+  tag = atom->tag;
   int nlocal = atom->nlocal;
 
   int m = 0;

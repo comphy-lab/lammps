@@ -125,7 +125,8 @@ int AtomVecRHEO::property_atom(const std::string &name)
 
 void AtomVecRHEO::pack_property_atom(int index, double *buf, int nvalues, int groupbit)
 {
-  int *mask = atom->mask;
+  // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
+  mask = atom->mask;
   int nlocal = atom->nlocal;
   int n = 0;
 

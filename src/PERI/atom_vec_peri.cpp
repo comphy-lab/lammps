@@ -88,6 +88,7 @@ void AtomVecPeri::grow_pointers()
 
 void AtomVecPeri::create_atom_post(int ilocal)
 {
+  // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
   auto *const xinit = atom->x;
   vfrac[ilocal] = 1.0;
   rmass[ilocal] = 1.0;
@@ -132,7 +133,8 @@ int AtomVecPeri::property_atom(const std::string &name)
 
 void AtomVecPeri::pack_property_atom(int index, double *buf, int nvalues, int groupbit)
 {
-  int *mask = atom->mask;
+  // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
+  mask = atom->mask;
   int nlocal = atom->nlocal;
   int n = 0;
 

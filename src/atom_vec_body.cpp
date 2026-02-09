@@ -616,7 +616,8 @@ int AtomVecBody::pack_data_bonus(double *buf, int /*flag*/)
 {
   int i;
 
-  tagint *tag = atom->tag;
+  // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
+  tag = atom->tag;
   int nlocal = atom->nlocal;
 
   int m = 0;

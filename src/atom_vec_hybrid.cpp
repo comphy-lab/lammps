@@ -14,6 +14,8 @@
 #include "atom_vec_hybrid.h"
 
 #include "atom.h"
+#include "atom_vec_line.h"
+#include "atom_vec_tri.h"
 #include "comm.h"
 #include "error.h"
 
@@ -153,6 +155,26 @@ void AtomVecHybrid::process_args(int narg, char **arg)
     merge_fields(fields_create, styles[k]->fields_create, 0, concat_dummy);
     merge_fields(fields_data_atom, styles[k]->fields_data_atom, 0, concat_dummy);
     merge_fields(fields_data_vel, styles[k]->fields_data_vel, 0, concat_dummy);
+  }
+
+  // Handle known incompatibilities between particular atoms styles
+  //   Tri & Line atom styles overwrite radii in post_data_atom()
+  //   may be others
+
+  for (int k = 0; k < nstyles; k++) {
+    if (strcmp(keywords[k], "line") == 0) {
+      if (std::find(fields_data_atom.begin(), fields_data_atom.end(), "radius") != fields_data_atom.end()) {
+        auto *avec_line = dynamic_cast<AtomVecLine *>(styles[k]);
+        avec_line->skip_radius = 1;
+      }
+    }
+
+    if (strcmp(keywords[k], "tri") == 0) {
+      if (std::find(fields_data_atom.begin(), fields_data_atom.end(), "radius") != fields_data_atom.end()) {
+        auto *avec_tri = dynamic_cast<AtomVecTri *>(styles[k]);
+        avec_tri->skip_radius = 1;
+      }
+    }
   }
 
   // check concat_grow for multiple special-case fields

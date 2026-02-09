@@ -369,6 +369,18 @@ void FixSurfaceLocal::post_constructor()
   if (!check_exist())
     error->all(FLERR,"Fix surface/local defines no line/triangle particles");
 
+  // confirm all tri/line atoms are defined by this fix
+
+  for (int i = 0; i < atom->nlocal + atom->nghost; i++) {
+    if (domain->dimension == 2) {
+      if (atom->line[i] >= 0 && atom2connect[i] == -1)
+        error->one(FLERR, "Unassociated line atom {} identified by fix surface/local", atom->tag[i]);
+    } else {
+      if (atom->tri[i] >= 0 && atom2connect[i] == -1)
+        error->one(FLERR, "Unassociated tri atom {} identified by fix surface/local", atom->tag[i]);
+    }
+  }
+
   // set max size for comm of connection info
   // 2d = 2 end points, 4 vectors, each of length npmaxall
   // 3d = 3 edges, 4 vectors, each of length nemaxall
@@ -448,19 +460,6 @@ void FixSurfaceLocal::setup_pre_neighbor()
   const double cutghost = MAX(neighbor->cutneighmax, comm->cutghostuser);
   if (cutghost < 2 * max_radius)
     error->warning(FLERR, "Maximum triangle diameter {} may be less than ghost cutoff {}", 2 * max_radius, cutghost);
-
-  // confirm all tri/line atoms are defined by this fix
-  //   TODO: save atom2connect to maintain old atoms
-
-  for (int i = 0; i < atom->nlocal + atom->nghost; i++) {
-    if (domain->dimension == 2) {
-      if (atom->line[i] >= 0 && atom2connect[i] == -1)
-        error->one(FLERR, "Unassociated line atom {} identified by fix surface/local", atom->tag[i]);
-    } else {
-      if (atom->tri[i] >= 0 && atom2connect[i] == -1)
-        error->one(FLERR, "Unassociated tri atom {} identified by fix surface/local", atom->tag[i]);
-    }
-  }
 
   // one-time calculation of remaining fields in Connect2d/3d
   // cannot do until now, b/c need ghost connection info via border comm
@@ -2597,7 +2596,8 @@ int FixSurfaceLocal::check_exist()
 void FixSurfaceLocal::assign2d()
 {
   AtomVec *avec = atom->avec;
-  avec_line = (AtomVecLine *) atom->style_match("line");
+  avec_line = dynamic_cast<AtomVecLine *> (atom->style_match("line"));
+
   if (!avec_line)
     error->all(FLERR,"Fix surface/local requires atom style line");
 
@@ -2832,7 +2832,8 @@ void FixSurfaceLocal::assign2d()
 void FixSurfaceLocal::assign3d()
 {
   AtomVec *avec = atom->avec;
-  avec_tri = (AtomVecTri *) atom->style_match("tri");
+  avec_tri = dynamic_cast<AtomVecTri *> (atom->style_match("tri"));
+
   if (!avec_tri)
     error->all(FLERR,"Fix surface/local requires atom style tri");
 
