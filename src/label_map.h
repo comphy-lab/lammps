@@ -18,6 +18,7 @@
 
 #include "pointers.h"    // IWYU pragma: export
 
+#include <array>
 #include <unordered_map>
 
 namespace LAMMPS_NS {
