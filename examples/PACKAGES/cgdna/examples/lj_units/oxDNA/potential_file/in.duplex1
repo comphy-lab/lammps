@@ -32,7 +32,7 @@ special_bonds lj 0 1 1
 # oxDNA pair interactions
 pair_style hybrid/overlay oxdna/excv oxdna/stk oxdna/hbond oxdna/xstk oxdna/coaxstk
 pair_coeff * * oxdna/excv    oxdna_lj.cgdna
-pair_coeff * * oxdna/stk     seqav 0.1 1.3448 2.6568 oxdna_lj.cgdna
+pair_coeff * * oxdna/stk     seqav 0.1 oxdna_lj.cgdna
 pair_coeff * * oxdna/hbond   seqav oxdna_lj.cgdna
 pair_coeff 1 4 oxdna/hbond   seqav oxdna_lj.cgdna
 pair_coeff 2 3 oxdna/hbond   seqav oxdna_lj.cgdna
