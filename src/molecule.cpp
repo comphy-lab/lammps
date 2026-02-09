@@ -233,8 +233,6 @@ void Molecule::command(int narg, char **arg, int &index)
     if (comm->me == 0) rewind(fp);
     Molecule::read(1);
     if (comm->me == 0) fclose(fp);
-
-    if (auto_angleflag) generate_angles();
   }
   Molecule::stats();
 }
@@ -1835,6 +1833,8 @@ void Molecule::from_json(const std::string &molid, const json &moldata)
     nspecialflag = 1;
   }
 
+  if (auto_angleflag) generate_angles();
+
   // body particle must have natom = 1
   // set radius by having body class compute its own radius
 
@@ -2681,6 +2681,8 @@ void Molecule::read(int flag)
       nspecialflag = 1;
     }
   }
+
+  if (flag && auto_angleflag) generate_angles();
 
   // body particle must have natom = 1
   // set radius by having body class compute its own radius
@@ -3543,84 +3545,33 @@ void Molecule::generate_angles()
     error->all(FLERR, fileiarg, "Cannot generate angles without bonds");
 
   int newton_bond = force->newton_bond;
-  int itype = 1;
+  int itype;
   tagint m, atom1, atom2, atom3;
-  std::vector<int *> angles_found;
-  int angle[3];
+  std::vector<int> atom1_found, atom2_found, atom3_found;
 
   // initialize
-  memory->create(count, natoms, "molecule:count");
   for (int i = 0; i < natoms; i++) {
     count[i] = 0;
     num_angle[i] = 0;
   }
 
   for (atom2 = 0; atom2 < natoms; atom2++) {
-    for (int j = 0; j < num_bond[atom2]; j++) {
-      atom1 = bond_atom[atom2][j] - 1;
-      for (int k = j + 1; k < num_bond[atom2]; k++) {
-        atom3 = bond_atom[atom2][k] - 1;
+    for (int i = 0; i < nspecial[atom2][0]; i++) {
+      atom1 = special[atom2][i] - 1;
+      for (int j = i + 1; j < nspecial[atom2][0]; j++) {
+        atom3 = special[atom2][j] - 1;
         count[atom2]++;
         nangles++;
-        angle[0] = atom1 + 1;
-        angle[1] = atom2 + 1;
-        angle[2] = atom3 + 1;
-        angles_found.push_back(angle);
-
-        if (newton_bond) {
+        atom1_found.push_back(atom1 + 1);
+        atom2_found.push_back(atom2 + 1);
+        atom3_found.push_back(atom3 + 1);
+        if (newton_bond == 0) {
           count[atom1]++;
           count[atom3]++;
         }
-        printf("found angle %d %d %d\n", (atom1+1), (atom2+1), (atom3+1));
       }
     }
-  } 
-
-  for (atom1 = 0; atom1 < natoms; atom1++) {
-    for (int j = 0; j < num_bond[atom1]; j++) {
-      atom2 = bond_atom[atom1][j] - 1;
-      for (int k = 0; k < num_bond[atom2]; k++) {
-        atom3 = bond_atom[atom2][k] - 1;
-        count[atom2]++;
-        nangles++;
-        angle[0] = atom1 + 1;
-        angle[1] = atom2 + 1;
-        angle[2] = atom3 + 1;
-        angles_found.push_back(angle);
-
-        if (newton_bond) {
-          count[atom1]++;
-          count[atom3]++;
-        }
-        printf("found angle %d %d %d\n", (atom1+1), (atom2+1), (atom3+1));
-      }
-    }
-  } 
-
-  for (atom1 = 0; atom1 < natoms; atom1++) {
-    for (int j = 0; j < num_bond[atom1]; j++) {
-      atom2 = bond_atom[atom1][j] - 1;
-
-      for (atom3 = atom1 + 1; atom3 < natoms; atom3++) {
-        for (int k = 0; k < num_bond[atom3]; k++) {
-          if (bond_atom[atom3][k] - 1 == atom2) {
-            count[atom2]++;
-            nangles++;
-            angle[0] = atom1 + 1;
-            angle[1] = atom2 + 1; 
-            angle[2] = atom3 + 1;
-            angles_found.push_back(angle);
-
-            if (newton_bond) {
-              count[atom1]++;
-              count[atom3]++;
-            }
-            printf("found angle %d %d %d\n", (atom1+1), (atom2+1), (atom3+1));
-          }
-        }
-      }
-    }
-  } 
+  }
 
   angle_per_atom = 0;
   for (int i = 0; i < natoms; i++) angle_per_atom = MAX(angle_per_atom, count[i]);
@@ -3631,10 +3582,11 @@ void Molecule::generate_angles()
   memory->create(angle_atom3, natoms, angle_per_atom, "molecule:angle_atom3");
 
   for (int i = 0; i < nangles; i++) {
-    atom1 = angles_found[i][0] + 1;
-    atom2 = angles_found[i][1] + 1;
-    atom3 = angles_found[i][2] + 1;
-
+    atom1 = atom1_found[i];
+    atom2 = atom2_found[i];
+    atom3 = atom3_found[i]; 
+    itype = atom->lmap->infer_angletype(type[atom1 - 1], type[atom2 - 1], type[atom3 - 1]);
+    if (itype == -1) error->one(FLERR,"Unable to infer angle type while autogenerating angles.");
     m = atom2 - 1;
     nangletypes = MAX(nangletypes, itype);
     angle_type[m][num_angle[m]] = itype;
@@ -3734,6 +3686,7 @@ void Molecule::generate_dihedrals()
 
   angleflag = 1;
 }
+
 /* ----------------------------------------------------------------------
    auto generate special bond info
 ------------------------------------------------------------------------- */
