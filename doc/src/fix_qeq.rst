@@ -262,7 +262,7 @@ interactions were done by replacing *1/r* using a damped potential
 *erfc(alpha*r)/r* with the parameter *alpha* controlling the rate of
 decay. However, any finite value of *alpha* leads to a jump at the
 cutoff, which interferes with equilibration if atoms move across the
-cutoff. The charge-neutralized potential of :ref:`(Wolf et al.) <Wolf4>`
+cutoff. The charge-neutralized potential of :ref:`(Wolf et al.) <Wolf5>`
 (*wolf*) and its extension by :ref:`(Fennell and Gezelter) <Fennell3>`
 (*dsf*) solve this problem. An extension was implemented to specify the
 width of taper (see :ref:`(Mei et al.) <Mei2>`) to smoothly terminate the
@@ -339,7 +339,7 @@ Physical Chemistry, 105, 9396-9049 (2001)
 
 **(QEq/Fire)** T.-R. Shan, A. P. Thompson, S. J. Plimpton, in preparation
 
-.. _Wolf4:
+.. _Wolf5:
 
 **(Wolf)** D. Wolf, P. Keblinski, S. R. Phillpot, J. Eggebrecht, J. Chem. Phys. 110, 8254 (1999).
 

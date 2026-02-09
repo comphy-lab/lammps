@@ -318,7 +318,7 @@ void ComputeRHEOVShift::correct_type_interface()
 {
   int i, j, a, ii, jj, jnum, itype, jtype;
   int fluidi, fluidj;
-  double xtmp, ytmp, ztmp, rsq, r, w, wp;
+  double xtmp, ytmp, ztmp, rsq, r, w;
   double imass, jmass, voli, volj, rhoi, rhoj;
   double dx[3];
   int dim = domain->dimension;
@@ -470,7 +470,7 @@ void ComputeRHEOVShift::correct_type_interface()
       volj = jmass / rhoj;
 
       w = compute_kernel->calc_w(i, j, dx[0], dx[1], dx[2], r);
-      wp = compute_kernel->calc_dw(i, j, dx[0], dx[1], dx[2], r);
+      (void) compute_kernel->calc_dw(i, j, dx[0], dx[1], dx[2], r);
       dWij = compute_kernel->dWij;
       dWji = compute_kernel->dWji;
 
