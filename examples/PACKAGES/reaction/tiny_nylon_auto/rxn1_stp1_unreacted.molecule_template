@@ -2,7 +2,6 @@ this is a molecule template for: initial nylon crosslink, pre-reacting
 
      18 atoms
      16 bonds
-     23 dihedrals
       2 impropers
 
 Coords
@@ -107,32 +106,6 @@ Bonds
     14 c_1-o_1     10     11
     15 c_1-o     10     12
     16 o-ho     12     15
-
-Dihedrals
-
-     1 hn-na-c2-c2      4      1      2      3
-     2 hn-na-c2-hc      4      1      2      6
-     3 hn-na-c2-hc      4      1      2      7
-     4 hn-na-c2-c2      5      1      2      3
-     5 hn-na-c2-hc      5      1      2      6
-     6 hn-na-c2-hc      5      1      2      7
-     7 na-c2-c2-c2      1      2      3     16
-     8 na-c2-c2-hc      1      2      3     17
-     9 na-c2-c2-hc      1      2      3     18
-    10 c2-c2-c2-hc     16      3      2      6
-    11 hc-c2-c2-hc      6      2      3     17
-    12 hc-c2-c2-hc      6      2      3     18
-    13 c2-c2-c2-hc     16      3      2      7
-    14 hc-c2-c2-hc      7      2      3     17
-    15 hc-c2-c2-hc      7      2      3     18
-    16 c2-c2-c_1-o_1      8      9     10     11
-    17 c2-c2-c_1-o      8      9     10     12
-    18 hc-c2-c_1-o_1     13      9     10     11
-    19 hc-c2-c_1-o     13      9     10     12
-    20 hc-c2-c_1-o_1     14      9     10     11
-    21 hc-c2-c_1-o     14      9     10     12
-    22 c2-c_1-o-ho      9     10     12     15
-    23 o_1-c_1-o-ho     11     10     12     15
 
 Impropers
 

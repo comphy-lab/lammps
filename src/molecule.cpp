@@ -1834,6 +1834,7 @@ void Molecule::from_json(const std::string &molid, const json &moldata)
   }
 
   if (auto_angleflag) generate_angles();
+  if (auto_dihedralflag) generate_dihedrals();
 
   // body particle must have natom = 1
   // set radius by having body class compute its own radius
@@ -2683,6 +2684,7 @@ void Molecule::read(int flag)
   }
 
   if (flag && auto_angleflag) generate_angles();
+  if (flag && auto_dihedralflag) generate_dihedrals();
 
   // body particle must have natom = 1
   // set radius by having body class compute its own radius
@@ -3549,7 +3551,6 @@ void Molecule::generate_angles()
   tagint m, atom1, atom2, atom3;
   std::vector<int> atom1_found, atom2_found, atom3_found;
 
-  // initialize
   for (int i = 0; i < natoms; i++) {
     count[i] = 0;
     num_angle[i] = 0;
@@ -3620,71 +3621,99 @@ void Molecule::generate_angles()
 void Molecule::generate_dihedrals()
 {
   if (!bondflag)
-    error->all(FLERR, fileiarg, "Cannot generate dihedrals without bonds");
+    error->all(FLERR, fileiarg, "Cannot generate angles without bonds");
 
   int newton_bond = force->newton_bond;
-  tagint m, atom1, atom3;
+  int itype;
+  tagint m, atom1, atom2, atom3, atom4;
+  std::vector<int> atom1_found, atom2_found, atom3_found, atom4_found;
 
-  // initialize
   for (int i = 0; i < natoms; i++) {
     count[i] = 0;
     num_dihedral[i] = 0;
   }
 
-  for (int atom2 = 0; atom2 < natoms; atom2++) {
-    for (int j = 0; j < num_bond[atom2]; j++) {
-      atom1 = bond_atom[atom2][j] - 1;
-      for (int k = atom2 + 1; k < num_bond[atom2]; k++) {
-        atom3 = bond_atom[atom2][k] - 1;
-        count[atom2]++;
+  for (atom2 = 0; atom2 < natoms; atom2++) {
+    for (int i = 0; i < nspecial[atom2][0]; i++) {
+      atom3 = special[atom2][i] - 1;
+      if (atom3 <= atom2) continue;
 
-        if (newton_bond) {
-          count[atom1]++;
-          count[atom3]++;
-        }
-      }
-    }
-  } 
+      for (int j = 0; j < nspecial[atom2][0]; j++) {
+        atom1 = special[atom2][j] - 1;
+        if (atom3 == atom1) continue;
 
-  angle_per_atom = 0;
-  for (int i = 0; i < natoms; i++) angle_per_atom = MAX(angle_per_atom, count[i]);
+        for (int k = 0; k < nspecial[atom3][0]; k++) {
+          atom4 = special[atom3][k] - 1;
+          if (atom4 == atom2) continue;
+          if (atom4 == atom1) continue;
 
-  memory->create(angle_type, natoms, angle_per_atom, "molecule:angle_type");
-  memory->create(angle_atom1, natoms, angle_per_atom, "molecule:angle_atom1");
-  memory->create(angle_atom2, natoms, angle_per_atom, "molecule:angle_atom2");
-  memory->create(angle_atom3, natoms, angle_per_atom, "molecule:angle_atom3");
+          count[atom2]++;
+          if (newton_bond == 0) {
+            count[atom1]++;
+            count[atom3]++;
+            count[atom4]++;
+          }
 
-  for (int atom2 = 0; atom2 < natoms; atom2++) {
-    for (int j = 0; j < num_bond[atom2]; j++) {
-      atom1 = bond_atom[atom2][j];
-      for (int k = atom2 + 1; k < num_bond[atom2]; k++) {
-        atom3 = bond_atom[atom2][k];
-        m = atom2;
-
-        //angle_type[m][num_angle[m]] = itype;
-        angle_atom1[m][num_angle[m]] = atom1;
-        angle_atom2[m][num_angle[m]] = atom2 + 1;
-        angle_atom3[m][num_angle[m]] = atom3;
-        num_angle[m]++;
-        if (newton_bond == 0) {
-          m = atom1 - 1;
-          // angle_type[m][num_angle[m]] = itype;
-          angle_atom1[m][num_angle[m]] = atom1;
-          angle_atom2[m][num_angle[m]] = atom2 + 1;
-          angle_atom3[m][num_angle[m]] = atom3;
-          num_angle[m]++;
-          m = atom3 - 1;
-          // angle_type[m][num_angle[m]] = itype;
-          angle_atom1[m][num_angle[m]] = atom1;
-          angle_atom2[m][num_angle[m]] = atom2 + 1;
-          angle_atom3[m][num_angle[m]] = atom3;
-          num_angle[m]++;
+          ndihedrals++;
+          atom1_found.push_back(atom1 + 1);
+          atom2_found.push_back(atom2 + 1);
+          atom3_found.push_back(atom3 + 1);
+          atom4_found.push_back(atom4 + 1);
         }
       }
     }
   }
 
-  angleflag = 1;
+  dihedral_per_atom = 0;
+  for (int i = 0; i < natoms; i++) dihedral_per_atom = MAX(dihedral_per_atom, count[i]);
+
+  memory->create(dihedral_type, natoms, dihedral_per_atom, "molecule:dihedral_type");
+  memory->create(dihedral_atom1, natoms, dihedral_per_atom, "molecule:dihedral_atom1");
+  memory->create(dihedral_atom2, natoms, dihedral_per_atom, "molecule:dihedral_atom2");
+  memory->create(dihedral_atom3, natoms, dihedral_per_atom, "molecule:dihedral_atom3");
+  memory->create(dihedral_atom4, natoms, dihedral_per_atom, "molecule:dihedral_atom4");
+
+  for (int i = 0; i < ndihedrals; i++) {
+    atom1 = atom1_found[i];
+    atom2 = atom2_found[i];
+    atom3 = atom3_found[i];
+    atom4 = atom4_found[i];
+    itype = atom->lmap->infer_dihedraltype(type[atom1 - 1], type[atom2 - 1], type[atom3 - 1], type[atom4 - 1]);
+    if (itype == -1) error->one(FLERR,"Unable to infer dihedral type while autogenerating dihedrals.");
+    m = atom2 - 1;
+    ndihedraltypes = MAX(ndihedraltypes, itype);
+    dihedral_type[m][num_dihedral[m]] = itype;
+    dihedral_atom1[m][num_dihedral[m]] = atom1;
+    dihedral_atom2[m][num_dihedral[m]] = atom2;
+    dihedral_atom3[m][num_dihedral[m]] = atom3;
+    dihedral_atom4[m][num_dihedral[m]] = atom4;
+    num_dihedral[m]++;
+    if (newton_bond == 0) {
+      m = atom1 - 1;
+      dihedral_type[m][num_dihedral[m]] = itype;
+      dihedral_atom1[m][num_dihedral[m]] = atom1;
+      dihedral_atom2[m][num_dihedral[m]] = atom2;
+      dihedral_atom3[m][num_dihedral[m]] = atom3;
+      dihedral_atom4[m][num_dihedral[m]] = atom4;
+      num_dihedral[m]++;
+      m = atom3 - 1;
+      dihedral_type[m][num_dihedral[m]] = itype;
+      dihedral_atom1[m][num_dihedral[m]] = atom1;
+      dihedral_atom2[m][num_dihedral[m]] = atom2;
+      dihedral_atom3[m][num_dihedral[m]] = atom3;
+      dihedral_atom4[m][num_dihedral[m]] = atom4;
+      num_dihedral[m]++;
+      m = atom4 - 1;
+      dihedral_type[m][num_dihedral[m]] = itype;
+      dihedral_atom1[m][num_dihedral[m]] = atom1;
+      dihedral_atom2[m][num_dihedral[m]] = atom2;
+      dihedral_atom3[m][num_dihedral[m]] = atom3;
+      dihedral_atom4[m][num_dihedral[m]] = atom4;
+      num_dihedral[m]++;
+    }
+  }
+
+  dihedralflag = 1;
 }
 
 /* ----------------------------------------------------------------------

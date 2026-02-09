@@ -2,7 +2,6 @@ this is a molecule template for: water condensation, pre-reacting
 
      15 atoms
      14 bonds
-     30 dihedrals
       0 impropers
 
 Coords
@@ -94,35 +93,3 @@ Bonds
     13 c_1-o     10     12
     14 o-ho     12     15
 
-Dihedrals
-
-     1 hn-n-c2-c2      4      1      2      3
-     2 hn-n-c2-hc      4      1      2      6
-     3 hn-n-c2-hc      4      1      2      7
-     4 hn-n-c2-c2      5      1      2      3
-     5 hn-n-c2-hc      5      1      2      6
-     6 hn-n-c2-hc      5      1      2      7
-     7 c_1-n-c2-c2     10      1      2      3
-     8 c_1-n-c2-hc     10      1      2      6
-     9 c_1-n-c2-hc     10      1      2      7
-    10 c2-n-c_1-c2      2      1     10      9
-    11 c2-n-c_1-o_1      2      1     10     11
-    12 c2-n-c_1-o      2      1     10     12
-    13 hn-n-c_1-c2      4      1     10      9
-    14 hn-n-c_1-o_1      4      1     10     11
-    15 hn-n-c_1-o      4      1     10     12
-    16 hn-n-c_1-c2      5      1     10      9
-    17 hn-n-c_1-o_1      5      1     10     11
-    18 hn-n-c_1-o      5      1     10     12
-    19 c2-c2-c_1-o_1      8      9     10     11
-    20 c2-c2-c_1-o      8      9     10     12
-    21 c2-c2-c_1-n      8      9     10      1
-    22 hc-c2-c_1-o_1     13      9     10     11
-    23 hc-c2-c_1-o     13      9     10     12
-    24 hc-c2-c_1-n     13      9     10      1
-    25 hc-c2-c_1-o_1     14      9     10     11
-    26 hc-c2-c_1-o     14      9     10     12
-    27 hc-c2-c_1-n     14      9     10      1
-    28 c2-c_1-o-ho      9     10     12     15
-    29 o_1-c_1-o-ho     11     10     12     15
-    30 n-c_1-o-ho      1     10     12     15

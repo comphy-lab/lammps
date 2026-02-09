@@ -2,7 +2,6 @@ this is a molecule template for: initial nylon crosslink, post-reacting
 
      18 atoms
      17 bonds
-     39 dihedrals
       0 impropers
 
 Coords
@@ -88,44 +87,3 @@ Bonds
     16 c_1-o     10     12
     17 o-ho     12     15
 
-Dihedrals
-
-     1 hn-n-c2-c2      4      1      2      3
-     2 hn-n-c2-hc      4      1      2      6
-     3 hn-n-c2-hc      4      1      2      7
-     4 hn-n-c2-c2      5      1      2      3
-     5 hn-n-c2-hc      5      1      2      6
-     6 hn-n-c2-hc      5      1      2      7
-     7 c_1-n-c2-c2     10      1      2      3
-     8 c_1-n-c2-hc     10      1      2      6
-     9 c_1-n-c2-hc     10      1      2      7
-    10 c2-n-c_1-c2      2      1     10      9
-    11 c2-n-c_1-o_1      2      1     10     11
-    12 c2-n-c_1-o      2      1     10     12
-    13 hn-n-c_1-c2      4      1     10      9
-    14 hn-n-c_1-o_1      4      1     10     11
-    15 hn-n-c_1-o      4      1     10     12
-    16 hn-n-c_1-c2      5      1     10      9
-    17 hn-n-c_1-o_1      5      1     10     11
-    18 hn-n-c_1-o      5      1     10     12
-    19 n-c2-c2-c2      1      2      3     16
-    20 n-c2-c2-hc      1      2      3     17
-    21 n-c2-c2-hc      1      2      3     18
-    22 c2-c2-c2-hc     16      3      2      6
-    23 hc-c2-c2-hc      6      2      3     17
-    24 hc-c2-c2-hc      6      2      3     18
-    25 c2-c2-c2-hc     16      3      2      7
-    26 hc-c2-c2-hc      7      2      3     17
-    27 hc-c2-c2-hc      7      2      3     18
-    28 c2-c2-c_1-o_1      8      9     10     11
-    29 c2-c2-c_1-o      8      9     10     12
-    30 c2-c2-c_1-n      8      9     10      1
-    31 hc-c2-c_1-o_1     13      9     10     11
-    32 hc-c2-c_1-o     13      9     10     12
-    33 hc-c2-c_1-n     13      9     10      1
-    34 hc-c2-c_1-o_1     14      9     10     11
-    35 hc-c2-c_1-o     14      9     10     12
-    36 hc-c2-c_1-n     14      9     10      1
-    37 c2-c_1-o-ho      9     10     12     15
-    38 o_1-c_1-o-ho     11     10     12     15
-    39 n-c_1-o-ho      1     10     12     15

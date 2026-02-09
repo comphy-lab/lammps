@@ -2,7 +2,6 @@ this is a molecule template for: water condensation, post-reacting
 
      15 atoms
      13 bonds
-     16 dihedrals
       2 impropers
 
 Coords
@@ -92,25 +91,6 @@ Bonds
     11 c2-hc      9     14
     12 c_1-o_1     10     11
     13 hw-o*     15     12
-
-Dihedrals
-
-     1 hn-n-c2-c2      5      1      2      3
-     2 hn-n-c2-hc      5      1      2      6
-     3 hn-n-c2-hc      5      1      2      7
-     4 c_1-n-c2-c2     10      1      2      3
-     5 c_1-n-c2-hc     10      1      2      6
-     6 c_1-n-c2-hc     10      1      2      7
-     7 c2-n-c_1-c2      2      1     10      9
-     8 c2-n-c_1-o_1      2      1     10     11
-     9 hn-n-c_1-c2      5      1     10      9
-    10 hn-n-c_1-o_1      5      1     10     11
-    11 c2-c2-c_1-o_1      8      9     10     11
-    12 c2-c2-c_1-n      8      9     10      1
-    13 hc-c2-c_1-o_1     13      9     10     11
-    14 hc-c2-c_1-n     13      9     10      1
-    15 hc-c2-c_1-o_1     14      9     10     11
-    16 hc-c2-c_1-n     14      9     10      1
 
 Impropers
 
