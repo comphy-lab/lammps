@@ -522,8 +522,10 @@ int LabelMap::infer_dihedraltype(const std::vector<std::string> &mytypes)
    the symmetry of the improper is encoded in improper.symmatoms
 ------------------------------------------------------------------------- */
 
-int LabelMap::infer_impropertype(int type1, int type2, int type3, int type4)
+int LabelMap::infer_impropertype(int type1, int type2, int type3, int type4, std::array<int, 4> *iorder)
 {
+  if (!force->improper) return 0;
+
   // check for out of range input
   if ((type1 < 1) || (type1 > natomtypes) || (type2 < 1) || (type2 > natomtypes) || (type3 < 1) ||
       (type3 > natomtypes) || (type4 < 1) || (type4 > natomtypes))
@@ -538,7 +540,7 @@ int LabelMap::infer_impropertype(int type1, int type2, int type3, int type4)
   for (int i = 0; i < 4; i++)
     if (mytypes[i].empty()) return 0;
 
-  return infer_impropertype(mytypes);
+  return infer_impropertype(mytypes, iorder);
 }
 
 /* ----------------------------------------------------------------------
@@ -548,41 +550,46 @@ int LabelMap::infer_impropertype(int type1, int type2, int type3, int type4)
    the symmetry of the improper is encoded in improper.symmatoms
 ------------------------------------------------------------------------- */
 
-int LabelMap::infer_impropertype(const std::vector<std::string> &mytypes)
+int LabelMap::infer_impropertype(const std::vector<std::string> &mytypes, std::array<int, 4> *iorder)
 {
-  // search for matching improper type label
+  if (!force->improper) return 0;
 
+  // search for matching improper type label
   int out = 0;
-  int status, nlist;
+  int status, navail_types = 4; //nlist;
   std::vector<std::string> itypes(4);
-  std::vector<std::string> list1(4);
-  std::vector<std::string> list2(4);
+  std::vector<std::string> avail_types = mytypes;
+  if (iorder) *iorder = {1, 2, 3, 4};
   for (int i = 0; i < nimpropertypes; i++) {
-    nlist = 0;
     status = parse_typelabel(4, itypelabel[i], itypes);
     if (status != -1) {
       if (mytypes[0] == itypes[0] && mytypes[1] == itypes[1] && mytypes[2] == itypes[2] &&
           mytypes[3] == itypes[3]) return i + 1;
       for (int j = 0; j < 4; j++) {
-        if (force->improper && (force->improper->symmatoms[j] == 1)) {
+        if (force->improper->symmatoms[j] == 1) {
           if (mytypes[j] != itypes[j]) {
             status = -1;
             break;
           }
         } else {
-          list1[nlist] = mytypes[j];
-          list2[nlist++] = itypes[j];
+          avail_types[j] = "";
+          navail_types--;
         }
       }
       if (status == -1) continue;
-      std::sort(list1.begin(), list1.end());
-      std::sort(list2.begin(), list2.end());
-      for (int j = 0; j < nlist; j++)
-        if (list1[j] != list2[j]) {
-          status = -1;
-          break;
+
+      for (int j = 0; j < 4; j++) {
+        if (force->improper->symmatoms[j] == 0) {
+          for (int k = 0; k < 4; k++) {
+            if (itypes[j] == avail_types[k]) {
+              avail_types[k] = "";
+              navail_types--;
+              if (iorder) (*iorder)[j] = k;
+            }
+          }
         }
-      if (status != -1) out = -(i + 1);
+      }
+      if (navail_types == 0) out = -(i + 1);
     }
   }
   return out;
