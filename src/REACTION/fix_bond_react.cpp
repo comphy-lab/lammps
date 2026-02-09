@@ -3804,7 +3804,8 @@ void FixBondReact::update_everything()
                     int local4 = atom->map(tag4);
                     if (local1 < 0 || local2 < 0 || local3 < 0 || local4 < 0)
                       error->one(FLERR,"Bond/react: Fix bond/react needs ghost atoms from further away");
-                    int signed_itype = atom->lmap->infer_impropertype(type[local1],type[local2],type[local3],type[local4]);
+                    std::array<int, 4> iorder;
+                    int signed_itype = atom->lmap->infer_impropertype(type[local1],type[local2],type[local3],type[local4],&iorder);
                     if (!signed_itype) error->one(FLERR,"Bond/react: Unable to infer improper type from wildcard atoms");
                     improper_type[jjlocal][p] = std::abs(signed_itype);
                     if (signed_itype > 0) {
@@ -3813,7 +3814,12 @@ void FixBondReact::update_everything()
                       improper_atom3[jjlocal][p] = tag3;
                       improper_atom4[jjlocal][p] = tag4;
                     } else {
-                      // need some fancy logic here
+                      int* iptrs[4] = {&improper_atom1[jjlocal][p],&improper_atom2[jjlocal][p],
+                                       &improper_atom3[jjlocal][p],&improper_atom4[jjlocal][p]};
+                      // types guaranteed to match, just in wrong order
+                      std::array<tagint, 4> tags = {tag1, tag2, tag3, tag4};
+                      for (int iatom = 0; iatom < 4; iatom++)
+                        *iptrs[iatom] = tags[iorder[iatom]];
                     }
                   } else {
                     improper_type[jjlocal][p] = rxn.product->improper_type[j][p];
@@ -3853,7 +3859,8 @@ void FixBondReact::update_everything()
                       int local4 = atom->map(tag4);
                       if (local1 < 0 || local2 < 0 || local3 < 0 || local4 < 0)
                         error->one(FLERR,"Bond/react: Fix bond/react needs ghost atoms from further away");
-                      int signed_itype = atom->lmap->infer_impropertype(type[local1],type[local2],type[local3],type[local4]);
+                      std::array<int, 4> iorder;
+                      int signed_itype = atom->lmap->infer_impropertype(type[local1],type[local2],type[local3],type[local4],&iorder);
                       if (!signed_itype) error->one(FLERR,"Bond/react: Unable to infer improper type from wildcard atoms");
                       improper_type[jjlocal][insert_num] = std::abs(signed_itype);
                       if (signed_itype > 0) {
@@ -3862,7 +3869,12 @@ void FixBondReact::update_everything()
                         improper_atom3[jjlocal][p] = tag3;
                         improper_atom4[jjlocal][p] = tag4;
                       } else {
-                        // need some fancy logic here
+                        int* iptrs[4] = {&improper_atom1[jjlocal][p],&improper_atom2[jjlocal][p],
+                                         &improper_atom3[jjlocal][p],&improper_atom4[jjlocal][p]};
+                        // types guaranteed to match, just in wrong order
+                        std::array<tagint, 4> tags = {tag1, tag2, tag3, tag4};
+                        for (int iatom = 0; iatom < 4; iatom++)
+                          *iptrs[iatom] = tags[iorder[iatom]];
                       }
                     } else {
                       improper_type[jjlocal][insert_num] = rxn.product->improper_type[j][p];
