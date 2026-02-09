@@ -10,7 +10,7 @@ Syntax
 
    labelmap option args
 
-* *option* = *atom* or *bond* or *angle* or *dihedral* or *improper* or *clear* or *write*
+* *option* = *atom* or *bond* or *angle* or *dihedral* or *improper* or *clear* or *write* or *check_labels*
 
   .. parsed-literal::
 
@@ -18,6 +18,8 @@ Syntax
      *write* arg = filename
      *atom* or *bond* or *angle* or *dihedral* or *improper*
        args = list of one or more numeric-type/type-label pairs
+     *check_labels* value = string
+       string = string containing any of the following characters: 'b', 'a', 'd', or 'i'
 
 Examples
 """"""""
@@ -78,6 +80,29 @@ The *write* option takes a filename as argument and writes the current
 label mappings to a file as a sequence of *labelmap* commands, so the
 file can be copied into a new LAMMPS input file or read in using the
 :doc:`include <include>` command.
+
+The *check_labels* keyword provides a warning if the type label of a bond,
+angle, dihedral, or improper defined in the simulation is not consistent
+with the atom types of its constituent atoms.  The *check_labels* value is
+a single string that should contain one or more of the characters 'b',
+'a', 'd', and 'i', which correspond to bonds, angles, dihedrals, and
+impropers, respectively.  For example, the keyword/value pair
+'check_labels badi' will check all the type labels of all higher-order
+interactions, while 'check_labels adi' will only check type labels for
+angles, dihedrals, and impropers.  The *check_labels* keyword requires a
+specific :doc:`type label<Howto_type_labels>` format to infer the types of
+higher-order interactions.  Bond, angle, dihedral, and improper type
+labels must contain their constituent atom types delimited by hyphens,
+e.g., 'c2-c2-c2-n' for a dihedral that contains three atoms of type 'c2'
+and one atom of 'n'.  If the constituent atoms do not have these atom
+types in the proper order, a warning will be generated when using this
+*check_types* keyword.  Certain symmetries are considered to account for
+equivalent ways of writing higher-order interactions.  Type labels for
+bonds, angles, and dihedrals are assumed to be equivalent to those written
+in reverse order.  For example, an angle with type label 'c1-c2-n' is
+equivalent to 'n-c2-c1'.  Symmetries for impropers are more complex and
+are described on the doc page for each improper style in the 'Symmetry
+convention' section.
 
 ----------
 
