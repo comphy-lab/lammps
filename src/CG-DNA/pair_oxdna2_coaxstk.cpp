@@ -41,6 +41,29 @@ using namespace MFOxdna;
 
 PairOxdna2Coaxstk::PairOxdna2Coaxstk(LAMMPS *lmp) : Pair(lmp)
 {
+  // dummy sequence-specific coaxial stacking strength
+  // A:0 C:1 G:2 T:3, 3'- [i][j] -5'
+
+  eta_cxst[0][0] = 1.00000;
+  eta_cxst[1][0] = 1.00000;
+  eta_cxst[2][0] = 1.00000;
+  eta_cxst[3][0] = 1.00000;
+
+  eta_cxst[0][1] = 1.00000;
+  eta_cxst[1][1] = 1.00000;
+  eta_cxst[2][1] = 1.00000;
+  eta_cxst[3][1] = 1.00000;
+
+  eta_cxst[0][2] = 1.00000;
+  eta_cxst[1][2] = 1.00000;
+  eta_cxst[2][2] = 1.00000;
+  eta_cxst[3][2] = 1.00000;
+
+  eta_cxst[0][3] = 1.00000;
+  eta_cxst[1][3] = 1.00000;
+  eta_cxst[2][3] = 1.00000;
+  eta_cxst[3][3] = 1.00000;
+
   single_enable = 0;
   writedata = 0;
   trim_flag = 0;
@@ -583,6 +606,7 @@ void PairOxdna2Coaxstk::coeff(int narg, char **arg)
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi;
+  int imod4,jmod4;
   utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
   utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
 
@@ -707,19 +731,34 @@ void PairOxdna2Coaxstk::coeff(int narg, char **arg)
     MPI_Bcast(&BB_cxst1_one, 1, MPI_DOUBLE, 0, world);
   }
 
-  b_cxst_lo_one = 0.25 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one)/
-        (0.5 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one) -
-        k_cxst_one * 0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one)/k_cxst_one);
+  // parameters depending on base step
+  for (int i = ilo; i <= ihi; i++) {
+    imod4 = i%4;
+    if (imod4 == 0) imod4 = 4;
+      
+    for (int j = jlo; j <= jhi; j++) {
+      jmod4 = j%4;
+      if (jmod4 == 0) jmod4 = 4;
+          
+      k_cxst[i][j] = k_cxst_one * eta_cxst[imod4-1][jmod4-1];
+          
+      b_cxst_lo[i][j] = 0.25 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one)/
+            (0.5 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one) -
+            k_cxst[i][j] * 0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one)/k_cxst[i][j]);
+            
+      cut_cxst_lc[i][j] = cut_cxst_lo_one - 0.5 * (cut_cxst_lo_one - cut_cxst_0_one)/b_cxst_lo[i][j];
+      
+      b_cxst_hi[i][j] = 0.25 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one)/
+            (0.5 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one) -
+            k_cxst[i][j] * 0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one)/k_cxst[i][j]);
+      
+      cut_cxst_hc[i][j] = cut_cxst_hi_one - 0.5* (cut_cxst_hi_one - cut_cxst_0_one)/b_cxst_hi[i][j];
+      cutsq_cxst_hc[i][j] = cut_cxst_hc[i][j]*cut_cxst_hc[i][j];
+            
+    } 
+  }  
 
-  cut_cxst_lc_one = cut_cxst_lo_one - 0.5 * (cut_cxst_lo_one - cut_cxst_0_one)/b_cxst_lo_one;
-
-  b_cxst_hi_one = 0.25 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one)/
-        (0.5 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one) -
-        k_cxst_one * 0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one)/k_cxst_one);
-
-  cut_cxst_hc_one = cut_cxst_hi_one - 0.5* (cut_cxst_hi_one - cut_cxst_0_one)/b_cxst_hi_one;
-
-
+  // uniform parameters
   b_cxst1_one = a_cxst1_one*a_cxst1_one*dtheta_cxst1_ast_one*dtheta_cxst1_ast_one/(1-a_cxst1_one*dtheta_cxst1_ast_one*dtheta_cxst1_ast_one);
   dtheta_cxst1_c_one = 1/(a_cxst1_one*dtheta_cxst1_ast_one);
 
@@ -735,15 +774,10 @@ void PairOxdna2Coaxstk::coeff(int narg, char **arg)
   for (int i = ilo; i <= ihi; i++) {
     for (int j = MAX(jlo,i); j <= jhi; j++) {
 
-      k_cxst[i][j] = k_cxst_one;
       cut_cxst_0[i][j] = cut_cxst_0_one;
       cut_cxst_c[i][j] = cut_cxst_c_one;
       cut_cxst_lo[i][j] = cut_cxst_lo_one;
       cut_cxst_hi[i][j] = cut_cxst_hi_one;
-      cut_cxst_lc[i][j] = cut_cxst_lc_one;
-      cut_cxst_hc[i][j] = cut_cxst_hc_one;
-      b_cxst_lo[i][j] = b_cxst_lo_one;
-      b_cxst_hi[i][j] = b_cxst_hi_one;
 
       a_cxst1[i][j] = a_cxst1_one;
       theta_cxst1_0[i][j] = theta_cxst1_0_one;
@@ -807,15 +841,10 @@ double PairOxdna2Coaxstk::init_one(int i, int j)
     error->all(FLERR,"Offset not supported in oxDNA");
   }
 
-  k_cxst[j][i] = k_cxst[i][j];
   cut_cxst_0[j][i] = cut_cxst_0[i][j];
   cut_cxst_c[j][i] = cut_cxst_c[i][j];
   cut_cxst_lo[j][i] = cut_cxst_lo[i][j];
   cut_cxst_hi[j][i] = cut_cxst_hi[i][j];
-  b_cxst_lo[j][i] = b_cxst_lo[i][j];
-  b_cxst_hi[j][i] = b_cxst_hi[i][j];
-  cut_cxst_lc[j][i] = cut_cxst_lc[i][j];
-  cut_cxst_hc[j][i] = cut_cxst_hc[i][j];
 
   a_cxst1[j][i] = a_cxst1[i][j];
   theta_cxst1_0[j][i] = theta_cxst1_0[i][j];
@@ -843,9 +872,6 @@ double PairOxdna2Coaxstk::init_one(int i, int j)
 
   AA_cxst1[j][i] = AA_cxst1[i][j];
   BB_cxst1[j][i] = BB_cxst1[i][j];
-
-  cutsq_cxst_hc[i][j] = cut_cxst_hc[i][j]*cut_cxst_hc[i][j];
-  cutsq_cxst_hc[j][i] = cutsq_cxst_hc[i][j];
 
   // set the master list distance cutoff
   return cut_cxst_hc[i][j];
