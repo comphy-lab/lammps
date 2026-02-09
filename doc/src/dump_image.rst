@@ -251,7 +251,7 @@ Here are five sample images, rendered as JPEG or PNG files.
 A detailed discussion of advanced graphics settings and workflows
 with examples is provided in the :doc:`Howto_viz` howto.
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
    support for writing compressed TGA files
 
@@ -332,7 +332,7 @@ prefixed by "c\_", "f\_", or "v\_", respectively.  Note that the
 *diameter* setting can be overridden with a numeric value applied to all
 atoms by the optional *adiam* keyword.
 
-.. versionchanged:: TBD
+.. versionchanged:: 11Feb2026
 
    Replaced colors "aqua" and "cyan" with "cyan" and "magenta"
 
@@ -447,7 +447,7 @@ If *type* is specified for the *color* value, then the color of each
 bond is determined by its bond type.  By default the mapping of bond
 types to colors is as follows:
 
-.. versionchanged:: TBD
+.. versionchanged:: 11Feb2026
 
    Replaced colors "aqua" and "cyan" with "cyan" and "magenta"
 
@@ -525,7 +525,7 @@ and repeats itself for types > 6.
 
 ----------
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 The *ellipsoid* keyword can be used when :doc:`atom_style ellipsoid
 <atom_style>` is used to define particles as ellipsoids, and will draw
@@ -610,7 +610,7 @@ increased when using either the :doc:`create_box <create_box>` or the
 
 ----------
 
-.. versionchanged:: TBD
+.. versionchanged:: 11Feb2026
 
    Support for several fix styles added and more flexible color selection
 
@@ -641,7 +641,7 @@ commands are in the :doc:`Howto_viz` howto.
 
 .. versionadded:: 10Sep2025
 
-.. versionchanged:: TBD
+.. versionchanged:: 11Feb2026
 
    draw style *transparent* was added
 
@@ -748,7 +748,7 @@ is a fraction of the shortest box length in x,y,z (for 3d) or x,y (for
 2d).  The color of the box boundaries can be set with the "dump_modify
 boxcolor" command.
 
-.. versionchanged:: TBD
+.. versionchanged:: 11Feb2026
 
 The *axes* keyword determines if and how the coordinate axes are
 rendered in the image as arrows with the letters 'X', 'Y', and 'Z' to
@@ -1034,7 +1034,7 @@ The *backcolor* sets the background color of the images.  The color
 name can be any of the 140 pre-defined colors (see below) or a color
 name defined by the dump_modify color option.
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 The *backcolor2* sets a second background color of the images to create
 a vertical background gradient.  The regular background color is the
@@ -1125,7 +1125,7 @@ pre-defined color names with new RBG values.
 
 **Transparency settings for atoms bonds and standard visualization objects**
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 Various graphical objects in *dump image* output can be rendered in a
 transparent fashion using the so-called screen-door transparency method.
@@ -1142,7 +1142,7 @@ combination with *fsaa on*.
 
 ----------
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 The *fcolor* keyword sets the color of any image objects created by a
 fix when using the color style "const".  The first argument is the fix ID
