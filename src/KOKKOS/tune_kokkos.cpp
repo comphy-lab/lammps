@@ -33,7 +33,7 @@ using namespace LAMMPS_NS;
 
 TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
   int _nparams, const char* _name) : Pointers(lmp), kernel_type(_kernel_type),
-  interval(nevery), num_params(_nparams), performance(nullptr), logfile(nullptr)
+  interval(nevery), num_params(_nparams), performance(nullptr), tuning_logfile(nullptr)
 {
   ncombinations = 0;
   allocated = 0;
@@ -68,12 +68,12 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
 
   if (comm->me == 0) {
     std::string filename = fmt::format("tuning-{}.log", name);
-    logfile = fopen(filename.c_str(),"w");
-    if (logfile == nullptr)
+    tuning_logfile = fopen(filename.c_str(),"w");
+    if (tuning_logfile == nullptr)
       error->all(FLERR,"Cannot open Kokkos tuning logfile {}: {}",
         filename.c_str(), utils::getsyserror());
   } else {
-    logfile = nullptr;
+    tuning_logfile = nullptr;
   }
 
   allocate(num_params);
@@ -84,9 +84,9 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
 TuneKokkos::~TuneKokkos()
 {
   if (performance) delete[] performance;
-  if (logfile) {
-    fclose(logfile);
-    logfile = nullptr;
+  if (tuning_logfile) {
+    fclose(tuning_logfile);
+    tuning_logfile = nullptr;
   }
 }
 
@@ -181,9 +181,9 @@ void TuneKokkos::tuning_kernel_params()
 
   bigint elapsed_steps = update->ntimestep - update->beginstep;
   if (elapsed_steps == 0) {
-    if (logfile) {
-      utils::print(logfile, "A new run starts...\n");
-      fflush(logfile);
+    if (tuning_logfile) {
+      utils::print(tuning_logfile, "A new run starts...\n");
+      fflush(tuning_logfile);
     }
   }
 
@@ -207,13 +207,13 @@ void TuneKokkos::tuning_kernel_params()
 
       performance[combination_idx] = 1.0 / tps;
 
-      if (logfile) {
+      if (tuning_logfile) {
         std::string mesg = fmt::format("t = {}: combination_idx {}: team size = {} ",
                             update->ntimestep, combination_idx, current_team_size);
         mesg += fmt::format("vector size = {} ", current_vector_size);
         mesg += fmt::format("perf = {:.1f} TPS\n", performance[combination_idx]);
-        utils::print(logfile, "{}", mesg.c_str());
-        fflush(logfile);
+        utils::print(tuning_logfile, "{}", mesg.c_str());
+        fflush(tuning_logfile);
 
         #ifdef TUNE_DEBUG
         utils::logmesg(lmp, mesg);
@@ -237,15 +237,15 @@ void TuneKokkos::tuning_kernel_params()
     int opt_idx = get_optimal_combination_idx();
     set_param_values(opt_idx);
 
-    if (logfile) {
+    if (tuning_logfile) {
       int opt_ts = 0, opt_vs = 0;
       get_current_params(opt_idx, opt_ts, opt_vs);
       std::string mesg = fmt::format("Finished tuning. Found the optimal params: ");
       mesg += fmt::format("team size = {} vector size = {} ",
                       opt_ts, opt_vs);
       mesg += fmt::format(" perf = {:.1f} TPS\n", opt_perf);
-      utils::print(logfile, "{}", mesg.c_str());
-      fflush(logfile);
+      utils::print(tuning_logfile, "{}", mesg.c_str());
+      fflush(tuning_logfile);
     }
 
     // reset combination_idx to zero to be ready for another scan if needed
@@ -280,6 +280,9 @@ void TuneKokkos::set_team_size_values(const std::vector<int>& tsizes)
 
   if (performance) delete[] performance;
   performance = new double[ncombinations];
+
+  scanning_completed = 0;
+  combination_idx = 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -302,6 +305,9 @@ void TuneKokkos::set_vector_size_values(const std::vector<int>& vsizes)
 
   if (performance) delete[] performance;
   performance = new double[ncombinations];
+
+  scanning_completed = 0;
+  combination_idx = 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -387,18 +393,23 @@ void TuneKokkos::set_param_values(int cidx)
 
   } else if (kernel_type == NBIN) {
 
+    // leave it to the caller to decide how to use the team size and/or vector size
+
   } else if (kernel_type == FIX) {
 
   } else if (kernel_type == COMPUTE) {
 
+    // leave it to the caller to decide how to use the team size and/or vector size
+
   } else if (kernel_type == GENERIC) {
 
+    // leave it to the caller to decide how to use the team size and/or vector size
   }
 
 }
 
 /* ----------------------------------------------------------------------
-   find the optimal performance
+   find the optimal performance from the stored performance data
    return the index of the optimal parameter set
 ------------------------------------------------------------------------- */
 
@@ -439,7 +450,7 @@ void TuneKokkos::regular_performance_check()
   if (tps <= 0.0) return;
   double perf = 1.0 / tps;
 
-  if (logfile) {
+  if (tuning_logfile) {
     int opt_ts = 0, opt_vs = 0;
     int opt_idx = get_optimal_combination_idx();
     get_current_params(opt_idx, opt_ts, opt_vs);
@@ -448,8 +459,8 @@ void TuneKokkos::regular_performance_check()
     mesg += fmt::format("team size = {} vector size = {} ",
                         opt_ts, opt_vs);
     mesg += fmt::format(" current perf = {:.1f} TPS\n", perf);
-    utils::print(logfile, "{}", mesg.c_str());
-    fflush(logfile);
+    utils::print(tuning_logfile, "{}", mesg.c_str());
+    fflush(tuning_logfile);
     #ifdef TUNE_DEBUG
     utils::logmesg(lmp, mesg);
     #endif
@@ -475,8 +486,8 @@ void TuneKokkos::regular_performance_check()
                         update->ntimestep, diff * 100.0, elapsed_steps);
       mesg += fmt::format(" opt perf = {:.1f} current perf = {:.1f} ", opt_perf, perf);
       mesg += fmt::format("Re-triggering scan\n");
-      utils::print(logfile, "{}", mesg.c_str());
-      fflush(logfile);
+      utils::print(tuning_logfile, "{}", mesg.c_str());
+      fflush(tuning_logfile);
       #ifdef TUNE_DEBUG
       utils::logmesg(lmp, mesg);
       #endif

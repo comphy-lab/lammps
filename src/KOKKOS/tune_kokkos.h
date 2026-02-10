@@ -56,7 +56,7 @@ class TuneKokkos : protected Pointers {
   double last_cpu;           // last CPU time when timing info was collected
   int firststep;             // 1 if first timestep for timing info collection
 
-  FILE *logfile;             // logfile
+  FILE *tuning_logfile;      // logfile
   std::string name;          // name of the tuner instance
 
   double get_timing_info();                   // get the elapsed time from the last call

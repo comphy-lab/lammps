@@ -128,10 +128,10 @@ Syntax
           Nteamsize = # of threads per block used for the pair compute kernel
         *nbin/atoms/per/bin = Natomsperbin
           Natomsperbin = # of atoms per bin used for neighbor list builds
-        *nbor/block/size = blocksize
-          blocksize = # of GPU threads per block for the flat neighbor build method
-        *bond/block/size = blocksize
-          blocksize = # of GPU threads per block for the bond force computation
+        *nbor/chunk/size = chunksize
+          chunksize = # of iterations each thread will perform for the flat neighbor build method
+        *bond/chunk/size = blocksize
+          chunksize = # of iterations each thread will perform for the bond force computation
         *auto/tuning = nevery
           nevery = # timesteps between autotuning adjustments (default = 0, no autotuning)
     *omp* args = Nthreads keyword value ...
