@@ -4,11 +4,13 @@ extern "C" {
 #include "lmp_f2c.h"
 doublereal droundup_lwork__(integer *lwork)
 {
-    const doublereal eps = 2.2204460492503131E-16;
     doublereal ret_val;
+    doublereal eps;
+    extern doublereal dlamch_(char *, ftnlen);
     ret_val = (doublereal)(*lwork);
     if ((integer)ret_val < *lwork) {
-        ret_val *= (1.000000000000000 + eps);
+        eps = dlamch_((char *)"E", (ftnlen)1);
+        ret_val *= eps + 1.;
     }
     return ret_val;
 }

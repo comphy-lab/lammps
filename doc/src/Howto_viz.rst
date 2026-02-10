@@ -34,6 +34,83 @@ rarely needed these days.
 
 ------------------------
 
+Basic workflow for loading LAMMPS trajectories in VMD
+=====================================================
+
+VMD can read native LAMMPS dump files (in text format not binary) and
+several other dump styles.  The native LAMMPS format is preferred since
+it contains simulation box information.  VMD does not support reading
+data files directly, but `the TopoTools plugin
+<https://www.ks.uiuc.edu/Research/vmd/plugins/topotools/>`_ does.  This
+step is usually necessary, since the LAMMPS dump files do not contain
+information about the molecular topology and elements and that
+information can be obtained from the data file.  There also is the
+`pbctools plugin
+<https://www.ks.uiuc.edu/Research/vmd/plugins/pbctools/>`_ that can be
+used for "repairing" bonds that are broken because one of its atom
+passed through a periodic boundary.  Because of using the plugins, the
+following commands need to be typed into the VMD console to read a
+trajectory.  The following commands are based on the ``peptide`` example
+to which the command ``dump 1 all atom 10 dump.peptide`` was added.
+Note the use of the group "all" in contrast to the commented out dump
+commands that use the group "peptide".  This is to match the number of
+atoms in the data file.  VMD does not support cases where the number of
+atoms change or you are trying to read in a subset of a system unless
+*all* files contain the same subset.
+
+.. code-block:: Tcl
+
+   # load data file including its coordinates
+   topo readlammpsdata data.peptide full
+   # atom style full is the default ^^^^ and can be omitted
+
+   # try to infer missing atom properties from available information
+   topo guessatom lammps data
+
+   # now add one of more dump files
+   mol addfile dump.peptide type lammpstrj waitfor all
+   # we tell VMD which file type ^^^^^^^^^ if the filename does not end in .lammpstrj
+
+   # jump to the first frame with the data file coordinates
+   animate goto 0
+   # if needed  use the following command to try and repair broken bonds
+   # pbc join fragment -now
+
+   # unwrap the entire trajectory to repair all broken bonds
+   # this is faster and more accurate than running `pbc join` for all frames
+   pbc unwrap -all
+   pbc wrap -all -compound fragment -orthorhombic
+   #       remove for triclinic box ^^^^^^^^^^^^^
+
+   # delete the coordinate frame from the data file
+   animate delete beg 0 end 0 top
+   # write out the topology information without coordinates to a PSF file
+   animate write psf peptide.psf top
+   # and the processed trajectory data to a DCD file for future use
+   animate write dcd peptide.dcd top waitfor all
+
+   ###############################################################
+   # the steps up to this line only need to be run once
+   ###############################################################
+   # set visualization defaults
+   display perspective orthographic
+   mol default style Licorice
+   mol default material Diffuse
+   display backgroundgradient on
+
+   # delete molecule and load psf and dcd file
+   mol delete top
+   mol new peptide.psf
+   mol addfile peptide.dcd waitfor all
+   pbc box
+
+To automate this process, you can also save these commands to a file,
+e.g. ``peptide.vmd`` and then load this file from the VMD "File" menu
+with "Load Visualization State..."  or type in the command console
+``play peptide.vmd``.
+
+------------------------
+
 Advanced graphics features in the *dump image* command
 ======================================================
 
@@ -149,8 +226,8 @@ with six colors as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types :math:`> 6`.  This mapping can be changed by the
 "dump_modify acolor" command, though.  If you want to change the color of a
@@ -704,8 +781,16 @@ styles:
    * :doc:`fix graphics/arrows <fix_graphics_arrows>`
    * :doc:`fix graphics/isosurface <fix_graphics_isosurface>`
    * :doc:`fix graphics/labels <fix_graphics_labels>`
+   * :doc:`fix graphics/lines <fix_graphics_lines>`
    * :doc:`fix graphics/objects <fix_graphics_objects>`
    * :doc:`fix graphics/periodic <fix_graphics_periodic>`
+   * :doc:`fix atom/swap <fix_atom_swap>`
+   * :doc:`fix bond/break <fix_bond_break>`
+   * :doc:`fix bond/create <fix_bond_create>`
+   * :doc:`fix bond/create/angle <fix_bond_create>`
+   * :doc:`fix bond/react <fix_bond_react>`
+   * :doc:`fix mol/swap <fix_mol_swap>`
+   * :doc:`fix neighbor/swap <fix_neighbor_swap>`
    * :doc:`fix indent <fix_indent>`
    * :doc:`fix reaxff/bonds <fix_reaxff_bonds>`
    * :doc:`fix smd/wall_surface <fix_smd_wall_surface>`
@@ -899,3 +984,31 @@ Fix smd/wall_surface
 Fix :doc:`smd/wall_surface <fix_smd_wall_surface>` of the :ref:`MACHDYN
 package <pkg-machdyn>` creates a custom wall from a mesh of triangles
 that is read from an STL format file.
+
+MC package fixes
+^^^^^^^^^^^^^^^^
+
+Several fixes from the :ref:`MC package <pkg-mc>` have support for
+adding graphics to a visualization.  These are typically added spheres
+of the atoms that were swapped or involved in a bond that was created or
+broken.  Below is an example for input commands that use both, :doc:`fix
+bond/break <fix_bond_break>` and :doc:`fix bond/create/angle
+<fix_bond_create>`.  Atoms involved in a created bond are highlighted in
+red while atoms involved in a broken bond in yellow.
+
+.. code-block:: LAMMPS
+
+   fix break all bond/break 500 1 2.5
+   fix form all bond/create/angle 500 1 1 2.2 1 aconstrain 90.0 180
+   variable nsteps index 500
+   fix label all graphics/labels ${nsteps}  &
+         text "Step: $(step:%05.0f)  Bonds created: $(f_form[2]:%02.0f)  Bonds broken: $(f_break[2]:%02.0f)" 500 32 0 &
+         fontcolor black framecolor black
+
+   dump viz all image ${nsteps} breakable-*.png type type size 1000 400 zoom 8 shiny 0.1 fsaa yes &
+               bond atom 0.5 view 160 90 box no 0.0 ssao yes 238174 0.6 &
+               fix break const 0 1.5 fix form const 0 1.5 fix label const 1 0
+   dump_modify viz pad 6 backcolor white element C acolor 1 gray adiam 1 0.5 &
+               fcolor break goldenrod fcolor form firebrick
+
+.. image:: img/break-create.png

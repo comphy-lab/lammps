@@ -83,7 +83,7 @@ Syntax
          yes/no = do or do not draw simulation box lines
          diam = diameter of box lines as fraction of shortest box length
        *axes* values = axes length diam = draw xyz axes
-         axes = *yes* or *no* = do or do not draw xyz axes lines next to simulation box
+         axes = *yes* or *no* or *center* or *lowerleft* or *lowerright* or *upperleft* or *upperright* = do or do not draw xyz axes arrows and select location
          length = length of axes lines as fraction of respective box lengths
          diam = diameter of axes lines as fraction of shortest box length
        *region* values = region-ID color drawstyle [opacity (optional) npoints (optional) diameter (optional)]
@@ -332,6 +332,10 @@ prefixed by "c\_", "f\_", or "v\_", respectively.  Note that the
 *diameter* setting can be overridden with a numeric value applied to all
 atoms by the optional *adiam* keyword.
 
+.. versionchanged:: TBD
+
+   Replaced colors "aqua" and "cyan" with "cyan" and "magenta"
+
 If *type* is specified for the *color* setting, then the color of each
 atom is determined by its atom type.  By default the mapping of types
 to colors is as follows:
@@ -340,8 +344,8 @@ to colors is as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types :math:`> 6`.  This mapping can be changed by the
 "dump_modify acolor" command, as described below.
@@ -443,12 +447,16 @@ If *type* is specified for the *color* value, then the color of each
 bond is determined by its bond type.  By default the mapping of bond
 types to colors is as follows:
 
+.. versionchanged:: TBD
+
+   Replaced colors "aqua" and "cyan" with "cyan" and "magenta"
+
 * type 1 = red
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for bond types > 6.  This mapping can be changed by
 the "dump_modify bcolor" command, as described below.
@@ -483,8 +491,8 @@ mapping of types to colors is as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types > 6.  There is not yet an option to
 change this via the dump_modify command.
@@ -510,8 +518,8 @@ default the mapping of types to colors is as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types > 6.
 
@@ -533,8 +541,8 @@ particle.  By default the mapping of types to colors is as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types > 6.
 
@@ -591,8 +599,8 @@ list of colors is by default as follows:
 * type 2 = green
 * type 3 = blue
 * type 4 = yellow
-* type 5 = aqua
-* type 6 = cyan
+* type 5 = cyan
+* type 6 = magenta
 
 and repeats itself for types > 6.  This list can by changed with the
 :doc:`dump_modify acolor <dump_image>` command.  If more different
@@ -635,7 +643,7 @@ commands are in the :doc:`Howto_viz` howto.
 
 .. versionchanged:: TBD
 
-   draw style *transparency* was added
+   draw style *transparent* was added
 
 The *region* keyword can be used to create a graphical representation of
 a :doc:`region <region>`.  This can be helpful in debugging the location
@@ -645,7 +653,7 @@ region-ID, the color for drawing the region, the draw style, and
 possible additional arguments as required by the draw style.
 
 Four draw styles of representing a region are available: *filled*\,
-*transparency*\, *frame*\, and *points*.  With draw style *filled* the
+*transparent*\, *frame*\, and *points*.  With draw style *filled* the
 surface of the region is triangulated and drawn.  For region styles that
 support open faces, surfaces for such open faces are skipped.  The style
 *transparent* is like *filled* but takes an additional parameter in the
@@ -740,16 +748,23 @@ is a fraction of the shortest box length in x,y,z (for 3d) or x,y (for
 2d).  The color of the box boundaries can be set with the "dump_modify
 boxcolor" command.
 
+.. versionchanged:: TBD
+
 The *axes* keyword determines if and how the coordinate axes are
-rendered as thin cylinders in the image.  If *no* is set, then the
-axes are not drawn and the *length* and *diam* settings are ignored.
-If *yes* is set, 3 thin cylinders are drawn to represent the x,y,z
-axes in colors red,green,blue.  The origin of these cylinders will be
-offset from the lower left corner of the box by 10%.  The *length*
-setting determines how long the cylinders will be as a fraction of the
-respective box lengths.  The *diam* setting determines their thickness
-as a fraction of the shortest box length in x,y,z (for 3d) or x,y (for
-2d).
+rendered in the image as arrows with the letters 'X', 'Y', and 'Z' to
+indicate the direction.  If *no* is set, then the axes are not drawn and
+the *length* and *diam* settings are ignored.  If *yes* or *lowerleft*
+is set, 3 arrows are drawn to represent the x,y,z axes in colors red,
+green, and blue, respectively.  The origin of these arrows will be
+offset from the lower left corner of the box by 10%.  If *center* is set
+the origin of the arrows will be in the center of the box. If
+*lowerright* is set, the origin of the arrows will be offset by 20% of
+the lower right corner of the box. If *upperleft* or *upperight* are set
+the origin of the arrows will be placed similar to the lower corner
+arrows, but offset by 20% from the top.  The *length* setting determines
+how long the cylinders will be as a fraction of the respective box
+lengths.  The *diam* setting determines their thickness as a fraction of
+the shortest box length in x,y,z (for 3d) or x,y (for 2d).
 
 The *subbox* keyword determines if and how processor subdomain
 boundaries are rendered as thin cylinders in the image.  If *no* is
@@ -844,15 +859,16 @@ color map.  The color map is used to assign a specific RGB
 based on the atom's attribute, which is a numeric value, e.g. its
 x-component of velocity if the atom-attribute "vx" was specified.
 
-The basic idea of a color map is that the atom-attribute will be
-within a range of values, and that range is associated with a series
-of colors (e.g. red, blue, green).  An atom's specific value (vx =
--3.2) can then mapped to the series of colors (e.g. halfway between
-red and blue), and a specific color is determined via an interpolation
-procedure.
+The basic idea of a color map is that the atom-attribute will be within
+a range of values, and that range is associated with a series of colors
+(e.g. red, blue, green).  An atom's specific value (vx = -3.2) can then
+mapped to the series of colors (e.g. halfway between red and blue), and
+a specific color is determined via an interpolation procedure.  There
+are some example command lines and resulting images at the end of this
+paragraph.
 
-There are many possible options for the color map, enabled by the
-*amap* keyword.  Here are the details.
+There are many possible options for the color map, enabled by the *amap*
+keyword.  Here are the details.
 
 The *lo* and *hi* settings determine the range of values allowed for
 the atom attribute.  If numeric values are used for *lo* and/or *hi*,
@@ -946,23 +962,71 @@ green.  The color of the atom is the color of its bin.  Note that the
 sequential color map is really a shorthand way of defining a discrete
 color map without having to specify where all the bin boundaries are.
 
-Here is an example of using a sequential color map to color all the
-atoms in individual molecules with a different color.  See the
-examples/pour/in.pour.2d.molecule input script for an example of how
-this is used.
+Here is an example for using a sequential color map to color all the
+atoms in individual molecules with a different color.  See below for how
+this can be used in the ``examples/pour/in.pour.2d.molecule`` input
+script.
 
 .. code-block:: LAMMPS
 
-   variable        colors string &
-                   "red green blue yellow white &
-                   purple pink orange lime gray"
-   variable        mol atom mol%10
-   dump            1 all image 250 image.*.jpg v_mol type &
-                   zoom 1.6 adiam 1.5
-   dump_modify     1 pad 5 amap 0 10 sa 1 10 ${colors}
+   variable    colors string "red green blue yellow white purple pink orange lime gray"
+   variable    mol2 atom mol%10
+   dump        2 all image 250 image.*.png v_mol2 type region slab black frame 0.25 &
+                               zoom 3.5 adiam 1.4 size 1200 600 fsaa yes shiny 0.2
+   dump_modify 2 pad 5 amap 0 10 sa 1 10 ${colors} backcolor darkgray boxcolor silver
 
-In this case, 10 colors are defined, and molecule IDs are
-mapped to one of the colors, even if there are 1000s of molecules.
+In this case, 10 colors are defined, and molecule IDs are mapped to one
+of the colors, even if there are 1000s of molecules.
+
+Here is an example for coloring the atoms in the "melt" example by their
+velocity with a custom continuous color map and using :doc:`fix
+graphics/labels <fix_graphics_labels>` to generate a colormap legend:
+
+.. code-block:: LAMMPS
+
+   # compute atom velocity
+   variable vel atom sqrt(vx*vx+vy*vy+vz*vz)
+
+   # overlay the top of the image with a horizontal color scale legend
+   fix obj all graphics/labels 100 colorscale "viz" "Atom Velocity (sigma/tau)" 300.0 560.0 0.0 size 24 &
+               transcolor none framecolor darkgray backcolor darkgray length 800
+
+   # output images and set atom color by the value of the variable "vel"
+   dump viz all image 100 melt-*.png v_vel type size 600 600 zoom 1.4 shiny 0.2 view 85 -5 &
+                          fsaa yes box yes 0.025 center s 0.5 0.5 0.6 fix obj const 1 0
+   dump_modify viz pad 6 boxcolor lightskyblue backcolor darkgray backcolor2 silver adiam * 1.2
+
+   # customize the color map using a continuous map with fractions
+   dump_modify viz amap 0.0 8 cf 0.0 6 min red 0.2 organge 0.4 green 0.6 darkcyan 0.8 blue max purple
+
+This is an altered *dump_modify* command line to generate a sequential color map:
+
+.. code-block:: LAMMPS
+
+   dump_modify viz amap 0.5 5.5 sf 0.167 6 red orange green darkcyan blue purple
+
+And another altered *dump_modify* command line to generate a discrete color map using absolute values:
+
+.. code-block:: LAMMPS
+
+   dump_modify viz amap 0.5 5.5 da 0.0 6 min 1.0 red 1.0 2.0 orange 2.0 3.0 green 3.0 4.0 darkcyan
+
+.. |amap1| image:: img/amap1.png
+   :width: 38%
+.. |amap2| image:: img/amap2.png
+   :width: 19%
+.. |amap3| image:: img/amap3.png
+   :width: 19%
+.. |amap4| image:: img/amap4.png
+   :width: 19%
+
+Here are images of the examples from above.
+
+|amap1|  |amap2|  |amap3|  |amap4|
+
+.. raw:: html
+
+   <center>(Click to see the full-size images)</center>
 
 ----------
 
@@ -1203,13 +1267,13 @@ The defaults for the dump image and dump movie keywords are as follows:
 
 The defaults for the dump_modify keywords specific to dump image and dump movie are as follows:
 
-* acolor = \* red/green/blue/yellow/aqua/cyan
+* acolor = \* red/green/blue/yellow/cyan/magenta
 * adiam = \* 1.0
 * amap = min max cf 0.0 2 min blue max red
 * atrans = 1.0
 * backcolor = black
 * backcolor2 = none
-* bcolor = \* red/green/blue/yellow/aqua/cyan
+* bcolor = \* red/green/blue/yellow/cyan/magenta
 * bdiam = \* 0.5
 * btrans = 1.0
 * boxcolor = yellow
