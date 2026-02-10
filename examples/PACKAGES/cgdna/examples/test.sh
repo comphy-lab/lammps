@@ -8,14 +8,14 @@ SRCDIR=$LMPDIR/src
 EXDIR=$LMPDIR/examples/PACKAGES/cgdna/examples/lj_units
 
 if [ $# -eq 1 ] && [ $1 = run ]; then
-#  echo '# Compiling executable in' $SRCDIR | tee -a $EXDIR/test.log
+  echo '# Compiling executable in' $SRCDIR | tee -a $EXDIR/test.log
 
-#  cd $SRCDIR
-#  make clean-all | tee -a $EXDIR/test.log
-#  make purge | tee -a $EXDIR/test.log
-#  make pu | tee -a $EXDIR/test.log
-#  make ps | tee -a $EXDIR/test.log
-#  make -j14 mpi | tee -a $EXDIR/test.log
+  cd $SRCDIR
+  make clean-all | tee -a $EXDIR/test.log
+  make purge | tee -a $EXDIR/test.log
+  make pu | tee -a $EXDIR/test.log
+  make ps | tee -a $EXDIR/test.log
+  make -j14 mpi | tee -a $EXDIR/test.log
 
   ######################################################
   printf '\n# Running oxDNA duplex1 NVE test\n' | tee -a $EXDIR/test.log
