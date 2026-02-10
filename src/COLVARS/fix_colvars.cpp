@@ -307,7 +307,7 @@ int FixColvars::modify_param(int narg, char **arg)
   int return_code = parse_fix_arguments(narg, arg, false);
   if (return_code >= 0) {
     // update colvars in case fix_modify changed them
-    update_colvars();
+    setup_colvars();
     // A fix colvars argument was detected, return directly
     return return_code;
   }
@@ -333,12 +333,12 @@ int FixColvars::modify_param(int narg, char **arg)
     error_code |= script->run(narg+1, script_args);
     std::string const result = proxy->get_error_msgs() + script->str_result();
     if (result.size()) utils::logmesg(lmp, result);
-    update_colvars();
+    setup_colvars();
     // free allocated memory
     for (int i = 0; i < narg; i++) memory->sfree(script_args[i+1]);
     return (error_code == COLVARSCRIPT_OK) ? narg : 0;
   } else { // me != 0
-    update_colvars(); // communicate colvars changes to mpi ranks > 0
+    setup_colvars(); // communicate colvars changes to mpi ranks > 0
     // Return without error, don't block Fix::modify_params()
     return narg;
   }
@@ -375,7 +375,7 @@ void FixColvars::setup(int vflag)
   MPI_Status status;
   MPI_Request request;
   if (me == 0) setup_io();
-  update_colvars();
+  setup_colvars();
   init_taglist();
   // determine size of comm buffer
   nme=0;
@@ -757,7 +757,7 @@ double FixColvars::compute_scalar()
 
 /* ---------------------------------------------------------------------- */
 
-void FixColvars::update_colvars()
+void FixColvars::setup_colvars()
 {
   int sizes_array[2];
   if (comm->me == 0) {

@@ -110,7 +110,7 @@ class FixColvars : public Fix {
   /// \param fix_constructor If false, try Colvars commands if LAMMPS ones fail
   int parse_fix_arguments(int narg, char **arg, bool fix_constructor = true);
 
-  void update_colvars(); // update size_array_rows and colname_auto
+  void setup_colvars(); // update size_array_rows and colname_auto
 };
 
 }    // namespace LAMMPS_NS
