@@ -30,9 +30,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.duplex1 > /dev/null
   mv log.lammps log.$DATE.duplex1.g++.1
   grep -e '[0-9]  ekin' log.$DATE.duplex1.g++.1 > e_test.1.dat
-  grep -e '[0-9]  ekin' ../log*1 > e_old.1.dat
+  grep -e '[0-9]  ekin' ../log*1 > e_ref.1.dat
 
-  paste e_old.1.dat e_test.1.dat |
+  paste e_ref.1.dat e_test.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -78,9 +78,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.duplex1 > /dev/null
   mv log.lammps log.$DATE.duplex1.g++.4
   grep -e '[0-9]  ekin' log.$DATE.duplex1.g++.4 > e_test.4.dat
-  grep -e '[0-9]  ekin' ../log*4 > e_old.4.dat
+  grep -e '[0-9]  ekin' ../log*4 > e_ref.4.dat
 
-  paste e_old.4.dat e_test.4.dat |
+  paste e_ref.4.dat e_test.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -135,9 +135,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.duplex2 > /dev/null
   mv log.lammps log.$DATE.duplex2.g++.1
   grep -e '[0-9]  ekin' log.$DATE.duplex2.g++.1 > e_test.1.dat
-  grep -e '[0-9]  ekin' ../log*1 > e_old.1.dat
+  grep -e '[0-9]  ekin' ../log*1 > e_ref.1.dat
 
-  paste e_old.1.dat e_test.1.dat |
+  paste e_ref.1.dat e_test.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -183,9 +183,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.duplex2 > /dev/null
   mv log.lammps log.$DATE.duplex2.g++.4
   grep -e '[0-9]  ekin' log.$DATE.duplex2.g++.4 > e_test.4.dat
-  grep -e '[0-9]  ekin' ../log*4 > e_old.4.dat
+  grep -e '[0-9]  ekin' ../log*4 > e_ref.4.dat
 
-  paste e_old.4.dat e_test.4.dat |
+  paste e_ref.4.dat e_test.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -242,9 +242,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.duplex1 > /dev/null
   mv log.lammps log.$DATE.duplex1.g++.1
   grep -e '[0-9]  ekin' log.$DATE.duplex1.g++.1 > e_test.1.dat
-  grep -e '[0-9]  ekin' ../log*1 > e_old.1.dat
+  grep -e '[0-9]  ekin' ../log*1 > e_ref.1.dat
 
-  paste e_old.1.dat e_test.1.dat |
+  paste e_ref.1.dat e_test.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -290,9 +290,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.duplex1 > /dev/null
   mv log.lammps log.$DATE.duplex1.g++.4
   grep -e '[0-9]  ekin' log.$DATE.duplex1.g++.4 > e_test.4.dat
-  grep -e '[0-9]  ekin' ../log*4 > e_old.4.dat
+  grep -e '[0-9]  ekin' ../log*4 > e_ref.4.dat
 
-  paste e_old.4.dat e_test.4.dat |
+  paste e_ref.4.dat e_test.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -347,9 +347,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.duplex2 > /dev/null
   mv log.lammps log.$DATE.duplex2.g++.1
   grep -e '[0-9]  ekin' log.$DATE.duplex2.g++.1 > e_test.1.dat
-  grep -e '[0-9]  ekin' ../log*1 > e_old.1.dat
+  grep -e '[0-9]  ekin' ../log*1 > e_ref.1.dat
 
-  paste e_old.1.dat e_test.1.dat |
+  paste e_ref.1.dat e_test.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -395,9 +395,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.duplex2 > /dev/null
   mv log.lammps log.$DATE.duplex2.g++.4
   grep -e '[0-9]  ekin' log.$DATE.duplex2.g++.4 > e_test.4.dat
-  grep -e '[0-9]  ekin' ../log*4 > e_old.4.dat
+  grep -e '[0-9]  ekin' ../log*4 > e_ref.4.dat
 
-  paste e_old.4.dat e_test.4.dat |
+  paste e_ref.4.dat e_test.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -452,9 +452,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.duplex3 > /dev/null
   mv log.lammps log.$DATE.duplex3.g++.1
   grep -e '[0-9]  ekin' log.$DATE.duplex3.g++.1 > e_test.1.dat
-  grep -e '[0-9]  ekin' ../log*1 > e_old.1.dat
+  grep -e '[0-9]  ekin' ../log*1 > e_ref.1.dat
 
-  paste e_old.1.dat e_test.1.dat |
+  paste e_ref.1.dat e_test.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -500,9 +500,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.duplex3 > /dev/null
   mv log.lammps log.$DATE.duplex3.g++.4
   grep -e '[0-9]  ekin' log.$DATE.duplex3.g++.4 > e_test.4.dat
-  grep -e '[0-9]  ekin' ../log*4 > e_old.4.dat
+  grep -e '[0-9]  ekin' ../log*4 > e_ref.4.dat
 
-  paste e_old.4.dat e_test.4.dat |
+  paste e_ref.4.dat e_test.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -559,9 +559,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.duplex4.4type > /dev/null
   mv log.lammps log.$DATE.duplex4.4type.g++.1
   grep -e '[0-9]  ekin' log.$DATE.duplex4.4type.g++.1 > e_test.4type.1.dat
-  grep -e '[0-9]  ekin' ../log*4type*1 > e_old.4type.1.dat
+  grep -e '[0-9]  ekin' ../log*4type*1 > e_ref.4type.1.dat
 
-  paste e_old.4type.1.dat e_test.4type.1.dat |
+  paste e_ref.4type.1.dat e_test.4type.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -606,9 +606,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.duplex4.8type > /dev/null
   mv log.lammps log.$DATE.duplex4.8type.g++.1
   grep -e '[0-9]  ekin' log.$DATE.duplex4.8type.g++.1 > e_test.8type.1.dat
-  grep -e '[0-9]  ekin' ../log*8type*1 > e_old.8type.1.dat
+  grep -e '[0-9]  ekin' ../log*8type*1 > e_ref.8type.1.dat
 
-  paste e_old.8type.1.dat e_test.8type.1.dat |
+  paste e_ref.8type.1.dat e_test.8type.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -654,9 +654,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.duplex4.4type > /dev/null
   mv log.lammps log.$DATE.duplex4.4type.g++.4
   grep -e '[0-9]  ekin' log.$DATE.duplex4.4type.g++.4 > e_test.4type.4.dat
-  grep -e '[0-9]  ekin' ../log*4type*4 > e_old.4type.4.dat
+  grep -e '[0-9]  ekin' ../log*4type*4 > e_ref.4type.4.dat
 
-  paste e_old.4type.4.dat e_test.4type.4.dat |
+  paste e_ref.4type.4.dat e_test.4type.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -701,9 +701,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.duplex4.8type > /dev/null
   mv log.lammps log.$DATE.duplex4.8type.g++.4
   grep -e '[0-9]  ekin' log.$DATE.duplex4.8type.g++.4 > e_test.8type.4.dat
-  grep -e '[0-9]  ekin' ../log*8type*4 > e_old.8type.4.dat
+  grep -e '[0-9]  ekin' ../log*8type*4 > e_ref.8type.4.dat
 
-  paste e_old.8type.4.dat e_test.8type.4.dat |
+  paste e_ref.8type.4.dat e_test.8type.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -758,9 +758,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.dsring > /dev/null
   mv log.lammps log.$DATE.dsring.g++.1
   grep -e '[0-9]  ekin' log.$DATE.dsring.g++.1 > e_test.1.dat
-  grep -e '[0-9]  ekin' ../log*1 > e_old.1.dat
+  grep -e '[0-9]  ekin' ../log*1 > e_ref.1.dat
 
-  paste e_old.1.dat e_test.1.dat |
+  paste e_ref.1.dat e_test.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -806,9 +806,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.dsring > /dev/null
   mv log.lammps log.$DATE.dsring.g++.4
   grep -e '[0-9]  ekin' log.$DATE.dsring.g++.4 > e_test.4.dat
-  grep -e '[0-9]  ekin' ../log*4 > e_old.4.dat
+  grep -e '[0-9]  ekin' ../log*4 > e_ref.4.dat
 
-  paste e_old.4.dat e_test.4.dat |
+  paste e_ref.4.dat e_test.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -863,9 +863,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 1 ./lmp_mpi -in in.duplex2 > /dev/null
   mv log.lammps log.$DATE.duplex2.g++.1
   grep -e '[0-9]  ekin' log.$DATE.duplex2.g++.1 > e_test.1.dat
-  grep -e '[0-9]  ekin' ../log*1 > e_old.1.dat
+  grep -e '[0-9]  ekin' ../log*1 > e_ref.1.dat
 
-  paste e_old.1.dat e_test.1.dat |
+  paste e_ref.1.dat e_test.1.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
@@ -911,9 +911,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   mpirun -np 4 ./lmp_mpi -in in.duplex2 > /dev/null
   mv log.lammps log.$DATE.duplex2.g++.4
   grep -e '[0-9]  ekin' log.$DATE.duplex2.g++.4 > e_test.4.dat
-  grep -e '[0-9]  ekin' ../log*4 > e_old.4.dat
+  grep -e '[0-9]  ekin' ../log*4 > e_ref.4.dat
 
-  paste e_old.4.dat e_test.4.dat |
+  paste e_ref.4.dat e_test.4.dat |
 
   awk -v tol="$REL_TOL" '
     failed == 0 {
