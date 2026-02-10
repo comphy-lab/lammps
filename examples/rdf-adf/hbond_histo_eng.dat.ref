@@ -1,4 +1,4 @@
-# Histogrammed data for fix ahist
+# Histogrammed data for fix bhist
 # TimeStep Number-of-bins Total-counts Missing-counts Min-value Max-value
 # Bin Coord Count Count/Total
 1000 32 26018 0 -2.072096376147826 7.383129904149904

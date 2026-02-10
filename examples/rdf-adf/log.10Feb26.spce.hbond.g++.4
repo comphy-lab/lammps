@@ -1,4 +1,4 @@
-LAMMPS (10 Dec 2025 - Development - patch_10Dec2025-764-gd3e6dfba7a-modified)
+LAMMPS (10 Dec 2025 - Development - patch_10Dec2025-1012-gb68a0deda4-modified)
 OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
   using 1 OpenMP thread(s) per MPI task
 # Liquid water hydrogen bonds
@@ -13,7 +13,7 @@ angle_style     harmonic
 read_data       data.spce
 Reading data file ...
   orthogonal box = (0.02645 0.02645 0.02641) to (35.5328 35.5328 35.4736)
-  1 by 1 by 1 MPI processor grid
+  2 by 2 by 1 MPI processor grid
   reading atoms ...
   4500 atoms
   scanning bonds ...
@@ -21,7 +21,7 @@ Reading data file ...
   scanning angles ...
   1 = max angles/atom
   orthogonal box = (0.02645 0.02645 0.02641) to (35.5328 35.5328 35.4736)
-  1 by 1 by 1 MPI processor grid
+  2 by 2 by 1 MPI processor grid
   reading bonds ...
   3000 bonds
   reading angles ...
@@ -33,8 +33,8 @@ Finding 1-2 1-3 1-4 neighbors ...
      1 = max # of 1-3 neighbors
      1 = max # of 1-4 neighbors
      2 = max # of special neighbors
-  special bonds CPU = 0.001 seconds
-  read_data CPU = 0.016 seconds
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.013 seconds
 
 pair_coeff      * * 0.0     1.0
 pair_coeff      1 1 0.15535 3.166
@@ -57,7 +57,7 @@ Finding SHAKE clusters ...
        0 = # of size 3 clusters
        0 = # of size 4 clusters
     1500 = # of frozen angles
-  find clusters CPU = 0.001 seconds
+  find clusters CPU = 0.000 seconds
 fix             2 all nvt temp 300.0 300.0 100.0
 
 velocity all create 300.0 6244325
@@ -72,7 +72,7 @@ PPPM initialization ...
   estimated absolute RMS force accuracy = 0.000394674
   estimated relative force accuracy = 1.188549e-06
   using double precision FFTW3
-  3d grid and FFT values/proc = 103823 64000
+  3d grid and FFT values/proc = 34263 16000
 Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
 Neighbor list info ...
   update: every = 1 steps, delay = 2 steps, check = yes
@@ -86,40 +86,40 @@ Neighbor list info ...
       pair build: half/bin/newton
       stencil: half/bin/3d
       bin: standard
-Per MPI rank memory allocation (min/avg/max) = 35.63 | 35.63 | 35.63 Mbytes
+Per MPI rank memory allocation (min/avg/max) = 13.44 | 13.44 | 13.44 Mbytes
    Step          Temp          E_pair         E_mol          TotEng         Press     
          0   300           -16730.553      0             -14048.719     -230.00191    
-       100   283.44728     -17046.902      0             -14513.039     -279.23003    
-       200   298.75278     -16803.728      0             -14133.042      311.62555    
-       300   296.64986     -16627.338      0             -13975.451      430.25402    
-       400   303.83446     -16663.253      0             -13947.14       120.76433    
-       500   298.11259     -16756.08       0             -14091.117      108.87681    
-Loop time of 13.1886 on 1 procs for 500 steps with 4500 atoms
+       100   283.44728     -17046.902      0             -14513.039     -279.22996    
+       200   298.75278     -16803.728      0             -14133.042      311.62539    
+       300   296.64989     -16627.338      0             -13975.451      430.25288    
+       400   303.83477     -16663.255      0             -13947.139      120.73687    
+       500   298.11277     -16756.073      0             -14091.109      108.84597    
+Loop time of 3.90822 on 4 procs for 500 steps with 4500 atoms
 
-Performance: 6.551 ns/day, 3.663 hours/ns, 37.912 timesteps/s, 170.602 katom-step/s
-99.6% CPU use with 1 MPI tasks x 1 OpenMP threads
+Performance: 22.107 ns/day, 1.086 hours/ns, 127.936 timesteps/s, 575.710 katom-step/s
+99.3% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 9.7677     | 9.7677     | 9.7677     |   0.0 | 74.06
-Bond    | 0.00021068 | 0.00021068 | 0.00021068 |   0.0 |  0.00
-Kspace  | 1.9298     | 1.9298     | 1.9298     |   0.0 | 14.63
-Neigh   | 1.3222     | 1.3222     | 1.3222     |   0.0 | 10.03
-Comm    | 0.037148   | 0.037148   | 0.037148   |   0.0 |  0.28
-Output  | 0.00015372 | 0.00015372 | 0.00015372 |   0.0 |  0.00
-Modify  | 0.12208    | 0.12208    | 0.12208    |   0.0 |  0.93
-Other   |            | 0.00922    |            |       |  0.07
+Pair    | 2.4963     | 2.5784     | 2.691      |   4.4 | 65.97
+Bond    | 0.00022052 | 0.00023976 | 0.00026395 |   0.0 |  0.01
+Kspace  | 0.71608    | 0.82847    | 0.91105    |   7.7 | 21.20
+Neigh   | 0.36458    | 0.36465    | 0.36475    |   0.0 |  9.33
+Comm    | 0.058999   | 0.059333   | 0.059653   |   0.1 |  1.52
+Output  | 0.00010848 | 0.00011988 | 0.00015199 |   0.0 |  0.00
+Modify  | 0.067612   | 0.067777   | 0.067875   |   0.0 |  1.73
+Other   |            | 0.009177   |            |       |  0.23
 
-Nlocal:           4500 ave        4500 max        4500 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
-Nghost:          21246 ave       21246 max       21246 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
-Neighs:     2.6015e+06 ave  2.6015e+06 max  2.6015e+06 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
+Nlocal:           1125 ave        1133 max        1114 min
+Histogram: 1 0 0 0 0 0 2 0 0 1
+Nghost:        12240.5 ave       12297 max       12195 min
+Histogram: 2 0 0 0 0 0 0 1 0 1
+Neighs:         650375 ave      671795 max      631470 min
+Histogram: 1 0 0 1 0 1 0 0 0 1
 
-Total # of neighbors = 2601503
-Ave neighs/atom = 578.11178
+Total # of neighbors = 2601500
+Ave neighs/atom = 578.11111
 Ave special neighs/atom = 2
 Neighbor list builds = 45
 Dangerous builds = 0
@@ -133,7 +133,7 @@ group           hgroup type 2
 variable        nmol equal count(ogroup)
 
 # water oxygen atoms are both hydrogen bond donor and acceptor
-compute         hb       all      hbond/local 3.3 30.0 ogroup ogroup hgroup dist hdist angle ehb
+compute         hb       all      hbond/local 3.3 30.0 ogroup ogroup hgroup dist hdist angle ehb # ecut 1.5
 
 # output all hydrogen bonds. each line contains: hydrogen-ID donor-ID acceptor-ID r_DA r_HA theta_HDA e_hb
 #dump            hb       all      local 100 hbonds.dump c_hb[*]
@@ -153,7 +153,7 @@ fix       dhist all ave/histo 100 10 1000 2.3 3.3 30 c_hb[4] file hbond_histo_di
 # get histogram of hydrogen bond angle
 fix       ahist all ave/histo 100 10 1000 0.0 30.0 30 c_hb[6] file hbond_histo_angle.dat mode vector kind local
 # get histogram of hydrogen bond strength
-fix       ahist all ave/histo 100 10 1000 -1.0 7.5 30 c_hb[7] file hbond_histo_eng.dat mode vector kind local beyond extra
+fix       bhist all ave/histo 100 10 1000 -1.0 7.5 30 c_hb[7] file hbond_histo_eng.dat mode vector kind local beyond extra
 
 # output computed global data as thermo output first for step then averaged
 thermo_style    custom step temp press v_nhb_mol c_avg[*] f_ave[*]
@@ -173,7 +173,7 @@ PPPM initialization ...
   estimated absolute RMS force accuracy = 0.000394674
   estimated relative force accuracy = 1.188549e-06
   using double precision FFTW3
-  3d grid and FFT values/proc = 103823 64000
+  3d grid and FFT values/proc = 34263 16000
 Generated 0 of 1 mixed pair_coeff terms from geometric mixing rule
 Neighbor list info ...
   update: every = 1 steps, delay = 2 steps, check = yes
@@ -192,48 +192,61 @@ Neighbor list info ...
       pair build: full/bin
       stencil: full/bin/3d
       bin: standard
-Per MPI rank memory allocation (min/avg/max) = 58.09 | 58.09 | 58.09 Mbytes
+Per MPI rank memory allocation (min/avg/max) = 20.52 | 20.52 | 20.53 Mbytes
    Step          Temp          Press         n_HB/mol        r_DA           r_HA         theta_HDA        e_HB         <n_HB/mol>      <r_DA>         <r_HA>       <theta_HDA>      <e_HB>     
-         0   298.11259      108.98496      3.464          2.8294662      1.8775508      12.882598      5.5070455      3.464          2.8294662      1.8775508      12.882598      5.5070455    
-       100   306.21914      315.68409      3.4613333      2.8271901      1.8749274      12.774577      5.521726       3.4626667      2.8283282      1.8762391      12.828587      5.5143858    
-       200   298.08879      159.42212      3.4586667      2.8341445      1.8832132      13.015924      5.4702931      3.4613333      2.8302669      1.8785638      12.891033      5.4996882    
-       300   300.64237     -9.2212624      3.4693333      2.8323445      1.8815997      13.083981      5.4741609      3.4633333      2.8307863      1.8793228      12.93927       5.4933064    
-       400   297.45097      286.32046      3.4293333      2.8289641      1.8779758      12.993786      5.4892263      3.4565333      2.8304219      1.8790534      12.950173      5.4924904    
-       500   301.44164     -9.571983       3.4653333      2.8318869      1.8804115      12.985865      5.4883953      3.458          2.8306661      1.8792797      12.956122      5.4918079    
-       600   299.29296      233.84428      3.484          2.8287969      1.8764791      12.859585      5.5180767      3.4617143      2.830399       1.8788796      12.942331      5.4955606    
-       700   302.01104      493.10199      3.48           2.8259464      1.8746001      12.937637      5.4942475      3.464          2.8298425      1.8783447      12.941744      5.4953964    
-       800   300.6665       434.67014      3.432          2.8275375      1.8753598      12.821798      5.5121203      3.4604444      2.8295863      1.878013       12.928417      5.4972546    
-       900   293.66433      195.66057      3.496          2.8353754      1.8840612      12.978486      5.4710753      3.464          2.8301653      1.8786179      12.933424      5.4946367    
-      1000   291.33233      130.40139      3.5146667      2.829365       1.8775873      12.863155      5.5052607      3.4686061      2.8300925      1.8785242      12.927036      5.4956025    
-Loop time of 28.1714 on 1 procs for 1000 steps with 4500 atoms
+         0   298.11277      108.95426      3.464          2.8294684      1.8775537      12.882778      5.5070239      3.464          2.8294684      1.8775537      12.882778      5.5070239    
+       100   306.24838      314.88456      3.4613333      2.8271572      1.8749351      12.777749      5.5205802      3.4626667      2.8283128      1.8762444      12.830264      5.513802     
+       200   298.14181      162.3911       3.468          2.8347217      1.8842173      13.088124      5.4579185      3.4644444      2.8304491      1.878902       12.916217      5.4951742    
+       300   297.83568     -51.325211      3.4506667      2.8334899      1.8822674      12.988465      5.4870946      3.461          2.8312093      1.8797434      12.934279      5.4931543    
+       400   295.77986      1259.2643      3.4426667      2.8238973      1.8729633      13.054753      5.4746861      3.4573333      2.8297469      1.8783874      12.958374      5.4894607    
+       500   297.06087     -1.1526544      3.4573333      2.8311673      1.8797019      12.959723      5.4918711      3.4573333      2.8299836      1.8786065      12.958599      5.4898624    
+       600   297.83598      422.92751      3.4826667      2.8308553      1.8800003      13.035224      5.4721684      3.4609524      2.8301081      1.8788056      12.969545      5.4873347    
+       700   301.83466      15.557696      3.452          2.8319844      1.8808721      12.962172      5.4711781      3.4598333      2.8303427      1.8790639      12.968623      5.4853151    
+       800   298.67352     -726.83277      3.4933333      2.8384211      1.8861774      12.836367      5.514328       3.4635556      2.8312403      1.8798543      12.953928      5.4885388    
+       900   311.32558     -378.2327       3.508          2.8350065      1.8829078      12.828427      5.5146626      3.468          2.8316169      1.8801596      12.941378      5.4911511    
+      1000   305.48016     -118.89147      3.4866667      2.8337025      1.8832568      13.057575      5.4718035      3.469697       2.8318065      1.8804412      12.951942      5.4893923    
+Loop time of 8.29112 on 4 procs for 1000 steps with 4500 atoms
 
-Performance: 6.134 ns/day, 3.913 hours/ns, 35.497 timesteps/s, 159.736 katom-step/s
-99.6% CPU use with 1 MPI tasks x 1 OpenMP threads
+Performance: 20.842 ns/day, 1.152 hours/ns, 120.611 timesteps/s, 542.749 katom-step/s
+99.3% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 19.878     | 19.878     | 19.878     |   0.0 | 70.56
-Bond    | 0.0004754  | 0.0004754  | 0.0004754  |   0.0 |  0.00
-Kspace  | 3.9133     | 3.9133     | 3.9133     |   0.0 | 13.89
-Neigh   | 2.8002     | 2.8002     | 2.8002     |   0.0 |  9.94
-Comm    | 0.079151   | 0.079151   | 0.079151   |   0.0 |  0.28
-Output  | 0.12328    | 0.12328    | 0.12328    |   0.0 |  0.44
-Modify  | 1.3576     | 1.3576     | 1.3576     |   0.0 |  4.82
-Other   |            | 0.01953    |            |       |  0.07
+Pair    | 5.1431     | 5.2625     | 5.4274     |   4.9 | 63.47
+Bond    | 0.00046434 | 0.00048358 | 0.00050015 |   0.0 |  0.01
+Kspace  | 1.4472     | 1.6123     | 1.7341     |   9.0 | 19.45
+Neigh   | 0.76798    | 0.76809    | 0.76823    |   0.0 |  9.26
+Comm    | 0.11621    | 0.11788    | 0.11897    |   0.3 |  1.42
+Output  | 0.034705   | 0.035923   | 0.036455   |   0.4 |  0.43
+Modify  | 0.4745     | 0.47519    | 0.47673    |   0.1 |  5.73
+Other   |            | 0.01872    |            |       |  0.23
 
-Nlocal:           4500 ave        4500 max        4500 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
-Nghost:          21451 ave       21451 max       21451 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
-Neighs:    2.60226e+06 ave 2.60226e+06 max 2.60226e+06 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
-FullNghs:  5.20381e+06 ave 5.20381e+06 max 5.20381e+06 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
+Nlocal:           1125 ave        1148 max        1109 min
+Histogram: 2 0 0 0 0 1 0 0 0 1
+Nghost:          12267 ave       12310 max       12227 min
+Histogram: 1 0 0 1 0 1 0 0 0 1
+Neighs:         650383 ave      675988 max      629110 min
+Histogram: 1 0 0 1 1 0 0 0 0 1
+FullNghs:  1.30078e+06 ave 1.33156e+06 max  1.2768e+06 min
+Histogram: 1 1 0 0 0 1 0 0 0 1
 
-Total # of neighbors = 5203806
-Ave neighs/atom = 1156.4013
+Total # of neighbors = 5203130
+Ave neighs/atom = 1156.2511
 Ave special neighs/atom = 2
 Neighbor list builds = 93
 Dangerous builds = 0
-Total wall time: 0:00:41
+print ""
+
+print "Results after simulation of $(time/1000.0) ps:"
+Results after simulation of 2 ps:
+print "Average number of hydrogen bonds per water molecule <n_HB/mol>:   $(f_ave[1]:%6.2f)"
+Average number of hydrogen bonds per water molecule <n_HB/mol>:     3.47
+print "Average hydrogen bond donor-acceptor distance <r_DA> /Angstrom:   $(f_ave[2]:%6.2f)"
+Average hydrogen bond donor-acceptor distance <r_DA> /Angstrom:     2.83
+print "Average hydrogen bond angle <theta_HDA> /degrees:                 $(f_ave[4]:%6.2f)"
+Average hydrogen bond angle <theta_HDA> /degrees:                  12.95
+print "Average hydrogen bond streangth <e_HB> /(kcal/mol):               $(f_ave[5]:%6.2f)"
+Average hydrogen bond streangth <e_HB> /(kcal/mol):                 5.49
+
+Total wall time: 0:00:12

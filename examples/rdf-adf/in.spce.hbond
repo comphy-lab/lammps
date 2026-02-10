@@ -60,7 +60,7 @@ fix       dhist all ave/histo 100 10 1000 2.3 3.3 30 c_hb[4] file hbond_histo_di
 # get histogram of hydrogen bond angle
 fix       ahist all ave/histo 100 10 1000 0.0 30.0 30 c_hb[6] file hbond_histo_angle.dat mode vector kind local
 # get histogram of hydrogen bond strength
-fix       ahist all ave/histo 100 10 1000 -1.0 7.5 30 c_hb[7] file hbond_histo_eng.dat mode vector kind local beyond extra
+fix       bhist all ave/histo 100 10 1000 -1.0 7.5 30 c_hb[7] file hbond_histo_eng.dat mode vector kind local beyond extra
 
 # output computed global data as thermo output first for step then averaged
 thermo_style    custom step temp press v_nhb_mol c_avg[*] f_ave[*]
@@ -75,3 +75,9 @@ thermo          100
 #            adiam 1 0.5 adiam 2 0.4 ccolor hb yellow ctrans hb 1.0
 
 run 1000
+print ""
+print "Results after simulation of $(time/1000.0) ps:"
+print "Average number of hydrogen bonds per water molecule <n_HB/mol>:   $(f_ave[1]:%6.2f)"
+print "Average hydrogen bond donor-acceptor distance <r_DA> /Angstrom:   $(f_ave[2]:%6.2f)"
+print "Average hydrogen bond angle <theta_HDA> /degrees:                 $(f_ave[4]:%6.2f)"
+print "Average hydrogen bond streangth <e_HB> /(kcal/mol):               $(f_ave[5]:%6.2f)"
