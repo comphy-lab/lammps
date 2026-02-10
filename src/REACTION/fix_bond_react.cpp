@@ -3814,8 +3814,8 @@ void FixBondReact::update_everything()
                       improper_atom3[jjlocal][p] = tag3;
                       improper_atom4[jjlocal][p] = tag4;
                     } else {
-                      int* iptrs[4] = {&improper_atom1[jjlocal][p],&improper_atom2[jjlocal][p],
-                                       &improper_atom3[jjlocal][p],&improper_atom4[jjlocal][p]};
+                      tagint* iptrs[4] = {&improper_atom1[jjlocal][p],&improper_atom2[jjlocal][p],
+                                          &improper_atom3[jjlocal][p],&improper_atom4[jjlocal][p]};
                       // types guaranteed to match, just in wrong order
                       std::array<tagint, 4> tags = {tag1, tag2, tag3, tag4};
                       for (int iatom = 0; iatom < 4; iatom++)
@@ -3869,8 +3869,8 @@ void FixBondReact::update_everything()
                         improper_atom3[jjlocal][p] = tag3;
                         improper_atom4[jjlocal][p] = tag4;
                       } else {
-                        int* iptrs[4] = {&improper_atom1[jjlocal][p],&improper_atom2[jjlocal][p],
-                                         &improper_atom3[jjlocal][p],&improper_atom4[jjlocal][p]};
+                        tagint* iptrs[4] = {&improper_atom1[jjlocal][p],&improper_atom2[jjlocal][p],
+                                            &improper_atom3[jjlocal][p],&improper_atom4[jjlocal][p]};
                         // types guaranteed to match, just in wrong order
                         std::array<tagint, 4> tags = {tag1, tag2, tag3, tag4};
                         for (int iatom = 0; iatom < 4; iatom++)
