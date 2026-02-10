@@ -153,6 +153,7 @@ class Compute : protected Pointers {
   virtual void restore_bias(int, double *) {}
   virtual void restore_bias_thr(int, double *, double *) {}
   virtual void restore_bias_all() {}
+  virtual void restore_bias_all_kk() {}
 
   virtual void reset_extra_compute_fix(const char *);
 
@@ -168,7 +169,7 @@ class Compute : protected Pointers {
   int matchstep(bigint);
   void clearstep();
 
-  bool is_initialized() const { return initialized_flag == 1; }
+  [[nodiscard]] bool is_initialized() const { return initialized_flag == 1; }
 
   virtual double memory_usage() { return 0.0; }
 
@@ -191,7 +192,7 @@ class Compute : protected Pointers {
   double **vbiasall;    // stored velocity bias for all atoms
   int maxbias;          // size of vbiasall array
 
-  inline int sbmask(int j) const { return j >> SBBITS & 3; }
+  [[nodiscard]] int sbmask(int j) const { return j >> SBBITS & 3; }
 
   // private methods
 
