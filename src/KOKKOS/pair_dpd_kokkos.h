@@ -135,6 +135,7 @@ class PairDPDKokkos : public PairDPD {
   typename AT::t_kkfloat_1d_3_randomread v;
   typename AT::t_kkacc_1d_3 f;
   typename AT::t_int_1d_randomread type;
+  typename AT::t_tagint_1d tag;
 
   typename AT::t_neighbors_2d d_neighbors;
   typename AT::t_int_1d_randomread d_ilist;

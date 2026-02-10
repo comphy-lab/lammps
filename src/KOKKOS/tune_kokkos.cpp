@@ -150,7 +150,7 @@ void TuneKokkos::allocate(int num_params)
   ncombinations = num_team_sizes * num_vector_sizes;
 
   // allocate the 2-d performance as a 1-d array
-  //   cols = team sizes (pair/team/size or bond/block/size = 64, 96, ..., 512)
+  //   cols = team sizes (pair/team/size or bond/chunk/size = 64, 96, ..., 512)
   //   rows = vector sizes (threads/per/atom = 1, 2, 4, 8, .., max_vectorsize)
 
   if (performance) delete[] performance;

@@ -16,8 +16,6 @@
 #define LMP_TUNE_KOKKOS_H
 
 #include "pointers.h"
-#include <mpi.h>
-#include <vector>
 
 namespace LAMMPS_NS {
 

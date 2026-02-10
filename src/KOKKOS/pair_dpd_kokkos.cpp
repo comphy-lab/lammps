@@ -39,7 +39,47 @@
 using namespace LAMMPS_NS;
 
 static constexpr double EPSILON = 1.0e-10;
+#define SQRT3  1.7320508075688772935274463
+#define TWO_N32 0.232830643653869628906250e-9 /* 2^-32 */
 
+#define k0 0xA341316C
+#define k1 0xC8013EA4
+#define k2 0xAD90777D
+#define k3 0x7E95761E
+
+#define g1 0xA5366B4D
+#define g2 0x72BE1579
+#define g3 0x3F38A6ED
+#define g4 0xABCB96F7
+#define g5 0x6957f5a7
+
+#define delta 0x9e3779b9
+#define rounds 8
+#define saru(seed1, seed2, seed, timestep, randnum) {                 \
+  unsigned int seed3 = seed + timestep;                               \
+  seed3^=(seed1<<7)^(seed2>>6);                                       \
+  seed2+=(seed1>>4)^(seed3>>15);                                      \
+  seed1^=(seed2<<9)+(seed3<<8);                                       \
+  seed3^=g1*((seed2>>11) ^ (seed1<<1));                               \
+  seed2+=g2*((seed1<<4)  ^ (seed3>>16));                              \
+  seed1^=g3*((seed3>>5)  ^ (((signed int)seed2)>>22));                \
+  seed2+=seed1*seed3;                                                 \
+  seed1+=seed3 ^ (seed2>>2);                                          \
+  seed2^=((signed int)seed2)>>17;                                     \
+  unsigned int state  = 0x79dedea3*(seed1^(((signed int)seed1)>>14)); \
+  unsigned int wstate = (state + seed2) ^ (((signed int)state)>>8);   \
+  state  = state + (wstate*(wstate^0xdddf97f5));                      \
+  wstate = g4 + (wstate>>1);                                          \
+  unsigned int sum = 0;                                               \
+  for (int i=0; i < rounds; i++) {                                    \
+    sum += delta;                                                     \
+    state += ((wstate<<4) + k0)^(wstate + sum)^((wstate>>5) + k1);    \
+    wstate += ((state<<4) + k2)^(state + sum)^((state>>5) + k3);      \
+  }                                                                   \
+  unsigned int v = (state ^ (state>>26)) + wstate;                    \
+  unsigned int s = (signed int)((v^(v>>20))*g5);                      \
+  randnum = SQRT3*(s*(TWO_N32)*2.0-1.0);                              \
+}
 
 template<class DeviceType>
 PairDPDKokkos<DeviceType>::PairDPDKokkos(class LAMMPS *_lmp) :
@@ -136,6 +176,7 @@ void PairDPDKokkos<DeviceType>::compute(int eflagin, int vflagin)
   v = atomKK->k_v.view<DeviceType>();
   f = atomKK->k_f.view<DeviceType>();
   type = atomKK->k_type.view<DeviceType>();
+  tag = atomKK->k_tag.view<DeviceType>();
 
   k_cutsq.template sync<DeviceType>();
   k_params.template sync<DeviceType>();
@@ -377,7 +418,9 @@ void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
   vztmp = v(i,2);
   itype = type(i);
   jnum = d_numneigh[i];
-  rand_type rand_gen = rand_pool.get_state();
+
+  const tagint itag = tag(i);
+  auto timestep = update->ntimestep;
 
   KK_FLOAT fxtmp = 0.0;
   KK_FLOAT fytmp = 0.0;
@@ -396,6 +439,13 @@ void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
     delz = ztmp - x(j,2);
     rsq = delx*delx + dely*dely + delz*delz;
     jtype = type(j);
+    const tagint jtag = tag(j);
+
+    tagint tag1=itag, tag2=jtag;
+    if (tag1 > tag2) {
+      tag1 = jtag; tag2 = itag;
+    }
+
     if (rsq < d_cutsq(itype,jtype)) {
       r = sqrt(rsq);
       if (r < EPSILON) return;     // r can be 0.0 in DPD systems
@@ -407,7 +457,9 @@ void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
 
       wd = 1.0 - r/params(itype,jtype).cut;
 
-      randnum = rand_gen.normal();
+      // random number from SARU
+      randnum = 0;
+      saru(tag1, tag2, timestep, seed, randnum);
 
       // conservative force
       fpair = params(itype,jtype).a0*wd;
@@ -447,7 +499,6 @@ void PairDPDKokkos<DeviceType>::operator()(TagDPDKokkos<NEIGHFLAG,EVFLAG>,
     a_f(i,2) += fztmp;
   });
 
-  rand_pool.free_state(rand_gen);
 }
 
 /* ---------------------------------------------------------------------- */
