@@ -228,8 +228,11 @@ void PairDPDKokkos<DeviceType>::compute(int eflagin, int vflagin)
     if (evflag) Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagDPDKokkos<HALF,1> >(0,inum),*this,ev);
     else {
       if (tuner) {
-        typename Kokkos::TeamPolicy<DeviceType, TagDPDKokkos<HALF,0> > policy_force(inum,
-          _team_size, _vector_size);
+        const unsigned int atoms_per_team = _team_size/_vector_size;
+        const unsigned int num_teams = inum / atoms_per_team + (inum % atoms_per_team ? 1 : 0);
+
+        typename Kokkos::TeamPolicy<DeviceType, TagDPDKokkos<HALF,0> > policy_force(num_teams,
+          atoms_per_team, _vector_size);
         Kokkos::parallel_for("force",policy_force,*this);
       }
       else
