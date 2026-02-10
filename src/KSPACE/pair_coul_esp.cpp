@@ -12,7 +12,7 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing author: Jiuyang Liang, Libin Lu Shidong Jiang (Flatiron)
+   Contributing author: Jiuyang Liang, Libin Lu, Shidong Jiang (Flatiron)
 ------------------------------------------------------------------------- */
 
 #include "pair_coul_esp.h"
