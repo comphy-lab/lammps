@@ -1,7 +1,7 @@
-LAMMPS (2 Jul 2021)
+LAMMPS (29 Sep 2021)
 variable number	equal 2
-variable ofreq	equal 1000
-variable efreq	equal 1000
+variable ofreq	equal 100
+variable efreq	equal 100
 variable T      equal 0.1
 
 units lj
@@ -41,7 +41,7 @@ Finding 1-2 1-3 1-4 neighbors ...
      4 = max # of 1-4 neighbors
      6 = max # of special neighbors
   special bonds CPU = 0.000 seconds
-  read_data CPU = 0.003 seconds
+  read_data CPU = 0.000 seconds
 
 set atom * mass 3.1575
 Setting atom values ...
@@ -96,15 +96,15 @@ variable ekin equal c_ekin
 variable epot equal c_epot
 variable etot equal c_erot+c_ekin+c_epot
 fix 5 all print ${efreq} "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
-fix 5 all print 1000 "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
+fix 5 all print 100 "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
 
 dump out all custom ${ofreq} out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
-dump out all custom 1000 out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
-dump out all custom 1000 out.2.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
+dump out all custom 100 out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
+dump out all custom 100 out.2.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
 dump_modify out sort id
 dump_modify out format line "%d %d %d  %22.15le %22.15le %22.15le  %d %d %d  %22.15le %22.15le %22.15le  %22.15le %22.15le %22.15le %22.15le  %22.15le %22.15le %22.15le"
 
-run 1000000
+run 1000
 Neighbor list info ...
   update every 1 steps, delay 0 steps, check yes
   max neighbors/atom: 2000, page size: 100000
@@ -136,32 +136,32 @@ Neighbor list info ...
 Per MPI rank memory allocation (min/avg/max) = 9.076 | 9.076 | 9.076 Mbytes
 Step Temp E_pair E_mol TotEng Press Volume 
        0   0.12021129   -1.3914531  0.016655298   -1.2057507 5.174549e-05        64000 
-1000  ekin = 2.68462004451395 |  erot = 2.58605420555131 | epot = -21.8105393794712 | etot = -16.5398651294059
-2000  ekin = 2.60963739095655 |  erot = 2.48175619043154 | epot = -21.6459705488588 | etot = -16.5545769674707
-3000  ekin = 2.63989588847182 |  erot = 2.46363051573262 | epot = -21.5254922679992 | etot = -16.4219658637948
-4000  ekin = 2.5752038952926 |  erot = 2.37178501784054 | epot = -21.4327542438291 | etot = -16.485765330696
-5000  ekin = 2.5044104280733 |  erot = 2.08769632851087 | epot = -21.3521450303024 | etot = -16.7600382737182
-6000  ekin = 2.36107642071569 |  erot = 2.35003179412404 | epot = -21.2782010260872 | etot = -16.5670928112475
-7000  ekin = 2.37495351372023 |  erot = 2.16846238087391 | epot = -21.2534688435259 | etot = -16.7100529489318
-8000  ekin = 2.42775724176586 |  erot = 2.14686490397955 | epot = -21.2553298683528 | etot = -16.6807077226074
-9000  ekin = 2.3142246486707 |  erot = 1.86378622524029 | epot = -21.2852707364932 | etot = -17.1072598625822
-10000  ekin = 2.3275093348898 |  erot = 1.94087852055647 | epot = -21.3429178830636 | etot = -17.0745300276174
- 10000   0.13886167   -1.3621774  0.016551227    -1.150352 9.5441241e-05        64000 
-Loop time of 30.4944 on 1 procs for 1000000 steps with 16 atoms
+100  ekin = 2.71200464083418 |  erot = 2.70283204761719 | epot = -21.9788566347399 | etot = -16.5640199462886
+200  ekin = 2.7041580872651 |  erot = 2.69455771890946 | epot = -21.9599299967619 | etot = -16.5612141905873
+300  ekin = 2.67651960655904 |  erot = 2.55193206386256 | epot = -21.9404183733912 | etot = -16.7119667029696
+400  ekin = 2.6810774626265 |  erot = 2.49100741275348 | epot = -21.9214491154785 | etot = -16.7493642400986
+500  ekin = 2.68741712649524 |  erot = 2.53725199191766 | epot = -21.9025753810024 | etot = -16.6779062625895
+600  ekin = 2.72388334967946 |  erot = 2.47975038061896 | epot = -21.8835606231048 | etot = -16.6799268928064
+700  ekin = 2.6889031900313 |  erot = 2.4496288982973 | epot = -21.8654141657335 | etot = -16.7268820774049
+800  ekin = 2.67538986364504 |  erot = 2.51975319882301 | epot = -21.8476460373704 | etot = -16.6525029749024
+900  ekin = 2.66959574148207 |  erot = 2.54050420461325 | epot = -21.829401850951 | etot = -16.6193019048557
+1000  ekin = 2.68462004451395 |  erot = 2.5860542055513 | epot = -21.8105393794712 | etot = -16.5398651294059
+    1000   0.11931645    -1.379684  0.016525276     -1.19537 4.3200251e-05        64000 
+Loop time of 0.011195 on 1 procs for 1000 steps with 16 atoms
 
-Performance: 28333.078 tau/day, 32792.915 timesteps/s
-99.7% CPU use with 1 MPI tasks x no OpenMP threads
+Performance: 77177.311 tau/day, 89325.592 timesteps/s
+98.9% CPU use with 1 MPI tasks x no OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 24.671     | 24.671     | 24.671     |   0.0 | 80.90
-Bond    | 0.87876    | 0.87876    | 0.87876    |   0.0 |  2.88
-Neigh   | 0.020568   | 0.020568   | 0.020568   |   0.0 |  0.07
-Comm    | 0.3709     | 0.3709     | 0.3709     |   0.0 |  1.22
-Output  | 0.15202    | 0.15202    | 0.15202    |   0.0 |  0.50
-Modify  | 4.1177     | 4.1177     | 4.1177     |   0.0 | 13.50
-Other   |            | 0.283      |            |       |  0.93
+Pair    | 0.007761   | 0.007761   | 0.007761   |   0.0 | 69.33
+Bond    | 0.000247   | 0.000247   | 0.000247   |   0.0 |  2.21
+Neigh   | 1.5e-05    | 1.5e-05    | 1.5e-05    |   0.0 |  0.13
+Comm    | 0.000114   | 0.000114   | 0.000114   |   0.0 |  1.02
+Output  | 0.000755   | 0.000755   | 0.000755   |   0.0 |  6.74
+Modify  | 0.002167   | 0.002167   | 0.002167   |   0.0 | 19.36
+Other   |            | 0.000136   |            |       |  1.21
 
 Nlocal:        16.0000 ave          16 max          16 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
@@ -173,11 +173,11 @@ Histogram: 1 0 0 0 0 0 0 0 0 0
 Total # of neighbors = 105
 Ave neighs/atom = 6.5625000
 Ave special neighs/atom = 3.7500000
-Neighbor list builds = 1000
+Neighbor list builds = 1
 Dangerous builds = 0
 
 write_data last_config.${number}.* nocoeff
 write_data last_config.2.* nocoeff
 System init for write_data ...
 #write_restart last_config.${number}.*
-Total wall time: 0:00:30
+Total wall time: 0:00:00

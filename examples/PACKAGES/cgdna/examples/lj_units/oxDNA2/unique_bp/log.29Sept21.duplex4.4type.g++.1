@@ -1,9 +1,9 @@
-LAMMPS (2 Jul 2021)
-variable number	equal 8
-variable ofreq	equal 1000
-variable efreq	equal 1000
+LAMMPS (29 Sep 2021)
+variable number	equal 4
+variable ofreq	equal 100
+variable efreq	equal 100
 
-variable ntype equal 8
+variable ntype equal 4
 
 variable T equal 0.1
 variable rhos   equal 0.2
@@ -24,10 +24,10 @@ atom_modify sort 0 1.0
 neighbor 2.0 bin
 neigh_modify every 10 delay 0 check yes
 
-read_data data.duplex4.8type
+read_data data.duplex4.4type
 Reading data file ...
   orthogonal box = (-20.000000 -20.000000 -20.000000) to (20.000000 20.000000 20.000000)
-  1 by 2 by 2 MPI processor grid
+  1 by 1 by 1 MPI processor grid
   reading atoms ...
   26 atoms
   reading velocities ...
@@ -44,15 +44,15 @@ Finding 1-2 1-3 1-4 neighbors ...
      2 = max # of 1-3 neighbors
      4 = max # of 1-4 neighbors
      6 = max # of special neighbors
-  special bonds CPU = 0.001 seconds
-  read_data CPU = 0.005 seconds
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.001 seconds
 
 mass * 3.1575           # sets per-type mass if not in data file
 set atom * mass 3.1575  # sets per-atom mass
 Setting atom values ...
   26 settings made for mass
 
-group all type 1 8
+group all type 1 4
 26 atoms in group all
 
 # oxDNA2 bond interactions - FENE backbone
@@ -77,7 +77,7 @@ pair_coeff * * oxdna2/hbond   seqdep 0.0 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0
 
 label loop
 variable base loop ${ntype}
-variable base loop 8
+variable base loop 4
   variable basemod equal ${base}%4
   variable basemod equal 1%4
   if "${basemod} == 1" then     "variable comp equal ${base}+3"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
@@ -88,9 +88,9 @@ pair_coeff 1 ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.
 pair_coeff 1 4 oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
   if "${basemod} == 2" then     "variable comp equal ${base}+1"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
 next base
-jump in.duplex4.8type loop
+jump in.duplex4.4type loop
 variable base loop ${ntype}
-variable base loop 8
+variable base loop 4
   variable basemod equal ${base}%4
   variable basemod equal 2%4
   if "${basemod} == 1" then     "variable comp equal ${base}+3"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
@@ -101,65 +101,23 @@ pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.
 pair_coeff 2 ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
 pair_coeff 2 3 oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
 next base
-jump in.duplex4.8type loop
+jump in.duplex4.4type loop
 variable base loop ${ntype}
-variable base loop 8
+variable base loop 4
   variable basemod equal ${base}%4
   variable basemod equal 3%4
   if "${basemod} == 1" then     "variable comp equal ${base}+3"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
   if "${basemod} == 2" then     "variable comp equal ${base}+1"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
 next base
-jump in.duplex4.8type loop
+jump in.duplex4.4type loop
 variable base loop ${ntype}
-variable base loop 8
+variable base loop 4
   variable basemod equal ${base}%4
   variable basemod equal 4%4
   if "${basemod} == 1" then     "variable comp equal ${base}+3"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
   if "${basemod} == 2" then     "variable comp equal ${base}+1"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
 next base
-jump in.duplex4.8type loop
-variable base loop ${ntype}
-variable base loop 8
-  variable basemod equal ${base}%4
-  variable basemod equal 5%4
-  if "${basemod} == 1" then     "variable comp equal ${base}+3"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
-variable comp equal ${base}+3
-variable comp equal 5+3
-pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
-pair_coeff 5 ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
-pair_coeff 5 8 oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
-  if "${basemod} == 2" then     "variable comp equal ${base}+1"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
-next base
-jump in.duplex4.8type loop
-variable base loop ${ntype}
-variable base loop 8
-  variable basemod equal ${base}%4
-  variable basemod equal 6%4
-  if "${basemod} == 1" then     "variable comp equal ${base}+3"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
-  if "${basemod} == 2" then     "variable comp equal ${base}+1"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
-variable comp equal ${base}+1
-variable comp equal 6+1
-pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
-pair_coeff 6 ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
-pair_coeff 6 7 oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
-next base
-jump in.duplex4.8type loop
-variable base loop ${ntype}
-variable base loop 8
-  variable basemod equal ${base}%4
-  variable basemod equal 7%4
-  if "${basemod} == 1" then     "variable comp equal ${base}+3"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
-  if "${basemod} == 2" then     "variable comp equal ${base}+1"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
-next base
-jump in.duplex4.8type loop
-variable base loop ${ntype}
-variable base loop 8
-  variable basemod equal ${base}%4
-  variable basemod equal 8%4
-  if "${basemod} == 1" then     "variable comp equal ${base}+3"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
-  if "${basemod} == 2" then     "variable comp equal ${base}+1"     "pair_coeff ${base} ${comp} oxdna2/hbond   seqdep 1.0678 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45"
-next base
-jump in.duplex4.8type loop
+jump in.duplex4.4type loop
 
 pair_coeff * * oxdna2/xstk    47.5 0.575 0.675 0.495 0.655 2.25 0.791592653589793 0.58 1.7 1.0 0.68 1.7 1.0 0.68 1.5 0 0.65 1.7 0.875 0.68 1.7 0.875 0.68
 pair_coeff * * oxdna2/coaxstk 58.5 0.4 0.6 0.22 0.58 2.0 2.891592653589793 0.65 1.3 0 0.8 0.9 0 0.95 0.9 0 0.95 40.0 3.116592653589793
@@ -189,15 +147,15 @@ variable ekin equal c_ekin
 variable epot equal c_epot
 variable etot equal c_erot+c_ekin+c_epot
 fix 5 all print ${efreq} "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
-fix 5 all print 1000 "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
+fix 5 all print 100 "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
 
 dump out all custom ${ofreq} out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
-dump out all custom 1000 out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
-dump out all custom 1000 out.8.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
+dump out all custom 100 out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
+dump out all custom 100 out.4.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
 dump_modify out sort id
 dump_modify out format line "%d %d %d  %22.15le %22.15le %22.15le  %d %d %d  %22.15le %22.15le %22.15le  %22.15le %22.15le %22.15le %22.15le  %22.15le %22.15le %22.15le"
 
-run 1000000
+run 1000
 Neighbor list info ...
   update every 10 steps, delay 0 steps, check yes
   max neighbors/atom: 2000, page size: 100000
@@ -230,53 +188,53 @@ Neighbor list info ...
       pair build: copy
       stencil: none
       bin: none
-WARNING: Communication cutoff adjusted to 5.638987723814632 (../comm.cpp:739)
-0  ekin = 3.74991604702378 |  erot = 3.45272678980464 | epot = -37.3742009011421 | etot = -30.1715580643137
-Per MPI rank memory allocation (min/avg/max) = 9.321 | 9.322 | 9.323 Mbytes
+WARNING: Communication cutoff adjusted to 5.638987723814633 (../comm.cpp:739)
+0  ekin = 3.74991604702378 |  erot = 3.45272678980464 | epot = -37.374200901142 | etot = -30.1715580643136
+Per MPI rank memory allocation (min/avg/max) = 9.328 | 9.328 | 9.328 Mbytes
 Step Temp E_pair E_mol TotEng Press Volume 
        0  0.099997761   -1.4717559   0.03428661   -1.2932417 5.6146609e-05        64000 
-1000  ekin = 3.92430268570824 |  erot = 3.29540971313705 | epot = -37.4816670091169 | etot = -30.2619546102716
-2000  ekin = 3.88644825046428 |  erot = 3.58410925014822 | epot = -37.5871874286304 | etot = -30.1166299280179
-3000  ekin = 3.90603224055461 |  erot = 3.7820605745286 | epot = -37.7021302921285 | etot = -30.0140374770453
-4000  ekin = 4.02636555552402 |  erot = 3.91677901140303 | epot = -37.8027608694504 | etot = -29.8596163025233
-5000  ekin = 4.05442725401043 |  erot = 4.07817807460239 | epot = -37.8494362833427 | etot = -29.7168309547299
-6000  ekin = 4.13499768127483 |  erot = 4.03873475277248 | epot = -37.8257365098368 | etot = -29.6520040757895
-7000  ekin = 4.08584129662811 |  erot = 3.9850289293034 | epot = -37.7447761711061 | etot = -29.6739059451746
-8000  ekin = 4.04473728341538 |  erot = 3.70461133282257 | epot = -37.6185211079512 | etot = -29.8691724917133
-9000  ekin = 3.97040375513034 |  erot = 3.89171847539017 | epot = -37.4779912856655 | etot = -29.615869055145
-10000  ekin = 4.08064552796876 |  erot = 4.10399273710614 | epot = -37.3378150214196 | etot = -29.1531767563447
- 10000   0.10411567   -1.4674304  0.032571422   -1.2846921 -6.6175275e-05        64000 
-Loop time of 46.7814 on 4 procs for 1000000 steps with 26 atoms
+100  ekin = 3.76288917169405 |  erot = 3.46242186163156 | epot = -37.3828221368588 | etot = -30.1575111035332
+200  ekin = 3.76854222932535 |  erot = 3.4325152195488 | epot = -37.3917750769569 | etot = -30.1907176280828
+300  ekin = 3.7733498203503 |  erot = 3.41735630149052 | epot = -37.4015041101712 | etot = -30.2107979883304
+400  ekin = 3.78467310542329 |  erot = 3.41337905183347 | epot = -37.4113338554367 | etot = -30.2132816981799
+500  ekin = 3.78875402492327 |  erot = 3.38050218850488 | epot = -37.4216042439365 | etot = -30.2523480305083
+600  ekin = 3.84054140342509 |  erot = 3.39806928124528 | epot = -37.4319051505875 | etot = -30.1932944659172
+700  ekin = 3.85623015763729 |  erot = 3.3820990039874 | epot = -37.4422378752379 | etot = -30.2039087136132
+800  ekin = 3.83030593841711 |  erot = 3.41094942112692 | epot = -37.4522028906203 | etot = -30.2109475310763
+900  ekin = 3.8083217031519 |  erot = 3.50809711501386 | epot = -37.462643885747 | etot = -30.1462250675813
+1000  ekin = 3.83184879800819 |  erot = 3.50203401022062 | epot = -37.4730508915114 | etot = -30.1391680832826
+    1000   0.10218263   -1.4751963  0.033925074   -1.2938924 4.2545226e-05        64000 
+Loop time of 0.027507 on 1 procs for 1000 steps with 26 atoms
 
-Performance: 18468.870 tau/day, 21376.007 timesteps/s
-99.8% CPU use with 4 MPI tasks x no OpenMP threads
+Performance: 31410.186 tau/day, 36354.383 timesteps/s
+99.5% CPU use with 1 MPI tasks x no OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 12.74      | 20.221     | 37.61      | 224.5 | 43.22
-Bond    | 0.40761    | 0.56838    | 0.7636     |  21.2 |  1.21
-Neigh   | 0.009822   | 0.0099905  | 0.010152   |   0.1 |  0.02
-Comm    | 5.0791     | 23.235     | 31.502     | 219.3 | 49.67
-Output  | 0.11084    | 0.12593    | 0.13167    |   2.5 |  0.27
-Modify  | 1.5136     | 2.183      | 2.853      |  44.8 |  4.67
-Other   |            | 0.4378     |            |       |  0.94
+Pair    | 0.022175   | 0.022175   | 0.022175   |   0.0 | 80.62
+Bond    | 0.000541   | 0.000541   | 0.000541   |   0.0 |  1.97
+Neigh   | 8e-06      | 8e-06      | 8e-06      |   0.0 |  0.03
+Comm    | 0.000119   | 0.000119   | 0.000119   |   0.0 |  0.43
+Output  | 0.001187   | 0.001187   | 0.001187   |   0.0 |  4.32
+Modify  | 0.003348   | 0.003348   | 0.003348   |   0.0 | 12.17
+Other   |            | 0.000129   |            |       |  0.47
 
-Nlocal:        6.50000 ave          10 max           3 min
-Histogram: 2 0 0 0 0 0 0 0 0 2
-Nghost:        19.5000 ave          23 max          16 min
-Histogram: 2 0 0 0 0 0 0 0 0 2
-Neighs:        75.2500 ave         190 max          23 min
-Histogram: 1 2 0 0 0 0 0 0 0 1
+Nlocal:        26.0000 ave          26 max          26 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:         0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        301.000 ave         301 max         301 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
 
 Total # of neighbors = 301
 Ave neighs/atom = 11.576923
 Ave special neighs/atom = 5.0769231
-Neighbor list builds = 1000
+Neighbor list builds = 1
 Dangerous builds = 0
 
 write_data last_config.${number}.* nocoeff
-write_data last_config.8.* nocoeff
+write_data last_config.4.* nocoeff
 System init for write_data ...
 #write_restart last_config.${number}.*
-Total wall time: 0:00:46
+Total wall time: 0:00:00

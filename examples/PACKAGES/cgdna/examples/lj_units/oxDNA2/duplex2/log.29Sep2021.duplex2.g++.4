@@ -1,7 +1,7 @@
-LAMMPS (2 Jul 2021)
+LAMMPS (29 Sep 2021)
 variable number	equal 2
-variable ofreq	equal 1000
-variable efreq	equal 1000
+variable ofreq	equal 100
+variable efreq	equal 100
 variable T      equal 0.1
 variable rhos   equal 0.2
 
@@ -24,7 +24,7 @@ neigh_modify every 1 delay 0 check yes
 read_data data.duplex2
 Reading data file ...
   orthogonal box = (-20.000000 -20.000000 -20.000000) to (20.000000 20.000000 20.000000)
-  1 by 1 by 1 MPI processor grid
+  1 by 2 by 2 MPI processor grid
   reading atoms ...
   16 atoms
   reading velocities ...
@@ -42,7 +42,7 @@ Finding 1-2 1-3 1-4 neighbors ...
      4 = max # of 1-4 neighbors
      6 = max # of special neighbors
   special bonds CPU = 0.000 seconds
-  read_data CPU = 0.003 seconds
+  read_data CPU = 0.001 seconds
 
 set atom * mass 3.1575
 Setting atom values ...
@@ -100,15 +100,15 @@ variable ekin equal c_ekin
 variable epot equal c_epot
 variable etot equal c_erot+c_ekin+c_epot
 fix 5 all print ${efreq} "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
-fix 5 all print 1000 "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
+fix 5 all print 100 "$(step)  ekin = ${ekin} |  erot = ${erot} | epot = ${epot} | etot = ${etot}" screen yes
 
 dump out all custom ${ofreq} out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
-dump out all custom 1000 out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
-dump out all custom 1000 out.2.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
+dump out all custom 100 out.${number}.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
+dump out all custom 100 out.2.lammpstrj id mol type x y z ix iy iz vx vy vz c_quat[1] c_quat[2] c_quat[3] c_quat[4] angmomx angmomy angmomz
 dump_modify out sort id
 dump_modify out format line "%d %d %d  %22.15le %22.15le %22.15le  %d %d %d  %22.15le %22.15le %22.15le  %22.15le %22.15le %22.15le %22.15le  %22.15le %22.15le %22.15le"
 
-run 1000000
+run 1000
 Neighbor list info ...
   update every 1 steps, delay 0 steps, check yes
   max neighbors/atom: 2000, page size: 100000
@@ -141,53 +141,53 @@ Neighbor list info ...
       pair build: copy
       stencil: none
       bin: none
-WARNING: Communication cutoff adjusted to 5.638987723814632 (../comm.cpp:739)
+WARNING: Communication cutoff adjusted to 5.638987723814633 (../comm.cpp:739)
 0  ekin = 2.70475393009871 |  erot = 2.80172072918779 | epot = -21.0482852787267 | etot = -15.5418106194402
-Per MPI rank memory allocation (min/avg/max) = 9.325 | 9.325 | 9.325 Mbytes
+Per MPI rank memory allocation (min/avg/max) = 9.320 | 9.349 | 9.434 Mbytes
 Step Temp E_pair E_mol TotEng Press Volume 
        0   0.12021129   -1.3610384  0.045520537   -1.1464707 5.9660461e-05        64000 
-1000  ekin = 2.70391570439002 |  erot = 2.60396138194761 | epot = -20.892587006041 | etot = -15.5847099197034
-2000  ekin = 2.64635320949975 |  erot = 2.53579824187029 | epot = -20.7791695875995 | etot = -15.5970181362294
-3000  ekin = 2.69752120400807 |  erot = 2.55180306746824 | epot = -20.7137659040141 | etot = -15.4644416325378
-4000  ekin = 2.6538821444735 |  erot = 2.47641299322465 | epot = -20.679411997643 | etot = -15.5491168599449
-5000  ekin = 2.60025466050757 |  erot = 2.2039059393524 | epot = -20.6560408696723 | etot = -15.8518802698123
-6000  ekin = 2.46901398821906 |  erot = 2.47310200487734 | epot = -20.6350989412901 | etot = -15.6929829481937
-7000  ekin = 2.51574664182366 |  erot = 2.31213437386206 | epot = -20.6631357493118 | etot = -15.835254733626
-8000  ekin = 2.59690047628267 |  erot = 2.32317845363664 | epot = -20.7152959922884 | etot = -15.7952170623691
-9000  ekin = 2.48618631858407 |  erot = 2.08285633125495 | epot = -20.7950725844518 | etot = -16.2260299346128
-10000  ekin = 2.52115116499232 |  erot = 2.20106084795616 | epot = -20.8992442032706 | etot = -16.1770321903222
- 10000   0.12998512   -1.3075422  0.032675661    -1.092075 0.0002012331        64000 
-Loop time of 34.8089 on 1 procs for 1000000 steps with 16 atoms
+100  ekin = 2.69567719932446 |  erot = 2.80510722461775 | epot = -21.033497959124 | etot = -15.5327135351818
+200  ekin = 2.7352768848698 |  erot = 2.84808750728969 | epot = -21.0179078231642 | etot = -15.4345434310047
+300  ekin = 2.72876354254406 |  erot = 2.82651212072427 | epot = -21.0015480990903 | etot = -15.446272435822
+400  ekin = 2.75252903795555 |  erot = 2.79310742071912 | epot = -20.9842707904738 | etot = -15.4386343317992
+500  ekin = 2.7917500345323 |  erot = 2.86475238719817 | epot = -20.9668085392548 | etot = -15.3103061175244
+600  ekin = 2.75579843201221 |  erot = 2.87544250262603 | epot = -20.948910434528 | etot = -15.3176694998898
+700  ekin = 2.76779421336001 |  erot = 2.85702467691806 | epot = -20.9316531502292 | etot = -15.3068342599511
+800  ekin = 2.76766259716391 |  erot = 2.89186738368362 | epot = -20.9140510751443 | etot = -15.2545210942968
+900  ekin = 2.74122827650119 |  erot = 2.92013028269743 | epot = -20.8966268488582 | etot = -15.2352682896596
+1000  ekin = 2.72013629959678 |  erot = 3.0469017850388 | epot = -20.8790776967073 | etot = -15.1120396120718
+    1000   0.12089495   -1.3485804  0.043638034   -1.1349338 4.9741678e-05        64000 
+Loop time of 0.006904 on 4 procs for 1000 steps with 16 atoms
 
-Performance: 24821.244 tau/day, 28728.292 timesteps/s
-99.8% CPU use with 1 MPI tasks x no OpenMP threads
+Performance: 125144.844 tau/day, 144843.569 timesteps/s
+99.5% CPU use with 4 MPI tasks x no OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 29.15      | 29.15      | 29.15      |   0.0 | 83.74
-Bond    | 0.89192    | 0.89192    | 0.89192    |   0.0 |  2.56
-Neigh   | 0.009135   | 0.009135   | 0.009135   |   0.0 |  0.03
-Comm    | 0.3491     | 0.3491     | 0.3491     |   0.0 |  1.00
-Output  | 0.15275    | 0.15275    | 0.15275    |   0.0 |  0.44
-Modify  | 3.9719     | 3.9719     | 3.9719     |   0.0 | 11.41
-Other   |            | 0.2836     |            |       |  0.81
+Pair    | 0.00149    | 0.00251    | 0.003305   |   1.3 | 36.36
+Bond    | 0.0001     | 0.00013025 | 0.00018    |   0.0 |  1.89
+Neigh   | 3e-06      | 3.75e-06   | 4e-06      |   0.0 |  0.05
+Comm    | 0.001923   | 0.0026268  | 0.003731   |   1.3 | 38.05
+Output  | 0.000297   | 0.00031325 | 0.000345   |   0.0 |  4.54
+Modify  | 0.000575   | 0.000689   | 0.000806   |   0.0 |  9.98
+Other   |            | 0.000631   |            |       |  9.14
 
-Nlocal:        16.0000 ave          16 max          16 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
-Nghost:         0.00000 ave           0 max           0 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
-Neighs:        107.000 ave         107 max         107 min
-Histogram: 1 0 0 0 0 0 0 0 0 0
+Nlocal:        4.00000 ave           5 max           3 min
+Histogram: 2 0 0 0 0 0 0 0 0 2
+Nghost:        12.0000 ave          13 max          11 min
+Histogram: 2 0 0 0 0 0 0 0 0 2
+Neighs:        26.7500 ave          44 max          11 min
+Histogram: 1 0 0 1 0 1 0 0 0 1
 
 Total # of neighbors = 107
 Ave neighs/atom = 6.6875000
 Ave special neighs/atom = 3.7500000
-Neighbor list builds = 1000
+Neighbor list builds = 1
 Dangerous builds = 0
 
 write_data last_config.${number}.* nocoeff
 write_data last_config.2.* nocoeff
 System init for write_data ...
 #write_restart last_config.${number}.*
-Total wall time: 0:00:34
+Total wall time: 0:00:00
