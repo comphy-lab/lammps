@@ -741,24 +741,23 @@ void PairOxdna2Coaxstk::coeff(int narg, char **arg)
       if (jmod4 == 0) jmod4 = 4;
           
       k_cxst[i][j] = k_cxst_one * eta_cxst[imod4-1][jmod4-1];
-          
-      b_cxst_lo[i][j] = 0.25 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one)/
-            (0.5 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one) -
-            k_cxst[i][j] * 0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one)/k_cxst[i][j]);
-            
-      cut_cxst_lc[i][j] = cut_cxst_lo_one - 0.5 * (cut_cxst_lo_one - cut_cxst_0_one)/b_cxst_lo[i][j];
-      
-      b_cxst_hi[i][j] = 0.25 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one)/
-            (0.5 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one) -
-            k_cxst[i][j] * 0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one)/k_cxst[i][j]);
-      
-      cut_cxst_hc[i][j] = cut_cxst_hi_one - 0.5* (cut_cxst_hi_one - cut_cxst_0_one)/b_cxst_hi[i][j];
-      cutsq_cxst_hc[i][j] = cut_cxst_hc[i][j]*cut_cxst_hc[i][j];
             
     } 
   }  
 
   // uniform parameters
+  b_cxst_lo_one = 0.25 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one)/
+        (0.5 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one) -
+         0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one));
+        
+  cut_cxst_lc_one = cut_cxst_lo_one - 0.5 * (cut_cxst_lo_one - cut_cxst_0_one)/b_cxst_lo_one;
+  
+  b_cxst_hi_one = 0.25 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one)/
+        (0.5 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one) -
+         0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one));
+  
+  cut_cxst_hc_one = cut_cxst_hi_one - 0.5* (cut_cxst_hi_one - cut_cxst_0_one)/b_cxst_hi_one;
+
   b_cxst1_one = a_cxst1_one*a_cxst1_one*dtheta_cxst1_ast_one*dtheta_cxst1_ast_one/(1-a_cxst1_one*dtheta_cxst1_ast_one*dtheta_cxst1_ast_one);
   dtheta_cxst1_c_one = 1/(a_cxst1_one*dtheta_cxst1_ast_one);
 
@@ -778,6 +777,10 @@ void PairOxdna2Coaxstk::coeff(int narg, char **arg)
       cut_cxst_c[i][j] = cut_cxst_c_one;
       cut_cxst_lo[i][j] = cut_cxst_lo_one;
       cut_cxst_hi[i][j] = cut_cxst_hi_one;
+      cut_cxst_lc[i][j] = cut_cxst_lc_one;
+      cut_cxst_hc[i][j] = cut_cxst_hc_one;
+      b_cxst_lo[i][j] = b_cxst_lo_one;
+      b_cxst_hi[i][j] = b_cxst_hi_one;
 
       a_cxst1[i][j] = a_cxst1_one;
       theta_cxst1_0[i][j] = theta_cxst1_0_one;
@@ -845,6 +848,10 @@ double PairOxdna2Coaxstk::init_one(int i, int j)
   cut_cxst_c[j][i] = cut_cxst_c[i][j];
   cut_cxst_lo[j][i] = cut_cxst_lo[i][j];
   cut_cxst_hi[j][i] = cut_cxst_hi[i][j];
+  b_cxst_lo[j][i] = b_cxst_lo[i][j];
+  b_cxst_hi[j][i] = b_cxst_hi[i][j];
+  cut_cxst_lc[j][i] = cut_cxst_lc[i][j];
+  cut_cxst_hc[j][i] = cut_cxst_hc[i][j];
 
   a_cxst1[j][i] = a_cxst1[i][j];
   theta_cxst1_0[j][i] = theta_cxst1_0[i][j];
@@ -872,6 +879,9 @@ double PairOxdna2Coaxstk::init_one(int i, int j)
 
   AA_cxst1[j][i] = AA_cxst1[i][j];
   BB_cxst1[j][i] = BB_cxst1[i][j];
+
+  cutsq_cxst_hc[i][j] = cut_cxst_hc[i][j]*cut_cxst_hc[i][j];
+  cutsq_cxst_hc[j][i] = cutsq_cxst_hc[i][j];
 
   // set the master list distance cutoff
   return cut_cxst_hc[i][j];
