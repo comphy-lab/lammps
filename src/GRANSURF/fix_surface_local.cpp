@@ -2662,7 +2662,7 @@ void FixSurfaceLocal::assign2d()
   int nlocal = atom->nlocal;
 
   tagint idmax = 0;
-  for (int i = 0; i < nlocal; i++) {
+  for (int i = nlocal0; i < nlocal; i++) {
     idmax = MAX(tag[i],idmax);
     atom2connect[i] = -1;
   }
@@ -2716,7 +2716,7 @@ void FixSurfaceLocal::assign2d()
 
       // change it to be a line
 
-      int n = atom->nlocal - 1;
+      n = atom->nlocal - 1;
       atom->tag[n] = idmaxall + i + 1;
       atom->image[n] = imagedata;
       atom->molecule[n] = lines[i].mol;
@@ -2898,7 +2898,7 @@ void FixSurfaceLocal::assign3d()
   int nlocal = atom->nlocal;
 
   tagint idmax = 0;
-  for (int i = 0; i < nlocal; i++) {
+  for (int i = nlocal0; i < nlocal; i++) {
     idmax = MAX(tag[i],idmax);
     atom2connect[i] = -1;
   }
@@ -2953,7 +2953,7 @@ void FixSurfaceLocal::assign3d()
 
       // change it to be a triangle
 
-      int n = atom->nlocal - 1;
+      n = atom->nlocal - 1;
       atom->tag[n] = idmaxall + i + 1;
       atom->image[n] = imagedata;
       atom->molecule[n] = tris[i].mol;

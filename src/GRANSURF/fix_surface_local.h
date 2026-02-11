@@ -20,9 +20,7 @@ FixStyle(surface/local,FixSurfaceLocal)
 #ifndef LMP_FIX_SURFACE_LOCAL_H
 #define LMP_FIX_SURFACE_LOCAL_H
 
-#include <stdio.h>
 #include "fix_surface.h"
-#include <map>
 #include "my_pool_chunk.h"
 
 namespace LAMMPS_NS {
@@ -69,6 +67,7 @@ class FixSurfaceLocal : public FixSurface {
   int tvar;
   char *tstr;
 
+  int nlocal0;          // # of existing atoms processed by connectivitylocal
   int ninput;
   int *input_modes,*input_stypes;
   char **input_sources;
