@@ -46,7 +46,7 @@ enum { HYDROGEN = 0, DONOR, ACCEPTOR, DIST, ANGLE, HDIST, ENGPOT, MAXVAL };
 /* ---------------------------------------------------------------------- */
 
 ComputeHBondLocal::ComputeHBondLocal(LAMMPS *lmp, int narg, char **arg) :
-    Compute(lmp, narg, arg), list(nullptr), alocal(nullptr), imgobjs(nullptr), imgparms(nullptr)
+    Compute(lmp, narg, arg), alocal(nullptr), list(nullptr), imgobjs(nullptr), imgparms(nullptr)
 {
   if (atom->molecular == Atom::ATOMIC)
     error->all(FLERR, "Cannot (yet) use compute hbond/local with non-molecular systems");
@@ -215,9 +215,9 @@ int ComputeHBondLocal::compute_image(int *&objs, double **&parms)
     double mid[3], vec[3];
     numobjs = 0;
     for (int i = 0; i < ncount; ++i) {
-      int idonor = atom->map(alocal[i][DONOR]);
-      int iacceptor = domain->closest_image(idonor, atom->map(alocal[i][ACCEPTOR]));
-      int ihydrogen = domain->closest_image(idonor, atom->map(alocal[i][HYDROGEN]));
+      int idonor = atom->map((tagint) alocal[i][DONOR]);
+      int iacceptor = domain->closest_image(idonor, (tagint) atom->map(alocal[i][ACCEPTOR]));
+      int ihydrogen = domain->closest_image(idonor, (tagint) atom->map(alocal[i][HYDROGEN]));
       if ((idonor < 0) || (iacceptor < 0) || (ihydrogen < 0)) continue;    // paranoia
 
       imgobjs[numobjs] = Graphics::ARROW;
@@ -261,7 +261,6 @@ int ComputeHBondLocal::compute_hbonds(int flag)
   const auto *const mask = atom->mask;
   const auto *const *const special = atom->special;
   const auto *const *const nspecial = atom->nspecial;
-  const auto nlocal = atom->nlocal;
 
   // to find hydrogen bonds, we use the following strategy:
   // - first loop over potential donors from neighbor list outer loop and apply group selections
@@ -312,7 +311,6 @@ int ComputeHBondLocal::compute_hbonds(int flag)
               double theta = acos(c);
 
               if (theta <= anglecutoff) {
-                double fpair = 0.0;
                 double epot = 0.0;
                 double hdist = 0.0;
                 double hdistsq = 0.0;

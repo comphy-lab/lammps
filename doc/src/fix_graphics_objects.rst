@@ -64,7 +64,7 @@ Examples
 Description
 """""""""""
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 This fix allows to add arbitrary objects to images rendered with
 :doc:`dump image <dump_image>` using the *fix* keyword.
@@ -167,7 +167,7 @@ definitions will grow the size of the sphere at a specified rate.
 Dump image info
 """""""""""""""
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 Fix graphics/objects is designed to be used with the *fix* keyword of
 :doc:`dump image <dump_image>`.  The fix will pass geometry information

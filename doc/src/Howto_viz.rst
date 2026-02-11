@@ -114,7 +114,7 @@ with "Load Visualization State..."  or type in the command console
 Advanced graphics features in the *dump image* command
 ======================================================
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 The following paragraphs discuss some of the more advanced features in
 the :doc:`dump image <dump_image>` command in LAMMPS with the help of

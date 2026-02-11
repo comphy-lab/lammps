@@ -116,7 +116,7 @@ section) the total mass of the molecule (header keyword = mass), the
 center-of-mass of the molecule (header keyword = com), and the moments
 of inertia of the molecule (header keyword = inertia).
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 The *check_labels* keyword causes the molecule command to issue a
 warning if the type label of a bond, angle, dihedral, or improper

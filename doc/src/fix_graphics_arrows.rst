@@ -57,7 +57,7 @@ Examples
 Description
 """""""""""
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 This fix allows to add arrows to images rendered with :doc:`dump image
 <dump_image>` using the *fix* keyword to represent vector properties
@@ -140,7 +140,7 @@ scalar (see below).
 Dump image info
 """""""""""""""
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 Fix graphics/arrows is designed to be used with the *fix* keyword of
 :doc:`dump image <dump_image>`.  The fix will add arrows based on the

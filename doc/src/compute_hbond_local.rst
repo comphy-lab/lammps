@@ -46,7 +46,7 @@ Examples
 Description
 """""""""""
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 Define a computation that determines the number of hydrogen bonds and
 computes some related properties according to the provided parameters.
