@@ -24,7 +24,7 @@ Syntax
 * color = atom attribute that determines color of each atom
 * diameter = atom attribute that determines size of each atom
 * zero or more keyword/value pairs may be appended
-* keyword = *atom* or *adiam* or *autobond* or *bond* or *grid* or *line* or *tri* or *ellipsoid* or *body* or *fix* or *size* or *view* or *center* or *up* or *zoom* or *box* or *axes* or *region* or *subbox* or *shiny* or *fsaa* or *ssao*
+* keyword = *atom* or *adiam* or *autobond* or *bond* or *grid* or *line* or *tri* or *ellipsoid* or *body* or *compute* or *fix* or *size* or *view* or *center* or *up* or *zoom* or *box* or *axes* or *region* or *subbox* or *shiny* or *fsaa* or *ssao*
 
   .. parsed-literal::
 
@@ -58,9 +58,13 @@ Syntax
        *body* = color bflag1 bflag2
          color = *type* or *index*
          bflag1,bflag2 = 2 numeric flags to affect how bodies are drawn
+       *compute* = computeID color cflag1 cflag2
+         computeID = ID of computes that generates objects to draw
+         color = *type* or *element* or *const*
+         cflag1,cflag2 = 2 numeric flags to affect how compute objects are drawn
        *fix* = fixID color fflag1 fflag2
          fixID = ID of fix that generates objects to draw
-         color = *type*
+         color = *type* or *element* or *const*
          fflag1,fflag2 = 2 numeric flags to affect how fix objects are drawn
        *size* values = width height = size of images
          width = width of image in # of pixels
@@ -180,12 +184,18 @@ Syntax
        *color* args = name R G B
          name = name of color
          R,G,B = red/green/blue numeric values from 0.0 to 1.0
-       *fcolor* args = fix-ID color
-         fix-ID = ID of the fix
-         color = name of color for image objects provided by this fix
-       *ftrans* args = fix-ID transparency
-         fix-ID = ID of the fix
-         transparency = transparency for image objects provided by this fix when using "const" color style
+       *ccolor* args = computeID color
+         computeID = ID of the compute
+         color = name of color for image objects provided by this compute when using "const" color style
+       *ctrans* args = computeID transparency
+         computeID = ID of the compute
+         transparency = transparency for image objects provided by this compute
+       *fcolor* args = fixID color
+         fixID = ID of the fix
+         color = name of color for image objects provided by this fix when using "const" color style
+       *ftrans* args = fixID transparency
+         fixID = ID of the fix
+         transparency = transparency for image objects provided by this fix
        *bitrate* arg = rate
          rate = target bitrate for movie in kbps
        *framerate* arg = fps
@@ -586,7 +596,7 @@ passed to the body style to affect how the drawing of a body particle
 is done.  See the :doc:`Howto body <Howto_body>` page for a
 description of what these parameters mean for each body style.
 
-.. versionchanged:: TDB
+.. versionchanged:: TBD
 
 The there are currently two supported settings for the *color* value:
 *type*, or *index*.  With the *type* setting the body particles will be
@@ -612,30 +622,36 @@ increased when using either the :doc:`create_box <create_box>` or the
 
 .. versionchanged:: TBD
 
-   Support for several fix styles added and more flexible color selection
+   Support for computes and several fix styles added and more flexible color selection
 
-The *fix* keyword can be used with a :doc:`fix <fix>` that produces
-objects to be drawn.  The fix keyword may be used multiple times to include visualizations of
-graphics objects from multiple fixes.  The fix keyword is followed by
-the :doc:`fix ID <fix>` of the fix, the color style setting and two
-numerical values *fflag1* and *fflag2*.
+The *compute* keyword can be used with a :doc:`compute style <compute>`
+that produces information about objects to be drawn. Similarly, the
+*fix* keyword can be used with a :doc:`fix style <fix>` that produces
+information about objects to be drawn.  The compute or fix keywords may
+be used multiple times to include visualizations of graphics objects
+from multiple computes and fixes.  The *compute* keyword is followed by
+the :doc:`compute ID <compute>` of the compute, the color style setting
+and two numerical values *cflag1* and *cflag2*.  The *fix* keyword is
+followed by the :doc:`fix ID <fix>` of the fix, the color style setting
+and two numerical values *fflag1* and *fflag2*.
 
 The color style may be either *type*, *element*, or *const*.  The first
 two will use the same color as assigned to the corresponding atom type
-and thus it depends on the fix which atom type it associates with any
-object.  Often this will be atom type 1.  For the *const* type a
-constant color will be used that can be changed with a *dump_modify
-fcolor* command (see below).  By default the constant color will be
-"red" (same as the default color for atom type 1).
+and thus it depends on the implementation of the compute or fix which
+atom type it associates with any object.  Often this will be atom
+type 1.  For the *const* type a constant color will be used that can be
+changed with a *dump_modify ccolor* or *dump_modify fcolor* command (see
+below).  By default the constant color will be "white".
 
-The *fflag1* and *fflag2* settings are numerical values which are used
-by *dump image* to adjust how the drawing of the objects communicated by
-the fix is done.  See the documentation of the individual fixes for a
-description of what these parameters mean for the graphics objects
-provided by those fixes.
+The *cflag1* and *cflag2* or *fflag1* and *fflag2* settings are
+numerical values which are used by *dump image* to adjust how the
+drawing of the objects communicated by the fix is done.  See the
+documentation of the individual computes and fixes for a description of
+what these parameters mean for the graphics objects provided by those
+fixes.
 
-More details and some examples for including graphics objects from fix
-commands are in the :doc:`Howto_viz` howto.
+More details and some examples for including graphics objects from compute
+and fix commands are in the :doc:`Howto_viz` howto.
 
 ----------
 
