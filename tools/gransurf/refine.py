@@ -378,8 +378,6 @@ def refine_2d(points,lines):
     lines.append(newline)
     inewline2 = len(lines) - 1
 
-    nlines = len(lines)
-
     # remove split line from sorted list
     # add 2 new lines to sorted list in appropriate locations
 
@@ -405,7 +403,6 @@ def refine_3d(points,edges,ehash,tris):
 
   while sizes[0][1] > thresh:
     iedge = sizes[0][0]
-    dist = sizes[0][1]
     edges[iedge].active = 0
 
     # add new point
@@ -678,12 +675,6 @@ else:
 
 if dim == 2: points = extract_points_2d(lines)
 if dim == 3: points = extract_points_3d(tris)
-
-npoints = len(points)
-if dim == 2:
-  nlines = len(lines)
-if dim == 3:
-  ntris = len(tris)
 
 # edges = list of unique edges for tris
 # ehash = enables search for a p1,p2 edge in edges
