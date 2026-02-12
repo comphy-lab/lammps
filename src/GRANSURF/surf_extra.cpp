@@ -199,7 +199,7 @@ int overlap_sphere_tri(double *xsphere, double radius,
     // 3 possible cases:
     // nearest tri pt is interior to edge
     // or nearest tri pt = either corner pt of edge
-    
+
     if (osum == 1) {
       if (o12flag) {
         lineflag = SurfExtra::nearest_point_line(xsphere,p1,p2,pt);
