@@ -97,16 +97,16 @@ else() # Fallback to KISSFFT
 endif()
 
 if(DOWNLOAD_RUNNER)
-  message(STATUS "DOWNLOAD_RUNNER is ON. Building RuNNer from source as a static library.")
+  message(STATUS "DOWNLOAD_RUNNER is ON. Building RuNNer from source as a shared library.")
 
   # Include ExternalProject module
   include(ExternalProject)
 
-  # Force using the static library. RuNNer's cmake build always produces libRuNNer_mpi.a.
+  # Force using the shared library. RuNNer's cmake build always produces libRuNNer_mpi.so.
   if(BUILD_MPI)
-    set(RUNNER_LIB_FULL_NAME "libRuNNer_mpi.a")
+    set(RUNNER_LIB_FULL_NAME "libRuNNer_mpi.so")
   else()
-    set(RUNNER_LIB_FULL_NAME "libRuNNer.a")
+    set(RUNNER_LIB_FULL_NAME "libRuNNer.so")
   endif()
 
   # Add any custom CMake variables required by the RuNNer build system here.
@@ -129,6 +129,7 @@ if(DOWNLOAD_RUNNER)
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
       -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/runner_install
+      -DBUILD_SHARED_LIB=yes
       ${RUNNER_CMAKE_ARGS}
 
     # Define the build and install steps
