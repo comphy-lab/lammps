@@ -1,7 +1,9 @@
 .. index:: fix surface/local
 
 fix surface/local command
-===============
+=========================
+
+.. versionadded:: TBD
 
 Syntax
 """"""
@@ -41,12 +43,12 @@ Examples
 .. code-block:: LAMMPS
 
    read_data data.tris
-   fix 1 all surface/local NULL
+   fix 1 all surface/local
 
    molecule tris surf.tri
-   fix 1 all surface/local tris
+   fix 1 all surface/local input mol tris
 
-   fix 1 all surface/local surf.tri.stl
+   fix 1 all surface/local input stl 1 surf.tri.stl
 
 Description
 """""""""""
@@ -81,7 +83,7 @@ the *input* keyword:
 
 * via a data file, read by the :doc:`read_data <read_data>` command
 * via a molecule file(s), read by the :doc:`molecule <molecule>` command
-* via an STL file(s), read by this commmand
+* via an STL file(s), read by this command
 
 If triangles/lines were previously read in by the :doc:`read_data
 <read_data>` command, then distributed triangles or lines already

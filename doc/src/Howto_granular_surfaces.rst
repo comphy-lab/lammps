@@ -1,13 +1,15 @@
 Granular surfaces
 =================
 
+.. versionadded:: TBD
+
 As explained on the :doc:`Howto granular <Howto_granular>` doc page,
 granular systems are composed of spherical particles with a diameter,
 as opposed to point particles.  This means they have an angular
 velocity and torque can be imparted to them to cause them to rotate.
 
 The :doc:`Howto granular <Howto_granular>` doc page lists various
-atom, pair, fix, and compute styles useful for creaeting granular
+atom, pair, fix, and compute styles useful for creating granular
 models.
 
 This page explains how you can also define granular surfaces which are
@@ -124,7 +126,7 @@ particles which interact with the surfaces.
 
 Note that for molecule or STL file input, the :doc:`fix surface/local
 <fix_surface_local>` command reads the file(s) and uses the values for
-each surface to creat a single new triangle or line particle.  For
+each surface to create a single new triangle or line particle.  For
 data file input, the triangle/line particles are created when the data
 file is read.
 

@@ -113,7 +113,7 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
         input_sources[ninput] = sourceID;
         iarg += 3;
       } else if (strcmp(arg[iarg+1],"stl") == 0) {
-        if (iarg+4 > narg) error->all(FLERR,"Illegal fix surface/global command");
+        if (iarg+4 > narg) error->all(FLERR,"Illegal fix surface/local command");
         input_modes = (int *)
           memory->srealloc(input_modes,(ninput+1)*sizeof(int),
                            "surface/local:input_modes");

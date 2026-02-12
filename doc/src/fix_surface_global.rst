@@ -1,7 +1,9 @@
 .. index:: fix surface/global
 
 fix surface/global command
-===============
+==========================
+
+.. versionadded:: TBD
 
 Syntax
 """"""
@@ -369,4 +371,4 @@ Default
 """""""
 
 The keyword defaults are smax = max type of all surfaces defined by
-the input keyword(s), flat = one degree, temperaure = none.
+the input keyword(s), flat = one degree, temperature = none.

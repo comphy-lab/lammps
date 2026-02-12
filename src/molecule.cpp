@@ -2486,20 +2486,20 @@ void Molecule::read(int flag)
   // error checks
 
   if (!has_atoms && nlines == 0 && ntris == 0)
-    error->all(FLERR,"Molecule file must define either atoms or lines or triangles");
+    error->all(FLERR, fileiarg, "Molecule file must define either atoms or lines or triangles");
 
   if (natoms < 0) error->all(FLERR, fileiarg, "Invalid atom count in molecule file");
-  if (nlines < 0) error->all(FLERR,"Invalid line count in molecule file");
-  if (ntris < 0) error->all(FLERR,"Invalid triangle count in molecule file");
+  if (nlines < 0) error->all(FLERR, fileiarg, "Invalid line count in molecule file");
+  if (ntris < 0) error->all(FLERR, fileiarg, "Invalid triangle count in molecule file");
   if (nbonds < 0) error->all(FLERR, fileiarg, "Invalid bond count in molecule file");
   if (nangles < 0) error->all(FLERR, fileiarg, "Invalid angle count in molecule file");
   if (ndihedrals < 0) error->all(FLERR, fileiarg, "Invalid dihedral count in molecule file");
   if (nimpropers < 0) error->all(FLERR, fileiarg, "Invalid improper count in molecule file");
 
   if (nlines && domain->dimension != 2)
-    error->all(FLERR,"Molecule file with lines must be for 2d simulation");
+    error->all(FLERR, fileiarg, "Molecule file with lines must be for 2d simulation");
   if (ntris && domain->dimension != 3)
-    error->all(FLERR,"Molecule file with triangles must be for 3d simulation");
+    error->all(FLERR, fileiarg, "Molecule file with triangles must be for 3d simulation");
 
   // count = vector for tallying values in different sections of file
   // set length to max of natoms, nlines, ntris
@@ -4142,12 +4142,12 @@ void Molecule::initialize()
   radius = nullptr;
   rmass = nullptr;
 
-  molline = NULL;
-  typeline = NULL;
-  lines = NULL;
-  moltri = NULL;
-  typetri = NULL;
-  tris = NULL;
+  molline = nullptr;
+  typeline = nullptr;
+  lines = nullptr;
+  moltri = nullptr;
+  typetri = nullptr;
+  tris = nullptr;
 
   num_bond = nullptr;
   bond_type = nullptr;

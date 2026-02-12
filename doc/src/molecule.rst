@@ -65,6 +65,8 @@ templates include:
 * :doc:`create_atoms <create_atoms>`
 * :doc:`atom_style template <atom_style>`
 
+.. versionchanged:: TBD
+
 It can also be used to define a collection of line segments (2d) or
 triangles (3d) which define an object's surface or a boundary
 condition for granular particles to interact with, via these commands:
@@ -127,12 +129,9 @@ section), the individual diameters of each particle (Diameters or
 "diameters" section), the per-atom dipoles (Dipoles or "dipoles"
 section) the total mass of the molecule (header keyword = mass), the
 center-of-mass of the molecule (header keyword = com), and the moments
-of inertia of the molecule (header keyword = inertia).
-
-   .. note::
-
-   For molecule files defining line segments or triangles, the *scale*
-   keyword is ignored.
+of inertia of the molecule (header keyword = inertia). For line or tri
+molecules, the scale factor multiplies the line endpoints or triangle
+vertices.
 
 .. note::
 

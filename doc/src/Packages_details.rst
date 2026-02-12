@@ -1114,7 +1114,7 @@ are distributed across processors.
 * src/GRANSURF: filenames -> commands
 * :doc:`Howto granular surfaces <Howto_granular_surfaces>`
 * :doc:`fix surface/global <fix_surface_global>`
-* :doc:`fix surface_local <fix_surface_local>`
+* :doc:`fix surface/local <fix_surface_local>`
 * examples/gransurf
 
 ----------

@@ -59,14 +59,13 @@ sub-models <Modify_gran_sub_mod>` doc page.
 These commands implement fix options specific to granular systems:
 
 * :doc:`fix freeze <fix_freeze>`
-* :doc:`fix freeze <fix_freeze>`
 * :doc:`fix pour <fix_pour>`
 * :doc:`fix viscous <fix_viscous>`
 * :doc:`fix wall/gran <fix_wall_gran>`
 * :doc:`fix wall/gran/region <fix_wall_gran_region>`
 
 The fix style *freeze* zeroes both the force and torque of frozen
-atoms, and should be used for granular system instead of the fix style
+atoms, and should be used for granular systems instead of the fix style
 *setforce*\ .
 
 To model heat conduction, one must add the temperature and heatflow
