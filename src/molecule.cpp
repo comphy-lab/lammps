@@ -2686,6 +2686,10 @@ void Molecule::read(int flag)
       error->all(FLERR, fileiarg, "Molecule file has no Body Doubles section");
     if (nfragments > 0 && !fragmentflag)
       error->all(FLERR, fileiarg, "Molecule file has no Fragments section");
+    if (nlines > 0 && !lineflag)
+      error->all(FLERR, fileiarg, "Molecule file has no Lines section");
+    if (ntris > 0 && !triflag)
+      error->all(FLERR, fileiarg, "Molecule file has no Triangles section");
   }
 
   // auto-generate special bonds if needed and not in file
