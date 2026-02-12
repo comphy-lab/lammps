@@ -293,12 +293,14 @@ void FixSurfaceLocal::post_constructor()
 {
   // if line/tri particles already exist from data file, initialize their connectivity
 
+  nlocal0 = 0;
   if (check_exist()) {
     if (comm->me == 0 && screen)
       fprintf(screen,"Connecting line/tri particles ...\n");
 
     if (dimension == 2) connectivity2d_local();
     else connectivity3d_local();
+    nlocal0 = atom->nlocal;
   }
 
   // loop over instances of input keyword
