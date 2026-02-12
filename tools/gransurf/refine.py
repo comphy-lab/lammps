@@ -136,8 +136,8 @@ def print_tris(txt,tris):
 # read a molecule file with lines
 
 def read_molfile_2d(filename):
-   with open(filename,"r") as f:
-     filelines = f.readlines()[1:]
+  with open(filename,"r") as f:
+    filelines = f.readlines()[1:]
 
   nlines = 0
 
@@ -182,8 +182,8 @@ def read_molfile_2d(filename):
 # read a molecule file with tris
 
 def read_molfile_3d(filename):
-   with open(filename,"r") as f:
-     filelines = f.readlines()[1:]
+  with open(filename,"r") as f:
+    filelines = f.readlines()[1:]
 
   ntris = 0
 
@@ -229,8 +229,8 @@ def read_molfile_3d(filename):
 # read an STL file with tris
 
 def read_stlfile(filename):
-   with open(filename, "r") as f:
-     filelines = f.readlines()
+  with open(filename, "r") as f:
+    filelines = f.readlines()
 
   if not filelines[0].startswith("solid "):
     error("STL file first line is invalid")
