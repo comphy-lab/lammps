@@ -61,13 +61,13 @@ class FixNeighHistory : public Fix {
   int size_restart(int) override;
   int maxsize_restart() override;
 
-  int get_dnum() const { return dnum; }
-  int get_maxpartner() const { return maxpartner; }
-  int *get_npartner() const { return npartner; }
-  tagint **get_partner() const { return partner; }
-  double **get_valuepartner() const { return valuepartner; }
-  MyPage<tagint> *get_ipage_atom() const { return ipage_atom; }
-  MyPage<double> *get_dpage_atom() const { return dpage_atom; }
+  [[nodiscard]] int get_dnum() const { return dnum; }
+  [[nodiscard]] int get_maxpartner() const { return maxpartner; }
+  [[nodiscard]] int *get_npartner() const { return npartner; }
+  [[nodiscard]] tagint **get_partner() const { return partner; }
+  [[nodiscard]] double **get_valuepartner() const { return valuepartner; }
+  [[nodiscard]] MyPage<tagint> *get_ipage_atom() const { return ipage_atom; }
+  [[nodiscard]] MyPage<double> *get_dpage_atom() const { return dpage_atom; }
 
  protected:
   int newton_pair;        // same as force setting
@@ -104,7 +104,7 @@ class FixNeighHistory : public Fix {
   void allocate_pages();
 
   // Shift by HISTBITS and check the first bit
-  inline int histmask(int j) const { return j >> HISTBITS & 1; }
+  [[nodiscard]] int histmask(int j) const { return j >> HISTBITS & 1; }
 
   enum { DEFAULT, NPARTNER, PERPARTNER };
 };

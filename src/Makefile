@@ -38,7 +38,7 @@ endif
 
 # Package variables
 
-# PACKAGE    = all packages
+# PACKAGE    = all supported packages
 # PACKBASIC  = a few core packages
 # PACKMOST   = most packages that do not require additional libs
 # PACKLIB    = all packages that require an additional lib
@@ -78,11 +78,11 @@ PACKAGE = \
 	extra-molecule \
 	extra-pair \
 	fep \
+	graphics \
 	granular \
 	gransurf \
 	intel \
 	interlayer \
-	kokkos \
 	latboltz \
 	manifold \
 	manybody \
@@ -121,7 +121,7 @@ PACKAGE = \
 # NOTE: the last four packages must remain at the end since
 # they depend on other packages to be installed first.
 
-PACKBASIC = molecule kspace manybody rigid
+PACKBASIC = molecule kspace manybody rigid graphics
 
 PACKMOST = \
 	kspace \
@@ -152,6 +152,7 @@ PACKMOST = \
 	extra-molecule \
 	extra-pair \
 	fep \
+	graphics \
 	granular \
 	gransurf \
 	interlayer \
@@ -185,11 +186,11 @@ PACKMOST = \
 # NOTE ^^^^^: the last three packages must remain at the end since
 # they depend on other packages to be installed first.
 
-PACKLIB = kokkos adios latboltz
+PACKLIB = adios latboltz
 
 PACKSYS = latboltz
 
-PACKINT = kokkos
+PACKINT =
 
 PACKEXT = adios
 
