@@ -477,7 +477,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
           for (it = 0; it < composite_surfs->size(); it++) {
             m = (*composite_surfs)[it];
             jjtmp = contact_surfs[m].neigh_index;
-            if (touch[jjtmp] == 1);
+            if (touch[jjtmp] == 1)
               jj = jjtmp;
           }
         }
