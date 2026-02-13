@@ -88,7 +88,7 @@ enum{INTERIOR = 0,EXTERNAL,UNCONNECTED};
 enum{SAME_SIDE,OPPOSITE_SIDE};
 enum{NSQ, BIN};
 
-static constexpr double FLATTHRESH = 1.0-cos(MY_PI/180.0);    // default = 1 degree
+static constexpr double FLATTHRESH = 0.00015230484360876085 // = 1.0-cos(MY_PI/180.0); = 1 degree
 static constexpr int DELTA = 128;
 static constexpr int DELTAMODEL = 1;    // make larger after debugging
 static constexpr int DELTAMOTION = 1;   // make larger after debugging
@@ -3356,7 +3356,7 @@ void FixSurfaceGlobal::move_transrotate(int imotion, int i)
 
 /* -------------------------------------------------------------------------
    rotate point I by right-hand rule around omega
-/* ------------------------------------------------------------------------- */
+   ------------------------------------------------------------------------- */
 
 void FixSurfaceGlobal::move_rotate_point(int i, double *rpoint, double *runit,
                                          double cosine, double sine)
