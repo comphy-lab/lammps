@@ -696,7 +696,7 @@ void FixDeform::init()
 
   auto fix_sllod = modify->get_fix_by_style("nvt/sllod");
   if (fix_sllod.size() > 0) {
-    const auto ifix = fix_sllod[0];
+    const auto *ifix = fix_sllod[0];
 
     // warn about flows which may produce a non-constant flow tensor
 
@@ -756,7 +756,7 @@ void FixDeform::init()
   }
 
   if (!end_flag && utils::strmatch(update->integrate_style,"^respa")) {
-    auto respa = dynamic_cast<Respa*>(update->integrate);
+    const auto *respa = dynamic_cast<Respa*>(update->integrate);
     nlevels_respa = respa->nlevels;
     step_respa = respa->step;
     nloop0_respa = respa->loop[nlevels_respa-1];
@@ -1097,7 +1097,6 @@ void FixDeform::update_domain()
 
   if (triclinic) {
     double *h = domain->h;
-    double xz_remap = 0.;
     for (int i : {5, 3, 4}) {
       int idenom = 0;         // xz || xy
       if (i == 3) idenom = 1; // yz

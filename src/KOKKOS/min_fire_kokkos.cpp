@@ -230,10 +230,10 @@ int MinFireKokkos::run_iterate(int maxiter) {
     double dtvone = dt;
     auto l_dmax = dmax;
     if constexpr (!ABCFLAG) {
-      Kokkos::parallel_reduce("min_fire/dtv_limit", nlocal, LAMMPS_LAMBDA(const int i, KK_FLOAT &dtmin_local) {
+      Kokkos::parallel_reduce("min_fire/dtv_limit", nlocal, LAMMPS_LAMBDA(const int i, double &dtmin_local) {
         KK_FLOAT vmax = fmax(fabs(l_v(i,0)), fmax(fabs(l_v(i,1)), fabs(l_v(i,2))));
         if (dtmin_local * vmax > l_dmax) dtmin_local = l_dmax / vmax;
-      }, Kokkos::Min<KK_FLOAT>(dtvone));
+      }, Kokkos::Min<double>(dtvone));
       dtvone = Kokkos::min(dtvone, dt);
     }
     MPI_Allreduce(&dtvone, &dtv, 1, MPI_DOUBLE, MPI_MIN, world);
