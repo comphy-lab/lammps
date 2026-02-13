@@ -1306,12 +1306,12 @@ Also see the :ref:`GPU <PKG-GPU>`, :ref:`OPT <PKG-OPT>`, :ref:`INTEL
 <PKG-INTEL>`, and :ref:`OPENMP <PKG-OPENMP>` packages, which have styles
 optimized for CPUs, KNLs, and GPUs.
 
-You must have a C++17 compatible compiler to use this package.
-KOKKOS makes extensive use of advanced C++ features, which can
-expose compiler bugs, especially when compiling for maximum
-performance at high optimization levels. Please see the file
-``lib/kokkos/README`` for a list of compilers and their respective
-platforms, that are known to work.
+You must have a C++20 compatible compiler to use this package.  KOKKOS
+makes extensive use of advanced C++ features, which can expose compiler
+bugs, especially when compiling for maximum performance at high
+optimization levels.  Please see the file ``lib/kokkos/README`` for a
+list of compilers and their respective platforms, that are known to
+work.
 
 **Authors:** The KOKKOS package was created primarily by Christian Trott
 and Stan Moore (Sandia), with contributions from other folks as well.
@@ -1555,7 +1555,7 @@ For more information on MBX, see the `MBX library <https://mbxsimulations.com>`_
 by the Paesani group at the University of California, San Diego. Major contributors
 include: Marc Riera, Christopher Knight, Ethan Bull-Vulpe, and Henry Agnew.
 
-.. versionadded:: TBD
+.. versionadded:: 11Feb2026
 
 **Install:**
 
@@ -1593,6 +1593,9 @@ conjunction with molecular dynamics (MD).
 * :doc:`fix bond/swap <fix_bond_swap>`
 * :doc:`fix charge/regulation <fix_charge_regulation>`
 * :doc:`fix gcmc <fix_gcmc>`
+* :doc:`fix hmc <fix_hmc>`
+* :doc:`fix mol/swap <fix_mol_swap>`
+* :doc:`fix neighbo/swap <fix_neighbor_swap>`
 * :doc:`fix sgcmc <fix_sgcmc>`
 * :doc:`fix tfmc <fix_tfmc>`
 * :doc:`fix widom <fix_widom>`

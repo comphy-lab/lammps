@@ -150,6 +150,7 @@ class Molecule : protected Pointers {
   int *count;
   int toffset, boffset, aoffset, doffset, ioffset;
   int json_format;
+  int check_which_labels[4];
   double sizescale;
 
   void read(int);
@@ -184,6 +185,7 @@ class Molecule : protected Pointers {
   std::string parse_keyword(int, char *);
   void skip_lines(int, char *, const std::string &);
 
+  void check_labels();
   void stats();
 };
 
