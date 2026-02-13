@@ -66,7 +66,7 @@ enum{CONCAVE,CONVEX};
 enum{INTERIOR = 0,EXTERNAL,UNCONNECTED};
 enum{SAME_SIDE,OPPOSITE_SIDE};
 
-static constexpr double FLATTHRESH = 0.00015230484360876085 // = 1.0-cos(MY_PI/180.0); = 1 degree
+static constexpr double FLATTHRESH = 0.00015230484360876085; // = 1.0-cos(MY_PI/180.0); = 1 degree
 
 static constexpr int RVOUS = 1;   // 0 for irregular, 1 for all2all
 
