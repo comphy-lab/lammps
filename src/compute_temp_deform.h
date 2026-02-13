@@ -53,7 +53,7 @@ class ComputeTempDeform : public Compute {
   virtual void restore_deform_bias_all_kk() {}
   void apply_deform_bias(double *, double *, double *, double *, double, double);
   virtual void apply_deform_bias_all(double dtv = 0.0);
-  virtual void apply_deform_bias_all_kk(double dtv = 0.0) {}
+  virtual void apply_deform_bias_all_kk(double) {}
 
   class Compute* temperature; // internal temperature compute
   int which;                  // whether internal temp compute has a bias

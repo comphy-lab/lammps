@@ -279,7 +279,6 @@ void ComputeTempDeform::remove_deform_bias_thr(int i, double *v, double *b)
 
 void ComputeTempDeform::remove_deform_bias_all()
 {
-  double **x = atom->x;
   double **v = atom->v;
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
