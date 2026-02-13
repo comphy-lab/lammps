@@ -38,8 +38,8 @@ class FixSurfaceLocal : public FixSurface {
 
   FixSurfaceLocal(class LAMMPS *, int, char **);
   ~FixSurfaceLocal() override;
-  int setmask();
-  void post_constructor();
+  int setmask() override;
+  void post_constructor() override;
 
   void setup_pre_neighbor() override;
   void pre_neighbor() override;
