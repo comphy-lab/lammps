@@ -425,7 +425,7 @@ TEST_F(MoleculeFileTest, badargs)
 TEST_F(MoleculeFileTest, noatom)
 {
     TEST_FAILURE(
-        ".*Molecule file must define either atoms or lines or triangles.*",
+        ".*No atoms or invalid atom count in molecule file.*",
         run_mol_cmd(test_name, "", "Comment\n0 atoms\n1 bonds\n\n Coords\n\nBonds\n\n 1 1 2\n"););
     platform::unlink("moltest_noatom.mol");
 }

@@ -2382,6 +2382,8 @@ void Molecule::read(int flag)
   // skip blank lines or lines that start with "#"
   // stop when read an unrecognized line
   bool has_atoms = false;
+  bool has_lines = false;
+  bool has_tris = false;
 
   while (true) {
 
@@ -2407,9 +2409,11 @@ void Molecule::read(int flag)
       } else if (values.matches(R"(^\s*\d+\s+lines\s*$)")) {
         nlines = values.next_int();
         nwant = 2;
+        has_lines = true;
       } else if (values.matches(R"(^\s*\d+\s+triangles\s*$)")) {
         ntris = values.next_int();
         nwant = 2;
+        has_tris = true;
       } else if (values.matches(R"(^\s*\d+\s+bonds\s*$)")) {
         nbonds = values.next_int();
         nwant = 2;
@@ -2485,8 +2489,14 @@ void Molecule::read(int flag)
 
   // error checks
 
-  if (!has_atoms && nlines == 0 && ntris == 0)
-    error->all(FLERR, fileiarg, "Molecule file must define either atoms or lines or triangles");
+  printf("has_atoms %d, nlines %d ntris %d\n", has_atoms, nlines, ntris);
+
+
+  if (!has_atoms && !has_lines && !has_tris)
+    error->all(FLERR, fileiarg, "Required \"atoms\" or \"lines\" or \"tris\" header keyword not found in molecule file");
+  if (has_atoms && natoms < 1) error->all(FLERR, fileiarg, "No atoms or invalid atom count in molecule file");
+  if (has_lines && nlines < 1) error->all(FLERR, fileiarg, "No lines or invalid line count in molecule file");
+  if (has_tris && ntris < 1) error->all(FLERR, fileiarg, "No tris or invalid tri count in molecule file");
 
   if (natoms < 0) error->all(FLERR, fileiarg, "Invalid atom count in molecule file");
   if (nlines < 0) error->all(FLERR, fileiarg, "Invalid line count in molecule file");
@@ -2496,9 +2506,9 @@ void Molecule::read(int flag)
   if (ndihedrals < 0) error->all(FLERR, fileiarg, "Invalid dihedral count in molecule file");
   if (nimpropers < 0) error->all(FLERR, fileiarg, "Invalid improper count in molecule file");
 
-  if (nlines && domain->dimension != 2)
+  if (has_lines && domain->dimension != 2)
     error->all(FLERR, fileiarg, "Molecule file with lines must be for 2d simulation");
-  if (ntris && domain->dimension != 3)
+  if (has_tris && domain->dimension != 3)
     error->all(FLERR, fileiarg, "Molecule file with triangles must be for 3d simulation");
 
   // count = vector for tallying values in different sections of file
