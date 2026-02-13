@@ -871,7 +871,7 @@ endif()
 # Create tarball for download with html and PDF version of manual included
 ###############################################################################
 add_custom_target(tarball
-  COMMAND ${LAMMPS_DIR}/cmake/packaging/build_tarball.sh ${LAMMPS_DIR}/doc ${LAMMPS_RELEASE}
+  COMMAND ${LAMMPS_DIR}/cmake/packaging/build_tarball.sh ${LAMMPS_DIR}/doc
 )
 
 
