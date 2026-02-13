@@ -2489,9 +2489,6 @@ void Molecule::read(int flag)
 
   // error checks
 
-  printf("has_atoms %d, nlines %d ntris %d\n", has_atoms, nlines, ntris);
-
-
   if (!has_atoms && !has_lines && !has_tris)
     error->all(FLERR, fileiarg, "Required \"atoms\" or \"lines\" or \"tris\" header keyword not found in molecule file");
   if (has_atoms && natoms < 1) error->all(FLERR, fileiarg, "No atoms or invalid atom count in molecule file");
