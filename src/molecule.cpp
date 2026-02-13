@@ -3556,13 +3556,13 @@ void Molecule::special_read(char *line)
 
 void Molecule::generate_angles()
 {
-  if (!bondflag)
-    error->all(FLERR, fileiarg, "molecule auto angle: Unable to generate angles without bonds.");
+  if (specialflag == 0)
+    error->all(FLERR, fileiarg, "molecule auto angle: Unable to generate angles without special bonds.");
 
   int newton_bond = force->newton_bond;
   int itype, signed_itype;
   tagint m, atom1, atom2, atom3;
-  std::vector<int> atom1_found, atom2_found, atom3_found;
+  std::vector<tagint> atom1_found, atom2_found, atom3_found;
 
   for (int i = 0; i < natoms; i++) {
     count[i] = 0;
@@ -3598,7 +3598,7 @@ void Molecule::generate_angles()
   for (int i = 0; i < nangles; i++) {
     atom1 = atom1_found[i];
     atom2 = atom2_found[i];
-    atom3 = atom3_found[i]; 
+    atom3 = atom3_found[i];
     signed_itype = atom->lmap->infer_angletype(type[atom1 - 1], type[atom2 - 1], type[atom3 - 1]);
     if (!signed_itype) error->one(FLERR,"molecule auto angle: Unable to infer angle type from bonds.");
     itype = std::abs(signed_itype);
@@ -3636,13 +3636,13 @@ void Molecule::generate_angles()
 
 void Molecule::generate_dihedrals()
 {
-  if (!bondflag)
-    error->all(FLERR, fileiarg, "molecule auto dihedral: Unable to generate dihedrals without bonds.");
+  if (specialflag == 0)
+    error->all(FLERR, fileiarg, "molecule auto dihedral: Unable to generate dihedrals without special bonds.");
 
   int newton_bond = force->newton_bond;
   int itype, signed_itype;
   tagint m, atom1, atom2, atom3, atom4;
-  std::vector<int> atom1_found, atom2_found, atom3_found, atom4_found;
+  std::vector<tagint> atom1_found, atom2_found, atom3_found, atom4_found;
 
   for (int i = 0; i < natoms; i++) {
     count[i] = 0;
@@ -3743,13 +3743,13 @@ void Molecule::generate_dihedrals()
 
 void Molecule::generate_impropers()
 {
-  if (!bondflag)
-    error->all(FLERR, fileiarg, "molecule auto improper: Unable to generate angles without bonds.");
+  if (specialflag == 0)
+    error->all(FLERR, fileiarg, "molecule auto improper: Unable to generate impropers without special bonds.");
 
   int newton_bond = force->newton_bond;
   int itype, signed_itype;
   tagint m, atom1, atom2, atom3, atom4;
-  std::vector<int> atom1_found, atom2_found, atom3_found, atom4_found;
+  std::vector<tagint> atom1_found, atom2_found, atom3_found, atom4_found;
 
   for (int i = 0; i < natoms; i++) {
     count[i] = 0;
@@ -3791,7 +3791,7 @@ void Molecule::generate_impropers()
     atom4 = atom4_found[i];
 
     std::array<int, 4> iorder;
-    signed_itype = atom->lmap->infer_impropertype(type[atom1 - 1], type[atom2 - 1], type[atom3 - 1], type[atom4 - 1]);
+    signed_itype = atom->lmap->infer_impropertype(type[atom1 - 1], type[atom2 - 1], type[atom3 - 1], type[atom4 - 1], &iorder);
     if (!signed_itype) error->one(FLERR,"molecule auto improper: Unable to infer improper type from bonds.");
     itype = std::abs(signed_itype);
     if (signed_itype < 0) {
@@ -3800,6 +3800,7 @@ void Molecule::generate_impropers()
       for (int iatom = 0; iatom < 4; iatom++)
         *iptrs[iatom] = tags[iorder[iatom]];
     }
+
     m = atom2 - 1;
     nimpropertypes = MAX(nimpropertypes, itype);
     improper_type[m][num_improper[m]] = itype;
