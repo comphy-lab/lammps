@@ -41,7 +41,7 @@ center GPUs) are under development.  You choose the mode at build time
 to produce an executable compatible with a specific hardware.
 
 The following compatibility notes have been last updated for LAMMPS
-version 11 February 2026 and its bundled Kokkos library version 5.0
+version 11 February 2026 and its bundled Kokkos library version 5.0.2.
 
 .. admonition:: C++20 support
    :class: note
