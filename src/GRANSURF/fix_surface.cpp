@@ -279,7 +279,7 @@ void FixSurface::extract_from_stlfile(char *filename, int stype,
 
 void FixSurface::connectivity2d_global(int npoints, int nlines, Line *lines,
                                        Connect2d *&connect2d,
-                                       int **&neigh_p1, int **&neigh_p2)
+                                       tagint **&neigh_p1, tagint **&neigh_p2)
 {
   connect2d = (Connect2d *)
     memory->smalloc(nlines*sizeof(Connect2d),"surface:connect2d");
@@ -377,10 +377,10 @@ void FixSurface::connectivity2d_global(int npoints, int nlines, Line *lines,
 
 int FixSurface::connectivity3d_global(int npoints, int ntris, Tri *tris,
                                       Connect3d *&connect3d,
-                                      int **&neigh_e1, int **&neigh_e2,
-                                      int **&neigh_e3,
-                                      int **&neigh_c1, int **&neigh_c2,
-                                      int **&neigh_c3)
+                                      tagint **&neigh_e1, tagint **&neigh_e2,
+                                      tagint **&neigh_e3,
+                                      tagint **&neigh_c1, tagint **&neigh_c2,
+                                      tagint **&neigh_c3)
 {
   int p1,p2,p3;
 

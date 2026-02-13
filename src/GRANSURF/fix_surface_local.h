@@ -83,7 +83,7 @@ class FixSurfaceLocal : public FixSurface {
   MyPoolChunk<tagint> *tpc;     // allocator for tagint 2d/3d connectivity vecs
 
   struct Pool2d {
-    int neigh_p1,neigh_p2;    // pool indices of neigh_p12 chunks
+    tagint neigh_p1,neigh_p2; // pool indices of neigh_p12 chunks
     int pwhich_p1,pwhich_p2;  // pool indices of pwhich_p12 chunks
     int nside_p1,nside_p2;    // pool indices of nside_p12 chunks
     int aflag_p1,aflag_p2;    // pool indices of aflag_p12 chunks
@@ -91,12 +91,12 @@ class FixSurfaceLocal : public FixSurface {
   };
 
   struct Pool3d {
-    int neigh_e1,neigh_e2,neigh_e3;     // pool indices of neigh_e123 chunks
+    tagint neigh_e1,neigh_e2,neigh_e3;  // pool indices of neigh_e123 chunks
     int ewhich_e1,ewhich_e2,ewhich_e3;  // pool indices of neigh_e123 chunks
     int nside_e1,nside_e2,nside_e3;     // pool indices of neigh_e123 chunks
     int aflag_e1,aflag_e2,aflag_e3;     // pool indices of neigh_e123 chunks
     int fflag_e1,fflag_e2,fflag_e3;     // pool indices of neigh_e123 chunks
-    int neigh_c1,neigh_c2,neigh_c3;     // pool indices of neigh_c123 chunks
+    tagint neigh_c1,neigh_c2,neigh_c3;  // pool indices of neigh_c123 chunks
     int cwhich_c1,cwhich_c2,cwhich_c3;  // pool indices of neigh_c123 chunks
     int nside_c1,nside_c2,nside_c3;     // pool indices of neigh_c123 chunks
     int fflag_c1,fflag_c2,fflag_c3;     // pool indices of neigh_c123 chunks

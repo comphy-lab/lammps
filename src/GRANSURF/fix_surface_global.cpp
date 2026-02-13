@@ -132,19 +132,19 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
   int iarg = 3;
   while (iarg < narg) {
     if (strcmp(arg[iarg],"input") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix surface/global command");
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global input", error);
       if (strcmp(arg[iarg+1],"mol") == 0) {
-        if (iarg+3 > narg) error->all(FLERR,"Illegal fix surface/global command");
+        if (iarg+3 > narg) utils::missing_cmd_args(FLERR, "fix surface/global input mol", error);
         extract_from_molecule(arg[iarg+2],hash,
                               npoints,maxpoints,points,nlines,lines,ntris,tris);
         iarg += 3;
       } else if (strcmp(arg[iarg+1],"stl") == 0) {
-        if (iarg+4 > narg) error->all(FLERR,"Illegal fix surface/global command");
+        if (iarg+4 > narg) utils::missing_cmd_args(FLERR, "fix surface/global input stl", error);
         int stype = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
         extract_from_stlfile(arg[iarg+3],stype,hash,
                              npoints,maxpoints,points,ntris,tris);
         iarg += 4;
-      } else error->all(FLERR,"Illegal fix surface/global command");
+      } else error->all(FLERR,"Illegal fix surface/global command: {}", arg[iarg+1]);
     } else break;
 
     ninput++;
@@ -166,7 +166,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
 
   while (iarg < narg) {
     if (strcmp(arg[iarg],"model") == 0) {
-      if (iarg+4 > narg) error->all(FLERR,"Illegal fix surface/global command {}", arg[iarg]);
+      if (iarg+4 > narg) utils::missing_cmd_args(FLERR, "fix surface/global model", error);
 
       if (nmodel == maxmodel) {
         maxmodel += DELTAMODEL;
@@ -263,7 +263,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
 
   while (iarg < narg) {
     if (strcmp(arg[iarg],"smaxtype") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix surface/global command");
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global smaxtype", error);
       int smaxtype = utils::inumeric(FLERR,arg[iarg+1],false,lmp);
       if (smaxtype > MAXSURFTYPE)
         error->all(FLERR,"Fix surface/global smaxtype > MAXSURFTYPE");
@@ -272,14 +272,14 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
       maxsurftype = smaxtype;
       iarg += 2;
     } else if (strcmp(arg[iarg],"flat") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix surface/global command");
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global flat", error);
       double flat = utils::numeric(FLERR,arg[iarg+1],false,lmp);
       if (flat < 0.0 || flat > 90.0)
         error->all(FLERR,"Invalid value for fix surface/global flat");
       flatthresh = 1.0 - cos(MY_PI*flat/180.0);
       iarg += 2;
     } else if (strcmp(arg[iarg],"temperature") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix surface/global command");
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global temperature", error);
       if (utils::strmatch(arg[iarg+1], "^v_")) {
         tstr = utils::strdup(arg[iarg+1] + 2);
       } else {
@@ -288,7 +288,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
       Twall_defined = 1;
       iarg += 2;
     } else if (strcmp(arg[iarg],"neighbor") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix surface/global command");
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global neighbor", error);
       if (strcmp(arg[iarg + 1],"nsq") == 0) {
         neigh_style = NSQ;
       } else if (strcmp(arg[iarg + 1],"bin") == 0) {
@@ -297,7 +297,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
         error->all(FLERR, "Unknown neighbor option {}", arg[iarg + 1]);
 
       iarg += 2;
-    } else error->all(FLERR,"Illegal fix surface/global command");
+    } else error->all(FLERR,"Illegal fix surface/global command: {}", arg[iarg]);
   }
 
   if (heat_flag && !Twall_defined)
@@ -764,7 +764,7 @@ void FixSurfaceGlobal::pre_neighbor()
   double **valuepartner;
   int **firstflag;
   double **firstvalue;
-  MyPage<int> *ipage_atom;
+  MyPage<tagint> *ipage_atom;
   MyPage<double> *dpage_atom;
 
   double **x = atom->x;
@@ -1474,7 +1474,7 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
   // move keyword
 
   if (strcmp(arg[0],"move") == 0) {
-    if (narg < 3) error->all(FLERR,"Illegal fix_modify move command");
+    if (narg < 3) utils::missing_cmd_args(FLERR, "fix surface/global modify move", error);
 
     int lo,hi;
     int *stypes = new int[maxsurftype+1];
@@ -1675,7 +1675,7 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
   // type/region keyword
 
   if (strcmp(arg[0],"type/region") == 0) {
-    if (narg < 3) error->all(FLERR,"Illegal fix_modify command");
+    if (narg < 3) utils::missing_cmd_args(FLERR, "fix surface/global modify type/region", error);
 
     int stype = utils::inumeric(FLERR,arg[1],false,lmp);
     if (stype <= 0 || stype > maxsurftype)
@@ -1715,7 +1715,7 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
 int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
 {
   if (strcmp(arg[0],"linear") == 0) {
-    if (narg < 4) error->all(FLERR,"Illegal fix_modify move command");
+    if (narg < 4) utils::missing_cmd_args(FLERR, "fix surface/global modify move linear", error);
     motion->mstyle = LINEAR;
 
     if (strcmp(arg[1], "NULL") == 0) motion->vxflag = 0;
@@ -1742,7 +1742,7 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
   }
 
   if (strcmp(arg[0],"wiggle") == 0) {
-    if (narg < 5) error->all(FLERR,"Illegal fix_modify move command");
+    if (narg < 5) utils::missing_cmd_args(FLERR, "fix surface/global modify move wiggle", error);
     motion->mstyle = WIGGLE;
 
     if (strcmp(arg[1], "NULL") == 0) motion->axflag = 0;
@@ -1773,7 +1773,7 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
   }
 
   if (strcmp(arg[0],"rotate") == 0) {
-    if (narg < 8) error->all(FLERR,"Illegal fix_modify move command");
+    if (narg < 8) utils::missing_cmd_args(FLERR, "fix surface/global modify move rotate", error);
     motion->mstyle = ROTATE;
 
     motion->point[0] = utils::numeric(FLERR,arg[1],false,lmp);
@@ -1805,7 +1805,7 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
   }
 
   if (strcmp(arg[0],"transrot") == 0) {
-    if (narg < 11) error->all(FLERR,"Illegal fix_modify move command");
+    if (narg < 11) utils::missing_cmd_args(FLERR, "fix surface/global modify move transrot", error);
     motion->mstyle = TRANSROT;
 
     error->all(FLERR,
@@ -1833,7 +1833,7 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
     }
 
     motion->period = utils::numeric(FLERR,arg[10],false,lmp);
-    if (motion->period <= 0.0) error->all(FLERR,"Illegal fix_modify move command");
+    if (motion->period <= 0.0) error->all(FLERR,"Illegal fix_modify move command, period {} must be positive", motion->period);
 
     motion->omega = MY_2PI / motion->period;
 
@@ -1848,7 +1848,7 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
   }
 
   if (strcmp(arg[0],"variable") == 0) {
-    if (narg < 7) error->all(FLERR,"Illegal fix_modify move command");
+    if (narg < 7) utils::missing_cmd_args(FLERR, "fix surface/global modify move variable", error);
     motion->mstyle = VARIABLE;
 
     if (strcmp(arg[1], "NULL") == 0)
@@ -1896,7 +1896,7 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
     return 7;
   }
 
-  error->all(FLERR,"Fix_modify move style not recognized");
+  error->all(FLERR,"Fix_modify move style {} not recognized", arg[0]);
 
   return 0;
 }
@@ -2175,7 +2175,7 @@ void FixSurfaceGlobal::check_molecules()
   int i,j,m,imol,flag;
 
   if (dimension == 2) {
-    int *neigh_p1,*neigh_p2;
+    tagint *neigh_p1, *neigh_p2;
     flag = 0;
     for (i = 0; i < nlines; i++) {
       imol = lines[i].mol;
@@ -2193,8 +2193,8 @@ void FixSurfaceGlobal::check_molecules()
                      "different molecule IDs =",flag);
 
   } else {
-    int *neigh_e1,*neigh_e2,*neigh_e3;
-    int *neigh_c1,*neigh_c2,*neigh_c3;
+    tagint *neigh_e1, *neigh_e2, *neigh_e3;
+    tagint *neigh_c1, *neigh_c2, *neigh_c3;
     flag = 0;
     for (i = 0; i < ntris; i++) {
       imol = tris[i].mol;

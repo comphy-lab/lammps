@@ -95,9 +95,9 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
   int iarg = 3;
   while (iarg < narg) {
     if (strcmp(arg[iarg],"input") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix surface/local command");
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/local input", error);
       if (strcmp(arg[iarg+1],"mol") == 0) {
-        if (iarg+3 > narg) error->all(FLERR,"Illegal fix surface/local command");
+        if (iarg+3 > narg) utils::missing_cmd_args(FLERR, "fix surface/local input mol", error);
         input_modes = (int *)
           memory->srealloc(input_modes,(ninput+1)*sizeof(int),
                            "surface/local:input_modes");
@@ -111,7 +111,7 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
         input_sources[ninput] = sourceID;
         iarg += 3;
       } else if (strcmp(arg[iarg+1],"stl") == 0) {
-        if (iarg+4 > narg) error->all(FLERR,"Illegal fix surface/local command");
+        if (iarg+4 > narg) utils::missing_cmd_args(FLERR, "fix surface/local input stl", error);
         input_modes = (int *)
           memory->srealloc(input_modes,(ninput+1)*sizeof(int),
                            "surface/local:input_modes");
@@ -129,7 +129,7 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
         strcpy(sourceID,arg[iarg+3]);
         input_sources[ninput] = sourceID;
         iarg += 4;
-      } else error->all(FLERR,"Illegal fix surface/local command");
+      } else error->all(FLERR,"Illegal fix surface/local command: {}", arg[iarg+1]);
     } else break;
 
     ninput++;
@@ -143,13 +143,13 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
 
   while (iarg < narg) {
     if (strcmp(arg[iarg],"flat") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal fix surface/local command");
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/local flat", error);
       double flat = utils::numeric(FLERR,arg[iarg+1],false,lmp);
       if (flat < 0.0 || flat > 90.0)
         error->all(FLERR,"Invalid value for fix surface/local flat");
       flatthresh = 1.0 - cos(MY_PI*flat/180.0);
       iarg += 2;
-    } else error->all(FLERR,"Illegal fix surface/local command");
+    } else error->all(FLERR,"Illegal fix surface/local command: {}", arg[iarg]);
   }
 
   // error check

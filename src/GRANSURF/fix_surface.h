@@ -138,10 +138,10 @@ class FixSurface : public Fix {
   void extract_from_stlfile(char *, int, std::map<std::tuple<double,double,double,int>,int> *,
                             int &, int &, Point *&, int &, Tri *&);
 
-  void connectivity2d_global(int, int, Line *, Connect2d *&, int **&, int **&);
+  void connectivity2d_global(int, int, Line *, Connect2d *&, tagint **&, tagint **&);
   int connectivity3d_global(int, int, Tri *, Connect3d *&,
-                            int **&, int **&, int **&,
-                            int **&, int **&, int **&);
+                            tagint **&, tagint **&, tagint **&,
+                            tagint **&, tagint **&, tagint **&);
 };
 
 }    // namespace LAMMPS_NS
