@@ -3318,9 +3318,9 @@ void FixSurfaceGlobal::move_transrotate(int imotion, int i)
 
   xsurf[i][0] = rpoint[0] + c[0] + disp[0];
   xsurf[i][1] = rpoint[1] + c[1] + disp[1];
-  xsurf[i][2] = rpoint[2] + c[2] + disp[2];
-  vsurf[i][0] = omega * (runit[1]*disp[2] - runit[2]*disp[1]); + vxflag*vx;
-  vsurf[i][1] = omega * (runit[2]*disp[0] - runit[0]*disp[2]); + vyflag*vy;
+  xsurf[i][2] = rpoint[2] + c[2] + disp[2];                    // FIXME: is that correct?
+  vsurf[i][0] = omega * (runit[1]*disp[2] - runit[2]*disp[1]); // + vxflag*vx;
+  vsurf[i][1] = omega * (runit[2]*disp[0] - runit[0]*disp[2]); // + vyflag*vy;
   vsurf[i][2] = omega * (runit[0]*disp[1] - runit[1]*disp[0]);
 
   if (vxflag) xsurf[i][0] += vx*delta;
