@@ -20,8 +20,8 @@ FixStyle(surface/global,FixSurfaceGlobal)
 #ifndef LMP_FIX_SURFACE_GLOBAL_H
 #define LMP_FIX_SURFACE_GLOBAL_H
 
-#include <stdio.h>
 #include "fix_surface.h"
+
 #include <map>
 #include <unordered_set>
 #include <vector>
@@ -34,7 +34,6 @@ namespace Granular_NS {
 
 class FixSurfaceGlobal : public FixSurface {
  public:
-
   // neighbor lists for spheres with surfs and shear history
   // accessed by fix shear/history
 
@@ -62,8 +61,8 @@ class FixSurfaceGlobal : public FixSurface {
  private:
   int neigh_style;
 
-  int dimension,firsttime,use_history;
-  double dt,skin;
+  int dimension, firsttime, use_history;
+  double dt, skin;
   double flatthresh;
   double Twall;
   int tvar;
@@ -74,18 +73,19 @@ class FixSurfaceGlobal : public FixSurface {
   // per-surf properties
 
   int maxsurftype;
-  double **xsurf,**vsurf,**omegasurf,*radsurf;
+  double **xsurf, **vsurf, **omegasurf, *radsurf;
 
   // granular models
 
   struct ModelTypes {
-    int plo,phi;
-    int slo,shi;
+    int plo, phi;
+    int slo, shi;
   };
 
   ModelTypes *modeltypes;
-  class Granular_NS::GranularModel **models;   // list of command-line models
-  class Granular_NS::GranularModel ***types2model;  // model assigned to each particle/surf type pair
+  class Granular_NS::GranularModel **models;    // list of command-line models
+  class Granular_NS::GranularModel **
+      *types2model;    // model assigned to each particle/surf type pair
 
   int nmodel, maxmodel;
   int history, size_history, heat_flag;
@@ -102,30 +102,30 @@ class FixSurfaceGlobal : public FixSurface {
   struct Motion {
     int active;
     int mstyle;
-    int vxflag,vyflag,vzflag;
-    int axflag,ayflag,azflag;
-    int xvar,yvar,zvar;
-    int vxvar,vyvar,vzvar;
-    double vx,vy,vz;
-    double ax,ay,az;
-    double dx,dy,dz;
+    int vxflag, vyflag, vzflag;
+    int axflag, ayflag, azflag;
+    int xvar, yvar, zvar;
+    int vxvar, vyvar, vzvar;
+    double vx, vy, vz;
+    double ax, ay, az;
+    double dx, dy, dz;
     double period;
-    double point[3],axis[3],unit[3];
+    double point[3], axis[3], unit[3];
     double omega;
-    char *xvarstr,*yvarstr,*zvarstr;
-    char *vxvarstr,*vyvarstr,*vzvarstr;
+    char *xvarstr, *yvarstr, *zvarstr;
+    char *vxvarstr, *vyvarstr, *vzvarstr;
     double time_origin;
   };
 
-  struct Motion *motions;  // list of defined motions, can be flagged inactive
-  int nmotion,maxmotion;   // # of defined motions versus allocated size
-  int anymove;             // 1 if any surf motion is enabled
-  int anymove_variable;    // 1 if any surf motion is style VARIABLE
+  struct Motion *motions;    // list of defined motions, can be flagged inactive
+  int nmotion, maxmotion;    // # of defined motions versus allocated size
+  int anymove;               // 1 if any surf motion is enabled
+  int anymove_variable;      // 1 if any surf motion is style VARIABLE
 
-  int *type2motion;        // assingment of surf types (1 to Ntype) to motions
-                           // -1 = non-moving surf type
+  int *type2motion;    // assingment of surf types (1 to Ntype) to motions
+                       // -1 = non-moving surf type
 
-  double **points_original,**xsurf_original;
+  double **points_original, **xsurf_original;
   double **points_lastneigh;
   int *pointmove;
 
@@ -142,72 +142,72 @@ class FixSurfaceGlobal : public FixSurface {
 
   // data structs for extracting surfs from molecule or STL files
 
-  Point *points;              // global list of unique points
-  Line *lines;                // global list of lines
-  Tri *tris;                  // global list of tris
-  int npoints,nlines,ntris;   // count of each
-  int nedges;                 // count of unique tri edges
-  int maxpoints;              // allocated length of points
-  int nsurf;                  // count of lines or tris for 2d/3d
-  int nsurf_ghost;            // count of ghost lines or tris for 2d/3d
-  int *idsurf;                // id of corresponding local lines or tris
+  Point *points;                 // global list of unique points
+  Line *lines;                   // global list of lines
+  Tri *tris;                     // global list of tris
+  int npoints, nlines, ntris;    // count of each
+  int nedges;                    // count of unique tri edges
+  int maxpoints;                 // allocated length of points
+  int nsurf;                     // count of lines or tris for 2d/3d
+  int nsurf_ghost;               // count of ghost lines or tris for 2d/3d
+  int *idsurf;                   // id of corresponding local lines or tris
 
   // ragged 2d arrays for 2d connectivity
 
-  int **neigh_p1;             // indices of other lines connected to endpt 1
-  int **pwhich_p1;            // which point (0/1) on other line is endpt 1
-  int **nside_p1;             // consistency of other line normal
-                              //   SAME_SIDE or OPPOSITE_SIDE
-  int **aflag_p1;             // is this line + other line CONCAVE or CONVEX surf
-                              //   surf = on normal side of this line
-  int **fflag_p1;             // is this line + other line FLAT or NONFLAT
+  int **neigh_p1;     // indices of other lines connected to endpt 1
+  int **pwhich_p1;    // which point (0/1) on other line is endpt 1
+  int **nside_p1;     // consistency of other line normal
+                      //   SAME_SIDE or OPPOSITE_SIDE
+  int **aflag_p1;     // is this line + other line CONCAVE or CONVEX surf
+                      //   surf = on normal side of this line
+  int **fflag_p1;     // is this line + other line FLAT or NONFLAT
 
-  int **neigh_p2;             // ditto for connections to endpt 2
-  int **pwhich_p2;            // ditto for endpt 2
-  int **nside_p2;             // ditto for endpt 2
-  int **aflag_p2;             // ditto for endpt 2
-  int **fflag_p2;             // ditto for endpt 2
+  int **neigh_p2;     // ditto for connections to endpt 2
+  int **pwhich_p2;    // ditto for endpt 2
+  int **nside_p2;     // ditto for endpt 2
+  int **aflag_p2;     // ditto for endpt 2
+  int **fflag_p2;     // ditto for endpt 2
 
   // ragged 2d arrays for 3d edge connectivity
 
-  int **neigh_e1;             // indices of other tris connected to edge 1
-  int **ewhich_e1;            // which edge (0/1/2) on other tri is edge 1
-  int **nside_e1;             // consistency of other tri normal
-                              //   SAME_SIDE or OPPOSITE_SIDE
-  int **aflag_e1;             // is this tri + other tri a FLAT,CONCAVE,CONVEX surf
-                              //   surf = on normal side of this tri
-  int **fflag_e1;             // is this tri + other tri FLAT or NONFLAT
-  int **neigh_e2;             // ditto for connections to edge 2
-  int **ewhich_e2;            // ditto for edge 2
-  int **nside_e2;             // ditto for edge 2
-  int **aflag_e2;             // ditto for edge 2
-  int **fflag_e2;             // ditto for edge 2
-  int **neigh_e3;             // ditto for connections to edge 3
-  int **ewhich_e3;            // ditto for edge 3
-  int **nside_e3;             // ditto for edge 3
-  int **aflag_e3;             // ditto for edge 3
-  int **fflag_e3;             // ditto for edge 3
+  int **neigh_e1;     // indices of other tris connected to edge 1
+  int **ewhich_e1;    // which edge (0/1/2) on other tri is edge 1
+  int **nside_e1;     // consistency of other tri normal
+                      //   SAME_SIDE or OPPOSITE_SIDE
+  int **aflag_e1;     // is this tri + other tri a FLAT,CONCAVE,CONVEX surf
+                      //   surf = on normal side of this tri
+  int **fflag_e1;     // is this tri + other tri FLAT or NONFLAT
+  int **neigh_e2;     // ditto for connections to edge 2
+  int **ewhich_e2;    // ditto for edge 2
+  int **nside_e2;     // ditto for edge 2
+  int **aflag_e2;     // ditto for edge 2
+  int **fflag_e2;     // ditto for edge 2
+  int **neigh_e3;     // ditto for connections to edge 3
+  int **ewhich_e3;    // ditto for edge 3
+  int **nside_e3;     // ditto for edge 3
+  int **aflag_e3;     // ditto for edge 3
+  int **fflag_e3;     // ditto for edge 3
 
   // ragged 2d arrays for 3d corner connectivity
 
-  int **neigh_c1;             // indices of other tris connected to cpt 1
-  int **cwhich_c1;            // which corner point (0/1/2) on other tri is cpt 1
-  int **nside_c1;             // consistency of other tri normal
-                              //   SAME_SIDE or OPPOSITE_SIDE, only meaningful for FLAT
-  int **fflag_c1;             // is this tri + other tri FLAT or NONFLAT
-  int **neigh_c2;             // indices of other tris connected to cpt 21
-  int **cwhich_c2;            // which corner point (0/1/2) on other tri is cpt 2
-  int **nside_c2;             // ditto for corner 2
-  int **fflag_c2;             // ditto for corner 2
-  int **neigh_c3;             // indices of tris connected to cpt 3
-  int **cwhich_c3;            // which corner point (0/1/2) on other tri is cpt 3
-  int **nside_c3;             // ditto for corner 3
-  int **fflag_c3;             // ditto for corner 3
+  int **neigh_c1;     // indices of other tris connected to cpt 1
+  int **cwhich_c1;    // which corner point (0/1/2) on other tri is cpt 1
+  int **nside_c1;     // consistency of other tri normal
+                      //   SAME_SIDE or OPPOSITE_SIDE, only meaningful for FLAT
+  int **fflag_c1;     // is this tri + other tri FLAT or NONFLAT
+  int **neigh_c2;     // indices of other tris connected to cpt 21
+  int **cwhich_c2;    // which corner point (0/1/2) on other tri is cpt 2
+  int **nside_c2;     // ditto for corner 2
+  int **fflag_c2;     // ditto for corner 2
+  int **neigh_c3;     // indices of tris connected to cpt 3
+  int **cwhich_c3;    // which corner point (0/1/2) on other tri is cpt 3
+  int **nside_c3;     // ditto for corner 3
+  int **fflag_c3;     // ditto for corner 3
 
   // per-surface 2d/3d connectivity
 
-  Connect2d *connect2d;       // 2d connection info
-  Connect3d *connect3d;       // 3d connection info
+  Connect2d *connect2d;    // 2d connection info
+  Connect3d *connect3d;    // 3d connection info
 
   std::vector<ContactSurf> contact_surfs;
   std::map<int, int> contacts_map;

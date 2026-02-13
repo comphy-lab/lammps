@@ -37,7 +37,7 @@ class FixSurfaceLocal : public FixSurface {
   double max_radius;             // maximum radius of a surface
 
   FixSurfaceLocal(class LAMMPS *, int, char **);
-  virtual ~FixSurfaceLocal();
+  ~FixSurfaceLocal() override;
   int setmask();
   void post_constructor();
 

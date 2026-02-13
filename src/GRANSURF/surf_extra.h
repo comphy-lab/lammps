@@ -16,12 +16,10 @@
 
 namespace SurfExtra {
 
-  int overlap_sphere_line(double *, double, double *, double *,
-                          double *, double *, double &);
-  int overlap_sphere_tri(double *, double,
-                         double *, double *, double *, double *,
-                         double *, double *, double &);
-  int nearest_point_line(double *, double *, double *, double *);
-}
+int overlap_sphere_line(double *, double, double *, double *, double *, double *, double &);
+int overlap_sphere_tri(double *, double, double *, double *, double *, double *, double *, double *,
+                       double &);
+int nearest_point_line(double *, double *, double *, double *);
+}    // namespace SurfExtra
 
 #endif

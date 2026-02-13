@@ -110,10 +110,6 @@ class FixSurface : public Fix {
   FixSurface(class LAMMPS *, int, char **);
   ~FixSurface() override;
 
-  virtual int setmask() = 0;
-
-  virtual void post_constructor() {}
-
  protected:
 
   // surfs read from molecule or STL files

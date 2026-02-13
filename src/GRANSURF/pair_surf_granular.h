@@ -13,7 +13,7 @@
 
 #ifdef PAIR_CLASS
 
-PairStyle(surf/granular,PairSurfGranular)
+PairStyle(surf / granular, PairSurfGranular)
 
 #else
 
@@ -21,8 +21,10 @@ PairStyle(surf/granular,PairSurfGranular)
 #define LMP_PAIR_SURF_GRANULAR_H
 
 #include "pair_granular.h"
-#include "fix_surface_local.h"
+
 #include "fix_surface.h"
+#include "fix_surface_local.h"
+
 #include <map>
 #include <unordered_set>
 #include <vector>
@@ -41,13 +43,13 @@ class PairSurfGranular : public PairGranular {
   int surfmoveflag;
 
   int style;
-  int emax;                // allocated size of endpt list
-  double **endpts;         // current end pts of each line
-                           // Nall x 6 array for local + ghost atoms
+  int emax;           // allocated size of endpt list
+  double **endpts;    // current end pts of each line
+                      // Nall x 6 array for local + ghost atoms
 
-  int cmax;                // allocated size of corners
-  double **corners;        // current corner pts and norm of each tri
-                           // Nall x 12 array for local + ghost atoms
+  int cmax;            // allocated size of corners
+  double **corners;    // current corner pts and norm of each tri
+                       // Nall x 12 array for local + ghost atoms
 
   // ptr to AtomVec for bonus info
 
@@ -56,17 +58,17 @@ class PairSurfGranular : public PairGranular {
 
   // line connectivity info for owned and ghost lines
 
-  class FixSurfaceLocal *fsl;              // ptr to surface/local fix
-  FixSurfaceLocal::Connect2d *connect2d;   // ptr to connectivity info
-  FixSurfaceLocal::Connect3d *connect3d;   // ptr to connectivity info
-  MyPoolChunk<int> *tcp;                   // allocator for connectivity info
+  class FixSurfaceLocal *fsl;               // ptr to surface/local fix
+  FixSurfaceLocal::Connect2d *connect2d;    // ptr to connectivity info
+  FixSurfaceLocal::Connect3d *connect3d;    // ptr to connectivity info
+  MyPoolChunk<int> *tcp;                    // allocator for connectivity info
 
   std::vector<FixSurface::ContactSurf> contact_surfs;
   std::map<int, int> contacts_map;
 
   // arrays from fix surface/local
 
-  int *atom2connect;       // per-atom index into connect 2d/3d vecs, -1 if none
+  int *atom2connect;    // per-atom index into connect 2d/3d vecs, -1 if none
 
   // lines and tris
 
