@@ -44,12 +44,10 @@ using namespace MathConst;
 // NOTE: num in point_match() is just for debugging, can remove it
 // NOTE: call to domain->remap() in assign2d/3d() will wrap new mol/STL line/tri particles by PBC
 //       is that what we want ?   not the case for fix surf/global lines/tris
-// NOTE: does this command use an optional temperature keyword, or is it defined by pair_coeff
 // NOTE: maybe this fix and FSG should be invoked during minimization ?
 //       do granular particle/particle pair styles work with minimization ?
 // NOTE: how are restarts done for the FSG and FSL fixes - should they store info
 //       in the restart file?  FSL sort of naturally does via the particles
-// NOTE: for FSG and FSL, think about how to enable per-surf temperatures
 
 static constexpr double EPSILON = 0.001;
 static constexpr int NBIN = 100;

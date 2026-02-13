@@ -83,9 +83,8 @@ class FixSurfaceGlobal : public FixSurface {
   };
 
   ModelTypes *modeltypes;
-  class Granular_NS::GranularModel **models;    // list of command-line models
-  class Granular_NS::GranularModel **
-      *types2model;    // model assigned to each particle/surf type pair
+  class Granular_NS::GranularModel **models;          // list of command-line models
+  class Granular_NS::GranularModel ***types2model;    // model for each particle/surf type
 
   int nmodel, maxmodel;
   int history, size_history, heat_flag;
