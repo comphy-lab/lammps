@@ -106,7 +106,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
   FixSurface(lmp, narg, arg), tstr(nullptr), nb(nullptr), ns(nullptr)
 {
   if (!atom->radius_flag || !atom->omega_flag)
-    error->all(FLERR,"Fix surface/global requires atom attributes radius and omega");
+    error->all(FLERR, 2, "Fix surface/global requires atom attributes radius and omega");
 
   dimension = domain->dimension;
 
@@ -126,8 +126,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
   neigh_style = BIN;
 
   int ninput = 0;
-  std::map<std::tuple<double,double,double,int>,int> *hash =
-    new std::map<std::tuple<double,double,double,int>,int>();
+  std::map<std::tuple<double,double,double,int>,int> hash;
 
   int iarg = 3;
   while (iarg < narg) {
@@ -135,24 +134,21 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
       if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global input", error);
       if (strcmp(arg[iarg+1],"mol") == 0) {
         if (iarg+3 > narg) utils::missing_cmd_args(FLERR, "fix surface/global input mol", error);
-        extract_from_molecule(arg[iarg+2],hash,
-                              npoints,maxpoints,points,nlines,lines,ntris,tris);
+        extract_from_molecule(arg[iarg+2],&hash,npoints,maxpoints,points,nlines,lines,ntris,tris);
         iarg += 3;
       } else if (strcmp(arg[iarg+1],"stl") == 0) {
         if (iarg+4 > narg) utils::missing_cmd_args(FLERR, "fix surface/global input stl", error);
         int stype = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
-        extract_from_stlfile(arg[iarg+3],stype,hash,
-                             npoints,maxpoints,points,ntris,tris);
+        extract_from_stlfile(arg[iarg+3],stype,&hash,npoints,maxpoints,points,ntris,tris);
         iarg += 4;
-      } else error->all(FLERR,"Illegal fix surface/global command: {}", arg[iarg+1]);
+      } else error->all(FLERR, iarg+1, "Unknown fix surface/global input keyword: {}", arg[iarg+1]);
     } else break;
 
     ninput++;
   }
 
-  delete hash;
   if (ninput == 0)
-    error->all(FLERR,"Fix surface/global command requires input keyword");
+    error->all(FLERR, 2, "Fix surface/global command requires using the input keyword");
 
   // process one or more granular models
   // disable bonded/history option for now
@@ -239,9 +235,8 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
 
     } else break;
   }
-
   if (nmodel == 0)
-    error->all(FLERR,"Fix surface/global command requires model keyword");
+    error->all(FLERR, 2, "Fix surface/global command requires model keyword");
 
   // maxsurftype = max surf type of any input surf (for now)
 

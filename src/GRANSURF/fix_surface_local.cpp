@@ -129,7 +129,7 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
         strcpy(sourceID,arg[iarg+3]);
         input_sources[ninput] = sourceID;
         iarg += 4;
-      } else error->all(FLERR,"Illegal fix surface/local command: {}", arg[iarg+1]);
+      } else error->all(FLERR, iarg+1, "Unknown fix surface/local input keyword: {}", arg[iarg+1]);
     } else break;
 
     ninput++;
@@ -145,11 +145,11 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
     if (strcmp(arg[iarg],"flat") == 0) {
       if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/local flat", error);
       double flat = utils::numeric(FLERR,arg[iarg+1],false,lmp);
-      if (flat < 0.0 || flat > 90.0)
-        error->all(FLERR,"Invalid value for fix surface/local flat");
+      if ((flat < 0.0) || (flat > 90.0))
+        error->all(FLERR, iarg+1, "Invalid value {} for fix surface/local flat keyword", flat);
       flatthresh = 1.0 - cos(MY_PI*flat/180.0);
       iarg += 2;
-    } else error->all(FLERR,"Illegal fix surface/local command: {}", arg[iarg]);
+    } else error->all(FLERR, iarg, "Unknown fix surface/local keyword: {}", arg[iarg]);
   }
 
   // error check
@@ -157,11 +157,11 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
   if (dimension == 2) {
     avec_line = (AtomVecLine *) atom->style_match("line");
     if (!avec_line)
-      error->all(FLERR,"Fix surface/local requires atom style line");
+      error->all(FLERR, 2, "Fix surface/local requires atom style line");
   } else if (dimension == 3) {
     avec_tri = (AtomVecTri *) atom->style_match("tri");
     if (!avec_tri)
-      error->all(FLERR,"Fix surface/local requires atom style tri");
+      error->all(FLERR, 2, "Fix surface/local requires atom style tri");
   }
 
   // initializations
@@ -367,17 +367,19 @@ void FixSurfaceLocal::post_constructor()
   // check that line/triangle particles now exist
 
   if (!check_exist())
-    error->all(FLERR,"Fix surface/local defines no line/triangle particles");
+    error->all(FLERR, Error::NOLASTLINE, "Fix surface/local defines no line/triangle particles");
 
   // confirm all tri/line atoms are defined by this fix
 
   for (int i = 0; i < atom->nlocal + atom->nghost; i++) {
     if (domain->dimension == 2) {
-      if (atom->line[i] >= 0 && atom2connect[i] == -1)
-        error->one(FLERR, "Unassociated line atom {} identified by fix surface/local", atom->tag[i]);
+      if ((atom->line[i] >= 0) && (atom2connect[i] == -1))
+        error->one(FLERR, Error::NOLASTLINE,
+                   "Unassociated line atom {} identified by fix surface/local", atom->tag[i]);
     } else {
-      if (atom->tri[i] >= 0 && atom2connect[i] == -1)
-        error->one(FLERR, "Unassociated tri atom {} identified by fix surface/local", atom->tag[i]);
+      if ((atom->tri[i] >= 0) && (atom2connect[i] == -1))
+        error->one(FLERR, Error::NOLASTLINE,
+                   "Unassociated tri atom {} identified by fix surface/local", atom->tag[i]);
     }
   }
 
@@ -452,7 +454,7 @@ void FixSurfaceLocal::grow_arrays(int nmax)
 void FixSurfaceLocal::setup_pre_neighbor()
 {
   if (atom->map_style == Atom::MAP_NONE)
-    error->all(FLERR,"Fix surface/local requires an atom map");
+    error->all(FLERR, Error::NOLASTLINE, "Fix surface/local requires an atom map");
 
   // check ghost cutoff large enough to walk all possible connections, > 2x max radius
   //  not perfect (doesn't check multi), but at least a warning
@@ -507,11 +509,9 @@ void FixSurfaceLocal::pre_neighbor()
   MPI_Allreduce(&count1,&all1,1,MPI_INT,MPI_SUM,world);
   MPI_Allreduce(&count2,&all2,1,MPI_INT,MPI_SUM,world);
 
-  if (all1 || all2 && comm->me == 0) {
-    char str[128];
-    sprintf(str,"FSL atom2connect vector mis-match: %d %d: %ld\n",all1,all2,update->ntimestep);
-    error->warning(FLERR,str);
-  }
+  if (all1 || all2 && comm->me == 0)
+    error->warning(FLERR, "Fix surface/local atom2connect vector mis-match: {} {}: {}\n",
+                   all1, all2, update->ntimestep);
 }
 
 /* ----------------------------------------------------------------------
@@ -522,7 +522,8 @@ void FixSurfaceLocal::grow_connect()
 {
   nmax_connect = nmax_connect/DELTA_CONNECT * DELTA_CONNECT;
   bigint newmax = (bigint) nmax_connect + DELTA_CONNECT;
-  if (newmax > MAXSMALLINT) error->one(FLERR,"Too many fix surface/local connections");
+  if (newmax > MAXSMALLINT)
+    error->one(FLERR, Error::NOLASTLINE, "Too many fix surface/local connections");
   nmax_connect = newmax;
 
   memory->grow(connect2atom,nmax_connect,"surface/local:connect2atom");
@@ -2597,9 +2598,8 @@ void FixSurfaceLocal::assign2d()
 {
   AtomVec *avec = atom->avec;
   avec_line = dynamic_cast<AtomVecLine *> (atom->style_match("line"));
-
   if (!avec_line)
-    error->all(FLERR,"Fix surface/local requires atom style line");
+    error->all(FLERR, Error::NOLASTLINE, "Fix surface/local requires atom style line");
 
   // set bounds for my proc
   // if periodic and I am lo/hi proc, adjust bounds by EPSILON
@@ -2708,7 +2708,8 @@ void FixSurfaceLocal::assign2d()
         coord[2] >= sublo[2] && coord[2] < subhi[2]) {
 
       if (lines[i].type < 1 || lines[i].type > atom->ntypes)
-        error->all(FLERR, "Invalid line type {} in fix surface/local", lines[i].type);
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Invalid line type {} in fix surface/local", lines[i].type);
 
       // create a default particle of correct style
 
@@ -2833,9 +2834,8 @@ void FixSurfaceLocal::assign3d()
 {
   AtomVec *avec = atom->avec;
   avec_tri = dynamic_cast<AtomVecTri *> (atom->style_match("tri"));
-
   if (!avec_tri)
-    error->all(FLERR,"Fix surface/local requires atom style tri");
+    error->all(FLERR, Error::NOLASTLINE, "Fix surface/local requires atom style tri");
 
   // set bounds for my proc
   // if periodic and I am lo/hi proc, adjust bounds by EPSILON
@@ -2944,8 +2944,9 @@ void FixSurfaceLocal::assign3d()
         coord[1] >= sublo[1] && coord[1] < subhi[1] &&
         coord[2] >= sublo[2] && coord[2] < subhi[2]) {
 
-      if (tris[i].type < 1 || tris[i].type > atom->ntypes)
-        error->all(FLERR, "Invalid triangle type {} in fix surface/local", tris[i].type);
+      if ((tris[i].type < 1) || (tris[i].type > atom->ntypes))
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Invalid triangle type {} in fix surface/local", tris[i].type);
 
       // create a default particle of correct style
 
@@ -3240,7 +3241,7 @@ void FixSurfaceLocal::connectivity2d_complete()
       jtag = connect2d[iconnect].neigh_p1[m];
       j = atom->map(jtag);
       if (j == -1)
-        error->one(FLERR, "Missing tri atom {} from surface", jtag);
+        error->one(FLERR, Error::NOLASTLINE, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       inorm = normals[iconnect];
@@ -3267,7 +3268,7 @@ void FixSurfaceLocal::connectivity2d_complete()
       jtag = connect2d[iconnect].neigh_p2[m];
       j = atom->map(jtag);
       if (j == -1)
-        error->one(FLERR, "Missing tri atom {} from surface", jtag);
+        error->one(FLERR, Error::NOLASTLINE, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       inorm = normals[iconnect];
@@ -3390,7 +3391,7 @@ void FixSurfaceLocal::connectivity3d_complete()
       jtag = connect3d[iconnect].neigh_e1[m];
       j = atom->map(jtag);
       if (j == -1)
-        error->one(FLERR, "Missing tri atom {} from surface", jtag);
+        error->one(FLERR, Error::NOLASTLINE, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       if (same_point(cpts[iconnect][0],cpts[jconnect][0])) jpfirst = 1;
@@ -3435,7 +3436,7 @@ void FixSurfaceLocal::connectivity3d_complete()
       jtag = connect3d[iconnect].neigh_e2[m];
       j = atom->map(jtag);
       if (j == -1)
-        error->one(FLERR, "Missing tri atom {} from surface", jtag);
+        error->one(FLERR, Error::NOLASTLINE, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       if (same_point(cpts[iconnect][1],cpts[jconnect][0])) jpfirst = 1;
@@ -3479,7 +3480,7 @@ void FixSurfaceLocal::connectivity3d_complete()
       jtag = connect3d[iconnect].neigh_e3[m];
       j = atom->map(jtag);
       if (j == -1)
-        error->one(FLERR, "Missing tri atom {} from surface", jtag);
+        error->one(FLERR, Error::NOLASTLINE, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
 
       if (same_point(cpts[iconnect][2],cpts[jconnect][0])) jpfirst = 1;
@@ -3533,7 +3534,7 @@ void FixSurfaceLocal::connectivity3d_complete()
       jtag = connect3d[iconnect].neigh_c1[m];
       j = atom->map(jtag);
       if (j == -1)
-        error->one(FLERR, "Missing tri atom {} from surface", jtag);
+        error->one(FLERR, Error::NOLASTLINE, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
       if (same_point(cpts[iconnect][0],cpts[jconnect][0]))
         connect3d[iconnect].cwhich_c1[m] = 0;
@@ -3559,7 +3560,7 @@ void FixSurfaceLocal::connectivity3d_complete()
       jtag = connect3d[iconnect].neigh_c2[m];
       j = atom->map(jtag);
       if (j == -1)
-        error->one(FLERR, "Missing tri atom {} from surface", jtag);
+        error->one(FLERR, Error::NOLASTLINE, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
       if (same_point(cpts[iconnect][1],cpts[jconnect][0]))
         connect3d[iconnect].cwhich_c2[m] = 0;
@@ -3585,7 +3586,7 @@ void FixSurfaceLocal::connectivity3d_complete()
       jtag = connect3d[iconnect].neigh_c3[m];
       j = atom->map(jtag);
       if (j == -1)
-        error->one(FLERR, "Missing tri atom {} from surface", jtag);
+        error->one(FLERR, Error::NOLASTLINE, "Missing tri atom {} from surface", jtag);
       jconnect = atom2connect[j];
       if (same_point(cpts[iconnect][2],cpts[jconnect][0]))
         connect3d[iconnect].cwhich_c3[m] = 0;
@@ -3725,7 +3726,7 @@ void FixSurfaceLocal::check2d()
   int allflag;
   MPI_Allreduce(&flag,&allflag,1,MPI_INT,MPI_SUM,world);
   if (allflag)
-    error->all(FLERR,fmt::format("Fix surface/local defines {} zero-length lines",allflag));
+    error->all(FLERR, Error::NOLASTLINE, "Fix surface/local defines {} zero-length lines", allflag);
 }
 
 /* ----------------------------------------------------------------------
@@ -3759,7 +3760,8 @@ void FixSurfaceLocal::check3d()
   int allflag;
   MPI_Allreduce(&flag,&allflag,1,MPI_INT,MPI_SUM,world);
   if (allflag)
-    error->all(FLERR,fmt::format("Fix surface/local defines {} zero-length triangle edges",allflag));
+    error->all(FLERR, Error::NOLASTLINE,
+               "Fix surface/local defines {} zero-length triangle edges", allflag);
 }
 
 /* ----------------------------------------------------------------------

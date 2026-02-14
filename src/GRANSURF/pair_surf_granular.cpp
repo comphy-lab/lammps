@@ -219,6 +219,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
+      j &= NEIGHMASK;           // ignore special bonds for now
 
       // Do we need special bonds?
       // factor_lj = special_lj[sbmask(j)];
@@ -227,11 +228,11 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
       // sanity check that neighbor list is built correctly
 
-      if ((style == LINE) && (line[i] >= 0 || line[j] < 0))
-        error->one(FLERR, "Pair surf/granular interaction is invalid");
+      if ((style == LINE) && ((line[i] >= 0) || (line[j] < 0)))
+        error->one(FLERR, Error::NOLASTLINE, "Pair surf/granular interaction is invalid");
 
-      if ((style == TRI) && (tri[i] >= 0 || tri[j] < 0))
-        error->one(FLERR, "Pair surf/granular interaction is invalid");
+      if ((style == TRI) && ((tri[i] >= 0) || (tri[j] < 0)))
+        error->one(FLERR, Error::NOLASTLINE, "Pair surf/granular interaction is invalid");
 
       delx = xtmp - x[j][0];
       dely = ytmp - x[j][1];
@@ -548,20 +549,26 @@ void PairSurfGranular::init_style()
   if (avectri) style = TRI;
 
   if (style == NONE)
-    error->all(FLERR,"Pair surf/granular requires atom style line or tri");
+    error->all(FLERR, Error::NOLASTLINE,
+               "Pair style surf/granular requires atom style line or tri");
 
   if (!atom->radius_flag || !atom->rmass_flag || !atom->omega_flag)
-    error->all(FLERR, "Pair surf/granular requires atom attributes radius, rmass, omega");
+    error->all(FLERR, Error::NOLASTLINE,
+               "Pair style surf/granular requires atom attributes radius, rmass, omega");
   if (!force->newton_pair)
-    error->all(FLERR, "Pair style surf/granular requires newton pair on");
+    error->all(FLERR, Error::NOLASTLINE,
+               "Pair style surf/granular requires newton pair on");
   if (comm->ghost_velocity == 0)
-    error->all(FLERR, "Pair surf/granular requires ghost atoms store velocity");
+    error->all(FLERR, Error::NOLASTLINE,
+               "Pair style surf/granular requires ghost atoms store velocity");
 
   if (heat_flag) {
     if (!atom->temperature_flag)
-      error->all(FLERR, "Heat conduction in pair surf/granularular requires atom style with temperature property");
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Heat conduction in pair style surf/granularular requires atom style with temperature property");
     if (!atom->heatflow_flag)
-      error->all(FLERR, "Heat conduction in pair surf/granularular requires atom style with heatflow property");
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Heat conduction in pair surf/granularular requires atom style with heatflow property");
   }
 
   // allocate history and initialize models
@@ -603,7 +610,8 @@ void PairSurfGranular::init_style()
     }
 
     if (model->beyond_contact)
-      error->all(FLERR, "Beyond contact models not currenty supported");
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Normal models interacting beyond contact are currenty not supported");
   }
 
   // need a granular neighbor list
@@ -618,34 +626,38 @@ void PairSurfGranular::init_style()
   // it replaces FixDummy, created in the constructor
   // this is so its order in the fix list is preserved
 
-  if (use_history && fix_history == nullptr) {
-    fix_history = dynamic_cast<FixNeighHistory *>(modify->replace_fix(id_dummy, fmt::format("{} all NEIGH_HISTORY {} onesided", id_history, size_history),1));
+  if (use_history && (fix_history == nullptr)) {
+    auto fixcmd = fmt::format("{} all NEIGH_HISTORY {} onesided", id_history, size_history);
+    fix_history = dynamic_cast<FixNeighHistory *>(modify->replace_fix(id_dummy, fixcmd, 1));
+    if (!fix_history) error->all(FLERR, Error::NOLASTLINE,
+                                 "Inserting internal fix neigh history failed");
     fix_history->pair = this;
   } else if (use_history) {
     fix_history = dynamic_cast<FixNeighHistory *>(modify->get_fix_by_id(id_history));
-    if (!fix_history) error->all(FLERR, "Could not find pair fix neigh history ID");
+    if (!fix_history) error->all(FLERR, Error::NOLASTLINE,
+                                 "Could not find pair fix neigh history ID {}", id_history);
   }
 
   // set ptr to FixSurfaceLocal for surf connectivity info
 
-  fsl = nullptr;
-  for (int m = 0; m < modify->nfix; m++) {
-    if (strcmp(modify->fix[m]->style, "surface/local") == 0) {
-      if (fsl)
-        error->all(FLERR, "Pair surf/granular requires single fix surface/local");
-      fsl = (FixSurfaceLocal *) modify->fix[m];
-    }
-  }
-  if (!fsl) error->all(FLERR, "Pair surf/granular requires a fix surface/local");
+  auto fixlist = modify->get_fix_by_style("surface/local");
+  if (fixlist.size() != 1)
+    error->all(FLERR, Error::NOLASTLINE,
+               "Pair style surf/granular requires using a single fix surface/local");
+  fsl = dynamic_cast<FixSurfaceLocal *>(fixlist.front());
+  if (!fsl)                     // should not happen, but let's be paranoid
+    error->all(FLERR, Error::NOLASTLINE,
+               "Fix {} {} is not compatible with pair style surf/granular",
+               fixlist.front()->id, fixlist.front()->style);
 
   // surfmoveflag = 1 if surfs may move at every step
   // yes if fix move exists and its group includes lines
   // NOTE: are there other conditions, like fix deform or fix npt?
 
   surfmoveflag = 0;
-  for (int m = 0; m < modify->nfix; m++) {
-    if (strcmp(modify->fix[m]->style, "move") == 0) {
-      int groupbit = modify->fix[m]->groupbit;
+  for (const auto &ifix : modify->get_fix_list()) {
+    if (strcmp(ifix->style, "move") == 0) {
+      int groupbit = ifix->groupbit;
       int *mask = atom->mask;
       int nlocal = atom->nlocal;
       int flag = 0;
@@ -670,11 +682,12 @@ void PairSurfGranular::init_style()
 
   // check for FixFreeze and set freeze_group_bit
 
-  auto fixlist = modify->get_fix_by_style("^freeze");
+  fixlist = modify->get_fix_by_style("^freeze");
   if (fixlist.size() == 0)
     freeze_group_bit = 0;
   else if (fixlist.size() > 1)
-    error->all(FLERR, "Only one fix freeze command at a time allowed");
+    error->all(FLERR, Error::NOLASTLINE,
+               "Only one fix freeze command at a time is allowed with pair style surf/granular");
   else
     freeze_group_bit = fixlist.front()->groupbit;
 
@@ -684,7 +697,8 @@ void PairSurfGranular::init_style()
   for (const auto &ifix : modify->get_fix_list()) {
     if (ifix->rigid_flag) {
       if (fix_rigid)
-        error->all(FLERR, "Only one fix rigid command at a time allowed");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Only one fix rigid command at a time is allowed with pair style surf/granular");
       else
         fix_rigid = ifix;
     }
@@ -907,7 +921,8 @@ void PairSurfGranular::prewalk_connections2d()
       }
       k = atom->map(ktag);
       if (k == -1)
-        error->one(FLERR, "Surface mesh atom {} missing at step {}", ktag, update->ntimestep);
+        error->one(FLERR, Error::NOLASTLINE,
+                   "Surface mesh atom {} missing at step {}", ktag, update->ntimestep);
 
       // Skip if not in contact
       if (contacts_map.find(k) == contacts_map.end())
@@ -980,7 +995,8 @@ void PairSurfGranular::prewalk_connections3d()
       }
       k = atom->map(ktag);
       if (k == -1)
-        error->one(FLERR, "Surface mesh atom {} missing at step {}", ktag, update->ntimestep);
+        error->one(FLERR, Error::NOLASTLINE,
+                   "Surface mesh atom {} missing at step {}", ktag, update->ntimestep);
 
       // Skip if not in contact
       if (contacts_map.find(k) == contacts_map.end())
@@ -1015,7 +1031,8 @@ void PairSurfGranular::prewalk_connections3d()
 
       k = atom->map(ktag);
       if (k == -1)
-        error->one(FLERR, "Surface mesh atom {} missing at step {}", ktag, update->ntimestep);
+        error->one(FLERR, Error::NOLASTLINE,
+                   "Surface mesh atom {} missing at step {}", ktag, update->ntimestep);
 
       // Skip if not in contact
       if (contacts_map.find(k) == contacts_map.end())
