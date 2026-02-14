@@ -2678,10 +2678,6 @@ void FixSurfaceLocal::assign2d()
   double xmid[3],lamda[3];
   double *coord,*x1,*x2;
   int *global,*local;
-
-  char pts[4][32];
-  char *values[4];
-  for (int i = 0; i < 4; i++) values[i] = &pts[i][0];
   std::vector<std::string> svalues(5);
 
   for (int i = 0; i < nlines; i++) {
@@ -2726,19 +2722,13 @@ void FixSurfaceLocal::assign2d()
       atom->radius[n] = 0.0;
 
       // set the bonus data for a line = end points
-
-      sprintf(values[0],"%-1.16e",x1[0]);
-      sprintf(values[1],"%-1.16e",x1[1]);
-      sprintf(values[2],"%-1.16e",x2[0]);
-      sprintf(values[3],"%-1.16e",x2[1]);
-
       // svalues[0] is not used here
       // used when caller of data_atom_bonus() is via read_data command
 
-      svalues[1] = (const char *) values[0];
-      svalues[2] = (const char *) values[1];
-      svalues[3] = (const char *) values[2];
-      svalues[4] = (const char *) values[3];
+      svalues[1] = fmt::format("{:.16e}", values[0]);
+      svalues[2] = fmt::format("{:.16e}", values[1]);
+      svalues[3] = fmt::format("{:.16e}", values[2]);
+      svalues[4] = fmt::format("{:.16e}", values[3]);
 
       avec_line->data_atom_bonus(n,svalues);
 
@@ -2914,10 +2904,6 @@ void FixSurfaceLocal::assign3d()
   double xmid[3],lamda[3];
   double *coord,*x1,*x2,*x3;
   int *global,*local;
-
-  char pts[9][32];
-  char *values[9];
-  for (int i = 0; i < 9; i++) values[i] = &pts[i][0];
   std::vector<std::string> svalues(10);
 
   for (int i = 0; i < ntris; i++) {
@@ -2963,29 +2949,18 @@ void FixSurfaceLocal::assign3d()
       atom->radius[n] = 0.0;
 
       // set the bonus data for a tri = corner pts
-
-      sprintf(values[0],"%-1.16e",x1[0]);
-      sprintf(values[1],"%-1.16e",x1[1]);
-      sprintf(values[2],"%-1.16e",x1[2]);
-      sprintf(values[3],"%-1.16e",x2[0]);
-      sprintf(values[4],"%-1.16e",x2[1]);
-      sprintf(values[5],"%-1.16e",x2[2]);
-      sprintf(values[6],"%-1.16e",x3[0]);
-      sprintf(values[7],"%-1.16e",x3[1]);
-      sprintf(values[8],"%-1.16e",x3[2]);
-
       // svalues[0] is not used here
       // used when caller of data_atom_bonus() is via read_data command
 
-      svalues[1] = (const char *) values[0];
-      svalues[2] = (const char *) values[1];
-      svalues[3] = (const char *) values[2];
-      svalues[4] = (const char *) values[3];
-      svalues[5] = (const char *) values[4];
-      svalues[6] = (const char *) values[5];
-      svalues[7] = (const char *) values[6];
-      svalues[8] = (const char *) values[7];
-      svalues[9] = (const char *) values[8];
+      svalues[1] = fmt::format("{:.16e}", values[0]);
+      svalues[2] = fmt::format("{:.16e}", values[1]);
+      svalues[3] = fmt::format("{:.16e}", values[2]);
+      svalues[4] = fmt::format("{:.16e}", values[3]);
+      svalues[5] = fmt::format("{:.16e}", values[4]);
+      svalues[6] = fmt::format("{:.16e}", values[5]);
+      svalues[7] = fmt::format("{:.16e}", values[6]);
+      svalues[8] = fmt::format("{:.16e}", values[7]);
+      svalues[9] = fmt::format("{:.16e}", values[8]);
 
       avec_tri->data_atom_bonus(n,svalues);
 
