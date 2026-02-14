@@ -2957,7 +2957,7 @@ void FixSurfaceLocal::assign3d()
       svalues[3] = fmt::format("{:.16e}", x1[2]);
       svalues[4] = fmt::format("{:.16e}", x2[0]);
       svalues[5] = fmt::format("{:.16e}", x2[1]);
-      svalues[6] = fmt::format("{:.16e}", x2[3]);
+      svalues[6] = fmt::format("{:.16e}", x2[2]);
       svalues[7] = fmt::format("{:.16e}", x3[0]);
       svalues[8] = fmt::format("{:.16e}", x3[1]);
       svalues[9] = fmt::format("{:.16e}", x3[2]);
