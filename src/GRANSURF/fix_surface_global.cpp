@@ -816,25 +816,25 @@ void FixSurfaceGlobal::pre_neighbor()
 
   if (neigh_style == BIN) {
     if (nb == nullptr) {
-      double rmax_surf = 0.0;
+      double rmax_surf = 0.0, rmax_surf_all;
       for (j = 0; j < nsurf; j++)
         rmax_surf = MAX(rmax_surf, radsurf[j]);
-      MPI_Allreduce(&rmax_surf, &rmax_surf, 1, MPI_DOUBLE, MPI_MAX, world);
+      MPI_Allreduce(&rmax_surf, &rmax_surf_all, 1, MPI_DOUBLE, MPI_MAX, world);
 
       // Does NOT yet account for pour/deposit
-      double rmax_atom = 0.0;
+      double rmax_atom = 0.0, rmax_atom_all;
       for (i = 0; i < nlocal; i++)
         rmax_atom = MAX(rmax_atom, radius[i]);
-      MPI_Allreduce(&rmax_atom, &rmax_atom, 1, MPI_DOUBLE, MPI_MAX, world);
+      MPI_Allreduce(&rmax_atom, &rmax_atom_all, 1, MPI_DOUBLE, MPI_MAX, world);
 
       //cutneighmax equiv
-      double cutoff = skin + rmax_atom + rmax_surf;
+      double cutoff = skin + rmax_atom_all + rmax_surf_all;
 
       if (nsurf_ghost == -1) {
         nsurf_ghost = 0;
 
         if (domain->triclinic)
-          error->all(FLERR, "Need to add support for triclinc");
+          error->all(FLERR, Error::NOLASTLINE, "Fix surface/global does not support triclinic cells");
 
         // get limits for creating ghosts
         int a;
