@@ -756,7 +756,7 @@ void FixSurfaceGlobal::pre_neighbor()
   int i,j,j2,k,m,n,nn,dnum,dnumbytes;
   double xtmp,ytmp,ztmp,delx,dely,delz;
   double radi,rsq,radsum,cutsq;
-  int *neighptr,*touchptr;
+  int *neighptr;
   double *valueptr;
 
   int *npartner;
@@ -938,7 +938,6 @@ void FixSurfaceGlobal::pre_neighbor()
       neighptr = ipage->vget();
       if (use_history) {
         nn = 0;
-        touchptr = ipage_atom->vget();
         valueptr = dpage_atom->vget();
       }
 
@@ -1008,7 +1007,6 @@ void FixSurfaceGlobal::pre_neighbor()
       neighptr = ipage->vget();
       if (use_history) {
         nn = 0;
-        touchptr = ipage_atom->vget();
         valueptr = dpage_atom->vget();
       }
 
@@ -2175,7 +2173,7 @@ void FixSurfaceGlobal::check_molecules()
   int i,j,m,imol,flag;
 
   if (dimension == 2) {
-    tagint *neigh_p1, *neigh_p2;
+    int *neigh_p1, *neigh_p2;
     flag = 0;
     for (i = 0; i < nlines; i++) {
       imol = lines[i].mol;
@@ -2193,8 +2191,8 @@ void FixSurfaceGlobal::check_molecules()
                      "different molecule IDs =",flag);
 
   } else {
-    tagint *neigh_e1, *neigh_e2, *neigh_e3;
-    tagint *neigh_c1, *neigh_c2, *neigh_c3;
+    int *neigh_e1, *neigh_e2, *neigh_e3;
+    int *neigh_c1, *neigh_c2, *neigh_c3;
     flag = 0;
     for (i = 0; i < ntris; i++) {
       imol = tris[i].mol;

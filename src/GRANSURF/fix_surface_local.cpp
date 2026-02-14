@@ -179,7 +179,7 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
   connect2atom = nullptr;
 
   ipc = new MyPoolChunk<int>(1,MAXTRIPOINT,6);
-  tpc = new MyPoolChunk<tagint>(1,MAXTRIPOINT,6);
+  tpc = new MyPoolChunk<int>(1,MAXTRIPOINT,6);
 
   flag_complete = 0;
   epssq = -1.0;
@@ -2677,7 +2677,7 @@ void FixSurfaceLocal::assign2d()
   imageint imagedata;
   double xmid[3],lamda[3];
   double *coord,*x1,*x2;
-  tagint *global,*local;
+  int *global,*local;
 
   char pts[4][32];
   char *values[4];
@@ -2913,7 +2913,7 @@ void FixSurfaceLocal::assign3d()
   imageint imagedata;
   double xmid[3],lamda[3];
   double *coord,*x1,*x2,*x3;
-  tagint *global,*local;
+  int *global,*local;
 
   char pts[9][32];
   char *values[9];
