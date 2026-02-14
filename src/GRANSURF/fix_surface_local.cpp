@@ -2725,10 +2725,10 @@ void FixSurfaceLocal::assign2d()
       // svalues[0] is not used here
       // used when caller of data_atom_bonus() is via read_data command
 
-      svalues[1] = fmt::format("{:.16e}", values[0]);
-      svalues[2] = fmt::format("{:.16e}", values[1]);
-      svalues[3] = fmt::format("{:.16e}", values[2]);
-      svalues[4] = fmt::format("{:.16e}", values[3]);
+      svalues[1] = fmt::format("{:.16e}", x1[0]);
+      svalues[2] = fmt::format("{:.16e}", x1[1]);
+      svalues[3] = fmt::format("{:.16e}", x2[0]);
+      svalues[4] = fmt::format("{:.16e}", x2[1]);
 
       avec_line->data_atom_bonus(n,svalues);
 
@@ -2952,15 +2952,15 @@ void FixSurfaceLocal::assign3d()
       // svalues[0] is not used here
       // used when caller of data_atom_bonus() is via read_data command
 
-      svalues[1] = fmt::format("{:.16e}", values[0]);
-      svalues[2] = fmt::format("{:.16e}", values[1]);
-      svalues[3] = fmt::format("{:.16e}", values[2]);
-      svalues[4] = fmt::format("{:.16e}", values[3]);
-      svalues[5] = fmt::format("{:.16e}", values[4]);
-      svalues[6] = fmt::format("{:.16e}", values[5]);
-      svalues[7] = fmt::format("{:.16e}", values[6]);
-      svalues[8] = fmt::format("{:.16e}", values[7]);
-      svalues[9] = fmt::format("{:.16e}", values[8]);
+      svalues[1] = fmt::format("{:.16e}", x1[0]);
+      svalues[2] = fmt::format("{:.16e}", x1[1]);
+      svalues[3] = fmt::format("{:.16e}", x1[2]);
+      svalues[4] = fmt::format("{:.16e}", x2[0]);
+      svalues[5] = fmt::format("{:.16e}", x2[1]);
+      svalues[6] = fmt::format("{:.16e}", x2[3]);
+      svalues[7] = fmt::format("{:.16e}", x3[0]);
+      svalues[8] = fmt::format("{:.16e}", x3[1]);
+      svalues[9] = fmt::format("{:.16e}", x3[2]);
 
       avec_tri->data_atom_bonus(n,svalues);
 
