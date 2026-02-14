@@ -12,8 +12,9 @@
 ------------------------------------------------------------------------- */
 
 #ifdef FIX_CLASS
-
+// clang-format off
 FixStyle(surface/local,FixSurfaceLocal)
+// clang-format on
 
 #else
 
