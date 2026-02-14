@@ -12,9 +12,9 @@
 ------------------------------------------------------------------------- */
 
 #ifdef PAIR_CLASS
-
-PairStyle(surf / granular, PairSurfGranular)
-
+// clang-format off
+PairStyle(surf/granular,PairSurfGranular)
+// clang-format on
 #else
 
 #ifndef LMP_PAIR_SURF_GRANULAR_H
