@@ -3819,12 +3819,12 @@ void FixSurfaceLocal::stats2d()
 
   if (comm->me == 0) {
     utils::logmesg(lmp,"Fix surface/local line segment creation:\n");
-    utils::logmesg(lmp,fmt::format("  {} lines\n",alllines));
-    utils::logmesg(lmp,fmt::format("  {} line end points\n",allpoints));
-    utils::logmesg(lmp,fmt::format("  {} end point connections\n",allconnect));
-    utils::logmesg(lmp,fmt::format("  {} free end points\n",allfree));
-    utils::logmesg(lmp,fmt::format("  {} min line length\n",allminsize));
-    utils::logmesg(lmp,fmt::format("  {} max line length\n",allmaxsize));
+    utils::logmesg(lmp,"  {} lines\n",alllines);
+    utils::logmesg(lmp,"  {} line end points\n",allpoints);
+    utils::logmesg(lmp,"  {} end point connections\n",allconnect);
+    utils::logmesg(lmp,"  {} free end points\n",allfree);
+    utils::logmesg(lmp,"  {} min line length\n",allminsize);
+    utils::logmesg(lmp,"  {} max line length\n",allmaxsize);
   }
 
   max_radius = maxsize * 0.5;
@@ -3946,17 +3946,17 @@ void FixSurfaceLocal::stats3d()
 
   if (comm->me == 0) {
     utils::logmesg(lmp,"Fix surface/local triangle creation:\n");
-    utils::logmesg(lmp,fmt::format("  {} tris\n",alltris));
-    utils::logmesg(lmp,fmt::format("  {} tri edges\n",alledges));
-    utils::logmesg(lmp,fmt::format("  {} tri corner points\n",allpoints));
-    utils::logmesg(lmp,fmt::format("  {} edge connections\n",allconnect_edge));
-    utils::logmesg(lmp,fmt::format("  {} corner point connections\n",allconnect_corner));
-    utils::logmesg(lmp,fmt::format("  {} free edges\n",allfree_edge));
-    utils::logmesg(lmp,fmt::format("  {} free corner points\n",allfree_corner));
-    utils::logmesg(lmp,fmt::format("  {} min edge length\n",allminedge));
-    utils::logmesg(lmp,fmt::format("  {} max edge length\n",allmaxedge));
-    utils::logmesg(lmp,fmt::format("  {} min tri area\n",allminarea));
-    utils::logmesg(lmp,fmt::format("  {} max tri area\n",allmaxarea));
+    utils::logmesg(lmp,"  {} tris\n",alltris);
+    utils::logmesg(lmp,"  {} tri edges\n",alledges);
+    utils::logmesg(lmp,"  {} tri corner points\n",allpoints);
+    utils::logmesg(lmp,"  {} edge connections\n",allconnect_edge);
+    utils::logmesg(lmp,"  {} corner point connections\n",allconnect_corner);
+    utils::logmesg(lmp,"  {} free edges\n",allfree_edge);
+    utils::logmesg(lmp,"  {} free corner points\n",allfree_corner);
+    utils::logmesg(lmp,"  {} min edge length\n",allminedge);
+    utils::logmesg(lmp,"  {} max edge length\n",allmaxedge);
+    utils::logmesg(lmp,"  {} min tri area\n",allminarea);
+    utils::logmesg(lmp,"  {} max tri area\n",allmaxarea);
   }
 
   max_radius = allmaxedge * 0.5;

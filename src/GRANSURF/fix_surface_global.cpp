@@ -261,16 +261,16 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
       if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global smaxtype", error);
       int smaxtype = utils::inumeric(FLERR,arg[iarg+1],false,lmp);
       if (smaxtype > MAXSURFTYPE)
-        error->all(FLERR,"Fix surface/global smaxtype > MAXSURFTYPE");
+        error->all(FLERR, iarg+1, "Fix surface/global smaxtype > MAXSURFTYPE");
       if (smaxtype < maxsurftype)
-        error->all(FLERR,"Fix surface/global smaxtype < input surf types");
+        error->all(FLERR, iarg+1, "Fix surface/global smaxtype < input surf types");
       maxsurftype = smaxtype;
       iarg += 2;
     } else if (strcmp(arg[iarg],"flat") == 0) {
       if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global flat", error);
       double flat = utils::numeric(FLERR,arg[iarg+1],false,lmp);
-      if (flat < 0.0 || flat > 90.0)
-        error->all(FLERR,"Invalid value for fix surface/global flat");
+      if ((flat < 0.0) || (flat > 90.0))
+        error->all(FLERR,"Invalid value {} for fix surface/global flat keyword", flat);
       flatthresh = 1.0 - cos(MY_PI*flat/180.0);
       iarg += 2;
     } else if (strcmp(arg[iarg],"temperature") == 0) {
@@ -289,7 +289,7 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
       } else if (strcmp(arg[iarg + 1],"bin") == 0) {
         neigh_style = BIN;
       } else
-        error->all(FLERR, "Unknown neighbor option {}", arg[iarg + 1]);
+        error->all(FLERR, iarg+1, "Unknown fix surface/global neighbor option {}", arg[iarg + 1]);
 
       iarg += 2;
     } else error->all(FLERR,"Illegal fix surface/global command: {}", arg[iarg]);
@@ -553,9 +553,11 @@ void FixSurfaceGlobal::init()
 
   if (heat_flag) {
     if (!atom->temperature_flag)
-      error->all(FLERR, "Heat conduction in fix surface/global requires atom style with temperature property");
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Heat conduction in fix surface/global requires atom style with temperature property");
     if (!atom->heatflow_flag)
-      error->all(FLERR, "Heat conduction in fix surface/global requires atom style with heatflow property");
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Heat conduction in fix surface/global requires atom style with heatflow property");
   }
 
   class GranularModel* model;
@@ -589,11 +591,9 @@ void FixSurfaceGlobal::init()
   if (tstr) {
     tvar = input->variable->find(tstr);
     if (tvar < 0)
-      error->all(FLERR, "Variable {} for fix surface/global does not exist", tstr);
-    if (! input->variable->equalstyle(tvar))
-      error->all(FLERR,
-                 "Variable {} for fix surface/global must be an equal style variable",
-                 tstr);
+      error->all(FLERR, Error::NOLASTLINE, "Variable {} for fix surface/global does not exist", tstr);
+    if (!input->variable->equalstyle(tvar))
+      error->all(FLERR, "Variable {} for fix surface/global must be an equal style variable", tstr);
   }
 
   // check on motion variables
@@ -605,45 +605,57 @@ void FixSurfaceGlobal::init()
     if (motion->xvarstr) {
       motion->xvar = input->variable->find(motion->xvarstr);
       if (motion->xvar < 0)
-        error->all(FLERR, "Variable name for fix_modify move does not exist");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable name {} for fix_modify move does not exist", motion->xvarstr);
       if (!input->variable->equalstyle(motion->xvar))
-        error->all(FLERR, "Variable for fix_modify move must be equal style");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable {} for fix_modify move must be equal style", motion->xvarstr);
     }
     if (motion->yvarstr) {
       motion->yvar = input->variable->find(motion->yvarstr);
       if (motion->yvar < 0)
-        error->all(FLERR, "Variable name for fix_modify move does not exist");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable name {} for fix_modify move does not exist", motion->yvarstr);
       if (!input->variable->equalstyle(motion->yvar))
-        error->all(FLERR, "Variable for fix_modify move must be equal style");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable {} for fix_modify move must be equal style", motion->yvarstr);
     }
     if (motion->zvarstr) {
       motion->zvar = input->variable->find(motion->zvarstr);
       if (motion->zvar < 0)
-        error->all(FLERR, "Variable name for fix_modify move does not exist");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable name {} for fix_modify move does not exist", motion->zvarstr);
       if (!input->variable->equalstyle(motion->zvar))
-        error->all(FLERR, "Variable for fix_modify move must be equal style");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable {} for fix_modify move must be equal style", motion->zvarstr);
     }
 
     if (motion->vxvarstr) {
       motion->vxvar = input->variable->find(motion->vxvarstr);
       if (motion->vxvar < 0)
-        error->all(FLERR, "Variable name for fix_modify move does not exist");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable name {} for fix_modify move does not exist", motion->vxvarstr);
       if (!input->variable->equalstyle(motion->vxvar))
-        error->all(FLERR, "Variable for fix_modify move must be equal style");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable {} for fix_modify move must be equal style", motion->vxvarstr);
     }
     if (motion->vyvarstr) {
       motion->vyvar = input->variable->find(motion->vyvarstr);
       if (motion->vyvar < 0)
-        error->all(FLERR, "Variable name for fix_modify move does not exist");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable name {} for fix_modify move does not exist", motion->vyvarstr);
       if (!input->variable->equalstyle(motion->vyvar))
-        error->all(FLERR, "Variable for fix_modify move must be equal style");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable {} for fix_modify move must be equal style", motion->vyvarstr);
     }
     if (motion->vzvarstr) {
       motion->vzvar = input->variable->find(motion->vzvarstr);
       if (motion->vzvar < 0)
-        error->all(FLERR, "Variable name for fix_modify move does not exist");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable name {} for fix_modify move does not exist", motion->vzvarstr);
       if (!input->variable->equalstyle(motion->vzvar))
-        error->all(FLERR, "Variable for fix_modify move must be equal style");
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Variable {} for fix_modify move must be equal style", motion->vzvarstr);
     }
   }
 
@@ -990,8 +1002,8 @@ void FixSurfaceGlobal::pre_neighbor()
       numneigh[i] = n;
       ipage->vgot(n);
       if (ipage->status())
-        error->one(FLERR,"Fix surface/global neighbor list overflow, "
-                   "boost neigh_modify one");
+        error->one(FLERR, Error::NOLASTLINE,
+                   "Fix surface/global neighbor list overflow, boost neigh_modify one");
     }
 
     list->inum = inum;
@@ -1049,8 +1061,8 @@ void FixSurfaceGlobal::pre_neighbor()
       numneigh[i] = n;
       ipage->vgot(n);
       if (ipage->status())
-        error->one(FLERR,"Fix surface/global neighbor list overflow, "
-                   "boost neigh_modify one");
+        error->one(FLERR, Error::NOLASTLINE,
+                   "Fix surface/global neighbor list overflow, boost neigh_modify one");
     }
 
     list->inum = inum;
@@ -1522,12 +1534,13 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
       }
 
       if (count)
-        error->all(FLERR,fmt::format("Fix_modify move none left {} surfs assigned inactive motion",count));
+        error->all(FLERR, Error::NOLASTLINE,
+                   "Fix_modify move none left {} surfs assigned inactive motion", count);
 
       // stats
 
       utils::logmesg(lmp,"Fix_modify move:\n");
-      utils::logmesg(lmp,fmt::format("  turned off motion for {} surfs\n",count));
+      utils::logmesg(lmp,"  turned off motion for {} surfs\n",count);
 
       // reset anymove and anymove_variable
       // if no anymove, deallocate memory and turn off INITIAL_INTEGRATE
@@ -1659,7 +1672,7 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
     }
 
     utils::logmesg(lmp,"Fix_modify move:\n");
-    utils::logmesg(lmp,fmt::format("  turned on motion for {} surfs\n",count));
+    utils::logmesg(lmp,"  turned on motion for {} surfs\n", count);
 
     delete [] stypes;
     return 2 + styleargs;
@@ -1671,7 +1684,7 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
     if (narg < 3) utils::missing_cmd_args(FLERR, "fix surface/global modify type/region", error);
 
     int stype = utils::inumeric(FLERR,arg[1],false,lmp);
-    if (stype <= 0 || stype > maxsurftype)
+    if ((stype <= 0) || (stype > maxsurftype))
       error->all(FLERR,"Invalid fix_modify type/region surf type");
 
     auto region = domain->get_region_by_id(arg[2]);
@@ -1693,7 +1706,7 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
     }
 
     utils::logmesg(lmp,"Fix_modify type/region:\n");
-    utils::logmesg(lmp,fmt::format("  {} surfs assigned to type {}\n",count,stype));
+    utils::logmesg(lmp,"  {} surfs assigned to type {}\n",count,stype);
 
     return 3;
   }
@@ -1759,7 +1772,8 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
         error->all(FLERR,"Fix_modify move cannot set wiggle z motion for 2d problem");
 
     motion->period = utils::numeric(FLERR, arg[7], false, lmp);
-    if (motion->period <= 0.0) error->all(FLERR, "Illegal fix_modify move command");
+    if (motion->period <= 0.0)
+      error->all(FLERR, "Illegal fix_modify move period {}", motion->period);
     motion->omega = MY_2PI / motion->period;
 
     return 5;
@@ -1779,11 +1793,11 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
 
     if (dimension == 2)
       if (motion->axis[0] != 0.0 || motion->axis[1] != 0.0)
-        error->all(FLERR,"Fix_modify move cannot rotate around "
-                   "non z-axis for 2d problem");
+        error->all(FLERR,"Fix_modify move cannot rotate around non z-axis for 2d problem");
 
     motion->period = utils::numeric(FLERR,arg[7],false,lmp);
-    if (motion->period <= 0.0) error->all(FLERR,"Illegal fix_modify move command");
+    if (motion->period <= 0.0)
+      error->all(FLERR,"Illegal fix_modify move period {}", motion->period);
 
     motion->omega = MY_2PI / motion->period;
 
@@ -1801,8 +1815,7 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
     if (narg < 11) utils::missing_cmd_args(FLERR, "fix surface/global modify move transrot", error);
     motion->mstyle = TRANSROT;
 
-    error->all(FLERR,
-               "Fix_modify move transrot not yet supported for fix surface/global");
+    error->all(FLERR, "Fix_modify move transrot not yet supported for fix surface/global");
 
     motion->vxflag = motion->vyflag = motion->vzflag = 1;
     motion->vx = utils::numeric(FLERR, arg[1], false, lmp);
@@ -1821,12 +1834,12 @@ int FixSurfaceGlobal::modify_param_move(Motion *motion, int narg, char **arg)
       if (motion->vzflag && (motion->vz != 0.0))
         error->all(FLERR,"Fix_modify move cannot set linear z motion for 2d problem");
       if (motion->axis[0] != 0.0 || motion->axis[1] != 0.0)
-        error->all(FLERR,"Fix_modify move cannot rotate around "
-                   "non z-axis for 2d problem");
+        error->all(FLERR,"Fix_modify move cannot rotate around non z-axis for 2d problem");
     }
 
     motion->period = utils::numeric(FLERR,arg[10],false,lmp);
-    if (motion->period <= 0.0) error->all(FLERR,"Illegal fix_modify move command, period {} must be positive", motion->period);
+    if (motion->period <= 0.0)
+      error->all(FLERR,"Illegal fix_modify move command, period {} must be positive", motion->period);
 
     motion->omega = MY_2PI / motion->period;
 
@@ -2068,7 +2081,7 @@ void FixSurfaceGlobal::check2d()
   }
 
   if (flag)
-    error->all(FLERR,fmt::format("Fix surface/global defines {} zero-length lines",flag));
+    error->all(FLERR, "Fix surface/global defines {} zero-length lines",flag);
 
   // check for duplicate lines
   // (p1,p2) is duplicate of any line with same 2 endpoints
@@ -2092,7 +2105,7 @@ void FixSurfaceGlobal::check2d()
   }
 
   if (flag)
-    error->all(FLERR,fmt::format("Fix surface/global defines {} duplicate lines",flag));
+    error->all(FLERR, "Fix surface/global defines {} duplicate lines",flag);
 }
 
 
@@ -2122,7 +2135,7 @@ void FixSurfaceGlobal::check3d()
   }
 
   if (flag)
-    error->all(FLERR,fmt::format("Fix surface/global defines {} zero-length triangle edges",flag));
+    error->all(FLERR, "Fix surface/global defines {} zero-length triangle edges",flag);
 
   // check for duplicate tris
   // (p1,p2,p3) of any tri with same 3 corner points
@@ -2154,7 +2167,7 @@ void FixSurfaceGlobal::check3d()
   }
 
   if (flag)
-    error->all(FLERR,fmt::format("Fix surface/global defines {} duplicate triangles",flag));
+    error->all(FLERR, "Fix surface/global defines {} duplicate triangles",flag);
 }
 
 /* ----------------------------------------------------------------------
@@ -2767,12 +2780,12 @@ void FixSurfaceGlobal::stats2d()
 
   if (comm->me == 0) {
     utils::logmesg(lmp,"Fix surface/global line segment creation:\n");
-    utils::logmesg(lmp,fmt::format("  {} lines\n",nlines));
-    utils::logmesg(lmp,fmt::format("  {} line end points\n",npoints));
-    utils::logmesg(lmp,fmt::format("  {} end point connections\n",nconnect));
-    utils::logmesg(lmp,fmt::format("  {} free end points\n",nfree));
-    utils::logmesg(lmp,fmt::format("  {} min line length\n",minsize));
-    utils::logmesg(lmp,fmt::format("  {} max line length\n",maxsize));
+    utils::logmesg(lmp,"  {} lines\n",nlines);
+    utils::logmesg(lmp,"  {} line end points\n",npoints);
+    utils::logmesg(lmp,"  {} end point connections\n",nconnect);
+    utils::logmesg(lmp,"  {} free end points\n",nfree);
+    utils::logmesg(lmp,"  {} min line length\n",minsize);
+    utils::logmesg(lmp,"  {} max line length\n",maxsize);
   }
 }
 
@@ -2834,17 +2847,17 @@ void FixSurfaceGlobal::stats3d()
 
   if (comm->me == 0) {
     utils::logmesg(lmp,"Fix surface/global triangle creation:\n");
-    utils::logmesg(lmp,fmt::format("  {} tris\n",ntris));
-    utils::logmesg(lmp,fmt::format("  {} tri edges\n",nedges));
-    utils::logmesg(lmp,fmt::format("  {} tri corner points\n",npoints));
-    utils::logmesg(lmp,fmt::format("  {} edge connections\n",nconnect_edge));
-    utils::logmesg(lmp,fmt::format("  {} corner point connections\n",nconnect_corner));
-    utils::logmesg(lmp,fmt::format("  {} free edges\n",nfree_edge));
-    utils::logmesg(lmp,fmt::format("  {} free corner points\n",nfree_corner));
-    utils::logmesg(lmp,fmt::format("  {} min edge length\n",minedge));
-    utils::logmesg(lmp,fmt::format("  {} max edge length\n",maxedge));
-    utils::logmesg(lmp,fmt::format("  {} min tri area\n",minarea));
-    utils::logmesg(lmp,fmt::format("  {} max tri area\n",maxarea));
+    utils::logmesg(lmp,"  {} tris\n",ntris);
+    utils::logmesg(lmp,"  {} tri edges\n",nedges);
+    utils::logmesg(lmp,"  {} tri corner points\n",npoints);
+    utils::logmesg(lmp,"  {} edge connections\n",nconnect_edge);
+    utils::logmesg(lmp,"  {} corner point connections\n",nconnect_corner);
+    utils::logmesg(lmp,"  {} free edges\n",nfree_edge);
+    utils::logmesg(lmp,"  {} free corner points\n",nfree_corner);
+    utils::logmesg(lmp,"  {} min edge length\n",minedge);
+    utils::logmesg(lmp,"  {} max edge length\n",maxedge);
+    utils::logmesg(lmp,"  {} min tri area\n",minarea);
+    utils::logmesg(lmp,"  {} max tri area\n",maxarea);
   }
 }
 
