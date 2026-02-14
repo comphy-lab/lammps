@@ -40,6 +40,7 @@ Settings howto
    Howto_nemd
    Howto_dispersion
    Howto_bulk2slab
+   Howto_broken_bonds
 
 Analysis howto
 ==============

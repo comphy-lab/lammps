@@ -1144,6 +1144,7 @@ are distributed across processors.
 * :doc:`Howto granular surfaces <Howto_granular_surfaces>`
 * :doc:`fix surface/global <fix_surface_global>`
 * :doc:`fix surface/local <fix_surface_local>`
+* :doc:`pair_style surf/granular <pair_surf_granular>`
 * examples/gransurf
 
 ----------

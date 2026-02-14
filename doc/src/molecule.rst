@@ -117,7 +117,7 @@ use that attribute (e.g. no bonds).
    labels will determine the actual types directly depending on the
    current :doc:`labelmap <labelmap>` settings.
 
-   .. note::
+.. note::
 
    For molecule files defining line segments or triangles, only the
    *toff* keyword is relevant; the other offset keywords are ignored
@@ -247,6 +247,10 @@ remaining lines of the section contain values.  The number of lines
 depends on the section keyword as described below.  Zero or more blank
 lines can be used between sections.  Sections can appear in any order,
 with a few exceptions as noted below.
+
+.. versionadded:: TBD
+
+   New header keywords *lines* and *tris*
 
 These are the recognized header keywords.  Header lines can come in
 any order.  The numeric value(s) are read from the beginning of the
@@ -749,6 +753,8 @@ the file format.
 
 ----------
 
+.. versionadded:: TBD
+
 *Lines* section:
 
 * one line per line segment
@@ -778,6 +784,8 @@ It depends on how the line segments are used by other commands in
 LAMMPS whether the normal direction matters or not.
 
 ----------
+
+.. versionadded:: TBD
 
 *Triangles* section:
 
@@ -1149,7 +1157,8 @@ contain only one atom:
 Restrictions
 """"""""""""
 
-None
+The *lines* and *tris* keywords and corresponding sections are currently
+not (yet) supported with molecule files in JSON format.
 
 Related commands
 """"""""""""""""

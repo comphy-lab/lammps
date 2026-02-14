@@ -1458,6 +1458,8 @@ Graining
 Grama
 grana
 granregion
+GRANSURF
+gransurf
 graphene
 Gravelle
 Greathouse
@@ -2291,6 +2293,8 @@ maxspecial
 maxSteps
 maxstrain
 maxtry
+Maxtype
+maxtype
 maxwell
 Maxwellian
 maxX
@@ -3694,6 +3698,7 @@ smallint
 Smallint
 smallsmall
 smatb
+smax
 smd
 SMD
 smi
@@ -3774,6 +3779,7 @@ Steinhardt
 Steinhauser
 Stepaniants
 stepwise
+stereolithography
 Stesmans
 stevens
 stiffnesses

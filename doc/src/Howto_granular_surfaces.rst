@@ -33,7 +33,7 @@ which span a significant fraction of the simulation box size in one or
 more dimensions.
 
 The second is *local* which means that the collection of
-triangles/lines is distributed across processers in the same manner
+triangles/lines is distributed across processors in the same manner
 that particles are distributed.  Each processor is assigned to
 sub-domain of the simulation box and owns whichever triangles/lines
 have their center point in the processor's sub-domain.  Similar to
@@ -57,7 +57,7 @@ the global surfaces in one of two ways.  The first option is from a
 molecule file(s) previously defined by the :doc:`molecule <molecule>`
 command.  The file should define triangles or lines with header
 keywords and a Triangles or Lines section.  The second option is from
-a text or binary STL (strereolithogray) file which defines a set of
+a text or binary STL (stereolithography) file which defines a set of
 triangles.  It can only be used with 3d simulations.
 
 The :doc:`fix surface/local <fix_surface_local>` command defines local
@@ -130,7 +130,7 @@ each surface to create a single new triangle or line particle.  For
 data file input, the triangle/line particles are created when the data
 file is read.
 
-For granular simluations with *global* surfaces, a hybrid atom style
+For granular simulations with *global* surfaces, a hybrid atom style
 which defines triangle-style or line-style particles should NOT be
 used.  The triangles/lines are stored by the :doc:`fix surface/global
 <fix_surface_global>` command and not as triangle-style or line-style
@@ -165,8 +165,8 @@ close to the center of the mixer it will interact with both nearby
 line segments as expected.
 
 See the next section on connectivity for how two triangles or line
-segemnts are treated if they share a common edge (triangle) or point
-(triange or line).
+segments are treated if they share a common edge (triangle) or point
+(triangle or line).
 
 ----------
 
@@ -186,7 +186,7 @@ with 2 or more connected triangles or line segments.
 Consider the simulation model of the previous section for a 2d mixer
 now defined by *local* line segments.  The flat surface of each mixer
 blade (and container box faces) is defined by multiple small line
-segments.  It is imporant that these line segments be "connected" so
+segments.  It is important that these line segments be "connected" so
 that when a particle contacts two adjacent line segments at the same
 time, the resulting force on the particle is the same as it would be
 if it were contacting the middle of a single long line segment.
@@ -216,7 +216,7 @@ the smallest triangle or line in the system.
 The reason INEXACT matches are allowed is that data files can be
 created in a variety of manners, including by LAMMPS itself as a
 simulation runs via the :doc:`write_data <write_data>` command.
-Interally, triangle-style and line-style particles do not store their
+Internally, triangle-style and line-style particles do not store their
 corner points directly.  Instead, the center point of the
 triangle/line is stored, along with an orientation of the
 triangle/line and a displacement vector from the center point for each
@@ -225,7 +225,7 @@ written to a data file for two different triangles/line, they may
 differ by epsilon due to round-offs in finite-precision arithmetic.
 
 Note that due to how connectivity is defined, two triangles/lines will
-not be connected if their corner points are separted by even small
+not be connected if their corner points are separated by even small
 distances (greater than EPSILON).  Likewise they will not be connected
 if the corner point of one triangle/line is very close to (or even on)
 the surface of another triangle or middle of another line segment.  In
@@ -259,7 +259,7 @@ These two commands can be used for that purpose:
 * :doc:`fix move <fix_move>` for *local* surfaces
 
 For *global* surfaces, the :doc:`fix_modify move <fix_modify>` command
-can move a specified subest of the triangles/lines in various ways
+can move a specified subset of the triangles/lines in various ways
 (translation, rotation, etc).  Which triangles move is specified based
 on the *type* of each triangle.  Types are specified when surfaces are
 defined by the :doc:`fix surface/global <fix_surface_global>` command.
@@ -286,6 +286,6 @@ The examples/gransurf directory has example input scripts which use
 both *global* and *local* surfaces.  Both 2d and 3d models are included.
 
 Each script produces a series of snapshot images using the :doc:`dump
-image <dump_image>` command.  The snapshots visualize both the
-particles and granular surfaces.  The snaphost can be animated to view
-a movie of the simulation.
+image <dump_image>` command.  The snapshots visualize both the particles
+and granular surfaces.  The snapshots can be animated to view a movie of
+the simulation.

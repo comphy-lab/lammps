@@ -69,6 +69,8 @@ Examples
 Description
 """""""""""
 
+.. versionadded:: TBD
+
 Enable granular surfaces to be used as boundary conditions on
 particles in a granular simulation.  Granular surfaces are defined as
 a set of triangles (3d) or a set of line segments (2d).
@@ -101,7 +103,7 @@ If triangles or lines were previously read in by the :doc:`molecule
 <molecule>` command, the *source* argument of the *input* keyword is
 *mol* and its *template-ID* argument is the molecule template ID used
 with the :doc:`molecule <molecule>` command.  Note that a
-doc:`molecule <molecule>` command can read and assign serveral
+doc:`molecule <molecule>` command can read and assign several
 molecule files to the same template-ID.  Each molecule file must
 define triangles or lines, not atoms.  For multiple molecule files,
 the set of triangles or lines defined used by this input option will
@@ -277,7 +279,7 @@ surfaces which are within a geometric region.  Their syntax is as follows:
          region-ID = ID of a region previously defined by the :doc:`region <region>` command
 
 The *stype* argument can specify one or more surface types.  It must
-specify all the surface types within a connecte object(s).  If an
+specify all the surface types within a connected object(s).  If an
 object is composed of surfaces of 2 or more types, it is an error to
 use the *move* keyword and not specify all those types, since this
 would break the connections.  Note that LAMMPS does NOT check that
@@ -311,7 +313,7 @@ the :doc:`fix move <fix_move>` command.  Only an equal-style variable
 can be used, as defined by the :doc:`variable <variable>`.  Atom-style
 variables cannot be used.  Also, if both the displacement and velocity
 variables for a particular x,y,z component are specified as NULL, then
-no change is made to those position or velococity components of an
+no change is made to those position or velocity components of an
 individual triangle/line, which is different than the explanation
 given by the :doc:`fix move <fix_move>` command for individual
 particles.
@@ -353,6 +355,10 @@ command.  This fix is not invoked during :doc:`energy minimization
 Restrictions
 """"""""""""
 
+This fix is part of the GRANSURF.  It is only enabled if LAMMPS was
+built with that package.  See the :doc:`Build package <Build_package>`
+page for more info.
+
 Molecule IDs are not currently used by granular surface interactions,
 though they may be in the future.  They are intended to be assigned
 uniquely to each inter-connected set of triangles/lines, as if each
@@ -365,7 +371,8 @@ molecule ID, in case this was not intentional.
 Related commands
 """"""""""""""""
 
-:doc:`fix surface/local <fix_surface_local>`
+:doc:`fix surface/local <fix_surface_local>`,
+:doc:`pair_style surf/granular <pair_surf_granular>`
 
 Default
 """""""

@@ -6,7 +6,7 @@ as opposed to point particles.  This means they have an angular
 velocity and torque can be imparted to them to cause them to rotate.
 
 The various atom, pair, fix, and compute styles listed below are
-useful for creaeting granular models.
+useful for creating granular models.
 
 You can also define granular surfaces which are a collection of line
 segments (2d systems) or triangles (3d systems), which act as
@@ -20,6 +20,7 @@ granular surfaces:
 * :doc:`Howto granular surfaces <Howto_granular_surfaces>`
 * :doc:`fix surface/global <fix_surface_global>`
 * :doc:`fix surface/local <fix_surface_local>`
+* :doc:`pair_style surf/granular <pair_surf_granular>`
 
 ----------
 

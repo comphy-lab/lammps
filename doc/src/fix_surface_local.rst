@@ -53,6 +53,8 @@ Examples
 Description
 """""""""""
 
+.. versionadded:: TBD
+
 Enable granular surfaces to be used as boundary conditions on
 particles in a granular simulation.  Granular surfaces are defined as
 a set of triangles (for 3d models) or a set of line segments (for 2d
@@ -97,9 +99,9 @@ system.
 
 If triangles or lines were previously read in by the :doc:`molecule
 <molecule>` command, the *source* keyword of the *input* keyword is
-*mol* and tts *template-ID* argument is the molecule template ID used
+*mol*. Its *template-ID* argument is the molecule template ID used
 with the :doc:`molecule <molecule>` command.  Note that a
-doc:`molecule <molecule>` command can read and assign serveral
+doc:`molecule <molecule>` command can read and assign several
 molecule files to the same template-ID.  Each molecule file must
 define triangles or lines, not atoms.  For multiple molecule files,
 the set of triangle or line particles defined by this input option
@@ -116,7 +118,7 @@ the STL file.  It can be in text or binary format; this command
 auto-detects the format. One triangle particle is created for each
 triangle in the STL file(s).  Note that STL files cannot be used for
 2d simulations since they only define triangles.  Each triangle
-partilce from an STL file is assigned a molecule ID = 1.
+particle from an STL file is assigned a molecule ID = 1.
 
 This `Wikepedia page
 <https://en.wikipedia.org/wiki/STL_(file_format)>`_ describes the
@@ -126,7 +128,7 @@ lammps/tools directory.  Examples of text STL files are included in
 the examples/gransurf directory.
 
 Note that this command allows for pre-defined triangle/line particles
-read in by the :doc:`read_data <read_data>` command as well as ultiple
+read in by the :doc:`read_data <read_data>` command as well as multiple
 uses of the *input* keyword, each with a *source* argument as either
 *mol* or *stl*.  The number of triangle/line particles created by this
 command will be the union of those already read by the :doc:`read_data
@@ -155,7 +157,7 @@ lines.
 
 The nature of individual surface/particle interactions are determined
 by the :doc:`pair_coeff <pair_coeff>` command which specifies
-interaction parameeters for each pair of particle types.  It is thus
+interaction parameters for each pair of particle types.  It is thus
 important to specify different types for granular particles and
 granular surfaces (triangle/line particles).  Typically a granular
 simulation with local surfaces uses the :doc:`pair_style hybrid
@@ -206,15 +208,20 @@ No parameter of this fix can be used with the *start/stop* keywords of
 the :doc:`run <run>` command.  This fix is not invoked during
 :doc:`energy minimization <minimize>`.
 
+--------
+
 Restrictions
 """"""""""""
 
-none
+This fix is part of the GRANSURF.  It is only enabled if LAMMPS was
+built with that package.  See the :doc:`Build package <Build_package>`
+page for more info.
 
 Related commands
 """"""""""""""""
 
-:doc:`fix surface/global <fix_surface_global>`
+:doc:`fix surface/global <fix_surface_global>`,
+:doc:`pair_style surf/granular <pair_surf_granular>`
 
 Default
 """""""
