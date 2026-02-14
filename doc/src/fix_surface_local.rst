@@ -101,7 +101,7 @@ If triangles or lines were previously read in by the :doc:`molecule
 <molecule>` command, the *source* keyword of the *input* keyword is
 *mol*. Its *template-ID* argument is the molecule template ID used
 with the :doc:`molecule <molecule>` command.  Note that a
-doc:`molecule <molecule>` command can read and assign several
+:doc:`molecule <molecule>` command can read and assign several
 molecule files to the same template-ID.  Each molecule file must
 define triangles or lines, not atoms.  For multiple molecule files,
 the set of triangle or line particles defined by this input option

@@ -232,8 +232,8 @@ the surface of another triangle or middle of another line segment.  In
 general these kinds of granular surfaces could be problematic and
 should be avoided, but LAMMPS does not check for these conditions.
 
-NOTE: maybe add a picture of T-shaped surf with 2 line segments (not
-3).  Explain why it could be bad?
+.. NOTE: maybe add a picture of T-shaped surf with 2 line segments (not
+   3).  Explain why it could be bad?
 
 Note that if a triangle or line segment has a free edge or free
 corner/end point (not connected to any other triangle/line), granular
@@ -263,7 +263,7 @@ can move a specified subset of the triangles/lines in various ways
 (translation, rotation, etc).  Which triangles move is specified based
 on the *type* of each triangle.  Types are specified when surfaces are
 defined by the :doc:`fix surface/global <fix_surface_global>` command.
-They can also be defined by the :doc:`fix_modify typre/region
+They can also be defined by the :doc:`fix_modify type/region
 <fix_modify>` command.
 
 For *local* surfaces, the :doc:`fix move <fix_move>` command can move

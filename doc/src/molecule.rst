@@ -811,7 +811,7 @@ the two triangles.
 The ordering of the three points defines the direction of the outward
 normal for the triangle. This is defined by a right-hand rule.  The
 outward normal N = (p2-p1) x (p3-p1), where p1, p2, p3 are the 3
-point.  In other words, the edge from p1 to p2 is crossed into the
+points.  In other words, the edge from p1 to p2 is crossed into the
 edge from p1 to p3 to determine the normal.
 
 It depends on how the triangles are used by other commands in LAMMPS
