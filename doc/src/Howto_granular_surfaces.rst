@@ -235,9 +235,6 @@ In addition, note that connectivity is only defined between two
 triangles/lines of the same type. This way surfaces of two types
 can move independently, as described in the following section.
 
-.. NOTE: maybe add a picture of T-shaped surf with 2 line segments (not
-   3).  Explain why it could be bad?
-
 Note that if a triangle or line segment has a free edge or free
 corner/end point (not connected to any other triangle/line), granular
 particles will still interact with the triangle/line if the nearest
@@ -284,6 +281,25 @@ integration fix as they may move apart from their connections.
 
 ----------
 
+Calculation of forces
+"""""""""""""""""""""
+
+Concave, convex, flat
+Internal, external
+
+----------
+
+Valid and invalid geometries
+""""""""""""""""""""""""""""
+
+T shapes
+parallel lines
+large tris/lines
+intersections, coaligned edges w/ only one shared corner
+smooth external edges
+
+----------
+
 Example scripts
 """""""""""""""
 
@@ -294,11 +310,3 @@ Each script produces a series of snapshot images using the :doc:`dump
 image <dump_image>` command.  The snapshots visualize both the particles
 and granular surfaces.  The snapshots can be animated to view a movie of
 the simulation.
-
-----------
-
-Calculation of forces
-"""""""""""""""""""""
-
-Concave, convex, flat
-Internal, external
