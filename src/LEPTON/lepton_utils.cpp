@@ -17,6 +17,7 @@
 
 #include "lepton_utils.h"
 
+#include "error.h"
 #include "input.h"
 #include "lammps.h"
 #include "pair_zbl_const.h"
@@ -59,12 +60,9 @@ double Lepton::ZBLFunction::evaluate(const double *args) const
 
 double Lepton::ZBLFunction::evaluateDerivative(const double *args, const int *order) const
 {
-  if (order[0] > 0)
-    throw DerivativeException(order[0], "zbl()", "'zi'");
-  if (order[1] > 0)
-    throw DerivativeException(order[0], "zbl()", "'zj'");
-  if (order[2] > 1)
-    throw DerivativeException(order[0], "zbl()", "'r'");
+  if (order[0] > 0) throw DerivativeException(order[0], "zbl()", "'zi'");
+  if (order[1] > 0) throw DerivativeException(order[0], "zbl()", "'zj'");
+  if (order[2] > 1) throw DerivativeException(order[0], "zbl()", "'r'");
 
   if (order[2] == 1) {
     const double zi = args[0];
@@ -120,12 +118,15 @@ std::string LeptonUtils::substitute(const std::string &in, LAMMPS_NS::LAMMPS *lm
   for (const auto &c : in) {
     if (in_var) {
       if (isalnum(c) || (c == '_')) {
-        output.push_back(c);
         name.push_back(c);
       } else {
         in_var = false;
         const char *val = variable->retrieve(name.c_str());
-        output.append(val);
+        if (val)
+          output.append(val);
+        else
+          lmp->error->all(FLERR, "Variable {} in expression {} does not exist", name, in);
+
         output.push_back(c);
       }
     } else {
@@ -149,8 +150,11 @@ std::string LeptonUtils::substitute(const std::string &in, LAMMPS_NS::LAMMPS *lm
   }
   if (in_var) {
     const char *val = variable->retrieve(name.c_str());
-    output.append(val);
+    if (val)
+      output.append(val);
+    else
+      lmp->error->all(FLERR, "Variable {} in expression {} does not exist", name, in);
   }
 
- return output;
+  return output;
 }
