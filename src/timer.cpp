@@ -15,9 +15,6 @@
 
 #include "comm.h"
 #include "error.h"
-#ifndef FMT_STATIC_THOUSANDS_SEPARATOR
-#include "fmt/chrono.h"
-#endif
 #include "tokenizer.h"
 
 #include <array>
@@ -269,15 +266,12 @@ void Timer::modify_params(int narg, char **arg)
     // format timeout setting
     std::string timeout = "off";
     if (_timeout >= 0.0) {
-#if defined(FMT_STATIC_THOUSANDS_SEPARATOR)
-      char outstr[200];
-      struct tm *tv = gmtime(&((time_t) _timeout));
-      strftime(outstr, 200, "%02d:%M:%S", tv);
-      timeout = outstr;
-#else
-      std::tm tv = fmt::gmtime((std::time_t) _timeout);
-      timeout = fmt::format("{:02d}:{:%M:%S}", tv.tm_yday * 24 + tv.tm_hour, tv);
-#endif
+      // round to seconds and break down to hours, minutes, and seconds
+      auto tmptime = lround(_timeout);
+      auto hours = tmptime / 60 / 24;
+      auto minutes = (tmptime / 60) - (hours * 24);
+      auto seconds = tmptime - ((hours * 24) + minutes) * 60;
+      timeout = fmt::format("{:02d}:{:02d}:{:02d}", hours, minutes, seconds);
     }
 
     utils::logmesg(lmp, "New timer settings: style={}  mode={}  timeout={}\n", timer_style[_level],

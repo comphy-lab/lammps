@@ -20,9 +20,6 @@
 #include "domain.h"
 #include "error.h"
 #include "fix.h"
-#ifndef FMT_STATIC_THOUSANDS_SEPARATOR
-#include "fmt/chrono.h"
-#endif
 #include "info.h"
 #include "input.h"
 #include "label_map.h"
@@ -2031,21 +2028,16 @@ int utils::date2num(const std::string &date)
 }
 
 /* ----------------------------------------------------------------------
-   get formatted string of current date from fmtlib
+   get formatted string of current date
 ------------------------------------------------------------------------- */
 
 std::string utils::current_date()
 {
   time_t tv = time(nullptr);
-#if defined(FMT_STATIC_THOUSANDS_SEPARATOR)
-  char outstr[200];
   struct tm *today = localtime(&tv);
-  strftime(outstr, 200, "%Y-%m-%d", today);
+  char outstr[16];
+  strftime(outstr, sizeof(outstr), "%Y-%m-%d", today);
   return std::string(outstr);
-#else
-  std::tm today = fmt::localtime(tv);
-  return fmt::format("{:%Y-%m-%d}", today);
-#endif
 }
 
 /* ----------------------------------------------------------------------
