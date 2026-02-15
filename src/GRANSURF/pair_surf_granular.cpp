@@ -100,7 +100,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
   double rsq, rsq_com, rmag, radsum, max_overlap, dot;
   double factor_lj, mi, mj, meff;
   double norm[3], dr[3], contact[3], ds[3], xc[3], vc[3], omegac[3];
-  double *endpt, *corner, *forces, *torquesi, *torquesj, dq;
+  double *endpt, *corner, *forces, *torquesi, *torquesj;
   double omega0[3] = {0.0, 0.0, 0.0};
 
   int it, jjtmp, nsidej;
@@ -519,7 +519,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
       if (heat_flag) {
         heatflow[i] += model->dq;
-        if (force->newton_pair || j < nlocal) heatflow[j] -= dq;
+        if (force->newton_pair || (j < nlocal)) heatflow[j] -= model->dq;
       }
 
       if (evflag) {
