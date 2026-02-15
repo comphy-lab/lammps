@@ -16,8 +16,7 @@ This page explains how you can also define granular surfaces which are
 a collection of triangles (3d systems) or line segments (2d systems),
 which act as boundaries interacting with the particles.  Different
 kinds of particle/surface interactions can be specified with similar
-options as the pair styles listed on the :doc:`Howto granular
-<Howto_granular>` doc page.
+options as the :doc:`granular pair style <pair_granular>`.
 
 ----------
 
@@ -175,9 +174,9 @@ Surface connectivity
 
 If multiple triangles/lines are used to define a contiguous surface
 which is flat or gently curved or has sharp edges or corners, LAMMPS
-will detect when two or more line segments (2d) share the same
-endpoint.  Or when two or more triangles (3d) share the same edge or
-same corner point.
+will detect when two or more line segments (2d) of the same type share
+the same endpoint.  Or when two or more triangles (3d) of the same type
+share the same edge or same corner point.
 
 This connectivity is stored internally and is used when appropriate to
 calculate accurate forces on particles which simultaneously overlap
@@ -232,6 +231,10 @@ the surface of another triangle or middle of another line segment.  In
 general these kinds of granular surfaces could be problematic and
 should be avoided, but LAMMPS does not check for these conditions.
 
+In addition, note that connectivity is only defined between two
+triangles/lines of the same type. This way surfaces of two types
+can move independently, as described in the following section.
+
 .. NOTE: maybe add a picture of T-shaped surf with 2 line segments (not
    3).  Explain why it could be bad?
 
@@ -275,7 +278,9 @@ Groups can be defined by the :doc:`group <group>` command.
 Note that for an object defined by two or more connected
 triangles/lines, it is an error to assign a motion and not include all
 the connected triangles/lines, since this would break the connections.
-LAMMPS does NOT check that this requirement is met.
+LAMMPS does NOT check that this requirement is met. For this reason,
+one must also be careful not to include *local* surfaces in an
+integration fix as they may move apart from their connections.
 
 ----------
 
@@ -289,3 +294,11 @@ Each script produces a series of snapshot images using the :doc:`dump
 image <dump_image>` command.  The snapshots visualize both the particles
 and granular surfaces.  The snapshots can be animated to view a movie of
 the simulation.
+
+----------
+
+Calculation of forces
+"""""""""""""""""""""
+
+Concave, convex, flat
+Internal, external

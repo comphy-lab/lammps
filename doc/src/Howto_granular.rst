@@ -10,7 +10,8 @@ useful for creating granular models.
 
 You can also define granular surfaces which are a collection of line
 segments (2d systems) or triangles (3d systems), which act as
-boundaries interacting with the particles.  Particle/surface
+boundaries interacting with the particles.  This is particularly useful
+for defining a complex wall or boundary geometry. Particle/surface
 interactions can be specified with similar options as the pair styles
 listed below.
 

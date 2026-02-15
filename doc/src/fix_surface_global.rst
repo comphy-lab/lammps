@@ -3,8 +3,6 @@
 fix surface/global command
 ==========================
 
-.. versionadded:: TBD
-
 Syntax
 """"""
 
@@ -121,7 +119,7 @@ auto-detects the format.  Note that STL files cannot be used for 2d
 simulations since they only define triangles.  Each triangle from an
 STL file is assigned a molecule ID = 1.
 
-This `Wikepedia page
+This `Wikipedia page
 <https://en.wikipedia.org/wiki/STL_(file_format)>`_ describes the
 format of both text and binary STL files.  Binary STL files can be
 converted to ASCII for editing with the stl_bin2txt tool in the
@@ -134,14 +132,14 @@ surfaces used by this command are the union of the triangles and lines
 from all the input keywords.
 
 Once surfaces are defined, this command calculates their connectivity.
-Two triangles are "connected" if they have a single corner point in
-common or an edge in common (2 corner points).  Two line segments are
-"connected" if the they have an end point in common.  More technical
-details on connectivity and its significance for granular surface
-simulations is given on :doc:`Howto granular surfaces
-<Howto_granular_surfaces>` doc page.  In brief, a pair of connected
-surfaces interact with a particle which contacts both of them
-simultaneously according to a set of rules which are designed to
+Two triangles are "connected" if they are the same type and have a
+single corner point in common or an edge in common (2 corner points).
+Two line segments are "connected" if the they have an end point in
+common.  More technical details on connectivity and its significance
+for granular surface simulations is given on :doc:`Howto granular
+surfaces <Howto_granular_surfaces>` doc page.  In brief, a pair of
+connected surfaces interact with a particle which contacts both of
+them simultaneously according to a set of rules which are designed to
 generate physically sensible forces on the particle.
 
 Note that there is no requirement that all the surfaces be connected
@@ -196,7 +194,10 @@ in the limit of one of the two particles going to infinite radius and
 mass (flat surface).  Specifically, delta = radius - r = overlap of
 particle with triangle/line, m_eff = mass of particle, and the
 effective radius of contact = RiRj/Ri+Rj is set to the radius of the
-particle.
+particle. See the :doc:`Howto granular surfaces <Howto_granular_surfaces>`
+page for information on how overlaps and normal vectors are calculated
+based on the geometry of the surface and when friction is transferred
+between lines/triangles.
 
 The parameters *Kn*, *Kt*, *gamma_n*, *gamma_t*, *xmu*, *dampflag*,
 and the optional keyword *limit_damping* have the same meaning and

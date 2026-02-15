@@ -3,8 +3,6 @@
 fix surface/local command
 =========================
 
-.. versionadded:: TBD
-
 Syntax
 """"""
 
@@ -120,7 +118,7 @@ triangle in the STL file(s).  Note that STL files cannot be used for
 2d simulations since they only define triangles.  Each triangle
 particle from an STL file is assigned a molecule ID = 1.
 
-This `Wikepedia page
+This `Wikipedia page
 <https://en.wikipedia.org/wiki/STL_(file_format)>`_ describes the
 format of both text and binary STL files.  Binary STL files can be
 converted to ASCII for editing with the stl_bin2txt tool in the
@@ -136,14 +134,15 @@ command will be the union of those already read by the :doc:`read_data
 
 Once all the distributed triangle/line particles are defined, this
 command calculates their connectivity.  Two triangles are "connected"
-if they have a single corner point in common or an edge in common (2
-corner points).  Two line segments are "connected" if the they have an
-end point in common.  More technical details on connectivity and its
-significance for granular surface simulations is given on :doc:`Howto
-granular surfaces <Howto_granular_surfaces>` doc page.  In brief, a
-pair of connected surfaces interact with a particle which contacts
-both of them simultaneously according to a set of rules which are
-designed to generate physically sensible forces on the particle.
+if they are the same type and have a single corner point in common or
+an edge in common (2 corner points).  Two line segments are "connected"
+if they are the same type and they have an end point in common.  More
+technical details on connectivity and its significance for granular
+surface simulations is given on :doc:`Howto granular surfaces
+<Howto_granular_surfaces>` doc page.  In brief, a pair of connected
+surfaces interact with a particle which contacts both of them
+simultaneously according to a set of rules which are designed to
+generate physically sensible forces on the particle.
 
 Note that there is no requirement that all the surfaces be connected
 to one another.  The surfaces can represent the surface of one or more
@@ -180,17 +179,6 @@ models.  A flat connection means a single force will be applied to the
 particle even if it is contact with both surfaces simultaneously.  See
 the :doc:`Howto granular surfaces <Howto_granular_surfaces>` doc page
 for more details.  The default for *maxangle* is one degree.
-
-The *temperature* keyword is required if any of the granular models
-defined by the :doc:`pair_coeff <pair_coeff>` command includes a heat
-model which depends on the surface temperature.  Otherwise it is
-ignored.  Its *Tsurf* value is the temperature of the surface in
-degrees Kelvin.
-
-Note that the *temperature* keyword used by the :doc:`fix
-surface/global <fix_surface_global>` command is not used by this
-command.  This is because the particle/surf interactions are computed
-by pair styles and that is where the temperature is applicable.
 
 Note that the *smax* keyword used by the :doc:`fix surface/global
 <fix_surface_global>` command is not used by this command.  This is
