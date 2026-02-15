@@ -22,8 +22,8 @@
 #include "domain.h"
 #include "error.h"
 #include "fix.h"
-#include "fix_nh.h"
 #include "fix_deform.h"
+#include "fix_nh.h"
 #include "group.h"
 #include "math_extra.h"
 #include "memory.h"
@@ -32,12 +32,12 @@
 
 using namespace LAMMPS_NS;
 
-enum{NOBIAS,BIAS};
+enum { NOBIAS, BIAS };
 
 /* ---------------------------------------------------------------------- */
 
 ComputeTempDeform::ComputeTempDeform(LAMMPS *lmp, int narg, char **arg) :
-  Compute(lmp, narg, arg), temperature(nullptr), id_temp(nullptr)
+    Compute(lmp, narg, arg), temperature(nullptr), id_temp(nullptr)
 {
   tcomputeflag = 1;
   int iarg = 3;
@@ -66,7 +66,8 @@ ComputeTempDeform::ComputeTempDeform(LAMMPS *lmp, int narg, char **arg) :
 
 /* ---------------------------------------------------------------------- */
 
-void ComputeTempDeform::post_constructor() {
+void ComputeTempDeform::post_constructor()
+{
   if (tcomputeflag) {
     id_temp = utils::strdup(std::string(id) + "_temp");
     modify->add_compute(fmt::format("{} {} temp", id_temp, group->names[igroup]));
@@ -83,7 +84,7 @@ ComputeTempDeform::~ComputeTempDeform()
   // delete temperature compute if created by this compute
 
   if (tcomputeflag) modify->delete_compute(id_temp);
-  delete [] id_temp;
+  delete[] id_temp;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -103,19 +104,23 @@ void ComputeTempDeform::init()
 
   temperature = modify->get_compute_by_id(id_temp);
   if (!temperature)
-    error->all(FLERR,"Temperature ID {} for compute {} does not exist", id_temp, style);
+    error->all(FLERR, "Temperature ID {} for compute {} does not exist", id_temp, style);
   if (temperature->tempflag == 0)
-    error->all(FLERR,"Compute {} temperature ID {} does not compute temperature", style, id_temp);
+    error->all(FLERR, "Compute {} temperature ID {} does not compute temperature", style, id_temp);
   if (temperature->igroup != igroup)
-    error->all(FLERR,"Group of temperature compute with ID {} for compute {} does not match", id_temp, style);
+    error->all(FLERR, "Group of temperature compute with ID {} for compute {} does not match",
+               id_temp, style);
 
   // avoid possibility of self-referential loop
 
   if (utils::strmatch(temperature->style, "^temp/deform"))
-    error->all(FLERR,"Compute {} internal temperature compute cannot be of style temp/deform", style);
+    error->all(FLERR, "Compute {} internal temperature compute cannot be of style temp/deform",
+               style);
 
-  if (temperature->tempbias) which = BIAS;
-  else which = NOBIAS;
+  if (temperature->tempbias)
+    which = BIAS;
+  else
+    which = NOBIAS;
 
   // make sure internal temperature compute is called first
 
@@ -276,7 +281,6 @@ void ComputeTempDeform::remove_deform_bias_thr(int i, double *v, double *b)
   }
 }
 
-
 /* ----------------------------------------------------------------------
    remove deform velocity bias from all atoms
 ------------------------------------------------------------------------- */
@@ -300,7 +304,8 @@ void ComputeTempDeform::remove_deform_bias_all()
   for (int i = 0; i < nlocal; i++)
     if (mask[i] & groupbit) {
       domain->x2lamda(atom->x[i], lamda);
-      vbiasall[i][0] = h_rate[0] * lamda[0] + h_rate[5] * lamda[1] + h_rate[4] * lamda[2] + h_ratelo[0];
+      vbiasall[i][0] =
+          h_rate[0] * lamda[0] + h_rate[5] * lamda[1] + h_rate[4] * lamda[2] + h_ratelo[0];
       vbiasall[i][1] = h_rate[1] * lamda[1] + h_rate[3] * lamda[2] + h_ratelo[1];
       vbiasall[i][2] = h_rate[2] * lamda[2] + h_ratelo[2];
       v[i][0] -= vbiasall[i][0];
@@ -375,28 +380,26 @@ void ComputeTempDeform::restore_deform_bias_all()
 
 void ComputeTempDeform::apply_deform_bias_all(double dtv)
 {
-  double ** x = atom->x;
+  double **x = atom->x;
   double **v = atom->v;
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
 
   // Box may not have been updated yet, so use flow tensor with real coords
   double grad_u[6];
-  MathExtra::multiply_shape_shape(domain->h_rate,domain->h_inv,grad_u);
+  MathExtra::multiply_shape_shape(domain->h_rate, domain->h_inv, grad_u);
   double xmid[3];
-  xmid[0] = (domain->boxhi[0] + domain->boxlo[0])/2.;
-  xmid[1] = (domain->boxhi[1] + domain->boxlo[1])/2.;
-  xmid[2] = (domain->boxhi[2] + domain->boxlo[2])/2.;
+  xmid[0] = (domain->boxhi[0] + domain->boxlo[0]) / 2.;
+  xmid[1] = (domain->boxhi[1] + domain->boxlo[1]) / 2.;
+  xmid[2] = (domain->boxhi[2] + domain->boxlo[2]) / 2.;
 
   // if needed, integrate boxlo to account for box not being updated yet
   // xmid does not change
-  double ylo = xmid[1] + (domain->boxlo[1] - xmid[1])*exp(grad_u[1]*dtv);
-  double zlo = xmid[2] + (domain->boxlo[2] - xmid[2])*exp(grad_u[2]*dtv);
+  double ylo = xmid[1] + (domain->boxlo[1] - xmid[1]) * exp(grad_u[1] * dtv);
+  double zlo = xmid[2] + (domain->boxlo[2] - xmid[2]) * exp(grad_u[2] * dtv);
 
   for (int i = 0; i < nlocal; i++)
-    if (mask[i] & groupbit) {
-      apply_deform_bias(v[i], x[i], grad_u, xmid, ylo, zlo);
-    }
+    if (mask[i] & groupbit) { apply_deform_bias(v[i], x[i], grad_u, xmid, ylo, zlo); }
 }
 
 /* ----------------------------------------------------------------------
@@ -405,7 +408,8 @@ void ComputeTempDeform::apply_deform_bias_all(double dtv)
    box may not have been updated yet, so get flow tensor as input
 ------------------------------------------------------------------------- */
 
-void ComputeTempDeform::apply_deform_bias(double *v, double *x, double *grad_u, double *xmid, double ylo, double zlo)
+void ComputeTempDeform::apply_deform_bias(double *v, double *x, double *grad_u, double *xmid,
+                                          double ylo, double zlo)
 {
   v[0] += (x[0] - xmid[0]) * grad_u[0] + (x[1] - ylo) * grad_u[5] + (x[2] - zlo) * grad_u[4];
   v[1] += (x[1] - xmid[1]) * grad_u[1] + (x[2] - zlo) * grad_u[3];
@@ -422,19 +426,20 @@ double ComputeTempDeform::memory_usage()
 
 /* ---------------------------------------------------------------------- */
 
-int ComputeTempDeform::modify_param(int narg, char **arg) {
-  if (strcmp(arg[0],"temp") == 0) {
-    if (narg < 2) error->all(FLERR,"Illegal compute_modify command");
+int ComputeTempDeform::modify_param(int narg, char **arg)
+{
+  if (strcmp(arg[0], "temp") == 0) {
+    if (narg < 2) error->all(FLERR, "Illegal compute_modify command");
     if (tcomputeflag) modify->delete_compute(id_temp);
-    delete [] id_temp;
+    delete[] id_temp;
     tcomputeflag = 0;
     id_temp = utils::strdup(arg[1]);
     return 2;
-  } else if (strcmp(arg[0],"extra/dof") == 0) {
+  } else if (strcmp(arg[0], "extra/dof") == 0) {
     // Can't set extra/dof of internal temp compute directly,
     // so pass through the modify call
     temperature->modify_params(MIN(narg, 2), arg);
-  } else if (strcmp(arg[0],"dynamic/dof") == 0) {
+  } else if (strcmp(arg[0], "dynamic/dof") == 0) {
     // Can't set dynamic_user flag of internal temp compute directly,
     // so pass through the modify call
     temperature->modify_params(MIN(narg, 2), arg);
