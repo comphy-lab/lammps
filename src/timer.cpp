@@ -18,6 +18,7 @@
 #include "tokenizer.h"
 
 #include <array>
+#include <cmath>
 #include <ctime>
 
 using namespace LAMMPS_NS;
@@ -216,7 +217,7 @@ double Timer::get_timeout_remain()
 namespace {
 const std::array<const std::string, Timer::NUMLVL> timer_style = {"off", "loop", "normal", "full"};
 const std::array<const std::string, 3> timer_mode = {"nosync", "(dummy)", "sync"};
-}
+}    // namespace
 
 void Timer::modify_params(int narg, char **arg)
 {
