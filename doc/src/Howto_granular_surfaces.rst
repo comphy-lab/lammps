@@ -266,18 +266,20 @@ defined by the :doc:`fix surface/global <fix_surface_global>` command.
 They can also be defined by the :doc:`fix_modify type/region
 <fix_modify>` command.
 
-For *local* surfaces, the :doc:`fix move <fix_move>` command can move
-a specified subset of the triangles/lines in various ways
-(translation, rotation, etc).  Which triangles move is specified based
-on the group-ID argument to the :doc:`fix move <fix_move>` command.
-Groups can be defined by the :doc:`group <group>` command.
+For *local* surfaces, the :doc:`fix move <fix_move>` command can move a
+specified subset of the triangles/lines in various ways (translation,
+rotation, etc).  Which triangles move is specified based on the group-ID
+argument to the :doc:`fix move <fix_move>` command.  Groups can be
+defined by the :doc:`group <group>` command.
 
-Note that for an object defined by two or more connected
-triangles/lines, it is an error to assign a motion and not include all
-the connected triangles/lines, since this would break the connections.
-LAMMPS does NOT check that this requirement is met. For this reason,
-one must also be careful not to include *local* surfaces in an
-integration fix as they may move apart from their connections.
+.. note::
+
+   For an object defined by two or more connected triangles/lines, it is
+   an error to assign a motion and not include all the connected
+   triangles/lines, since this would break the connections.  LAMMPS does
+   **NOT** check that this requirement is met.  For this reason, one
+   must also be careful not to include *local* surfaces in an
+   integration fix as they may move apart from their connections.
 
 ----------
 
@@ -295,7 +297,7 @@ Valid and invalid geometries
 T shapes
 parallel lines
 large tris/lines
-intersections, coaligned edges w/ only one shared corner
+intersections, co-aligned edges w/ only one shared corner
 smooth external edges
 
 ----------
@@ -303,7 +305,7 @@ smooth external edges
 Example scripts
 """""""""""""""
 
-The examples/gransurf directory has example input scripts which use
+The ``examples/gransurf`` directory has example input scripts which use
 both *global* and *local* surfaces.  Both 2d and 3d models are included.
 
 Each script produces a series of snapshot images using the :doc:`dump
