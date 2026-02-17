@@ -67,6 +67,7 @@
 #include "variable.h"
 
 #include <algorithm>
+#include <cstring>
 #include <map>
 #include <unordered_set>
 #include <vector>
