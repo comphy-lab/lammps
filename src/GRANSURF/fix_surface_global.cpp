@@ -524,7 +524,7 @@ void FixSurfaceGlobal::post_constructor()
 {
   if (use_history) {
     id_fix = std::string("NEIGH_HISTORY_SURFACE_GLOBAL_") + id;
-    auto cmd = fmt::format(id_fix  + " all NEIGH_HISTORY {} onesided surface/global", size_history);
+    auto cmd = fmt::format("{} all NEIGH_HISTORY {} onesided surface/global", id_fix, size_history);
     fix_history = dynamic_cast<FixNeighHistory *>(modify->add_fix(cmd));
   } else
     fix_history = nullptr;
