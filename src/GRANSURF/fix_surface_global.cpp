@@ -47,6 +47,7 @@
 #include "force.h"
 #include "granular_model.h"
 #include "gran_sub_mod.h"
+#include "graphics.h"
 #include "input.h"
 #include "lattice.h"
 #include "math_const.h"
@@ -79,7 +80,6 @@ using namespace MathConst;
 using namespace MathExtra;
 using namespace SurfExtra;
 
-enum{SPHERE,LINE,TRI};           // also in DumpImage
 enum{LINEAR,WIGGLE,ROTATE,TRANSROT,VARIABLE};
 
 enum{NONFLAT,FLAT};
@@ -2012,7 +2012,7 @@ int FixSurfaceGlobal::image(int *&ivec, double **&darray)
       p1 = points[lines[i].p1].x;
       p2 = points[lines[i].p2].x;
 
-      imflag[i] = LINE;
+      imflag[i] = Graphics::LINE;
       imdata[i][0] = lines[i].type;
       imdata[i][1] = p1[0];
       imdata[i][2] = p1[1];
@@ -2036,7 +2036,7 @@ int FixSurfaceGlobal::image(int *&ivec, double **&darray)
       p2 = points[tris[i].p2].x;
       p3 = points[tris[i].p3].x;
 
-      imflag[i] = TRI;
+      imflag[i] = Graphics::TRI;
       imdata[i][0] = tris[i].type;
       imdata[i][1] = p1[0];
       imdata[i][2] = p1[1];
