@@ -123,7 +123,7 @@ the Additional Information section below.
      - :ref:`APIP <PKG-APIP>`
      - adaptive-precision interatomic potentials(APIP) with a :doc:`lambda thermostat <fix_lambda_thermostat_apip>`, see :doc:`APIP howto <Howto_apip>`
    * - *apip conservative*
-     - *atomic* + apip_lambda, apip_lambda_required, apip_la_inp, apip_la_avg, apip_la_norm, apip_e_fast, apip_e_precise
+     - *atomic* + apip_lambda, apip_lambda_required, apip_e_fast, apip_e_precise
      - :ref:`APIP <PKG-APIP>`
      - conservative adaptive-precision interatomic potentials(APIP), see :doc:`APIP howto <Howto_apip>`
    * - *atomic*

@@ -18,7 +18,7 @@ Syntax
 * cut_hi = radius above which the weighting function for the local averaging is 0 [box units]
 * lattice = *fcc* or *bcc* or N = # of neighbors per atom to include in the CSP calculation
 * zero or one keyword/args pairs may be appended
-* keyword = *csp_cut* or *csp_mode* or *forces* or *lambda_non_group*
+* keyword = *csp_cut* or *csp_mode* or *forces* or *lambda_non_group* or *store_peratom*
 
   .. parsed-literal::
 
@@ -34,6 +34,8 @@ Syntax
            *precise* = assign a constant switching parameter of 0 to atoms, that are not in the group specified by group-ID
            *fast* = assign a constant switching parameter of 1 to atoms, that are not in the group specified by group-ID
            float = assign this constant switching parameter to atoms, that are not in the group specified by group-ID (0 <= float <= 1)
+       *store_peratom* args = integer
+           integer = provide per-atom output every this many timesteps
 
 Examples
 """"""""
@@ -153,8 +155,10 @@ constant (every changed CSP pair may change the total energy of the system).
 The global scalar can be accessed by various
 :doc:`output commands <Howto_output>`.
 
-The force, that is caused by the differentiation of the switching parameter, is
-returned as per-atom array.
+If *store_peratom* is used, 5 quantities are provided as per-atom vector:
+1.-3. the force that is caused by the differentiation of the switching
+parameter, 4. the differentiable CSP and 5. the locally averaged differentiable
+CSP that was used to calculate the switching parameter.
 The per-atom vector can be accessed by various
 :doc:`output commands <Howto_output>`.
 
@@ -183,7 +187,8 @@ Default
 *forces* = *yes*,
 *csp_cut* = 5.0,
 *csp_mode* = *static*,
-*lambda_non_group* = 1
+*lambda_non_group* = 1,
+*store_peratom* = :math:`\infty`
 
 ----------
 
