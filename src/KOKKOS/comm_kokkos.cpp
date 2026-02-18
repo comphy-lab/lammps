@@ -528,7 +528,6 @@ void CommKokkos::reverse_comm_device(Fix *fix, int size)
     // unpack buffer
     auto k_sendlist_iswap = Kokkos::subview(k_sendlist,iswap,Kokkos::ALL);
     fixKKBase->unpack_reverse_comm_kokkos(sendnum[iswap], k_sendlist_iswap,k_buf_tmp);
-    DeviceType().fence();
   }
 
 }
