@@ -584,7 +584,6 @@ void FixNeighHistoryOMP::post_neighbor()
 
         // Remove special bond bits
         j &= NEIGHMASK;
-        
 
         // rflag = 1 if r < radsum in npair_size() method
         // preserve neigh history info if tag[j] is in old-neigh partner list
