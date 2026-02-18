@@ -100,8 +100,8 @@ void PairBondValKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
     k_fp = DAT::tdual_kkfloat_1d("pair:fp",nmax);
     d_s0 = k_s0.template view<DeviceType>();
     d_fp = k_fp.template view<DeviceType>();
-    h_s0 = k_s0.h_view;
-    h_fp = k_fp.h_view;
+    h_s0 = k_s0.view_host();
+    h_fp = k_fp.view_host();
   }
 
   x = atomKK->k_x.view<DeviceType>();
@@ -372,22 +372,22 @@ double PairBondValKokkos<DeviceType>::init_one(int i, int j)
 {
   double cutone = PairBondVal::init_one(i,j);
 
-  k_params.h_view(i,j).r0 = r0[i][j];
-  k_params.h_view(i,j).alpha = alpha[i][j];
-  k_params.h_view(i,j).sparam = sparam[i][j];
-  k_params.h_view(i,j).v0 = v0[i][j];
-  k_params.h_view(i,j).offset = offset[i][j];
-  k_params.h_view(i,j).cutsq = cutone*cutone;
-  k_params.h_view(j,i) = k_params.h_view(i,j);
+  k_params.view_host()(i,j).r0 = r0[i][j];
+  k_params.view_host()(i,j).alpha = alpha[i][j];
+  k_params.view_host()(i,j).sparam = sparam[i][j];
+  k_params.view_host()(i,j).v0 = v0[i][j];
+  k_params.view_host()(i,j).offset = offset[i][j];
+  k_params.view_host()(i,j).cutsq = cutone*cutone;
+  k_params.view_host()(j,i) = k_params.view_host()(i,j);
   if (i<MAX_TYPES_STACKPARAMS+1 && j<MAX_TYPES_STACKPARAMS+1) {
-    m_params[i][j] = m_params[j][i] = k_params.h_view(i,j);
+    m_params[i][j] = m_params[j][i] = k_params.view_host()(i,j);
     m_cutsq[j][i] = m_cutsq[i][j] = cutone*cutone;
   }
   if (i==j){
-    k_energy0.h_view(i) = energy0[i];
+    k_energy0.view_host()(i) = energy0[i];
   }
 
-  k_cutsq.h_view(i,j) = k_cutsq.h_view(j,i) = cutone*cutone;
+  k_cutsq.view_host()(i,j) = k_cutsq.view_host()(j,i) = cutone*cutone;
   k_cutsq.template modify<LMPHostType>();
   k_params.template modify<LMPHostType>();
   k_energy0.template modify<LMPHostType>();
