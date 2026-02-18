@@ -43,7 +43,7 @@ class KokkosBase {
 
 
   virtual int pack_reverse_comm_fix_kokkos(int, int, DAT::tdual_double_1d &) {return 0;};
-  virtual void unpack_reverse_comm_fix_kokkos(int, DAT::tdual_int_2d,
+  virtual void unpack_reverse_comm_fix_kokkos(int, DAT::tdual_int_1d,
                                           int, DAT::tdual_double_1d &) {}
 
 
