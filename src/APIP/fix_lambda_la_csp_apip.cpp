@@ -121,8 +121,9 @@ FixLambdaLACSPAPIP::FixLambdaLACSPAPIP(LAMMPS *lmp, int narg, char **arg) :
       i++;
     } else if (strcmp(arg[i], "store_peratom") == 0) {
       if (i + 1 == narg)
-        error->all(FLERR,
-                   "the store_stats option of fix lambda/la/csp/apip requires an additional argument");
+        error->all(
+            FLERR,
+            "the store_stats option of fix lambda/la/csp/apip requires an additional argument");
       peratom_freq = utils::inumeric(FLERR, arg[i + 1], false, lmp);
       if (peratom_freq <= 0) error->all(FLERR, "store_peratom frequency needs to be positive.");
       i++;
@@ -730,14 +731,13 @@ void FixLambdaLACSPAPIP::pre_reverse(int /*eflag*/, int vflag)
   calculate_forces(vflag);
 }
 
-
 /**
   * Calculate derivative of the switching parameter for the forces.
   */
 
 void FixLambdaLACSPAPIP::calculate_forces(int vflag)
 {
-  if (! calculate_forces_flag) return;
+  if (!calculate_forces_flag) return;
 
   int i, j, ii, jj, inum, jnum, i_pair, i1, i2, i3;
   int *ilist, *jlist, *numneigh, **firstneigh, *mask;
@@ -1113,7 +1113,7 @@ void FixLambdaLACSPAPIP::unpack_forward_comm(int n, int first, double *buf)
 
 void FixLambdaLACSPAPIP::store_f_lambda_before()
 {
-  if ((! store_stats) || update->ntimestep % peratom_freq) { return; }
+  if ((!store_stats) || update->ntimestep % peratom_freq) { return; }
 
   int nlocal = atom->nlocal;
   double **f = atom->f;
@@ -1132,7 +1132,7 @@ void FixLambdaLACSPAPIP::store_f_lambda_before()
 
 void FixLambdaLACSPAPIP::store_f_lambda_after()
 {
-  if ((! store_stats) || update->ntimestep % peratom_freq) { return; }
+  if ((!store_stats) || update->ntimestep % peratom_freq) { return; }
 
   int nlocal = atom->nlocal;
   double **f = atom->f;
@@ -1150,7 +1150,7 @@ void FixLambdaLACSPAPIP::store_f_lambda_after()
 
 void FixLambdaLACSPAPIP::store_la()
 {
-  if ((! store_stats) || update->ntimestep % peratom_freq) { return; }
+  if ((!store_stats) || update->ntimestep % peratom_freq) { return; }
 
   int nlocal = atom->nlocal;
   double *inp = fixstore_la_inp->vstore;
@@ -1163,9 +1163,8 @@ void FixLambdaLACSPAPIP::store_la()
     memory->create(f_lambda, size_f_lambda, size_peratom_cols, "pair:lambda:la:csp:apip:f:lambda");
     array_atom = f_lambda;
     // zero forces if required
-    if (! calculate_forces_flag)
-      for (int i = 0; i < nlocal; i++)
-        f_lambda[i][0] = f_lambda[i][1] = f_lambda[i][2] = 0;
+    if (!calculate_forces_flag)
+      for (int i = 0; i < nlocal; i++) f_lambda[i][0] = f_lambda[i][1] = f_lambda[i][2] = 0;
   }
 
   for (int i = 0; i < nlocal; i++) {

@@ -108,16 +108,16 @@ class FixLambdaLACSPAPIP : public Fix {
 
   class NeighList *list;
 
-  class FixStoreAtom *fixstore_pairs;    ///< ptr to stored neighbour pairs of last timestep
-  class FixStoreAtom *fixstore_la_avg;   ///< ptr to stored local averaging data
-  class FixStoreAtom *fixstore_la_inp;   ///< ptr to stored local averaging data
-  class FixStoreAtom *fixstore_la_norm;  ///< ptr to stored local averaging data
-  bool tags_stored;                ///< CSP-pairs are stored/not stored for true/false
+  class FixStoreAtom *fixstore_pairs;      ///< ptr to stored neighbour pairs of last timestep
+  class FixStoreAtom *fixstore_la_avg;     ///< ptr to stored local averaging data
+  class FixStoreAtom *fixstore_la_inp;     ///< ptr to stored local averaging data
+  class FixStoreAtom *fixstore_la_norm;    ///< ptr to stored local averaging data
+  bool tags_stored;                        ///< CSP-pairs are stored/not stored for true/false
   int counter_changed_csp_nghs;    ///< scalar return value that indicates lost conservativity
   bool
       const_ngh_flag;    ///< use/do not use constant CSP-pairs to get a conservative APIP for true/false
   bool calculate_forces_flag;    ///< calculate/do not calculate forces for true/false
-  bool store_stats;     ///< store per-atom stats/no stats for true/false
+  bool store_stats;              ///< store per-atom stats/no stats for true/false
 
   enum { FORWARD_INP_LAMBDA, FORWARD_PREFACTOR };
   int comm_forward_flag;    // flag that determines which variables are communicated in comm forward

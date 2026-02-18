@@ -158,8 +158,7 @@ FixLambdaAPIP::FixLambdaAPIP(LAMMPS *lmp, int narg, char **arg) :
 
   if (!atom->apip_lambda_const_flag)
     error->all(FLERR, "fix lambda requires atomic style with lambda_const.");
-  if (!atom->apip_lambda_flag)
-    error->all(FLERR, "fix lambda requires atomic style with lambda.");
+  if (!atom->apip_lambda_flag) error->all(FLERR, "fix lambda requires atomic style with lambda.");
   if (!atom->apip_lambda_input_flag)
     error->all(FLERR, "fix lambda requires atomic style with lambda_input.");
   if (!atom->apip_lambda_input_ta_flag)

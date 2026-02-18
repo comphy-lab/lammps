@@ -99,8 +99,9 @@ void AtomVecApip::process_args(int narg, char **arg)
     fields_border = {"apip_lambda", "apip_lambda_required"};
     fields_exchange = {"apip_lambda", "apip_lambda_required"};
     fields_restart = {"apip_lambda", "apip_lambda_required"};
-    fields_grow = {"apip_lambda", "apip_lambda_required", "apip_e_fast", "apip_e_precise"};    // allocates memory
-    fields_reverse = {};    // communication of force after calculation
+    fields_grow = {"apip_lambda", "apip_lambda_required", "apip_e_fast",
+                   "apip_e_precise"};    // allocates memory
+    fields_reverse = {};                 // communication of force after calculation
   }
 
   setup_fields();
