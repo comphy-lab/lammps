@@ -209,7 +209,8 @@ Related commands
 """"""""""""""""
 
 :doc:`fix surface/global <fix_surface_global>`,
-:doc:`pair_style surf/granular <pair_surf_granular>`
+:doc:`pair_style surf/granular <pair_surf_granular>`,
+:doc:`fix smd/wall_surface <fix_smd_wall_surface>`
 
 Default
 """""""

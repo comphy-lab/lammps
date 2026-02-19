@@ -239,6 +239,36 @@ used includes a heat model which depends on the surface temperature.
 Otherwise it is ignored.  Its *Tsurf* value is the temperature of the
 surface in degrees Kelvin.
 
+-----------------
+
+Dump image info
+"""""""""""""""
+
+.. versionadded:: TBD
+
+This wall fix supports the *fix* keyword of :doc:`dump image
+<dump_image>`.  The fix will pass geometry information about the surface
+to *dump image* so that it will be included in the rendered image.  For
+:doc:`2d systems <dimension>`, the "surface" will be a collection of
+line segments displayed as cylinders.  For :doc:`3d systems
+<dimension>`, the surface will be a collection of triangles that are
+displayed as either as a wireframe, or triangles, or both.
+
+The color of the wall is by default that of the atom type associated
+with the triangles using the color styles "type" or "element".  With
+color style "const" the default value of "white" can be changed using
+:doc:`dump_modify fcolor <dump_image>`.  The transparency is by default
+fully opaque and can be changed with *dump\_modify ftrans*\ .
+
+For 2d systems, the *fflag1* setting allows to set the
+radius of the rendered cylinders.
+
+For 3d systems, the *fflag1* setting selects the render style (1 =
+triangles, 2 = wireframe, 3 = both and *fflag2* sets the diameter of the
+wireframe.
+
+-----------------
+
 Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -373,7 +403,8 @@ Related commands
 """"""""""""""""
 
 :doc:`fix surface/local <fix_surface_local>`,
-:doc:`pair_style surf/granular <pair_surf_granular>`
+:doc:`pair_style surf/granular <pair_surf_granular>`,
+:doc:`fix smd/wall_surface <fix_smd_wall_surface>`
 
 Default
 """""""
