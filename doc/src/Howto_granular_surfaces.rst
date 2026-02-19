@@ -145,13 +145,14 @@ with both sides of each triangle or line segment.
 
 No check is made to see if two triangles or line segments intersect
 each other; this is allowed if it makes sense for the geometry of the
-collection of surfaces.
+collection of surfaces. However, intersections can cause issues as
+the missing connectivity can lead to inaccurate forces.
 
-As an example, consider a 2d simulation which mixes a container of
-granular particles.  *Global* line segments are used to define both
-the box-shaped container and the mixer in the center.  The 4 mixer
-blades are in the shape of a large X and are made to rotate using the
-:doc:`fix_modify <fix_modify>` command (see below).
+As an example of a valid intersection, consider a 2d simulation which mixes
+a container of granular particles.  *Global* line segments are used to
+define both the box-shaped container and the mixer in the center.  The
+4 mixer blades are in the shape of a large X and are made to rotate using
+the :doc:`fix_modify <fix_modify>` command (see below).
 
 The 2 blades could be defined by 2 line segments which cross each
 other at their centers.  Or the 2 blades could be defined by 4 line
@@ -162,6 +163,15 @@ mixer, but displaced from it by a distance less than the radius of a
 granular particle.  In any of these cases, when a particle gets very
 close to the center of the mixer it will interact with both nearby
 line segments as expected.
+
+As an example of an invalid intersection, consider a 2d simulation of a
+T shaped object defined by 2 line segments.  The vertical line segment
+ends at the midpoint of the horizontal line segment.  Without proper
+connectivity, there is no way to censor a force from the geometrically
+hidden vertical segment as a particle moves horizontally across the top
+of the T. In contrast, if the T shape is defined by 3 line segments
+that all share a common endpoint at the center of the top of the T,
+then the connectivity would censor the force from the vertical segment.
 
 See the next section on connectivity for how two triangles or line
 segments are treated if they share a common edge (triangle) or point
@@ -291,14 +301,46 @@ Internal, external
 
 ----------
 
-Valid and invalid geometries
-""""""""""""""""""""""""""""
+Recommendations for geometries
+""""""""""""""""""""""""""""""
 
-T shapes
-parallel lines
-large tris/lines
-intersections, co-aligned edges w/ only one shared corner
-smooth external edges
+When designing geometries for granular surfaces, there are several things
+to keep in mind to avoid unintended force contributions and to improve
+efficiency.
+
+While convex corners are identified and used to censor forces from physically
+hidden sections of a wall, if a particle is not in contact with the entirety
+of a convex turn, then forces cannot be properly censored. For example, consider
+a 2d system with a U shaped wall defined by 3 line segments. If the width of
+the U is very thin (less than a typical particle-wall overlap), then a
+particle could potentially be in contact with both vertical legs of the U. If
+the particle is also in contact with the base of the U, then it can identify
+the convex turn and censor forces from the rightmost vertical leg. However,
+if the particle is towards the top of the U and not in contact with the base,
+then there is no way for the particle to identify the convex turn and censor
+forces. Therefore, walls with very thin features separated by a gap less than
+the expected overlap can lead to unintended additional forces.
+
+As mentioned in the above section, forces resulting from contact with unconnected
+endpoints of lines do point in the expected direction and experience no
+discontinuities as the particle moves around the endpoint. However, in 3D,
+contacts with unconnected edges only produce reasonably directed forces oriented
+away from the edge. However, the exact direction of a force can wobble as the
+contact moves across a series of disconnected edges and convex turns may not be
+appropriately censored as LAMMPS does not currently construct the proper
+quasi-2d connectivity of 2D features. Therefore, it is recommended to avoid
+complex geometries along unconnected boundaries such as rapid oscillations in-
+or out-of-plane such as pleats or sawteeth, relative to the length of an edge.
+
+To build a neighborlist between particles and lines/triangles, LAMMPS assigns
+a radius to each line/triangle that corresponds to the radius of the
+circle/sphere that encloses the object. Therefore, one must be aware that
+systems with large disparities between triangle/line and partile radii may
+slow down the neighbor list build for and could benefit from :doc:`the multi
+neighbor style <neighbor>` for *local* surfaces. Furthermore, triangles with
+very high aspect ratios should generally be avoided as they can lead to
+large neighbor lists containing many particles which are not actually close
+to being contact with the triangle (false positives).
 
 ----------
 
