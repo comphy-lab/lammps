@@ -31,6 +31,8 @@ class FixOxdnaLRF : public Fix {
   int setmask() override;
   void init() override;
   void init_list(int, class NeighList *) override;
+  void min_setup_pre_force(int);
+  void min_pre_force(int) override;
   void setup_pre_force(int) override;
   void pre_force(int) override;
 

@@ -34,9 +34,9 @@ FixOxdnaLRF::FixOxdnaLRF(LAMMPS *lmp, int narg, char **arg) :
   comm_forward = 9;
 
   int nmax = atom->nmax;
-  memory->create(nx, nmax, 3, "FixOxdnaLRF:nx");
-  memory->create(ny, nmax, 3, "FixOxdnaLRF:ny");
-  memory->create(nz, nmax, 3, "FixOxdnaLRF:nz");
+  memory->create(nx, nmax, 3, "fix_oxdna/lrf:nx");
+  memory->create(ny, nmax, 3, "fix_oxdna/lrf:ny");
+  memory->create(nz, nmax, 3, "fix_oxdna/lrf:nz");
   atom->add_callback(0);
 }
 
@@ -55,6 +55,7 @@ FixOxdnaLRF::~FixOxdnaLRF()
 int FixOxdnaLRF::setmask()
 {
   int mask = 0;
+  mask |= MIN_PRE_FORCE;
   mask |= PRE_FORCE;
   return mask;
 }
@@ -78,6 +79,20 @@ void FixOxdnaLRF::init()
 void FixOxdnaLRF::init_list(int /*id*/, NeighList *ptr)
 {
   list = ptr;
+}
+
+/* ---------------------------------------------------------------------- */
+
+void FixOxdnaLRF::min_setup_pre_force(int vflag)
+{
+  min_pre_force(vflag);
+}
+
+/* ---------------------------------------------------------------------- */
+
+void FixOxdnaLRF::min_pre_force(int /*vflag*/)
+{
+  compute_lrf();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -108,9 +123,9 @@ double FixOxdnaLRF::memory_usage()
 
 void FixOxdnaLRF::grow_arrays(int nmax)
 {
-  memory->grow(nx, nmax, 3, "FixOxdnaLRF:nx");
-  memory->grow(ny, nmax, 3, "FixOxdnaLRF:ny");
-  memory->grow(nz, nmax, 3, "FixOxdnaLRF:nz");
+  memory->grow(nx, nmax, 3, "fix_oxdna/lrf:nx");
+  memory->grow(ny, nmax, 3, "fix_oxdna/lrf:ny");
+  memory->grow(nz, nmax, 3, "fix_oxdna/lrf:nz");
 }
 
 /* ---------------------------------------------------------------------- */
