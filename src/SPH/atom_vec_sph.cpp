@@ -124,8 +124,6 @@ int AtomVecSPH::property_atom(const std::string &name)
 
 void AtomVecSPH::pack_property_atom(int index, double *buf, int nvalues, int groupbit)
 {
-  // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
-  mask = atom->mask;
   int nlocal = atom->nlocal;
   int n = 0;
 

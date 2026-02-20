@@ -346,9 +346,6 @@ void AtomVecLine::data_atom_bonus(int m, const std::vector<std::string> &values)
 {
   if (line[m]) error->one(FLERR, "Assigning line parameters to non-line atom");
 
-  // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
-  x = atom->x;
-
   if (nlocal_bonus == nmax_bonus) grow_bonus();
 
   int ivalue = 1;
@@ -522,8 +519,6 @@ int AtomVecLine::pack_data_bonus(double *buf, int /*flag*/)
   if (triclinic_general) x_bonus = x_hold;
   else x_bonus = x;
 
-  // // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
-  tag = atom->tag;
   int nlocal = atom->nlocal;
 
   int m = 0;

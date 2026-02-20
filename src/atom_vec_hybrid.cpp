@@ -230,7 +230,10 @@ void AtomVecHybrid::init()
 
 void AtomVecHybrid::grow_pointers()
 {
-  for (int k = 0; k < nstyles; k++) styles[k]->grow_pointers();
+  for (int k = 0; k < nstyles; k++) {
+    styles[k]->grow_default_pointers(tag, type, mask, image, x, v, f);
+    styles[k]->grow_pointers();
+  }
 }
 
 /* ---------------------------------------------------------------------- */

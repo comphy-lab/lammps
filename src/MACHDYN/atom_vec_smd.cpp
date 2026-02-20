@@ -118,9 +118,6 @@ void AtomVecSMD::grow_pointers()
   eff_plastic_strain = atom->eff_plastic_strain;
   eff_plastic_strain_rate = atom->eff_plastic_strain_rate;
   damage = atom->damage;
-
-  // Must redefine standard pointers (defined in AtomVec::grow()) in case this is a hybrid substyle
-  x = atom->x;
 }
 
 /* ----------------------------------------------------------------------
