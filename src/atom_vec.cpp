@@ -2606,7 +2606,7 @@ void AtomVec::init_method(int nfield, Method *method)
      used by hybrid style to set substyle pointers
 ------------------------------------------------------------------------- */
 
-void AtomVec::grow_default_pointers(tagint *tag2, int *type2, int *mask2, int *image2,
+void AtomVec::grow_default_pointers(tagint *tag2, int *type2, int *mask2, imageint *image2,
                                     double **x2, double **v2, double **f2)
 {
   tag = tag2;
