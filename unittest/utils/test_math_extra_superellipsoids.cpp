@@ -17,10 +17,32 @@
 #include "gtest/gtest.h"
 #include <cmath>
 #include <vector>
-
+#include <limits>
 // TODO: consider making a fixture with several setup functions?
 
 static constexpr double EPSILON = 1e-4;
+static constexpr double SOLV_EPSILON = std::numeric_limits<double>::epsilon() * 100; 
+
+TEST(HandwrittenSolver, invertible)
+{
+    double A[16] = {4, 2, 1, 3, 
+                    0, 5, 2, 1, 
+                    1, 0, 3, 2, 
+                    2, 1, 0, 4};
+                    
+    double b[4] = {23.0, 20.0, 18.0, 20.0};
+    
+    double expected_solution[4] = {1.0, 2.0, 3.0, 4.0};
+
+    bool success = MathExtraSuperellipsoids::solve_4x4_robust_unrolled(A, b);
+
+    ASSERT_TRUE(success) << "The solver falsely flagged an invertible matrix as singular.";
+    
+    for (int i = 0; i < 4; ++i) {
+        ASSERT_NEAR(b[i], expected_solution[i], SOLV_EPSILON) << "Failed at index " << i;
+    }
+}
+
 
 TEST(ContactPointAndNormal, sphere)
 {
@@ -205,7 +227,7 @@ TEST(ContactPointAndNormal, supersphere_poly_geometric)
 {
     double r1      = 3.456;
     double r2      = 3.0 * r1; // Polydisperse: radius_2 = 3 * radius_1
-    double overlap = r1 / 5.0;
+    double overlap = r1 / 20.0;
     double xci[3]  = {-(r1 - overlap / 2.0), 0.0, 0.0};
     double xcj[3]  = {r2 - overlap / 2.0, 0.0, 0.0};
 
@@ -229,8 +251,7 @@ TEST(ContactPointAndNormal, supersphere_poly_geometric)
         int flag        = (n < 2.01) ? 0 : 1;
 
         // Initial Guess: Offset from 0 to test convergence
-        double X0[4] = {overlap / 80, overlap / 80, overlap / 80, 1.0}, nij[3];
-
+        double X0[4] = {overlap, EPSILON, EPSILON, 1.0 / 2.0}, nij[3];
         int status = MathExtraSuperellipsoids::determine_contact_point(
             xci, R, shapei, block, flag, xcj, R, shapej, block, flag, X0, nij, method);
 

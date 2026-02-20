@@ -22,15 +22,10 @@
 // #include "math_special.h"
 // #include "math_const.h"
 
-// #include <algorithm>
-// #include <cstring>
-
-extern "C" { // General Matrices
-    void dgetrf_(const int *m, const int *n, double *a, const int *lda, int *ipiv, int *info); // Factorize
-    void dgetrs_(const char *trans, const int *n, const int *nrhs, double *a, const int *lda, int *ipiv, double *b, const int *ldb, int *info); // Solve (using factorzation)
-}
-
 namespace MathExtraSuperellipsoids {
+
+inline constexpr double TIKHONOV_SCALE =
+    1e-14;    // TODO: inline constexpr are C++17, which is Okay as of 10Sep2025 version of LAMMPS!
 
 static constexpr int ITERMAX_NR = 100;
 static constexpr double TOL_NR_RES = 1e-10 * 1e-10;
@@ -397,11 +392,10 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
   // avg radii for regularization if GEOMETRIC formulation
   double avg_radius_i = 1;
   double avg_radius_j = 1;
-  double max_step;
+  double max_step = std::sqrt(lsq) / 3.0;
   if (formulation == FORMULATION_GEOMETRIC) {
     avg_radius_i = (shapei[0] + shapei[1] + shapei[2]) / 3.0;
     avg_radius_j = (shapej[0] + shapej[1] + shapej[2]) / 3.0;
-    max_step = std::sqrt(lsq) / 3.0;
   }
 
   norm = compute_residual_and_jacobian(xci, Ri, shapei, blocki, flagi, xcj, Rj, shapej, blockj, flagj, X0, shapefunc, residual, jacobian, formulation, avg_radius_i, avg_radius_j);
@@ -460,38 +454,27 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
         rhs[2] = b_fast[2]; rhs[3] = b_fast[3];
         gauss_elim_solved = true;
     }
-
-    // Fallback to LAPACK
-    if (!gauss_elim_solved) {
-
-        rhs[0] = -residual[0]; rhs[1] = -residual[1]; 
-        rhs[2] = -residual[2]; rhs[3] = -residual[3];
-
-        int lapack_error = 0;
-        int ipiv[16];
-        const int n = 4;
-        const char trans = 'N'; 
-        const int nrhs = 1;
-        
-        dgetrf_(&n, &n, jacobian, &n, ipiv, &lapack_error);
-        
-        if (lapack_error < 0) {
-            return lapack_error;
-        } else if (lapack_error > 0) { 
-            // Singular: Apply Tikhonov "Patch" to the LU FACTORS
-            // This is the "Dirty Hack" that makes the aligned test pass.
-            // It modifies the pivot U_ii, not the original matrix diagonal.
-            double diag_weight = TIKHONOV_SCALE * (jacobian[0] + jacobian[5] + jacobian[10]);
-            jacobian[0]  += diag_weight;
-            jacobian[5]  += diag_weight;
-            jacobian[10] += diag_weight;
-          
+    else {
+      // restore matrix
+      for(int r=0; r<4; ++r) {
+        for(int c=0; c<4; ++c) {
+            A_fast[r*4 + c] = jacobian[c*4 + r];
         }
+      }
+      b_fast[0] = -residual[0]; b_fast[1] = -residual[1]; 
+      b_fast[2] = -residual[2]; b_fast[3] = -residual[3];
 
-        // Solve using the (patched) factors
-        dgetrs_(&trans, &n, &nrhs, jacobian, &n, ipiv, rhs, &n, &lapack_error);
-        
-        if (lapack_error) return lapack_error;
+      double trace = jacobian[0] + jacobian[5] + jacobian[10];
+      double diag_weight = TIKHONOV_SCALE * trace;
+      A_fast[0]  += diag_weight;
+      A_fast[5]  += diag_weight;
+      A_fast[10] += diag_weight;
+
+      if (MathExtraSuperellipsoids::solve_4x4_robust_unrolled(A_fast, b_fast)) {
+          rhs[0] = b_fast[0]; rhs[1] = b_fast[1]; 
+          rhs[2] = b_fast[2]; rhs[3] = b_fast[3];
+          gauss_elim_solved = true;
+      }
     }
 
     if (iter > 0)
@@ -504,15 +487,15 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
 
     if (formulation == FORMULATION_GEOMETRIC) {
       a = 1.0; // no need for multiplicity scaling 
-      // Limit the max step size to avoid jumping too far
-      // normalize residual vector if step was limited
-      double spatial_residual_norm = std::sqrt(rhs[0]*rhs[0] + rhs[1]*rhs[1] + rhs[2]*rhs[2]);
-      if (spatial_residual_norm > max_step) {
-          double scale = max_step / spatial_residual_norm;
-          rhs[0] *= scale;
-          rhs[1] *= scale;
-          rhs[2] *= scale;
-      }
+    }
+    // Limit the max step size to avoid jumping too far
+    // normalize residual vector if step was limited
+    double spatial_residual_norm = std::sqrt(rhs[0]*rhs[0] + rhs[1]*rhs[1] + rhs[2]*rhs[2]);
+    if (spatial_residual_norm > max_step) {
+        double scale = max_step / spatial_residual_norm;
+        rhs[0] *= scale;
+        rhs[1] *= scale;
+        rhs[2] *= scale;
     }
 
     for (iter_ls = 0 ; iter_ls < ITERMAX_LS ; iter_ls++) {
@@ -630,10 +613,6 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
       break;
   }
 
-  // LAPACK dgetrs() error values are negative, return values:
-  // 2 = failed convergence
-  // 1 = converged but grains not touching
-  // 0 = converged and grains touching
   if (!converged){
     if (shapefunc[0] > 0.0 || shapefunc[1] > 0.0) return 1;
     std::cout << "Current residual norm: " << norm << std::endl;

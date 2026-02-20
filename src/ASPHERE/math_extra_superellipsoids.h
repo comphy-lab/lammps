@@ -21,10 +21,9 @@
 #include "math_extra.h"
 #include <cmath>
 #include <iostream>
+#include <limits>
 
 namespace MathExtraSuperellipsoids {
-inline constexpr double TIKHONOV_SCALE =
-    1e-14;    // TODO: inline constexpr are C++17, which is Okay as of 10Sep2025 version of LAMMPS!
 
 enum ContactFormulation { FORMULATION_ALGEBRAIC = 0, FORMULATION_GEOMETRIC = 1 };
 
@@ -145,122 +144,8 @@ inline double MathExtraSuperellipsoids::det4_M44_zero(const double m[4][4])
   return ans;
 }
 
-inline bool MathExtraSuperellipsoids::solve_4x4_manual(double A[16], double b[4])
-{
-
-  // 1. Pivot 0
-  double inv0 = 1.0 / A[0];
-  double m1 = A[4] * inv0;
-  double m2 = A[8] * inv0;
-  double m3 = A[12] * inv0;
-
-  A[5] -= m1 * A[1];
-  A[6] -= m1 * A[2];
-  A[7] -= m1 * A[3];
-  b[1] -= m1 * b[0];
-  A[9] -= m2 * A[1];
-  A[10] -= m2 * A[2];
-  A[11] -= m2 * A[3];
-  b[2] -= m2 * b[0];
-  A[13] -= m3 * A[1];
-  A[14] -= m3 * A[2];
-  A[15] -= m3 * A[3];
-  b[3] -= m3 * b[0];
-
-  // 2. Pivot 1
-  double inv1 = 1.0 / A[5];
-  double m4 = A[9] * inv1;
-  double m5 = A[13] * inv1;
-
-  A[10] -= m4 * A[6];
-  A[11] -= m4 * A[7];
-  b[2] -= m4 * b[1];
-  A[14] -= m5 * A[6];
-  A[15] -= m5 * A[7];
-  b[3] -= m5 * b[1];
-
-  // 3. Pivot 2
-  double inv2 = 1.0 / A[10];
-  double m6 = A[14] * inv2;
-
-  A[15] -= m6 * A[11];
-  b[3] -= m6 * b[2];
-
-  // 4. Backward Substitution
-  b[3] = b[3] / A[15];
-  b[2] = (b[2] - A[11] * b[3]) * inv2;
-  b[1] = (b[1] - A[7] * b[3] - A[6] * b[2]) * inv1;
-  b[0] = (b[0] - A[3] * b[3] - A[2] * b[2] - A[1] * b[1]) * inv0;
-
-  return true;
-}
-
-inline bool MathExtraSuperellipsoids::solve_4x4_robust(double A[16], double b[4])
-{
-  // Helper lambda to access A[row, col]
-  auto at = [&](int r, int c) -> double & {
-    return A[r * 4 + c];
-  };
-
-  // --- FORWARD ELIMINATION with PARTIAL PIVOTING ---
-
-  for (int i = 0; i < 3; ++i) {    // Loop over columns 0, 1, 2
-    // 1. Find the Pivot (Max absolute value in this column)
-    int pivot_row = i;
-    double max_val = std::abs(at(i, i));
-
-    for (int k = i + 1; k < 4; ++k) {
-      double val = std::abs(at(k, i));
-      if (val > max_val) {
-        max_val = val;
-        pivot_row = k;
-      }
-    }
-
-    // 2. Singularity Check (The "Flat Particle" Guard)
-    if (max_val < 1e-14) return false;
-
-    // 3. Swap Rows if needed (Swap A rows AND b elements)
-    if (pivot_row != i) {
-      std::swap(b[i], b[pivot_row]);
-      for (int k = i; k < 4; ++k) {    // Only need to swap from column 'i' onwards
-        std::swap(at(i, k), at(pivot_row, k));
-      }
-    }
-
-    // 4. Eliminate
-    double inv_pivot = 1.0 / at(i, i);
-    for (int k = i + 1; k < 4; ++k) {
-      double factor = at(k, i) * inv_pivot;
-      // A[k, i] becomes 0, no need to compute it.
-      // Update the rest of the row:
-      for (int j = i + 1; j < 4; ++j) { at(k, j) -= factor * at(i, j); }
-      // Update RHS
-      b[k] -= factor * b[i];
-    }
-  }
-
-  // Final Pivot Check for the last element
-  if (std::abs(at(3, 3)) < 1e-14) return false;
-
-  // --- BACKWARD SUBSTITUTION ---
-  b[3] /= at(3, 3);
-  b[2] = (b[2] - at(2, 3) * b[3]) / at(2, 2);
-  b[1] = (b[1] - at(1, 2) * b[2] - at(1, 3) * b[3]) / at(1, 1);
-  b[0] = (b[0] - at(0, 1) * b[1] - at(0, 2) * b[2] - at(0, 3) * b[3]) / at(0, 0);
-
-  return true;
-}
-
 inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], double b[4])
 {
-
-  // // Tikhonov regularization could be applied here
-  // double trace = A[0] + A[5] + A[10];
-  // A[0]  += TIKHONOV_SCALE * trace;
-  // A[5]  += TIKHONOV_SCALE * trace;
-  // A[10] += TIKHONOV_SCALE * trace;
-
   // --- COLUMN 0 ---
   // 1. Find Pivot in Col 0
   int p = 0;
@@ -283,7 +168,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
     p = 3;
   }
 
-  if (max_val < 1e-14) return false;
+  if (max_val < 0.0) return false;
   // 2. Swap Row 0 with Row p
   if (p != 0) {
     int row_offset = p * 4;
@@ -333,7 +218,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
     p = 3;
   }
 
-  if (max_val < 1e-14) return false;
+  if (max_val < 0.0) return false;
 
   // 2. Swap Row 1 with Row p
   if (p != 1) {
@@ -371,7 +256,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
     p = 3;
   }
 
-  if (max_val < 1e-14) return false;
+  if (max_val < 0.0) return false;
 
   // 2. Swap Row 2 with Row p
   if (p != 2) {
@@ -392,7 +277,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
 
   // --- BACKWARD SUBSTITUTION ---
   // Check last pivot
-  if (std::abs(A[15]) < 1e-14) return false;
+  if (std::abs(A[15]) < 0.0) return false;
 
   double inv3 = 1.0 / A[15];
   b[3] *= inv3;

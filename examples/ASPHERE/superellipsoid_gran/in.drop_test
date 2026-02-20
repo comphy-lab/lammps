@@ -4,9 +4,10 @@
 units           si
 atom_style      ellipsoid
 dimension       3
-boundary        p p p 
+boundary        p p f 
 comm_modify     vel yes
 newton          off
+processors      * * 1
 
 neighbor 0.5 bin
 neigh_modify   delay 0 every 1 check yes
@@ -14,9 +15,9 @@ neigh_modify   delay 0 every 1 check yes
 # 1. Setup Simulation Box
 # Expanded box to accommodate the floor and falling height
 variable        box_length equal 25
-variable        box_height equal 30
+variable        box_height equal 300
 
-region          box block 0 25 0 25 0 30
+region          box block 0 ${box_length} 0 ${box_length} 0 ${box_height}
 create_box      2 box
 
 # 3. Create Lattice Wall (Type 1)
@@ -30,7 +31,7 @@ create_atoms    1 region floor_reg
 
 # 4. Create Falling Particles (Type 2)
 region          drop_zone block 5 20 5 20 10 ${box_height}
-create_atoms    2 random 600 12345 drop_zone overlap 2.0 maxtry 1000 
+create_atoms    2 random 3000 12345 drop_zone overlap 2.0 maxtry 100
 
 # 2. Material Properties
 # Type 1: Wall particles
@@ -43,8 +44,9 @@ set             type 2 shape 2.0 1.0 1.0
 
 # Initialize Superquadric "Blockiness" to 2.0 (Ellipsoid) 
 # Necessary to prevent division-by-zero in the dump variables below
-set             type 1 block 5.0 5.0 
-set             type 2 block 5.0 5.0 
+variable        blockiness equal 8.0
+set             type 1 block 4.0 4.0 
+set             type 2 block ${blockiness} ${blockiness} 
 
 # 5. Define Groups
 group           wall type 1
@@ -53,7 +55,7 @@ group           mobile type 2
 
 # 6. Interaction / Pair Style
 # Kept exactly as requested
-pair_style      gran/hooke/history/ellipsoid 1e3 0.0 10.0 0.0 0.5 0 bounding_box
+pair_style      gran/hooke/history/ellipsoid 1e4 0.0 10.0 0.0 0.5 0 bounding_box geometric
 pair_coeff      * *
 
 # 7. Computes and Output
@@ -65,7 +67,7 @@ compute         block all property/atom block1 block2
 variable        phi atom "2/c_block[2]"
 variable        theta atom "2/c_block[1]"
 
-dump            mydump all custom 100 dump_drop.lammpstrj id type x y z fx fy fz tqx tqy tqz c_diameter[*] c_orient[*] v_phi v_theta
+dump            mydump all custom 100 dump_drop_geometric_${blockiness}.lammpstrj id type x y z fx fy fz tqx tqy tqz c_diameter[*] c_orient[*] v_phi v_theta
 # Explicit mapping for Ovito
 dump_modify     mydump colname c_orient[1] quatw colname c_orient[2] quati colname c_orient[3] quatj colname c_orient[4] quatk
 
@@ -84,7 +86,11 @@ fix             2 mobile gravity 9.81 vector 0 0 -1
 # Applied to all, but fix freeze overrides integration for the wall
 fix             3 mobile nve/asphere
 
+compute rke all erotate/asphere
+
 # 9. Run
 thermo          100
-timestep        0.001
-run             300000
+thermo_style  custom time step ke c_rke 
+
+timestep        0.0001
+run             100000
