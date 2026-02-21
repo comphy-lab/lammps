@@ -1742,18 +1742,14 @@ std::string FixNH::get_thermo_colname(int n)
     }
   }
 
-  int ich;
-
   if (tstat_flag) {
     ilen = mtchain;
     if (n < ilen) {
-      ich = n;
       return fmt::format("f_{}:PE_eta[{}]",id,n+1);
     }
     n -= ilen;
     ilen = mtchain;
     if (n < ilen) {
-      ich = n;
       return fmt::format("f_{}:KE_eta_dot[{}]",id,n+1);
     }
     n -= ilen;
@@ -1812,13 +1808,11 @@ std::string FixNH::get_thermo_colname(int n)
     if (mpchain) {
       ilen = mpchain;
       if (n < ilen) {
-        ich = n;
         return fmt::format("f_{}:PE_etap[{}]",id,n+1);
       }
       n -= ilen;
       ilen = mpchain;
       if (n < ilen) {
-        ich = n;
         return fmt::format("f_{}:KE_etap_dot[{}]",id,n+1);
       }
       n -= ilen;
