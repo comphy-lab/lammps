@@ -656,8 +656,8 @@ void FixMBX::mbx_fill_system_information_from_atom()
   }
 
   // Reset anchors
-  int * last_anchor = mol_anchor + nall;
-  std::fill(mol_anchor, last_anchor, 0);
+  int *last_anchor = mol_anchor + nall;
+  memset(mol_anchor, 0, sizeof(int)*nall);
 
   for (int i = 0; i < nall; ++i) {
     // Assign anchor TODO careful, not necessarily true
