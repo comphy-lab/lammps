@@ -5354,11 +5354,11 @@ TEST_F(AtomStyleTest, oxdna)
     END_HIDE_OUTPUT();
 }
 
-// LDD PACKAGE
-
+// BOCS PACKAGE atom_style ldd
+// checks that the atom_style has ldd fields set up with addresses 0 1 != 1 0
 TEST_F(AtomStyleTest, atomic_ldd_basic)
 {
-    if (!Info::has_package("LDD")) GTEST_SKIP();
+    if (!Info::has_package("BOCS")) GTEST_SKIP();
 
     BEGIN_HIDE_OUTPUT();
     command("atom_style ldd 2");
@@ -5399,10 +5399,23 @@ TEST_F(AtomStyleTest, atomic_ldd_basic)
 
 }
 
+// BOCS PACKAGE atom_style ldd - Checks indicator options / correct 1 0 != 0 1 LD calc [1st set of indicators]
+// This is a little trickier now because atom_style ldd has fields defined by a manybody pair input
 TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
 {
- if (!Info::has_package("LDD")) GTEST_SKIP();
-
+ if (!Info::has_package("BOCS")) GTEST_SKIP();
+ 
+ /* create input file to read, mimicking molecule file setup/teardown */
+ const char ldd_input_file[] = 
+	 "pair_coeff  1 1  indicator lucy    0.0 0.65 self yes potential noforce\n"
+	 "pair_coeff  1 2  indicator dpd     0.0 0.65 self no  potential noforce\n"
+	 "pair_coeff  2 1  indicator sphere  0.0 0.55 self no potential noforce\n"
+	 "pair_coeff  2 2  indicator lucy    0.0 0.65 self no potential noforce\n";
+ FILE *lddfp = fopen("ldd_input.txt", "w");
+ if (lddfp) {
+ fputs(ldd_input_file, lddfp);
+ fclose(lddfp);
+ }
  BEGIN_HIDE_OUTPUT();
  command("atom_style ldd 2");
  command("region my_box block 0 9 0 9 0 9");
@@ -5414,10 +5427,7 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
  command("create_atoms 1 single 1       0.1     0.1");
  command("create_atoms 2 single 1       0.54    0.65");
  command("create_atoms 2 single 1       8.9     0.65");
- command("pair_coeff  1 1  indicator lucy    0.0 0.65 self yes potential noforce");
- command("pair_coeff  1 2  indicator dpd     0.0 0.65 self no  potential noforce");
- command("pair_coeff  2 1  indicator sphere  0.0 0.55 self no potential noforce");
- command("pair_coeff  2 2  indicator lucy    0.0 0.65 self no potential noforce");
+ command("pair_coeff * * ldd_input.txt");
  command("neighbor 4.0 bin");
  command("fix 1 all nve");
  command("run 0");
@@ -5472,11 +5482,26 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
  ASSERT_NEAR(lmp->atom->ldd_grad_density[4][7], 20.74187283, 1e-8);
  ASSERT_NEAR(lmp->atom->ldd_grad_density[4][8], 0.0000, 1e-8);
 
+ // Teardown LDD input file 
+ remove("ldd_input.txt");
 }
 
+// BOCS PACKAGE atom_style ldd - Checks indicator options / correct 1 0 != 0 1 LD calc [2nd set of indicators]
 TEST_F(AtomStyleTest, atomic_ldd_indicators_set2)
 {
- if (!Info::has_package("LDD")) GTEST_SKIP();
+ if (!Info::has_package("BOCS")) GTEST_SKIP();
+
+ /* create input file to read, mimicking molecule file setup/teardown */
+ const char ldd_input_file[] =
+         "pair_coeff  1 1  indicator dpd      0.0 0.66 self yes potential noforce\n"
+         "pair_coeff  1 2  indicator shell    0.2 0.65 self no  potential noforce\n"
+         "pair_coeff  2 1  indicator smooth   0.1 0.55 self no potential noforce\n"
+         "pair_coeff  2 2  indicator shell    0.0 0.65 self yes potential noforce\n";
+ FILE *lddfp = fopen("ldd_input.txt", "w");
+ if (lddfp) {
+ fputs(ldd_input_file, lddfp);
+ fclose(lddfp);
+ }
 
  BEGIN_HIDE_OUTPUT();
  command("atom_style ldd 2");
@@ -5489,10 +5514,7 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set2)
  command("create_atoms 1 single 1       0.1     0.1");
  command("create_atoms 2 single 1       0.54    0.65");
  command("create_atoms 2 single 1       8.9     0.65");
- command("pair_coeff  1 1  indicator dpd      0.0 0.66 self yes potential noforce");
- command("pair_coeff  1 2  indicator shell    0.2 0.65 self no  potential noforce");
- command("pair_coeff  2 1  indicator smooth   0.1 0.55 self no potential noforce");
- command("pair_coeff  2 2  indicator shell    0.0 0.65 self yes potential noforce");
+ command("pair_coeff  * *  ldd_input.txt");
  command("neighbor 4.0 bin");
  command("fix 1 all nve");
  command("run 0");
@@ -5546,6 +5568,11 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set2)
  ASSERT_NEAR(lmp->atom->ldd_grad_density[4][6], 0.0000, 1e-8);
  ASSERT_NEAR(lmp->atom->ldd_grad_density[4][7], 2.338833853, 1e-8);
  ASSERT_NEAR(lmp->atom->ldd_grad_density[4][8], 0.0000, 1e-8);
+
+
+ // Teardown LDD input file 
+ remove("ldd_input.txt");
+
 
 }
 

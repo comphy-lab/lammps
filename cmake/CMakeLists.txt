@@ -1,4 +1,4 @@
-# -*- CMake -*- master configuration file for building LAMMPS
+#-*- CMake -*- master configuration file for building LAMMPS
 ########################################
 # CMake build system
 # This file is part of LAMMPS
@@ -302,7 +302,6 @@ set(STANDARD_PACKAGES
   KIM
   KSPACE
   LATBOLTZ
-  LDD
   LEPTON
   MACHDYN
   MANIFOLD
