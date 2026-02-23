@@ -71,7 +71,7 @@ Examples
 
    pair_style hybrid/overlay oxrna2/excv oxrna2/stk oxrna2/hbond oxrna2/xstk oxrna2/coaxstk oxrna2/dh
    pair_coeff * * oxrna2/excv    oxrna2_lj.cgdna
-   pair_coeff * * oxrna2/stk     seqdep 0.1 1.40206 2.77 oxrna2_lj.cgdna
+   pair_coeff * * oxrna2/stk     seqdep 0.1 oxrna2_lj.cgdna
    pair_coeff * * oxrna2/hbond   seqdep oxrna2_lj.cgdna
    pair_coeff 1 4 oxrna2/hbond   seqdep oxrna2_lj.cgdna
    pair_coeff 2 3 oxrna2/hbond   seqdep oxrna2_lj.cgdna
@@ -94,7 +94,7 @@ Examples
 
    pair_style hybrid/overlay oxrna2/excv oxrna2/stk oxrna2/hbond oxrna2/xstk oxrna2/coaxstk oxrna2/dh
    pair_coeff * * oxrna2/excv    oxrna2_real.cgdna
-   pair_coeff * * oxrna2/stk     seqdep 300.0 8.35864576375849 0.005504556 oxrna2_real.cgdna
+   pair_coeff * * oxrna2/stk     seqdep 300.0 oxrna2_real.cgdna
    pair_coeff * * oxrna2/hbond   seqdep oxrna2_real.cgdna
    pair_coeff 1 4 oxrna2/hbond   seqdep oxrna2_real.cgdna
    pair_coeff 2 3 oxrna2/hbond   seqdep oxrna2_real.cgdna
@@ -146,12 +146,12 @@ description of the oxRNA2 force field.
    backbone (see also documentation of :doc:`bond_style oxrna2/fene
    <bond_oxdna>`). Most of the coefficients in the above example have to
    be kept fixed and cannot be changed without reparameterizing the
-   entire model.  Exceptions are the first four coefficients after
-   *oxrna2/stk* (seq=seqdep, T=0.1, xi=1.40206 and kappa=2.77 and
+   entire model.  Exceptions are the first two coefficients after
+   *oxrna2/stk* (seq=seqdep and T=0.1 and
    corresponding *real unit* equivalents in the above examples), the
    first coefficient after *oxrna2/hbond* (seq=seqdep in the above
-   example) and the three coefficients after *oxrna2/dh* (T=0.1,
-   rhos=0.5, qeff=1.02455 in the above example). When using a Langevin
+   example) and the two coefficients after *oxrna2/dh* (T=0.1 and
+   rhos=0.5 in the above example). When using a Langevin
    thermostat e.g. through :doc:`fix langevin <fix_langevin>` or
    :doc:`fix nve/dotc/langevin <fix_nve_dotc_langevin>` the temperature
    coefficients have to be matched to the one used in the fix.
@@ -210,7 +210,7 @@ example, the following command:
 
    pair_style hybrid/overlay oxrna2/excv oxrna2/stk oxrna2/hbond oxrna2/xstk oxrna2/coaxstk oxrna2/dh
    pair_coeff * * oxrna2/excv    2.0 0.7 0.675 2.0 0.515 0.5 2.0 0.33 0.32
-   pair_coeff * * oxrna2/stk     seqdep 0.1 1.40206 2.77 oxrna2_lj.cgdna
+   pair_coeff * * oxrna2/stk     seqdep 0.1 oxrna2_lj.cgdna
    pair_coeff * * oxrna2/hbond   seqdep oxrna2_lj.cgdna
    pair_coeff 1 4 oxrna2/hbond   seqdep oxrna2_lj.cgdna
    pair_coeff 2 3 oxrna2/hbond   seqdep oxrna2_lj.cgdna
