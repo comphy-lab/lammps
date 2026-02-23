@@ -2,12 +2,27 @@
 
 DATE='10Dec25'
 REL_TOL=1e-8
+UNITS=real
 
 LMPDIR=/Users/xwb17127/Work/code/lammps
 SRCDIR=$LMPDIR/src
-EXDIR=$LMPDIR/examples/PACKAGES/cgdna/examples/lj_units
 
 if [ $# -eq 1 ] && [ $1 = run ]; then
+
+  if [ $UNITS = lj ]; then 
+    EXDIR=$LMPDIR/examples/PACKAGES/cgdna/examples/lj_units
+    echo '# Running tests with lj units' | tee -a $EXDIR/test.log
+
+  elif [ $UNITS = real ]; then 
+    EXDIR=$LMPDIR/examples/PACKAGES/cgdna/examples/real_units
+    echo '# Running tests with real units' | tee -a $EXDIR/test.log
+
+  else
+    echo '# Choose lj or real units'
+    exit 1
+
+  fi
+
   echo '# Compiling executable in' $SRCDIR | tee -a $EXDIR/test.log
 
   cd $SRCDIR
@@ -235,7 +250,11 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cp $SRCDIR/lmp_mpi .
   cp ../in.duplex1 .
   cp ../data.duplex1 .
-  cp ../oxdna_lj.cgdna .
+  if [ $UNITS = lj ]; then
+    cp ../oxdna_lj.cgdna .
+  elif [ $UNITS = real ]; then
+    cp ../oxdna_real.cgdna .
+  fi
 
   ### 1 MPI-task ###
   mpirun -np 1 ./lmp_mpi -in in.duplex1 > /dev/null
@@ -962,7 +981,11 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cp $SRCDIR/lmp_mpi .
   cp ../in.duplex1 .
   cp ../data.duplex1 .
-  cp ../oxdna2_lj.cgdna .
+  if [ $UNITS = lj ]; then
+    cp ../oxdna2_lj.cgdna .
+  elif [ $UNITS = real ]; then
+    cp ../oxdna2_real.cgdna .
+  fi
 
   ### 1 MPI-task ###
   mpirun -np 1 ./lmp_mpi -in in.duplex1 > /dev/null
@@ -1173,7 +1196,11 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cp $SRCDIR/lmp_mpi .
   cp ../in.duplex2 .
   cp ../data.duplex2 .
-  cp ../oxrna2_lj.cgdna .
+  if [ $UNITS = lj ]; then
+    cp ../oxrna2_lj.cgdna .
+  elif [ $UNITS = real ]; then
+    cp ../oxrna2_real.cgdna .
+  fi
 
   ### 1 MPI-task ###
   mpirun -np 1 ./lmp_mpi -in in.duplex2 > /dev/null
@@ -1277,6 +1304,19 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   echo '# Done' | tee -a $EXDIR/test.log
 
 elif [ $# -eq 1 ] && [ $1 = clean ]; then
+
+  if [ $UNITS = lj ]; then 
+    EXDIR=$LMPDIR/examples/PACKAGES/cgdna/examples/lj_units
+
+  elif [ $UNITS = real ]; then 
+    EXDIR=$LMPDIR/examples/PACKAGES/cgdna/examples/real_units
+
+  else
+    echo '# Choose lj or real units'
+    exit 1
+
+  fi
+
   echo '# Deleting test directories'
   rm -rf $EXDIR/oxDNA/duplex1/test
   rm -rf $EXDIR/oxDNA/duplex2/test
