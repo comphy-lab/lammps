@@ -34,7 +34,7 @@ special_bonds lj 0 1 1
 # oxRNA2 pair interactions
 pair_style hybrid/overlay oxrna2/excv oxrna2/stk oxrna2/hbond oxrna2/xstk oxrna2/coaxstk oxrna2/dh
 pair_coeff * * oxrna2/excv    oxrna2_real.cgdna
-pair_coeff * * oxrna2/stk     seqdep 300.0 8.35864576375849 0.005504556 oxrna2_real.cgdna
+pair_coeff * * oxrna2/stk     seqdep 300.0 oxrna2_real.cgdna
 pair_coeff * * oxrna2/hbond   seqdep oxrna2_real.cgdna
 pair_coeff 1 4 oxrna2/hbond   seqdep oxrna2_real.cgdna
 pair_coeff 2 3 oxrna2/hbond   seqdep oxrna2_real.cgdna
