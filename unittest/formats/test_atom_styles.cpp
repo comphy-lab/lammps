@@ -5404,13 +5404,13 @@ TEST_F(AtomStyleTest, atomic_ldd_basic)
 TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
 {
  if (!Info::has_package("BOCS")) GTEST_SKIP();
- 
+
  /* create input file to read, mimicking molecule file setup/teardown */
- const char ldd_input_file[] = 
-	 "pair_coeff  1 1  indicator lucy    0.0 0.65 self yes potential noforce\n"
-	 "pair_coeff  1 2  indicator dpd     0.0 0.65 self no  potential noforce\n"
-	 "pair_coeff  2 1  indicator sphere  0.0 0.55 self no potential noforce\n"
-	 "pair_coeff  2 2  indicator lucy    0.0 0.65 self no potential noforce\n";
+ const char ldd_input_file[] =
+         "pair_coeff  1 1  indicator lucy    0.0 0.65 self yes potential noforce\n"
+         "pair_coeff  1 2  indicator dpd     0.0 0.65 self no  potential noforce\n"
+         "pair_coeff  2 1  indicator sphere  0.0 0.55 self no potential noforce\n"
+         "pair_coeff  2 2  indicator lucy    0.0 0.65 self no potential noforce\n";
  FILE *lddfp = fopen("ldd_input.txt", "w");
  if (lddfp) {
  fputs(ldd_input_file, lddfp);
@@ -5482,7 +5482,7 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set1)
  ASSERT_NEAR(lmp->atom->ldd_grad_density[4][7], 20.74187283, 1e-8);
  ASSERT_NEAR(lmp->atom->ldd_grad_density[4][8], 0.0000, 1e-8);
 
- // Teardown LDD input file 
+ // Teardown LDD input file
  remove("ldd_input.txt");
 }
 
@@ -5570,7 +5570,7 @@ TEST_F(AtomStyleTest, atomic_ldd_indicators_set2)
  ASSERT_NEAR(lmp->atom->ldd_grad_density[4][8], 0.0000, 1e-8);
 
 
- // Teardown LDD input file 
+ // Teardown LDD input file
  remove("ldd_input.txt");
 
 
