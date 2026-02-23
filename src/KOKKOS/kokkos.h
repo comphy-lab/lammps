@@ -32,6 +32,7 @@ class KokkosLMP : protected Pointers {
   int forward_pair_comm_legacy;
   int reverse_pair_comm_legacy;
   int forward_fix_comm_legacy;
+  int reverse_fix_comm_legacy;
   int reverse_comm_legacy;
   int sort_legacy;
   int atom_map_legacy;
@@ -43,10 +44,12 @@ class KokkosLMP : protected Pointers {
   int forward_pair_comm_changed;
   int reverse_pair_comm_changed;
   int forward_fix_comm_changed;
+  int reverse_fix_comm_changed;
   int reverse_comm_changed;
   int sort_changed;
   int atom_map_changed;
   int nthreads,ngpus;
+  int kk_fp32;
   int auto_sync;
   int gpu_aware_flag;
   int neigh_thread;

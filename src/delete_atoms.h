@@ -21,7 +21,6 @@ CommandStyle(delete_atoms,DeleteAtoms);
 #define LMP_DELETE_ATOMS_H
 
 #include "command.h"
-#include <map>
 
 namespace LAMMPS_NS {
 
@@ -33,7 +32,6 @@ class DeleteAtoms : public Command {
  protected:
   int *dlist;
   int allflag, compress_flag, condense_flag, bond_flag, mol_flag;
-  std::map<tagint, int> *hash;
   int ringrank;
   tagint *tagproc, *newtags;
 
@@ -48,7 +46,7 @@ class DeleteAtoms : public Command {
   void recount_topology();
   void options(int, char **);
 
-  inline int sbmask(int j) const { return j >> SBBITS & 3; }
+  [[nodiscard]] int sbmask(int j) const { return j >> SBBITS & 3; }
 
   // callback functions for ring communication
 

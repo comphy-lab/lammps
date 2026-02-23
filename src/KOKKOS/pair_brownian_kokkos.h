@@ -47,18 +47,20 @@ class PairBrownianKokkos : public PairBrownian, public KokkosBase {
   ~PairBrownianKokkos() override;
   void compute(int, int) override;
   void coeff(int, char **) override;
-  void settings(int, char **) override;
   void init_style() override;
   double init_one(int, int) override;
 
   template<int NEIGHFLAG, int NEWTON_PAIR, int VFLAG, int FLAGFLD>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator()(TagPairBrownianCompute<NEIGHFLAG,NEWTON_PAIR,VFLAG,FLAGFLD>, const int, EV_FLOAT &ev) const;
   template<int NEIGHFLAG, int NEWTON_PAIR, int VFLAG, int FLAGFLD>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void operator()(TagPairBrownianCompute<NEIGHFLAG,NEWTON_PAIR,VFLAG,FLAGFLD>, const int) const;
 
   template<int NEIGHFLAG, int NEWTON_PAIR>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void ev_tally_xyz(EV_FLOAT &ev, int i, int j,
                     KK_FLOAT fx, KK_FLOAT fy, KK_FLOAT fz,
@@ -68,7 +70,7 @@ class PairBrownianKokkos : public PairBrownian, public KokkosBase {
   typename AT::t_kkfloat_1d_3_lr_randomread x;
   typename AT::t_kkfloat_1d_3_lr c_x;
   typename AT::t_kkacc_1d_3 f;
-  typename AT::t_kkfloat_1d_3 torque;
+  typename AT::t_kkacc_1d_3 torque;
   typename AT::t_int_1d_randomread type;
   typename AT::t_kkfloat_1d_randomread radius;
 
@@ -95,6 +97,7 @@ class PairBrownianKokkos : public PairBrownian, public KokkosBase {
 
   void allocate() override;
 
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   void set_3_orthogonal_vectors(const KK_FLOAT p1[3], KK_FLOAT * const p2, KK_FLOAT * const p3) const {
     KK_FLOAT norm;

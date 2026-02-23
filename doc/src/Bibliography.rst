@@ -55,9 +55,6 @@ Bibliography
 **(Andersen)**
    H.\  Andersen, J of Comp Phys, 52, 24-34 (1983).
 
-**(Anderson)**
-   Anderson, Mukherjee, Critchley, Ziegler, and Lipton "POEMS: Parallelizable Open-source Efficient Multibody Software ", Engineering With Computers (2006).
-
 **(Appshaw)**
    Appshaw, Seddon, Hanna, Soft. Matter,18, 1747(2022).
 
@@ -233,7 +230,7 @@ Bibliography
    A Caro, DA Crowson, M Caro; Phys Rev Lett, 95, 075702 (2005)
 
 **(CasP)**
-   CasP webpage: http://www.casp-program.org/
+   CasP webpage: https://lief.if.ufrgs.br/pub/CasP/
 
 **(Cawkwell2012)**
    A.\  M. N. Niklasson, M. J. Cawkwell, Phys. Rev. B, 86 (17), 174308 (2012).

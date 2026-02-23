@@ -41,13 +41,14 @@ class PairMorseKokkos : public PairMorse {
 
   void compute(int, int) override;
 
-  void settings(int, char **) override;
   void init_style() override;
   double init_one(int, int) override;
 
   struct params_morse{
+// NOLINTNEXTLINE
     KOKKOS_INLINE_FUNCTION
     params_morse() {cutsq=0,d0=0;alpha=0;r0=0;offset=0;}
+// NOLINTNEXTLINE
     KOKKOS_INLINE_FUNCTION
     params_morse(int /*i*/) {cutsq=0,d0=0;alpha=0;r0=0;offset=0;}
     KK_FLOAT cutsq,d0,alpha,r0,offset;
@@ -55,14 +56,17 @@ class PairMorseKokkos : public PairMorse {
 
  protected:
   template<bool STACKPARAMS, class Specialisation>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   KK_FLOAT compute_fpair(const KK_FLOAT& rsq, const int& i, const int&j, const int& itype, const int& jtype) const;
 
   template<bool STACKPARAMS, class Specialisation>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   KK_FLOAT compute_evdwl(const KK_FLOAT& rsq, const int& i, const int&j, const int& itype, const int& jtype) const;
 
   template<bool STACKPARAMS, class Specialisation>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   KK_FLOAT compute_ecoul(const KK_FLOAT& /*rsq*/, const int& /*i*/, const int& /*j*/,
                         const int& /*itype*/, const int& /*jtype*/) const { return 0; }

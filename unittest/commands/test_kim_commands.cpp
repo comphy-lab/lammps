@@ -554,7 +554,7 @@ TEST_F(KimCommandsTest, kim_query)
                  "one or more comma-separated items.*",
                  command(squery););
 
-    squery = "kim query a0 get_lattice_constant_cubic crystal=[\"fcc\"] species=[\"Al\"]";
+    squery = R"(kim query a0 get_lattice_constant_cubic crystal=["fcc"] species=["Al"])";
     TEST_FAILURE(".*ERROR: Illegal query format.\nMust use 'kim init' before "
                  "'kim query' or must provide the model name after query "
                  "function with the format of 'model=\\[model_name\\]'.*",
@@ -645,7 +645,7 @@ TEST_F(KimCommandsTest, kim_query)
     END_HIDE_OUTPUT();
 
     std::string model_list = variable->retrieve("model_list");
-    auto n = model_list.find("EAM_Dynamo_ErcolessiAdams_1994_Al__MO_123629422045_005");
+    auto n = model_list.find("EAM_Dynamo_LiuErcolessiAdams_2004_Al__MO_051157671505_000");
     ASSERT_TRUE(n != std::string::npos);
 
     BEGIN_HIDE_OUTPUT();

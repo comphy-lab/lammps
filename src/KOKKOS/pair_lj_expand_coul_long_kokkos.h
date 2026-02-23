@@ -42,14 +42,15 @@ class PairLJExpandCoulLongKokkos : public PairLJExpandCoulLong {
 
   void compute(int, int) override;
 
-  void settings(int, char **) override;
   void init_tables(double cut_coul, double *cut_respa) override;
   void init_style() override;
   double init_one(int, int) override;
 
   struct params_lj_coul{
+// NOLINTNEXTLINE
     KOKKOS_INLINE_FUNCTION
     params_lj_coul() {cut_ljsq=0;cut_coulsq=0;lj1=0;lj2=0;lj3=0;lj4=0;offset=0;shift=0;};
+// NOLINTNEXTLINE
     KOKKOS_INLINE_FUNCTION
     params_lj_coul(int /*i*/) {cut_ljsq=0;cut_coulsq=0;lj1=0;lj2=0;lj3=0;lj4=0;offset=0;shift=0;};
     KK_FLOAT cut_ljsq,cut_coulsq,lj1,lj2,lj3,lj4,offset,shift;
@@ -57,21 +58,25 @@ class PairLJExpandCoulLongKokkos : public PairLJExpandCoulLong {
 
  protected:
   template<bool STACKPARAMS, class Specialisation>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   KK_FLOAT compute_fpair(const KK_FLOAT& rsq, const int& i, const int&j,
                         const int& itype, const int& jtype) const;
 
   template<bool STACKPARAMS, class Specialisation>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   KK_FLOAT compute_fcoul(const KK_FLOAT& rsq, const int& i, const int&j, const int& itype,
                         const int& jtype, const KK_FLOAT& factor_coul, const KK_FLOAT& qtmp) const;
 
   template<bool STACKPARAMS, class Specialisation>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   KK_FLOAT compute_evdwl(const KK_FLOAT& rsq, const int& i, const int&j,
                         const int& itype, const int& jtype) const;
 
   template<bool STACKPARAMS, class Specialisation>
+// NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
   KK_FLOAT compute_ecoul(const KK_FLOAT& rsq, const int& i, const int&j,
                         const int& itype, const int& jtype, const KK_FLOAT& factor_coul, const KK_FLOAT& qtmp) const;
