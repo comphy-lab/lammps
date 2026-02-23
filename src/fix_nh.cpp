@@ -487,14 +487,14 @@ FixNH::FixNH(LAMMPS *lmp, int narg, char **arg) :
     } else if (dimension == 2 && (p_flag[0] + p_flag[1] > 1)) {
       error->all(FLERR,"Cannot perform 2d isochoric NPT with all dimensions barostated.");
     } else if (p_flag[0] + p_flag[1] + p_flag[2] == 0) {
-      error->all(FLERR,"Cannot perform isochoric NPT with no barostated dimension.");
+      error->all(FLERR,"Isochoric simulation requires at least 1 diagonal dimension to be barostated.");
     }
     if (dimension == 3) {
-      if (domain->xperiodic * domain->yperiodic * domain->zperiodic == 0)
-        error->all(FLERR, "Isochoric NPT requires periodic boundary conditions.");
+      if (domain->xperiodic * p_isoch[0] + domain->yperiodic * p_isoch[1] + domain->zperiodic * p_isoch[2] == 0)
+        error->all(FLERR, "Isochoric NPT requires periodic boundary conditions along isochoric dimensions.");
     } else {
-      if (domain->xperiodic * domain->yperiodic == 0)
-        error->all(FLERR, "Isochoric NPT requires periodic boundary conditions.");
+      if (domain->xperiodic * p_isoch[0] + domain->yperiodic * p_isoch[0] == 0)
+        error->all(FLERR, "Isochoric NPT requires periodic boundary conditions along isochoric dimensions.");
       if (p_isoch[2])
         error->all(FLERR, "2d Isochoric NPT cannot use z dimension.");
     }
