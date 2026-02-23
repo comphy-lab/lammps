@@ -1,0 +1,4 @@
+pair_coeff     1 * indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.11.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.1.1.noself.dat
+pair_coeff     2 * indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.22.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.2.2.noself.dat
+pair_coeff     3 * indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.33.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.3.3.noself.dat
+pair_coeff     4 * indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.44.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.4.4.noself.dat

@@ -19,11 +19,17 @@ pair_style     hybrid/overlay ldd 5.26850 lj/cut 14.0
 #pair_style     hybrid/overlay ldd rc table spline N
 
 pair_coeff	1 1 lj/cut 1 1
-pair_coeff      1 1 ldd indicator lucy 0.0 5.26850 self yes potential quadratic 1 1 1
+pair_coeff      * * ldd ld_input_file.txt
 
 neigh_modify	delay 0 every 1 check yes one 10000
 neighbor	15 bin
 thermo          500
+
+# compute pkg_ldd relevant qtys
+# compute 1 all property/atom ldd_local_density1 # local density of particle 1 surrounding others
+# compute 2 all property/atom ldd_energy1 # energy contribution from particle 1 surrounding others
+# compute 3 all property/atom ldd_total_energy # total energy from all LD involved interactions on each central particle
+
 
 # Converting lammps real units to gmx/bocs units
 # Uncomment if want to use the print statements below
@@ -44,8 +50,12 @@ run_style       verlet
 # fix		print_pv  all print 500 "${VOL} ${PRESS}" file PV.dat screen no
 
 ## Prints a ldd file format, for use in BOCS / to view ldd qtys. 
-# dump            2 all ldd 1000 bocs_traj.lmp
+# dump           2 all custom 1000 bocs_traj.lmp id x y z vx vy vz fx fy fz c_1 c_2 c_3
 # dump_modify	2 sort id
+# dump_modify	2 colname 11 lddens1
+# dump_modify    2 colname 12 lddnrg1
+# dump_modify	2 colname 13 lddttlnrg
+
 
 # Write restart files to continue simulations
 # restart 100000 state1.restart state2.restart

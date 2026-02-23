@@ -30,11 +30,8 @@ velocity	all create 300.0 22345 dist gaussian
 
 pair_coeff	* * table nb_interaction_tables/lammps_nb_ACA_ACA.table nb_ACA_ACA 15.0
 
+pair_coeff 	* * ldd ldd_input_file.txt
 # In this example, for simplicity, we opt to set interactions by central site. You can have 2^4 different settings. 
-pair_coeff      1 * ldd indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.11.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.1.1.noself.dat
-pair_coeff	2 * ldd indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.22.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.2.2.noself.dat
-pair_coeff	3 * ldd indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.33.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.3.3.noself.dat
-pair_coeff      4 * ldd indicator dpd 0.0 6.5 self no potential table/spline nb_interaction_tables/LD_table.44.noself.dat gradient table/gradspline nb_interaction_tables/SG_table.4.4.noself.dat
 
 neigh_modify	delay 0 every 1 check yes one 10000
 neighbor	15.0 bin
@@ -46,6 +43,25 @@ thermo_style    custom step temp ke pe evdwl etotal press vol
 # variable TEMP equal temp
 # variable VOL equal vol/1000.0
 # variable PRESS equal press*1.01325
+
+# Compute ldd atom style qtys #
+# Local densities of each surrounding type #
+# compute 1 all property/atom ldd_local_density1 ldd_local_density2 ldd_local_density3 ldd_local_density4
+# U(rho) for each type X defining rho_X|I 
+#compute 2 all property/atom ldd_energy1 ldd_energy2 ldd_energy3 ldd_energy4
+
+# Total energy from all LD style interactions (All SG terms + All LD terms)
+#compute 3 all property/atom ldd_total_energy
+
+# LD gradient components for each surrounding atom type
+#compute 4 all property/atom ldd_grad_densityx1 ldd_grad_densityy1 ldd_grad_densityz1
+#compute 5 all property/atom ldd_grad_densityx2 ldd_grad_densityy2 ldd_grad_densityz2 
+#compute 6 all property/atom ldd_grad_densityx3 ldd_grad_densityy3 ldd_grad_densityz3
+#compute 7 all property/atom ldd_grad_densityx4 ldd_grad_densityy4 ldd_grad_densityz4
+
+# SG energy contributions
+#compute 8 all property/atom ldd_gradnrg1 ldd_gradnrg2 ldd_gradnrg3 ldd_gradnrg4
+
 
 
 minimize 1.0e-8 1.0e-10 1000 10000
@@ -59,10 +75,45 @@ run_style       verlet
 #fix             print_vol all print 500 "${STEP} ${VOL}" file vol.dat screen no
 #fix             print_press all print 500 "${STEP} ${PRESS}" file press.dat screen no
 
-## Prints ldd file that can be used with BOCS 
-# Uncomment if want a trajectory 
-# dump            4 all ldd 500 bocs_traj.lmp
-# dump_modify	4 sort id
+## Prints trajectory file that can be used with BOCS (fully labeled ldd info)
+# Uncomment if want a trajectory, leave c_X[*} etc commented out if want to post process LD info.
+# dump         4 all custom 500 bocs_traj.lmp id x y z vx vy vz fx fy fz c_1[*] c_2[*] c_3 c_4[*] c_5[*] c_6[*] c_7[*] c_8[*]
+# dump_modify  4 sort id
+
+# Uncomment if calculating all LD info during run 
+# dump_modify  4 colname c_1[1] lddens1 
+# dump_modify  4 colname c_1[2] lddens2 
+# dump_modify  4 colname c_1[3] lddens3  
+# dump_modify  4 colname c_1[4] lddens4
+# dump_modify  4 colname c_2[1] lddnrg1
+# dump_modify  4 colname c_2[2] lddnrg2
+# dump_modify  4 colname c_2[3] lddnrg3
+# dump_modify  4 colname c_2[4] lddnrg4
+# dump_modify  4 colname c_3 lddttlnrg
+# dump_modify  4 colname c_4[1] gradx1
+# dump_modify  4 colname c_4[2] grady1
+# dump_modify  4 colname c_4[3] gradz13
+# dump_modify  4 colname c_5[1] gradx2
+# dump_modify  4 colname c_5[2] grady2
+# dump_modify  4 colname c_5[3] gradz2
+# dump_modify  4 colname c_6[1] gradx3
+# dump_modify  4 colname c_6[2] grady3
+# dump_modify  4 colname c_6[3] gradz3
+# dump_modify  4 colname c_7[1] gradx4
+# dump_modify  4 colname c_7[2] grady4
+# dump_modify  4 colname c_7[3] gradz4
+# dump_modify  4 colname c_8[1] gradnrg1
+# dump_modify  4 colname c_8[2] gradnrg2
+# dump_modify  4 colname c_8[3] gradnrg3
+# dump_modify  4 colname c_8[4] gradnrg4
+
+
+
+ 
+
+
+# dump_modify    2 colname 12 lddnrg1
+# dump_modify   2 colname 13 lddttlnrg
 
 ## Run for this many steps
 run 10000 # production run for 4 ns.
