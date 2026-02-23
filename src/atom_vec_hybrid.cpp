@@ -157,22 +157,24 @@ void AtomVecHybrid::process_args(int narg, char **arg)
     merge_fields(fields_data_vel, styles[k]->fields_data_vel, 0, concat_dummy);
   }
 
-  // Handle known incompatibilities between particular atoms styles
-  //   Tri & Line atom styles overwrite radii in post_data_atom()
-  //   may be others
-
+  // as needed, alert sub-styles of interactions with other sub-styles
+  //   if sub-style which defines radius in data file exists (e.g. SPHERE),
+  //     need to alert sub-styles LINE or TRI
+  //     this is so thay can treat non-line/tri particles as
+  //       point particles versus finite-size spheroids
+  
   for (int k = 0; k < nstyles; k++) {
     if (strcmp(keywords[k], "line") == 0) {
       if (std::find(fields_data_atom.begin(), fields_data_atom.end(), "radius") != fields_data_atom.end()) {
         auto *avec_line = dynamic_cast<AtomVecLine *>(styles[k]);
-        avec_line->skip_radius = 1;
+        avec_line->set_sphere();
       }
     }
 
     if (strcmp(keywords[k], "tri") == 0) {
       if (std::find(fields_data_atom.begin(), fields_data_atom.end(), "radius") != fields_data_atom.end()) {
         auto *avec_tri = dynamic_cast<AtomVecTri *>(styles[k]);
-        avec_tri->skip_radius = 1;
+        avec_tri->set_sphere();
       }
     }
   }

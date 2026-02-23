@@ -38,6 +38,8 @@ class AtomVecTri : public AtomVec {
   ~AtomVecTri() override;
   void init() override;
 
+  void set_sphere();
+
   void grow_pointers() override;
   void copy_bonus(int, int, int) override;
   void clear_bonus() override;
@@ -66,7 +68,7 @@ class AtomVecTri : public AtomVec {
   void set_equilateral(int, double);
 
   int nlocal_bonus;
-  int skip_radius;
+  int particle_style;
 
  private:
   int *tri;
