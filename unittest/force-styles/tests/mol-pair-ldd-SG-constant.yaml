@@ -14,10 +14,7 @@ post_commands: ! ""
 input_file: in.ldd
 pair_style: ldd 4.0
 pair_coeff: ! |
-  1 1  indicator lucy    0.0 0.65 self yes potential constant 0 gradient constant -4
-  1 2  indicator dpd     0.0 0.65 self no  potential constant 0 gradient constant 3
-  2 1  indicator sphere  0.0 0.55 self no potential constant  0 gradient constant 2
-  2 2  indicator lucy    0.0 0.65 self no potential constant 0 gradient constant 1
+  * *  pair_ldd_input_SG_constant.txt
 extract: ! ""
 natoms: 5
 init_vdwl: 7494.856928993495

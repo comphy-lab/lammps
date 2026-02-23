@@ -1,0 +1,4 @@
+pair_coeff  1 1  indicator lucy    0.0 1.65 self yes potential table/spline LD_SG_table.txt gradient table/gradspline LD_SG_table.txt
+pair_coeff  1 2  indicator dpd     0.0 1.65 self no  potential table/spline LD_SG_table.txt gradient table/gradspline LD_SG_table.txt
+pair_coeff  2 1  indicator sphere  0.0 1.55 self no potential table/spline LD_SG_table.txt gradient table/gradspline LD_SG_table.txt
+pair_coeff  2 2  indicator lucy    0.0 1.65 self no potential table/spline LD_SG_table.txt gradient table/gradspline LD_SG_table.txt

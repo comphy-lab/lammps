@@ -14,10 +14,7 @@ post_commands: ! ""
 input_file: in.ldd
 pair_style: ldd 4.0
 pair_coeff: ! |
-  1 1  indicator lucy    0.0 0.65 self yes potential quadratic 0 0 0 gradient quadratic 0 2 -0.5
-  1 2  indicator dpd     0.0 0.65 self no  potential quadratic 0 0 0 gradient quadratic 0 1 0.5
-  2 1  indicator sphere  0.0 0.55 self no potential quadratic  0 0 0
-  2 2  indicator lucy    0.0 0.65 self no potential quadratic  0 0 0 gradient quadratic 0 -3 0
+  * *  pair_ldd_input_SG_quadratic.txt
 extract: ! ""
 natoms: 5
 init_vdwl: 4006.009313471248

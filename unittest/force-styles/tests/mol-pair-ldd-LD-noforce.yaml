@@ -12,10 +12,7 @@ post_commands: ! ""
 input_file: in.ldd
 pair_style: ldd 4.0
 pair_coeff: ! |
-    1 1  indicator lucy    0.0 0.65 self yes potential noforce
-    1 2  indicator dpd     0.0 0.65 self no  potential noforce
-    2 1  indicator sphere  0.0 0.55 self no potential noforce
-    2 2  indicator lucy    0.0 0.65 self no potential noforce
+    * *  pair_ldd_input_LD_noforce.txt
 extract: ! ""
 natoms: 5
 init_vdwl: 0

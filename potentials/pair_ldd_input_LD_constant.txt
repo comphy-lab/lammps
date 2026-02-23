@@ -1,0 +1,4 @@
+pair_coeff   1 1  indicator lucy    0.0 0.65 self yes potential constant -4
+pair_coeff  1 2  indicator dpd     0.0 0.65 self no  potential constant 3
+pair_coeff  2 1  indicator sphere  0.0 0.55 self no potential constant 2
+pair_coeff  2 2  indicator lucy    0.0 0.65 self no potential constant 1

@@ -13,10 +13,8 @@ pre_commands: ! ""
 post_commands: ! ""
 input_file: in.ldd
 pair_style: ldd 4.0
-pair_coeff: ! "1 1  indicator shell    0.4 1.0 self yes potential linear -1 0.0\n1
-  2  indicator sphere     0.25 0.5 self no  potential linear -1 0.0 \n2 1  indicator
-  smooth  0.2 0.55 self no potential linear  -1 0\n2 2  indicator shell    0.0 0.65
-  self no potential linear -1 0\n"
+pair_coeff: ! |
+    * * pair_ldd_input_LDINDSET2.txt
 extract: ! ""
 natoms: 5
 init_vdwl: -27.128549662659502
