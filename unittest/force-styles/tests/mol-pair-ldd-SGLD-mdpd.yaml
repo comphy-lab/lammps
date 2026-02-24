@@ -13,7 +13,7 @@ post_commands: ! ""
 input_file: in.ldd
 pair_style: ldd 4.0
 pair_coeff: ! |
-  * *  pair_ldd_input_SGLD_mdpd.txt
+  * *  SGLD_mdpd.ldd
 extract: ! ""
 natoms: 5
 init_vdwl: 6207.827469041553

@@ -13,7 +13,7 @@ post_commands: ! ""
 input_file: in.ldd
 pair_style: ldd 4.0
 pair_coeff: ! |
-  * * pair_ldd_input_LD_constant.txt
+  * * LD_constant.ldd
 extract: ! ""
 natoms: 5
 init_vdwl: 7

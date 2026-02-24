@@ -13,7 +13,7 @@ post_commands: ! ""
 input_file: in.ldd
 pair_style: ldd 4.0
 pair_coeff: ! |
-  * * pair_ldd_input_LDINDSET1.txt
+  * * LDINDSET1.ldd
 extract: ! ""
 natoms: 5
 init_vdwl: -47.979247840176924
