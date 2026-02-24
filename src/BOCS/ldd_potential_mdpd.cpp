@@ -28,6 +28,7 @@
 
 #include "error.h"
 #include "math_const.h"
+#include "math_special.h"
 #include "memory.h"
 #include "utils.h"
 
@@ -35,6 +36,7 @@
 
 using namespace LAMMPS_NS;
 using MathConst::MY_PI;
+using MathSpecial::powint;
 
 LddPotentialMdpd::LddPotentialMdpd(class LAMMPS *lmp) : LddPotential(lmp)
 {
@@ -70,7 +72,7 @@ void LddPotentialMdpd::setup_potl(int ipt, int narg, char **arg)
 
   // Unable to find rc
   if (rc == -1.0) { error->all(FLERR, "Unable to find rc in LDD pair coeff line."); }
-  coeffs[1] = MY_PI * coeffs[0] * rc * rc * rc * rc / 30.0;
+  coeffs[1] = MY_PI * coeffs[0] * powint(rc,4) / 30.0;
 }
 
 double LddPotentialMdpd::u(double rho)
