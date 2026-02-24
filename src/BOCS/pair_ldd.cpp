@@ -107,9 +107,9 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   // atom_style. I did it here because it's the first thing called when
   // the user tries to use this pair type.
   // This can be moved if there's a better place for it elsewhere.
-  if (!atom->ldd_big_flag) { error->all(FLERR, "atomstyle ldd must be used with pair style ldd"); }
+  if (!atom->ldd_big_flag) error->all(FLERR, "atomstyle ldd must be used with pair style ldd");
 
-  if (atom->ldd_ntypes != atom->ntypes) { error->all(FLERR, "ldd_ntypes doesn't match ntypes"); }
+  if (atom->ldd_ntypes != atom->ntypes) error->all(FLERR, "ldd_ntypes doesn't match ntypes");
 
   // This is the same as is done in force.cpp
   char *str = (char *) "none";
@@ -177,7 +177,7 @@ void PairLdd::allocate()
   int n = atom->ntypes;
   memory->create(setflag, n + 1, n + 1, "pair:setflag");
   for (int i = 1; i <= n; i++) {
-    for (int j = i; j <= n; j++) { setflag[i][j] = 0; }
+    for (int j = i; j <= n; j++) setflag[i][j] = 0;
   }
 
   memory->create(cutsq, n + 1, n + 1, "LDD:cutsq");
@@ -206,7 +206,7 @@ void PairLdd::allocate()
 
   // MCL ignore solution fix - we want to ignore a type if it has no specified ldds
   // 10.04.24                - so I set the default to ignore and change it only if spec/
-  for (int i = 0; i <= n; i++) { ignore_me[i] = true; }
+  for (int i = 0; i <= n; i++) ignore_me[i] = true;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -506,10 +506,10 @@ void PairLdd::coeff_ldd(int narg, char **arg)
   while (iarg < narg) {
     if (strcmp(arg[iarg], KEY_LDD_IND) == 0) {
       /* check for double keyword */
-      if (bkInd) { ErrorDoubleKeyword(KEY_LDD_IND); }
+      if (bkInd) ErrorDoubleKeyword(KEY_LDD_IND);
       bkInd = true;
       /* make sure the proper number of arguments for this keyword are present */
-      if (iarg + 3 >= narg) { ErrorNumKeywordArgs(KEY_LDD_IND, "wtype r0 rc"); }
+      if (iarg + 3 >= narg) ErrorNumKeywordArgs(KEY_LDD_IND, "wtype r0 rc");
 
       for (i = ilo; i <= ihi; ++i) {
         for (j = jlo; j <= jhi; ++j) {
@@ -525,10 +525,10 @@ void PairLdd::coeff_ldd(int narg, char **arg)
       iarg += 4;
     } else if (strcmp(arg[iarg], KEY_LDD_SELF) == 0) {
       /* check for double keyword */
-      if (bkSelf) { ErrorDoubleKeyword(KEY_LDD_SELF); }
+      if (bkSelf) ErrorDoubleKeyword(KEY_LDD_SELF);
       bkSelf = true;
       /* make sure the proper number of arguments for this keyword are present */
-      if (iarg + 1 >= narg) { ErrorNumKeywordArgs(KEY_LDD_SELF, "yes/no"); }
+      if (iarg + 1 >= narg) ErrorNumKeywordArgs(KEY_LDD_SELF, "yes/no");
 
       if (strcmp(arg[iarg + 1], "yes") == 0)
         bSelf = true;
@@ -544,10 +544,10 @@ void PairLdd::coeff_ldd(int narg, char **arg)
       iarg += 2;
     } else if (strcmp(arg[iarg], KEY_LDD_POTL) == 0) {
       /* check for double keyword */
-      if (bkPotl) { ErrorDoubleKeyword(KEY_LDD_POTL); }
+      if (bkPotl) ErrorDoubleKeyword(KEY_LDD_POTL);
       bkPotl = true;
       /* make sure the proper number of arguments for this keyword are present */
-      if (iarg + 1 >= narg) { ErrorNumKeywordArgs(KEY_LDD_POTL, "type *args*"); }
+      if (iarg + 1 >= narg) ErrorNumKeywordArgs(KEY_LDD_POTL, "type *args*");
 
       for (i = ilo; i <= ihi; ++i) {
         for (j = jlo; j <= jhi; ++j) {
@@ -559,7 +559,7 @@ void PairLdd::coeff_ldd(int narg, char **arg)
       iarg += (Potls[ilo][jlo]->n_coeffs + 2);
     } else if (strcmp(arg[iarg], KEY_LDD_GRAD) == 0) {
       /* check for double keyword */
-      if (bkGrad) { ErrorDoubleKeyword(KEY_LDD_GRAD); }
+      if (bkGrad) ErrorDoubleKeyword(KEY_LDD_GRAD);
       bkGrad = true;
       /* make sure the proper number of arguments for this keyword are present */
       if (iarg + 1 >= narg) ErrorNumKeywordArgs(KEY_LDD_GRAD, "type *args*");
@@ -689,7 +689,7 @@ double PairLdd::single(int i, int j, int itype, int jtype, double rsq, double, d
                        double &fforce)
 {
   fforce = 0.0;
-  if ((ignore_pair[itype][jtype]) && (ignore_pair[jtype][itype])) { return 0.0; }
+  if ((ignore_pair[itype][jtype]) && (ignore_pair[jtype][itype])) return 0.0;
   double r_pair = sqrt(rsq);
   const double *const *const x = atom->x;
   double **const local_dens = atom->ldd_local_density;
@@ -824,7 +824,7 @@ void PairLdd::LDD_calculate_LDs()    //
       const int *const jlist = firstneigh[i];
       const int jnum = numneigh[i];
       // self interaction
-      if (self_interaction[itype][itype]) { local_dens[i][itype] += Inds[itype][itype]->invnorm; }
+      if (self_interaction[itype][itype]) local_dens[i][itype] += Inds[itype][itype]->invnorm;
       for (jj = 0; jj < jnum; jj++) {
         j = jlist[jj];
         j &= NEIGHMASK;
@@ -920,7 +920,7 @@ int PairLdd::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int 
   m = 0;
   for (i = 0; i < n; i++) {
     j = list[i];
-    for (k = 1; k <= ntypes; k++) { buf[m++] = ld[j][k]; }
+    for (k = 1; k <= ntypes; k++) buf[m++] = ld[j][k];
     for (k = 1; k <= ntypes; k++) {
       buf[m++] = ldg[j][GRADTYPE(k)];
       buf[m++] = ldg[j][GRADTYPE(k) + 1];
@@ -941,7 +941,7 @@ void PairLdd::unpack_forward_comm(int n, int first, double *buf)
   m = 0;
   last = first + n;
   for (i = first; i < last; i++) {
-    for (k = 1; k <= ntypes; k++) { ld[i][k] = buf[m++]; }
+    for (k = 1; k <= ntypes; k++) ld[i][k] = buf[m++];
     for (k = 1; k <= ntypes; ++k) {
       ldg[i][GRADTYPE(k)] = buf[m++];
       ldg[i][GRADTYPE(k) + 1] = buf[m++];
@@ -959,7 +959,7 @@ int PairLdd::pack_reverse_comm(int n, int first, double *buf)
   m = 0;
   last = first + n;
   for (i = first; i < last; i++) {
-    for (k = 1; k <= ntypes; k++) { buf[m++] = ld[i][k]; }
+    for (k = 1; k <= ntypes; k++) buf[m++] = ld[i][k];
     for (k = 1; k <= ntypes; k++) {
       buf[m++] = ldg[i][GRADTYPE(k)];
       buf[m++] = ldg[i][GRADTYPE(k) + 1];
@@ -979,7 +979,7 @@ void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
   m = 0;
   for (i = 0; i < n; i++) {
     j = list[i];
-    for (k = 1; k <= ntypes; k++) { ld[j][k] += buf[m++]; }
+    for (k = 1; k <= ntypes; k++) ld[j][k] += buf[m++];
     for (k = 1; k <= ntypes; k++) {
       ldg[j][GRADTYPE(k)] += buf[m++];
       ldg[j][GRADTYPE(k) + 1] += buf[m++];
@@ -1027,7 +1027,7 @@ void PairLdd::read_file(char *filename, int nelements)
                                 world);    // should broadcast to all
 
     if (comm->me == 0) {
-      if (feof(lddinp_fp) == true) { bdone = true; }
+      if (feof(lddinp_fp)) bdone = 1;
     }    // But only 0 will know if done
     MPI_Bcast(&bdone, 1, MPI_INT, 0, world);
     if (bdone) continue;
