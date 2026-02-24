@@ -832,11 +832,8 @@ void PairLdd::LDD_calculate_LDs()    //
         j = jlist[jj];
         j &= NEIGHMASK;
         jtype = type[j];
-        if ((!ignore_pair[itype][jtype]) ||
-            (!ignore_pair
-                 [jtype]
-                 [itype]))    // MCL We need the displacements if relevent to either interaction
-        {
+        // MCL We need the displacements if relevent to either interaction
+        if ((!ignore_pair[itype][jtype]) || (!ignore_pair[jtype][itype])) {
           delx = xtmp - x[j][0];
           dely = ytmp - x[j][1];
           delz = ztmp - x[j][2];
@@ -1006,8 +1003,8 @@ void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
 void PairLdd::coeff(int narg, char **arg)
 {
   if (!allocated) allocate();
-  if (narg > 3)    // then the command probably looked like pair_coeff * * ele1 ele2 etc.
-  {
+  // then the command probably looked like pair_coeff * * ele1 ele2 etc.
+  if (narg > 3) {
     map_element2type(narg - 3, arg + 3);
     if (nelements != atom->ntypes) {
       error->one(FLERR,
@@ -1015,9 +1012,8 @@ void PairLdd::coeff(int narg, char **arg)
                  nelements, atom->ntypes);
     }
   }
-  read_file(
-      arg[2],
-      nelements);    // parse pair ij != ji syntax in a different file to get around messing with the main-line of lammps
+  // parse pair ij != ji syntax in a different file to get around messing with the main-line of lammps
+  read_file(arg[2], nelements);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1064,8 +1060,9 @@ void PairLdd::read_file(char *filename, int nelements)
           filename, ldd_arg_string[0].c_str(), line_buf, filename);
       num_words = 0;
     }
-    if (nelements > 0)    // then the user is probably passing e.g. pair_coeff A B instead of 1 2
-    {                     // coeff_ldd likes 1 2 so we'll change it out before we pass into there.
+    // then the user is probably passing e.g. pair_coeff A B instead of 1 2
+    // coeff_ldd likes 1 2 so we'll change it out before we pass into there.
+    if (nelements > 0) {
       for (int k = 0; k < nelements; k++) {
         if (utils::strsame(ldd_arg_string[1], elements[k])) {
           ldd_arg_string[1] = std::to_string(k + 1);
