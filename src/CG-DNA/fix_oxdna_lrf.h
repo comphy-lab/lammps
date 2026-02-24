@@ -29,8 +29,6 @@ class FixOxdnaLRF : public Fix {
   FixOxdnaLRF(class LAMMPS *, int, char **);
   ~FixOxdnaLRF() override;
   int setmask() override;
-  void init() override;
-  void init_list(int, class NeighList *) override;
   void min_setup_pre_force(int);
   void min_pre_force(int) override;
   void setup_pre_force(int) override;
@@ -40,12 +38,13 @@ class FixOxdnaLRF : public Fix {
   void grow_arrays(int) override;
   void copy_arrays(int, int, int) override;
   void set_arrays(int) override;
+  int pack_exchange(int, double *) override;
+  int unpack_exchange(int, double *) override;
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
-  void *extract(const char *, int &) override;
 
  private:
-  double **nx, **ny, **nz;    // per-atom arrays for local unit vectors
+  double **nxyz;    // per-atom arrays for local unit vectors
   void compute_lrf();
 
   class NeighList *list;

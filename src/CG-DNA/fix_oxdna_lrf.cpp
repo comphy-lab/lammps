@@ -29,25 +29,29 @@ using namespace LAMMPS_NS;
 using namespace FixConst;
 
 FixOxdnaLRF::FixOxdnaLRF(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), nx(nullptr), ny(nullptr), nz(nullptr)
+    Fix(lmp, narg, arg), nxyz(nullptr)
 {
   comm_forward = 9;
 
+  peratom_flag = 1;
+  size_peratom_cols = 9;
+  peratom_freq = 1;
+
   int nmax = atom->nmax;
-  memory->create(nx, nmax, 3, "fix_oxdna/lrf:nx");
-  memory->create(ny, nmax, 3, "fix_oxdna/lrf:ny");
-  memory->create(nz, nmax, 3, "fix_oxdna/lrf:nz");
-  atom->add_callback(0);
+  FixOxdnaLRF::grow_arrays(nmax);
+  atom->add_callback(Atom::GROW);
+
+  for (int i = 0; i < nmax; i++)
+    for (int j = 0; j < size_peratom_cols; j++)
+      array_atom[i][j] = 0.0;
 }
 
 /* ---------------------------------------------------------------------- */
 
 FixOxdnaLRF::~FixOxdnaLRF()
 {
-  atom->delete_callback(id, 0);
-  memory->destroy(nx);
-  memory->destroy(ny);
-  memory->destroy(nz);
+  atom->delete_callback(id, Atom::GROW);
+  memory->destroy(nxyz);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -58,27 +62,6 @@ int FixOxdnaLRF::setmask()
   mask |= MIN_PRE_FORCE;
   mask |= PRE_FORCE;
   return mask;
-}
-
-/* ---------------------------------------------------------------------- */
-
-void FixOxdnaLRF::init()
-{
-  // assume force->pair, since fix is initialised through pair oxdna/excv
-  auto req = neighbor->add_request(this, NeighConst::REQ_DEFAULT);
-  req->set_cutoff(force->pair->cutforce);
-
-  double cutghost;    // as computed by Neighbor and Comm
-  cutghost = MAX(force->pair->cutforce + neighbor->skin, comm->cutghostuser);
-
-  if (force->pair->cutforce > cutghost) comm->cutghostuser = force->pair->cutforce + neighbor->skin;
-}
-
-/* ---------------------------------------------------------------------- */
-
-void FixOxdnaLRF::init_list(int /*id*/, NeighList *ptr)
-{
-  list = ptr;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -123,27 +106,60 @@ double FixOxdnaLRF::memory_usage()
 
 void FixOxdnaLRF::grow_arrays(int nmax)
 {
-  memory->grow(nx, nmax, 3, "fix_oxdna/lrf:nx");
-  memory->grow(ny, nmax, 3, "fix_oxdna/lrf:ny");
-  memory->grow(nz, nmax, 3, "fix_oxdna/lrf:nz");
+  memory->grow(nxyz, nmax, size_peratom_cols, "fix_oxdna/lrf:nxyz");
+  array_atom = nxyz;
 }
 
 /* ---------------------------------------------------------------------- */
 
 void FixOxdnaLRF::copy_arrays(int i, int j, int delflag)
 {
-  memcpy(nx[j], nx[i], sizeof(double) * 3);
-  memcpy(ny[j], ny[i], sizeof(double) * 3);
-  memcpy(nz[j], nz[i], sizeof(double) * 3);
+  memcpy(nxyz[j], nxyz[i], sizeof(double) * size_peratom_cols);
 }
 
 /* ---------------------------------------------------------------------- */
 
 void FixOxdnaLRF::set_arrays(int i)
 {
-  memset(nx[i], 0, sizeof(double) * 3);
-  memset(ny[i], 0, sizeof(double) * 3);
-  memset(nz[i], 0, sizeof(double) * 3);
+  memset(nxyz[i], 0, sizeof(double) * size_peratom_cols);
+}
+
+/* ---------------------------------------------------------------------- */
+
+int FixOxdnaLRF::pack_exchange(int i, double *buf)
+{
+  int m = 0;
+  int *ellipsoid = atom->ellipsoid;
+  int j = ellipsoid[i];
+  buf[m++] = nxyz[j][0];
+  buf[m++] = nxyz[j][1];
+  buf[m++] = nxyz[j][2];
+  buf[m++] = nxyz[j][3];
+  buf[m++] = nxyz[j][4];
+  buf[m++] = nxyz[j][5];
+  buf[m++] = nxyz[j][6];
+  buf[m++] = nxyz[j][7];
+  buf[m++] = nxyz[j][8];
+
+  return m;
+}
+
+/* ---------------------------------------------------------------------- */
+
+int FixOxdnaLRF::unpack_exchange(int nlocal, double *buf)
+{
+  int m = 0;
+  nxyz[nlocal][0] = buf[m++];
+  nxyz[nlocal][1] = buf[m++];
+  nxyz[nlocal][2] = buf[m++];
+  nxyz[nlocal][3] = buf[m++];
+  nxyz[nlocal][4] = buf[m++];
+  nxyz[nlocal][5] = buf[m++];
+  nxyz[nlocal][6] = buf[m++];
+  nxyz[nlocal][7] = buf[m++];
+  nxyz[nlocal][8] = buf[m++];
+
+  return m;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -151,19 +167,20 @@ void FixOxdnaLRF::set_arrays(int i)
 int FixOxdnaLRF::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, int * /*pbc*/)
 {
   int i, j, m;
+  int *ellipsoid = atom->ellipsoid;
 
   m = 0;
   for (i = 0; i < n; i++) {
-    j = list[i];
-    buf[m++] = nx[j][0];
-    buf[m++] = nx[j][1];
-    buf[m++] = nx[j][2];
-    buf[m++] = ny[j][0];
-    buf[m++] = ny[j][1];
-    buf[m++] = ny[j][2];
-    buf[m++] = nz[j][0];
-    buf[m++] = nz[j][1];
-    buf[m++] = nz[j][2];
+    j = ellipsoid[list[i]];
+    buf[m++] = nxyz[j][0];
+    buf[m++] = nxyz[j][1];
+    buf[m++] = nxyz[j][2];
+    buf[m++] = nxyz[j][3];
+    buf[m++] = nxyz[j][4];
+    buf[m++] = nxyz[j][5];
+    buf[m++] = nxyz[j][6];
+    buf[m++] = nxyz[j][7];
+    buf[m++] = nxyz[j][8];
   }
   return m;
 }
@@ -176,15 +193,15 @@ void FixOxdnaLRF::unpack_forward_comm(int n, int first, double *buf)
   m = 0;
   last = first + n;
   for (i = first; i < last; i++) {
-    nx[i][0] = buf[m++];
-    nx[i][1] = buf[m++];
-    nx[i][2] = buf[m++];
-    ny[i][0] = buf[m++];
-    ny[i][1] = buf[m++];
-    ny[i][2] = buf[m++];
-    nz[i][0] = buf[m++];
-    nz[i][1] = buf[m++];
-    nz[i][2] = buf[m++];
+    nxyz[i][0] = buf[m++];
+    nxyz[i][1] = buf[m++];
+    nxyz[i][2] = buf[m++];
+    nxyz[i][3] = buf[m++];
+    nxyz[i][4] = buf[m++];
+    nxyz[i][5] = buf[m++];
+    nxyz[i][6] = buf[m++];
+    nxyz[i][7] = buf[m++];
+    nxyz[i][8] = buf[m++];
   }
 }
 
@@ -199,31 +216,30 @@ void FixOxdnaLRF::compute_lrf()
   AtomVecEllipsoid::Bonus *bonus = avec->bonus;
   int *ellipsoid = atom->ellipsoid;
 
-  int inum = list->inum;
-  int *ilist = list->ilist;
-
   // loop over all local atoms, calculation of local reference frame
   for (int i = 0; i < nlocal; ++i) {
     if (atom->mask[i] & groupbit) {
 
-      int n = ilist[i];
+      int n = ellipsoid[i];
+      if (n < 0) continue;    // skip non-ellipsoid atoms
+
       // quaternion and Cartesian unit vectors in lab frame
       double *qn, nx_temp[3], ny_temp[3], nz_temp[3];
 
-      if (ellipsoid[n] < 0) continue;    // skip non-ellipsoid atoms
-      qn = bonus[ellipsoid[n]].quat;
+      qn = bonus[n].quat;
 
       q_to_exyz(qn, nx_temp, ny_temp, nz_temp);
 
-      nx[n][0] = nx_temp[0];
-      nx[n][1] = nx_temp[1];
-      nx[n][2] = nx_temp[2];
-      ny[n][0] = ny_temp[0];
-      ny[n][1] = ny_temp[1];
-      ny[n][2] = ny_temp[2];
-      nz[n][0] = nz_temp[0];
-      nz[n][1] = nz_temp[1];
-      nz[n][2] = nz_temp[2];
+      nxyz[n][0] = nx_temp[0];
+      nxyz[n][1] = nx_temp[1];
+      nxyz[n][2] = nx_temp[2];
+      nxyz[n][3] = ny_temp[0];
+      nxyz[n][4] = ny_temp[1];
+      nxyz[n][5] = ny_temp[2];
+      nxyz[n][6] = nz_temp[0];
+      nxyz[n][7] = nz_temp[1];
+      nxyz[n][8] = nz_temp[2];
+
     }
   }
 
@@ -231,13 +247,3 @@ void FixOxdnaLRF::compute_lrf()
 }
 
 /* ---------------------------------------------------------------------- */
-
-void *FixOxdnaLRF::extract(const char *str, int &dim)
-{
-  dim = 2;
-
-  if (strcmp(str, "nx") == 0) return (void *) nx;
-  if (strcmp(str, "ny") == 0) return (void *) ny;
-  if (strcmp(str, "nz") == 0) return (void *) nz;
-  return nullptr;
-}

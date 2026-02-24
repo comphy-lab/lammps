@@ -143,13 +143,14 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
   double **f = atom->f;
   double **torque = atom->torque;
   int *type = atom->type;
+  int *ellipsoid = atom->ellipsoid;
 
   int nlocal = atom->nlocal;
   int newton_pair = force->newton_pair;
   int *alist,*blist,*numneigh,**firstneigh;
   double *special_lj = force->special_lj;
 
-  int a,b,ia,ib,anum,bnum,atype,btype;
+  int a,b,ia,ib,anum,bnum,atype,btype,aellip,bellip;
 
   double f2,f4t1,f4t4,f4t5,f4t6,f5c3;
   double df2,df4t1,df4t4,df4t5,df4t6,df5c3,rsint;
@@ -162,11 +163,8 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // n(x/y/z)_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
-  int dim;
-  nx_xtrct = (double **) fix_lrf->extract("nx",dim);
-  ny_xtrct = (double **) fix_lrf->extract("ny",dim);
-  nz_xtrct = (double **) fix_lrf->extract("nz",dim);
+  // nxyz_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
+  nxyz_xtrct = fix_lrf->array_atom;
 
   // loop over pair interaction neighbors of my atoms
 
@@ -174,10 +172,11 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
 
     a = alist[ia];
     atype = type[a];
+    aellip = ellipsoid[a];
 
-    ax[0] = nx_xtrct[a][0];
-    ax[1] = nx_xtrct[a][1];
-    ax[2] = nx_xtrct[a][2];
+    ax[0] = nxyz_xtrct[aellip][0];
+    ax[1] = nxyz_xtrct[aellip][1];
+    ax[2] = nxyz_xtrct[aellip][2];
     // a(y/z) not needed here as oxDNA(1) co-linear
 
     // vector COM a - stacking site a
@@ -200,10 +199,11 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
       b &= NEIGHMASK;
 
       btype = type[b];
+      bellip = ellipsoid[b];
 
-      bx[0] = nx_xtrct[b][0];
-      bx[1] = nx_xtrct[b][1];
-      bx[2] = nx_xtrct[b][2];
+      bx[0] = nxyz_xtrct[bellip][0];
+      bx[1] = nxyz_xtrct[bellip][1];
+      bx[2] = nxyz_xtrct[bellip][2];
       // b(y/z) not needed here as oxDNA(1) co-linear
 
       // vector COM b - stacking site b
@@ -256,12 +256,12 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
       // early rejection criterium
       if (f4t1 != 0.0) {
 
-      az[0] = nz_xtrct[a][0];
-      az[1] = nz_xtrct[a][1];
-      az[2] = nz_xtrct[a][2];
-      bz[0] = nz_xtrct[b][0];
-      bz[1] = nz_xtrct[b][1];
-      bz[2] = nz_xtrct[b][2];
+      az[0] = nxyz_xtrct[aellip][6];
+      az[1] = nxyz_xtrct[aellip][7];
+      az[2] = nxyz_xtrct[aellip][8];
+      bz[0] = nxyz_xtrct[bellip][6];
+      bz[1] = nxyz_xtrct[bellip][7];
+      bz[2] = nxyz_xtrct[bellip][8];
 
       cost4 = MathExtra::dot3(az,bz);
       if (cost4 >  1.0) cost4 =  1.0;
@@ -393,9 +393,9 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
       // cosphi3 and cosphi4 (=cosphi3) force and virial
       if (cosphi3 != 0.0) {
 
-        ay[0] = ny_xtrct[a][0];
-        ay[1] = ny_xtrct[a][1];
-        ay[2] = ny_xtrct[a][2];
+        ay[0] = nxyz_xtrct[aellip][3];
+        ay[1] = nxyz_xtrct[aellip][4];
+        ay[2] = nxyz_xtrct[aellip][5];
 
         finc   = -f2 * f4t1* f4t4 * f4t5 * f4t6 * 2.0 * f5c3 * df5c3 * factor_lj;
 
