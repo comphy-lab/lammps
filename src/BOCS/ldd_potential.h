@@ -47,10 +47,9 @@ class LddPotential : protected Pointers {
   LddPotential(class LAMMPS *);
   virtual ~LddPotential();
 
-  virtual void setup_potl(int, int, char **) {} // fnc to define U_x, must be overriden
-  virtual double u(double ) { return 0; } // fn that returns value of U_x(rho), must be overriden
-  virtual double f(double ) { return 0; } // fn that returns f_x(rho), must be overriden
-
+  virtual void setup_potl(int, int, char **) = 0;    // fnc to define U_x
+  virtual double u(double) = 0;    // fn that returns value of U_x(rho)
+  virtual double f(double) = 0;    // fn that returns f_x(rho)
   void read_table_file(char *, bool );
   int get_table_index(double );
   double calc_A_table(double , int );
