@@ -40,7 +40,8 @@ class LddPotential;
 class PairLdd: public Pair {
  public:
   PairLdd(class LAMMPS *);
-  virtual ~PairLdd();
+  ~PairLdd() override;
+
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
