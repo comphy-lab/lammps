@@ -1020,16 +1020,16 @@ void PairLdd::read_file(char *filename, int nelements)
   int arg_string_size = 0;
   char **ldd_arg_chars;
   int num_words = 0;
-  bool bdone = false;
-  while (!bdone)    // file reader/arg parser loop
-  {
+  int bdone = 0;
+  // file reader/arg parser loop
+  while (!bdone) {
     utils::read_lines_from_file(lddinp_fp, 1, MAXLINE, line_buf, comm->me,
                                 world);    // should broadcast to all
 
     if (comm->me == 0) {
       if (feof(lddinp_fp) == true) { bdone = true; }
     }    // But only 0 will know if done
-    MPI_Bcast(&bdone, 1, MPI_CXX_BOOL, 0, world);
+    MPI_Bcast(&bdone, 1, MPI_INT, 0, world);
     MPI_Barrier(MPI_COMM_WORLD);
     if (bdone) { continue; }
 
