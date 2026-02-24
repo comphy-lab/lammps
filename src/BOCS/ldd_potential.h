@@ -45,7 +45,7 @@ class LddPotential : protected Pointers {
   t_table potl_table; // field for the table info
 
   LddPotential(class LAMMPS *);
-  virtual ~LddPotential();
+  ~LddPotential() override;
 
   virtual void setup_potl(int, int, char **) = 0;    // fnc to define U_x
   virtual double u(double) = 0;    // fn that returns value of U_x(rho)
