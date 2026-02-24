@@ -1,4 +1,4 @@
-/* ----------------------------------------------------------------------
+/* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
    LAMMPS development team: developers@lammps.org
@@ -29,24 +29,21 @@ LddPotentialStyle(table/spline,LddPotentialTableSpline);
 namespace LAMMPS_NS {
 
 class LddPotentialTableSpline : public LddPotential {
-  public:
+ public:
+  LddPotentialTableSpline(class LAMMPS *);
+  ~LddPotentialTableSpline() override;
 
-    LddPotentialTableSpline(class LAMMPS *);
-    ~LddPotentialTableSpline();
+  void setup_potl(int, int, char **) override;
+  double u(double) override;
+  double f(double) override;
+  double splint(double, double, double, double, double, double, double, double, double, double);
 
-    void setup_potl(int, int, char **) override;
-    double u(double ) override;
-    double f(double ) override;
-    double splint(double , double , double , double , double ,
-                  double , double , double , double , double );
+  void spline(double *, double *, int, double, double, double *);
 
-    void spline(double *, double *, int , double , double , double *);
-
-  protected:
-    virtual void allocate();
-
+ protected:
+  virtual void allocate();
 };
-}
+}    // namespace LAMMPS_NS
 
 #endif
 #endif

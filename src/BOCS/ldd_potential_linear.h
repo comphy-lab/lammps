@@ -1,4 +1,4 @@
-/* ----------------------------------------------------------------------
+/* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
    LAMMPS development team: developers@lammps.org
@@ -30,20 +30,18 @@ LddPotentialStyle(linear,LddPotentialLinear);
 namespace LAMMPS_NS {
 
 class LddPotentialLinear : public LddPotential {
-  public:
+ public:
+  LddPotentialLinear(class LAMMPS *);
+  ~LddPotentialLinear() override;
 
-    LddPotentialLinear(class LAMMPS *);
-    ~LddPotentialLinear();
+  void setup_potl(int, int, char **) override;
+  double u(double) override;
+  double f(double) override;
 
-    void setup_potl(int, int, char **) override;
-    double u(double ) override;
-    double f(double ) override;
-
-  protected:
-    virtual void allocate();
-
+ protected:
+  virtual void allocate();
 };
-}
+}    // namespace LAMMPS_NS
 
 #endif
 #endif
