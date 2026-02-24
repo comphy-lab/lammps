@@ -447,6 +447,7 @@ template <typename T> LddPotential *PairLdd::potential_creator(LAMMPS *lmp)
 {
   return new T(lmp);
 }
+
 /* ---------------------------------------------------------------------- */
 
 void PairLdd::ErrorDoubleKeyword(const char *keyword)
@@ -465,6 +466,8 @@ void PairLdd::ErrorNumKeywordArgs(const char *keyword, const char *arglist)
       keyword, arglist, keyword);
   error->all(FLERR, errmsg);
 }
+
+/* ---------------------------------------------------------------------- */
 
 void PairLdd::coeff_ldd(int narg, char **arg)
 {
@@ -869,6 +872,8 @@ void PairLdd::LDD_calculate_LDs()    //
   comm->forward_comm(this);
 }
 
+/* ---------------------------------------------------------------------- */
+
 void PairLdd::LDD_calculate_energies()
 {
   int i, ii;
@@ -910,6 +915,8 @@ void PairLdd::LDD_calculate_energies()
   }
 }
 
+/* ---------------------------------------------------------------------- */
+
 int PairLdd::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int *pbc)
 {
   int i, j, k, m;
@@ -931,6 +938,8 @@ int PairLdd::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int 
   return m;
 }
 
+/* ---------------------------------------------------------------------- */
+
 void PairLdd::unpack_forward_comm(int n, int first, double *buf)
 {
   int i, k, m, last;
@@ -949,6 +958,8 @@ void PairLdd::unpack_forward_comm(int n, int first, double *buf)
     }
   }
 }
+
+/* ---------------------------------------------------------------------- */
 
 int PairLdd::pack_reverse_comm(int n, int first, double *buf)
 {
@@ -970,6 +981,8 @@ int PairLdd::pack_reverse_comm(int n, int first, double *buf)
   return m;
 }
 
+/* ---------------------------------------------------------------------- */
+
 void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
 {
   int i, j, k, m;
@@ -988,6 +1001,8 @@ void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
   }
 }
 
+/* ---------------------------------------------------------------------- */
+
 void PairLdd::coeff(int narg, char **arg)
 {
   if (!allocated) allocate();
@@ -1004,6 +1019,8 @@ void PairLdd::coeff(int narg, char **arg)
       arg[2],
       nelements);    // parse pair ij != ji syntax in a different file to get around messing with the main-line of lammps
 }
+
+/* ---------------------------------------------------------------------- */
 
 void PairLdd::read_file(char *filename, int nelements)
 {
