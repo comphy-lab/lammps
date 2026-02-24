@@ -99,9 +99,9 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   comm_reverse = 4 * atom->ntypes;
 
   // Initialize these to NULL
-  Inds = NULL;
-  Potls = NULL;
-  GradPotls = NULL;
+  Inds = nullptr;
+  Potls = nullptr;
+  GradPotls = nullptr;
 
   // Somewhere we need to check to make sure the user is using the correct
   // atom_style. I did it here because it's the first thing called when
@@ -425,7 +425,7 @@ LddIndicator *PairLdd::new_indicator(std::string wtype)
     return indicator_creator(lmp);
   }
   error->all(FLERR, utils::check_packages_for_style("LddIndicator", wtype, lmp));
-  return NULL;
+  return nullptr;
 }
 
 template <typename T> LddIndicator *PairLdd::indicator_creator(LAMMPS *lmp)
@@ -440,7 +440,7 @@ LddPotential *PairLdd::new_potential(std::string ptype)
     return potential_creator(lmp);
   }
   error->all(FLERR, utils::check_packages_for_style("LddPotential", ptype, lmp));
-  return NULL;
+  return nullptr;
 }
 
 template <typename T> LddPotential *PairLdd::potential_creator(LAMMPS *lmp)
@@ -1007,10 +1007,10 @@ void PairLdd::coeff(int narg, char **arg)
 
 void PairLdd::read_file(char *filename, int nelements)
 {
-  FILE *lddinp_fp = NULL;
+  FILE *lddinp_fp = nullptr;
   if (comm->me == 0) {
     lddinp_fp = utils::open_potential(filename, lmp, 0);
-    if (lddinp_fp == nullptr) {
+    if (!lddinp_fp) {
       error->one(FLERR, "Cannot open ldd input file {}: {}", filename, utils::getsyserror());
     }
   }
