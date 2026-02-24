@@ -11,19 +11,13 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 /* ------------------------------------------------------
-    This file is part of the LDD package for LAMMPS.
+    This file is part of the BOCS package for LAMMPS.
     Contributed by Michael R. DeLyser, mrd5285@psu.edu
     and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University
    ------------------------------------------------------ */
+
 #include "pair_ldd.h"
-
-#include <mpi.h>
-
-#include <cmath>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
 
 #include "atom.h"
 #include "comm.h"
@@ -43,21 +37,25 @@
 #include "the_ldd_indicator_types.h"
 #include "the_ldd_potential_types.h"
 
+#include <cmath>
+#include <cstring>
+
 using namespace LAMMPS_NS;
-
-static constexpr int MAXLINE = 1024;
-
-#define KEY_LDD_IND "indicator"
-#define KEY_LDD_POTL "potential"
-#define KEY_LDD_GRAD "gradient"
-#define KEY_LDD_SELF "self"
-#define KEY_LDD_IGNORE "ignore"
 
 #define DOT_PRODUCT(a,b) (a[0] * b[0] + a[1] * b[1] + a[2] * b[2])
 #define DOT_PROD_GRAD(a,ta,b,tb) (a[3*ta] * b[3*tb] + a[3*ta+1] * b[3*tb+1] + a[3*ta+2] * b[3*tb+2])
 #define GRADTYPE(a) (3*a)
 
-static const char cite_pair_ldd1_c[] =
+namespace {
+  constexpr int MAXLINE = 1024;
+
+  constexpr char KEY_LDD_IND[] =  "indicator";
+  constexpr char KEY_LDD_POTL[] =  "potential";
+  constexpr char KEY_LDD_GRAD[] = "gradient";
+  constexpr char KEY_LDD_SELF[] = "self";
+  constexpr char KEY_LDD_IGNORE[] = "ignore";
+
+  constexpr char cite_pair_ldd1_c[] =
   "pair ldd command: doi:10.1063/1.5128665\n\n"
   "@Article{DeLyser1,\n"
   " author = {Michael R. DeLyser and W. G. Noid},\n"
@@ -68,7 +66,7 @@ static const char cite_pair_ldd1_c[] =
   " pages =   {22:224106}\n"
   "}\n\n";
 
-  static const char cite_pair_ldd2_c[] =
+  constexpr char cite_pair_ldd2_c[] =
   "pair ldd command gradient keyword: doi:10.1063/5.0075291\n\n"
   "@Article{DeLyser2,\n"
   " author = {Michael R. DeLyser and W. G. Noid},\n"
@@ -78,8 +76,7 @@ static const char cite_pair_ldd1_c[] =
   " volume =  156,\n"
   " pages =   {034106}\n"
   "}\n\n";
-
-
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -1115,7 +1112,7 @@ void PairLdd::coeff(int narg, char **arg)
 
 }
 
-void PairLdd::read_file(char * filename, int nelements)
+void PairLdd::read_file(char *filename, int nelements)
 {
   FILE *lddinp_fp = NULL;
   if (comm->me == 0)
