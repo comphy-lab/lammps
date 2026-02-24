@@ -21,13 +21,22 @@ PairStyle(oxdna3/coaxstk,PairOxdna3Coaxstk);
 #define LMP_PAIR_OXDNA3_COAXSTK_H
 
 #include "pair_oxdna2_coaxstk.h"
+#include "nucleotide_oxdna.h"
 
 namespace LAMMPS_NS {
 
 class PairOxdna3Coaxstk : public PairOxdna2Coaxstk {
  public:
   PairOxdna3Coaxstk(class LAMMPS *lmp);
-  void compute_stacking_site(double *, double *, double *, double *) const override;
+  // inline below has to be here in the header file, otherwise KOKKOS 
+  // compilation fails due to undefined vtable symbols.
+  inline void compute_stacking_site(double e1[3], double /*e2*/[3],
+   double /*e3*/[3], double rstk[3]) const override
+  {
+   NucleotideOxdna3 oxdna3;
+   oxdna3.stacking_site(e1, NULL, NULL, rstk);
+  };
+
 };
 
 }    // namespace LAMMPS_NS

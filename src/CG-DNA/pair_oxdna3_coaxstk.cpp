@@ -52,13 +52,3 @@ PairOxdna3Coaxstk::PairOxdna3Coaxstk(LAMMPS *lmp) : PairOxdna2Coaxstk(lmp)
   writedata = 0;
   trim_flag = 0;
 }
-
-/* -----------------------------------------------------------------------
-    compute vector COM-stacking interaction site in oxDNA3
--------------------------------------------------------------------------- */
-inline void PairOxdna3Coaxstk::compute_stacking_site(double e1[3], double /*e2*/[3],
-    double /*e3*/[3], double rstk[3]) const
-{
-  NucleotideOxdna3 oxdna3;
-  oxdna3.stacking_site(e1, NULL, NULL, rstk);
-}
