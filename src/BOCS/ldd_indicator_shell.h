@@ -1,4 +1,4 @@
-/* ----------------------------------------------------------------------
+/* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
    LAMMPS development team: developers@lammps.org
@@ -30,19 +30,20 @@ LddIndicatorStyle(shell,LddIndicatorShell);
 namespace LAMMPS_NS {
 
 class LddIndicatorShell : public LddIndicator {
-  public:
+ public:
+  LddIndicatorShell(class LAMMPS *);
+  ~LddIndicatorShell() override;
 
-    LddIndicatorShell(class LAMMPS *);
-    ~LddIndicatorShell();
-    void init_coeffs(double, double, int) override;
-    double w(double ) override;
-    double wp(double ) override;
-    double wp2(double ) override;
-  protected:
-    virtual void allocate();
+  void init_coeffs(double, double, int) override;
+  double w(double) override;
+  double wp(double) override;
+  double wp2(double) override;
+
+ protected:
+  virtual void allocate();
 };
 
-}
+}    // namespace LAMMPS_NS
 
 #endif
 #endif

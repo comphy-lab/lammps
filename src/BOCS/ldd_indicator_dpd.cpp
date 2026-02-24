@@ -18,46 +18,29 @@
    ------------------------------------------------------ */
 #include "ldd_indicator_dpd.h"
 
-#include <cmath>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
-#include "atom.h"
-#include "atom_masks.h"
-#include "comm.h"
-#include "compute.h"
-#include "domain.h"
-#include "error.h"
-#include "force.h"
-#include "kspace.h"
 #include "math_const.h"
+#include "math_special.h"
 #include "memory.h"
-#include "neighbor.h"
-#include "suffix.h"
-#include "update.h"
-#include "utils.h"
 
 using namespace LAMMPS_NS;
-using namespace MathConst;
+using MathConst::MY_PI;
+using MathSpecial::powint;
 
-LddIndicatorDpd::LddIndicatorDpd(class LAMMPS * lmp) : LddIndicator(lmp)
+LddIndicatorDpd::LddIndicatorDpd(class LAMMPS *lmp) : LddIndicator(lmp)
 {
   n_coeffs = 3;
 }
 
 LddIndicatorDpd::~LddIndicatorDpd()
 {
-  if (allocated == 1)
-  {
-    memory->destroy(coeffs);
-  }
+  if (allocated == 1) memory->destroy(coeffs);
+
   allocated = 0;
 }
 
 void LddIndicatorDpd::allocate()
 {
-  memory->create(coeffs,n_coeffs,"ldd_indicator:coeffs");
+  memory->create(coeffs, n_coeffs, "ldd_indicator:coeffs");
   allocated = 1;
 }
 
@@ -68,14 +51,13 @@ void LddIndicatorDpd::init_coeffs(double a, double b, int dim)
   rc = b;
   coeffs[0] = 1.0;
   coeffs[1] = -2.0 / rc;
-  coeffs[2] = 1.0 / pow(rc,2);
-  switch (dim)
-  {
+  coeffs[2] = 1.0 / powint(rc, 2);
+  switch (dim) {
     case 2:
       norm = MY_PI * rc * rc / 6.0;
       break;
     case 3:
-      norm = 2.0 * MY_PI * pow(rc,3) / 15.0;
+      norm = 2.0 * MY_PI * powint(rc, 3) / 15.0;
       break;
   }
   invnorm = 1.0 / norm;
@@ -84,14 +66,13 @@ void LddIndicatorDpd::init_coeffs(double a, double b, int dim)
 double LddIndicatorDpd::w(double r)
 {
   if (r > rc) { return 0.0; }
-  return (coeffs[0] + coeffs[1] * r +
-          coeffs[2] * pow(r,2)) * invnorm;
+  return (coeffs[0] + coeffs[1] * r + coeffs[2] * powint(r, 2)) * invnorm;
 }
 
 double LddIndicatorDpd::wp(double r)
 {
   if (r > rc) { return 0.0; }
-  return (coeffs[1] + 2.0 * coeffs[2] * r) * invnorm ;
+  return (coeffs[1] + 2.0 * coeffs[2] * r) * invnorm;
 }
 
 double LddIndicatorDpd::wp2(double r)
@@ -99,4 +80,3 @@ double LddIndicatorDpd::wp2(double r)
   if (r > rc) { return 0.0; }
   return (2.0 * coeffs[2]) * invnorm;
 }
-

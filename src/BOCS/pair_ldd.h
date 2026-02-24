@@ -58,14 +58,14 @@ class PairLdd : public Pair {
   typedef LddIndicator *(*IndicatorCreator)(LAMMPS *);
   typedef std::map<std::string, IndicatorCreator> IndicatorCreatorMap;
   IndicatorCreatorMap *indicator_map;
-  class LddIndicator *new_indicator(std::string wtype);
+  class LddIndicator *new_indicator(const std::string &);
 
   char *potential_style;            // key for LDD potential U_x map
   class LddPotential *potential;    // U_x and all associated info
   typedef LddPotential *(*PotentialCreator)(LAMMPS *);
   typedef std::map<std::string, PotentialCreator> PotentialCreatorMap;
   PotentialCreatorMap *potential_map;
-  class LddPotential *new_potential(std::string ptype);
+  class LddPotential *new_potential(const std::string &);
 
   // Functions to calculate the local densities, the gradients,
   // and the associated energies

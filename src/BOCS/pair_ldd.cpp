@@ -418,7 +418,7 @@ void PairLdd::settings(int narg, char **arg)
 /* ---------------------------------------------------------------------- */
 
 // Again, these are analogous to what is done in force.h
-LddIndicator *PairLdd::new_indicator(std::string wtype)
+LddIndicator *PairLdd::new_indicator(const std::string &wtype)
 {
   if (indicator_map->find(wtype) != indicator_map->end()) {
     IndicatorCreator indicator_creator = (*indicator_map)[wtype];
@@ -433,7 +433,7 @@ template <typename T> LddIndicator *PairLdd::indicator_creator(LAMMPS *lmp)
   return new T(lmp);
 }
 
-LddPotential *PairLdd::new_potential(std::string ptype)
+LddPotential *PairLdd::new_potential(const std::string &ptype)
 {
   if (potential_map->find(ptype) != potential_map->end()) {
     PotentialCreator potential_creator = (*potential_map)[ptype];

@@ -26,7 +26,8 @@
 using namespace LAMMPS_NS;
 
 namespace {
-constexpr double BIG = 0.999e30;
+constexpr double BIG = 0.99e30;
+constexpr double BIGGER = 0.999e30;
 constexpr double SMALL = 1.0e-8;
 }    // namespace
 
@@ -67,7 +68,7 @@ void LddPotentialTableSpline::spline(double x[], double y[], int n, double yp1, 
   int i, j;
   double p, qn, sig, un;
   std::vector<double> u(n);
-  if (yp1 >= BIG)
+  if (yp1 > BIG)
     y2[0] = u[0] = 0.0;
   else {
     y2[0] = -0.5;
@@ -82,7 +83,7 @@ void LddPotentialTableSpline::spline(double x[], double y[], int n, double yp1, 
     u[i] = (6.0 * u[i] / (x[i + 1] - x[i - 1]) - sig * u[i - 1]) / p;
   }
 
-  if (ypn >= BIG)
+  if (ypn > BIG)
     qn = un = 0.0;
   else {
     qn = 0.5;
@@ -104,8 +105,10 @@ void LddPotentialTableSpline::setup_potl(int ipt, int narg, char **arg)
   }
   read_table_file(arg[ipt + 2], true);
 
-  spline(&(potl_table.r[0]), &(potl_table.u[0]), potl_table.n_pts, BIG, BIG, &(potl_table.u2[0]));
-  spline(&(potl_table.r[0]), &(potl_table.f[0]), potl_table.n_pts, BIG, BIG, &(potl_table.f2[0]));
+  spline(&(potl_table.r[0]), &(potl_table.u[0]), potl_table.n_pts, BIGGER, BIGGER,
+         &(potl_table.u2[0]));
+  spline(&(potl_table.r[0]), &(potl_table.f[0]), potl_table.n_pts, BIGGER, BIGGER,
+         &(potl_table.f2[0]));
 }
 
 /* Evaluate cubic spline. Modified from "Numerical Recipes in C" Second Edition */

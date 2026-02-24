@@ -16,6 +16,7 @@
     and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University
    ------------------------------------------------------ */
+
 #ifdef LDD_POTENTIAL_CLASS
 // clang-format off
 LddPotentialStyle(noforce,LddPotentialNoForce);
@@ -32,7 +33,7 @@ namespace LAMMPS_NS {
 class LddPotentialNoForce : public LddPotential {
  public:
   LddPotentialNoForce(class LAMMPS *);
-  ~LddPotentialNoForce() override;
+  ~LddPotentialNoForce() override = default;
 
   void setup_potl(int, int, char **) override;
   double u(double) override;

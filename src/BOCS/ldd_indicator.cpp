@@ -18,38 +18,17 @@
    ------------------------------------------------------ */
 #include "ldd_indicator.h"
 
-#include <cmath>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
-#include "atom.h"
-#include "atom_masks.h"
-#include "comm.h"
-#include "compute.h"
-#include "domain.h"
-#include "error.h"
-#include "force.h"
-#include "kspace.h"
-#include "math_const.h"
-#include "memory.h"
-#include "neighbor.h"
-#include "suffix.h"
-#include "update.h"
-#include "utils.h"
-
 using namespace LAMMPS_NS;
 
 LddIndicator::LddIndicator(class LAMMPS * lmp) : Pointers(lmp)
 {
   r0 = rc = rs = rb = norm = invnorm = 0.0;
   n_coeffs = allocated = 0;
-  coeffs = NULL;
+  coeffs = nullptr;
 }
 
 LddIndicator::~LddIndicator()
 {
-  n_coeffs = allocated = 0;
-  memory->destroy(coeffs);
+  n_coeffs = 0;
   r0 = rc = rs = rb = norm = invnorm = 0.0;
 }

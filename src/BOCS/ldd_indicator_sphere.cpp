@@ -16,48 +16,31 @@
     and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University
    ------------------------------------------------------ */
+
 #include "ldd_indicator_sphere.h"
 
-#include <cmath>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
-#include "atom.h"
-#include "atom_masks.h"
-#include "comm.h"
-#include "compute.h"
-#include "domain.h"
-#include "error.h"
-#include "force.h"
-#include "kspace.h"
 #include "math_const.h"
+#include "math_special.h"
 #include "memory.h"
-#include "neighbor.h"
-#include "suffix.h"
-#include "update.h"
-#include "utils.h"
 
 using namespace LAMMPS_NS;
-using namespace MathConst;
+using MathConst::MY_PI;
+using MathSpecial::powint;
 
-LddIndicatorSphere::LddIndicatorSphere(class LAMMPS * lmp) : LddIndicator(lmp)
+LddIndicatorSphere::LddIndicatorSphere(class LAMMPS *lmp) : LddIndicator(lmp)
 {
   n_coeffs = 4;
 }
 
 LddIndicatorSphere::~LddIndicatorSphere()
 {
-  if (allocated == 1)
-  {
-    memory->destroy(coeffs);
-  }
+  if (allocated == 1) memory->destroy(coeffs);
   allocated = 0;
 }
 
 void LddIndicatorSphere::allocate()
 {
-  memory->create(coeffs,n_coeffs,"ldd_indicator:coeffs");
+  memory->create(coeffs, n_coeffs, "ldd_indicator:coeffs");
   allocated = 1;
 }
 
@@ -66,29 +49,28 @@ void LddIndicatorSphere::init_coeffs(double a, double b, int dim)
   if (!allocated) allocate();
   r0 = a;
   rc = b;
-  rs = (b-a) / 2.0;
-  rb = (b+a) / 2.0;
+  rs = (b - a) / 2.0;
+  rb = (b + a) / 2.0;
   // If only C++ could use negative indices like python...
-  coeffs[2] = -3.0 * (pow(rb,4) + pow(rs,4))/(16.0 * pow(rs,3))
-              + 3.0 * pow(rb,2) / (8.0 * rs);
-  coeffs[0] = (pow(rb,3) + pow(rs,3))/(2.0 * pow(rs,3));
-  coeffs[1] = -3.0*(rb*rb + rs*rs)/(8.0*pow(rs,3));
-  coeffs[3] = 1.0 / (16.0 * pow(rs,3));
-  switch (dim)
-  {
+  coeffs[2] = -3.0 * (powint(rb, 4) + powint(rs, 4)) / (16.0 * powint(rs, 3)) +
+      3.0 * powint(rb, 2) / (8.0 * rs);
+  coeffs[0] = (powint(rb, 3) + powint(rs, 3)) / (2.0 * powint(rs, 3));
+  coeffs[1] = -3.0 * (rb * rb + rs * rs) / (8.0 * powint(rs, 3));
+  coeffs[3] = 1.0 / (16.0 * powint(rs, 3));
+  switch (dim) {
     case 2:
-      norm = 2.0 * MY_PI * (pow(r0,2)/2.0 +
-                      coeffs[2] * (rc - r0) +
-                coeffs[0] / 2.0 * (pow(rc,2)-pow(r0,2)) +
-                coeffs[1] / 3.0 * (pow(rc,3)-pow(r0,3)) +
-                coeffs[3] / 5.0 * (pow(rc,5)-pow(r0,5)));
+      norm = 2.0 * MY_PI *
+          (powint(r0, 2) / 2.0 + coeffs[2] * (rc - r0) +
+           coeffs[0] / 2.0 * (powint(rc, 2) - powint(r0, 2)) +
+           coeffs[1] / 3.0 * (powint(rc, 3) - powint(r0, 3)) +
+           coeffs[3] / 5.0 * (powint(rc, 5) - powint(r0, 5)));
       break;
     case 3:
-      norm = 4.0 * MY_PI * (pow(r0,3)/3.0 +
-                coeffs[2] / 2.0 * (pow(rc,2)-pow(r0,2)) +
-                coeffs[0] / 3.0 * (pow(rc,3)-pow(r0,3)) +
-                coeffs[1] / 4.0 * (pow(rc,4)-pow(r0,4)) +
-                coeffs[3] / 6.0 * (pow(rc,6)-pow(r0,6)));
+      norm = 4.0 * MY_PI *
+          (powint(r0, 3) / 3.0 + coeffs[2] / 2.0 * (powint(rc, 2) - powint(r0, 2)) +
+           coeffs[0] / 3.0 * (powint(rc, 3) - powint(r0, 3)) +
+           coeffs[1] / 4.0 * (powint(rc, 4) - powint(r0, 4)) +
+           coeffs[3] / 6.0 * (powint(rc, 6) - powint(r0, 6)));
       break;
   }
   invnorm = 1.0 / norm;
@@ -98,25 +80,19 @@ double LddIndicatorSphere::w(double r)
 {
   if (r < r0) { return invnorm; }
   if (r > rc) { return 0.0; }
-  return (coeffs[2] / r +
-          coeffs[0] +
-          coeffs[1] * r +
-          coeffs[3] * pow(r,3)) * invnorm;
+  return (coeffs[2] / r + coeffs[0] + coeffs[1] * r + coeffs[3] * powint(r, 3)) * invnorm;
 }
 
 double LddIndicatorSphere::wp(double r)
 {
   if (r < r0) { return 0.0; }
   if (r > rc) { return 0.0; }
-  return (      -coeffs[2] / pow(r,2) +
-                 coeffs[1] +
-           3.0 * coeffs[3] * pow(r,2)) * invnorm;
+  return (-coeffs[2] / powint(r, 2) + coeffs[1] + 3.0 * coeffs[3] * powint(r, 2)) * invnorm;
 }
 
 double LddIndicatorSphere::wp2(double r)
 {
   if (r < r0) { return 0.0; }
   if (r > rc) { return 0.0; }
-  return ( 2.0 * coeffs[2] / pow(r,3) +
-           6.0 * coeffs[3] * r) * invnorm;
+  return (2.0 * coeffs[2] / powint(r, 3) + 6.0 * coeffs[3] * r) * invnorm;
 }
