@@ -16,67 +16,33 @@
     and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University
    ------------------------------------------------------ */
+
 #include "ldd_potential_noforce.h"
-
-#include <cmath>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
-#include "atom.h"
-#include "atom_masks.h"
-#include "comm.h"
-#include "compute.h"
-#include "domain.h"
-#include "error.h"
-#include "force.h"
-#include "kspace.h"
-#include "math_const.h"
-#include "memory.h"
-#include "neighbor.h"
-#include "suffix.h"
-#include "update.h"
-#include "utils.h"
-
 
 using namespace LAMMPS_NS;
 
-LddPotentialNoForce::LddPotentialNoForce(class LAMMPS * lmp) : LddPotential(lmp)
+LddPotentialNoForce::LddPotentialNoForce(class LAMMPS *lmp) : LddPotential(lmp)
 {
   n_coeffs = 0;
-  ptype_len = 7;
-}
-
-LddPotentialNoForce::~LddPotentialNoForce()
-{
-  if (allocated == 1)
-  {
-    memory->destroy(ptype);
-  }
-  allocated = 0;
 }
 
 void LddPotentialNoForce::allocate()
 {
-  memory->create(ptype,ptype_len,"ldd_potential:ptype");
   allocated = 1;
 }
 
-void LddPotentialNoForce::setup_potl(int ipt, int narg, char **arg)
+void LddPotentialNoForce::setup_potl(int /*ipt*/, int /*narg*/, char ** /*arg*/)
 {
   if (!allocated) allocate();
-
-  sprintf(ptype,"noforce");
 }
 
 /* These last two should never be called in the case of noforce */
-double LddPotentialNoForce::u(double rho)
+double LddPotentialNoForce::u(double /*rho*/)
 {
   return 0.0;
 }
 
-double LddPotentialNoForce::f(double rho)
+double LddPotentialNoForce::f(double /*rho*/)
 {
   return 0.0;
 }
-

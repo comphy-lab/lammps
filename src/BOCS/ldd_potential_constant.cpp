@@ -18,48 +18,25 @@
    ------------------------------------------------------ */
 #include "ldd_potential_constant.h"
 
-#include <cmath>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
-#include "atom.h"
-#include "atom_masks.h"
-#include "comm.h"
-#include "compute.h"
-#include "domain.h"
-#include "error.h"
-#include "force.h"
-#include "kspace.h"
-#include "math_const.h"
 #include "memory.h"
-#include "neighbor.h"
-#include "suffix.h"
-#include "update.h"
 #include "utils.h"
 
 using namespace LAMMPS_NS;
 
-LddPotentialConstant::LddPotentialConstant(class LAMMPS * lmp) : LddPotential(lmp)
+LddPotentialConstant::LddPotentialConstant(class LAMMPS *lmp) : LddPotential(lmp)
 {
   n_coeffs = 1;
-  ptype_len = 8;
 }
 
 LddPotentialConstant::~LddPotentialConstant()
 {
-  if (allocated == 1)
-  {
-    memory->destroy(coeffs);
-    memory->destroy(ptype);
-  }
+  if (allocated == 1) memory->destroy(coeffs);
   allocated = 0;
 }
 
 void LddPotentialConstant::allocate()
 {
-  memory->create(coeffs,n_coeffs,"ldd_potential:coeffs");
-  memory->create(ptype,ptype_len,"ldd_potential:ptype");
+  memory->create(coeffs, n_coeffs, "ldd_potential:coeffs");
   allocated = 1;
 }
 
@@ -67,8 +44,7 @@ void LddPotentialConstant::setup_potl(int ipt, int narg, char **arg)
 {
   if (!allocated) allocate();
 
-  coeffs[0] = utils::numeric(FLERR,arg[ipt+2],false,lmp);
-  sprintf(ptype,"constant");
+  coeffs[0] = utils::numeric(FLERR, arg[ipt + 2], false, lmp);
 }
 
 double LddPotentialConstant::u(double rho)
@@ -80,4 +56,3 @@ double LddPotentialConstant::f(double rho)
 {
   return 0.0;
 }
-

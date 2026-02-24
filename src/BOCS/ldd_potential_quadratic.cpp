@@ -19,59 +19,36 @@
 
 #include "ldd_potential_quadratic.h"
 
-#include <cmath>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
-#include "atom.h"
-#include "atom_masks.h"
-#include "comm.h"
-#include "compute.h"
-#include "domain.h"
-#include "error.h"
-#include "force.h"
-#include "kspace.h"
-#include "math_const.h"
 #include "memory.h"
-#include "neighbor.h"
-#include "suffix.h"
-#include "update.h"
 #include "utils.h"
 
 using namespace LAMMPS_NS;
 
-LddPotentialQuadratic::LddPotentialQuadratic(class LAMMPS * lmp) : LddPotential(lmp)
+LddPotentialQuadratic::LddPotentialQuadratic(class LAMMPS *lmp) : LddPotential(lmp)
 {
   n_coeffs = 3;
-  ptype_len = 9;
 }
 
 LddPotentialQuadratic::~LddPotentialQuadratic()
 {
-  if (allocated == 1)
-  {
-    memory->destroy(coeffs);
-    memory->destroy(ptype);
-  }
+  if (allocated == 1) memory->destroy(coeffs);
+
   allocated = 0;
 }
 
 void LddPotentialQuadratic::allocate()
 {
-  memory->create(coeffs,n_coeffs,"ldd_potential:coeffs");
-  memory->create(ptype,ptype_len,"ldd_potential:ptype");
+  memory->create(coeffs, n_coeffs, "ldd_potential:coeffs");
   allocated = 1;
 }
 
-void LddPotentialQuadratic::setup_potl(int ipt, int narg, char **arg)
+void LddPotentialQuadratic::setup_potl(int ipt, int /*narg*/, char **arg)
 {
   if (!allocated) allocate();
 
-  coeffs[0] = utils::numeric(FLERR,arg[ipt+2],false,lmp);
-  coeffs[1] = utils::numeric(FLERR,arg[ipt+3],false,lmp);
-  coeffs[2] = utils::numeric(FLERR,arg[ipt+4],false,lmp);
-  sprintf(ptype,"quadratic");
+  coeffs[0] = utils::numeric(FLERR, arg[ipt + 2], false, lmp);
+  coeffs[1] = utils::numeric(FLERR, arg[ipt + 3], false, lmp);
+  coeffs[2] = utils::numeric(FLERR, arg[ipt + 4], false, lmp);
 }
 
 double LddPotentialQuadratic::u(double rho)
@@ -83,4 +60,3 @@ double LddPotentialQuadratic::f(double rho)
 {
   return -(2.0 * coeffs[0] * rho + coeffs[1]);
 }
-

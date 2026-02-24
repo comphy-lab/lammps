@@ -18,41 +18,21 @@
    ------------------------------------------------------ */
 #include "ldd_potential_tablegradlin.h"
 
-#include <cmath>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-
-#include "atom.h"
-#include "atom_masks.h"
-#include "comm.h"
-#include "compute.h"
-#include "domain.h"
 #include "error.h"
-#include "force.h"
-#include "kspace.h"
-#include "math_const.h"
 #include "memory.h"
-#include "neighbor.h"
-#include "suffix.h"
-#include "update.h"
 #include "utils.h"
 
 using namespace LAMMPS_NS;
 
-LddPotentialTableGradLin::LddPotentialTableGradLin(class LAMMPS * lmp) : LddPotential(lmp)
+LddPotentialTableGradLin::LddPotentialTableGradLin(class LAMMPS *lmp) : LddPotential(lmp)
 {
   n_coeffs = 1;
-  ptype_len = 15;
 }
 
 LddPotentialTableGradLin::~LddPotentialTableGradLin()
 {
-  if (allocated == 1)
-  {
+  if (allocated == 1) {
     memory->destroy(coeffs);
-    memory->destroy(ptype);
-    memory->destroy(table_fnm);
     memory->destroy(potl_table.r);
     memory->destroy(potl_table.u);
     memory->destroy(potl_table.f);
@@ -62,9 +42,7 @@ LddPotentialTableGradLin::~LddPotentialTableGradLin()
 
 void LddPotentialTableGradLin::allocate()
 {
-  memory->create(coeffs,n_coeffs,"ldd_potential:coeffs");
-  memory->create(ptype,ptype_len,"ldd_potential:ptype");
-  memory->create(table_fnm,100,"ldd_potential:table_fnm");
+  memory->create(coeffs, n_coeffs, "ldd_potential:coeffs");
   allocated = 1;
 }
 
@@ -72,47 +50,37 @@ void LddPotentialTableGradLin::setup_potl(int ipt, int narg, char **arg)
 {
   if (!allocated) allocate();
 
-  if (narg <= ipt + 1)
-  {
-    error->all(FLERR,"ERROR: unable to read filename following table_lin");
-    exit(EXIT_FAILURE);
-  }
-  read_table_file(arg[ipt+2],false);
-  strcpy(table_fnm,arg[ipt+2]);
-  sprintf(ptype,"table/lin");
-}
+  if (narg <= ipt + 1) error->all(FLERR, "ERROR: unable to read filename following table_lin");
 
+  read_table_file(arg[ipt + 2], false);
+}
 
 double LddPotentialTableGradLin::u(double rho)
 {
   // Handle this case separately
-  if (rho == potl_table.r[potl_table.n_pts-1])
-  {
-    return potl_table.u[potl_table.n_pts-1];
-  }
+  if (rho == potl_table.r[potl_table.n_pts - 1]) { return potl_table.u[potl_table.n_pts - 1]; }
   int idx = get_table_index(rho);
   double A = calc_A_table(rho, idx);
   double B = 1.0 - A;
   // If we didn't handle the first case separately, we'd try to access
   // potl_table.u[idx+1] here and it wouldn't work
-  return (A * potl_table.u[idx] + B * potl_table.u[idx+1]);
+  return (A * potl_table.u[idx] + B * potl_table.u[idx + 1]);
 }
 
 double LddPotentialTableGradLin::f(double rho)
 {
-  if (rho == potl_table.r[potl_table.n_pts-1])
-  {
-    return 1/potl_table.dr * potl_table.u[potl_table.n_pts-1]; // potl_table.f[potl_table.n_pts-1];
+  if (rho == potl_table.r[potl_table.n_pts - 1]) {
+    return 1 / potl_table.dr *
+        potl_table.u[potl_table.n_pts - 1];    // potl_table.f[potl_table.n_pts-1];
   }
   int idx = get_table_index(rho);
-//  double A = calc_A_table(rho, idx);
-//  double B = 1.0 - A;
-  if (rho == potl_table.r[0])
-  {
-    return potl_table.f[0];
-  }
-  double Bp = -1/potl_table.dr; // In BOCS we calculate the deriv, here I need the negative deriv
+  //  double A = calc_A_table(rho, idx);
+  //  double B = 1.0 - A;
+  if (rho == potl_table.r[0]) { return potl_table.f[0]; }
+  double Bp =
+      -1 / potl_table.dr;    // In BOCS we calculate the deriv, here I need the negative deriv
   double Ap = -Bp;
-  return (Ap*potl_table.u[idx] + Bp*potl_table.u[idx+1]); // MCL Gotta use a delta interp for f if linear for u
+  return (Ap * potl_table.u[idx] +
+          Bp * potl_table.u[idx + 1]);    // MCL Gotta use a delta interp for f if linear for u
   // I think this amounts to using a delta on the fwd dif at idx i
 }

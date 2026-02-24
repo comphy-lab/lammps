@@ -28,9 +28,6 @@ class LddPotential : protected Pointers {
   int allocated;      // 0 or 1, tracks whether the potential type has been allocated
   int n_coeffs;       // length of coeffs
   double *coeffs;     // coefficients involved in defining u_LD or u_SG (e.g. a b c in ax^2 + bx +c)
-  int ptype_len;      // length of ptype entry (num chars for map keyword)
-  char *ptype;        // The map keyword for the potential type
-  char *table_fnm;    // filename for tabulated interactions, max 100 char
 
   struct t_table {
     int n_pts;     // number of table entries
