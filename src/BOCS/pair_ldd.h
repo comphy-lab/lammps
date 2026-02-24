@@ -1,4 +1,4 @@
-/* ----------------------------------------------------------------------
+/* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
    LAMMPS development team: developers@lammps.org
@@ -30,14 +30,13 @@ PairStyle(ldd,PairLdd);
 
 #include "pair.h"
 
-
 namespace LAMMPS_NS {
 
 //Forward Declarations
 class LddIndicator;
 class LddPotential;
 
-class PairLdd: public Pair {
+class PairLdd : public Pair {
  public:
   PairLdd(class LAMMPS *);
   ~PairLdd() override;
@@ -54,19 +53,19 @@ class PairLdd: public Pair {
 
   /* I do this the same way it's done in force.h */
 
-  char *indicator_style; // key for LDD indicator map
-  class LddIndicator *indicator; // w(r) and all associated info
+  char *indicator_style;            // key for LDD indicator map
+  class LddIndicator *indicator;    // w(r) and all associated info
   typedef LddIndicator *(*IndicatorCreator)(LAMMPS *);
-  typedef std::map<std::string,IndicatorCreator> IndicatorCreatorMap;
+  typedef std::map<std::string, IndicatorCreator> IndicatorCreatorMap;
   IndicatorCreatorMap *indicator_map;
-  class LddIndicator * new_indicator(std::string wtype);
+  class LddIndicator *new_indicator(std::string wtype);
 
-  char *potential_style; // key for LDD potential U_x map
-  class LddPotential *potential; // U_x and all associated info
+  char *potential_style;            // key for LDD potential U_x map
+  class LddPotential *potential;    // U_x and all associated info
   typedef LddPotential *(*PotentialCreator)(LAMMPS *);
-  typedef std::map<std::string,PotentialCreator> PotentialCreatorMap;
+  typedef std::map<std::string, PotentialCreator> PotentialCreatorMap;
   PotentialCreatorMap *potential_map;
-  class LddPotential * new_potential (std::string ptype);
+  class LddPotential *new_potential(std::string ptype);
 
   // Functions to calculate the local densities, the gradients,
   // and the associated energies
@@ -79,32 +78,34 @@ class PairLdd: public Pair {
   void unpack_reverse_comm(int, int *, double *);
 
  protected:
-  double cut_LDD_global; // longest interaction cutoff obtained from pair_style ldd
-  double **cut; // cutoffs passed in pair_coeff ldd commands. dim n_types x n_types
-  bool **self_interaction; // Self interaction settings from pair_coeff. dim n_types x n_types
-  bool **ignore_pair; // Ignored Potential list. dim n_types x n_types
-  bool *ignore_me;  // Totally ignored central type list. dim_ntypes
-  bool **bGradient; // List of pair types a surrounded by b that also have a gradient interaction. dim n_types x n_types
+  double cut_LDD_global;      // longest interaction cutoff obtained from pair_style ldd
+  double **cut;               // cutoffs passed in pair_coeff ldd commands. dim n_types x n_types
+  bool **self_interaction;    // Self interaction settings from pair_coeff. dim n_types x n_types
+  bool **ignore_pair;         // Ignored Potential list. dim n_types x n_types
+  bool *ignore_me;            // Totally ignored central type list. dim_ntypes
+  bool **
+      bGradient;    // List of pair types a surrounded by b that also have a gradient interaction. dim n_types x n_types
 
-  LddIndicator ***Inds; //The address of an n_type x n_type structure, holding all a|b indicator info
-  LddPotential ***Potls; //The address of an n_type x n_type structure, holding all a|b U_rho info
-  LddPotential ***GradPotls; //The address of an n_type x n_type structure, holding all a|b U_{\nabla} info
+  LddIndicator **
+      *Inds;    //The address of an n_type x n_type structure, holding all a|b indicator info
+  LddPotential **
+      *Potls;    //The address of an n_type x n_type structure, holding all a|b U_rho info
+  LddPotential **
+      *GradPotls;    //The address of an n_type x n_type structure, holding all a|b U_{\nabla} info
 
   void allocate();
   void ErrorDoubleKeyword(const char *);
   void ErrorNumKeywordArgs(const char *, const char *);
-  void read_file(char * filename, int nelements); // reads ldd inp file, executes coeff_ldd
+  void read_file(char *filename, int nelements);    // reads ldd inp file, executes coeff_ldd
 
-
-  private:
+ private:
   // Again, the same as done in force.h
-    void LDD_factory();
-    template <typename T> static LddIndicator *indicator_creator(LAMMPS *);
-    template <typename T> static LddPotential *potential_creator(LAMMPS *);
-
+  void LDD_factory();
+  template <typename T> static LddIndicator *indicator_creator(LAMMPS *);
+  template <typename T> static LddPotential *potential_creator(LAMMPS *);
 };
 
-}
+}    // namespace LAMMPS_NS
 
 #endif
 #endif
