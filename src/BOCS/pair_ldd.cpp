@@ -1030,8 +1030,7 @@ void PairLdd::read_file(char *filename, int nelements)
       if (feof(lddinp_fp) == true) { bdone = true; }
     }    // But only 0 will know if done
     MPI_Bcast(&bdone, 1, MPI_INT, 0, world);
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (bdone) { continue; }
+    if (bdone) continue;
 
     num_words = utils::trim_and_count_words(line_buf, " ");
     if (num_words - 1 <= 0) {
