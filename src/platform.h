@@ -261,7 +261,7 @@ int chdir(const std::string &path);
  * Unlike the the ``mkdir()`` or ``_mkdir()`` functions of the C library, this
  * function will also try to create non-existing sub-directories in case they
  * don't exist, and thus it behaves like the ``mkdir -p`` command rather than
- * plain ``mkdir`` or ``md` in a Unix or Windows shell, respectively.
+ * plain ``mkdir`` or ``md`` in a Unix or Windows shell, respectively.
  *
  * \param  path  directory path
  * \return -1 if unsuccessful, otherwise >= 0  */
