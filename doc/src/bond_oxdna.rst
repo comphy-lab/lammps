@@ -40,14 +40,11 @@ Examples
    bond_style oxdna2/fene
    bond_coeff * 2.0 0.25 0.7564
 
-   bond_style oxrna2/fene
-   bond_coeff * 2.0 0.25 0.76107
-
-   bond_style oxdna/fene
-   bond_coeff * oxdna_lj.cgdna
-
    bond_style oxdna3/fene
    bond_coeff * oxdna3_lj.cgdna
+
+   bond_style oxrna2/fene
+   bond_coeff * 2.0 0.25 0.76107
 
    # Real units
    bond_style oxdna/fene
@@ -62,16 +59,13 @@ Examples
    bond_style oxrna2/fene
    bond_coeff * 11.92337812042065 2.1295 6.482800913
 
-   bond_style oxrna2/fene
-   bond_coeff * oxrna2_real.cgdna
-
 .. note::
 
    The coefficients in the above examples have to be kept fixed and
    cannot be changed without reparameterizing the entire model. They are
    provided in forms compatible with both *units lj* and *units real*
    (see documentation of :doc:`units <units>`).  These can also be read
-   from a potential file (in case of oxDNA3 the sole option) with correct 
+   from a potential file (sole option for oxDNA3) with correct 
    unit style by specifying the name of the file. Several potential files
    for each unit style are included in the ``potentials`` directory of 
    the LAMMPS distribution.
@@ -125,14 +119,13 @@ in the data file or restart files read by the :doc:`read_data
 .. warning::
 
    If data files are produced with :doc:`write_data <write_data>`, then
-   the :doc:`newton <newton>` command should be set to *newton on* or
-   *newton off on*.  Otherwise the data files will not have the same
-   3'-to-5' polarity as the initial data file. This limitation does not
-   apply to binary restart files produced with :doc:`write_restart
-   <write_restart>`.
+   the :doc:`newton <newton>` command should be set to *newton on*.
+   Otherwise the data files will not have the same 3'-to-5' polarity 
+   as the initial data file. This limitation does not apply to
+   binary restart files produced with :doc:`write_restart <write_restart>`.
 
 Example input and data files for DNA and RNA duplexes can be found in
-``examples/PACKAGES/cgdna/examples/oxDNA/`, `.../oxDNA2/`, `.../oxDNA2/``
+``examples/PACKAGES/cgdna/examples/oxDNA/`, `.../oxDNA2/`, `.../oxDNA3/``
 and ``.../oxRNA2/``.  A simple python setup tool which creates single
 straight or helical DNA strands, DNA/RNA duplexes or arrays of DNA/RNA
 duplexes can be found in ``examples/PACKAGES/cgdna/util/``.

@@ -161,8 +161,16 @@ description of the oxDNA2 force field.
    the data file. The first (second) atom in a bond definition is
    understood to point towards the 3'-end (5'-end) of the strand.
 
+.. warning::
+
+   If data files are produced with :doc:`write_data <write_data>`, then
+   the :doc:`newton <newton>` command should be set to *newton on*.
+   Otherwise the data files will not have the same 3'-to-5' polarity 
+   as the initial data file. This limitation does not apply to
+   binary restart files produced with :doc:`write_restart <write_restart>`.
+
 Example input and data files for DNA duplexes can be found in
-``examples/PACKAGES/cgdna/examples/oxDNA/`` and ``.../oxDNA2/``.  A
+``examples/PACKAGES/cgdna/examples/oxDNA2/``.  A
 simple python setup tool which creates single straight or helical DNA
 strands, DNA duplexes or arrays of DNA duplexes can be found in
 ``examples/PACKAGES/cgdna/util/``.
