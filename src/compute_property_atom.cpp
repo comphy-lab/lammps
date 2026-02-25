@@ -263,7 +263,18 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
       if (!avec_ellipsoid && !avec_body && !atom->quat_flag)
         error->all(FLERR,"Compute property/atom {} is not available", arg[iarg]);
       pack_choice[i] = &ComputePropertyAtom::pack_quatk;
-
+    } else if (strcmp(arg[iarg],"inertiax") == 0) {
+      if (!avec_ellipsoid) 
+        error->all(FLERR,"Compute property/atom {} requires atom style ellipsoid with super flag", arg[iarg]);
+      pack_choice[i] = &ComputePropertyAtom::pack_inertiax;
+    } else if (strcmp(arg[iarg],"inertiay") == 0) {
+      if (!avec_ellipsoid) 
+        error->all(FLERR,"Compute property/atom {} requires atom style ellipsoid with super flag", arg[iarg]);
+      pack_choice[i] = &ComputePropertyAtom::pack_inertiay;
+    } else if (strcmp(arg[iarg],"inertiaz") == 0) {
+      if (!avec_ellipsoid) 
+        error->all(FLERR,"Compute property/atom {} requires atom style ellipsoid with super flag", arg[iarg]);
+      pack_choice[i] = &ComputePropertyAtom::pack_inertiaz;
     } else if (strcmp(arg[iarg],"tqx") == 0) {
       if (!atom->torque_flag)
         error->all(FLERR,"Compute property/atom {} is not available", arg[iarg]);
@@ -1400,6 +1411,58 @@ void ComputePropertyAtom::pack_block2(int n)
   for (int i = 0; i < nlocal; i++) {
     if ((mask[i] & groupbit) && ellipsoid[i] >= 0)
       buf[n] = bonus[ellipsoid[i]].block[1];
+    else buf[n] = 1.0;
+    n += nvalues;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------- */
+
+void ComputePropertyAtom::pack_inertiax(int n)
+{
+  AtomVecEllipsoid::Bonus *bonus = avec_ellipsoid->bonus;
+  int *ellipsoid = atom->ellipsoid;
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+
+  for (int i = 0; i < nlocal; i++) {
+    if ((mask[i] & groupbit) && ellipsoid[i] >= 0)
+      buf[n] = bonus[ellipsoid[i]].inertia[0];
+    else buf[n] = 1.0;
+    n += nvalues;
+  }
+}
+/* ---------------------------------------------------------------------- */
+
+void ComputePropertyAtom::pack_inertiay(int n)
+{
+  AtomVecEllipsoid::Bonus *bonus = avec_ellipsoid->bonus;
+  int *ellipsoid = atom->ellipsoid;
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+
+  for (int i = 0; i < nlocal; i++) {
+    if ((mask[i] & groupbit) && ellipsoid[i] >= 0)
+      buf[n] = bonus[ellipsoid[i]].inertia[1];
+    else buf[n] = 1.0;
+    n += nvalues;
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+
+void ComputePropertyAtom::pack_inertiaz(int n)
+{
+  AtomVecEllipsoid::Bonus *bonus = avec_ellipsoid->bonus;
+  int *ellipsoid = atom->ellipsoid;
+  int *mask = atom->mask;
+  int nlocal = atom->nlocal;
+
+  for (int i = 0; i < nlocal; i++) {
+    if ((mask[i] & groupbit) && ellipsoid[i] >= 0)
+      buf[n] = bonus[ellipsoid[i]].inertia[2];
     else buf[n] = 1.0;
     n += nvalues;
   }

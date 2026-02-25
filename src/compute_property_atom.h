@@ -110,6 +110,9 @@ class ComputePropertyAtom : public Compute {
   void pack_quati(int);
   void pack_quatj(int);
   void pack_quatk(int);
+  void pack_inertiax(int);
+  void pack_inertiay(int);
+  void pack_inertiaz(int);
   void pack_tqx(int);
   void pack_tqy(int);
   void pack_tqz(int);

@@ -279,7 +279,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
                   iter_ig == 1 ? AtomVecEllipsoid::BlockType::ELLIPSOID : flagi, x[j], Rj, shapej,
                   blockj, iter_ig == 1 ? AtomVecEllipsoid::BlockType::ELLIPSOID : flagj, X0, nij,
                   contact_formulation);
-              
+
               if (status == 0)
                 touching = true;
               else if (status == 1)

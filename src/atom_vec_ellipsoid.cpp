@@ -731,7 +731,7 @@ void AtomVecEllipsoid::set_shape(int i, double shapex, double shapey, double sha
   } else {
     double *shape = bonus[ellipsoid[i]].shape;
     double *block = bonus[ellipsoid[i]].block;
-    double *inertia = bonus[nlocal_bonus].inertia;
+    double *inertia = bonus[ellipsoid[i]].inertia;
     BlockType type = bonus[ellipsoid[i]].type;
     shape[0] = shapex;
     shape[1] = shapey;
@@ -773,7 +773,7 @@ void AtomVecEllipsoid::set_block(int i, double blockn1, double blockn2)
   } else {
     double *shape = bonus[ellipsoid[i]].shape;
     double *block = bonus[ellipsoid[i]].block;
-    double *inertia = bonus[nlocal_bonus].inertia;
+    double *inertia = bonus[ellipsoid[i]].inertia;
     BlockType &type = bonus[ellipsoid[i]].type;
     block[0] = blockn1;
     block[1] = blockn2;
