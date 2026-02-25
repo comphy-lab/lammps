@@ -78,12 +78,12 @@ Examples
 
 .. note::
 
-   The coefficients in the above examples are provided in forms
-   compatible with both *units lj* and *units real* (see documentation
-   of :doc:`units <units>`).  In case of oxDNA3 these have to be read 
-   from a potential file with correct unit style by specifying the name 
-   of the file. The potential files for each unit style are included in the
-   ``potentials`` directory of the LAMMPS distribution.
+   The coefficients are provided in forms compatible with both 
+   *units lj* and *units real* (see documentation  of :doc:`units <units>`).
+   In case of oxDNA3 almost all coefficients have to be read from a potential
+   file with correct unit style by specifying the name of the file. The 
+   potential files for each unit style are included in the ``potentials``
+   directory of the LAMMPS distribution.
 
 Description
 """""""""""
@@ -111,13 +111,14 @@ for a detailed description of the oxDNA3 force field.
    These pair styles have to be used together with the related oxDNA3
    bond style *oxdna3/fene* for the connectivity of the phosphate
    backbone (see also documentation of :doc:`bond_style oxdna3/fene
-   <bond_oxdna>`). Most of the coefficients in the above example have to
-   be kept fixed and cannot be changed without reparameterizing the
-   entire model.  Exceptions are the first coefficient after
-   *oxdna3/stk* (T=0.1 and corresponding *real unit* equivalents in the 
-   above examples) and the two coefficients after *oxdna3/dh* (T=0.1 and
-   rhos=0.2 in the above example). When using a Langevin
-   thermostat e.g. through :doc:`fix langevin <fix_langevin>` or
+   <bond_oxdna>`). All coefficients in the above mentioned potential files 
+   have to be kept fixed and cannot be changed without reparameterizing the
+   entire model.  The first coefficient after *oxdna3/stk* 
+   (T=0.1 and corresponding *real unit* equivalents in the above examples)
+   and the two coefficients after *oxdna3/dh* (T=0.1 and rhos=0.2 in the 
+   above example) have to be set to the temperature and salt concentration
+   of the system. When using a Langevin thermostat e.g. through 
+   :doc:`fix langevin <fix_langevin>` or
    :doc:`fix nve/dotc/langevin <fix_nve_dotc_langevin>` the temperature
    coefficients have to be matched to the one used in the fix.
 
