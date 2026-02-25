@@ -42,7 +42,7 @@ using namespace MFOxdna;
 PairOxdna2Coaxstk::PairOxdna2Coaxstk(LAMMPS *lmp) : Pair(lmp)
 {
   // dummy sequence-specific coaxial stacking strength
-  // A:0 C:1 G:2 T:3, 3'- [i][j] -5'
+  // A:0 C:1 G:2 T:3, 3'- [i] X [j] -5'
 
   eta_cxst[0][0] = 1.00000;
   eta_cxst[1][0] = 1.00000;
@@ -177,7 +177,10 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
   int *alist,*blist,*numneigh,**firstneigh;
   double *special_lj = force->special_lj;
 
-  int a,b,ia,ib,anum,bnum,atype,btype;
+  tagint *id3p = atom->id3p;
+  tagint *id5p = atom->id5p;
+
+  int a,b,ia,ib,anum,bnum,atype,aktype,btype,bktype;
 
   double f2,f4f6t1,f4t4,f4t5,f4t6;
   double df2,df4f6t1,df4t4,df4t5,df4t6,rsint;
@@ -201,6 +204,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
 
     a = alist[ia];
     atype = type[a];
+    aktype = atype;
 
     ax[0] = nx_xtrct[a][0];
     ax[1] = nx_xtrct[a][1];
@@ -222,6 +226,14 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       b &= NEIGHMASK;
 
       btype = type[b];
+      bktype = btype;
+
+      // directionality test for base step-dependent coaxial stacking strength
+      // if a -> b is 3' -> 5' swap types
+      if(id3p[a]==-1 && id5p[b]==-1) {
+        aktype = btype;
+        bktype = atype;
+      }
 
       bx[0] = nx_xtrct[b][0];
       bx[1] = nx_xtrct[b][1];
@@ -324,7 +336,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       if (cosphi3 >  1.0) cosphi3 =  1.0;
       if (cosphi3 < -1.0) cosphi3 = -1.0;
 
-      f2 = F2(r_stkstk, k_cxst[atype][btype], cut_cxst_0[atype][btype],
+      f2 = F2(r_stkstk, k_cxst[aktype][bktype], cut_cxst_0[atype][btype],
               cut_cxst_lc[atype][btype], cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype],
               cut_cxst_hi[atype][btype], b_cxst_lo[atype][btype], b_cxst_hi[atype][btype],
               cut_cxst_c[atype][btype]);
@@ -334,7 +346,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       // early rejection criterium
       if (evdwl != 0.0) {
 
-      df2 = DF2(r_stkstk, k_cxst[atype][btype], cut_cxst_0[atype][btype],
+      df2 = DF2(r_stkstk, k_cxst[aktype][bktype], cut_cxst_0[atype][btype],
                 cut_cxst_lc[atype][btype], cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype],
                 cut_cxst_hi[atype][btype], b_cxst_lo[atype][btype], b_cxst_hi[atype][btype]);
 

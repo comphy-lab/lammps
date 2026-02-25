@@ -26,7 +26,7 @@ PairOxdna3Coaxstk::PairOxdna3Coaxstk(LAMMPS *lmp) : PairOxdna2Coaxstk(lmp)
 {
 
   // sequence-specific coaxial stacking strength
-  // A:0 C:1 G:2 T:3, 3'- [i][j] -5'
+  // A:0 C:1 G:2 T:3, 3'- [i] X [j] -5'
 
   eta_cxst[0][0] = 1.1217958408368172;
   eta_cxst[1][0] = 1.0712851690057155;
@@ -40,13 +40,13 @@ PairOxdna3Coaxstk::PairOxdna3Coaxstk(LAMMPS *lmp) : PairOxdna2Coaxstk(lmp)
 
   eta_cxst[0][2] = 1.1217958408368172;
   eta_cxst[1][2] = 0.9896542231533637;
-  eta_cxst[2][2] = 1.108839260816948;
+  eta_cxst[2][2] = 1.1088392608169480;
   eta_cxst[3][2] = 1.1217958408368172;
 
   eta_cxst[0][3] = 0.9300223683636719;
   eta_cxst[1][3] = 0.7694592613578328;
   eta_cxst[2][3] = 1.0007533199170144;
-  eta_cxst[3][3] = 0.859398379155222;
+  eta_cxst[3][3] = 0.8593983791552220;
 
   single_enable = 0;
   writedata = 0;
