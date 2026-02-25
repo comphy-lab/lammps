@@ -40,7 +40,7 @@ using MathSpecial::powint;
 
 LddPotentialMdpd::LddPotentialMdpd(class LAMMPS *lmp) : LddPotential(lmp)
 {
-  n_coeffs = 2;
+  n_coeffs = 1;
 }
 
 LddPotentialMdpd::~LddPotentialMdpd()
@@ -51,7 +51,7 @@ LddPotentialMdpd::~LddPotentialMdpd()
 
 void LddPotentialMdpd::allocate()
 {
-  memory->create(coeffs, n_coeffs, "ldd_potential:coeffs");
+  memory->create(coeffs, n_coeffs+1, "ldd_potential:coeffs");
   allocated = 1;
 }
 
