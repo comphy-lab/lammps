@@ -1,11 +1,15 @@
 .. index:: bond_style oxdna/fene
 .. index:: bond_style oxdna2/fene
+.. index:: bond_style oxdna3/fene
 .. index:: bond_style oxrna2/fene
 
 bond_style oxdna/fene command
 =============================
 
 bond_style oxdna2/fene command
+==============================
+
+bond_style oxdna3/fene command
 ==============================
 
 bond_style oxrna2/fene command
@@ -19,6 +23,8 @@ Syntax
    bond_style oxdna/fene
 
    bond_style oxdna2/fene
+
+   bond_style oxdna3/fene
 
    bond_style oxrna2/fene
 
@@ -40,12 +46,18 @@ Examples
    bond_style oxdna/fene
    bond_coeff * oxdna_lj.cgdna
 
+   bond_style oxdna3/fene
+   bond_coeff * oxdna3_lj.cgdna
+
    # Real units
    bond_style oxdna/fene
    bond_coeff * 11.92337812042065 2.1295 6.409795
 
    bond_style oxdna2/fene
    bond_coeff * 11.92337812042065 2.1295 6.4430152
+
+   bond_style oxdna3/fene
+   bond_coeff * oxdna3_real.cgdna
 
    bond_style oxrna2/fene
    bond_coeff * 11.92337812042065 2.1295 6.482800913
