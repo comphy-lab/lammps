@@ -120,7 +120,7 @@ cross-stacking *oxdna2/xstk* and coaxial stacking interaction
 well as the hydrogen-bonding interaction *oxdna2/hbond* between
 complementary pairs of nucleotides on opposite strands. Average sequence
 or sequence-dependent stacking and base-pairing strengths are supported
-:ref:`(Sulc) <Sulc2>`. Quasi-unique base-pairing between nucleotides can
+:ref:`(Sulc) <Sulc3>`. Quasi-unique base-pairing between nucleotides can
 be achieved by using more complementary pairs of atom types like 5-8 and
 6-7, 9-12 and 10-11, 13-16 and 14-15, etc.  This prevents the
 hybridization of in principle complementary bases within Ntypes/4 bases
@@ -130,9 +130,9 @@ The exact functional form of the pair styles is rather complex.  The
 individual potentials consist of products of modulation factors, which
 themselves are constructed from a number of more basic potentials
 (Morse, Lennard-Jones, harmonic angle and distance) as well as quadratic
-smoothing and modulation terms.  We refer to :ref:`(Snodin) <Snodin2>`
+smoothing and modulation terms.  We refer to :ref:`(Snodin) <Snodin3>`
 and the original oxDNA publications :ref:`(Ouldridge-DPhil)
-<Ouldridge-DPhil2>` and :ref:`(Ouldridge) <Ouldridge2>` for a detailed
+<Ouldridge-DPhil4>` and :ref:`(Ouldridge) <Ouldridge4>` for a detailed
 description of the oxDNA2 force field.
 
 .. note::
@@ -167,14 +167,14 @@ simple python setup tool which creates single straight or helical DNA
 strands, DNA duplexes or arrays of DNA duplexes can be found in
 ``examples/PACKAGES/cgdna/util/``.
 
-Please cite :ref:`(Henrich) <Henrich2>` in any publication that uses
+Please cite :ref:`(Henrich) <Henrich6>` in any publication that uses
 this implementation. An updated documentation that contains general
 information on the model, its implementation and performance as well as
 the structure of the data and input file can be found `here
 <PDF/CG-DNA.pdf>`_.
 
 Please cite also the relevant oxDNA2 publications
-:ref:`(Snodin) <Snodin2>` and :ref:`(Sulc) <Sulc2>`.
+:ref:`(Snodin) <Snodin3>` and :ref:`(Sulc) <Sulc3>`.
 
 ----------
 
@@ -241,10 +241,12 @@ CG-DNA package and the MOLECULE and ASPHERE package.  See the
 Related commands
 """"""""""""""""
 
-:doc:`bond_style oxdna2/fene <bond_oxdna>`, :doc:`pair_coeff <pair_coeff>`,
+:doc:`bond_style oxdna3/fene <bond_oxdna>`,
 :doc:`bond_style oxdna/fene <bond_oxdna>`, :doc:`pair_style oxdna/excv <pair_oxdna>`,
+:doc:`bond_style oxdna2/fene <bond_oxdna>`, :doc:`pair_style oxdna2/excv <pair_oxdna2>`,
 :doc:`bond_style oxrna2/fene <bond_oxdna>`, :doc:`pair_style oxrna2/excv <pair_oxrna2>`,
-:doc:`atom_style oxdna <atom_style>`, :doc:`fix nve/dotc/langevin <fix_nve_dotc_langevin>`
+:doc:`pair_coeff <pair_coeff>`, :doc:`atom_style oxdna <atom_style>`,
+:doc:`fix nve/dotc/langevin <fix_nve_dotc_langevin>`
 
 Default
 """""""
@@ -253,22 +255,26 @@ none
 
 ----------
 
-.. _Henrich2:
+.. _Henrich6:
 
 **(Henrich)** O. Henrich, Y. A. Gutierrez-Fosado, T. Curk, T. E. Ouldridge, Eur. Phys. J. E 41, 57 (2018).
 
-.. _Snodin2:
+.. _Snodin3:
 
 **(Snodin)** B.E. Snodin, F. Randisi, M. Mosayebi, et al., J. Chem. Phys. 142, 234901 (2015).
 
-.. _Sulc2:
+.. _Sulc3:
 
 **(Sulc)** P. Sulc, F. Romano, T.E. Ouldridge, L. Rovigatti, J.P.K. Doye, A.A. Louis, J. Chem. Phys. 137, 135101 (2012).
 
-.. _Ouldridge-DPhil2:
+.. _Ouldridge-DPhil4:
 
 **(Ouldridge-DPhil)** T.E. Ouldridge, Coarse-grained modelling of DNA and DNA self-assembly, DPhil. University of Oxford (2011).
 
-.. _Ouldridge2:
+.. _Ouldridge4:
 
 **(Ouldridge)** T.E. Ouldridge, A.A. Louis, J.P.K. Doye, J. Chem. Phys. 134, 085101 (2011).
+
+.. _Bonato2:
+
+**(Bonato)** A. Bonato, T.E. Ouldridge, A.A. Louis, J.P.K. Doye, L. Rovigatti, M. Matthies, O.Henrich, in preparation.

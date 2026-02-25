@@ -403,7 +403,7 @@ and :ref:`ASPHERE <PKG-ASPHERE>` packages are installed.
 * :doc:`pair_style oxrna2/\* <pair_oxrna2>`
 * :doc:`bond_style oxdna/\* <bond_oxdna>`
 * :doc:`bond_style oxdna2/\* <bond_oxdna>`
-* :doc:`bond_style oxdna3/\* <bond_oxdna3>`
+* :doc:`bond_style oxdna3/\* <bond_oxdna>`
 * :doc:`bond_style oxrna2/\* <bond_oxdna>`
 * :doc:`fix nve/dotc/langevin <fix_nve_dotc_langevin>`
 * ``examples/PACKAGES/cgdna``
