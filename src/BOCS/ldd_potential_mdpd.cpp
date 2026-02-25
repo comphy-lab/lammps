@@ -40,7 +40,7 @@ using MathSpecial::powint;
 
 LddPotentialMdpd::LddPotentialMdpd(class LAMMPS *lmp) : LddPotential(lmp)
 {
-  n_coeffs = 1;
+  n_coeffs = 2;
 }
 
 LddPotentialMdpd::~LddPotentialMdpd()
