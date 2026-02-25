@@ -138,23 +138,54 @@ void Molecule::command(int narg, char **arg, int &index)
       iarg += 2;
     } else if (strcmp(arg[iarg], "check_labels") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "check_labels", error);
-      if (strchr(arg[iarg + 1], 'b'))
-        check_which_labels[0] = 1;
-      if (strchr(arg[iarg + 1], 'a'))
-        check_which_labels[1] = 1;
-      if (strchr(arg[iarg + 1], 'd'))
-        check_which_labels[2] = 1;
-      if (strchr(arg[iarg + 1], 'i'))
-        check_which_labels[3] = 1;
+
+      int i = 0;
+      char option;
+
+      while ((option = arg[iarg + 1][i++]) != '\0') {
+        switch (option) {
+          case 'b':
+            check_which_labels[0] = 1;
+            break;
+          case 'a':
+            check_which_labels[1] = 1;
+            break;
+          case 'd':
+            check_which_labels[2] = 1;
+            break;
+          case 'i':
+            check_which_labels[3] = 1;
+            break;
+          default:
+            error->all(FLERR, iarg + 1, "Illegal check_labels option {}", option);
+            break;
+        }
+      }
+
       iarg += 2;
     } else if (strcmp(arg[iarg], "auto") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "molecule auto", error);
-      if (strchr(arg[iarg + 1], 'a'))
-        auto_angleflag = 1;
-      if (strchr(arg[iarg + 1], 'd'))
-        auto_dihedralflag = 1;
-      if (strchr(arg[iarg + 1], 'i'))
-        auto_improperflag = 1;
+
+      int i = 0;
+      char option;
+
+      while ((option = arg[iarg + 1][i++]) != '\0') {
+        switch (option) {
+          case 'a':
+            auto_angleflag = 1;
+            break;
+          case 'd':
+            auto_dihedralflag = 1;
+            break;
+          case 'i':
+            auto_improperflag = 1;
+            break;
+          default:
+            error->all(FLERR, iarg + 1, "Illegal auto option {}", option);
+            break;
+        }
+      }
+
       iarg += 2;
     } else
       break;
@@ -3558,6 +3589,15 @@ void Molecule::generate_angles()
   if (specialflag == 0)
     error->all(FLERR, fileiarg, "Unable to generate angles without special bonds.");
 
+  if (angleflag == 1) {
+    error->warning(FLERR, "Generating angles will overwrite angle data from molecule template.");
+    memory->destroy(num_angle);
+    memory->destroy(angle_type);
+    memory->destroy(angle_atom1);
+    memory->destroy(angle_atom2);
+    memory->destroy(angle_atom3);
+  }
+
   int newton_bond = force->newton_bond;
   int itype, signed_itype;
   tagint m, atom1, atom2, atom3;
@@ -3637,6 +3677,16 @@ void Molecule::generate_dihedrals()
 {
   if (specialflag == 0)
     error->all(FLERR, fileiarg, "Unable to generate dihedrals without special bonds.");
+
+  if (dihedralflag == 1) {
+    error->warning(FLERR, "Generating dihedrals will overwrite dihedral data from molecule template.");
+    memory->destroy(num_dihedral);
+    memory->destroy(dihedral_type);
+    memory->destroy(dihedral_atom1);
+    memory->destroy(dihedral_atom2);
+    memory->destroy(dihedral_atom3);
+    memory->destroy(dihedral_atom4);
+  }
 
   int newton_bond = force->newton_bond;
   int itype, signed_itype;
@@ -3751,6 +3801,15 @@ void Molecule::generate_impropers()
   if (specialflag == 0)
     error->all(FLERR, fileiarg, "Unable to generate impropers without special bonds.");
 
+  if (improperflag == 1) {
+    error->warning(FLERR, "Generating impropers will overwrite improper data from molecule template.");
+    memory->destroy(num_improper);
+    memory->destroy(improper_type);
+    memory->destroy(improper_atom1);
+    memory->destroy(improper_atom2);
+    memory->destroy(improper_atom3);
+    memory->destroy(improper_atom4);
+  }
   int newton_bond = force->newton_bond;
   int itype, signed_itype;
   tagint m, atom1, atom2, atom3, atom4;
