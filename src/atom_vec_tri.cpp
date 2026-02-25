@@ -719,7 +719,7 @@ void AtomVecTri::pack_data_pre(int ilocal)
   // if SPHERE particle
   //   rmass is reset to density by another hybrid atom_style, e.g. sphere
   // if TRI particle
-  //   convert rmass to per-length density
+  //   convert rmass to per-area density
 
   if (tri_flag >= 0) {
     double c2mc1[3], c3mc1[3], norm[3];

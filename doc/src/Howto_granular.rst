@@ -1,22 +1,23 @@
 Granular models
 ===============
 
-Granular systems are composed of spherical particles with a diameter,
-as opposed to point particles.  This means they have an angular
-velocity and torque can be imparted to them to cause them to rotate.
+Granular systems are composed of finite-size spherical particles with
+a diameter, as opposed to point particles.  This means they have an
+angular velocity and torque can be imparted to them to cause them to
+rotate.
 
-The various atom, pair, fix, and compute styles listed below are
-useful for creating granular models.
+The various atom, pair, fix, and compute styles listed below on this
+page are useful for creating granular models.
 
-You can also define granular surfaces which are a collection of line
+You can also define granular "surfaces" which are a collection of line
 segments (2d systems) or triangles (3d systems), which act as
-boundaries interacting with the particles.  This is particularly useful
-for defining a complex wall or boundary geometry. Particle/surface
-interactions can be specified with similar options as the pair styles
-listed below.
+boundaries interacting with the particles.  This is particularly
+useful for defining a complex wall or boundary
+geometry. Particle/surface interactions can be specified with similar
+options as the pair styles listed below for particle-only systems.
 
-This Howto doc page and two fixes explain how to define and use
-granular surfaces:
+This Howto doc page and two fixes and additional pair style explain
+how to define and use granular surfaces:
 
 * :doc:`Howto granular surfaces <Howto_granular_surfaces>`
 * :doc:`fix surface/global <fix_surface_global>`
@@ -54,6 +55,12 @@ between interacting pairs of particles:
 * :doc:`pair_style gran/hertzian <pair_gran>`
 * :doc:`pair_style granular <pair_granular>`
 
+The first 3 are the older, original granular pair styles implemented
+in LAMMPS.  The 4th :doc:`pair_style gran/no_history <pair_gran>` is
+the newest and most flexible.  It's pairwise interaction models
+include options similar to the first 3 pair styles, plus many
+additional models.
+
 To add your own custom granular contact model to the :doc:`pair_style
 granular <pair_granular>` command, see the :doc:`Modifying granular
 sub-models <Modify_gran_sub_mod>` doc page.
@@ -75,11 +82,11 @@ atom variables with:
 
 * :doc:`fix property/atom <fix_property_atom>`
 
-a temperature integration fix
+plus a temperature integration fix
 
 * :doc:`fix heat/flow <fix_heat_flow>`
 
-and a heat conduction option defined in both
+and a heat conduction option defined in both these commands:
 
 * :doc:`pair_style granular <pair_granular>`
 * :doc:`fix wall/gran <fix_wall_gran>`

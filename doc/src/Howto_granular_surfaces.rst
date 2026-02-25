@@ -10,18 +10,19 @@ velocity and torque can be imparted to them to cause them to rotate.
 
 The :doc:`Howto granular <Howto_granular>` doc page lists various
 atom, pair, fix, and compute styles useful for creating granular
-models.
+models for systems of interacting particles.
 
 This page explains how you can also define granular surfaces which are
 a collection of triangles (3d systems) or line segments (2d systems),
 which act as boundaries interacting with the particles.  Different
 kinds of particle/surface interactions can be specified with similar
-options as the :doc:`granular pair style <pair_granular>`.
+options as the :doc:`granular pair style <pair_granular>` command.
 
 ----------
 
 Global versus local surfaces
 """"""""""""""""""""""""""""
+
 A key point to understand is that LAMMPS supports two forms of
 granular surfaces.  You cannot use both in the same simulation.
 
@@ -33,17 +34,20 @@ more dimensions.
 
 The second is *local* which means that the collection of
 triangles/lines is distributed across processors in the same manner
-that particles are distributed.  Each processor is assigned to
+that particles are distributed.  Each processor is assigned to a
 sub-domain of the simulation box and owns whichever triangles/lines
 have their center point in the processor's sub-domain.  Similar to
 particles, each processor may also own ghost copies of triangles/lines
-whose finite size overlaps with the processor's sub-domain.  The
-number of triangles/lines can now be very large.  For effective
-distribution and minimal communication all the triangles/lines should
-be small, no more than a few particle diameters in size.  If even one
-larger triangle or line is defined then the neighbor list cutoff and
-communication cutoff will be set correspondingly larger, which can
-slow down the simulation.
+whose finite size overlaps with the processor's sub-domain.  The total
+number of triangles/lines in the system can now be very large.  For
+effective distribution and minimal communication, all the
+triangles/lines should be small, no more than a few particle diameters
+in size.  If even one larger triangle or line is defined then the
+neighbor list cutoff and communication cutoff will be set
+correspondingly larger, which can slow down the simulation.  Note that
+a large triangle are line can instead be defined as multiple smaller
+trianges or lines without changing the topology of the collective
+surface.
 
 One of these two commands must be specified to use *global* or *local*
 surfaces in your granular simulation:
@@ -67,7 +71,9 @@ based on the center point of each triangle/line.  The third option is
 to include them in a LAMMPS data file which has been previously read
 in via the :doc:`read_data <read_data>` command.  If the file has a
 Triangles or Lines section, then triangles/lines will be read in and
-distributed along with any particles the data file includes.
+distributed along with any particles the data file includes, assuming
+an appropriate :doc:`atom_style <atom_style>` has been specified, as
+explained below.
 
 ----------
 
@@ -100,11 +106,12 @@ does not check that this is the case.  LAMMPS will issue a warning if
 a set of inter-connected triangles/lines do not all have the same
 molecule ID, in case this was not intentional.
 
-For local surfaces, the molecule ID can be used to define groups and
-thus assign different motions to different surface objects.  See the
-Surface Motion section below.  Various other LAMMPS commands operate
-on groups or molecules and can thus be used to gather statistics about
-or output information about individual surface objects.
+For local surfaces, the molecule ID can be used to define groups which
+enables assignment of different motions to different surface objects.
+See the Surface Motion section below.  Various other LAMMPS commands
+operate on groups or molecules and can thus be used to gather
+statistics about or output information about individual surface
+objects.
 
 ----------
 
@@ -119,9 +126,9 @@ one of these two sub-styles (for 3d or 2d):
 * :doc:`atom_style tri <atom_style>` for 3d simulations
 * :doc:`atom_style line <atom_style>` for 2d simulations
 
-Typically, the atom_style hybrid command will also define a
-:doc:`atom_style sphere <atom_style>` sub-style for the granular
-particles which interact with the surfaces.
+The atom_style hybrid command must also define a :doc:`atom_style
+sphere <atom_style>` sub-style for the granular particles which
+interact with the surfaces.
 
 Note that for molecule or STL file input, the :doc:`fix surface/local
 <fix_surface_local>` command reads the file(s) and uses the values for
@@ -131,7 +138,9 @@ file is read.
 
 For granular simulations with *global* surfaces, a hybrid atom style
 which defines triangle-style or line-style particles should NOT be
-used.  The triangles/lines are stored by the :doc:`fix surface/global
+used.  Typically only an :doc:`atom_style sphere <atom_style>` command
+is needed to define the properties of particles in the simulation.
+The triangles/lines are stored by the :doc:`fix surface/global
 <fix_surface_global>` command and not as triangle-style or line-style
 particles.
 
@@ -141,18 +150,44 @@ Rules for surface topology
 """"""""""""""""""""""""""
 
 For both *global* and *local* surfaces, granular particles interact
-with both sides of each triangle or line segment.
+with both sides of each triangle or line segment.  This means a surface
+such as a mixer blade can be infinitely thin.
+
+Triangles and line segments can be "connected" to form a contiguous
+surface if they share common edges or corner point (triangles) or end
+points (line segments).  Each triangle edge or corner point can be
+shared by multiple adjacent triangles.  A triangle edge is shared by
+two triangles if both the end points of the edge are corner points of
+both triangles.  A triangle corner point is shared by two triangles if
+it is a corner point of both.  Likewise a line segment end point is
+shared by two line segments if it is an end point of both segments.
+
+NOTE: say something about epsilon criterion for "shared" ?
+
+There is no requirement that a triangle edge or triangle corner point
+or line segment end point be connected to another triangle or line
+segment.  If an edge or point has no connection, it is a free edge or
+point.  Particle interact with the free edge or corner point in a
+manner consistent with forces generated by particles overlapping with
+the interior of a triangle or line segment.
+
+NOTE: Joel - do you like the preceeding paragraph?
+
+NOTE: need an explanation of PBC
 
 No check is made to see if two triangles or line segments intersect
 each other; this is allowed if it makes sense for the geometry of the
-collection of surfaces. However, intersections can cause issues as
-the missing connectivity can lead to inaccurate forces.
+collection of surfaces. However, intersections can cause issues if the
+missing connectivity leads to inaccurate forces.
 
-As an example of a valid intersection, consider a 2d simulation which mixes
-a container of granular particles.  *Global* line segments are used to
-define both the box-shaped container and the mixer in the center.  The
-4 mixer blades are in the shape of a large X and are made to rotate using
-the :doc:`fix_modify <fix_modify>` command (see below).
+As an example of a valid intersection, consider a 2d simulation which
+mixes a container of granular particles.  *Global* line segments are
+used to define both the box-shaped container and the mixer in the
+center.  The 4 mixer blades are in the shape of a large X and are made
+to rotate using the :doc:`fix_modify <fix_modify>` command (see
+below).
+
+NOTE for Joel: need a figure of mixer here?
 
 The 2 blades could be defined by 2 line segments which cross each
 other at their centers.  Or the 2 blades could be defined by 4 line
@@ -172,6 +207,8 @@ hidden vertical segment as a particle moves horizontally across the top
 of the T. In contrast, if the T shape is defined by 3 line segments
 that all share a common endpoint at the center of the top of the T,
 then the connectivity would censor the force from the vertical segment.
+
+NOTE for Joel: need a figure of T-shape here?
 
 See the next section on connectivity for how two triangles or line
 segments are treated if they share a common edge (triangle) or point
@@ -276,11 +313,12 @@ defined by the :doc:`fix surface/global <fix_surface_global>` command.
 They can also be defined by the :doc:`fix_modify type/region
 <fix_modify>` command.
 
-For *local* surfaces, the :doc:`fix move <fix_move>` command can move a
-specified subset of the triangles/lines in various ways (translation,
-rotation, etc).  Which triangles move is specified based on the group-ID
-argument to the :doc:`fix move <fix_move>` command.  Groups can be
-defined by the :doc:`group <group>` command.
+For *local* surfaces, the :doc:`fix move <fix_move>` command can move
+a specified subset of the triangles/lines in various ways
+(translation, rotation, etc).  Which triangles move is specified based
+on the group-ID argument to the :doc:`fix move <fix_move>` command.
+Groups of *local* surfaces can be defined by the :doc:`group <group>`
+command.
 
 .. note::
 
@@ -291,10 +329,14 @@ defined by the :doc:`group <group>` command.
    must also be careful not to include *local* surfaces in an
    integration fix as they may move apart from their connections.
 
+Note for Joel - can change this "note" if implement the check we've discussed.
+
 ----------
 
 Calculation of forces
 """""""""""""""""""""
+
+NOTE for Joel - add to this sub-section
 
 Concave, convex, flat
 Internal, external
@@ -308,39 +350,50 @@ When designing geometries for granular surfaces, there are several things
 to keep in mind to avoid unintended force contributions and to improve
 efficiency.
 
-While convex corners are identified and used to censor forces from physically
-hidden sections of a wall, if a particle is not in contact with the entirety
-of a convex turn, then forces cannot be properly censored. For example, consider
-a 2d system with a U shaped wall defined by 3 line segments. If the width of
-the U is very thin (less than a typical particle-wall overlap), then a
-particle could potentially be in contact with both vertical legs of the U. If
-the particle is also in contact with the base of the U, then it can identify
-the convex turn and censor forces from the rightmost vertical leg. However,
-if the particle is towards the top of the U and not in contact with the base,
-then there is no way for the particle to identify the convex turn and censor
-forces. Therefore, walls with very thin features separated by a gap less than
-the expected overlap can lead to unintended additional forces.
+While convex corners are identified and used to censor forces from
+physically hidden sections of a wall, if a particle is not in contact
+with the entirety of a convex turn, then forces cannot be properly
+censored. For example, consider a 2d system with a U shaped wall
+defined by 3 line segments. If the width of the U is very thin (less
+than a typical particle-wall overlap), then a particle could
+potentially be in contact with both vertical legs of the U. If the
+particle is also in contact with the base of the U, then it can
+identify the convex turn and censor forces from the rightmost vertical
+leg. However, if the particle is towards the top of the U and not in
+contact with the base, then there is no way for the particle to
+identify the convex turn and censor forces. Therefore, walls with very
+thin features separated by a gap less than the expected overlap can
+lead to unintended additional forces.
 
-As mentioned in the above section, forces resulting from contact with unconnected
-endpoints of lines do point in the expected direction and experience no
-discontinuities as the particle moves around the endpoint. However, in 3D,
-contacts with unconnected edges only produce reasonably directed forces oriented
-away from the edge. However, the exact direction of a force can wobble as the
-contact moves across a series of disconnected edges and convex turns may not be
-appropriately censored as LAMMPS does not currently construct the proper
-quasi-2d connectivity of 2D features. Therefore, it is recommended to avoid
-complex geometries along unconnected boundaries such as rapid oscillations in-
-or out-of-plane such as pleats or sawteeth, relative to the length of an edge.
+NOTE for Joel: Clarify "overlap" in last sentence - does it mean
+"overlap distance between a particle and a surface" or something else
+?
 
-To build a neighborlist between particles and lines/triangles, LAMMPS assigns
-a radius to each line/triangle that corresponds to the radius of the
-circle/sphere that encloses the object. Therefore, one must be aware that
-systems with large disparities between triangle/line and partile radii may
-slow down the neighbor list build for and could benefit from :doc:`the multi
-neighbor style <neighbor>` for *local* surfaces. Furthermore, triangles with
-very high aspect ratios should generally be avoided as they can lead to
-large neighbor lists containing many particles which are not actually close
-to being contact with the triangle (false positives).
+NOTE for Joel: add diagram of U-shaped wall + particle ?
+
+As mentioned in the above section, forces resulting from contact with
+unconnected endpoints of lines do point in the expected direction and
+experience no discontinuities as the particle moves around the
+endpoint. However, in 3D, contacts with unconnected edges only produce
+reasonably directed forces oriented away from the edge. However, the
+exact direction of a force can wobble as the contact moves across a
+series of disconnected edges and convex turns may not be appropriately
+censored as LAMMPS does not currently construct the proper quasi-2d
+connectivity of 2D features. Therefore, it is recommended to avoid
+complex geometries along unconnected boundaries such as rapid
+oscillations in- or out-of-plane such as pleats or sawteeth, relative
+to the length of an edge.
+
+To build a neighborlist between particles and lines/triangles, LAMMPS
+assigns a radius to each line/triangle that corresponds to the radius
+of the circle/sphere that encloses the object. Therefore, one must be
+aware that systems with large disparities between triangle/line and
+partile radii may slow down the neighbor list build for and could
+benefit from :doc:`the multi neighbor style <neighbor>` for *local*
+surfaces. Furthermore, triangles with very high aspect ratios should
+generally be avoided as they can lead to large neighbor lists
+containing many particles which are not actually close to being
+contact with the triangle (false positives).
 
 ----------
 
