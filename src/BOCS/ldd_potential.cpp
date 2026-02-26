@@ -63,7 +63,7 @@ LddPotential::~LddPotential()
 void LddPotential::read_table_file(char *fnm, bool bspline)
 {
   potl_table.n_pts = 0;
-  FILE *fp = nullptr; 
+  FILE *fp = nullptr;
   char line[1000];
   if (comm->me == 0)
   {
@@ -83,7 +83,7 @@ void LddPotential::read_table_file(char *fnm, bool bspline)
     memory->create(potl_table.u2, potl_table.n_pts, "LDpotl:u2");
     memory->create(potl_table.f2, potl_table.n_pts, "LDpotl:f2");
   }
-  
+
   if (comm->me == 0)
   {
   for (int i = 0; i < potl_table.n_pts; ++i) {
