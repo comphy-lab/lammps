@@ -142,11 +142,24 @@ contacts or bad geometries (for the given force styles in use) leading
 to forces that can no longer be represented as numbers.  Those will show
 as "NaN" or "Inf".  On most machines, the program will continue, but
 there is no way to recover from it and those NaN or Inf values will
-propagate.  So-called :doc:`"soft-core" potentials <pair_fep_soft>` or
-the :doc:`"soft" repulsive-only pair style <pair_soft>` are less prone
-for this behavior (depending on the settings in use) and can be used at
-the beginning of a simulation.  Also, single precision numbers can
-overflow much faster, so for the GPU, KOKKOS, or INTEL package it may be
+propagate.
+
+If the "NaN" or "Inf" appears in the first simulation step, the most
+common cause is overlapping atoms.  Note that when atoms are *very*
+close, this cannot be seen when visualizing the geometry, since the
+atoms are effectively sitting on top of each other.  A good test is to
+insert a command like :doc:`delete_atoms 0.1 all all <delete_atoms>` and
+then monitor the output to see how many atoms are deleted, if any.  A
+non-zero number would be an indication of overlapping atoms. Note that
+atoms can also overlap through periodic boundaries when the box
+dimensions are too small (e.g. determined by min/max position of atoms
+without padding).
+
+So-called :doc:`"soft-core" potentials <pair_fep_soft>` or the
+:doc:`"soft" repulsive-only pair style <pair_soft>` are less prone for
+this behavior (depending on the settings in use) and can be used at the
+beginning of a simulation.  Also, single precision numbers can overflow
+much faster, so for the GPU, KOKKOS, or INTEL package it may be
 beneficial to run with double precision initially before switching to
 mixed or single precision for faster execution when the system has
 relaxed.
