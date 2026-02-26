@@ -32,6 +32,7 @@ class PairOxdna3Xstk : public Pair {
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
+  void init_style() override;
   void init_list(int, class NeighList *) override;
   double init_one(int, int) override;
   void write_restart(FILE *) override;
@@ -62,9 +63,11 @@ class PairOxdna3Xstk : public Pair {
   double **b_xst7, **dtheta_xst7_c;
   double **a_xst8, **theta_xst8_0_33, **theta_xst8_0_55, **dtheta_xst8_ast;
   double **b_xst8, **dtheta_xst8_c;
-  double **nx_xtrct, **ny_xtrct, **nz_xtrct;    // per-atom arrays for local unit vectors
+  double **nxyz_xtrct;    // per-atom arrays for local unit vectors
 
   virtual void allocate();
+
+  class Fix *fix_lrf;    // ptr to oxdna/lrf fix
 };
 
 }    // namespace LAMMPS_NS
