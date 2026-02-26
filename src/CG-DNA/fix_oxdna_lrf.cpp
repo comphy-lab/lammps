@@ -37,13 +37,13 @@ FixOxdnaLRF::FixOxdnaLRF(LAMMPS *lmp, int narg, char **arg) :
   size_peratom_cols = 9;
   peratom_freq = 1;
 
-  int nmax = atom->nmax;
-  FixOxdnaLRF::grow_arrays(nmax);
+  FixOxdnaLRF::grow_arrays(atom->nmax);
   atom->add_callback(Atom::GROW);
 
-  for (int i = 0; i < nmax; i++)
+  int nlocal = atom->nlocal;
+  for (int i = 0; i < nlocal; i++)
     for (int j = 0; j < size_peratom_cols; j++)
-      array_atom[i][j] = 0.0;
+      nxyz[i][j] = 0.0;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -129,17 +129,15 @@ void FixOxdnaLRF::set_arrays(int i)
 int FixOxdnaLRF::pack_exchange(int i, double *buf)
 {
   int m = 0;
-  int *ellipsoid = atom->ellipsoid;
-  int j = ellipsoid[i];
-  buf[m++] = nxyz[j][0];
-  buf[m++] = nxyz[j][1];
-  buf[m++] = nxyz[j][2];
-  buf[m++] = nxyz[j][3];
-  buf[m++] = nxyz[j][4];
-  buf[m++] = nxyz[j][5];
-  buf[m++] = nxyz[j][6];
-  buf[m++] = nxyz[j][7];
-  buf[m++] = nxyz[j][8];
+  buf[m++] = nxyz[i][0];
+  buf[m++] = nxyz[i][1];
+  buf[m++] = nxyz[i][2];
+  buf[m++] = nxyz[i][3];
+  buf[m++] = nxyz[i][4];
+  buf[m++] = nxyz[i][5];
+  buf[m++] = nxyz[i][6];
+  buf[m++] = nxyz[i][7];
+  buf[m++] = nxyz[i][8];
 
   return m;
 }
@@ -167,11 +165,10 @@ int FixOxdnaLRF::unpack_exchange(int nlocal, double *buf)
 int FixOxdnaLRF::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, int * /*pbc*/)
 {
   int i, j, m;
-  int *ellipsoid = atom->ellipsoid;
 
   m = 0;
   for (i = 0; i < n; i++) {
-    j = ellipsoid[list[i]];
+    j = list[i];
     buf[m++] = nxyz[j][0];
     buf[m++] = nxyz[j][1];
     buf[m++] = nxyz[j][2];
@@ -212,7 +209,7 @@ void FixOxdnaLRF::compute_lrf()
   using namespace MathExtra;    // q_to_exyz
 
   int nlocal = atom->nlocal;
-  auto *avec = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
+  avec = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
   AtomVecEllipsoid::Bonus *bonus = avec->bonus;
   int *ellipsoid = atom->ellipsoid;
 
@@ -230,15 +227,15 @@ void FixOxdnaLRF::compute_lrf()
 
       q_to_exyz(qn, nx_temp, ny_temp, nz_temp);
 
-      nxyz[n][0] = nx_temp[0];
-      nxyz[n][1] = nx_temp[1];
-      nxyz[n][2] = nx_temp[2];
-      nxyz[n][3] = ny_temp[0];
-      nxyz[n][4] = ny_temp[1];
-      nxyz[n][5] = ny_temp[2];
-      nxyz[n][6] = nz_temp[0];
-      nxyz[n][7] = nz_temp[1];
-      nxyz[n][8] = nz_temp[2];
+      nxyz[i][0] = nx_temp[0];
+      nxyz[i][1] = nx_temp[1];
+      nxyz[i][2] = nx_temp[2];
+      nxyz[i][3] = ny_temp[0];
+      nxyz[i][4] = ny_temp[1];
+      nxyz[i][5] = ny_temp[2];
+      nxyz[i][6] = nz_temp[0];
+      nxyz[i][7] = nz_temp[1];
+      nxyz[i][8] = nz_temp[2];
 
     }
   }

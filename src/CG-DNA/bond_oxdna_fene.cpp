@@ -150,7 +150,7 @@ void BondOxdnaFene::ev_tally_xyz(int i, int j, int nlocal, int newton_bond, doub
 ------------------------------------------------------------------------- */
 void BondOxdnaFene::compute(int eflag, int vflag)
 {
-  int a, b, in, type, aellip, bellip;
+  int a, b, in, type, alocal, blocal;
   double delf[3], delta[3], deltb[3];    // force, torque increment
   double delr[3], ebond, fbond;
   double rsq, Deltasq, rlogarg;
@@ -164,7 +164,7 @@ void BondOxdnaFene::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
-  int *ellipsoid = atom->ellipsoid;
+  tagint *tag = atom->tag;
 
   int **bondlist = neighbor->bondlist;
   int nbondlist = neighbor->nbondlist;
@@ -186,27 +186,27 @@ void BondOxdnaFene::compute(int eflag, int vflag)
     b = bondlist[in][0];
     type = bondlist[in][2];
 
-    aellip = ellipsoid[a];
-    bellip = ellipsoid[b];
+    alocal = atom->map(tag[a]);
+    blocal = atom->map(tag[b]);
 
-    ax[0] = nxyz_xtrct[aellip][0];
-    ax[1] = nxyz_xtrct[aellip][1];
-    ax[2] = nxyz_xtrct[aellip][2];
-    ay[0] = nxyz_xtrct[aellip][3];
-    ay[1] = nxyz_xtrct[aellip][4];
-    ay[2] = nxyz_xtrct[aellip][5];
-    az[0] = nxyz_xtrct[aellip][6];
-    az[1] = nxyz_xtrct[aellip][7];
-    az[2] = nxyz_xtrct[aellip][8];
-    bx[0] = nxyz_xtrct[bellip][0];
-    bx[1] = nxyz_xtrct[bellip][1];
-    bx[2] = nxyz_xtrct[bellip][2];
-    by[0] = nxyz_xtrct[bellip][3];
-    by[1] = nxyz_xtrct[bellip][4];
-    by[2] = nxyz_xtrct[bellip][5];
-    bz[0] = nxyz_xtrct[bellip][6];
-    bz[1] = nxyz_xtrct[bellip][7];
-    bz[2] = nxyz_xtrct[bellip][8];
+    ax[0] = nxyz_xtrct[alocal][0];
+    ax[1] = nxyz_xtrct[alocal][1];
+    ax[2] = nxyz_xtrct[alocal][2];
+    ay[0] = nxyz_xtrct[alocal][3];
+    ay[1] = nxyz_xtrct[alocal][4];
+    ay[2] = nxyz_xtrct[alocal][5];
+    az[0] = nxyz_xtrct[alocal][6];
+    az[1] = nxyz_xtrct[alocal][7];
+    az[2] = nxyz_xtrct[alocal][8];
+    bx[0] = nxyz_xtrct[blocal][0];
+    bx[1] = nxyz_xtrct[blocal][1];
+    bx[2] = nxyz_xtrct[blocal][2];
+    by[0] = nxyz_xtrct[blocal][3];
+    by[1] = nxyz_xtrct[blocal][4];
+    by[2] = nxyz_xtrct[blocal][5];
+    bz[0] = nxyz_xtrct[blocal][6];
+    bz[1] = nxyz_xtrct[blocal][7];
+    bz[2] = nxyz_xtrct[blocal][8];
 
     // vector COM-backbone site a and b
     compute_interaction_sites(ax, ay, az, ra_cs);

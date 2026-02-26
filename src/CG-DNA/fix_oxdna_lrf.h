@@ -47,7 +47,7 @@ class FixOxdnaLRF : public Fix {
   double **nxyz;    // per-atom arrays for local unit vectors
   void compute_lrf();
 
-  class NeighList *list;
+  class AtomVecEllipsoid *avec;
 };
 
 }    // namespace LAMMPS_NS

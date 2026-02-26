@@ -138,6 +138,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
+  tagint *tag = atom->tag;
   int *type = atom->type;
 
   int nlocal = atom->nlocal;
@@ -146,9 +147,8 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
 
   auto *avec = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
   AtomVecEllipsoid::Bonus *bonus = avec->bonus;
-  int *ellipsoid = atom->ellipsoid;
 
-  int a,b,in,ia,ib,anum,bnum,atype,btype,aellip,bellip;
+  int a,b,in,ia,ib,anum,bnum,atype,btype,alocal,blocal;
 
   evdwl = 0.0;
   ev_init(eflag,vflag);
@@ -167,17 +167,17 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
 
     a = alist[ia];
     atype = type[a];
-    aellip = ellipsoid[a];
+    alocal = atom->map(tag[a]);
 
-    ax[0] = nxyz_xtrct[aellip][0];
-    ax[1] = nxyz_xtrct[aellip][1];
-    ax[2] = nxyz_xtrct[aellip][2];
-    ay[0] = nxyz_xtrct[aellip][3];
-    ay[1] = nxyz_xtrct[aellip][4];
-    ay[2] = nxyz_xtrct[aellip][5];
-    az[0] = nxyz_xtrct[aellip][6];
-    az[1] = nxyz_xtrct[aellip][7];
-    az[2] = nxyz_xtrct[aellip][8];
+    ax[0] = nxyz_xtrct[alocal][0];
+    ax[1] = nxyz_xtrct[alocal][1];
+    ax[2] = nxyz_xtrct[alocal][2];
+    ay[0] = nxyz_xtrct[alocal][3];
+    ay[1] = nxyz_xtrct[alocal][4];
+    ay[2] = nxyz_xtrct[alocal][5];
+    az[0] = nxyz_xtrct[alocal][6];
+    az[1] = nxyz_xtrct[alocal][7];
+    az[2] = nxyz_xtrct[alocal][8];
 
     // vector COM - backbone and base site a
     compute_interaction_sites(ax,ay,az,ra_cs,ra_cb);
@@ -200,17 +200,17 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
       b &= NEIGHMASK;
 
       btype = type[b];
-      bellip = ellipsoid[b];
+      blocal = atom->map(tag[b]);
 
-      bx[0] = nxyz_xtrct[bellip][0];
-      bx[1] = nxyz_xtrct[bellip][1];
-      bx[2] = nxyz_xtrct[bellip][2];
-      by[0] = nxyz_xtrct[bellip][3];
-      by[1] = nxyz_xtrct[bellip][4];
-      by[2] = nxyz_xtrct[bellip][5];
-      bz[0] = nxyz_xtrct[bellip][6];
-      bz[1] = nxyz_xtrct[bellip][7];
-      bz[2] = nxyz_xtrct[bellip][8];
+      bx[0] = nxyz_xtrct[blocal][0];
+      bx[1] = nxyz_xtrct[blocal][1];
+      bx[2] = nxyz_xtrct[blocal][2];
+      by[0] = nxyz_xtrct[blocal][3];
+      by[1] = nxyz_xtrct[blocal][4];
+      by[2] = nxyz_xtrct[blocal][5];
+      bz[0] = nxyz_xtrct[blocal][6];
+      bz[1] = nxyz_xtrct[blocal][7];
+      bz[2] = nxyz_xtrct[blocal][8];
 
       // vector COM - backbone and base site b
       compute_interaction_sites(bx,by,bz,rb_cs,rb_cb);

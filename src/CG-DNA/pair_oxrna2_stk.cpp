@@ -259,8 +259,8 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
+  tagint *tag = atom->tag;
   int *type = atom->type;
-  int *ellipsoid = atom->ellipsoid;
 
   int nlocal = atom->nlocal;
   int newton_bond = force->newton_bond;
@@ -270,7 +270,7 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
 
   tagint *id5p = atom->id5p;
 
-  int a,b,btemp,in,atype,btype,aellip,bellip;
+  int a,b,btemp,in,atype,btype,alocal,blocal;
 
   double f1,f4t5,f4t6,f4t9,f4t10,f5c1,f5c2;
   double df1,df4t5,df4t6,df4t9,df4t10,df5c1,df5c2;
@@ -289,7 +289,7 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
     b = bondlist[in][1];
 
     // directionality test: a -> b is 3' -> 5'
-    if(atom->tag[b] != id5p[a]) {
+    if(tag[b] != id5p[a]) {
 
       btemp = b;
       b = a;
@@ -297,29 +297,29 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
 
     }
 
-    aellip = ellipsoid[a];
-    bellip = ellipsoid[b];
+    alocal = atom->map(tag[a]);
+    blocal = atom->map(tag[b]);
 
     // a now in 3' direction, b in 5' direction
 
-    ax[0] = nxyz_xtrct[aellip][0];
-    ax[1] = nxyz_xtrct[aellip][1];
-    ax[2] = nxyz_xtrct[aellip][2];
-    ay[0] = nxyz_xtrct[aellip][3];
-    ay[1] = nxyz_xtrct[aellip][4];
-    ay[2] = nxyz_xtrct[aellip][5];
-    az[0] = nxyz_xtrct[aellip][6];
-    az[1] = nxyz_xtrct[aellip][7];
-    az[2] = nxyz_xtrct[aellip][8];
-    bx[0] = nxyz_xtrct[bellip][0];
-    bx[1] = nxyz_xtrct[bellip][1];
-    bx[2] = nxyz_xtrct[bellip][2];
-    by[0] = nxyz_xtrct[bellip][3];
-    by[1] = nxyz_xtrct[bellip][4];
-    by[2] = nxyz_xtrct[bellip][5];
-    bz[0] = nxyz_xtrct[bellip][6];
-    bz[1] = nxyz_xtrct[bellip][7];
-    bz[2] = nxyz_xtrct[bellip][8];
+    ax[0] = nxyz_xtrct[alocal][0];
+    ax[1] = nxyz_xtrct[alocal][1];
+    ax[2] = nxyz_xtrct[alocal][2];
+    ay[0] = nxyz_xtrct[alocal][3];
+    ay[1] = nxyz_xtrct[alocal][4];
+    ay[2] = nxyz_xtrct[alocal][5];
+    az[0] = nxyz_xtrct[alocal][6];
+    az[1] = nxyz_xtrct[alocal][7];
+    az[2] = nxyz_xtrct[alocal][8];
+    bx[0] = nxyz_xtrct[blocal][0];
+    bx[1] = nxyz_xtrct[blocal][1];
+    bx[2] = nxyz_xtrct[blocal][2];
+    by[0] = nxyz_xtrct[blocal][3];
+    by[1] = nxyz_xtrct[blocal][4];
+    by[2] = nxyz_xtrct[blocal][5];
+    bz[0] = nxyz_xtrct[blocal][6];
+    bz[1] = nxyz_xtrct[blocal][7];
+    bz[2] = nxyz_xtrct[blocal][8];
 
     // vector COM a - 5'-stacking site a
     ra_cst[0] = d_cst_x_5p*ax[0] + d_cst_y_5p*ay[0];
