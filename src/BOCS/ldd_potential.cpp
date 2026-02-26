@@ -115,10 +115,10 @@ void LddPotential::read_table_file(char *fnm, bool bspline)
 int LddPotential::get_table_index(double r)
 {
   if (r > potl_table.r[potl_table.n_pts - 1])
-    error->one(FLERR, "local density = {} > {} = table hi", r, potl_table.r[potl_table.n_pts - 1]);
+    error->all(FLERR, "local density = {} > {} = table hi", r, potl_table.r[potl_table.n_pts - 1]);
 
   if (r < potl_table.r[0])
-    error->one(FLERR, "local density = {} < {} = table lo", r, potl_table.r[0]);
+    error->all(FLERR, "local density = {} < {} = table lo", r, potl_table.r[0]);
 
   return floor((r - potl_table.r[0]) / (potl_table.dr));
 }

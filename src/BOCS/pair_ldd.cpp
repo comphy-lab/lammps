@@ -483,8 +483,6 @@ void PairLdd::coeff_ldd(int narg, char **arg)
  * gradient is optional.
  * potl_coeffs and grad_coeffs depend on the type of potential used
  */
-  int me;    // Use lammps comm->me instead?
-  MPI_Comm_rank(world, &me);
   if (narg < 2) error->all(FLERR, "You must list coefficients for the ldd pair interaction");
   //if (!allocated) allocate();
   int n = atom->ntypes;
