@@ -29,6 +29,8 @@ class PairOxdnaStk : public Pair {
  public:
   PairOxdnaStk(class LAMMPS *);
   ~PairOxdnaStk() override;
+  virtual void compute_backbone_site(double *, double *, double *, double *) const;
+  virtual void compute_stacking_site(double *, double *, double *, double *) const;
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
@@ -39,20 +41,18 @@ class PairOxdnaStk : public Pair {
   void read_restart(FILE *) override;
   void write_restart_settings(FILE *) override;
   void read_restart_settings(FILE *) override;
-  void write_data(FILE *) override;
-  void write_data_all(FILE *) override;
   void *extract(const char *, int &) override;
 
  protected:
   // stacking interaction
   double eta_st[4][4];
   double stacking_strength(double, double, double);
-  double **epsilon_st, **a_st, **cut_st_0, **cut_st_c;
-  double **cut_st_lo, **cut_st_hi;
-  double **cut_st_lc, **cut_st_hc, **b_st_lo, **b_st_hi, **shift_st;
-  double **cutsq_st_hc;
-  double **a_st4, **theta_st4_0, **dtheta_st4_ast;
-  double **b_st4, **dtheta_st4_c;
+  double **epsilon_st, **a_st;
+  double ****cut_st_0, ****cut_st_c, ****cut_st_lo, ****cut_st_hi; 
+  double ****cut_st_lc, ****cut_st_hc, **b_st_lo, **b_st_hi, ****shift_st;
+  double ****cutsq_st_hc;
+  double ****a_st4, **theta_st4_0, ****dtheta_st4_ast;
+  double ****b_st4, ****dtheta_st4_c;
   double **a_st5, **theta_st5_0, **dtheta_st5_ast;
   double **b_st5, **dtheta_st5_c;
   double **a_st6, **theta_st6_0, **dtheta_st6_ast;

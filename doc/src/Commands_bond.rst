@@ -41,6 +41,7 @@ OPT.
    * :doc:`nonlinear (o) <bond_nonlinear>`
    * :doc:`oxdna/fene <bond_oxdna>`
    * :doc:`oxdna2/fene <bond_oxdna>`
+   * :doc:`oxdna3/fene <bond_oxdna>`
    * :doc:`oxrna2/fene <bond_oxdna>`
    * :doc:`quartic (o) <bond_quartic>`
    * :doc:`rheo/shell <bond_rheo_shell>`
@@ -124,7 +125,7 @@ OPT.
    * :doc:`class2 (ko) <dihedral_class2>`
    * :doc:`cosine/shift/exp (o) <dihedral_cosine_shift_exp>`
    * :doc:`cosine/squared/restricted <dihedral_cosine_squared_restricted>`
-   * :doc:`fourier (io) <dihedral_fourier>`
+   * :doc:`fourier (iko) <dihedral_fourier>`
    * :doc:`harmonic (iko) <dihedral_harmonic>`
    * :doc:`helix (o) <dihedral_helix>`
    * :doc:`lepton (o) <dihedral_lepton>`
@@ -162,7 +163,7 @@ OPT.
    * :doc:`amoeba <improper_amoeba>`
    * :doc:`class2 (ko) <improper_class2>`
    * :doc:`cossq (o) <improper_cossq>`
-   * :doc:`cvff (io) <improper_cvff>`
+   * :doc:`cvff (iko) <improper_cvff>`
    * :doc:`distance <improper_distance>`
    * :doc:`distharm <improper_distharm>`
    * :doc:`fourier (o) <improper_fourier>`

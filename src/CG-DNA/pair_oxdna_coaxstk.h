@@ -29,6 +29,8 @@ class PairOxdnaCoaxstk : public Pair {
  public:
   PairOxdnaCoaxstk(class LAMMPS *);
   ~PairOxdnaCoaxstk() override;
+  void compute_backbone_site(double *, double *, double *, double *) const;
+  void compute_stacking_site(double *, double *, double *, double *) const;
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
@@ -39,8 +41,6 @@ class PairOxdnaCoaxstk : public Pair {
   void read_restart(FILE *) override;
   void write_restart_settings(FILE *) override;
   void read_restart_settings(FILE *) override;
-  void write_data(FILE *) override;
-  void write_data_all(FILE *) override;
   void *extract(const char *, int &) override;
 
  protected:

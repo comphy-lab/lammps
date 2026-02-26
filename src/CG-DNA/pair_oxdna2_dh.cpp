@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_oxdna2_dh.h"
+#include "atom_vec_oxdna.h"
+#include "nucleotide_oxdna.h"
 
 #include "atom.h"
 #include "comm.h"
@@ -41,7 +43,7 @@ using namespace LAMMPS_NS;
 PairOxdna2Dh::PairOxdna2Dh(LAMMPS *lmp) : Pair(lmp)
 {
   single_enable = 0;
-  writedata = 1;
+  writedata = 0;
   trim_flag = 0;
 }
 
@@ -67,17 +69,13 @@ PairOxdna2Dh::~PairOxdna2Dh()
 }
 
 /* ----------------------------------------------------------------------
-    compute vector COM-sugar-phosphate backbone interaction site in oxDNA2
+   compute vector COM-sugar-phosphate backbone interaction site in oxDNA2
 ------------------------------------------------------------------------- */
-void PairOxdna2Dh::compute_interaction_sites(double e1[3],
-  double e2[3], double /*e3*/[3], double r[3])
+inline void PairOxdna2Dh::compute_backbone_site(double e1[3], double e2[3],
+  double /*e3*/[3], double rbk[3]) const
 {
-  double d_cs_x = ConstantsOxdna::get_d_cs_x();
-  double d_cs_y = ConstantsOxdna::get_d_cs_y();
-
-  r[0] = d_cs_x*e1[0] + d_cs_y*e2[0];
-  r[1] = d_cs_x*e1[1] + d_cs_y*e2[1];
-  r[2] = d_cs_x*e1[2] + d_cs_y*e2[2];
+  NucleotideOxdna2 oxdna2;
+  oxdna2.backbone_site(e1, e2, NULL, rbk);
 }
 
 /* ----------------------------------------------------------------------
@@ -92,7 +90,7 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
   double evdwl,fpair,factor_lj;
   double r,rsq,rinv;
   // vectors COM-backbone sites in lab frame
-  double ra_cs[3],rb_cs[3];
+  double ra_cbk[3],rb_cbk[3];
 
   // Cartesian unit vectors in lab frame
   double ax[3],ay[3],az[3];
@@ -103,6 +101,7 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
   double **torque = atom->torque;
   tagint *tag = atom->tag;
   int *type = atom->type;
+  tagint *qeff = atom->qeff;
 
   int nlocal = atom->nlocal;
   int newton_pair = force->newton_pair;
@@ -141,11 +140,11 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
     az[2] = nxyz_xtrct[alocal][8];
 
     // vector COM-backbone site a
-    compute_interaction_sites(ax,ay,az,ra_cs);
+    compute_backbone_site(ax,ay,az,ra_cbk);
 
-    rtmp_s[0] = x[a][0] + ra_cs[0];
-    rtmp_s[1] = x[a][1] + ra_cs[1];
-    rtmp_s[2] = x[a][2] + ra_cs[2];
+    rtmp_s[0] = x[a][0] + ra_cbk[0];
+    rtmp_s[1] = x[a][1] + ra_cbk[1];
+    rtmp_s[2] = x[a][2] + ra_cbk[2];
 
     blist = firstneigh[a];
     bnum = numneigh[a];
@@ -169,12 +168,12 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
       bz[2] = nxyz_xtrct[blocal][8];
 
       // vector COM-backbone site b
-      compute_interaction_sites(bx,by,bz,rb_cs);
+      compute_backbone_site(bx,by,bz,rb_cbk);
 
       // vector backbone site b to a
-      delr[0] = rtmp_s[0] - x[b][0] - rb_cs[0];
-      delr[1] = rtmp_s[1] - x[b][1] - rb_cs[1];
-      delr[2] = rtmp_s[2] - x[b][2] - rb_cs[2];
+      delr[0] = rtmp_s[0] - x[b][0] - rb_cbk[0];
+      delr[1] = rtmp_s[1] - x[b][1] - rb_cbk[1];
+      delr[2] = rtmp_s[2] - x[b][2] - rb_cbk[2];
       rsq = delr[0]*delr[0] + delr[1]*delr[1] + delr[2]*delr[2];
 
       if (rsq <= cutsq_dh_c[atype][btype]) {
@@ -184,11 +183,11 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
 
         if (r <= cut_dh_ast[atype][btype]) {
 
-          fpair = qeff_dh_pf[atype][btype] * exp(-kappa_dh[atype][btype] * r) *
+          fpair = qeff[a]*qeff[b]*qeff_dh_pf[atype][btype] * exp(-kappa_dh[atype][btype] * r) *
                   (kappa_dh[atype][btype] + rinv) * rinv * rinv;
 
           if (eflag) {
-            evdwl = qeff_dh_pf[atype][btype] * exp(-kappa_dh[atype][btype]*r) * rinv;
+            evdwl = qeff[a]*qeff[b]*qeff_dh_pf[atype][btype] * exp(-kappa_dh[atype][btype]*r) * rinv;
           }
 
         }
@@ -218,7 +217,7 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
           f[a][1] += delf[1];
           f[a][2] += delf[2];
 
-          MathExtra::cross3(ra_cs,delf,delta);
+          MathExtra::cross3(ra_cbk,delf,delta);
 
           torque[a][0] += delta[0];
           torque[a][1] += delta[1];
@@ -232,7 +231,7 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
           f[b][1] -= delf[1];
           f[b][2] -= delf[2];
 
-          MathExtra::cross3(rb_cs,delf,deltb);
+          MathExtra::cross3(rb_cbk,delf,deltb);
 
           torque[b][0] -= deltb[0];
           torque[b][1] -= deltb[1];
@@ -297,7 +296,7 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 {
   int count;
 
-  if (narg != 5) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
+  if (narg != 5 && narg != 6) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi;
@@ -306,7 +305,13 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 
   count = 0;
 
+  int nlocal = atom->nlocal;
+  tagint *qeff = atom->qeff;
+  tagint *id3p = atom->id3p;
+
   double T, rhos_dh_one, qeff_dh_one;
+
+  no_3p_charge_flag = 0;
 
   T = utils::numeric(FLERR,arg[2],false,lmp);
   rhos_dh_one = utils::numeric(FLERR,arg[3],false,lmp);
@@ -314,6 +319,7 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
   if (utils::strmatch(arg[4], "^[a-zA-Z0-9_]*\\.cgdna$")) { // if last arg is a potential file
     if (comm->me == 0) { // read value from potential file
       PotentialFileReader reader(lmp, arg[4], "oxdna potential", " (dh)");
+      reader.set_bufsize(65336);
       char * line;
       std::string iloc, jloc, potential_name;
       while ((line = reader.next_line())) {
@@ -336,6 +342,10 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
     }
     MPI_Bcast(&qeff_dh_one, 1, MPI_DOUBLE, 0, world);
   } else qeff_dh_one = utils::numeric(FLERR,arg[4],false,lmp); // else, it is effective charge
+
+  if (narg == 6 && strcmp(arg[5],"no_3p_charge")  == 0) {
+    no_3p_charge_flag = 1;
+  }
 
   double lambda_dh_one, kappa_dh_one, qeff_dh_pf_one;
   double b_dh_one, cut_dh_ast_one, cut_dh_c_one;
@@ -384,14 +394,13 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 
   cut_dh_ast_one = 3.0*lambda_dh_one;
 
-  b_dh_one = -(exp(-cut_dh_ast_one/lambda_dh_one) * qeff_dh_pf_one * qeff_dh_pf_one *
+  b_dh_one = (exp(-cut_dh_ast_one/lambda_dh_one) * qeff_dh_pf_one *
       (cut_dh_ast_one + lambda_dh_one) * (cut_dh_ast_one + lambda_dh_one))/
-      (-4.0 * cut_dh_ast_one * cut_dh_ast_one * cut_dh_ast_one *
-      lambda_dh_one * lambda_dh_one * qeff_dh_pf_one);
+      (4.0 * cut_dh_ast_one * cut_dh_ast_one * cut_dh_ast_one *
+      lambda_dh_one * lambda_dh_one);
 
-  cut_dh_c_one =  cut_dh_ast_one * (qeff_dh_pf_one*cut_dh_ast_one +
-      3.0*qeff_dh_pf_one * lambda_dh_one)/
-      (qeff_dh_pf_one * (cut_dh_ast_one+lambda_dh_one));
+  cut_dh_c_one =  cut_dh_ast_one * (cut_dh_ast_one + 3.0 * lambda_dh_one)/
+      (cut_dh_ast_one + lambda_dh_one);
 
   for (int i = ilo; i <= ihi; i++) {
     for (int j = MAX(jlo,i); j <= jhi; j++) {
@@ -405,6 +414,12 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
       setflag[i][j] = 1;
       count++;
     }
+  }
+
+  // optionally remove charge from 3'-end
+  for (int in = 0; in < nlocal; in++) {
+    qeff[in] = 1;
+    if (id3p[in] == -1 && no_3p_charge_flag) qeff[in] = 0;
   }
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
@@ -551,37 +566,6 @@ void PairOxdna2Dh::read_restart_settings(FILE *fp)
   MPI_Bcast(&offset_flag,1,MPI_INT,0,world);
   MPI_Bcast(&mix_flag,1,MPI_INT,0,world);
   MPI_Bcast(&tail_flag,1,MPI_INT,0,world);
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes to data file
-------------------------------------------------------------------------- */
-
-void PairOxdna2Dh::write_data(FILE *fp)
-{
-  for (int i = 1; i <= atom->ntypes; i++)
-    fprintf(fp,"%d\
-         %g %g\
-         %g %g %g\
-         \n",i,
-        kappa_dh[i][i],qeff_dh_pf[i][i],
-        b_dh[i][i],cut_dh_ast[i][i],cut_dh_c[i][i]);
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes all pairs to data file
-------------------------------------------------------------------------- */
-
-void PairOxdna2Dh::write_data_all(FILE *fp)
-{
-  for (int i = 1; i <= atom->ntypes; i++)
-    for (int j = i; j <= atom->ntypes; j++)
-      fprintf(fp,"%d %d\
-         %g %g\
-         %g %g %g\
-         \n",i,j,
-        kappa_dh[i][j],qeff_dh_pf[i][j],
-        b_dh[i][j],cut_dh_ast[i][j],cut_dh_c[i][j]);
 }
 
 /* ---------------------------------------------------------------------- */

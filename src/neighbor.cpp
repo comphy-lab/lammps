@@ -67,7 +67,7 @@ static constexpr double BIG = 1.0e20;
 enum{NONE,ALL,PARTIAL,TEMPLATE};
 
 static const char cite_neigh_multi[] =
-  "neighbor multi command: doi:10.1016/j.cpc.2008.03.005, doi:10.1007/s40571-020-00361-2\n\n"
+  "neighbor multi command: https://doi.org/10.1016/j.cpc.2008.03.005, https://doi.org/10.1007/s40571-020-00361-2\n\n"
   "@Article{Intveld08,\n"
   " author =  {in 't Veld, P. J. and S. J.~Plimpton and G. S. Grest},\n"
   " title =   {Accurate and Efficient Methods for Modeling Colloidal\n"
@@ -559,7 +559,8 @@ void Neighbor::init()
             || force->pair_match("coul/wolf",0,isub)
             || force->pair_match("coul/dsf",0,isub)
             || force->pair_match("coul/exclude",0)
-            || force->pair_match("thole",0,isub))
+            || force->pair_match("thole",0,isub)
+            || force->pair_match("ox.*/excv",0,isub))
           ++flag;
       }
       if (flag)
@@ -570,7 +571,8 @@ void Neighbor::init()
           || force->pair_match("coul/wolf",0)
           || force->pair_match("coul/dsf",0)
           || force->pair_match("coul/exclude",0)
-          || force->pair_match("thole",0))
+          || force->pair_match("thole",0)
+          || force->pair_match("ox*/excv",0))
         special_flag[1] = special_flag[2] = special_flag[3] = 2;
     }
   }

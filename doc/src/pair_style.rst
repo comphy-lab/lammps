@@ -291,6 +291,7 @@ accelerated styles exist.
 * :doc:`lubricate/poly <pair_lubricate>` - Hydrodynamic lubrication forces with polydispersity
 * :doc:`lubricateU <pair_lubricateU>` - Hydrodynamic lubrication forces for Fast Lubrication Dynamics
 * :doc:`lubricateU/poly <pair_lubricateU>` - Hydrodynamic lubrication forces for Fast Lubrication with polydispersity
+* :doc:`mbx <pair_mbx>` - Many-Body eXpansion (MBX) potential
 * :doc:`mdpd <pair_mesodpd>` - mDPD particle interactions
 * :doc:`mdpd/rhosum <pair_mesodpd>` - mDPD particle interactions for mass density
 * :doc:`meam <pair_meam>` - Modified embedded atom method (MEAM)
@@ -326,6 +327,12 @@ accelerated styles exist.
 * :doc:`oxdna2/hbond <pair_oxdna2>` -
 * :doc:`oxdna2/stk <pair_oxdna2>` -
 * :doc:`oxdna2/xstk <pair_oxdna2>` -
+* :doc:`oxdna3/coaxstk <pair_oxdna3>` -
+* :doc:`oxdna3/dh <pair_oxdna3>` -
+* :doc:`oxdna3/excv <pair_oxdna3>` -
+* :doc:`oxdna3/hbond <pair_oxdna3>` -
+* :doc:`oxdna3/stk <pair_oxdna3>` -
+* :doc:`oxdna3/xstk <pair_oxdna3>` -
 * :doc:`oxrna2/coaxstk <pair_oxrna2>` -
 * :doc:`oxrna2/dh <pair_oxrna2>` -
 * :doc:`oxrna2/excv <pair_oxrna2>` -
@@ -354,6 +361,7 @@ accelerated styles exist.
 * :doc:`rheo/solid <pair_rheo_solid>` - solid interactions in RHEO package
 * :doc:`resquared <pair_resquared>` - Everaers RE-Squared ellipsoidal potential
 * :doc:`saip/metal <pair_saip_metal>` - Interlayer potential for hetero-junctions formed with hexagonal 2D materials and metal surfaces
+* :doc:`saip/metal/tmd <pair_saip_metal>` - Interlayer potential for transition-metal dichalcogenide / metal interfaces
 * :doc:`sdpd/taitwater/isothermal <pair_sdpd_taitwater_isothermal>` - Smoothed dissipative particle dynamics for water at isothermal conditions
 * :doc:`smatb <pair_smatb>` - Second Moment Approximation to the Tight Binding
 * :doc:`smatb/single <pair_smatb>` - Second Moment Approximation to the Tight Binding for single-element systems

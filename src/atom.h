@@ -128,7 +128,7 @@ class Atom : protected Pointers {
 
   // CG-DNA package
 
-  tagint *id5p;
+  tagint *id3p, *id5p, *qeff;
 
   // DPD-REACT package
 
@@ -331,7 +331,7 @@ class Atom : protected Pointers {
   void setup();
 
   std::string get_style();
-  AtomVec *style_match(const char *);
+  AtomVec *style_match(const std::string &);
   void modify_params(int, char **);
   void tag_check();
   void tag_extend();

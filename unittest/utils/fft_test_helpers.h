@@ -47,14 +47,12 @@ constexpr double TWO_PI = 2.0 * PI;
 
 // Precision-aware tolerances (based on FFT_SCALAR type)
 #ifdef FFT_SINGLE
-constexpr FFT_SCALAR BASE_TOLERANCE         = 1e-5;
-constexpr FFT_SCALAR ROUNDTRIP_TOLERANCE    = 1e-4;
-constexpr FFT_SCALAR KNOWN_ANSWER_TOLERANCE = 1e-5;
-constexpr FFT_SCALAR PARSEVAL_TOLERANCE     = 1e-4;
-constexpr FFT_SCALAR HERMITIAN_TOLERANCE    = 1e-5;
-constexpr FFT_SCALAR LINEARITY_TOLERANCE    = 1e-4;
+constexpr FFT_SCALAR ROUNDTRIP_TOLERANCE    = 1e-5;
+constexpr FFT_SCALAR KNOWN_ANSWER_TOLERANCE = 1e-6;
+constexpr FFT_SCALAR PARSEVAL_TOLERANCE     = 1e-5;
+constexpr FFT_SCALAR HERMITIAN_TOLERANCE    = 1e-6;
+constexpr FFT_SCALAR LINEARITY_TOLERANCE    = 1e-5;
 #else
-constexpr FFT_SCALAR BASE_TOLERANCE         = 1e-12;
 constexpr FFT_SCALAR ROUNDTRIP_TOLERANCE    = 1e-11;
 constexpr FFT_SCALAR KNOWN_ANSWER_TOLERANCE = 1e-12;
 constexpr FFT_SCALAR PARSEVAL_TOLERANCE     = 1e-10;
@@ -165,11 +163,11 @@ public:
 
     // Accessors
     FFT_SCALAR *data() { return data_; }
-    const FFT_SCALAR *data() const { return data_; }
-    int size() const { return size_; }
-    int nfast() const { return nfast_; }
-    int nmid() const { return nmid_; }
-    int nslow() const { return nslow_; }
+    [[nodiscard]] const FFT_SCALAR *data() const { return data_; }
+    [[nodiscard]] int size() const { return size_; }
+    [[nodiscard]] int nfast() const { return nfast_; }
+    [[nodiscard]] int nmid() const { return nmid_; }
+    [[nodiscard]] int nslow() const { return nslow_; }
 
     // Zero all data
     void zero() { std::fill(data_, data_ + size_, 0.0); }
@@ -251,7 +249,7 @@ public:
     }
 
     // Check if input is purely real (for Hermitian symmetry tests)
-    virtual bool is_real_input() const = 0;
+    [[nodiscard]] virtual bool is_real_input() const = 0;
 };
 
 // =============================================================================
@@ -274,7 +272,7 @@ public:
         set_complex(data, 0, 0, 0, nfast, nmid, std::complex<FFT_SCALAR>(amplitude_, 0.0));
     }
 
-    bool is_real_input() const override { return true; }
+    [[nodiscard]] bool is_real_input() const override { return true; }
 
 private:
     FFT_SCALAR amplitude_;
@@ -298,7 +296,7 @@ public:
         }
     }
 
-    bool is_real_input() const override { return true; }
+    [[nodiscard]] bool is_real_input() const override { return true; }
 
 private:
     FFT_SCALAR value_;
@@ -336,7 +334,7 @@ public:
         }
     }
 
-    bool is_real_input() const override { return true; }
+    [[nodiscard]] bool is_real_input() const override { return true; }
 
 private:
     int kx_, ky_, kz_;
@@ -378,7 +376,7 @@ public:
         }
     }
 
-    bool is_real_input() const override { return true; }
+    [[nodiscard]] bool is_real_input() const override { return true; }
 
 private:
     FFT_SCALAR sigma_;
@@ -411,7 +409,7 @@ public:
         }
     }
 
-    bool is_real_input() const override { return false; }
+    [[nodiscard]] bool is_real_input() const override { return false; }
 
 private:
     unsigned int seed_;
@@ -473,9 +471,9 @@ public:
         }
     }
 
-    bool is_real_input() const override { return true; }
+    [[nodiscard]] bool is_real_input() const override { return true; }
 
-    const std::vector<Mode> &get_modes() const { return modes_; }
+    [[nodiscard]] const std::vector<Mode> &get_modes() const { return modes_; }
 
 private:
     std::vector<Mode> modes_;
@@ -506,7 +504,7 @@ public:
     virtual bool validate() = 0;
 
     // Get error statistics from last validation
-    virtual const ErrorStats &get_error_stats() const { return error_stats_; }
+    [[nodiscard]] virtual const ErrorStats &get_error_stats() const { return error_stats_; }
 
     // Enable/disable verbose output
     void set_verbose(bool verbose) { verbose_ = verbose; }
@@ -537,14 +535,14 @@ public:
         error_stats_.reset();
         int n_points = nfast_ * nmid_ * nslow_;
 
-        double max_original = 0.0;
+        FFT_SCALAR max_original = 0.0;
         for (int i = 0; i < n_points; i++) {
             auto orig_val = get_complex_linear(original_data_, i);
             max_original  = std::max(max_original, std::abs(orig_val));
         }
 
         // Check if data is essentially zero (avoid division by zero)
-        bool is_zero_data = (max_original < 1e-14);
+        bool is_zero_data = (max_original < 1e-12);
 
         for (int i = 0; i < n_points; i++) {
             auto orig = get_complex_linear(original_data_, i);
@@ -602,13 +600,13 @@ public:
         int n_points = nfast_ * nmid_ * nslow_;
 
         // Find maximum expected value for relative error calculation
-        double max_expected = 0.0;
+        FFT_SCALAR max_expected = 0.0;
         for (int i = 0; i < n_points; i++) {
             auto exp_val = get_complex_linear(expected_fft_, i);
             max_expected = std::max(max_expected, std::abs(exp_val));
         }
 
-        bool is_zero_expected = (max_expected < 1e-14);
+        bool is_zero_expected = (max_expected < 1e-12);
 
         for (int i = 0; i < n_points; i++) {
             auto computed = get_complex_linear(computed_fft_, i);
