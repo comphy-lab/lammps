@@ -1,4 +1,4 @@
-/* ----------------------------------------------------------------------
+/* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
    LAMMPS development team: developers@lammps.org
@@ -59,16 +59,22 @@ LddPotential::~LddPotential()
   allocated = 0;
 }
 
+/* ---------------------------------------------------------------------- */
 void LddPotential::read_table_file(char *fnm, bool bspline)
 {
   potl_table.n_pts = 0;
-  FILE *fp = utils::open_potential(fnm, lmp, nullptr);
-  if (!fp)
-    error->all(FLERR, "unable to open table file {} for reading: {}", fnm, utils::getsyserror());
-
+  FILE *fp = nullptr; 
   char line[1000];
+  if (comm->me == 0)
+  {
+  fp = utils::open_potential(fnm, lmp, nullptr);
+  if (!fp)
+    error->one(FLERR, "unable to open table file {} for reading: {}", fnm, utils::getsyserror());
+
   while (fgets(line, 1000, fp) != nullptr) { ++(potl_table.n_pts); }
   rewind(fp);
+  }
+  MPI_Bcast(&potl_table.n_pts, 1, MPI_INT, 0, world );
 
   memory->create(potl_table.r, potl_table.n_pts, "LDpotl:r");
   memory->create(potl_table.u, potl_table.n_pts, "LDpotl:u");
@@ -77,19 +83,26 @@ void LddPotential::read_table_file(char *fnm, bool bspline)
     memory->create(potl_table.u2, potl_table.n_pts, "LDpotl:u2");
     memory->create(potl_table.f2, potl_table.n_pts, "LDpotl:f2");
   }
-
+  
+  if (comm->me == 0)
+  {
   for (int i = 0; i < potl_table.n_pts; ++i) {
     fgets(line, 1000, fp);
     float rt, ut, ft;
     int test_sscanf = sscanf(line, " %f %f %f ", &rt, &ut, &ft);
     if (test_sscanf != 3)
-      error->all(FLERR, "unable to read rho u f from line {} in file {}", i, fnm);
+      error->one(FLERR, "unable to read rho u f from line {} in file {}", i, fnm);
 
     potl_table.r[i] = (double) rt;
     potl_table.u[i] = (double) ut;
     potl_table.f[i] = (double) ft;
   }
   fclose(fp);
+  }
+  MPI_Bcast(potl_table.r, potl_table.n_pts, MPI_DOUBLE, 0, world);
+  MPI_Bcast(potl_table.u, potl_table.n_pts, MPI_DOUBLE, 0, world);
+  MPI_Bcast(potl_table.f, potl_table.n_pts, MPI_DOUBLE, 0, world);
+
   potl_table.dr = potl_table.r[1] - potl_table.r[0];
   for (int i = 0; i < potl_table.n_pts - 1; ++i) {
     if (fabs(potl_table.r[i + 1] - potl_table.r[i] - potl_table.dr) > potl_table.dr / 100.0)
@@ -98,7 +111,7 @@ void LddPotential::read_table_file(char *fnm, bool bspline)
                  potl_table.r[i], potl_table.r[i + 1] - potl_table.r[i]);
   }
 }
-
+/* ---------------------------------------------------------------------- */
 int LddPotential::get_table_index(double r)
 {
   if (r > potl_table.r[potl_table.n_pts - 1])
@@ -110,6 +123,7 @@ int LddPotential::get_table_index(double r)
   return floor((r - potl_table.r[0]) / (potl_table.dr));
 }
 
+/* ---------------------------------------------------------------------- */
 double LddPotential::calc_A_table(double r, int idx)
 {
   return ((potl_table.r[idx + 1] - r) / (potl_table.dr));
