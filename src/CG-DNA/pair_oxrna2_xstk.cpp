@@ -22,12 +22,15 @@
 #include "comm.h"
 #include "constants_oxdna.h"
 #include "error.h"
+#include "fix_oxdna_lrf.h"
 #include "force.h"
 #include "math_const.h"
 #include "math_extra.h"
 #include "memory.h"
 #include "mf_oxdna.h"
+#include "modify.h"
 #include "neigh_list.h"
+#include "neighbor.h"
 #include "potential_file_reader.h"
 
 #include <cmath>
@@ -140,6 +143,7 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
+  tagint *tag = atom->tag;
   int *type = atom->type;
 
   int nlocal = atom->nlocal;
@@ -147,7 +151,7 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
   int *alist,*blist,*numneigh,**firstneigh;
   double *special_lj = force->special_lj;
 
-  int a,b,ia,ib,anum,bnum,atype,btype;
+  int a,b,ia,ib,anum,bnum,atype,btype,alocal,blocal;
 
   double f2,f4t1,f4t2,f4t3,f4t7,f4t8;
   double df2,df4t1,df4t2,df4t3,df4t7,df4t8,rsint;
@@ -160,10 +164,8 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // n(x/z)_xtrct = extracted local unit vectors from oxdna_excv
-  int dim;
-  nx_xtrct = (double **) force->pair->extract("nx",dim);
-  nz_xtrct = (double **) force->pair->extract("nz",dim);
+  // nxyz_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
+  nxyz_xtrct = fix_lrf->array_atom;
 
   // loop over pair interaction neighbors of my atoms
 
@@ -171,10 +173,11 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
 
     a = alist[ia];
     atype = type[a];
+    alocal = atom->map(tag[a]);
 
-    ax[0] = nx_xtrct[a][0];
-    ax[1] = nx_xtrct[a][1];
-    ax[2] = nx_xtrct[a][2];
+    ax[0] = nxyz_xtrct[alocal][0];
+    ax[1] = nxyz_xtrct[alocal][1];
+    ax[2] = nxyz_xtrct[alocal][2];
 
     // vector COM - base site a
     compute_base_site(atype%4,ax,ay,az,ra_cbs);
@@ -189,10 +192,11 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
       b &= NEIGHMASK;
 
       btype = type[b];
+      blocal = atom->map(tag[b]);
 
-      bx[0] = nx_xtrct[b][0];
-      bx[1] = nx_xtrct[b][1];
-      bx[2] = nx_xtrct[b][2];
+      bx[0] = nxyz_xtrct[blocal][0];
+      bx[1] = nxyz_xtrct[blocal][1];
+      bx[2] = nxyz_xtrct[blocal][2];
 
       // vector COM - base site b
       compute_base_site(btype%4,bx,by,bz,rb_cbs);
@@ -250,9 +254,9 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
       // early rejection criterium
       if (f4t3 != 0.0) {
 
-      az[0] = nz_xtrct[a][0];
-      az[1] = nz_xtrct[a][1];
-      az[2] = nz_xtrct[a][2];
+      az[0] = nxyz_xtrct[alocal][6];
+      az[1] = nxyz_xtrct[alocal][7];
+      az[2] = nxyz_xtrct[alocal][8];
 
       cost7 = -1.0*MathExtra::dot3(az,delr_bsbs_norm);
       if (cost7 >  1.0) cost7 =  1.0;
@@ -268,9 +272,9 @@ void PairOxrna2Xstk::compute(int eflag, int vflag)
       // early rejection criterium
       if (f4t7 != 0.0) {
 
-      bz[0] = nz_xtrct[b][0];
-      bz[1] = nz_xtrct[b][1];
-      bz[2] = nz_xtrct[b][2];
+      bz[0] = nxyz_xtrct[blocal][6];
+      bz[1] = nxyz_xtrct[blocal][7];
+      bz[2] = nxyz_xtrct[blocal][8];
 
       cost8 = MathExtra::dot3(bz,delr_bsbs_norm);
       if (cost8 >  1.0) cost8 =  1.0;
@@ -801,6 +805,19 @@ void PairOxrna2Xstk::coeff(int narg, char **arg)
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxrna2/xstk" + utils::errorurl(21));
 
+}
+
+/* ----------------------------------------------------------------------
+   init specific to this pair style
+------------------------------------------------------------------------- */
+void PairOxrna2Xstk::init_style()
+{
+  fix_lrf = nullptr;
+  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
+  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  else fix_lrf = dynamic_cast<FixOxdnaLRF *>(fixes[0]);
+
+  neighbor->add_request(this, NeighConst::REQ_DEFAULT);
 }
 
 /* ----------------------------------------------------------------------

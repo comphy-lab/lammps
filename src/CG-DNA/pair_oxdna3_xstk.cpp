@@ -23,11 +23,14 @@
 #include "atom.h"
 #include "comm.h"
 #include "error.h"
+#include "fix_oxdna_lrf.h"
 #include "force.h"
 #include "math_const.h"
 #include "math_extra.h"
 #include "memory.h"
+#include "modify.h"
 #include "neigh_list.h"
+#include "neighbor.h"
 #include "potential_file_reader.h"
 
 #include <cmath>
@@ -176,6 +179,7 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
+  tagint *tag = atom->tag;
   int *type = atom->type;
 
   int nlocal = atom->nlocal;
@@ -186,7 +190,7 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
   tagint *id3p = atom->id3p;
   tagint *id5p = atom->id5p;
 
-  int a,b,ia,ib,anum,bnum;
+  int a,b,ia,ib,anum,bnum,alocal,blocal;
   int a3ptype,atype,a5ptype,b3ptype,btype,b5ptype; 
 
   double f2_33,f2_55,f4t1,f4t2,f4t3,f4t4_33,f4t4_55,f4t7_33,f4t7_55,f4t8_33,f4t8_55;
@@ -201,11 +205,8 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // n(x/y/z)_xtrct = extracted local unit vectors from oxdna_excv
-  int dim;
-  nx_xtrct = (double **) force->pair->extract("nx",dim);
-  ny_xtrct = (double **) force->pair->extract("ny",dim);
-  nz_xtrct = (double **) force->pair->extract("nz",dim);
+  // nxyz_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
+  nxyz_xtrct = fix_lrf->array_atom;
 
   // loop over pair interaction neighbors of my atoms
 
@@ -213,6 +214,7 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
 
     a = alist[ia];
     atype = type[a];
+    alocal = atom->map(tag[a]);
 
     if (id3p[a] != -1) {
       a3ptype = type[atom->map(id3p[a])];
@@ -224,9 +226,9 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
     }
     else a5ptype = 0;
 
-    ax[0] = nx_xtrct[a][0];
-    ax[1] = nx_xtrct[a][1];
-    ax[2] = nx_xtrct[a][2];
+    ax[0] = nxyz_xtrct[alocal][0];
+    ax[1] = nxyz_xtrct[alocal][1];
+    ax[2] = nxyz_xtrct[alocal][2];
 
     // vector COM - base site a
     compute_base_site(atype%4,ax,ay,az,ra_cbs);
@@ -241,6 +243,7 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
       b &= NEIGHMASK;
 
       btype = type[b];
+      blocal = atom->map(tag[b]);
 
       if (id3p[b] != -1) {
         b3ptype = type[atom->map(id3p[b])];
@@ -252,9 +255,9 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
       }
       else b5ptype = 0;
 
-      bx[0] = nx_xtrct[b][0];
-      bx[1] = nx_xtrct[b][1];
-      bx[2] = nx_xtrct[b][2];
+      bx[0] = nxyz_xtrct[blocal][0];
+      bx[1] = nxyz_xtrct[blocal][1];
+      bx[2] = nxyz_xtrct[blocal][2];
 
       // vector COM - base site b
       compute_base_site(btype%4,bx,by,bz,rb_cbs);
@@ -318,12 +321,12 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
       // early rejection criterium
       if (f4t3) {
 
-      az[0] = nz_xtrct[a][0];
-      az[1] = nz_xtrct[a][1];
-      az[2] = nz_xtrct[a][2];
-      bz[0] = nz_xtrct[b][0];
-      bz[1] = nz_xtrct[b][1];
-      bz[2] = nz_xtrct[b][2];
+      az[0] = nxyz_xtrct[alocal][6];
+      az[1] = nxyz_xtrct[alocal][7];
+      az[2] = nxyz_xtrct[alocal][8];
+      bz[0] = nxyz_xtrct[blocal][6];
+      bz[1] = nxyz_xtrct[blocal][7];
+      bz[2] = nxyz_xtrct[blocal][8];
 
       cost4 = MathExtra::dot3(az,bz);
       if (cost4 >  1.0) cost4 =  1.0;
@@ -1230,6 +1233,19 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna/xstk" + utils::errorurl(21));
 
+}
+
+/* ----------------------------------------------------------------------
+   init specific to this pair style
+------------------------------------------------------------------------- */
+void PairOxdna3Xstk::init_style()
+{
+  fix_lrf = nullptr;
+  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
+  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  else fix_lrf = dynamic_cast<FixOxdnaLRF *>(fixes[0]);
+
+  neighbor->add_request(this, NeighConst::REQ_DEFAULT);
 }
 
 /* ----------------------------------------------------------------------

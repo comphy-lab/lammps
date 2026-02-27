@@ -22,10 +22,12 @@
 #include "comm.h"
 #include "constants_oxdna.h"
 #include "error.h"
+#include "fix_oxdna_lrf.h"
 #include "force.h"
 #include "math_extra.h"
 #include "memory.h"
 #include "mf_oxdna.h"
+#include "modify.h"
 #include "neighbor.h"
 #include "potential_file_reader.h"
 
@@ -255,6 +257,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
+  tagint *tag = atom->tag;
   int *type = atom->type;
 
   int nlocal = atom->nlocal;
@@ -266,7 +269,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
   tagint *id3p = atom->id3p;
   tagint *id5p = atom->id5p;
 
-  int a,b,btemp,in,a3ptype,atype,btype,b5ptype;
+  int a,b,btemp,in,a3ptype,atype,btype,b5ptype,alocal,blocal;
 
   double f1,f4t4,f4t5,f4t6,f5c1,f5c2;
   double df1,df4t4,df4t5,df4t6,df5c1,df5c2;
@@ -274,11 +277,8 @@ void PairOxdnaStk::compute(int eflag, int vflag)
   evdwl = 0.0;
   ev_init(eflag,vflag);
 
-  // n(x/y/z)_xtrct = extracted local unit vectors from oxdna_excv
-  int dim;
-  nx_xtrct = (double **) force->pair->extract("nx",dim);
-  ny_xtrct = (double **) force->pair->extract("ny",dim);
-  nz_xtrct = (double **) force->pair->extract("nz",dim);
+  // nxyz_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
+  nxyz_xtrct = fix_lrf->array_atom;
 
   // loop over stacking interaction neighbors using bond topology
 
@@ -288,7 +288,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     b = bondlist[in][1];
 
     // directionality test: a -> b is 3' -> 5'
-    if(atom->tag[b] != id5p[a]) {
+    if(tag[b] != id5p[a]) {
 
       btemp = b;
       b = a;
@@ -296,14 +296,17 @@ void PairOxdnaStk::compute(int eflag, int vflag)
 
     }
 
+    alocal = atom->map(tag[a]);
+    blocal = atom->map(tag[b]);
+
     // a now in 3' direction, b in 5' direction
 
-    ax[0] = nx_xtrct[a][0];
-    ax[1] = nx_xtrct[a][1];
-    ax[2] = nx_xtrct[a][2];
-    bx[0] = nx_xtrct[b][0];
-    bx[1] = nx_xtrct[b][1];
-    bx[2] = nx_xtrct[b][2];
+    ax[0] = nxyz_xtrct[alocal][0];
+    ax[1] = nxyz_xtrct[alocal][1];
+    ax[2] = nxyz_xtrct[alocal][2];
+    bx[0] = nxyz_xtrct[blocal][0];
+    bx[1] = nxyz_xtrct[blocal][1];
+    bx[2] = nxyz_xtrct[blocal][2];
     // (a/b)y/z not needed here as oxDNA(1) co-linear
 
     // vector COM a - stacking site a
@@ -368,12 +371,12 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     // early rejection criterium
     if (f1 != 0.0) {
 
-    az[0] = nz_xtrct[a][0];
-    az[1] = nz_xtrct[a][1];
-    az[2] = nz_xtrct[a][2];
-    bz[0] = nz_xtrct[b][0];
-    bz[1] = nz_xtrct[b][1];
-    bz[2] = nz_xtrct[b][2];
+    az[0] = nxyz_xtrct[alocal][6];
+    az[1] = nxyz_xtrct[alocal][7];
+    az[2] = nxyz_xtrct[alocal][8];
+    bz[0] = nxyz_xtrct[blocal][6];
+    bz[1] = nxyz_xtrct[blocal][7];
+    bz[2] = nxyz_xtrct[blocal][8];
 
     // theta4 angle and correction
     cost4 = MathExtra::dot3(bz,az);
@@ -400,12 +403,12 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     // early rejection criterium
     if (f4t5 != 0.0) {
 
-    ay[0] = ny_xtrct[a][0];
-    ay[1] = ny_xtrct[a][1];
-    ay[2] = ny_xtrct[a][2];
-    by[0] = ny_xtrct[b][0];
-    by[1] = ny_xtrct[b][1];
-    by[2] = ny_xtrct[b][2];
+    ay[0] = nxyz_xtrct[alocal][3];
+    ay[1] = nxyz_xtrct[alocal][4];
+    ay[2] = nxyz_xtrct[alocal][5];
+    by[0] = nxyz_xtrct[blocal][3];
+    by[1] = nxyz_xtrct[blocal][4];
+    by[2] = nxyz_xtrct[blocal][5];
 
     cost6p = MathExtra::dot3(delr_stkstk_norm,az);
     if (cost6p >  1.0) cost6p =  1.0;
@@ -1076,6 +1079,11 @@ void PairOxdnaStk::init_style()
   if (!atom->style_match("oxdna")) {
     error->all(FLERR,"Must use 'atom_style hybrid bond ellipsoid oxdna' with pair style oxdna/stk, oxdna2/stk or oxrna2/stk");
   }
+
+  fix_lrf = nullptr;
+  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
+  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  else fix_lrf = dynamic_cast<FixOxdnaLRF *>(fixes[0]);
 }
 
 /* ----------------------------------------------------------------------
