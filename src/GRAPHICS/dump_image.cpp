@@ -1360,9 +1360,15 @@ void DumpImage::create_image()
           image->draw_cylinder(&bodyarray[k][0],&bodyarray[k][3],color,bodyarray[k][6],3,opacity);
         else if (bodyvec[k] == Graphics::TRI) {
           // brighten flat surfaces a little bit
-          image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] = 0.2;
+          image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] = 0.3;
+          image->keyLightColor[0] = image->keyLightColor[1] = image->keyLightColor[2] = 0.8;
+          image->fillLightColor[0] = image->fillLightColor[1] = image->fillLightColor[2] = 0.45;
+          image->backLightColor[0] = image->backLightColor[1] = image->backLightColor[2] = 0.8;
           image->draw_triangle(&bodyarray[k][0],&bodyarray[k][3],&bodyarray[k][6],color,opacity);
           image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] = 0.0;
+          image->keyLightColor[0] = image->keyLightColor[1] = image->keyLightColor[2] = 0.9;
+          image->fillLightColor[0] = image->fillLightColor[1] = image->fillLightColor[2] = 0.45;
+          image->backLightColor[0] = image->backLightColor[1] = image->backLightColor[2] = 0.9;
         }
       }
 
