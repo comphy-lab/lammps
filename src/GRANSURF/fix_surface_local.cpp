@@ -49,6 +49,19 @@ using namespace MathConst;
 //       do granular particle/particle pair styles work with minimization ?
 // NOTE: how are restarts done for the FSG and FSL fixes - should they store info
 //       in the restart file?  FSL sort of naturally does via the particles
+// NOTE: in FSG neigh-list-retrigger is based on surf point movement
+//         due to any motion applied in initial_integrate()
+//       is anything similar done for FSL and FixMove ?
+//       nothing for tri points is done in Neighbor::check_distance()
+// NOTE: motion consistency check for connected lines/tris
+//       can be done in init() for FSG, since FSG stores motion for each surf
+//       idea for how to do it in FSL init(), since FLS knows nothing about motion
+//         detect instances of fix move which apply to lines/tris
+//           store which group used for each instance
+//         loop over pairs of connected lines/tris
+//           if each belongs to different group assigned to FixMove instance,
+//             flag error - assume different FixMove = different motion
+//       could put motion error check methods (line/tri,2d/3d) in fix surface
 
 static constexpr double EPSILON = 0.001;
 static constexpr int NBIN = 100;
