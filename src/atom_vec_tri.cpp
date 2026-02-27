@@ -689,7 +689,7 @@ void AtomVecTri::data_atom_post(int ilocal)
   //   radius/rmass are set by another hybrid atom_style, e.g. sphere
   // if TRI particle
   //   radius/rmass will be set by data_atom_bonus()
-  
+
   if (tri_flag < 0 && particle_style == POINT) radius[ilocal] = 0.0;
 
   omega[ilocal][0] = 0.0;
@@ -742,7 +742,7 @@ void AtomVecTri::pack_data_post(int ilocal)
   // if SPHERE particle, just return
   //   rmass is reset to pre-pack value by another hybrid atom_style, e.g. sphere
   // else reset rmass for TRI and POINT particles
-  
+
   if (tri_flag < 0 && particle_style == SPHERE) return;
   rmass[ilocal] = rmass_one;
 }

@@ -40,6 +40,7 @@ class FixSurfaceLocal : public FixSurface {
   ~FixSurfaceLocal() override;
   int setmask() override;
   void post_constructor() override;
+  void setup(int) override;
 
   void setup_pre_neighbor() override;
   void pre_neighbor() override;

@@ -126,13 +126,13 @@ void AtomVecSphere::data_atom_post(int ilocal)
   // NOTE: this logic only works if atom_style hybrid defines
   //   sphere sub-style BEFORE line/tri sub-style
   //   which is enforced in atom_style hybrid
-  
+
   if (atom->line_flag && atom->line[ilocal] == 1) return;
   if (atom->tri_flag && atom->tri[ilocal] == 1) return;
-  
+
   // set radius to half of data file diameter
   // data file rmass is density, convert to per-sphere rmass
-  
+
   radius_one = 0.5 * atom->radius[ilocal];
   radius[ilocal] = radius_one;
   if (radius_one > 0.0) rmass[ilocal] *= 4.0 * MY_PI / 3.0 * radius_one * radius_one * radius_one;
@@ -160,10 +160,10 @@ void AtomVecSphere::pack_data_pre(int ilocal)
 
   if (atom->line_flag && atom->line[ilocal] >= 0) return;
   if (atom->tri_flag && atom->tri[ilocal] >= 0) return;
-  
+
   // set radius to data file diameter
   // data file rmass is density, convert from per-sphere rmass
-  
+
   radius_one = radius[ilocal];
   rmass_one = rmass[ilocal];
 
@@ -190,7 +190,7 @@ void AtomVecSphere::pack_data_post(int ilocal)
   if (atom->tri_flag && atom->tri[ilocal] == 1) return;
 
   // reset radius/rmass for SPHERE particles
-  
+
   radius[ilocal] = radius_one;
   rmass[ilocal] = rmass_one;
 }

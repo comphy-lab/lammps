@@ -483,7 +483,7 @@ void AtomVecLine::data_atom_post(int ilocal)
   //   radius/rmass are set by another hybrid atom_style, e.g. sphere
   // if LINE particle
   //   radius/rmass will be set by data_atom_bonus()
-  
+
   if (line_flag < 0 && particle_style == POINT) radius[ilocal] = 0.0;
 
   omega[ilocal][0] = 0.0;
@@ -523,11 +523,11 @@ void AtomVecLine::pack_data_pre(int ilocal)
 void AtomVecLine::pack_data_post(int ilocal)
 {
   line[ilocal] = line_flag;
-  
+
   // if SPHERE particle, just return
   //   rmass is reset to pre-pack value by another hybrid atom_style, e.g. sphere
   // else reset rmass for LINE and POINT particles
-  
+
   if (line_flag < 0 && particle_style == SPHERE) return;
   rmass[ilocal] = rmass_one;
 }

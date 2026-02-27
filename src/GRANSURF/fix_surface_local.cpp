@@ -19,9 +19,11 @@
 #include "comm.h"
 #include "domain.h"
 #include "error.h"
+#include "fix_move.h"
 #include "math_const.h"
 #include "math_extra.h"
 #include "memory.h"
+#include "modify.h"
 #include "molecule.h"
 #include "neighbor.h"
 #include "stl_reader.h"
@@ -451,6 +453,233 @@ void FixSurfaceLocal::post_constructor()
 
   if (dimension == 2) stats2d();
   else stats3d();
+}
+
+/* ----------------------------------------------------------------------
+   error check that each surf is assigned to no more than one motion
+   error check that connected surfs have same motion
+   done at beginning of each run in case fix_modify move has changed motions
+   do at setup() when connectivity for owned/ghost surfs is fully initialized
+------------------------------------------------------------------------- */
+
+void FixSurfaceLocal::setup(int vflag)
+{
+  // count instances of FixMove
+  // just return if no FixMove commands
+  // movelist = pointers to each instance
+  // NOTE: should this use modify->get_fix_by_style() instead ?
+
+  int nmove = 0;
+  for (const auto &ifix : modify->get_fix_list())
+    if (strcmp(ifix->style,"move") == 0) nmove++;
+  if (nmove == 0) return;
+
+  auto *movelist = new Fix*[nmove];
+
+  nmove = 0;
+  for (const auto &ifix : modify->get_fix_list())
+    if (strcmp(ifix->style,"move") == 0)
+      movelist[nmove++] = ifix;
+
+  // check for inconsistent surf motion
+  // error if a single surf is assigned to multiple motions
+  // error if two surfs are connected but are assigned to different motions
+  // check before every run, b/c fix_modify move can be used between runs
+
+  if (dimension == 2) {
+
+    int *line = atom->line;
+    int *mask = atom->mask;
+    tagint *tag = atom->tag;
+    int nlocal = atom->nlocal;
+
+    // check that each line is assigned to no more than one FixMove
+
+    int mcount;
+    int ecount = 0;
+
+    for (int i = 0; i < nlocal; i++) {
+      if (line[i] < 0) continue;
+
+      mcount = 0;
+      for (int m = 0; m < nmove; m++)
+        if (mask[i] & movelist[m]->groupbit) mcount++;
+      if (mcount > 1) ecount++;
+    }
+
+    int selfcount;
+    MPI_Allreduce(&ecount,&selfcount,1,MPI_INT,MPI_SUM,world);
+
+    if (selfcount) {
+      delete [] movelist;
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Multiple fix surface/local motions assigned to "
+                 "{} lines",selfcount);
+    }
+
+    // check connections to either endpoint of each line
+    // avoid double counting by jtag < itag check
+
+    tagint itag;
+    int iline,jline,np1,np2,j,imotion,jmotion;
+    ecount = 0;
+
+    for (int i = 0; i < nlocal; i++) {
+      if (line[i] < 0) continue;
+      itag = tag[i];
+      iline = atom2connect[i];
+
+      imotion = -1;
+      for (int m = 0; m < nmove; m++)
+        if (mask[i] & movelist[m]->groupbit) imotion = m;
+
+      np1 = connect2d[iline].np1;
+      np2 = connect2d[iline].np2;
+      for (j = 0; j < np1; j++) {
+        jline = atom->map(connect2d[iline].neigh_p1[j]);
+        if (tag[jline] < itag) continue;
+        jmotion = -1;
+        for (int m = 0; m < nmove; m++)
+          if (mask[jline] & movelist[m]->groupbit) jmotion = m;
+        if (imotion != jmotion) ecount++;
+      }
+      for (j = 0; j < np2; j++) {
+        jline = atom->map(connect2d[iline].neigh_p2[j]);
+        if (tag[jline] < itag) continue;
+        jmotion = -1;
+        for (int m = 0; m < nmove; m++)
+          if (mask[jline] & movelist[m]->groupbit) jmotion = m;
+        if (imotion != jmotion) ecount++;
+      }
+    }
+
+    int paircount;
+    MPI_Allreduce(&ecount,&paircount,1,MPI_INT,MPI_SUM,world);
+
+    if (paircount) {
+      delete [] movelist;
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Fix surface/local motions assigned to "
+                 "{} connected line pairs are inconsistent",paircount);
+    }
+
+  } else if (dimension == 3) {
+
+    int *tri = atom->tri;
+    int *mask = atom->mask;
+    tagint *tag = atom->tag;
+    int nlocal = atom->nlocal;
+
+    // check that each tri is assigned to no more than one FixMove
+
+    int mcount;
+    int ecount = 0;
+
+    for (int i = 0; i < nlocal; i++) {
+      if (tri[i] < 0) continue;
+
+      mcount = 0;
+      for (int m = 0; m < nmove; m++)
+        if (mask[i] & movelist[m]->groupbit) mcount++;
+      if (mcount > 1) ecount++;
+    }
+
+    int selfcount;
+    MPI_Allreduce(&ecount,&selfcount,1,MPI_INT,MPI_SUM,world);
+
+    if (selfcount) {
+      delete [] movelist;
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Multiple fix surface/local motions assigned to "
+                 "{} tris",selfcount);
+    }
+
+    // check connections to each tri's 3 edges and 3 corner pts
+    // avoid double counting by jtag < itag check
+    // but edge and corner connections both contribute to error count
+
+    tagint itag;
+    int itri,jtri,ne1,ne2,ne3,nc1,nc2,nc3,j,imotion,jmotion;
+    ecount = 0;
+
+    for (int i = 0; i < nlocal; i++) {
+      if (tri[i] < 0) continue;
+      itag = tag[i];
+      itri = atom2connect[i];
+
+      imotion = -1;
+      for (int m = 0; m < nmove; m++)
+        if (mask[i] & movelist[m]->groupbit) imotion = m;
+
+      ne1 = connect3d[itri].ne1;
+      ne2 = connect3d[itri].ne2;
+      ne3 = connect3d[itri].ne3;
+
+      for (j = 0; j < ne1; j++) {
+        jtri = atom->map(connect3d[itri].neigh_e1[j]);
+        if (tag[jtri] < itag) continue;
+        jmotion = -1;
+        for (int m = 0; m < nmove; m++)
+          if (mask[jtri] & movelist[m]->groupbit) jmotion = m;
+        if (imotion != jmotion) ecount++;
+      }
+      for (j = 0; j < ne2; j++) {
+        jtri = atom->map(connect3d[itri].neigh_e2[j]);
+        if (tag[jtri] < itag) continue;
+        jmotion = -1;
+        for (int m = 0; m < nmove; m++)
+          if (mask[jtri] & movelist[m]->groupbit) jmotion = m;
+        if (imotion != jmotion) ecount++;
+      }
+      for (j = 0; j < ne3; j++) {
+        jtri = atom->map(connect3d[itri].neigh_e3[j]);
+        if (tag[jtri] < itag) continue;
+        jmotion = -1;
+        for (int m = 0; m < nmove; m++)
+          if (mask[jtri] & movelist[m]->groupbit) jmotion = m;
+        if (imotion != jmotion) ecount++;
+      }
+
+      nc1 = connect3d[itri].nc1;
+      nc2 = connect3d[itri].nc2;
+      nc3 = connect3d[itri].nc3;
+
+      for (j = 0; j < nc1; j++) {
+        jtri = atom->map(connect3d[itri].neigh_c1[j]);
+        if (tag[jtri] < itag) continue;
+        jmotion = -1;
+        for (int m = 0; m < nmove; m++)
+          if (mask[jtri] & movelist[m]->groupbit) jmotion = m;
+        if (imotion != jmotion) ecount++;
+      }
+      for (j = 0; j < nc2; j++) {
+        jtri = atom->map(connect3d[itri].neigh_c2[j]);
+        if (tag[jtri] < itag) continue;
+        jmotion = -1;
+        for (int m = 0; m < nmove; m++)
+          if (mask[jtri] & movelist[m]->groupbit) jmotion = m;
+        if (imotion != jmotion) ecount++;
+      }
+      for (j = 0; j < nc3; j++) {
+        jtri = atom->map(connect3d[itri].neigh_c3[j]);
+        if (tag[jtri] < itag) continue;
+        jmotion = -1;
+        for (int m = 0; m < nmove; m++)
+          if (mask[jtri] & movelist[m]->groupbit) jmotion = m;
+        if (imotion != jmotion) ecount++;
+      }
+    }
+
+    int paircount;
+    MPI_Allreduce(&ecount,&paircount,1,MPI_INT,MPI_SUM,world);
+
+    if (paircount) {
+      delete [] movelist;
+      error->all(FLERR, Error::NOLASTLINE,
+                 "Fix surface/local motions assigned to "
+                 "{} connected tri pairs are inconsistent",paircount);
+    }
+  }
 }
 
 /* ----------------------------------------------------------------------

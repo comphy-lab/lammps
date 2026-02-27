@@ -16,6 +16,7 @@
 #include "atom.h"
 #include "domain.h"
 #include "error.h"
+#include "fix_move.h"
 #include "memory.h"
 #include "molecule.h"
 #include "stl_reader.h"

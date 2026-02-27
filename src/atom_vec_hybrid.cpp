@@ -162,7 +162,7 @@ void AtomVecHybrid::process_args(int narg, char **arg)
   //     need to alert sub-styles LINE or TRI
   //     this is so thay can treat non-line/tri particles as
   //       point particles versus finite-size spheroids
-  
+
   for (int k = 0; k < nstyles; k++) {
     if (strcmp(keywords[k], "line") == 0) {
       if (std::find(fields_data_atom.begin(), fields_data_atom.end(), "radius") != fields_data_atom.end()) {

@@ -674,107 +674,94 @@ void FixSurfaceGlobal::init()
   // check before every run, b/c fix_modify move can be used between runs
 
   int ecount = 0;
-  
+
   if (anymove && dimension == 2) {
     int iline,jline,np1,np2,j,imotion,jmotion;
 
     // check connections to either endpoint of each line
     // avoid double counting by jline < iline check
-    
+
     for (iline = 0; iline < nlines; iline++) {
       imotion = type2motion[iline];
-      
+
       np1 = connect2d[iline].np1;
       np2 = connect2d[iline].np2;
-      if (np1) {
-        for (j = 0; j < np1; j++) {
-          jline = connect2d[iline].neigh_p1[j];
-          if (jline < iline) continue;
-          jmotion = type2motion[jline];
-          if (imotion != jmotion) ecount++;
-        }
+
+      for (j = 0; j < np1; j++) {
+        jline = connect2d[iline].neigh_p1[j];
+        if (jline < iline) continue;
+        jmotion = type2motion[jline];
+        if (imotion != jmotion) ecount++;
       }
-      if (np2) {
-        for (j = 0; j < np1; j++) {
-          jline = connect2d[iline].neigh_p2[j];
-          if (jline < iline) continue;
-          jmotion = type2motion[jline];
-          if (imotion != jmotion) ecount++;
-        }
+      for (j = 0; j < np1; j++) {
+        jline = connect2d[iline].neigh_p2[j];
+        if (jline < iline) continue;
+        jmotion = type2motion[jline];
+        if (imotion != jmotion) ecount++;
       }
     }
   }
 
   if (anymove && dimension == 3) {
     int itri,jtri,ne1,ne2,ne3,nc1,nc2,nc3,j,imotion,jmotion;
-    
+
     // check connections to each tri's 3 edges and 3 corner pts
     // avoid double counting by jtri < itri check
-    // but edge and corner connections both contribute to ecount
+    // but edge and corner connections both contribute to error count
 
     for (itri = 0; itri < ntris; itri++) {
       imotion = type2motion[itri];
-      
+
       ne1 = connect3d[itri].ne1;
       ne2 = connect3d[itri].ne2;
       ne3 = connect3d[itri].ne3;
-      if (ne1) {
-        for (j = 0; j < ne1; j++) {
-          jtri = connect3d[itri].neigh_e1[j];
-          if (jtri < itri) continue;
-          jmotion = type2motion[jtri];
-          if (imotion != jmotion) ecount++;
-        }
+
+      for (j = 0; j < ne1; j++) {
+        jtri = connect3d[itri].neigh_e1[j];
+        if (jtri < itri) continue;
+        jmotion = type2motion[jtri];
+        if (imotion != jmotion) ecount++;
       }
-      if (ne2) {
-        for (j = 0; j < ne2; j++) {
-          jtri = connect3d[itri].neigh_e2[j];
-          if (jtri < itri) continue;
-          jmotion = type2motion[jtri];
-          if (imotion != jmotion) ecount++;
-        }
+      for (j = 0; j < ne2; j++) {
+        jtri = connect3d[itri].neigh_e2[j];
+        if (jtri < itri) continue;
+        jmotion = type2motion[jtri];
+        if (imotion != jmotion) ecount++;
       }
-      if (ne3) {
-        for (j = 0; j < ne3; j++) {
-          jtri = connect3d[itri].neigh_e3[j];
-          if (jtri < itri) continue;
-          jmotion = type2motion[jtri];
-          if (imotion != jmotion) ecount++;
-        }
+      for (j = 0; j < ne3; j++) {
+        jtri = connect3d[itri].neigh_e3[j];
+        if (jtri < itri) continue;
+        jmotion = type2motion[jtri];
+        if (imotion != jmotion) ecount++;
       }
-      
+
       nc1 = connect3d[itri].nc1;
       nc2 = connect3d[itri].nc2;
       nc3 = connect3d[itri].nc3;
-      if (nc1) {
-        for (j = 0; j < nc1; j++) {
-          jtri = connect3d[itri].neigh_c1[j];
-          if (jtri < itri) continue;
-          jmotion = type2motion[jtri];
-          if (imotion != jmotion) ecount++;
-        }
+
+      for (j = 0; j < nc1; j++) {
+        jtri = connect3d[itri].neigh_c1[j];
+        if (jtri < itri) continue;
+        jmotion = type2motion[jtri];
+        if (imotion != jmotion) ecount++;
       }
-      if (nc2) {
-        for (j = 0; j < nc1; j++) {
-          jtri = connect3d[itri].neigh_c2[j];
-          if (jtri < itri) continue;
-          jmotion = type2motion[jtri];
-          if (imotion != jmotion) ecount++;
-        }
+      for (j = 0; j < nc1; j++) {
+        jtri = connect3d[itri].neigh_c2[j];
+        if (jtri < itri) continue;
+        jmotion = type2motion[jtri];
+        if (imotion != jmotion) ecount++;
       }
-      if (nc3) {
-        for (j = 0; j < nc3; j++) {
-          jtri = connect3d[itri].neigh_c3[j];
-          if (jtri < itri) continue;
-          jmotion = type2motion[jtri];
-          if (imotion != jmotion) ecount++;
-        }
+      for (j = 0; j < nc3; j++) {
+        jtri = connect3d[itri].neigh_c3[j];
+        if (jtri < itri) continue;
+        jmotion = type2motion[jtri];
+        if (imotion != jmotion) ecount++;
       }
     }
   }
 
   if (ecount) error->all(FLERR, Error::NOLASTLINE,
-                         "Fix surface/global motions assigned to " 
+                         "Fix surface/global motions assigned to "
                          "{} connected surf pairs are inconsistent",ecount);
 }
 

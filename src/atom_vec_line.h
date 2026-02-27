@@ -37,7 +37,7 @@ class AtomVecLine : public AtomVec {
   void init() override;
 
   void set_sphere();
-  
+
   void grow_pointers() override;
   void copy_bonus(int, int, int) override;
   void clear_bonus() override;
