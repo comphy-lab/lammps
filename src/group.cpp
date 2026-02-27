@@ -658,7 +658,8 @@ int Group::get_bitmask_by_id(const std::string &file, int line, const std::strin
 {
   int igroup = find(name);
   if (igroup < 0)
-    error->all(file, line, "Group ID {} requested by {} does not exist", name, caller);
+    error->all(file, line, Error::NOLASTLINE, "Group ID {} requested by {} does not exist", name,
+               caller);
   return bitmask[igroup];
 }
 
