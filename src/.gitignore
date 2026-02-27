@@ -1049,6 +1049,8 @@
 /fix_orient_eco.h
 /fix_orient_fcc.cpp
 /fix_orient_fcc.h
+/fix_oxdna_lrf.cpp
+/fix_oxdna_lrf.h
 /fix_peri_neigh.cpp
 /fix_peri_neigh.h
 /fix_phonon.cpp
