@@ -302,8 +302,6 @@ void FixGroup::set_group()
       mask[i] &= gbitinverse;
   }
 
-  if (varflag) memory->destroy(var);
-
   // ensure ghost atom masks are also updated
 
   comm->forward_comm(this);
@@ -374,6 +372,10 @@ void FixGroup::set_group()
     // we need a second forward communication, since we could only update the masks of local atoms
     comm->forward_comm(this);
   }
+
+  // no longer needed
+
+  if (varflag) memory->destroy(var);
 
   // add atoms that have the same molecule ID as selected atoms
   if (moleculeflag) group->add_molecules(0, gbit);
