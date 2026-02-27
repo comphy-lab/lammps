@@ -65,7 +65,7 @@ class PairOxdnaStk : public Pair {
   virtual void allocate();
   void ev_tally_xyz(int, int, int, int, double, double, double, double, double, double, double);
 
-  class Fix *fix_lrf;    // ptr to oxdna/lrf fix
+  class FixOxdnaLRF *fix_lrf;    // ptr to oxdna/lrf fix
 };
 
 }    // namespace LAMMPS_NS

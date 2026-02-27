@@ -22,7 +22,7 @@
 #include "comm.h"
 #include "constants_oxdna.h"
 #include "error.h"
-#include "fix.h"
+#include "fix_oxdna_lrf.h"
 #include "force.h"
 #include "math_extra.h"
 #include "memory.h"
@@ -925,7 +925,7 @@ void PairOxdnaHbond::init_style()
   fix_lrf = nullptr;
   auto fixes = modify->get_fix_by_style("^oxdna/lrf");
   if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
-  else fix_lrf = fixes[0];
+  else fix_lrf = dynamic_cast<FixOxdnaLRF *>(fixes[0]);
 
   neighbor->add_request(this, NeighConst::REQ_DEFAULT);
 }
