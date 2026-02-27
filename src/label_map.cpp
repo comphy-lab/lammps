@@ -551,10 +551,6 @@ int LabelMap::infer_impropertype(int type1, int type2, int type3, int type4, std
 
 int LabelMap::infer_impropertype(const std::vector<std::string> &mytypes, std::array<int, 4> *iorder)
 {
-  if (std::string(force->improper_style) == "hybrid")
-    error->all(FLERR, "Cannot infer improper type with improper_style hybrid");
-
-
   // search for matching improper type label
   int out = 0;
   int status, navail_types;

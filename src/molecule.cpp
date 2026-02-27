@@ -3800,6 +3800,9 @@ void Molecule::generate_dihedrals()
 
 void Molecule::generate_impropers()
 {
+  if (std::string(force->improper_style) == "hybrid")
+    error->all(FLERR, fileiarg, "Cannot infer improper type with improper_style hybrid");
+
   if (specialflag == 0)
     error->all(FLERR, fileiarg, "Unable to generate impropers without special bonds.");
 
@@ -3813,6 +3816,7 @@ void Molecule::generate_impropers()
     memory->destroy(improper_atom3);
     memory->destroy(improper_atom4);
   }
+
   int newton_bond = force->newton_bond;
   int itype, signed_itype;
   tagint m, atom1, atom2, atom3, atom4;
