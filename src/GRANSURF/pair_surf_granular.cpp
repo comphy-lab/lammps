@@ -50,7 +50,7 @@ enum{NONE, LINE, TRI};
 enum{NONFLAT,FLAT};
 enum{CONCAVE,CONVEX};
 enum{SAME_SIDE,OPPOSITE_SIDE};
-enum{INTERIOR = 0,EXTERNAL,UNCONNECTED};
+enum{INTERNAL = 0,EXTERNAL,UNCONNECTED};
 
 static constexpr double EPSILON = 1e-12;
 static constexpr double BIG = 1.0e20;
@@ -290,7 +290,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
       // Find out if contact is on an external edge/corner
       jconnect = atom2connect[j];
-      external_flag = INTERIOR;
+      external_flag = INTERNAL;
       if (style == LINE) {
         MathExtra::copy3(&endpts[line[j]][6], norm);
         dot = MathExtra::dot3(norm, dr);
@@ -463,7 +463,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
       model->xj = xc;
       model->vj = vc;
-      model->omegaj = omegac; // Ask Dan
+      model->omegaj = omegac;
 
       if (use_history) {
         jj = contact_surfs[n].neigh_index;
@@ -1627,7 +1627,7 @@ double PairSurfGranular::calculate_3d_forces(std::vector<int> *composite_surfs)
     //   note this does not weight unconnected
     if (external == EXTERNAL) {
       contact_surfs[n].weight_contribution = w_ext;
-    } else if (external == INTERIOR) {
+    } else if (external == INTERNAL) {
       contact_surfs[n].weight_contribution = w_int;
     }
 

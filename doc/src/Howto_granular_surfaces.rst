@@ -85,26 +85,22 @@ For both global and local surfaces, each triangle/line is assigned a
 from a molecule, STL, or data file.  Since STL files do not define
 types or molecule IDs, the :doc:`fix surface/global
 <fix_surface_global>` and :doc:`fix surface/local <fix_surface_local>`
-commands specify the type that will be assigned to the read-in
-triangles.  The molecule ID for each triangle is set to 1.  The
-:doc:`fix surface/global <fix_surface_global>` command also allows use
-of the :doc:`fix_modify type/region <fix_modify>` command to assign
-types based on a geometric region.  Since local surfaces are
-effectively particles, the :doc:`set <set>` command can be used to
-alter the *type* or *molecule ID* of any triangle or line.
+commands specify the type and molecule ID that will be assigned to the
+read-in triangles.  The :doc:`fix surface/global <fix_surface_global>`
+command also allows use of the :doc:`fix_modify type/region <fix_modify>`
+command to assign types based on a geometric region.  Since local
+surfaces are effectively particles, the :doc:`set <set>` command can
+be used to alter the *type* or *molecule ID* of any triangle or line.
 
 For both global and local surfaces, types are used to define the style
 of granular interactions for individual triangles/lines.  Different
 styles can be used within a single object consisting of connected
 triangles/lines.  See the Surface Connectivity section below.
 
-Molecule IDs are not currently used by granular surface interactions,
-though they may be in the future.  They are intended to be assigned
-uniquely to each inter-connected set of triangles/lines, as if each
-object were a "molecule".  However, this is not required, and LAMMPS
-does not check that this is the case.  LAMMPS will issue a warning if
-a set of inter-connected triangles/lines do not all have the same
-molecule ID, in case this was not intentional.
+Molecule IDs are used to determine which triangles/lines are connected.
+They are therefore intended to be assigned uniquely to each
+inter-connected set of triangles/lines, as if each object were a
+"molecule".
 
 For local surfaces, the molecule ID can be used to define groups which
 enables assignment of different motions to different surface objects.
@@ -221,9 +217,9 @@ Surface connectivity
 
 If multiple triangles/lines are used to define a contiguous surface
 which is flat or gently curved or has sharp edges or corners, LAMMPS
-will detect when two or more line segments (2d) of the same type share
-the same endpoint.  Or when two or more triangles (3d) of the same type
-share the same edge or same corner point.
+will detect when two or more line segments (2d) in the same molecule
+share the same endpoint.  Or when two or more triangles (3d) in the
+same molecule share the same edge or same corner point.
 
 This connectivity is stored internally and is used when appropriate to
 calculate accurate forces on particles which simultaneously overlap
@@ -279,8 +275,9 @@ general these kinds of granular surfaces could be problematic and
 should be avoided, but LAMMPS does not check for these conditions.
 
 In addition, note that connectivity is only defined between two
-triangles/lines of the same type. This way surfaces of two types
-can move independently, as described in the following section.
+triangles/lines of the same molecule ID. This way surfaces of two
+molecules can move independently, as described in the following
+section.
 
 Note that if a triangle or line segment has a free edge or free
 corner/end point (not connected to any other triangle/line), granular
@@ -308,9 +305,9 @@ These two commands can be used for that purpose:
 For *global* surfaces, the :doc:`fix_modify move <fix_modify>` command
 can move a specified subset of the triangles/lines in various ways
 (translation, rotation, etc).  Which triangles move is specified based
-on the *type* of each triangle.  Types are specified when surfaces are
-defined by the :doc:`fix surface/global <fix_surface_global>` command.
-They can also be defined by the :doc:`fix_modify type/region
+on the *molecule ID* of each triangle.  Molecule IDs are specified when
+surfaces are defined by the :doc:`fix surface/global <fix_surface_global>`
+command. They can also be defined by the :doc:`fix_modify mol/region
 <fix_modify>` command.
 
 For *local* surfaces, the :doc:`fix move <fix_move>` command can move

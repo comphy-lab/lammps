@@ -70,6 +70,7 @@ class FixSurfaceLocal : public FixSurface {
   int nlocal0;    // # of existing atoms processed by connectivitylocal
   int ninput;
   int *input_modes, *input_stypes;
+  tagint *input_smols;
   char **input_sources;
 
   int flag_complete;    // whether one-time connectivity info has been calculated
@@ -128,7 +129,7 @@ class FixSurfaceLocal : public FixSurface {
     int ibin;         // bin assignment
     int ilocal;       // index of line/tri particle
     int ipoint;       // 0/1 for line endpt, 0/1/2 for tri corner pt
-    int type;         // type of line/tri particle
+    tagint mol;       // mol of line/tri particle
     tagint atomID;    // ID of line/tri particle
     double x[3];      // coords of endpt or corner pt
   };

@@ -76,7 +76,7 @@ static constexpr int DELTA_RVOUS = 8;       // must be >= 8, make it bigger when
 
 enum{NONFLAT,FLAT};
 enum{CONCAVE,CONVEX};
-enum{INTERIOR = 0,EXTERNAL,UNCONNECTED};
+enum{INTERNAL = 0,EXTERNAL,UNCONNECTED};
 enum{SAME_SIDE,OPPOSITE_SIDE};
 
 static constexpr double FLATTHRESH = 0.00015230484360876085; // = 1.0-cos(MY_PI/180.0); = 1 degree
@@ -106,6 +106,7 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
   input_modes = nullptr;
   input_sources = nullptr;
   input_stypes = nullptr;
+  input_smols = nullptr;
 
   int iarg = 3;
   while (iarg < narg) {
@@ -126,7 +127,7 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
         input_sources[ninput] = sourceID;
         iarg += 3;
       } else if (strcmp(arg[iarg+1],"stl") == 0) {
-        if (iarg+4 > narg) utils::missing_cmd_args(FLERR, "fix surface/local input stl", error);
+        if (iarg+5 > narg) utils::missing_cmd_args(FLERR, "fix surface/local input stl", error);
         input_modes = (int *)
           memory->srealloc(input_modes,(ninput+1)*sizeof(int),
                            "surface/local:input_modes");
@@ -136,14 +137,19 @@ FixSurfaceLocal::FixSurfaceLocal(LAMMPS *lmp, int narg, char **arg) :
         input_stypes = (int *)
           memory->srealloc(input_stypes,(ninput+1)*sizeof(int),
                            "surface/local:input_stypes");
+        input_smols = (tagint *)
+          memory->srealloc(input_smols,(ninput+1)*sizeof(tagint),
+                           "surface/local:input_smols");
         input_modes[ninput] = STLFILE;
         int stype = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
         input_stypes[ninput] = stype;
-        int n = strlen(arg[iarg+3]) + 1;
+        tagint smol = utils::tnumeric(FLERR,arg[iarg+3],false,lmp);
+        input_smols[ninput] = smol;
+        int n = strlen(arg[iarg+4]) + 1;
         char *sourceID = new char[n];
-        strcpy(sourceID,arg[iarg+3]);
+        strcpy(sourceID,arg[iarg+4]);
         input_sources[ninput] = sourceID;
-        iarg += 4;
+        iarg += 5;
       } else error->all(FLERR, iarg+1, "Unknown fix surface/local input keyword: {}", arg[iarg+1]);
     } else break;
 
@@ -347,7 +353,8 @@ void FixSurfaceLocal::post_constructor()
                               npoints,maxpoints,points,nlines,lines,ntris,tris);
       if (mode == STLFILE) {
         int stype = input_stypes[i];
-        extract_from_stlfile(sourceID,stype,hash,
+        tagint smol = input_smols[i];
+        extract_from_stlfile(sourceID,stype,smol,hash,
                              npoints,maxpoints,points,ntris,tris);
       }
     }
@@ -358,6 +365,7 @@ void FixSurfaceLocal::post_constructor()
     for (int i = 0; i < ninput; i++) delete [] input_sources[i];
     memory->sfree(input_sources);
     memory->sfree(input_stypes);
+    memory->sfree(input_smols);
 
     // each proc infers global connectivity from global data structs
     // distribute lines/surfs across procs, based on center pt coords
@@ -1829,7 +1837,7 @@ void FixSurfaceLocal::connectivity2d_local()
   int me = comm->me;
   int nprocs = comm->nprocs;
 
-  int *type = atom->type;
+  tagint *molecule = atom->molecule;
   tagint *tag = atom->tag;
 
   int *proclist = nullptr;
@@ -1858,7 +1866,7 @@ void FixSurfaceLocal::connectivity2d_local()
         inbuf[ncount].ibin = indices[k];
         inbuf[ncount].ilocal = i;
         inbuf[ncount].ipoint = ipoint;
-        inbuf[ncount].type = type[i];
+        inbuf[ncount].mol = molecule[i];
         inbuf[ncount].atomID = tag[i];
         inbuf[ncount].x[0] = endpts[m][2*ipoint];
         inbuf[ncount].x[1] = endpts[m][2*ipoint+1];
@@ -2129,7 +2137,7 @@ void FixSurfaceLocal::connectivity3d_local()
   int me = comm->me;
   int nprocs = comm->nprocs;
 
-  int *type = atom->type;
+  tagint *molecule = atom->molecule;
   tagint *tag = atom->tag;
 
   int *proclist = nullptr;
@@ -2158,7 +2166,7 @@ void FixSurfaceLocal::connectivity3d_local()
         inbuf[ncount].ibin = indices[k];
         inbuf[ncount].ilocal = i;
         inbuf[ncount].ipoint = ipoint;
-        inbuf[ncount].type = type[i];
+        inbuf[ncount].mol = molecule[i];
         inbuf[ncount].atomID = tag[i];
         inbuf[ncount].x[0] = corners[m][3*ipoint];
         inbuf[ncount].x[1] = corners[m][3*ipoint+1];
@@ -2639,7 +2647,7 @@ int FixSurfaceLocal::point_match(int n, char *inbuf,
         dy = in[i].x[1] - in[j].x[1];
         dz = in[i].x[2] - in[j].x[2];
         rsq = dx*dx + dy*dy + dz*dz;
-        if (rsq < epssq && in[i].type == in[j].type) {
+        if (rsq < epssq && in[i].mol == in[j].mol) {
           if (ncount+2 > maxcount) {
             maxcount += DELTA_RVOUS;
             memory->grow(proclist,maxcount,"surface/local:proclist");
@@ -3517,8 +3525,8 @@ void FixSurfaceLocal::connectivity2d_complete()
   for (i = 0; i < nlocal; i++) {
     if (line[i] < 0) continue;
     iconnect = atom2connect[i];
-    connect2d[iconnect].external_pt[0] = INTERIOR;
-    connect2d[iconnect].external_pt[1] = INTERIOR;
+    connect2d[iconnect].external_pt[0] = INTERNAL;
+    connect2d[iconnect].external_pt[1] = INTERNAL;
   }
 
   int n;
@@ -3837,7 +3845,7 @@ void FixSurfaceLocal::connectivity3d_complete()
     if (tri[i] < 0) continue;
     iconnect = atom2connect[i];
     for (int a = 0; a < 3; a++)
-      connect3d[iconnect].external_edge[a] = INTERIOR;
+      connect3d[iconnect].external_edge[a] = INTERNAL;
   }
 
   for (int i = 0; i < nlocal; i++) {

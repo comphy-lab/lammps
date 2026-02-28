@@ -21,8 +21,9 @@ Syntax
             *mol* arg = template-ID
                template-ID = ID of molecule template specified in a
                separate :doc:`molecule <molecule>` command, which defines a set of triangles or lines
-            *stl* args = stype stlfile
+            *stl* args = stype smol stlfile
                stype = numeric type assigned to all triangles in STL file
+               smol = numeric molecule ID assigned to all triangles in STL file
                stlfile = STL filename which defines a set of triangles
 
 * zero or more keyword/value pairs may be appended
@@ -46,7 +47,7 @@ Examples
    molecule tris surf.tri
    fix 1 all surface/local input mol tris
 
-   fix 1 all surface/local input stl 1 surf.tri.stl
+   fix 1 all surface/local input stl 1 1 surf.tri.stl
 
 Description
 """""""""""
@@ -111,12 +112,12 @@ An STL (stereolithography) file defines a set of triangles.  For use
 with this command, the *source* argument of the *input* keyword is
 *stl*.  The *stype* argument is the numeric type assigned to all the
 triangles from the file.  Note that STL files do not contain types or
-other flags for each triangle.  The *stlfile* argument is the name of
-the STL file.  It can be in text or binary format; this command
-auto-detects the format. One triangle particle is created for each
-triangle in the STL file(s).  Note that STL files cannot be used for
-2d simulations since they only define triangles.  Each triangle
-particle from an STL file is assigned a molecule ID = 1.
+other flags for each triangle.  The *smol* argument is the numeric
+molecule ID assigned to all triangles in the file. The *stlfile*
+argument is the name of the STL file.  It can be in text or binary
+format; this command auto-detects the format. One triangle particle
+is created for each triangle in the STL file(s).  Note that STL files
+cannot be used for 2d simulations since they only define triangles.
 
 This `Wikipedia page
 <https://en.wikipedia.org/wiki/STL_(file_format)>`_ describes the
@@ -134,10 +135,10 @@ command will be the union of those already read by the :doc:`read_data
 
 Once all the distributed triangle/line particles are defined, this
 command calculates their connectivity.  Two triangles are "connected"
-if they are the same type and have a single corner point in common or
-an edge in common (2 corner points).  Two line segments are "connected"
-if they are the same type and they have an end point in common.  More
-technical details on connectivity and its significance for granular
+if they are in the same molecule and have a single corner point in common
+or an edge in common (2 corner points).  Two line segments are "connected"
+if they are in the same molecule and they have an end point in common.
+More technical details on connectivity and its significance for granular
 surface simulations is given on :doc:`Howto granular surfaces
 <Howto_granular_surfaces>` doc page.  In brief, a pair of connected
 surfaces interact with a particle which contacts both of them
@@ -180,10 +181,12 @@ particle even if it is contact with both surfaces simultaneously.  See
 the :doc:`Howto granular surfaces <Howto_granular_surfaces>` doc page
 for more details.  The default for *maxangle* is one degree.
 
-Note that the *smax* keyword used by the :doc:`fix surface/global
-<fix_surface_global>` command is not used by this command.  This is
-because local triangles and lines are already particles and their type
-is limited by the maximum number of particle types.
+Note that the *smaxtype* and *smaxmol* keywords used by the :doc:`fix
+surface/global <fix_surface_global>` command are not used by this
+command.  This is because local triangles and lines are already particles
+and their type is limited by the maximum number of particle types and
+their molecule ID are limited by the standard limitations on the
+number of molecules.
 
 Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""

@@ -86,7 +86,7 @@ enum{LINEAR,WIGGLE,ROTATE,TRANSROT,VARIABLE};
 
 enum{NONFLAT,FLAT};
 enum{CONCAVE,CONVEX};
-enum{INTERIOR = 0,EXTERNAL,UNCONNECTED};
+enum{INTERNAL = 0,EXTERNAL,UNCONNECTED};
 enum{SAME_SIDE,OPPOSITE_SIDE};
 enum{NSQ, BIN};
 
@@ -95,6 +95,7 @@ static constexpr int DELTA = 128;
 static constexpr int DELTAMODEL = 1;    // make larger after debugging
 static constexpr int DELTAMOTION = 1;   // make larger after debugging
 static constexpr int MAXSURFTYPE = 1024;  // extreme, so can reduce it later
+static constexpr int MAXSURFMOL = 1024;   // extreme, so can reduce it later
 static constexpr double BIG = 1.0e20;
 static constexpr double EPSILON = 1e-12;
 
@@ -140,10 +141,11 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
         extract_from_molecule(arg[iarg+2],&hash,npoints,maxpoints,points,nlines,lines,ntris,tris);
         iarg += 3;
       } else if (strcmp(arg[iarg+1],"stl") == 0) {
-        if (iarg+4 > narg) utils::missing_cmd_args(FLERR, "fix surface/global input stl", error);
+        if (iarg+5 > narg) utils::missing_cmd_args(FLERR, "fix surface/global input stl", error);
         int stype = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
-        extract_from_stlfile(arg[iarg+3],stype,&hash,npoints,maxpoints,points,ntris,tris);
-        iarg += 4;
+        int smol = utils::inumeric(FLERR,arg[iarg+3],false,lmp);
+        extract_from_stlfile(arg[iarg+4],stype,(tagint) smol,&hash,npoints,maxpoints,points,ntris,tris);
+        iarg += 5;
       } else error->all(FLERR, iarg+1, "Unknown fix surface/global input keyword: {}", arg[iarg+1]);
     } else break;
 
@@ -252,8 +254,20 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
       maxsurftype = MAX(maxsurftype,tris[i].type);
   }
 
+  // maxsurfmol = max surf molecule ID of any input surf (for now)
+
+  maxsurfmol = 0;
+  if (dimension == 2) {
+    for (int i = 0; i < nlines; i++)
+      maxsurfmol = MAX(maxsurfmol,lines[i].mol);
+  } else {
+    for (int i = 0; i < ntris; i++)
+      maxsurfmol = MAX(maxsurfmol,tris[i].mol);
+  }
+
   // optional command-line args
   // smaxtype overrides max surf type of input surfs
+  // smaxmol overrides max surf mol ID of input surfs
   // flat overrides FLATTHRESH of one degree
 
   int Twall_defined = 0;
@@ -268,6 +282,15 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
       if (smaxtype < maxsurftype)
         error->all(FLERR, iarg+1, "Fix surface/global smaxtype < input surf types");
       maxsurftype = smaxtype;
+      iarg += 2;
+    } else if (strcmp(arg[iarg],"smaxmol") == 0) {
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global smaxmol", error);
+      tagint smaxmol = utils::tnumeric(FLERR,arg[iarg+1],false,lmp);
+      if (smaxmol > MAXSURFMOL)
+        error->all(FLERR, iarg+1, "Fix surface/global smaxmol > MAXSURFMOL");
+      if (smaxmol < maxsurfmol)
+        error->all(FLERR, iarg+1, "Fix surface/global smaxmol < input surf types");
+      maxsurfmol = smaxmol;
       iarg += 2;
     } else if (strcmp(arg[iarg],"flat") == 0) {
       if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "fix surface/global flat", error);
@@ -383,9 +406,9 @@ FixSurfaceGlobal::FixSurfaceGlobal(LAMMPS *lmp, int narg, char **arg) :
   imflag = nullptr;
   imdata = nullptr;
 
-  type2motion = new int[maxsurftype+1];
-  for (int i = 0; i <= maxsurftype; i++)
-    type2motion[i] = -1;
+  mol2motion = new int[maxsurfmol+1];
+  for (int i = 0; i <= maxsurfmol; i++)
+    mol2motion[i] = -1;
 
   firsttime = 1;
 
@@ -501,7 +524,7 @@ FixSurfaceGlobal::~FixSurfaceGlobal()
   }
 
   memory->sfree(motions);
-  delete [] type2motion;
+  delete [] mol2motion;
 
   delete list;
   delete listhistory;
@@ -676,13 +699,14 @@ void FixSurfaceGlobal::init()
   int ecount = 0;
 
   if (anymove && dimension == 2) {
-    int iline,jline,np1,np2,j,imotion,jmotion;
+    int iline,jline,np1,np2,j,imotion,jmotion,imol,jmol;
 
     // check connections to either endpoint of each line
     // avoid double counting by jline < iline check
 
     for (iline = 0; iline < nlines; iline++) {
-      imotion = type2motion[iline];
+      imol = lines[iline].mol;
+      imotion = mol2motion[imol];
 
       np1 = connect2d[iline].np1;
       np2 = connect2d[iline].np2;
@@ -690,27 +714,30 @@ void FixSurfaceGlobal::init()
       for (j = 0; j < np1; j++) {
         jline = connect2d[iline].neigh_p1[j];
         if (jline < iline) continue;
-        jmotion = type2motion[jline];
+        jmol = lines[jline].mol;
+        jmotion = mol2motion[jmol];
         if (imotion != jmotion) ecount++;
       }
       for (j = 0; j < np1; j++) {
         jline = connect2d[iline].neigh_p2[j];
         if (jline < iline) continue;
-        jmotion = type2motion[jline];
+        jmol = lines[jline].mol;
+        jmotion = mol2motion[jmol];
         if (imotion != jmotion) ecount++;
       }
     }
   }
 
   if (anymove && dimension == 3) {
-    int itri,jtri,ne1,ne2,ne3,nc1,nc2,nc3,j,imotion,jmotion;
+    int itri,jtri,ne1,ne2,ne3,nc1,nc2,nc3,j,imotion,jmotion,imol,jmol;
 
     // check connections to each tri's 3 edges and 3 corner pts
     // avoid double counting by jtri < itri check
     // but edge and corner connections both contribute to error count
 
     for (itri = 0; itri < ntris; itri++) {
-      imotion = type2motion[itri];
+      imol = tris[itri].mol;
+      imotion = mol2motion[imol];
 
       ne1 = connect3d[itri].ne1;
       ne2 = connect3d[itri].ne2;
@@ -719,19 +746,22 @@ void FixSurfaceGlobal::init()
       for (j = 0; j < ne1; j++) {
         jtri = connect3d[itri].neigh_e1[j];
         if (jtri < itri) continue;
-        jmotion = type2motion[jtri];
+        jmol = tris[jtri].mol;
+        jmotion = mol2motion[jmol];
         if (imotion != jmotion) ecount++;
       }
       for (j = 0; j < ne2; j++) {
         jtri = connect3d[itri].neigh_e2[j];
         if (jtri < itri) continue;
-        jmotion = type2motion[jtri];
+        jmol = tris[jtri].mol;
+        jmotion = mol2motion[jmol];
         if (imotion != jmotion) ecount++;
       }
       for (j = 0; j < ne3; j++) {
         jtri = connect3d[itri].neigh_e3[j];
         if (jtri < itri) continue;
-        jmotion = type2motion[jtri];
+        jmol = tris[jtri].mol;
+        jmotion = mol2motion[jmol];
         if (imotion != jmotion) ecount++;
       }
 
@@ -742,19 +772,22 @@ void FixSurfaceGlobal::init()
       for (j = 0; j < nc1; j++) {
         jtri = connect3d[itri].neigh_c1[j];
         if (jtri < itri) continue;
-        jmotion = type2motion[jtri];
+        jmol = tris[jtri].mol;
+        jmotion = mol2motion[jmol];
         if (imotion != jmotion) ecount++;
       }
       for (j = 0; j < nc1; j++) {
         jtri = connect3d[itri].neigh_c2[j];
         if (jtri < itri) continue;
-        jmotion = type2motion[jtri];
+        jmol = tris[jtri].mol;
+        jmotion = mol2motion[jmol];
         if (imotion != jmotion) ecount++;
       }
       for (j = 0; j < nc3; j++) {
         jtri = connect3d[itri].neigh_c3[j];
         if (jtri < itri) continue;
-        jmotion = type2motion[jtri];
+        jmol = tris[jtri].mol;
+        jmotion = mol2motion[jmol];
         if (imotion != jmotion) ecount++;
       }
     }
@@ -799,8 +832,8 @@ void FixSurfaceGlobal::initial_integrate(int vflag)
   // invoke appropriate move option for each surf
 
   for (int i = 0; i < nsurf; i++) {
-    if (dimension == 2) imotion = type2motion[lines[i].type];
-    else imotion = type2motion[tris[i].type];
+    if (dimension == 2) imotion = mol2motion[lines[i].mol];
+    else imotion = mol2motion[tris[i].mol];
     if (imotion < 0) continue;
 
     mstyle = motions[imotion].mstyle;
@@ -815,13 +848,13 @@ void FixSurfaceGlobal::initial_integrate(int vflag)
 
   if (dimension == 2) {
     for (int i = 0; i < nlines; i++) {
-      if (type2motion[lines[i].type] < 0) continue;
+      if (mol2motion[lines[i].mol] < 0) continue;
       pointmove[lines[i].p1] = 0;
       pointmove[lines[i].p2] = 0;
     }
   } else {
     for (int i = 0; i < ntris; i++) {
-      if (type2motion[tris[i].type] < 0) continue;
+      if (mol2motion[tris[i].mol] < 0) continue;
       pointmove[tris[i].p1] = 0;
       pointmove[tris[i].p2] = 0;
       pointmove[tris[i].p3] = 0;
@@ -1351,7 +1384,7 @@ void FixSurfaceGlobal::post_force(int vflag)
       }
 
       // Find out if contact is on an external edge/corner
-      external_flag = INTERIOR;
+      external_flag = INTERNAL;
       if (dimension == 2) {
         MathExtra::copy3(lines[j].norm, norm);
         dot = MathExtra::dot3(norm, dr);
@@ -1511,7 +1544,7 @@ void FixSurfaceGlobal::post_force(int vflag)
 
       model->xj = xc;
       model->vj = vc;
-      model->omegaj = omegac; // Ask Dan
+      model->omegaj = omegac;
 
       if (use_history) {
         jj = contact_surfs[n].neigh_index;
@@ -1580,30 +1613,30 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
     if (narg < 3) utils::missing_cmd_args(FLERR, "fix surface/global modify move", error);
 
     int lo,hi;
-    int *stypes = new int[maxsurftype+1];
-    for (int i = 1; i <= maxsurftype; i++) stypes[i] = 0;
+    int *smols = new int[maxsurfmol+1];
+    for (int i = 1; i <= maxsurfmol; i++) smols[i] = 0;
 
     auto fields = Tokenizer(arg[1], ",").as_vector();
     for (int ifield = 0; ifield < fields.size(); ifield++) {
-      utils::bounds(FLERR, fields[ifield], 1, maxsurftype, lo, hi, error);
-      for (int i = lo; i <= hi; i++) stypes[i] = 1;
+      utils::bounds(FLERR, fields[ifield], 1, maxsurfmol, lo, hi, error);
+      for (int i = lo; i <= hi; i++) smols[i] = 1;
     }
 
     if (strcmp(arg[2],"none") == 0) {
       int count = 0;
-      for (int itype = 1; itype <= maxsurftype; itype++) {
-        if (type2motion[itype] < 0) continue;
-        int imotion = type2motion[itype];
+      for (int imol = 1; imol <= maxsurfmol; imol++) {
+        if (mol2motion[imol] < 0) continue;
+        int imotion = mol2motion[imol];
         motions[imotion].active = 0;
-        type2motion[itype] = -1;
+        mol2motion[imol] = -1;
 
-        // set vsurf and omegasurf to zero for itype surfs
+        // set vsurf and omegasurf to zero for imol surfs
 
-        int stype;
+        int smol;
         for (int i = 0; i < nsurf; i++) {
-          if (dimension == 2) stype = lines[i].type;
-          else stype = tris[i].type;
-          if (stype == itype) {
+          if (dimension == 2) smol = lines[i].mol;
+          else smol = tris[i].mol;
+          if (smol == imol) {
             vsurf[i][0] = vsurf[i][1] = vsurf[i][2] = 0.0;
             omegasurf[i][0] = omegasurf[i][1] = omegasurf[i][2] = 0.0;
             count++;
@@ -1612,20 +1645,20 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
       }
 
       // error check if any surf now assigned to inactive motion
-      // b/c specification of types for "none" was incomplete
+      // b/c specification of mols for "none" was incomplete
 
       int imotion;
 
       count = 0;
       if (dimension == 2) {
         for (int i = 0; i < nlines; i++) {
-          imotion = type2motion[lines[i].type];
+          imotion = mol2motion[lines[i].mol];
           if (imotion < 0) continue;
           if (!motions[imotion].active) count++;
         }
       } else {
         for (int i = 0; i < ntris; i++) {
-          imotion = type2motion[tris[i].type];
+          imotion = mol2motion[tris[i].mol];
           if (imotion < 0) continue;
           if (!motions[imotion].active) count++;
         }
@@ -1644,8 +1677,8 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
       // if no anymove, deallocate memory and turn off INITIAL_INTEGRATE
 
       anymove = 0;
-      for (int i = 1; i <= maxsurftype; i++)
-        if (type2motion[i] >= 0) anymove = 1;
+      for (int i = 1; i <= maxsurfmol; i++)
+        if (mol2motion[i] >= 0) anymove = 1;
 
       anymove_variable = 0;
       for (int i = 0; i < nmotion; i++)
@@ -1668,7 +1701,7 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
         next_reneighbor = -1;
       }
 
-      delete [] stypes;
+      delete [] smols;
       return 3;
     }
 
@@ -1690,10 +1723,10 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
 
     motions[imotion].active = 0;
 
-    // use stypes to set type2motion
+    // use smols to set mol2motion
 
-    for (int itype = 1; itype <= maxsurftype; itype++)
-      if (stypes[itype]) type2motion[itype] = imotion;
+    for (int imol = 1; imol <= maxsurfmol; imol++)
+      if (smols[imol]) mol2motion[imol] = imotion;
 
     // if first motion, allocate points and surf memory
 
@@ -1719,17 +1752,17 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
     force_reneighbor = 1;
     next_reneighbor = -1;
 
-    // intialize points and surfs in stypes
+    // intialize points and surfs in smols
 
-    int itype,p1,p2,p3;
+    int imol,p1,p2,p3;
     double omega;
     double *runit;
     int count = 0;
 
     for (int i = 0; i < nsurf; i++) {
-      if (dimension == 2) itype = lines[i].type;
-      else itype = tris[i].type;
-      if (!stypes[itype]) continue;
+      if (dimension == 2) imol = lines[i].mol;
+      else imol = tris[i].mol;
+      if (!smols[imol]) continue;
       count++;
 
       if (dimension == 2) {
@@ -1772,8 +1805,41 @@ int FixSurfaceGlobal::modify_param(int narg, char **arg)
     utils::logmesg(lmp,"Fix_modify move:\n");
     utils::logmesg(lmp,"  turned on motion for {} surfs\n", count);
 
-    delete [] stypes;
+    delete [] smols;
     return 2 + styleargs;
+  }
+
+  // mol/region keyword
+
+  if (strcmp(arg[0],"mol/region") == 0) {
+    if (narg < 3) utils::missing_cmd_args(FLERR, "fix surface/global modify mol/region", error);
+
+    int smol = utils::inumeric(FLERR,arg[1],false,lmp);
+    if ((smol <= 0) || (smol > maxsurfmol))
+      error->all(FLERR,"Invalid fix_modify mol/region surf mol");
+
+    auto region = domain->get_region_by_id(arg[2]);
+    if (!region) error->all(FLERR,"Fix_modify mol/region region {} does not exist", arg[2]);
+
+    int count = 0;
+    if (dimension == 2) {
+      for (int i = 0; i < nlines; i++)
+        if (region->match(xsurf[i][0],xsurf[i][1],xsurf[i][2])) {
+          lines[i].mol = smol;
+          count++;
+        }
+    } else {
+      for (int i = 0; i < ntris; i++)
+        if (region->match(xsurf[i][0],xsurf[i][1],xsurf[i][2])) {
+          tris[i].mol = smol;
+          count++;
+        }
+    }
+
+    utils::logmesg(lmp,"Fix_modify mol/region:\n");
+    utils::logmesg(lmp,"  {} surfs assigned to mol {}\n",count,smol);
+
+    return 3;
   }
 
   // type/region keyword
@@ -2454,8 +2520,8 @@ void FixSurfaceGlobal::connectivity2d_complete()
   // determine whether pts are external based on connectivity
 
   for (int i = 0; i < nsurf; i++) {
-    connect2d[i].external_pt[0] = INTERIOR;
-    connect2d[i].external_pt[1] = INTERIOR;
+    connect2d[i].external_pt[0] = INTERNAL;
+    connect2d[i].external_pt[1] = INTERNAL;
   }
 
   for (int i = 0; i < nsurf; i++) {
@@ -2821,7 +2887,7 @@ void FixSurfaceGlobal::connectivity3d_complete()
 
   for (int i = 0; i < nsurf; i++)
     for (int a = 0; a < 3; a++)
-      connect3d[i].external_edge[a] = INTERIOR;
+      connect3d[i].external_edge[a] = INTERNAL;
 
   for (int i = 0; i < nsurf; i++) {
     // external edge if there's a nonflat connection
@@ -4334,7 +4400,7 @@ double FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
     //   note this does not weight unconnected
     if (external == EXTERNAL) {
       contact_surfs[n].weight_contribution = w_ext;
-    } else if (external == INTERIOR) {
+    } else if (external == INTERNAL) {
       contact_surfs[n].weight_contribution = w_int;
     }
 

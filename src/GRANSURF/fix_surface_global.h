@@ -73,6 +73,7 @@ class FixSurfaceGlobal : public FixSurface {
   // per-surf properties
 
   int maxsurftype;
+  int maxsurfmol;
   double **xsurf, **vsurf, **omegasurf, *radsurf;
 
   // granular models
@@ -121,8 +122,8 @@ class FixSurfaceGlobal : public FixSurface {
   int anymove;               // 1 if any surf motion is enabled
   int anymove_variable;      // 1 if any surf motion is style VARIABLE
 
-  int *type2motion;    // assingment of surf types (1 to Ntype) to motions
-                       // -1 = non-moving surf type
+  int *mol2motion;    // assingment of surf mols (1 to Nmol) to motions
+                       // -1 = non-moving surf mol
 
   double **points_original, **xsurf_original;
   double **points_lastneigh;

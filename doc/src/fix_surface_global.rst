@@ -20,8 +20,9 @@ Syntax
          *source* = *mol* or *stl*
             *mol* arg = template-ID
                template-ID = ID of molecule template specified in a separate :doc:`molecule <molecule>` command, which defines a set of triangles or lines
-            *stl* args = stype stlfile
+            *stl* args = stype smol stlfile
                stype = numeric type assigned to all triangles in STL file
+               smol = numeric molecule ID assigned to all triangles in STL file
                stlfile = STL filename which defines a set of triangles
 
 * model = one or more model keywords can be specified
@@ -47,8 +48,10 @@ Syntax
 
   .. parsed-literal::
 
-       *smax* value = smaxtype
+       *smaxtype* value = smaxtype
          smaxtype = maximum surface type allowed
+       *smaxmol* value = smaxmol
+         smaxmol = maximum surface molecule ID allowed
        *flat* value = maxangle
          maxangle = maximum angle (degrees) between a pair of connected triangles/lines for a flat connection
        *temperature* value = Tsurf
@@ -62,7 +65,7 @@ Examples
    molecule lines surf.line
    fix 1 all surface/global input mol linesurf model 1 1 hooke 4000.0 NULL 100.0 NULL 0.5 1
 
-   fix 1 all surface/global input stl 1 object.stl model * 1 hooke/history 4000.0 NULL 100.0 NULL 0.5 1
+   fix 1 all surface/global input stl 1 1 object.stl model * 1 hooke/history 4000.0 NULL 100.0 NULL 0.5 1
 
 Description
 """""""""""
@@ -113,11 +116,12 @@ An STL (stereolithography) file defines a set of triangles.  For use
 with this command, the *source* argument of the *input* keyword is
 *stl*.  The *stype* argument is the numeric type assigned to all the
 triangles from the file.  Note that STL files do not contain types or
-other flags for each triangle.  The *stlfile* argument is the name of
-the STL file.  It can be in text or binary format; this command
-auto-detects the format.  Note that STL files cannot be used for 2d
-simulations since they only define triangles.  Each triangle from an
-STL file is assigned a molecule ID = 1.
+other flags for each triangle.  The *smol* argument is the numeric
+molecule ID assigned to all triangles in the file. The *stlfile*
+argument is the name of the STL file.  It can be in text or binary
+format; this command auto-detects the format. One triangle particle
+is created for each triangle in the STL file(s).  Note that STL files
+cannot be used for 2d simulations since they only define triangles.
 
 This `Wikipedia page
 <https://en.wikipedia.org/wiki/STL_(file_format)>`_ describes the
@@ -131,15 +135,16 @@ keyword, each with a *source* argument as either *mol* or *stl*.  The
 surfaces used by this command are the union of the triangles and lines
 from all the input keywords.
 
-Once surfaces are defined, this command calculates their connectivity.
-Two triangles are "connected" if they are the same type and have a
-single corner point in common or an edge in common (2 corner points).
-Two line segments are "connected" if the they have an end point in
-common.  More technical details on connectivity and its significance
-for granular surface simulations is given on :doc:`Howto granular
-surfaces <Howto_granular_surfaces>` doc page.  In brief, a pair of
-connected surfaces interact with a particle which contacts both of
-them simultaneously according to a set of rules which are designed to
+Once all the distributed triangle/line particles are defined, this
+command calculates their connectivity.  Two triangles are "connected"
+if they are in the same molecule and have a single corner point in common
+or an edge in common (2 corner points).  Two line segments are "connected"
+if they are in the same molecule and they have an end point in common.
+More technical details on connectivity and its significance for granular
+surface simulations is given on :doc:`Howto granular surfaces
+<Howto_granular_surfaces>` doc page.  In brief, a pair of connected
+surfaces interact with a particle which contacts both of them
+simultaneously according to a set of rules which are designed to
 generate physically sensible forces on the particle.
 
 Note that there is no requirement that all the surfaces be connected
@@ -219,12 +224,19 @@ page.
 
 These are the optional keywords and values.
 
-The *smax* keyword sets the maximum value *smaxtype* of a surface type
-which can be used.  By default, this is the maximum type of any
-surface defined by the *input* keyword(s).  If the :doc:`fix_modify
+The *smaxtype* keyword sets the maximum value of a surface type which
+can be used.  By default, this is the maximum type of any surface
+defined by the *input* keyword(s).  If the :doc:`fix_modify
 type/region <fix_modify>` command (described below) will be used later
 to change a surface type to a larger value than the default, then the
-*smax* keyword can allow this.
+*smaxtype* keyword can allow this.
+
+The *smaxmol* keyword sets the maximum value of a surface molecule ID
+which can be used.  By default, this is the maximum molecule ID of any
+surface defined by the *input* keyword(s).  If the :doc:`fix_modify
+mol/region <fix_modify>` command (described below) will be used later
+to change a surface type to a larger value than the default, then the
+*smaxmol* keyword can allow this.
 
 The *flat* keyword sets a *maxangle* threshold for the angle (in
 degrees) between two connected surfaces (triangles or line segments)
@@ -275,29 +287,30 @@ Restart, fix_modify, output, run start/stop, minimize info
 No information about this fix is written to :doc:`binary restart files
 <restart>`.
 
-This fix defines two new keywords for the doc:`fix_modify
-<fix_modify>` command, *move* and *type/region*.  Because they are
-specific to this command, they are only described here, not on the
-doc:`fix_modify <fix_modify>` doc page.  Both keywords can be used
-multiple times.  In the description that follows, a surface means a
-triangle (3d) or line segment (2d).
+This fix defines three new keywords for the doc:`fix_modify
+<fix_modify>` command, *move*, *type/region*, and *mol/region*.
+Because they are specific to this command, they are only described
+here, not on the doc:`fix_modify <fix_modify>` doc page.  All keywords
+can be used multiple times.  In the description that follows, a
+surface means a triangle (3d) or line segment (2d).
 
 The *move* keyword can be used to make all or a subset of the surfaces
 move in a prescribed manner, similar to the :doc:`fix move <fix_move>`
 command.  The *type/region* keyword can be used to change the types of
-surfaces which are within a geometric region.  Their syntax is as follows:
+surfaces which are within a geometric region.  The *mol/region* keyword
+similiarly changes the molecule ID of surfaces. Their syntax is as follows:
 
 .. code-block:: LAMMPS
 
    fix_modify fix-ID keyword values ...
 
 * fix-ID = ID of the fix to modify
-* keyword (specific to this fix) = *move* or *type/region*
+* keyword (specific to this fix) = *move* or *type/region* or *mol/region*
 
   .. parsed-literal::
 
-       *move* values = stype mstyle args
-          stype =  numeric surface type(s) (see comma-separated, asterisk form below)
+       *move* values = smol mstyle args
+          smol =  numeric surface molecule ID(s) (see comma-separated, asterisk form below)
           mstyle = *none* or *linear* or *wiggle* or *rotate* or *transrot* or *variable*
            *none* args = none
            *linear* args = Vx Vy Vz
@@ -308,34 +321,37 @@ surfaces which are within a geometric region.  Their syntax is as follows:
        *type/region* values = stype region-ID
          stype = numeric surface type
          region-ID = ID of a region previously defined by the :doc:`region <region>` command
+       *mol/region* values = smol region-ID
+         smol = numeric surface molecule ID
+         region-ID = ID of a region previously defined by the :doc:`region <region>` command
 
-The *stype* argument can specify one or more surface types.  It must
-specify all the surface types within a connected object(s).  If an
-object is composed of surfaces of 2 or more types, it is an error to
-use the *move* keyword and not specify all those types, since this
-would break the connections.  Note that LAMMPS does NOT check that
-this requirement is met.  It is likewise an error to use the *move*
-keyword multiple times to induce motion which overlaps surfaces in
-ways that violate the surface geometry restrictions explained on the
-:doc:`Howto granular surfaces <Howto_granular_surfaces>` doc page.
-Again, LAMMPS does NOT check that this requirement is met.
+The *smol* argument can specify one or more surface molecule IDs.
+It must specify all the surface molecule IDs within a connected
+object(s).  If an object is composed of surfaces of 2 or more
+molecules, it is an error to use the *move* keyword and not specify
+all those molecule IDs, since this would break the connections.  Note
+that LAMMPS does NOT check that this requirement is met.  It is likewise
+an error to use the *move* keyword multiple times to induce motion which
+overlaps surfaces in ways that violate the surface geometry restrictions
+explained on the :doc:`Howto granular surfaces <Howto_granular_surfaces>`
+doc page. Again, LAMMPS does NOT check that this requirement is met.
 
-The general format of *stype* is st,st,...,st where one or more *st*
-sub-arguments are separated by commas.  A single *st* sub-argument is
+The general format of *smol* is sm,sm,...,sm where one or more *sm*
+sub-arguments are separated by commas.  A single *sm* sub-argument is
 either a single numeric value or contains a wildcard asterisk.  The
 asterisk is used in place of or in conjunction with numeric arguments
-to specify multiple type values.  This takes the form "\*" or "\*n" or
-"n\*" or "m\*n".  If :math:`N` is the number of atom types, then an
-asterisk with no numeric values means all types from 1 to :math:`N`.
-A leading asterisk means all types from 1 to n (inclusive).  A
-trailing asterisk means all types from n to :math:`N` (inclusive).  A
-middle asterisk means all types from m to n (inclusive).
+to specify multiple molecule values.  This takes the form "\*" or "\*n"
+or "n\*" or "m\*n".  If :math:`N` is the number of molecules, then an
+asterisk with no numeric values means all molecules from 1 to :math:`N`.
+A leading asterisk means all molecules from 1 to n (inclusive).  A
+trailing asterisk means all molecules from n to :math:`N` (inclusive).
+A middle asterisk means all molecules from m to n (inclusive).
 
 The *mstyle* argument is one of the listed styles above.  The *none*
 style turns off motion which was previously enabled, e.g. stops the
-rotation of an object.  Again, the list of surface types must include
-all the surfaces in a connected object.  The other *move* styles and
-their effects on motion are the same as those defined by the :doc:`fix
+rotation of an object.  Again, the list of surface molecule IDs must
+include all the surfaces in a connected object.  The other *move* styles
+and their effects on motion are the same as those defined by the :doc:`fix
 move <fix_move>` command.  Their arguments are also the same as those
 documented by the :doc:`fix move <fix_move>` command.
 
@@ -359,15 +375,20 @@ surfaces after they have been initialized by the *input* keyword.
 This is most useful for STL triangles since STL files do not allow for
 assignment of types to individual triangles.
 
-The *stype* argument is a single numeric value, which must be between
-1 and maxtype inclusive.  Maxtype is either the maximum type of all
+The *mol/region* keyword can be used to re-assign surface molecule IDs
+to surfaces after they have been initialized by the *input* keyword.
+This is most useful for STL triangles since STL files do not allow for
+assignment of molecules to individual triangles.
+
+The *smol* argument is a single numeric value, which must be between
+1 and maxmol inclusive.  Maxmol is either the maximum molecule ID of all
 surfaces read in by the *input* keyword or the setting of the optional
-*smax* keyword.  The *region-ID* is the ID of a geometric region
+*smaxmol* keyword.  The *region-ID* is the ID of a geometric region
 defined by the :doc:`region <region>` command.  Note that regions can
 be the inside or outside of a geometric object, such as a sphere or
 block.  The geometric center point of a triangle or line segment is
 used to determine where a surface is in the region or not.  If it is,
-its type is reset to *stype*.
+its molecule ID is reset to *smol*.
 
 Examples for both keywords are as follows:
 
@@ -409,5 +430,6 @@ Related commands
 Default
 """""""
 
-The keyword defaults are smax = max type of all surfaces defined by
-the input keyword(s), flat = one degree, temperature = none.
+The keyword defaults are smaxtype (mol) = max type (molecule ID) of all
+surfaces defined by the input keyword(s), flat = one degree,
+temperature = none.

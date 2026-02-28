@@ -87,8 +87,8 @@ void FixSurface::extract_from_molecule(char *molID,
         lines[iline].mol = molline[i];
         lines[iline].type = typeline[i];
 
-        // include type so surfs of different type have separate points that can move
-        auto key = std::make_tuple(epts[i][0],epts[i][1],0.0,typeline[i]);
+        // only lines in the same molecule are connected
+        auto key = std::make_tuple(epts[i][0],epts[i][1],0.0,molline[i]);
         if (hash->find(key) == hash->end()) {
           if (npoints == maxpoints) {
             maxpoints += DELTA;
@@ -103,7 +103,7 @@ void FixSurface::extract_from_molecule(char *molID,
           npoints++;
         } else lines[iline].p1 = (*hash)[key];
 
-        key = std::make_tuple(epts[i][2],epts[i][3],0.0,typeline[i]);
+        key = std::make_tuple(epts[i][2],epts[i][3],0.0,molline[i]);
         if (hash->find(key) == hash->end()) {
           if (npoints == maxpoints) {
             maxpoints += DELTA;
@@ -132,7 +132,8 @@ void FixSurface::extract_from_molecule(char *molID,
         tris[itri].mol = moltri[i];
         tris[itri].type = typetri[i];
 
-        auto key = std::make_tuple(cpts[i][0],cpts[i][1],cpts[i][2],typetri[i]);
+        // only tris in the same molecule are connected
+        auto key = std::make_tuple(cpts[i][0],cpts[i][1],cpts[i][2],moltri[i]);
         if (hash->find(key) == hash->end()) {
           if (npoints == maxpoints) {
             maxpoints += DELTA;
@@ -147,7 +148,7 @@ void FixSurface::extract_from_molecule(char *molID,
           npoints++;
         } else tris[itri].p1 = (*hash)[key];
 
-        key = std::make_tuple(cpts[i][3],cpts[i][4],cpts[i][5],typetri[i]);
+        key = std::make_tuple(cpts[i][3],cpts[i][4],cpts[i][5],moltri[i]);
         if (hash->find(key) == hash->end()) {
           if (npoints == maxpoints) {
             maxpoints += DELTA;
@@ -162,7 +163,7 @@ void FixSurface::extract_from_molecule(char *molID,
           npoints++;
         } else tris[itri].p2 = (*hash)[key];
 
-        key = std::make_tuple(cpts[i][6],cpts[i][7],cpts[i][8],typetri[i]);
+        key = std::make_tuple(cpts[i][6],cpts[i][7],cpts[i][8],moltri[i]);
         if (hash->find(key) == hash->end()) {
           if (npoints == maxpoints) {
             maxpoints += DELTA;
@@ -189,7 +190,7 @@ void FixSurface::extract_from_molecule(char *molID,
    identify unique points using hash
 ------------------------------------------------------------------------- */
 
-void FixSurface::extract_from_stlfile(char *filename, int stype,
+void FixSurface::extract_from_stlfile(char *filename, int stype, int smol,
                                       std::map<std::tuple<double,double,double,int>,int> *hash,
                                       int &npoints, int &maxpoints,
                                       Point *&points, int &ntris, Tri *&tris)
@@ -217,11 +218,11 @@ void FixSurface::extract_from_stlfile(char *filename, int stype,
 
   for (int itri_new = 0; itri_new < ntris_new; itri_new++) {
     int itri = itri_new + ntris_old;
-    tris[itri].mol = 1;
+    tris[itri].mol = smol;
     tris[itri].type = stype;
 
-    // include type so surfs of different type have separate points that can move
-    auto key = std::make_tuple(stltris[itri_new][0],stltris[itri_new][1],stltris[itri_new][2],stype);
+    // only tris in the same molecule are connected
+    auto key = std::make_tuple(stltris[itri_new][0],stltris[itri_new][1],stltris[itri_new][2],smol);
     if (hash->find(key) == hash->end()) {
       if (npoints == maxpoints) {
         maxpoints += DELTA;
@@ -236,7 +237,7 @@ void FixSurface::extract_from_stlfile(char *filename, int stype,
       npoints++;
     } else tris[itri].p1 = (*hash)[key];
 
-    key = std::make_tuple(stltris[itri_new][3],stltris[itri_new][4],stltris[itri_new][5],stype);
+    key = std::make_tuple(stltris[itri_new][3],stltris[itri_new][4],stltris[itri_new][5],smol);
     if (hash->find(key) == hash->end()) {
       if (npoints == maxpoints) {
         maxpoints += DELTA;
@@ -251,7 +252,7 @@ void FixSurface::extract_from_stlfile(char *filename, int stype,
       npoints++;
     } else tris[itri].p2 = (*hash)[key];
 
-    key = std::make_tuple(stltris[itri_new][6],stltris[itri_new][7],stltris[itri_new][8],stype);
+    key = std::make_tuple(stltris[itri_new][6],stltris[itri_new][7],stltris[itri_new][8],smol);
     if (hash->find(key) == hash->end()) {
       if (npoints == maxpoints) {
         maxpoints += DELTA;

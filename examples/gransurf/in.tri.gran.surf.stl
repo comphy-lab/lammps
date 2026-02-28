@@ -10,7 +10,7 @@ comm_modify     vel yes
 region          box block -7 7 -7 7 0 9 units box
 create_box      2 box
 
-fix             20 all surface/local input stl 2 surf.tri.stl
+fix             20 all surface/local input stl 2 1 surf.tri.stl
 
 pair_style      hybrid granular surf/granular
 pair_coeff      1 1 granular hooke 4000.0 100.0 &
