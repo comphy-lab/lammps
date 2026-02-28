@@ -1044,6 +1044,7 @@ void FixGCMC::attempt_atomic_insertion()
       atom->v[m][0] = random_unequal->gaussian()*sigma;
       atom->v[m][1] = random_unequal->gaussian()*sigma;
       atom->v[m][2] = random_unequal->gaussian()*sigma;
+      random_unequal->gaussian(); // this ensures exact restart
       modify->create_attribute(m);
 
       success = 1;
@@ -1449,6 +1450,7 @@ void FixGCMC::attempt_molecule_insertion()
     vnew[0] = random_equal->gaussian()*sigma;
     vnew[1] = random_equal->gaussian()*sigma;
     vnew[2] = random_equal->gaussian()*sigma;
+    random_unequal->gaussian(); // this ensures exact restart
 
     for (int i = 0; i < natoms_per_molecule; i++) {
       if (procflag[i]) {
@@ -1721,6 +1723,7 @@ void FixGCMC::attempt_atomic_insertion_full()
     atom->v[m][0] = random_unequal->gaussian()*sigma;
     atom->v[m][1] = random_unequal->gaussian()*sigma;
     atom->v[m][2] = random_unequal->gaussian()*sigma;
+    random_unequal->gaussian(); // this ensures exact restart
     if (charge_flag) atom->q[m] = charge;
     modify->create_attribute(m);
   }
@@ -2116,6 +2119,7 @@ void FixGCMC::attempt_molecule_insertion_full()
   vnew[0] = random_equal->gaussian()*sigma;
   vnew[1] = random_equal->gaussian()*sigma;
   vnew[2] = random_equal->gaussian()*sigma;
+  random_unequal->gaussian(); // this ensures exact restart
 
   for (int i = 0; i < natoms_per_molecule; i++) {
     double xtmp[3];
@@ -2521,6 +2525,13 @@ void FixGCMC::update_gas_atoms_list()
     }
   }
 
+  // sort local atoms on tags to ensure exact restart
+
+  tagint *tag = atom->tag;
+  std::sort(local_gas_list, local_gas_list + ngas_local,
+            [&tag](int i, int j) { return tag[i] < tag[j]; }
+            );
+
   MPI_Allreduce(&ngas_local,&ngas,1,MPI_INT,MPI_SUM,world);
   MPI_Scan(&ngas_local,&ngas_before,1,MPI_INT,MPI_SUM,world);
   ngas_before -= ngas_local;
@@ -2559,10 +2570,13 @@ double FixGCMC::memory_usage()
 
 void FixGCMC::write_restart(FILE *fp)
 {
+  int nglobalvals = 12;
+  int nlocalvals = comm->nprocs;
+  int ntotalvals = nglobalvals + nlocalvals;
+  double list[ntotalvals];
+  
   int n = 0;
-  double list[12];
   list[n++] = random_equal->state();
-  list[n++] = random_unequal->state();
   list[n++] = ubuf(next_reneighbor).d;
   list[n++] = ntranslation_attempts;
   list[n++] = ntranslation_successes;
@@ -2573,11 +2587,15 @@ void FixGCMC::write_restart(FILE *fp)
   list[n++] = ninsertion_attempts;
   list[n++] = ninsertion_successes;
   list[n++] = ubuf(update->ntimestep).d;
+  list[n++] = nlocalvals;
+  
+  double state = random_unequal->state();
+  MPI_Gather(&state, 1, MPI_DOUBLE, &list[n], 1, MPI_DOUBLE, 0, world);
 
   if (comm->me == 0) {
-    int size = n * sizeof(double);
-    fwrite(&size,sizeof(int),1,fp);
-    fwrite(list,sizeof(double),n,fp);
+    int size =  ntotalvals * sizeof(double);
+    fwrite(&size, sizeof(int), 1, fp);
+    fwrite(list, sizeof(double), ntotalvals, fp);
   }
 }
 
@@ -2593,9 +2611,6 @@ void FixGCMC::restart(char *buf)
   seed = static_cast<int> (list[n++]);
   random_equal->reset(seed);
 
-  seed = static_cast<int> (list[n++]);
-  random_unequal->reset(seed);
-
   next_reneighbor = (bigint) ubuf(list[n++]).i;
 
   ntranslation_attempts  = list[n++];
@@ -2610,6 +2625,15 @@ void FixGCMC::restart(char *buf)
   bigint ntimestep_restart = (bigint) ubuf(list[n++]).i;
   if (ntimestep_restart != update->ntimestep)
     error->all(FLERR,"Must not reset timestep when restarting fix gcmc");
+
+  // read stored state of RNG unique to this process
+  // if nprocs changed, use state of proc 0
+  
+  int nlocalvals = comm->nprocs;
+  int ntmp = list[n++];
+  if (nlocalvals == ntmp) n += comm->me;
+  seed = static_cast<int> (list[n]);
+  random_unequal->reset(seed);
 }
 
 void FixGCMC::grow_molecule_arrays(int nmolatoms) {
