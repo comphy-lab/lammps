@@ -447,12 +447,22 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
     b_fast[2] = -residual[2]; b_fast[3] = -residual[3];
 
     // Try Fast Solver
-    if (MathExtraSuperellipsoids::solve_4x4_robust_unrolled(A_fast, b_fast)) {
-        rhs[0] = b_fast[0]; rhs[1] = b_fast[1]; 
-        rhs[2] = b_fast[2]; rhs[3] = b_fast[3];
-        gauss_elim_solved = true;
+    gauss_elim_solved = MathExtraSuperellipsoids::solve_4x4_robust_unrolled(A_fast, b_fast);
+    
+    // check for divergence or numerical issues in the fast solver
+    // and fall back to regularized solver if necessary
+    bool fail0 = !std::isfinite(b_fast[0]) | (std::abs(b_fast[0]) > 1e30);
+    bool fail1 = !std::isfinite(b_fast[1]) | (std::abs(b_fast[1]) > 1e30);
+    bool fail2 = !std::isfinite(b_fast[2]) | (std::abs(b_fast[2]) > 1e30);
+    bool fail3 = !std::isfinite(b_fast[3]) | (std::abs(b_fast[3]) > 1e30);
+    if (fail0 | fail1 | fail2 | fail3) {
+        gauss_elim_solved = false;
     }
-    else {
+    
+    rhs[0] = b_fast[0]; rhs[1] = b_fast[1]; 
+    rhs[2] = b_fast[2]; rhs[3] = b_fast[3];
+    
+    if (!gauss_elim_solved) {
       // restore matrix
       for(int r=0; r<4; ++r) {
         for(int c=0; c<4; ++c) {
@@ -461,9 +471,9 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
       }
       b_fast[0] = -residual[0]; b_fast[1] = -residual[1]; 
       b_fast[2] = -residual[2]; b_fast[3] = -residual[3];
-
+       // enforce a minimum regularization to avoid zero pivots in edge cases (flat on flat)
       double trace = jacobian[0] + jacobian[5] + jacobian[10];
-      double diag_weight = TIKHONOV_SCALE * trace;
+      double diag_weight = std::fmax(TIKHONOV_SCALE * trace, TIKHONOV_SCALE);
       A_fast[0]  += diag_weight;
       A_fast[5]  += diag_weight;
       A_fast[10] += diag_weight;
@@ -604,8 +614,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
       X0[3] = X_line[3];
     }
 
-    if (converged)
-      break;
+    if (converged) break;
   }
 
   if (!converged){

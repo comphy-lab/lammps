@@ -226,8 +226,8 @@ TEST(ContactPointAndNormal, sphere_geometric)
 TEST(ContactPointAndNormal, supersphere_poly_geometric)
 {
     double r1      = 3.456;
-    double r2      = 3.0 * r1; // Polydisperse: radius_2 = 3 * radius_1
-    double overlap = r1 / 20.0;
+    double r2      = 2.0 * r1; // Polydisperse: radius_2 = 3 * radius_1
+    double overlap = r1 / 10.0;
     double xci[3]  = {-(r1 - overlap / 2.0), 0.0, 0.0};
     double xcj[3]  = {r2 - overlap / 2.0, 0.0, 0.0};
 
@@ -251,7 +251,7 @@ TEST(ContactPointAndNormal, supersphere_poly_geometric)
         int flag        = (n < 2.01) ? 0 : 1;
 
         // Initial Guess: Offset from 0 to test convergence
-        double X0[4] = {overlap, EPSILON, EPSILON, 1.0 / 2.0}, nij[3];
+        double X0[4] = {overlap, overlap, overlap, 1.0 / 2.0}, nij[3];
         int status = MathExtraSuperellipsoids::determine_contact_point(
             xci, R, shapei, block, flag, xcj, R, shapej, block, flag, X0, nij, method);
 

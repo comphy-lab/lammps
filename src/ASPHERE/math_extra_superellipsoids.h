@@ -165,7 +165,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
     p = 3;
   }
 
-  if (max_val < 0.0) return false;
+  if (max_val <= 0.0) return false;
   // 2. Swap Row 0 with Row p
   if (p != 0) {
     int row_offset = p * 4;
@@ -215,7 +215,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
     p = 3;
   }
 
-  if (max_val < 0.0) return false;
+  if (max_val <= 0.0) return false;
 
   // 2. Swap Row 1 with Row p
   if (p != 1) {
@@ -253,7 +253,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
     p = 3;
   }
 
-  if (max_val < 0.0) return false;
+  if (max_val <= 0.0) return false;
 
   // 2. Swap Row 2 with Row p
   if (p != 2) {
@@ -274,7 +274,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
 
   // --- BACKWARD SUBSTITUTION ---
   // Check last pivot
-  if (std::abs(A[15]) < 0.0) return false;
+  if (std::abs(A[15]) <= 0.0) return false;
 
   double inv3 = 1.0 / A[15];
   b[3] *= inv3;

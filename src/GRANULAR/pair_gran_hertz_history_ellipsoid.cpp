@@ -426,9 +426,6 @@ void PairGranHertzHistoryEllipsoid::compute(int eflag, int vflag)
         tor2 = cr1[2] * fx - cr1[0] * fz;
         tor3 = cr1[0] * fy - cr1[1] * fx;
 
-        tor1 *= factor_lj;
-        tor2 *= factor_lj;
-        tor3 *= factor_lj;
         torque[i][0] += tor1;
         torque[i][1] += tor2;
         torque[i][2] += tor3;

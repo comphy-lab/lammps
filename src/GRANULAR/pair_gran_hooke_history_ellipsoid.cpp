@@ -456,16 +456,12 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
         f[i][0] += fx;
         f[i][1] += fy;
         f[i][2] += fz;
-
         // torques are cross prodcuts of branch vector with the entire force at contact point
 
         tor1 = cr1[1] * fz - cr1[2] * fy;
         tor2 = cr1[2] * fx - cr1[0] * fz;
         tor3 = cr1[0] * fy - cr1[1] * fx;
 
-        tor1 *= factor_lj;
-        tor2 *= factor_lj;
-        tor3 *= factor_lj;
         torque[i][0] += tor1;
         torque[i][1] += tor2;
         torque[i][2] += tor3;
