@@ -346,7 +346,7 @@ FixNH::FixNH(LAMMPS *lmp, int narg, char **arg) :
       else if (strcmp(arg[iarg+1], "yz") == 0) p_isoch[1] = p_isoch[2] = 1;
       else if (strcmp(arg[iarg+1], "xz") == 0) p_isoch[0] = p_isoch[2] = 1;
       else error->all(FLERR,"Illegal fix {} isochoric option: {}", style, arg[iarg+1]);
-      isochoric = true;
+      isochoric = 1;
       iarg += 2;
     } else if (strcmp(arg[iarg],"fixedpoint") == 0) {
       if (iarg+4 > narg)
@@ -530,8 +530,11 @@ FixNH::FixNH(LAMMPS *lmp, int narg, char **arg) :
     if (p_flag[4]) box_change |= BOX_CHANGE_XZ;
     if (p_flag[5]) box_change |= BOX_CHANGE_XY;
     // In the isochoric case, dimensions can change size while not being
-    // barostated to maintain volume/surface
+    // barostated to maintain volume/area
     if (isochoric) {
+      if (dimension == 3) vol_start = domain->xprd * domain->yprd * domain->zprd;
+      else vol_start = domain->xprd * domain->yprd;
+
       if (p_isoch[0]) box_change |= BOX_CHANGE_X;
       if (p_isoch[1]) box_change |= BOX_CHANGE_Y;
       if (dimension == 3 && p_isoch[2]) box_change |= BOX_CHANGE_Z;
@@ -1198,24 +1201,24 @@ void FixNH::remap()
 
   // scale diagonal components
   // scale tilt factors with cell, if set
-  isofac = 1.;
+  if (isochoric) isofac = vol_start;
 
   if (p_flag[0]) {
     oldlo = domain->boxlo[0];
     oldhi = domain->boxhi[0];
     expfac = exp(dto*omega_dot[0]);
-    isofac /= expfac;
     domain->boxlo[0] = (oldlo-fixedpoint[0])*expfac + fixedpoint[0];
     domain->boxhi[0] = (oldhi-fixedpoint[0])*expfac + fixedpoint[0];
+    if (isochoric) isofac /= domain->boxhi[0] - domain->boxlo[0];
   }
 
   if (p_flag[1]) {
     oldlo = domain->boxlo[1];
     oldhi = domain->boxhi[1];
     expfac = exp(dto*omega_dot[1]);
-    isofac /= expfac;
     domain->boxlo[1] = (oldlo-fixedpoint[1])*expfac + fixedpoint[1];
     domain->boxhi[1] = (oldhi-fixedpoint[1])*expfac + fixedpoint[1];
+    if (isochoric) isofac /= domain->boxhi[1] - domain->boxlo[1];
     if (scalexy) h[5] *= expfac;
   }
 
@@ -1223,25 +1226,30 @@ void FixNH::remap()
     oldlo = domain->boxlo[2];
     oldhi = domain->boxhi[2];
     expfac = exp(dto*omega_dot[2]);
-    isofac /= expfac;
     domain->boxlo[2] = (oldlo-fixedpoint[2])*expfac + fixedpoint[2];
     domain->boxhi[2] = (oldhi-fixedpoint[2])*expfac + fixedpoint[2];
+    if (isochoric) isofac /= domain->boxhi[2] - domain->boxlo[2];
     if (scalexz) h[4] *= expfac;
     if (scaleyz) h[3] *= expfac;
   }
 
   if (isochoric) {
+
+    // We remove remaining dimensions so that only scale factors are left
+    // in isofac
+    for (int i = 0; i < 3; i++) {
+      if (p_isoch[i] || !p_flag[i]) isofac /= (domain->boxhi[i]-domain->boxlo[i]);
+    }
     int iso_sum = p_isoch[0] + p_isoch[1] + p_isoch[2];
     if (iso_sum == 2) isofac = sqrt(isofac);
+
     if (p_isoch[0]) {
-      // Scale x
       oldlo = domain->boxlo[0];
       oldhi = domain->boxhi[0];
       domain->boxlo[0] = (oldlo-fixedpoint[0])*isofac + fixedpoint[0];
       domain->boxhi[0] = (oldhi-fixedpoint[0])*isofac + fixedpoint[0];
     }
     if (p_isoch[1]) {
-      // Scale y
       oldlo = domain->boxlo[1];
       oldhi = domain->boxhi[1];
       domain->boxlo[1] = (oldlo-fixedpoint[1])*isofac + fixedpoint[1];
@@ -1353,8 +1361,9 @@ int FixNH::size_restart_global()
   int nsize = 2;
   if (tstat_flag) nsize += 1 + 2*mtchain;
   if (pstat_flag) {
-    nsize += 16 + 2*mpchain;
+    nsize += 17 + 2*mpchain;
     if (deviatoric_flag) nsize += 6;
+    if (isochoric) nsize += 4;
   }
 
   return nsize;
@@ -1410,6 +1419,13 @@ int FixNH::pack_restart_data(double *list)
       list[n++] = h0_inv[4];
       list[n++] = h0_inv[5];
     }
+    list[n++] = isochoric;
+    if (isochoric) {
+        list[n++] = p_isoch[0];
+        list[n++] = p_isoch[1];
+        list[n++] = p_isoch[2];
+        list[n++] = vol_start;
+    }
   }
 
   return n;
@@ -1464,6 +1480,13 @@ void FixNH::restart(char *buf)
       h0_inv[3] = list[n++];
       h0_inv[4] = list[n++];
       h0_inv[5] = list[n++];
+    }
+    flag = static_cast<int> (list[n++]);
+    if (flag) {
+      p_isoch[0] = list[n++];
+      p_isoch[1] = list[n++];
+      p_isoch[2] = list[n++];
+      vol_start = list[n++];
     }
   }
 }

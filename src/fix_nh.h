@@ -123,6 +123,7 @@ class FixNH : public Fix {
   int flipflag;    // 1 if box flips are invoked as needed
   int isochoric;   // 1 if isochoric NPT simulation
   int p_isoch[3];  // 1 if dimension is used for isochoric simulation
+  double vol_start; // reference volume for isochoric simulation
 
   int pre_exchange_flag;    // set if pre_exchange needed for box flips
 
