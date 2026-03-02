@@ -1600,6 +1600,8 @@ pre-compiled version already present on your system.
          -D PKG_ML-RUNNER=yes       # yes (default): Download and build RuNNer automatically.
          -D DOWNLOAD_RUNNER=yes     # yes (default): clone the stable version of the official RuNNer repo.
                                     # no: Use a pre-compiled RuNNer library.
+         -D RUNNER_SHARED_LIB=yes    # no: (default): Look for static library (.a).
+                                     # yes: Look for shared library (.so).
 
       **Manual Library Configuration (if DOWNLOAD_RUNNER=no):**
 
@@ -1609,8 +1611,6 @@ pre-compiled version already present on your system.
                                      # (default: $HOME/.local/lib)
          -D RUNNER_LIB_NAME=name     # Filename of the library (without extension).
                                      # (default: libRuNNer_mpi)
-         -D RUNNER_SHARED_LIB=yes    # yes (default): Look for shared library (.so).
-                                     # no: Look for static library (.a).
 
       **FFT Library Selection:**
 
