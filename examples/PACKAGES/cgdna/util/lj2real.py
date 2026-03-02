@@ -64,9 +64,9 @@ class ConversionFactors:
         self.mass_conv_factor = 100.0
         self.length_conv_factor = 8.518
         self.time_conv_factor = 1705.5321720702023
-        self.vel_conv_factor = 0.004992576592480432
-        self.angular_mom_conv_factor = 4.251178968497088
-        self.density_conv_factor = 0.2689646108022295
+        self.vel_conv_factor = 0.004994335574251124
+        self.angular_mom_conv_factor = 4.254175042147109
+        self.density_conv_factor = 0.2686805266223118
 
         self.oxdna_fene_string = "11.92337812042065 2.1295 6.409795"
         self.oxdna_excv_string = "11.92337812042065 5.9626 5.74965 11.92337812042065 4.38677 4.259 11.92337812042065 2.81094 2.72576"
