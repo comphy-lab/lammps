@@ -117,7 +117,7 @@ if(DOWNLOAD_RUNNER)
   )
 
   ExternalProject_Add(runner_build
-    GIT_REPOSITORY "git@gitlab.com:runner-suite/runner2.git"
+    GIT_REPOSITORY "https://gitlab.com/runner-suite/runner2.git"
     GIT_TAG "main"
     GIT_SHALLOW YES
     GIT_PROGRESS YES
