@@ -7,7 +7,7 @@ option(DOWNLOAD_RUNNER "Force download and build of RuNNer. If this is OFF\
   be set to meaningful values." ON
 )
 option(RUNNER_SHARED_LIB "Use pre-compiled shared/dynamic RuNNer library. Only \
-  considered if DOWNLOAD_RUNNER is OFF." ON
+  considered if DOWNLOAD_RUNNER is OFF." OFF
 )
 set(RUNNER_LIB_DIR "" CACHE PATH "Directory containing \
   the RuNNer library. Only considered if DOWNLOAD_RUNNER is OFF."
@@ -97,17 +97,27 @@ else() # Fallback to KISSFFT
 endif()
 
 if(DOWNLOAD_RUNNER)
-  message(STATUS "DOWNLOAD_RUNNER is ON. Building RuNNer from source as a shared library.")
-
   # Include ExternalProject module
   include(ExternalProject)
 
+  if(RUNNER_SHARED_LIB)
+    set(RUNNER_LIB_EXT ".so")
+    set(RUNNER_LIB_TYPE SHARED)
+  else()
+    set(RUNNER_LIB_EXT ".a")
+    set(RUNNER_LIB_TYPE STATIC)
+  endif()
+
+  message(STATUS "DOWNLOAD_RUNNER is ON. Building RuNNer from source as a ${RUNNER_LIB_TYPE} library.")
+
   # Force using the shared library. RuNNer's cmake build always produces libRuNNer_mpi.so.
   if(BUILD_MPI)
-    set(RUNNER_LIB_FULL_NAME "libRuNNer_mpi.so")
+    set(RUNNER_LIB_NAME "libRuNNer_mpi")
   else()
-    set(RUNNER_LIB_FULL_NAME "libRuNNer.so")
+    set(RUNNER_LIB_NAME "libRuNNer")
   endif()
+
+  set(RUNNER_LIB_FULL_NAME ${RUNNER_LIB_NAME}${RUNNER_LIB_EXT})
 
   # Add any custom CMake variables required by the RuNNer build system here.
   set(RUNNER_CMAKE_ARGS
@@ -129,7 +139,7 @@ if(DOWNLOAD_RUNNER)
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
       -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/runner_install
-      -DBUILD_SHARED_LIB=yes
+      -DBUILD_SHARED_LIB=${RUNNER_SHARED_LIB}
       ${RUNNER_CMAKE_ARGS}
 
     # Define the build and install steps
@@ -141,7 +151,7 @@ if(DOWNLOAD_RUNNER)
   )
 
   # Create an IMPORTED library target for RuNNer
-  add_library(RuNNer::RuNNer STATIC IMPORTED)
+  add_library(RuNNer::RuNNer ${RUNNER_LIB_TYPE} IMPORTED)
   set_target_properties(RuNNer::RuNNer PROPERTIES
     IMPORTED_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/runner_install/RuNNer/lib/${RUNNER_LIB_FULL_NAME}"
   )
