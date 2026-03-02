@@ -58,15 +58,15 @@ class ConversionFactors:
 
     def __init__(self, invert: bool = False):
         self.inverted = False
-        self.temp_conv_factor = 3000.038822
-        self.energy_conv_factor = 5.961689060210325
-        self.kT_conv_factor = 0.001987204155
-        self.mass_conv_factor = 100.0277580236
+        self.temp_conv_factor = 3000.0
+        self.energy_conv_factor = 5.961612775922496
+        self.kT_conv_factor = 0.0019872042586408316
+        self.mass_conv_factor = 100.0
         self.length_conv_factor = 8.518
-        self.time_conv_factor = 1706.0
-        self.vel_conv_factor = 0.004992966002344666
-        self.angular_mom_conv_factor = 4.254188991883894
-        self.density_conv_factor = 0.2687551067436886
+        self.time_conv_factor = 1705.5321720702023
+        self.vel_conv_factor = 0.004992576592480432
+        self.angular_mom_conv_factor = 4.251178968497088
+        self.density_conv_factor = 0.2689646108022295
 
         self.oxdna_fene_string = "11.92337812042065 2.1295 6.409795"
         self.oxdna_excv_string = "11.92337812042065 5.9626 5.74965 11.92337812042065 4.38677 4.259 11.92337812042065 2.81094 2.72576"
