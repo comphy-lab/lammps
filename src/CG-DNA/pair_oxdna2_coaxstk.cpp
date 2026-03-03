@@ -184,7 +184,8 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
   tagint *id3p = atom->id3p;
   tagint *id5p = atom->id5p;
 
-  int a,b,ia,ib,anum,bnum,atype,aktype,btype,bktype,alocal,blocal;
+  int a,b,ia,ib,anum,bnum,atype,btype,alocal,blocal;
+  double k_cxst_ab;
 
   double f2,f4f6t1,f4t4,f4t5,f4t6;
   double df2,df4f6t1,df4t4,df4t5,df4t6,rsint;
@@ -206,7 +207,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
 
     a = alist[ia];
     atype = type[a];
-    aktype = atype;
+
     alocal = atom->map(tag[a]);
 
     ax[0] = nxyz_xtrct[alocal][0];
@@ -227,16 +228,8 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       b = blist[ib];
       factor_lj = special_lj[sbmask(b)]; // = 0 for nearest neighbors
       b &= NEIGHMASK;
-
       btype = type[b];
-      bktype = btype;
 
-      // directionality test for base step-dependent coaxial stacking strength
-      // if a -> b is 3' -> 5' swap types
-      if(id3p[a]==-1 && id5p[b]==-1) {
-        aktype = btype;
-        bktype = atype;
-      }
       blocal = atom->map(tag[b]);
 
       bx[0] = nxyz_xtrct[blocal][0];
@@ -340,7 +333,21 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       if (cosphi3 >  1.0) cosphi3 =  1.0;
       if (cosphi3 < -1.0) cosphi3 = -1.0;
 
-      f2 = F2(r_stkstk, k_cxst[aktype][bktype], cut_cxst_0[atype][btype],
+      // directionality test for base step-dependent coaxial stacking strength
+      // if a -> b is 5' -> 3' retain types
+      if(id5p[a]==-1 && id3p[b]==-1) {
+        k_cxst_ab = k_cxst[atype][btype];
+      }
+      // if a -> b is 3' -> 5' swap types
+      else if(id3p[a]==-1 && id5p[b]==-1) {
+        k_cxst_ab = k_cxst[btype][atype];
+      }
+      // otherwise mix types
+      else {
+        k_cxst_ab = 0.5*(k_cxst[atype][btype]+k_cxst[btype][atype]);
+      }
+
+      f2 = F2(r_stkstk, k_cxst_ab, cut_cxst_0[atype][btype],
               cut_cxst_lc[atype][btype], cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype],
               cut_cxst_hi[atype][btype], b_cxst_lo[atype][btype], b_cxst_hi[atype][btype],
               cut_cxst_c[atype][btype]);
@@ -350,7 +357,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       // early rejection criterium
       if (evdwl != 0.0) {
 
-      df2 = DF2(r_stkstk, k_cxst[aktype][bktype], cut_cxst_0[atype][btype],
+      df2 = DF2(r_stkstk, k_cxst_ab, cut_cxst_0[atype][btype],
                 cut_cxst_lc[atype][btype], cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype],
                 cut_cxst_hi[atype][btype], b_cxst_lo[atype][btype], b_cxst_hi[atype][btype]);
 
