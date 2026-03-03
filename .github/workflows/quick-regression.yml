@@ -67,6 +67,7 @@ jobs:
               -D PKG_MANIFOLD=on \
               -D PKG_ML-PACE=on \
               -D PKG_ML-RANN=on \
+              -D PKG_ML-RUNNER=on \
               -D PKG_RHEO=on \
               -D PKG_PTM=on \
               -D PKG_PYTHON=on \
