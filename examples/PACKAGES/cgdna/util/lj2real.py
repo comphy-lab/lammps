@@ -526,7 +526,7 @@ def modify_inputfile(inputfile_path: str, conversion_factors: ConversionFactors)
 
         elif "timestep" in line:
             elements[1] = str(
-                round(float(elements[1]) * conversion_factors.time_conv_factor, 5)
+                round(float(elements[1]) * conversion_factors.time_conv_factor, 6)
             )
             lines[i] = " ".join(elements) + "\n"
             lines_changed += 1

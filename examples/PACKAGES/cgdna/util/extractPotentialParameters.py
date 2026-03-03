@@ -18,7 +18,6 @@ class ConversionFactors:
             self.unit = 'lj'
             self.temperature = 1.0
             self.energy = 1.0
-            self.kT = 1.0
             self.length = 1.0
 
 if units=='lj':

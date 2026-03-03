@@ -1,8 +1,8 @@
 #! /bin/bash
 
-DATE='2Mar26'
+DATE='10Dec25'
 REL_TOL=1e-8
-UNITS=lj
+UNITS=real
 
 LMPDIR=/Users/xwb17127/Work/code/lammps
 SRCDIR=$LMPDIR/src
