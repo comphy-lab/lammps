@@ -1,11 +1,15 @@
 #! /bin/bash
 
-DATE='10Dec25'
 REL_TOL=1e-8
-UNITS=real
+UNITS=lj
 
 LMPDIR=/Users/xwb17127/Work/code/lammps
 SRCDIR=$LMPDIR/src
+
+DAY=$(grep -e 'LAMMPS_VERSION' $SRCDIR/version.h | awk '{print $3}' | sed 's/"//g') 
+MONTH=$(grep -e 'LAMMPS_VERSION' $SRCDIR/version.h | awk '{print $4}' | sed 's/"//g') 
+YEAR=$(grep -e 'LAMMPS_VERSION' $SRCDIR/version.h | awk '{print $5}' | sed 's/"//g') 
+DATE=$DAY$MONTH$YEAR
 
 if [ $# -eq 1 ] && [ $1 = run ]; then
 
@@ -1237,7 +1241,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $4, $52, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1246,7 +1250,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $8, $56, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1255,7 +1259,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $12, $60, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1264,7 +1268,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $16, $64, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1273,7 +1277,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $20, $68, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1282,7 +1286,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $24, $72, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1291,7 +1295,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $28, $76, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1300,7 +1304,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $32, $80, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1309,7 +1313,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $36, $84, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1318,7 +1322,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $40, $88, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1327,7 +1331,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $44, $92, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
@@ -1336,7 +1340,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (diff < 0) diff = -diff
       if (diff > tol) {
         printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $48, $96, diff, tol
-        printf "# 1 MPI-task FAILED\n"
+        printf "# 4 MPI-tasks FAILED\n"
         failed = 1
         exit 1
       }
