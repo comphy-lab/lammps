@@ -24,8 +24,8 @@ neigh_modify every 10 delay 0 check yes
 
 read_data data.duplex4.4type
 
-mass * 315.8376           # sets per-type mass if not in data file
-set atom * mass 315.8376  # sets per-atom mass
+mass * 315.75           # sets per-type mass if not in data file
+set atom * mass 315.75  # sets per-atom mass
 
 group all type 1 4
 

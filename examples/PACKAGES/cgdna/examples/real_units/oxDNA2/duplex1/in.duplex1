@@ -22,7 +22,7 @@ neigh_modify every 1 delay 0 check yes
 
 read_data data.duplex1
 
-set atom * mass 315.8376
+set atom * mass 315.75
 
 group all type 1 4
 
