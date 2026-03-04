@@ -1452,7 +1452,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       }
     }
     END {
-      if (failed == 0) print "# 4 MPI-tasks passed\n"
+      if (failed == 0) print "# 4 MPI-tasks passed"
     }
   ' 2>&1 | tee -a $EXDIR/test.log
 
