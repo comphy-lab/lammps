@@ -17,8 +17,8 @@ AngleStyle(class2xe,AngleClass2xe);
 // clang-format on
 #else
 
-#ifndef LMP_ANGLE_CLASS2xe_H
-#define LMP_ANGLE_CLASS2xe_H
+#ifndef LMP_ANGLE_CLASS2XE_H
+#define LMP_ANGLE_CLASS2XE_H
 
 #include "angle.h"
 
