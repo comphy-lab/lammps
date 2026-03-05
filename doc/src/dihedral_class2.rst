@@ -164,10 +164,12 @@ The *class2xe* dihedral style uses the potential
 
 .. math::
 
-   E_{mbt}  = & \left[ 1 - e^{-\alpha_2 (r_{jk} - r_2)} \right] [ A_1 \cos (\phi) + A_2 \cos (2\phi) + A_3 \cos (3\phi) ] \\
-   E_{ebt}  = & \left[ 1 - e^{-\alpha_1 (r_{ij} - r_1)} \right] [ B_1 \cos (\phi) + B_2 \cos (2\phi) + B_3 \cos (3\phi) ] + \\
-              & \left[ 1 - e^{-\alpha_3 (r_{kl} - r_3)} \right] [ C_1 \cos (\phi) + C_2 \cos (2\phi) + C_3 \cos (3\phi) ] \\
-   E_{bb13} = & D \left[ 1 - e^{-\alpha (r_{ij} - r_1)} \right] \left[ 1 - e^{-\alpha (r_{kl} - r_3)} \right]
+   \begin{aligned}
+   E_{mbt}  &= \left[ 1 - e^{-\alpha_2 (r_{jk} - r_2)} \right] [ A_1 \cos (\phi) + A_2 \cos (2\phi) + A_3 \cos (3\phi) ] \\
+   E_{ebt}  &= \left[ 1 - e^{-\alpha_1 (r_{ij} - r_1)} \right] [ B_1 \cos (\phi) + B_2 \cos (2\phi) + B_3 \cos (3\phi) ] + \\
+             & \left[ 1 - e^{-\alpha_3 (r_{kl} - r_3)} \right] [ C_1 \cos (\phi) + C_2 \cos (2\phi) + C_3 \cos (3\phi) ] \\
+   E_{bb13} &= D \left[ 1 - e^{-\alpha (r_{ij} - r_1)} \right] \left[ 1 - e^{-\alpha (r_{kl} - r_3)} \right]
+   \end{aligned}
 
 where :math:`E_{mbt}` is a middle-bond-torsion term,
 :math:`E_{ebt}` is an end-bond-torsion term, and :math:`E_{bb13}` is a bond-bond-13 term.
