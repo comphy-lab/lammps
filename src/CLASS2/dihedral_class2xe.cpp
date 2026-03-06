@@ -411,7 +411,8 @@ void DihedralClass2xe::compute(int eflag, int vflag)
 
     for (i = 0; i < 4; i++)
       for (j = 0; j < 3; j++)
-        fabcd[i][j] += db*sumbtf*dphidr[i][j] + sumbte*dbonddr[1][i][j];
+        fabcd[i][j] += db*sumbtf*dphidr[i][j]
+                       + sumbte*(mbt_alpha2[type]*mbt_ralpha2)*dbonddr[1][i][j];
 
     // end-bond/torsion coupling
     // energy on bond1 (first bond)
