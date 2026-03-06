@@ -59,10 +59,15 @@ void FixNVEAsphereNoforce::init()
 
 /* ---------------------------------------------------------------------- */
 
-void FixNVEAsphereNoforce::initial_integrate(int /*vflag*/)
+template <bool is_super>
+void FixNVEAsphereNoforce::initial_integrate_templated()
 {
-  AtomVecEllipsoid::Bonus *bonus;
-  if (avec) bonus = avec->bonus;
+  AtomVecEllipsoid::Bonus *bonus = nullptr;
+  AtomVecEllipsoid::BonusSuper *bonus_super = nullptr;  
+  if (avec) {
+    if (is_super) bonus_super = avec->bonus_super;
+    else bonus = avec->bonus;
+  }
   double **x = atom->x;
   double **v = atom->v;
   double **angmom = atom->angmom;
@@ -86,13 +91,20 @@ void FixNVEAsphereNoforce::initial_integrate(int /*vflag*/)
 
       // principal moments of inertia
 
-      shape = bonus[ellipsoid[i]].shape;
-      quat = bonus[ellipsoid[i]].quat;
+      if (is_super) {
+        quat = bonus_super[ellipsoid[i]].quat;
 
-      inertia[0] = rmass[i] * (shape[1]*shape[1]+shape[2]*shape[2]) / 5.0;
-      inertia[1] = rmass[i] * (shape[0]*shape[0]+shape[2]*shape[2]) / 5.0;
-      inertia[2] = rmass[i] * (shape[0]*shape[0]+shape[1]*shape[1]) / 5.0;
+        inertia[0] = bonus_super[ellipsoid[i]].inertia[0];
+        inertia[1] = bonus_super[ellipsoid[i]].inertia[1];
+        inertia[2] = bonus_super[ellipsoid[i]].inertia[2];
+      } else {
+        shape = bonus[ellipsoid[i]].shape;
+        quat = bonus[ellipsoid[i]].quat;
 
+        inertia[0] = rmass[i] * (shape[1]*shape[1]+shape[2]*shape[2]) / 5.0;
+        inertia[1] = rmass[i] * (shape[0]*shape[0]+shape[2]*shape[2]) / 5.0;
+        inertia[2] = rmass[i] * (shape[0]*shape[0]+shape[1]*shape[1]) / 5.0;
+      }
       // compute omega at 1/2 step from angmom at 1/2 step and current q
       // update quaternion a full step via Richardson iteration
       // returns new normalized quaternion
@@ -101,4 +113,11 @@ void FixNVEAsphereNoforce::initial_integrate(int /*vflag*/)
       MathExtra::richardson(quat,angmom[i],omega,inertia,dtq);
     }
   }
+}
+/* ---------------------------------------------------------------------- */
+
+void FixNVEAsphereNoforce::initial_integrate(int /*vflag*/)
+{
+  if (atom->superellipsoid_flag) initial_integrate_templated<true>();
+  else initial_integrate_templated<false>();
 }
