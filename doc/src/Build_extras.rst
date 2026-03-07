@@ -382,9 +382,16 @@ option in preparations to run on Aurora system at Argonne.
 KIM package
 ---------------------
 
-To build with this package, the KIM library with API v2 must be downloaded
-and built on your system. It must include the KIM models that you want to
-use with LAMMPS.
+To build with this package, the KIM API v2.0+ must be downloaded
+and built on your system. See 
+`Obtaining KIM Models <https://openkim.org/doc/usage/obtaining-models>`_ to
+learn how to install the KIM API, as well as how to install any models you
+wish to use afterward.
+See the list of all KIM models here: https://openkim.org/browse/models
+
+(Also note that when downloading and installing from source
+the KIM API library with all its models, may take a long time (tens of
+minutes to hours) to build.  Of course you only need to do that once.)
 
 If you would like to use the :doc:`kim query <kim_commands>`
 command, you also need to have libcurl installed with the matching
@@ -399,16 +406,6 @@ done using *pip* as ``pip install kim-property``, or from the *conda-forge*
 channel as ``conda install kim-property`` if LAMMPS is built in Conda. More
 detailed information is available at:
 `kim-property installation <https://github.com/openkim/kim-property#installing-kim-property>`_.
-
-In addition to installing the KIM API, it is also necessary to install the
-library of KIM models (interatomic potentials).
-See `Obtaining KIM Models <https://openkim.org/doc/usage/obtaining-models>`_ to
-learn how to install a pre-build binary of the OpenKIM Repository of Models.
-See the list of all KIM models here: https://openkim.org/browse/models
-
-(Also note that when downloading and installing from source
-the KIM API library with all its models, may take a long time (tens of
-minutes to hours) to build.  Of course you only need to do that once.)
 
 .. tabs::
 
@@ -426,11 +423,14 @@ minutes to hours) to build.  Of course you only need to do that once.)
                                          # value = no (default) or yes
 
       If ``DOWNLOAD_KIM`` is set to ``yes`` (or ``on``), the KIM API library
-      will be downloaded and built inside the CMake build directory.  If
+      will be downloaded and built inside the CMake build directory.  Note that
+      in most cases it is recommended that you do not use this option, and instead
+      provide a KIM API installation yourself before building LAMMPS.  If
       the KIM library is already installed on your system (in a location
       where CMake cannot find it), you may need to set the
       ``PKG_CONFIG_PATH`` environment variable so that libkim-api can be
-      found, or run the command ``source kim-api-activate``.
+      found, or run the command ``source kim-api-activate``.  If CMake can't find
+      the KIM API, the ``DOWNLOAD_KIM`` option will be enabled automatically.
 
       Extra unit tests can only be available if they are explicitly requested
       (``KIM_EXTRA_UNITTESTS`` is set to ``yes`` (or ``on``)) and the prerequisites
