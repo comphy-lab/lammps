@@ -296,9 +296,6 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       else if (strcmp(arg[iarg+1],"index") == 0) lcolor = INDEX;
       else
         error->all(FLERR, iarg+1, "Dump image line only supports color by type, atom, or index");
-      if ((lcolor != ATOM) && (acolor != TYPE))
-        error->all(FLERR, iarg+1,
-                   "Must color atoms by type with line particles colored by type or index");
       ldiam = NUMERIC;
       ldiamvalue = utils::numeric(FLERR,arg[iarg+2],false,lmp);
       iarg += 3;
@@ -311,9 +308,6 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       else if (strcmp(arg[iarg+1],"index") == 0) tcolor = INDEX;
       else
         error->all(FLERR, iarg+1, "Dump image tri only supports color by type, atom, or index");
-      if ((tcolor != ATOM) && (acolor != TYPE))
-        error->all(FLERR, iarg+1,
-                   "Must color atoms by type with tri particles colored by type or index");
       tstyle = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
       tdiamvalue = utils::numeric(FLERR,arg[iarg+3],false,lmp);
       iarg += 4;
@@ -326,9 +320,6 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       else if (strcmp(arg[iarg+1],"index") == 0) ecolor = INDEX;
       else
         error->all(FLERR, iarg+1, "Dump image ellipsoid only supports color by type, atom, or index");
-      if ((ecolor != ATOM) && (acolor != TYPE))
-        error->all(FLERR, iarg+1,
-                   "Must color atoms by type with ellipsoid particles colored by type or index");
       estyle = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
       if ((estyle < 0) || (estyle > 3))
         error->all(FLERR, iarg+2, "Dump image ellipsoid only supports style setting 1, 2, or 3");
@@ -347,9 +338,6 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       else if (strcmp(arg[iarg+1],"index") == 0) bodycolor = INDEX;
       else
         error->all(FLERR, iarg+1, "Dump image body only supports color by type, atom, or index");
-      if ((bodycolor != ATOM) && (acolor != TYPE))
-        error->all(FLERR, iarg+1,
-                   "Must color atoms by type with body particles colored by type or index");
       bodyflag1 = utils::numeric(FLERR,arg[iarg+2],false,lmp);
       bodyflag2 = utils::numeric(FLERR,arg[iarg+3],false,lmp);
       iarg += 4;
@@ -1154,7 +1142,7 @@ void DumpImage::create_image()
 {
   int i,j,k,m,n,itype,atom1,atom2,imol,iatom,btype,ibonus,drawflag;
   tagint tagprev;
-  double diameter,delx,dely,delz;
+  double diameter,opacity,delx,dely,delz;
   int *bodyvec;
   double **bodyarray;
   double *color,*color1,*color2;
@@ -1162,10 +1150,15 @@ void DumpImage::create_image()
   double pt1[3],pt2[3],pt3[3];
   double mat[3][3];
 
+  // set defaults to avoid accidental uninitialized accesses
+  diameter = 1.0;
+  opacity = 1.0;
+
   // render my atoms
 
   if (atomflag) {
     double **x = atom->x;
+    int *type = atom->type;
     int *line = atom->line;
     int *tri = atom->tri;
     int *ellipsoid = atom->ellipsoid;
@@ -1175,11 +1168,11 @@ void DumpImage::create_image()
     for (i = 0; i < nchoose; i++) {
       j = clist[i];
 
+      itype = type[j];
+      opacity = aopacity[itype];
       if (acolor == TYPE) {
-        itype = static_cast<int>(buf[m]);
         color = colortype[itype];
       } else if (acolor == ELEMENT) {
-        itype = static_cast<int>(buf[m]);
         color = colorelement[itype];
       } else if (acolor == ATTRIBUTE) {
         color = image->map_value2color(0,buf[m]);
@@ -1188,10 +1181,8 @@ void DumpImage::create_image()
       if (adiam == NUMERIC) {
         diameter = adiamvalue;
       } else if (adiam == TYPE) {
-        itype = static_cast<int>(buf[m+1]);
         diameter = diamtype[itype];
       } else if (adiam == ELEMENT) {
-        itype = static_cast<int>(buf[m+1]);
         diameter = diamelement[itype];
       } else if (adiam == ATTRIBUTE) {
         diameter = buf[m+1];
@@ -1207,7 +1198,7 @@ void DumpImage::create_image()
         if (bodyflag && body[j] >= 0) drawflag = 0;
       }
 
-      if (drawflag) image->draw_sphere(x[j],color,diameter,aopacity[atom->type[j]]);
+      if (drawflag) image->draw_sphere(x[j],color,diameter,opacity);
 
       m += size_one;
     }
@@ -1279,7 +1270,7 @@ void DumpImage::create_image()
       if (line[j] < 0) continue;
 
       itype = type[j];
-      double opacity = aopacity[itype];
+      opacity = aopacity[itype];
       if (lcolor == TYPE) {
         color = colortype[itype];
       } else if (lcolor == INDEX) {
@@ -1315,7 +1306,7 @@ void DumpImage::create_image()
       pt2[1] = x[j][1] - dy;
       pt2[2] = 0.0;
 
-      image->draw_cylinder(pt1,pt2,color,ldiamvalue,3,aopacity[atom->type[j]]);
+      image->draw_cylinder(pt1,pt2,color,ldiamvalue,3,opacity);
 
       m += size_one;
     }
@@ -1340,7 +1331,7 @@ void DumpImage::create_image()
       if (tri[j] < 0) continue;
 
       itype = type[j];
-      double opacity = aopacity[itype];
+      opacity = aopacity[itype];
       if (tcolor == TYPE) {
         color = colortype[itype];
       } else if (tcolor == INDEX) {
@@ -1400,7 +1391,7 @@ void DumpImage::create_image()
       if (ellipsoid[j] < 0) continue;
 
       itype = type[j];
-      double opacity = aopacity[itype];
+      opacity = aopacity[itype];
       if (ecolor == TYPE) {
         color = colortype[itype];
       } else if (ecolor == INDEX) {
@@ -1440,24 +1431,24 @@ void DumpImage::create_image()
   if (bodyflag) {
     Body *bptr = avec_body->bptr;
     int *body = atom->body;
+    int *type = atom->type;
 
     m = 0;
     for (i = 0; i < nchoose; i++) {
       j = clist[i];
       if (body[j] < 0) continue;
 
+      itype = type[j];
+      opacity = aopacity[itype];
       if (bodycolor == TYPE) {
-        itype = static_cast<int>(buf[m]);
         color = colortype[itype];
       } else if (bodycolor == INDEX) {
         itype = (body[j] % atom->ntypes) + 1;
         color = colortype[itype];
       } else if (bodycolor == ATOM) {
         if (acolor == TYPE) {
-          itype = static_cast<int>(buf[m]);
           color = colortype[itype];
         } else if (acolor == ELEMENT) {
-          itype = static_cast<int>(buf[m]);
           color = colorelement[itype];
         } else if (acolor == ATTRIBUTE) {
           color = image->map_value2color(0,buf[m]);
@@ -1467,7 +1458,6 @@ void DumpImage::create_image()
       } else {
         color = image->color2rgb("white");
       }
-      double opacity = aopacity[atom->type[j]];
 
       ibonus = body[j];
       n = bptr->image(ibonus,bodyflag1,bodyflag2,bodyvec,bodyarray);
@@ -1766,7 +1756,7 @@ void DumpImage::create_image()
       if (!objvec || !objarray) continue;
 
       // set color and transparency
-      double opacity = iobj.opacity;
+      opacity = iobj.opacity;
       if (iobj.colorstyle == TYPE) {
         itype = static_cast<int>(objarray[i][0] - 1.0) % ntypes + 1;
         color = colortype[itype];
@@ -1837,7 +1827,7 @@ void DumpImage::create_image()
         int type1 = static_cast<int>(objarray[i][0] - 1.0) % ntypes + 1;
         int type2 = static_cast<int>(objarray[i][1] - 1.0) % ntypes + 1;
         double *color1, *color2;
-        double opacity = iobj.opacity;
+        opacity = iobj.opacity;
         if (iobj.colorstyle == TYPE) {
           color1 = colortype[type1];
           color2 = colortype[type2];
@@ -1852,7 +1842,7 @@ void DumpImage::create_image()
           color2 = image->color2rgb("white");
         }
 
-        double diameter = 0.5;
+        diameter = 0.5;
         if (bdiam == ATOM) {
           if (adiam == NUMERIC) {
             diameter = adiamvalue;
@@ -2014,7 +2004,7 @@ void DumpImage::create_image()
           DRAW_CYLINDER(4, 7);
           DRAW_CYLINDER(6, 7);
         } else if ((reg.style == FILLED) || (reg.style == TRANSPARENT)) {
-          double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
+          opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
           if (!reg.ptr->open_faces[0]) {
             DRAW_TRIANGLE(0, 1, 2);
             DRAW_TRIANGLE(2, 3, 0);
@@ -2132,7 +2122,7 @@ void DumpImage::create_image()
 
         // determine draw style flags
         int drawflag = (reg.style == FRAME) ? 2 : 1;
-        double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
+        opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
 
         ConeObj c(length, radiushi, radiuslo, faceflag,
                   (reg.style == FRAME) ? RESOLUTION : 2 * RESOLUTION);
@@ -2170,7 +2160,7 @@ void DumpImage::create_image()
 
         // determine draw style flags
         int flag = 1;
-        double opacity = 1.0;
+        opacity = 1.0;
         if (reg.style == FRAME) {
           flag = 2;
         } else if (reg.style == TRANSPARENT) {
@@ -2196,7 +2186,7 @@ void DumpImage::create_image()
           double radius[3] = {myreg->radius, myreg->radius, myreg->radius};
           EllipsoidObj(4).draw(image, 2, reg.color, center, radius, reg.ptr, reg.diameter, 1.0);
         } else if ((reg.style == FILLED) || (reg.style == TRANSPARENT)) {
-          double opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
+          opacity = (reg.style == TRANSPARENT) ? reg.opacity : 1.0;
           myreg->forward_transform(center[0], center[1], center[2]);
           image->draw_sphere(center, reg.color, 2.0 * myreg->radius, opacity);
         }
