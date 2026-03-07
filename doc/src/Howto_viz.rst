@@ -996,7 +996,7 @@ input file:
 
    group       ogroup type 1
    group       hgroup type 2
-   compute     hb     all hbond/local 3.3 30.0 ogroup ogroup hgroup
+   compute     hb     all hbond/local 3.5 30.0 ogroup ogroup hgroup
 
    dump        viz    all image 100 water-*.png element type size 600 600 zoom 1.331 view 70 20 &
                                                 shiny 0.2 ssao yes 348276 0.6 fsaa yes  box yes 0.025 &
@@ -1018,25 +1018,19 @@ and the surrounding water molecules in both directions.
 
 .. code-block:: LAMMPS
 
-    # define ellipsoid region around peptide for hbond analysis and visualization
-    group     peptide type <= 12
-    variable  comx equal xcm(peptide,x)
-    variable  comy equal xcm(peptide,y)
-    variable  comz equal xcm(peptide,z)
-    region    shell ellipsoid v_comx v_comy v_comz 7.0 8.0 16.0
-    group     viz dynamic all region shell include molecule
+    # select atoms for visualization: peptide and water molecules within 3.5 angstrom
+    group     viz dynamic peptide within 3.5 include molecule every 100
 
-    # define groups of donor and acceptor atoms for peptide and water
-    group           pdonor    type 5
-    group           wdonor    type 13
-    group           pacceptor type 3 5 9 12
-    group           wacceptor type 13
-    group           hydrogen type 10 14
+    # define groups of donor, acceptor, and hydrogen atoms for peptide and water
+    group           pdonor    type  5  9        # peptide donors : nitrogens and phenol oxygen
+    group           woxygen   type 13           # water oxygens are donor and acceptor
+    group           pacceptor type  3  5  9 12  # peptide acceptors: oxygens, nitrogens, and sulfur
+    group           hydrogen  type  4 10 14     # hydrogens bonded to oxygens and nitrogens
 
     # peptide-water hydrogen bonds where the peptide is the donor
-    compute hb1 all hbond/local 3.3 30.0 pdonor wacceptor hydrogen
+    compute hb1 all hbond/local 3.5 30.0 pdonor woxygen hydrogen
     # peptide-water hydrogen bonds where the peptide is the acceptor
-    compute hb2 all hbond/local 3.7 30.0 wdonor pacceptor hydrogen
+    compute hb2 all hbond/local 3.7 30.0 woxygen pacceptor hydrogen
 
     # create donor/acceptor hydrogen bond info text
     fix label all graphics/labels 100 text "Hydrogen bonds donated:   $(c_hb1:%02.0f)" 207 72 0.0 &

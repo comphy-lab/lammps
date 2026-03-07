@@ -44,19 +44,19 @@ Syntax
            f_ID = per-grid vector calculated by a fix with ID
            f_ID[I] = Ith column of per-grid array calculated by a fix with ID
        *line* = color width
-         color = *type*
+         color = *type* or *index* or *atom*
          width = numeric value for line width (distance units)
        *tri* = color tflag width
-         color = *type*
+         color = *type* or *index* or *atom*
          tflag = 1 for just triangle, 2 for just tri edges, 3 for both
          width = numeric value for triangle edge width (distance units)
        *ellipsoid* = color eflag level width
-         color = *type*
+         color = *type* or *index* or *atom*
          eflag = 1 for triangles, 2 for wireframe, 3 for both
          level = mesh refinement level, value between 1 (low resolution) and 6 (ultra high resolution)
          width = diameter of wireframe edges (distance units) (ignored for triangles)
        *body* = color bflag1 bflag2
-         color = *type* or *index*
+         color = *type* or *index* or *atom*
          bflag1,bflag2 = 2 numeric flags to affect how bodies are drawn
        *compute* = computeID color cflag1 cflag2
          computeID = ID of computes that generates objects to draw
@@ -181,9 +181,10 @@ Syntax
          color = name of color for simulation box lines and processor subdomain lines
        *subboxtrans* arg = transparency
          transparency = transparency for simulation subbox lines (value between 0 (invisible) and 1 (fully opaque))
-       *color* args = name R G B
+       *color* args = name R G B *or* name hex
          name = name of color
          R,G,B = red/green/blue numeric values from 0.0 to 1.0
+         hex = 24-bit RGB color in hexadecimal
        *ccolor* args = computeID color
          computeID = ID of the compute
          color = name of color for image objects provided by this compute when using "const" color style
@@ -218,6 +219,7 @@ Examples
 
    labelmap atom 1 C 2 H 3 O 4 N
    dump_modify 1 acolor C gray acolor H white acolor O red acolor N blue
+   dump_modify 1 color gray80 0.8 0.8 0.8 color gray20 0x333333
 
 Description
 """""""""""
@@ -492,10 +494,21 @@ as described below.
 The *line* keyword can be used when :doc:`atom_style line <atom_style>`
 is used to define particles as line segments, and will draw them as
 lines.  If this keyword is not used, such particles will be drawn as
-spheres, the same as if they were regular atoms.  The only setting
-currently allowed for the *color* value is *type*, which will color
-the lines according to the atom type of the particle.  By default the
-mapping of types to colors is as follows:
+spheres, the same as if they were regular atoms.
+
+.. versionchanged:: TBD
+
+   added *index* and *atom* color styles
+
+The there are currently three supported settings for the *color* value:
+*type*, *index*, or *atom*.  With the *type* setting the line particles
+will be colored according to the atom type of the particle.  With the
+*index* setting the coloring follows the line index instead.  With the
+*atom* setting, the color follows the coloring selected for coloring
+atoms (including using color maps).  For *type* and *index* settings,
+the value is mapped to the colors of atom types thus the coloring style
+for atoms **must** be set to *type*.  The list of colors is by default
+the list of atom type colors as follows:
 
 * type 1 = red
 * type 2 = green
@@ -504,8 +517,11 @@ mapping of types to colors is as follows:
 * type 5 = cyan
 * type 6 = magenta
 
-and repeats itself for types > 6.  There is not yet an option to
-change this via the dump_modify command.
+and repeats itself for types > 6.  This list can by changed with the
+:doc:`dump_modify acolor <dump_image>` command.  If more different
+colors than atom types are desired, the *number of atom types* must be
+*increased* correspondingly when using either the :doc:`create_box
+<create_box>` or the :doc:`read_data <read_data>` command.
 
 The line *width* can only be a numeric value, which specifies that all
 lines will be drawn as cylinders with that diameter, e.g. 1.0, which
@@ -519,10 +535,21 @@ used to define particles as triangles, and will draw them as triangles
 or edges (3 lines) or both, depending on the setting for *tflag*\ .  If
 edges are drawn, the *width* setting determines the diameters of the
 line segments.  If this keyword is not used, triangle particles will
-be drawn as spheres, the same as if they were regular atoms.  The only
-setting currently allowed for the *color* value is *type*, which will
-color the triangles according to the atom type of the particle.  By
-default the mapping of types to colors is as follows:
+be drawn as spheres, the same as if they were regular atoms.
+
+.. versionchanged:: TBD
+
+   added *index* and *atom* color styles
+
+The there are currently three supported settings for the *color* value:
+*type*, *index*, or *atom*.  With the *type* setting the triangles
+will be colored according to the atom type of the particle.  With the
+*index* setting the coloring follows the triangle index instead.  With the
+*atom* setting, the color follows the coloring selected for coloring
+atoms (including using color maps).  For *type* and *index* settings,
+the value is mapped to the colors of atom types thus the coloring style
+for atoms **must** be set to *type*.  The list of colors is by default
+the list of atom type colors as follows:
 
 * type 1 = red
 * type 2 = green
@@ -531,7 +558,11 @@ default the mapping of types to colors is as follows:
 * type 5 = cyan
 * type 6 = magenta
 
-and repeats itself for types > 6.
+and repeats itself for types > 6.  This list can by changed with the
+:doc:`dump_modify acolor <dump_image>` command.  If more different
+colors than atom types are desired, the *number of atom types* must be
+*increased* correspondingly when using either the :doc:`create_box
+<create_box>` or the :doc:`read_data <read_data>` command.
 
 ----------
 
@@ -543,9 +574,21 @@ them as a mesh of triangles or edges or both, depending on the setting
 for *eflag*\ .  If edges are drawn, the *width* setting determines the
 diameters of the line segments.  If this keyword is not used, ellipsoid
 particles will be drawn as spheres, the same as if they were regular
-atoms.  The only setting currently allowed for the *color* value is
-*type*, which will color the triangles according to the atom type of the
-particle.  By default the mapping of types to colors is as follows:
+atoms.
+
+.. versionchanged:: TBD
+
+   added *index* and *atom* color styles
+
+The there are currently three supported settings for the *color* value:
+*type*, *index*, or *atom*.  With the *type* setting the ellipsoids will
+be colored according to the atom type of the particle.  With the *index*
+setting the coloring follows the ellipsoid index instead.  With the
+*atom* setting, the color follows the coloring selected for coloring
+atoms (including using color maps).  For *type* and *index* settings,
+the value is mapped to the colors of atom types thus the coloring style
+for atoms **must** be set to *type*.  The list of colors is by default
+the list of atom type colors as follows:
 
 * type 1 = red
 * type 2 = green
@@ -554,7 +597,11 @@ particle.  By default the mapping of types to colors is as follows:
 * type 5 = cyan
 * type 6 = magenta
 
-and repeats itself for types > 6.
+and repeats itself for types > 6.  This list can by changed with the
+:doc:`dump_modify acolor <dump_image>` command.  If more different
+colors than atom types are desired, the *number of atom types* must be
+*increased* correspondingly when using either the :doc:`create_box
+<create_box>` or the :doc:`read_data <read_data>` command.
 
 The *level* setting determines the number of triangles in the mesh of
 triangles and thus the resolution of the representation of the
@@ -585,25 +632,34 @@ is used to define body particles with internal state
 body style.  If this keyword is not used, such particles will be drawn
 as spheres, the same as if they were regular atoms.
 
-The :doc:`Howto body <Howto_body>` page describes the body styles
-LAMMPS currently supports, and provides more details as to the kind of
-body particles they represent and how they are drawn by this dump
-image command.  For all the body styles, individual atoms can be
-either a body particle or a usual point (non-body) particle.  Non-body
-particles will be drawn the same way they would be as a regular atom.
-The *bflag1* and *bflag2* settings are numerical values which are
-passed to the body style to affect how the drawing of a body particle
-is done.  See the :doc:`Howto body <Howto_body>` page for a
-description of what these parameters mean for each body style.
+The :doc:`Howto body <Howto_body>` page describes the body styles LAMMPS
+currently supports, and provides more details as to the kind of body
+particles they represent and how they are drawn by this dump image
+command.  For all the body styles, individual atoms can be either a body
+particle or a usual point (non-body) particle.  Non-body particles will
+be drawn the same way they would be as a regular atom.  The *bflag1* and
+*bflag2* settings are numerical values which are passed to the body
+style to affect how the drawing of a body particle is done.  See the
+:doc:`Howto body <Howto_body>` page for a description of what these
+parameters mean for each body style.
 
 .. versionchanged:: 11Feb2026
 
-The there are currently two supported settings for the *color* value:
-*type*, or *index*.  With the *type* setting the body particles will be
-colored according to the atom type of the particle.  With the *index*
-setting the coloring follows the body index instead.  For both settings,
-the value (type or index) is mapped to the colors of atom types.  The
-list of colors is by default as follows:
+   added *index* color style
+
+.. versionchanged:: TBD
+
+   added *atom* color style
+
+The there are currently three supported settings for the *color* value:
+*type*, *index*, or *atom*.  With the *atom* setting, the color follows
+the coloring selected for coloring atoms (including using color maps).
+With the *type* setting the body particles will be colored according to
+the atom type of the particle.  With the *index* setting the coloring
+follows the body index instead.  For the *type* and *index* settings,
+the value (type or index) is mapped to the colors of atom types thus
+the coloring style for atoms **must** be set to *type*.  The list of
+colors is by default as follows:
 
 * type 1 = red
 * type 2 = green
@@ -614,9 +670,9 @@ list of colors is by default as follows:
 
 and repeats itself for types > 6.  This list can by changed with the
 :doc:`dump_modify acolor <dump_image>` command.  If more different
-colors than atom types are desired, the number of atom types must be
-increased when using either the :doc:`create_box <create_box>` or the
-:doc:`read_data <read_data>` command.
+colors than atom types are desired, the *number of atom types* must be
+*increased* correspondingly when using either the :doc:`create_box
+<create_box>` or the :doc:`read_data <read_data>` command.
 
 ----------
 
@@ -1125,12 +1181,22 @@ dump_modify color option.
 
 ----------
 
+.. versionchanged:: TBD
+
+   add support for entering colors in hexadecimal
+
 The *color* keyword allows definition of a new color name, in addition
 to the 140-predefined colors (see below), and associates three
 red/green/blue RGB values with that color name.  The color name can
 then be used with any other dump_modify keyword that takes a color
-name as a value.  The RGB values should each be floating point values
-between 0.0 and 1.0 inclusive.
+name as a value.  The RGB values should be either specified as three
+floating point values between 0.0 and 1.0 inclusive or as a single
+24-bit hexadecimal number. The following two commands are equivalent.
+
+.. code-block:: LAMMPS
+
+   dump_modify 1 color mygray 0.431 0.498 0.502
+   dump_modify 1 color mygray 0x6e7f80
 
 When a color name is converted to RGB values, the user-defined color
 names are searched first, then the 140 pre-defined color names.  This
