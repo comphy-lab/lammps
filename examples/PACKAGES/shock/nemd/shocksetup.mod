@@ -67,7 +67,7 @@ pair_coeff 	* * 1.0 1.0
 neighbor	0.3 bin
 neigh_modify	every 20 delay 0 check no
 
-thermo_style  	custom step temp pe density press lx ly lz 
+thermo_style  	custom step temp pe press lx ly lz 
 run 0
 
 timestep	${dt}
@@ -82,11 +82,15 @@ run		${nequil}
 reset_timestep	0
 
 # estimate location of shock front assuming ideal kinematics
+# i.e. P(t) = P0 * (L0+u0*t-xs)/L0, requires u1 = 0
 compute	   	mymom all momentum
 variable	xshock equal (1.0+c_mymom[1]/(atoms*${mass})/${up})*lx-${up}*time
+fix             xshockprev all vector ${nthermo} v_xshock nmax 2
+variable        ushock equal (f_xshockprev[2]-f_xshockprev[1])/(${nthermo}*${dt})+${up}
+run             ${nthermo} # needed to fil both entries in xshockprev vector
 
-thermo		${nthermo}
-thermo_style  	custom step spcpu temp pe density etotal press v_xshock lx
+thermo          ${nthermo}
+thermo_style    custom step temp pe density etotal press v_xshock v_ushock
 
 # add impact velocity in minus x
 

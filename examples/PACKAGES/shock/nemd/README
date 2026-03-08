@@ -1,0 +1,24 @@
+This example reproduces the 2010 shockwave study of Holian, Ravelo,
+Germann, and co-workers:
+
+# https://doi.org/10.1063/1.3486088 J. Chem. Phys. 133, 114502 (2010)
+
+It runs a non-equilibrium molecular dynamics simulations of strong
+shockwave propagation in a fluid.  The potential is the smoothly
+truncated cubic spline Lennard-Jones proposed by those researchers
+because of its combination of computational efficiency, qualitative
+realism, and energy conservation.
+
+The main output is the estimated shock speed as a function of time in
+log.lammps, estimated from the change in momentum.  Except for
+non-steady state values at the start, it averages close to the value
+of 45.2 reported by Holian et al.
+
+A secondary output is the velocity time correlation function in
+vtcf.dat.
+
+In order to run this example, LAMMPS must be compiled with the
+EXTRA-PAIR and EXTRA-COMPUTE packages. It also requires the history
+keywords that were added to fix store/state and compute property/atom
+on xx/xx/2026.
+
