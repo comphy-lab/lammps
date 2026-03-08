@@ -416,7 +416,7 @@ Using OpenKIM Web Queries in LAMMPS (*kim query*)
 
 The *kim query* command performs a web query to retrieve the predictions of an
 IM set by *kim init* for material properties archived in
-`OpenKIM <https://openkim.org>`_, or to obtain a list of available models 
+`OpenKIM <https://openkim.org>`_, or to obtain a list of available models
 that support a given set of atomic species.
 
 Syntax

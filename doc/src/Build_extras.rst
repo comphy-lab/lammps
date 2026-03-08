@@ -387,7 +387,7 @@ KIM package
 ---------------------
 
 To build with this package, the KIM API v2.0+ must be downloaded
-and built on your system. See 
+and built on your system. See
 `Obtaining KIM Models <https://openkim.org/doc/usage/obtaining-models>`_ to
 learn how to install the KIM API, as well as how to install any models you
 wish to use afterward.
