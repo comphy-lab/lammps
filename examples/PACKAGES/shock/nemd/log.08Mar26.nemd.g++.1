@@ -1,0 +1,521 @@
+LAMMPS (10 Sep 2025 - Development - patch_10Sep2025-52-ga29d50873f)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+# 3d Lennard-Jones fluid with shockwave in x
+
+include         shockparams.mod
+# matches conditions of Holian et al. (2010)
+# https://doi.org/10.1063/1.3486088
+# J. Chem. Phys. 133, 114502 (2010)
+
+variable 	nequil index 1000               # equilbration run length
+variable 	nsteps index 3000               # shock run length
+variable 	rho index 0.7071067811865475    # initial density
+variable 	temp index 1.251                # initial temperature
+variable        nx index 30                     # fcc units cells in axial direction
+variable        ny index 5                      # fcc units cells in laterial direction
+variable        nz index 5                      # fcc units cells in laterial direction
+variable	nthermo equal 100               # human output interval
+variable        nevery equal 1                  # computer sampling interval
+variable	eps index 1.0e-5                # offset of first atom from (0,0,0)
+variable	dt index 0.0005                 # timestep
+variable	up index 22.4                   # shock particle velocity
+variable	mass index 1.0                  # LJ mass
+variable        leftwindow index 50             # number of time samples before shockfront
+variable        rightwindow index 150           # number of time samples after shockfront
+variable        leftbulkpad index 5.0           # ignore particles within this distance from left surface
+variable        rightbulkpad index 30.0         # ignore particles within this distance from right surface
+include         shocksetup.mod
+units		lj
+atom_style	atomic
+atom_modify 	map yes sort 0 0
+
+boundary	f p p
+lattice		fcc ${rho} origin ${eps} ${eps} ${eps}
+lattice		fcc 0.7071067811865475 origin ${eps} ${eps} ${eps}
+lattice		fcc 0.7071067811865475 origin 1.0e-5 ${eps} ${eps}
+lattice		fcc 0.7071067811865475 origin 1.0e-5 1.0e-5 ${eps}
+lattice		fcc 0.7071067811865475 origin 1.0e-5 1.0e-5 1.0e-5
+Lattice spacing in x,y,z = 1.7817974 1.7817974 1.7817974
+
+region		box block 0 ${nx} 0 ${ny} 0 ${nz} units lattice
+region		box block 0 30 0 ${ny} 0 ${nz} units lattice
+region		box block 0 30 0 5 0 ${nz} units lattice
+region		box block 0 30 0 5 0 5 units lattice
+
+create_box	1 box
+Created orthogonal box = (0 0 0) to (53.453923 8.9089872 8.9089872)
+  1 by 1 by 1 MPI processor grid
+create_atoms	1 region box
+Created 3000 atoms
+  using lattice units in orthogonal box = (0 0 0) to (53.453923 8.9089872 8.9089872)
+  create_atoms CPU = 0.001 seconds
+mass		1 ${mass}
+mass		1 1.0
+
+# define property to store timestep it crosses threshold velocity
+
+fix             myidump all property/atom i_tshock d_xshock d_vxhist010 d_vxhist020 d_vxhist030 d_vxhist040 d_vxhist050 d_vxhist060 d_vxhist070 d_vxhist080 d_vxhist090 d_vxhist100 d_vxhist110 d_vxhist120 d_vxhist130 d_vxhist140 d_vxhist150 d_vxhist160 d_vxhist170 d_vxhist180 d_vxhist190 d_vxhist200
+
+set             group all i_tshock -1
+Setting atom values ...
+  3000 settings made for i_tshock
+set             group all d_xshock 0.0
+Setting atom values ...
+  3000 settings made for d_xshock
+set             group all d_vxhist010 -1e20 d_vxhist020 -1e20 d_vxhist030 -1e20 d_vxhist040 -1e20 d_vxhist050 -1e20 d_vxhist060 -1e20 d_vxhist070 -1e20 d_vxhist080 -1e20 d_vxhist090 -1e20 d_vxhist100 -1e20 d_vxhist110 -1e20 d_vxhist120 -1e20 d_vxhist130 -1e20 d_vxhist140 -1e20 d_vxhist150 -1e20 d_vxhist160 -1e20 d_vxhist170 -1e20 d_vxhist180 -1e20 d_vxhist190 -1e20 d_vxhist200 -1e20
+Setting atom values ...
+  3000 settings made for d_vxhist010
+  3000 settings made for d_vxhist020
+  3000 settings made for d_vxhist030
+  3000 settings made for d_vxhist040
+  3000 settings made for d_vxhist050
+  3000 settings made for d_vxhist060
+  3000 settings made for d_vxhist070
+  3000 settings made for d_vxhist080
+  3000 settings made for d_vxhist090
+  3000 settings made for d_vxhist100
+  3000 settings made for d_vxhist110
+  3000 settings made for d_vxhist120
+  3000 settings made for d_vxhist130
+  3000 settings made for d_vxhist140
+  3000 settings made for d_vxhist150
+  3000 settings made for d_vxhist160
+  3000 settings made for d_vxhist170
+  3000 settings made for d_vxhist180
+  3000 settings made for d_vxhist190
+  3000 settings made for d_vxhist200
+
+velocity	all create ${temp} 87287
+velocity	all create 1.251 87287
+
+pair_style	lj/cubic
+pair_coeff 	* * 1.0 1.0
+
+neighbor	0.3 bin
+neigh_modify	every 20 delay 0 check no
+
+thermo_style  	custom step temp pe density press lx ly lz
+run 0
+WARNING: No fixes with time integration, atoms won't move
+For more information see https://docs.lammps.org/err0028 (src/verlet.cpp:60)
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 20 steps, delay = 0 steps, check = no
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 2.0370519
+  ghost atom cutoff = 2.0370519
+  binsize = 1.0185259, bins = 53 9 9
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cubic, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 2.825 | 2.825 | 2.825 Mbytes
+   Step          Temp          PotEng        Density         Press            Lx             Ly             Lz      
+         0   1.251         -4.4495922      0.70710678    -3.3340495      53.453923      8.9089872      8.9089872    
+Loop time of 1.066e-06 on 1 procs for 0 steps with 3000 atoms
+
+93.8% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 1.066e-06  |            |       |100.00
+
+Nlocal:           3000 ave        3000 max        3000 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           3750 ave        3750 max        3750 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          26700 ave       26700 max       26700 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 26700
+Ave neighs/atom = 8.9
+Neighbor list builds = 0
+Dangerous builds not checked
+
+timestep	${dt}
+timestep	0.0005
+variable        tdamp equal ${dt}*10.0
+variable        tdamp equal 0.0005*10.0
+fix		mynvt all nvt temp ${temp} ${temp} ${tdamp}
+fix		mynvt all nvt temp 1.251 ${temp} ${tdamp}
+fix		mynvt all nvt temp 1.251 1.251 ${tdamp}
+fix		mynvt all nvt temp 1.251 1.251 0.005
+fix 		xwalls all wall/reflect xlo EDGE xhi EDGE
+
+run		${nequil}
+run		1000
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Per MPI rank memory allocation (min/avg/max) = 2.825 | 2.825 | 2.825 Mbytes
+   Step          Temp          PotEng        Density         Press            Lx             Ly             Lz      
+         0   1.251         -4.4495922      0.70710678    -3.3340495      53.453923      8.9089872      8.9089872    
+      1000   1.242998      -3.3337144      0.70710678     1.8738697      53.453923      8.9089872      8.9089872    
+Loop time of 0.736514 on 1 procs for 1000 steps with 3000 atoms
+
+Performance: 58654.724 tau/day, 1357.748 timesteps/s, 4.073 Matom-step/s
+99.7% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.56532    | 0.56532    | 0.56532    |   0.0 | 76.76
+Neigh   | 0.10325    | 0.10325    | 0.10325    |   0.0 | 14.02
+Comm    | 0.017564   | 0.017564   | 0.017564   |   0.0 |  2.38
+Output  | 3.6726e-05 | 3.6726e-05 | 3.6726e-05 |   0.0 |  0.00
+Modify  | 0.045231   | 0.045231   | 0.045231   |   0.0 |  6.14
+Other   |            | 0.005115   |            |       |  0.69
+
+Nlocal:           3000 ave        3000 max        3000 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           3430 ave        3430 max        3430 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          34708 ave       34708 max       34708 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 34708
+Ave neighs/atom = 11.569333
+Neighbor list builds = 50
+Dangerous builds not checked
+
+# nemd simulation
+
+reset_timestep	0
+
+# estimate location of shock front assuming ideal kinematics
+compute	   	mymom all momentum
+variable	xshock equal (1.0+c_mymom[1]/(atoms*${mass})/${up})*lx-${up}*time
+variable	xshock equal (1.0+c_mymom[1]/(atoms*1.0)/${up})*lx-${up}*time
+variable	xshock equal (1.0+c_mymom[1]/(atoms*1.0)/22.4)*lx-${up}*time
+variable	xshock equal (1.0+c_mymom[1]/(atoms*1.0)/22.4)*lx-22.4*time
+
+thermo		${nthermo}
+thermo		100
+thermo_style  	custom step spcpu temp pe density etotal press v_xshock lx
+
+# add impact velocity in minus x
+
+variable	upneg equal -${up}
+variable	upneg equal -22.4
+velocity	all set ${upneg} 0.0 0.0 sum yes units box
+velocity	all set -22.4 0.0 0.0 sum yes units box
+
+unfix		mynvt
+fix		mynve all nve
+
+# create group for bulk atoms, to avoid surface artefacts
+
+variable        bulklo equal xlo+${leftbulkpad}
+variable        bulklo equal xlo+5.0
+variable        bulkhi equal xhi-${rightbulkpad}
+variable        bulkhi equal xhi-30.0
+region		bulk block ${bulklo} ${bulkhi} INF INF INF INF units box
+region		bulk block 5 ${bulkhi} INF INF INF INF units box
+region		bulk block 5 23.4539230884204 INF INF INF INF units box
+group           bulk region bulk
+1045 atoms in group bulk
+
+
+# fix set command to check for threshold crossings every step
+# when crossing occurs set d_xshock first, then set i_tshock
+
+variable        vxthresh equal ${upneg}*0.5 # threshold velocity = (u0+u1)/2
+variable        vxthresh equal -22.4*0.5 
+fix             vxave all ave/atom 1 ${nevery} ${nevery} vx
+fix             vxave all ave/atom 1 1 ${nevery} vx
+fix             vxave all ave/atom 1 1 1 vx
+variable        istart atom "f_vxave > v_vxthresh && i_tshock == -1"
+variable        tshock equal step-${nevery}
+variable        tshock equal step-1
+variable        inew atom ternary(v_istart,v_tshock,i_tshock)
+variable        dnew atom ternary(v_istart,x,d_xshock)
+fix             setshock all set ${nevery} 0 group all d_xshock v_dnew i_tshock v_inew
+fix             setshock all set 1 0 group all d_xshock v_dnew i_tshock v_inew
+
+# set up vx history, c_vxhist[*][1] not yet supported
+
+variable nhistory equal ${leftwindow}+${rightwindow}
+variable nhistory equal 50+${rightwindow}
+variable nhistory equal 50+150
+fix vxhist all store/state 0 vx history ${nevery} ${nhistory} 0
+fix vxhist all store/state 0 vx history 1 ${nhistory} 0
+fix vxhist all store/state 0 vx history 1 200 0
+compute vxhist all property/atom history[$(v_nhistory-010+1)][1] history[$(v_nhistory-020+1)][1] history[$(v_nhistory-030+1)][1] history[$(v_nhistory-040+1)][1] history[$(v_nhistory-050+1)][1] history[$(v_nhistory-060+1)][1] history[$(v_nhistory-070+1)][1] history[$(v_nhistory-080+1)][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[$(v_nhistory-020+1)][1] history[$(v_nhistory-030+1)][1] history[$(v_nhistory-040+1)][1] history[$(v_nhistory-050+1)][1] history[$(v_nhistory-060+1)][1] history[$(v_nhistory-070+1)][1] history[$(v_nhistory-080+1)][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[$(v_nhistory-030+1)][1] history[$(v_nhistory-040+1)][1] history[$(v_nhistory-050+1)][1] history[$(v_nhistory-060+1)][1] history[$(v_nhistory-070+1)][1] history[$(v_nhistory-080+1)][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[$(v_nhistory-040+1)][1] history[$(v_nhistory-050+1)][1] history[$(v_nhistory-060+1)][1] history[$(v_nhistory-070+1)][1] history[$(v_nhistory-080+1)][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[$(v_nhistory-050+1)][1] history[$(v_nhistory-060+1)][1] history[$(v_nhistory-070+1)][1] history[$(v_nhistory-080+1)][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[$(v_nhistory-060+1)][1] history[$(v_nhistory-070+1)][1] history[$(v_nhistory-080+1)][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[$(v_nhistory-070+1)][1] history[$(v_nhistory-080+1)][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[$(v_nhistory-080+1)][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[$(v_nhistory-090+1)][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[$(v_nhistory-100+1)][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[$(v_nhistory-110+1)][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[$(v_nhistory-120+1)][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[$(v_nhistory-130+1)][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[71][1] history[$(v_nhistory-140+1)][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[71][1] history[61][1] history[$(v_nhistory-150+1)][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[71][1] history[61][1] history[51][1] history[$(v_nhistory-160+1)][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[71][1] history[61][1] history[51][1] history[41][1] history[$(v_nhistory-170+1)][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[71][1] history[61][1] history[51][1] history[41][1] history[31][1] history[$(v_nhistory-180+1)][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[71][1] history[61][1] history[51][1] history[41][1] history[31][1] history[21][1] history[$(v_nhistory-190+1)][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[71][1] history[61][1] history[51][1] history[41][1] history[31][1] history[21][1] history[11][1] history[$(v_nhistory-200+1)][1] history vxhist
+compute vxhist all property/atom history[191][1] history[181][1] history[171][1] history[161][1] history[151][1] history[141][1] history[131][1] history[121][1] history[111][1] history[101][1] history[91][1] history[81][1] history[71][1] history[61][1] history[51][1] history[41][1] history[31][1] history[21][1] history[11][1] history[1][1] history vxhist
+
+# store vxhist at end of window
+
+variable        step_rightwindow atom i_tshock + ${rightwindow}*${nevery}
+variable        step_rightwindow atom i_tshock + 150*${nevery}
+variable        step_rightwindow atom i_tshock + 150*1
+variable        irightwindow atom step == v_step_rightwindow
+variable        dnewvxhist010 atom ternary(v_irightwindow,c_vxhist[1], d_vxhist010)
+variable        dnewvxhist020 atom ternary(v_irightwindow,c_vxhist[2], d_vxhist020)
+variable        dnewvxhist030 atom ternary(v_irightwindow,c_vxhist[3], d_vxhist030)
+variable        dnewvxhist040 atom ternary(v_irightwindow,c_vxhist[4], d_vxhist040)
+variable        dnewvxhist050 atom ternary(v_irightwindow,c_vxhist[5], d_vxhist050)
+variable        dnewvxhist060 atom ternary(v_irightwindow,c_vxhist[6], d_vxhist060)
+variable        dnewvxhist070 atom ternary(v_irightwindow,c_vxhist[7], d_vxhist070)
+variable        dnewvxhist080 atom ternary(v_irightwindow,c_vxhist[8], d_vxhist080)
+variable        dnewvxhist090 atom ternary(v_irightwindow,c_vxhist[9], d_vxhist090)
+variable        dnewvxhist100 atom ternary(v_irightwindow,c_vxhist[10],d_vxhist100)
+variable        dnewvxhist110 atom ternary(v_irightwindow,c_vxhist[11],d_vxhist110)
+variable        dnewvxhist120 atom ternary(v_irightwindow,c_vxhist[12],d_vxhist120)
+variable        dnewvxhist130 atom ternary(v_irightwindow,c_vxhist[13],d_vxhist130)
+variable        dnewvxhist140 atom ternary(v_irightwindow,c_vxhist[14],d_vxhist140)
+variable        dnewvxhist150 atom ternary(v_irightwindow,c_vxhist[15],d_vxhist150)
+variable        dnewvxhist160 atom ternary(v_irightwindow,c_vxhist[16],d_vxhist160)
+variable        dnewvxhist170 atom ternary(v_irightwindow,c_vxhist[17],d_vxhist170)
+variable        dnewvxhist180 atom ternary(v_irightwindow,c_vxhist[18],d_vxhist180)
+variable        dnewvxhist190 atom ternary(v_irightwindow,c_vxhist[19],d_vxhist190)
+variable        dnewvxhist200 atom ternary(v_irightwindow,c_vxhist[20],d_vxhist200)
+
+fix             sethist all set ${nevery} 0 group all d_vxhist010 v_dnewvxhist010 d_vxhist020 v_dnewvxhist020 d_vxhist030 v_dnewvxhist030 d_vxhist040 v_dnewvxhist040 d_vxhist050 v_dnewvxhist050 d_vxhist060 v_dnewvxhist060 d_vxhist070 v_dnewvxhist070 d_vxhist080 v_dnewvxhist080 d_vxhist090 v_dnewvxhist090 d_vxhist100 v_dnewvxhist100 d_vxhist110 v_dnewvxhist110 d_vxhist120 v_dnewvxhist120 d_vxhist130 v_dnewvxhist130 d_vxhist140 v_dnewvxhist140 d_vxhist150 v_dnewvxhist150 d_vxhist160 v_dnewvxhist160 d_vxhist170 v_dnewvxhist170 d_vxhist180 v_dnewvxhist180 d_vxhist190 v_dnewvxhist190 d_vxhist200 v_dnewvxhist200
+fix             sethist all set 1 0 group all d_vxhist010 v_dnewvxhist010 d_vxhist020 v_dnewvxhist020 d_vxhist030 v_dnewvxhist030 d_vxhist040 v_dnewvxhist040 d_vxhist050 v_dnewvxhist050 d_vxhist060 v_dnewvxhist060 d_vxhist070 v_dnewvxhist070 d_vxhist080 v_dnewvxhist080 d_vxhist090 v_dnewvxhist090 d_vxhist100 v_dnewvxhist100 d_vxhist110 v_dnewvxhist110 d_vxhist120 v_dnewvxhist120 d_vxhist130 v_dnewvxhist130 d_vxhist140 v_dnewvxhist140 d_vxhist150 v_dnewvxhist150 d_vxhist160 v_dnewvxhist160 d_vxhist170 v_dnewvxhist170 d_vxhist180 v_dnewvxhist180 d_vxhist190 v_dnewvxhist190 d_vxhist200 v_dnewvxhist200
+
+# run
+
+run		${nsteps}
+run		3000
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Per MPI rank memory allocation (min/avg/max) = 28.08 | 28.08 | 28.08 Mbytes
+   Step         S/CPU           Temp          PotEng        Density         TotEng         Press         v_xshock          Lx      
+         0   0              168.17999     -3.3337144      0.70710678     248.85218      119.8768       0.059442842    53.453923    
+       100   366.88026      165.96177     -0.006667134    0.70710678     248.85301      129.18884      1.5589475      53.453923    
+       200   361.0737       163.49354      3.7003648      0.70710678     248.85892      139.77213      2.4362327      53.453923    
+       300   352.23347      161.01309      7.4292027      0.70710678     248.86832      150.32168      3.797419       53.453923    
+       400   348.67714      158.55112      11.075662      0.70710678     248.82306      160.60615      5.1865046      53.453923    
+       500   338.68493      156.35488      14.353925      0.70710678     248.80807      169.96238      6.0054684      53.453923    
+       600   339.85043      153.4961       18.641704      0.70710678     248.8091       182.0693       7.4261996      53.453923    
+       700   332.90143      150.99253      22.387836      0.70710678     248.80113      192.66907      8.5813252      53.453923    
+       800   300.28562      148.73591      25.766215      0.70710678     248.79571      202.29392      9.9486321      53.453923    
+       900   305.0384       147.03011      28.319375      0.70710678     248.79103      209.84786      11.226309      53.453923    
+      1000   325.23813      144.16644      32.602809      0.70710678     248.78039      221.87192      12.187443      53.453923    
+      1100   323.49969      141.97192      35.870207      0.70710678     248.7571       231.22531      13.303392      53.453923    
+      1200   315.09616      138.47615      41.106311      0.70710678     248.7513       245.68842      14.449151      53.453923    
+      1300   285.9943       136.0265       44.762095      0.70710678     248.73384      256.12869      15.472593      53.453923    
+      1400   290.39754      132.61094      49.910785      0.70710678     248.76089      270.17224      16.598046      53.453923    
+      1500   290.60348      132.06084      50.727856      0.70710678     248.75308      273.31719      17.483838      53.453923    
+      1600   288.05921      130.84959      52.509614      0.70710678     248.71858      279.03742      18.696654      53.453923    
+      1700   282.31763      128.71048      55.753638      0.70710678     248.75501      288.43826      19.86591       53.453923    
+      1800   281.5392       125.0372       61.292304      0.70710678     248.78558      303.41703      20.987         53.453923    
+      1900   264.96132      121.72975      66.226777      0.70710678     248.76053      317.11447      22.514218      53.453923    
+      2000   279.70817      119.02463      70.254733      0.70710678     248.73217      328.52066      23.984058      53.453923    
+      2100   271.27723      117.44183      72.599851      0.70710678     248.70387      335.5109       25.049228      53.453923    
+      2200   263.67983      115.01474      76.236614      0.70710678     248.70122      345.61911      26.049884      53.453923    
+      2300   271.44129      113.34071      78.753862      0.70710678     248.70825      352.77876      26.89178       53.453923    
+      2400   268.72679      114.12428      77.607066      0.70710678     248.73642      350.26057      28.166316      53.453923    
+      2500   267.77485      118.08852      71.671983      0.70710678     248.74571      334.48735      29.083021      53.453923    
+      2600   267.48415      118.15717      71.578786      0.70710678     248.75546      333.15475      30.066175      53.453923    
+      2700   272.92082      120.87069      67.540177      0.70710678     248.78578      321.91847      31.322154      53.453923    
+      2800   279.03561      123.64828      63.377011      0.70710678     248.7876       310.32125      32.980527      53.453923    
+      2900   267.83276      127.00696      58.352893      0.70710678     248.79983      296.63571      34.109167      53.453923    
+      3000   281.98939      128.03885      56.804325      0.70710678     248.79858      291.64226      35.230828      53.453923    
+Loop time of 10.123 on 1 procs for 3000 steps with 3000 atoms
+
+Performance: 12802.489 tau/day, 296.354 timesteps/s, 889.062 katom-step/s
+99.7% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 4.0884     | 4.0884     | 4.0884     |   0.0 | 40.39
+Neigh   | 0.43139    | 0.43139    | 0.43139    |   0.0 |  4.26
+Comm    | 0.058466   | 0.058466   | 0.058466   |   0.0 |  0.58
+Output  | 0.0014141  | 0.0014141  | 0.0014141  |   0.0 |  0.01
+Modify  | 5.5274     | 5.5274     | 5.5274     |   0.0 | 54.60
+Other   |            | 0.01605    |            |       |  0.16
+
+Nlocal:           3000 ave        3000 max        3000 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           3349 ave        3349 max        3349 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          60103 ave       60103 max       60103 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 60103
+Ave neighs/atom = 20.034333
+Neighbor list builds = 150
+Dangerous builds not checked
+
+# calculate average vxhist
+
+variable vxhist010 atom d_vxhist010
+compute vxhistav010 bulk reduce ave v_vxhist010
+variable vtcfhist010 equal c_vxhistav010/${up}+1.0
+variable vtcfhist010 equal c_vxhistav010/22.4+1.0
+
+variable vxhist020 atom d_vxhist020
+compute vxhistav020 bulk reduce ave v_vxhist020
+variable vtcfhist020 equal c_vxhistav020/${up}+1.0
+variable vtcfhist020 equal c_vxhistav020/22.4+1.0
+
+variable vxhist030 atom d_vxhist030
+compute vxhistav030 bulk reduce ave v_vxhist030
+variable vtcfhist030 equal c_vxhistav030/${up}+1.0
+variable vtcfhist030 equal c_vxhistav030/22.4+1.0
+
+variable vxhist040 atom d_vxhist040
+compute vxhistav040 bulk reduce ave v_vxhist040
+variable vtcfhist040 equal c_vxhistav040/${up}+1.0
+variable vtcfhist040 equal c_vxhistav040/22.4+1.0
+
+variable vxhist050 atom d_vxhist050
+compute vxhistav050 bulk reduce ave v_vxhist050
+variable vtcfhist050 equal c_vxhistav050/${up}+1.0
+variable vtcfhist050 equal c_vxhistav050/22.4+1.0
+
+variable vxhist060 atom d_vxhist060
+compute vxhistav060 bulk reduce ave v_vxhist060
+variable vtcfhist060 equal c_vxhistav060/${up}+1.0
+variable vtcfhist060 equal c_vxhistav060/22.4+1.0
+
+variable vxhist070 atom d_vxhist070
+compute vxhistav070 bulk reduce ave v_vxhist070
+variable vtcfhist070 equal c_vxhistav070/${up}+1.0
+variable vtcfhist070 equal c_vxhistav070/22.4+1.0
+
+variable vxhist080 atom d_vxhist080
+compute vxhistav080 bulk reduce ave v_vxhist080
+variable vtcfhist080 equal c_vxhistav080/${up}+1.0
+variable vtcfhist080 equal c_vxhistav080/22.4+1.0
+
+variable vxhist090 atom d_vxhist090
+compute vxhistav090 bulk reduce ave v_vxhist090
+variable vtcfhist090 equal c_vxhistav090/${up}+1.0
+variable vtcfhist090 equal c_vxhistav090/22.4+1.0
+
+variable vxhist100 atom d_vxhist100
+compute vxhistav100 bulk reduce ave v_vxhist100
+variable vtcfhist100 equal c_vxhistav100/${up}+1.0
+variable vtcfhist100 equal c_vxhistav100/22.4+1.0
+
+variable vxhist110 atom d_vxhist110
+compute vxhistav110 bulk reduce ave v_vxhist110
+variable vtcfhist110 equal c_vxhistav110/${up}+1.0
+variable vtcfhist110 equal c_vxhistav110/22.4+1.0
+
+variable vxhist120 atom d_vxhist120
+compute vxhistav120 bulk reduce ave v_vxhist120
+variable vtcfhist120 equal c_vxhistav120/${up}+1.0
+variable vtcfhist120 equal c_vxhistav120/22.4+1.0
+
+variable vxhist130 atom d_vxhist130
+compute vxhistav130 bulk reduce ave v_vxhist130
+variable vtcfhist130 equal c_vxhistav130/${up}+1.0
+variable vtcfhist130 equal c_vxhistav130/22.4+1.0
+
+variable vxhist140 atom d_vxhist140
+compute vxhistav140 bulk reduce ave v_vxhist140
+variable vtcfhist140 equal c_vxhistav140/${up}+1.0
+variable vtcfhist140 equal c_vxhistav140/22.4+1.0
+
+variable vxhist150 atom d_vxhist150
+compute vxhistav150 bulk reduce ave v_vxhist150
+variable vtcfhist150 equal c_vxhistav150/${up}+1.0
+variable vtcfhist150 equal c_vxhistav150/22.4+1.0
+
+variable vxhist160 atom d_vxhist160
+compute vxhistav160 bulk reduce ave v_vxhist160
+variable vtcfhist160 equal c_vxhistav160/${up}+1.0
+variable vtcfhist160 equal c_vxhistav160/22.4+1.0
+
+variable vxhist170 atom d_vxhist170
+compute vxhistav170 bulk reduce ave v_vxhist170
+variable vtcfhist170 equal c_vxhistav170/${up}+1.0
+variable vtcfhist170 equal c_vxhistav170/22.4+1.0
+
+variable vxhist180 atom d_vxhist180
+compute vxhistav180 bulk reduce ave v_vxhist180
+variable vtcfhist180 equal c_vxhistav180/${up}+1.0
+variable vtcfhist180 equal c_vxhistav180/22.4+1.0
+
+variable vxhist190 atom d_vxhist190
+compute vxhistav190 bulk reduce ave v_vxhist190
+variable vtcfhist190 equal c_vxhistav190/${up}+1.0
+variable vtcfhist190 equal c_vxhistav190/22.4+1.0
+
+variable vxhist200 atom d_vxhist200
+compute vxhistav200 bulk reduce ave v_vxhist200
+variable vtcfhist200 equal c_vxhistav200/${up}+1.0
+variable vtcfhist200 equal c_vxhistav200/22.4+1.0
+
+run 0
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Per MPI rank memory allocation (min/avg/max) = 30.58 | 30.58 | 30.58 Mbytes
+   Step         S/CPU           Temp          PotEng        Density         TotEng         Press         v_xshock          Lx      
+      3000   0              128.03885      56.804325      0.70710678     248.79858      291.64226      35.230828      53.453923    
+Loop time of 1.052e-06 on 1 procs for 0 steps with 3000 atoms
+
+95.1% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 1.052e-06  |            |       |100.00
+
+Nlocal:           3000 ave        3000 max        3000 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           3349 ave        3349 max        3349 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          60103 ave       60103 max       60103 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 60103
+Ave neighs/atom = 20.034333
+Neighbor list builds = 0
+Dangerous builds not checked
+
+print """# t VTCF(t)
+$((010-v_leftwindow)*v_nevery*v_dt) ${vtcfhist010}
+$((020-v_leftwindow)*v_nevery*v_dt) ${vtcfhist020}
+$((030-v_leftwindow)*v_nevery*v_dt) ${vtcfhist030}
+$((040-v_leftwindow)*v_nevery*v_dt) ${vtcfhist040}
+$((050-v_leftwindow)*v_nevery*v_dt) ${vtcfhist050}
+$((060-v_leftwindow)*v_nevery*v_dt) ${vtcfhist060}
+$((070-v_leftwindow)*v_nevery*v_dt) ${vtcfhist070}
+$((080-v_leftwindow)*v_nevery*v_dt) ${vtcfhist080}
+$((090-v_leftwindow)*v_nevery*v_dt) ${vtcfhist090}
+$((100-v_leftwindow)*v_nevery*v_dt) ${vtcfhist100}
+$((110-v_leftwindow)*v_nevery*v_dt) ${vtcfhist110}
+$((120-v_leftwindow)*v_nevery*v_dt) ${vtcfhist120}
+$((130-v_leftwindow)*v_nevery*v_dt) ${vtcfhist130}
+$((140-v_leftwindow)*v_nevery*v_dt) ${vtcfhist140}
+$((150-v_leftwindow)*v_nevery*v_dt) ${vtcfhist150}
+$((160-v_leftwindow)*v_nevery*v_dt) ${vtcfhist160}
+$((170-v_leftwindow)*v_nevery*v_dt) ${vtcfhist170}
+$((180-v_leftwindow)*v_nevery*v_dt) ${vtcfhist180}
+$((190-v_leftwindow)*v_nevery*v_dt) ${vtcfhist190}
+$((200-v_leftwindow)*v_nevery*v_dt) ${vtcfhist200}""" file vtcf.dat screen no
+Total wall time: 0:00:10
