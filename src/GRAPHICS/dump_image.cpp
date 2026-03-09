@@ -261,7 +261,13 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       if (iarg+3 > narg) utils::missing_cmd_args(FLERR,"dump image line", error);
       lineflag = YES;
       if (strcmp(arg[iarg+1],"type") == 0) lcolor = TYPE;
-      else error->all(FLERR, iarg+1, "Dump image line only supports color by type");
+      else if (strcmp(arg[iarg+1],"atom") == 0) lcolor = ATOM;
+      else if (strcmp(arg[iarg+1],"index") == 0) lcolor = INDEX;
+      else
+        error->all(FLERR, iarg+1, "Dump image line only supports color by type, atom, or index");
+      if ((lcolor != ATOM) && (acolor != TYPE))
+        error->all(FLERR, iarg+1,
+                   "Must color atoms by type with line particles colored by type or index");
       ldiam = NUMERIC;
       ldiamvalue = utils::numeric(FLERR,arg[iarg+2],false,lmp);
       iarg += 3;
@@ -270,7 +276,13 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       if (iarg+4 > narg) utils::missing_cmd_args(FLERR,"dump image tri", error);
       triflag = YES;
       if (strcmp(arg[iarg+1],"type") == 0) tcolor = TYPE;
-      else error->all(FLERR, iarg+1, "Dump image tri only supports color by type");
+      else if (strcmp(arg[iarg+1],"atom") == 0) tcolor = ATOM;
+      else if (strcmp(arg[iarg+1],"index") == 0) tcolor = INDEX;
+      else
+        error->all(FLERR, iarg+1, "Dump image tri only supports color by type, atom, or index");
+      if ((tcolor != ATOM) && (acolor != TYPE))
+        error->all(FLERR, iarg+1,
+                   "Must color atoms by type with tri particles colored by type or index");
       tstyle = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
       tdiamvalue = utils::numeric(FLERR,arg[iarg+3],false,lmp);
       iarg += 4;
@@ -279,14 +291,20 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       if (iarg+5 > narg) utils::missing_cmd_args(FLERR,"dump image ellipsoid", error);
       ellipsoidflag = YES;
       if (strcmp(arg[iarg+1],"type") == 0) ecolor = TYPE;
-      else error->all(FLERR, iarg+1, "Dump image ellipsoid only supports color by type");
+      else if (strcmp(arg[iarg+1],"atom") == 0) ecolor = ATOM;
+      else if (strcmp(arg[iarg+1],"index") == 0) ecolor = INDEX;
+      else
+        error->all(FLERR, iarg+1, "Dump image ellipsoid only supports color by type, atom, or index");
+      if ((ecolor != ATOM) && (acolor != TYPE))
+        error->all(FLERR, iarg+1,
+                   "Must color atoms by type with ellipsoid particles colored by type or index");
       estyle = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
       if ((estyle < 0) || (estyle > 3))
         error->all(FLERR, iarg+2, "Dump image ellipsoid only supports style setting 1, 2, or 3");
       elevel = utils::inumeric(FLERR,arg[iarg+3],false,lmp);
       if (elevel == 0) elevel = 4; // default setting
       if (elevel > 6)
-        error->all(FLERR, iarg+3, "Dump image ellipsoid mesh refinement level is too large");
+        error->all(FLERR, iarg+3, "Dump image ellipsoid mesh refinement level {} is too large", elevel);
       ediamvalue = utils::numeric(FLERR,arg[iarg+4],false,lmp);
       iarg += 5;
 
@@ -1230,12 +1248,30 @@ void DumpImage::create_image()
     int *line = atom->line;
     int *type = atom->type;
 
+    m = 0;
     for (i = 0; i < nchoose; i++) {
       j = clist[i];
       if (line[j] < 0) continue;
 
+      itype = type[j];
+      double opacity = aopacity[itype];
       if (lcolor == TYPE) {
-        color = colortype[type[j]];
+        color = colortype[itype];
+      } else if (lcolor == INDEX) {
+        itype = (line[j] % atom->ntypes) + 1;
+        color = colortype[itype];
+      } else if (lcolor == ATOM) {
+        if (acolor == TYPE) {
+          color = colortype[itype];
+        } else if (acolor == ELEMENT) {
+          color = colorelement[itype];
+        } else if (acolor == ATTRIBUTE) {
+          color = image->map_value2color(0,buf[m]);
+        } else {
+          color = image->color2rgb("white");
+        }
+      } else {
+        color = image->color2rgb("white");
       }
 
       if (ldiam == NUMERIC) {
@@ -1255,6 +1291,8 @@ void DumpImage::create_image()
       pt2[2] = 0.0;
 
       image->draw_cylinder(pt1,pt2,color,ldiamvalue,3,aopacity[atom->type[j]]);
+
+      m += size_one;
     }
   }
 
@@ -1271,14 +1309,31 @@ void DumpImage::create_image()
     int *tri = atom->tri;
     int *type = atom->type;
 
+    m = 0;
     for (i = 0; i < nchoose; i++) {
       j = clist[i];
       if (tri[j] < 0) continue;
 
+      itype = type[j];
+      double opacity = aopacity[itype];
       if (tcolor == TYPE) {
-        color = colortype[type[j]];
+        color = colortype[itype];
+      } else if (tcolor == INDEX) {
+        itype = (tri[j] % atom->ntypes) + 1;
+        color = colortype[itype];
+      } else if (tcolor == ATOM) {
+        if (acolor == TYPE) {
+          color = colortype[itype];
+        } else if (acolor == ELEMENT) {
+          color = colorelement[itype];
+        } else if (acolor == ATTRIBUTE) {
+          color = image->map_value2color(0,buf[m]);
+        } else {
+          color = image->color2rgb("white");
+        }
+      } else {
+        color = image->color2rgb("white");
       }
-      double opacity = aopacity[atom->type[j]];
 
       MathExtra::quat_to_mat(avec_tri->bonus[tri[j]].quat,mat);
       MathExtra::matvec(mat,avec_tri->bonus[tri[j]].c1,pt1);
@@ -1288,12 +1343,27 @@ void DumpImage::create_image()
       MathExtra::add3(pt2,x[j],pt2);
       MathExtra::add3(pt3,x[j],pt3);
 
-      if (tridraw) image->draw_triangle(pt1,pt2,pt3,color,opacity);
+      if (tridraw) {
+        // brighten flat surfaces a little bit
+        image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] = 0.3;
+        image->keyLightColor[0] = image->keyLightColor[1] = image->keyLightColor[2] = 0.8;
+        image->fillLightColor[0] = image->fillLightColor[1] = image->fillLightColor[2] = 0.45;
+        image->backLightColor[0] = image->backLightColor[1] = image->backLightColor[2] = 0.8;
+
+        image->draw_triangle(pt1,pt2,pt3,color,opacity);
+
+        // restore previous settings
+        image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] = 0.0;
+        image->keyLightColor[0] = image->keyLightColor[1] = image->keyLightColor[2] = 0.9;
+        image->fillLightColor[0] = image->fillLightColor[1] = image->fillLightColor[2] = 0.45;
+        image->backLightColor[0] = image->backLightColor[1] = image->backLightColor[2] = 0.9;
+      }
       if (edgedraw) {
         image->draw_cylinder(pt1,pt2,color,tdiamvalue,3,opacity);
         image->draw_cylinder(pt2,pt3,color,tdiamvalue,3,opacity);
         image->draw_cylinder(pt3,pt1,color,tdiamvalue,3,opacity);
       }
+      m += size_one;
     }
   }
 
@@ -1304,16 +1374,50 @@ void DumpImage::create_image()
     double **x = atom->x;
     int *ellipsoid = atom->ellipsoid;
     int *type = atom->type;
+    m = 0;
+
     for (i = 0; i < nchoose; i++) {
       j = clist[i];
       if (ellipsoid[j] < 0) continue;
 
+      itype = type[j];
+      double opacity = aopacity[itype];
       if (ecolor == TYPE) {
-        color = colortype[type[j]];
+        color = colortype[itype];
+      } else if (ecolor == INDEX) {
+        itype = (ellipsoid[j] % atom->ntypes) + 1;
+        color = colortype[itype];
+      } else if (ecolor == ATOM) {
+        if (acolor == TYPE) {
+          color = colortype[itype];
+        } else if (acolor == ELEMENT) {
+          color = colorelement[itype];
+        } else if (acolor == ATTRIBUTE) {
+          color = image->map_value2color(0,buf[m]);
+        } else {
+          color = image->color2rgb("white");
+        }
+      } else {
+        color = image->color2rgb("white");
+      }
+      if (estyle & 1) {
+        // brighten flat surfaces a little bit
+        image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] = 0.3;
+        image->keyLightColor[0] = image->keyLightColor[1] = image->keyLightColor[2] = 0.8;
+        image->fillLightColor[0] = image->fillLightColor[1] = image->fillLightColor[2] = 0.45;
+        image->backLightColor[0] = image->backLightColor[1] = image->backLightColor[2] = 0.8;
       }
       EllipsoidObj e(elevel);
       e.draw(image, estyle, color, x[j], avec_ellipsoid->bonus[ellipsoid[j]].shape,
-             avec_ellipsoid->bonus[ellipsoid[j]].quat, ediamvalue, aopacity[type[j]]);
+             avec_ellipsoid->bonus[ellipsoid[j]].quat, ediamvalue, opacity);
+      if (estyle & 1) {
+        // restore previous settings
+        image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] = 0.0;
+        image->keyLightColor[0] = image->keyLightColor[1] = image->keyLightColor[2] = 0.9;
+        image->fillLightColor[0] = image->fillLightColor[1] = image->fillLightColor[2] = 0.45;
+        image->backLightColor[0] = image->backLightColor[1] = image->backLightColor[2] = 0.9;
+      }
+      m += size_one;
     }
   }
 
