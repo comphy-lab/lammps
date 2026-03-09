@@ -49,7 +49,7 @@ Created orthogonal box = (0 0 0) to (53.453923 8.9089872 8.9089872)
 create_atoms	1 region box
 Created 3000 atoms
   using lattice units in orthogonal box = (0 0 0) to (53.453923 8.9089872 8.9089872)
-  create_atoms CPU = 0.001 seconds
+  create_atoms CPU = 0.000 seconds
 mass		1 ${mass}
 mass		1 1.0
 
@@ -115,9 +115,9 @@ Neighbor list info ...
 Per MPI rank memory allocation (min/avg/max) = 2.636 | 2.642 | 2.647 Mbytes
    Step          Temp          PotEng         Press            Lx             Ly             Lz      
          0   1.251         -4.4495922     -3.3340495      53.453923      8.9089872      8.9089872    
-Loop time of 2.9575e-06 on 4 procs for 0 steps with 3000 atoms
+Loop time of 1.99425e-06 on 4 procs for 0 steps with 3000 atoms
 
-93.0% CPU use with 4 MPI tasks x 1 OpenMP threads
+100.3% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
@@ -127,7 +127,7 @@ Neigh   | 0          | 0          | 0          |   0.0 |  0.00
 Comm    | 0          | 0          | 0          |   0.0 |  0.00
 Output  | 0          | 0          | 0          |   0.0 |  0.00
 Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 2.958e-06  |            |       |100.00
+Other   |            | 1.994e-06  |            |       |100.00
 
 Nlocal:            750 ave         750 max         750 min
 Histogram: 4 0 0 0 0 0 0 0 0 0
@@ -158,20 +158,20 @@ Per MPI rank memory allocation (min/avg/max) = 2.636 | 2.642 | 2.647 Mbytes
    Step          Temp          PotEng         Press            Lx             Ly             Lz      
          0   1.251         -4.4495922     -3.3340495      53.453923      8.9089872      8.9089872    
       1000   1.3047894     -3.3407357      1.9122431      53.453923      8.9089872      8.9089872    
-Loop time of 0.178558 on 4 procs for 1000 steps with 3000 atoms
+Loop time of 0.187058 on 4 procs for 1000 steps with 3000 atoms
 
-Performance: 241937.839 tau/day, 5600.413 timesteps/s, 16.801 Matom-step/s
-99.8% CPU use with 4 MPI tasks x 1 OpenMP threads
+Performance: 230944.103 tau/day, 5345.928 timesteps/s, 16.038 Matom-step/s
+99.6% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 0.11686    | 0.12493    | 0.12806    |   1.3 | 69.96
-Neigh   | 0.022273   | 0.023646   | 0.024131   |   0.5 | 13.24
-Comm    | 0.012772   | 0.016657   | 0.026591   |   4.5 |  9.33
-Output  | 1.6813e-05 | 1.9049e-05 | 2.5056e-05 |   0.0 |  0.01
-Modify  | 0.011574   | 0.012031   | 0.013211   |   0.6 |  6.74
-Other   |            | 0.001279   |            |       |  0.72
+Pair    | 0.12104    | 0.12991    | 0.13498    |   1.5 | 69.45
+Neigh   | 0.02307    | 0.024409   | 0.024868   |   0.5 | 13.05
+Comm    | 0.012643   | 0.01809    | 0.029271   |   4.9 |  9.67
+Output  | 1.8347e-05 | 2.0263e-05 | 2.5356e-05 |   0.0 |  0.01
+Modify  | 0.012199   | 0.013385   | 0.016198   |   1.4 |  7.16
+Other   |            | 0.001247   |            |       |  0.67
 
 Nlocal:            750 ave         768 max         720 min
 Histogram: 1 0 0 0 0 0 0 2 0 1
@@ -209,20 +209,20 @@ Per MPI rank memory allocation (min/avg/max) = 2.636 | 2.642 | 2.647 Mbytes
    Step          Temp          PotEng         Press            Lx             Ly             Lz      
          0   1.3047894     -3.3407357      1.9122431      53.453923      8.9089872      8.9089872    
        100   1.2478648     -3.3354146      1.8621644      53.453923      8.9089872      8.9089872    
-Loop time of 0.0175257 on 4 procs for 100 steps with 3000 atoms
+Loop time of 0.017798 on 4 procs for 100 steps with 3000 atoms
 
-Performance: 246494.623 tau/day, 5705.894 timesteps/s, 17.118 Matom-step/s
+Performance: 242723.305 tau/day, 5618.595 timesteps/s, 16.856 Matom-step/s
 99.9% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 0.011491   | 0.012422   | 0.012779   |   0.5 | 70.88
-Neigh   | 0.0023197  | 0.002435   | 0.0024826  |   0.1 | 13.89
-Comm    | 0.0010326  | 0.0014301  | 0.0025066  |   1.6 |  8.16
-Output  | 7.845e-06  | 9.5287e-06 | 1.4445e-05 |   0.0 |  0.05
-Modify  | 0.0010905  | 0.0011093  | 0.0011482  |   0.1 |  6.33
-Other   |            | 0.0001198  |            |       |  0.68
+Pair    | 0.011568   | 0.012594   | 0.013099   |   0.5 | 70.76
+Neigh   | 0.002153   | 0.0022661  | 0.0023287  |   0.1 | 12.73
+Comm    | 0.0010884  | 0.0016209  | 0.0028795  |   1.8 |  9.11
+Output  | 7.346e-06  | 8.687e-06  | 1.2474e-05 |   0.0 |  0.05
+Modify  | 0.0010807  | 0.0011746  | 0.0014014  |   0.4 |  6.60
+Other   |            | 0.0001335  |            |       |  0.75
 
 Nlocal:            750 ave         768 max         720 min
 Histogram: 1 0 0 0 0 0 0 2 0 1
@@ -377,20 +377,20 @@ Per MPI rank memory allocation (min/avg/max) = 27.89 | 27.89 | 27.9 Mbytes
       2900   125.15724      61.201001      0.70710678     248.87429      304.72218      31.87266       55.43659     
       3000   126.44735      59.281306      0.70710678     248.88911      298.90512      33.262938      50.205555    
       3100   128.22984      56.601377      0.70710678     248.88202      291.07308      34.613479      49.410826    
-Loop time of 4.32559 on 4 procs for 3000 steps with 3000 atoms
+Loop time of 7.42137 on 4 procs for 3000 steps with 3000 atoms
 
-Performance: 29961.237 tau/day, 693.547 timesteps/s, 2.081 Matom-step/s
-99.8% CPU use with 4 MPI tasks x 1 OpenMP threads
+Performance: 17463.080 tau/day, 404.238 timesteps/s, 1.213 Matom-step/s
+79.8% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 0.10418    | 0.866      | 1.8428     |  73.2 | 20.02
-Neigh   | 0.013229   | 0.093232   | 0.18798    |  22.5 |  2.16
-Comm    | 0.063378   | 1.9819     | 3.6489     |  99.0 | 45.82
-Output  | 0.0011259  | 0.0097743  | 0.018478   |   6.8 |  0.23
-Modify  | 0.53919    | 1.3705     | 2.224      |  55.7 | 31.68
-Other   |            | 0.004169   |            |       |  0.10
+Pair    | 0.14082    | 1.3252     | 2.8882     |  93.4 | 17.86
+Neigh   | 0.013766   | 0.12891    | 0.28147    |  28.9 |  1.74
+Comm    | 0.6338     | 3.7446     | 6.4367     | 115.4 | 50.46
+Output  | 0.0038867  | 0.017999   | 0.031793   |   8.0 |  0.24
+Modify  | 0.79541    | 2.195      | 3.5997     |  72.3 | 29.58
+Other   |            | 0.009677   |            |       |  0.13
 
 Nlocal:            750 ave        1479 max           3 min
 Histogram: 1 0 1 0 0 0 0 1 0 1
@@ -404,116 +404,116 @@ Ave neighs/atom = 20.006
 Neighbor list builds = 150
 Dangerous builds not checked
 
-# calculate average vxhist
+# average vxhist to get CVCF
 
 variable vxhist010 atom d_vxhist010
 compute vxhistav010 bulk reduce ave v_vxhist010
-variable vtcfhist010 equal c_vxhistav010/${up}+1.0
-variable vtcfhist010 equal c_vxhistav010/22.4+1.0
+variable cvcfhist010 equal c_vxhistav010/${up}+1.0
+variable cvcfhist010 equal c_vxhistav010/22.4+1.0
 
 variable vxhist020 atom d_vxhist020
 compute vxhistav020 bulk reduce ave v_vxhist020
-variable vtcfhist020 equal c_vxhistav020/${up}+1.0
-variable vtcfhist020 equal c_vxhistav020/22.4+1.0
+variable cvcfhist020 equal c_vxhistav020/${up}+1.0
+variable cvcfhist020 equal c_vxhistav020/22.4+1.0
 
 variable vxhist030 atom d_vxhist030
 compute vxhistav030 bulk reduce ave v_vxhist030
-variable vtcfhist030 equal c_vxhistav030/${up}+1.0
-variable vtcfhist030 equal c_vxhistav030/22.4+1.0
+variable cvcfhist030 equal c_vxhistav030/${up}+1.0
+variable cvcfhist030 equal c_vxhistav030/22.4+1.0
 
 variable vxhist040 atom d_vxhist040
 compute vxhistav040 bulk reduce ave v_vxhist040
-variable vtcfhist040 equal c_vxhistav040/${up}+1.0
-variable vtcfhist040 equal c_vxhistav040/22.4+1.0
+variable cvcfhist040 equal c_vxhistav040/${up}+1.0
+variable cvcfhist040 equal c_vxhistav040/22.4+1.0
 
 variable vxhist050 atom d_vxhist050
 compute vxhistav050 bulk reduce ave v_vxhist050
-variable vtcfhist050 equal c_vxhistav050/${up}+1.0
-variable vtcfhist050 equal c_vxhistav050/22.4+1.0
+variable cvcfhist050 equal c_vxhistav050/${up}+1.0
+variable cvcfhist050 equal c_vxhistav050/22.4+1.0
 
 variable vxhist060 atom d_vxhist060
 compute vxhistav060 bulk reduce ave v_vxhist060
-variable vtcfhist060 equal c_vxhistav060/${up}+1.0
-variable vtcfhist060 equal c_vxhistav060/22.4+1.0
+variable cvcfhist060 equal c_vxhistav060/${up}+1.0
+variable cvcfhist060 equal c_vxhistav060/22.4+1.0
 
 variable vxhist070 atom d_vxhist070
 compute vxhistav070 bulk reduce ave v_vxhist070
-variable vtcfhist070 equal c_vxhistav070/${up}+1.0
-variable vtcfhist070 equal c_vxhistav070/22.4+1.0
+variable cvcfhist070 equal c_vxhistav070/${up}+1.0
+variable cvcfhist070 equal c_vxhistav070/22.4+1.0
 
 variable vxhist080 atom d_vxhist080
 compute vxhistav080 bulk reduce ave v_vxhist080
-variable vtcfhist080 equal c_vxhistav080/${up}+1.0
-variable vtcfhist080 equal c_vxhistav080/22.4+1.0
+variable cvcfhist080 equal c_vxhistav080/${up}+1.0
+variable cvcfhist080 equal c_vxhistav080/22.4+1.0
 
 variable vxhist090 atom d_vxhist090
 compute vxhistav090 bulk reduce ave v_vxhist090
-variable vtcfhist090 equal c_vxhistav090/${up}+1.0
-variable vtcfhist090 equal c_vxhistav090/22.4+1.0
+variable cvcfhist090 equal c_vxhistav090/${up}+1.0
+variable cvcfhist090 equal c_vxhistav090/22.4+1.0
 
 variable vxhist100 atom d_vxhist100
 compute vxhistav100 bulk reduce ave v_vxhist100
-variable vtcfhist100 equal c_vxhistav100/${up}+1.0
-variable vtcfhist100 equal c_vxhistav100/22.4+1.0
+variable cvcfhist100 equal c_vxhistav100/${up}+1.0
+variable cvcfhist100 equal c_vxhistav100/22.4+1.0
 
 variable vxhist110 atom d_vxhist110
 compute vxhistav110 bulk reduce ave v_vxhist110
-variable vtcfhist110 equal c_vxhistav110/${up}+1.0
-variable vtcfhist110 equal c_vxhistav110/22.4+1.0
+variable cvcfhist110 equal c_vxhistav110/${up}+1.0
+variable cvcfhist110 equal c_vxhistav110/22.4+1.0
 
 variable vxhist120 atom d_vxhist120
 compute vxhistav120 bulk reduce ave v_vxhist120
-variable vtcfhist120 equal c_vxhistav120/${up}+1.0
-variable vtcfhist120 equal c_vxhistav120/22.4+1.0
+variable cvcfhist120 equal c_vxhistav120/${up}+1.0
+variable cvcfhist120 equal c_vxhistav120/22.4+1.0
 
 variable vxhist130 atom d_vxhist130
 compute vxhistav130 bulk reduce ave v_vxhist130
-variable vtcfhist130 equal c_vxhistav130/${up}+1.0
-variable vtcfhist130 equal c_vxhistav130/22.4+1.0
+variable cvcfhist130 equal c_vxhistav130/${up}+1.0
+variable cvcfhist130 equal c_vxhistav130/22.4+1.0
 
 variable vxhist140 atom d_vxhist140
 compute vxhistav140 bulk reduce ave v_vxhist140
-variable vtcfhist140 equal c_vxhistav140/${up}+1.0
-variable vtcfhist140 equal c_vxhistav140/22.4+1.0
+variable cvcfhist140 equal c_vxhistav140/${up}+1.0
+variable cvcfhist140 equal c_vxhistav140/22.4+1.0
 
 variable vxhist150 atom d_vxhist150
 compute vxhistav150 bulk reduce ave v_vxhist150
-variable vtcfhist150 equal c_vxhistav150/${up}+1.0
-variable vtcfhist150 equal c_vxhistav150/22.4+1.0
+variable cvcfhist150 equal c_vxhistav150/${up}+1.0
+variable cvcfhist150 equal c_vxhistav150/22.4+1.0
 
 variable vxhist160 atom d_vxhist160
 compute vxhistav160 bulk reduce ave v_vxhist160
-variable vtcfhist160 equal c_vxhistav160/${up}+1.0
-variable vtcfhist160 equal c_vxhistav160/22.4+1.0
+variable cvcfhist160 equal c_vxhistav160/${up}+1.0
+variable cvcfhist160 equal c_vxhistav160/22.4+1.0
 
 variable vxhist170 atom d_vxhist170
 compute vxhistav170 bulk reduce ave v_vxhist170
-variable vtcfhist170 equal c_vxhistav170/${up}+1.0
-variable vtcfhist170 equal c_vxhistav170/22.4+1.0
+variable cvcfhist170 equal c_vxhistav170/${up}+1.0
+variable cvcfhist170 equal c_vxhistav170/22.4+1.0
 
 variable vxhist180 atom d_vxhist180
 compute vxhistav180 bulk reduce ave v_vxhist180
-variable vtcfhist180 equal c_vxhistav180/${up}+1.0
-variable vtcfhist180 equal c_vxhistav180/22.4+1.0
+variable cvcfhist180 equal c_vxhistav180/${up}+1.0
+variable cvcfhist180 equal c_vxhistav180/22.4+1.0
 
 variable vxhist190 atom d_vxhist190
 compute vxhistav190 bulk reduce ave v_vxhist190
-variable vtcfhist190 equal c_vxhistav190/${up}+1.0
-variable vtcfhist190 equal c_vxhistav190/22.4+1.0
+variable cvcfhist190 equal c_vxhistav190/${up}+1.0
+variable cvcfhist190 equal c_vxhistav190/22.4+1.0
 
 variable vxhist200 atom d_vxhist200
 compute vxhistav200 bulk reduce ave v_vxhist200
-variable vtcfhist200 equal c_vxhistav200/${up}+1.0
-variable vtcfhist200 equal c_vxhistav200/22.4+1.0
+variable cvcfhist200 equal c_vxhistav200/${up}+1.0
+variable cvcfhist200 equal c_vxhistav200/22.4+1.0
 
 run 0
 Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
 Per MPI rank memory allocation (min/avg/max) = 30.45 | 30.47 | 30.49 Mbytes
    Step          Temp          PotEng        Density         TotEng         Press         v_xshock       v_ushock   
       3100   128.22984      56.601377      0.70710678     248.88202      291.07308      34.613479      49.410826    
-Loop time of 1.80875e-06 on 4 procs for 0 steps with 3000 atoms
+Loop time of 1.7985e-06 on 4 procs for 0 steps with 3000 atoms
 
-82.9% CPU use with 4 MPI tasks x 1 OpenMP threads
+83.4% CPU use with 4 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
@@ -523,7 +523,7 @@ Neigh   | 0          | 0          | 0          |   0.0 |  0.00
 Comm    | 0          | 0          | 0          |   0.0 |  0.00
 Output  | 0          | 0          | 0          |   0.0 |  0.00
 Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 1.809e-06  |            |       |100.00
+Other   |            | 1.798e-06  |            |       |100.00
 
 Nlocal:            750 ave        1479 max           3 min
 Histogram: 1 0 1 0 0 0 0 1 0 1
@@ -537,25 +537,25 @@ Ave neighs/atom = 20.006
 Neighbor list builds = 0
 Dangerous builds not checked
 
-print """# t VTCF(t)
-$((010-v_leftwindow)*v_nevery*v_dt) ${vtcfhist010}
-$((020-v_leftwindow)*v_nevery*v_dt) ${vtcfhist020}
-$((030-v_leftwindow)*v_nevery*v_dt) ${vtcfhist030}
-$((040-v_leftwindow)*v_nevery*v_dt) ${vtcfhist040}
-$((050-v_leftwindow)*v_nevery*v_dt) ${vtcfhist050}
-$((060-v_leftwindow)*v_nevery*v_dt) ${vtcfhist060}
-$((070-v_leftwindow)*v_nevery*v_dt) ${vtcfhist070}
-$((080-v_leftwindow)*v_nevery*v_dt) ${vtcfhist080}
-$((090-v_leftwindow)*v_nevery*v_dt) ${vtcfhist090}
-$((100-v_leftwindow)*v_nevery*v_dt) ${vtcfhist100}
-$((110-v_leftwindow)*v_nevery*v_dt) ${vtcfhist110}
-$((120-v_leftwindow)*v_nevery*v_dt) ${vtcfhist120}
-$((130-v_leftwindow)*v_nevery*v_dt) ${vtcfhist130}
-$((140-v_leftwindow)*v_nevery*v_dt) ${vtcfhist140}
-$((150-v_leftwindow)*v_nevery*v_dt) ${vtcfhist150}
-$((160-v_leftwindow)*v_nevery*v_dt) ${vtcfhist160}
-$((170-v_leftwindow)*v_nevery*v_dt) ${vtcfhist170}
-$((180-v_leftwindow)*v_nevery*v_dt) ${vtcfhist180}
-$((190-v_leftwindow)*v_nevery*v_dt) ${vtcfhist190}
-$((200-v_leftwindow)*v_nevery*v_dt) ${vtcfhist200}""" file vtcf.dat screen no
-Total wall time: 0:00:04
+print """# t CVCF(t)
+$((010-v_leftwindow)*v_nevery*v_dt) ${cvcfhist010}
+$((020-v_leftwindow)*v_nevery*v_dt) ${cvcfhist020}
+$((030-v_leftwindow)*v_nevery*v_dt) ${cvcfhist030}
+$((040-v_leftwindow)*v_nevery*v_dt) ${cvcfhist040}
+$((050-v_leftwindow)*v_nevery*v_dt) ${cvcfhist050}
+$((060-v_leftwindow)*v_nevery*v_dt) ${cvcfhist060}
+$((070-v_leftwindow)*v_nevery*v_dt) ${cvcfhist070}
+$((080-v_leftwindow)*v_nevery*v_dt) ${cvcfhist080}
+$((090-v_leftwindow)*v_nevery*v_dt) ${cvcfhist090}
+$((100-v_leftwindow)*v_nevery*v_dt) ${cvcfhist100}
+$((110-v_leftwindow)*v_nevery*v_dt) ${cvcfhist110}
+$((120-v_leftwindow)*v_nevery*v_dt) ${cvcfhist120}
+$((130-v_leftwindow)*v_nevery*v_dt) ${cvcfhist130}
+$((140-v_leftwindow)*v_nevery*v_dt) ${cvcfhist140}
+$((150-v_leftwindow)*v_nevery*v_dt) ${cvcfhist150}
+$((160-v_leftwindow)*v_nevery*v_dt) ${cvcfhist160}
+$((170-v_leftwindow)*v_nevery*v_dt) ${cvcfhist170}
+$((180-v_leftwindow)*v_nevery*v_dt) ${cvcfhist180}
+$((190-v_leftwindow)*v_nevery*v_dt) ${cvcfhist190}
+$((200-v_leftwindow)*v_nevery*v_dt) ${cvcfhist200}""" file cvcf.dat screen no
+Total wall time: 0:00:07

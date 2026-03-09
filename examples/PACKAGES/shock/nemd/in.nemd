@@ -92,109 +92,109 @@ d_vxhist200 v_dnewvxhist200
 
 run		${nsteps}
 
-# calculate average vxhist
+# average vxhist to get CVCF 
 
 variable vxhist010 atom d_vxhist010
 compute vxhistav010 bulk reduce ave v_vxhist010
-variable vtcfhist010 equal c_vxhistav010/${up}+1.0
+variable cvcfhist010 equal c_vxhistav010/${up}+1.0
 
 variable vxhist020 atom d_vxhist020
 compute vxhistav020 bulk reduce ave v_vxhist020
-variable vtcfhist020 equal c_vxhistav020/${up}+1.0
+variable cvcfhist020 equal c_vxhistav020/${up}+1.0
 
 variable vxhist030 atom d_vxhist030
 compute vxhistav030 bulk reduce ave v_vxhist030
-variable vtcfhist030 equal c_vxhistav030/${up}+1.0
+variable cvcfhist030 equal c_vxhistav030/${up}+1.0
 
 variable vxhist040 atom d_vxhist040
 compute vxhistav040 bulk reduce ave v_vxhist040
-variable vtcfhist040 equal c_vxhistav040/${up}+1.0
+variable cvcfhist040 equal c_vxhistav040/${up}+1.0
 
 variable vxhist050 atom d_vxhist050
 compute vxhistav050 bulk reduce ave v_vxhist050
-variable vtcfhist050 equal c_vxhistav050/${up}+1.0
+variable cvcfhist050 equal c_vxhistav050/${up}+1.0
 
 variable vxhist060 atom d_vxhist060
 compute vxhistav060 bulk reduce ave v_vxhist060
-variable vtcfhist060 equal c_vxhistav060/${up}+1.0
+variable cvcfhist060 equal c_vxhistav060/${up}+1.0
 
 variable vxhist070 atom d_vxhist070
 compute vxhistav070 bulk reduce ave v_vxhist070
-variable vtcfhist070 equal c_vxhistav070/${up}+1.0
+variable cvcfhist070 equal c_vxhistav070/${up}+1.0
 
 variable vxhist080 atom d_vxhist080
 compute vxhistav080 bulk reduce ave v_vxhist080
-variable vtcfhist080 equal c_vxhistav080/${up}+1.0
+variable cvcfhist080 equal c_vxhistav080/${up}+1.0
 
 variable vxhist090 atom d_vxhist090
 compute vxhistav090 bulk reduce ave v_vxhist090
-variable vtcfhist090 equal c_vxhistav090/${up}+1.0
+variable cvcfhist090 equal c_vxhistav090/${up}+1.0
 
 variable vxhist100 atom d_vxhist100
 compute vxhistav100 bulk reduce ave v_vxhist100
-variable vtcfhist100 equal c_vxhistav100/${up}+1.0
+variable cvcfhist100 equal c_vxhistav100/${up}+1.0
 
 variable vxhist110 atom d_vxhist110
 compute vxhistav110 bulk reduce ave v_vxhist110
-variable vtcfhist110 equal c_vxhistav110/${up}+1.0
+variable cvcfhist110 equal c_vxhistav110/${up}+1.0
 
 variable vxhist120 atom d_vxhist120
 compute vxhistav120 bulk reduce ave v_vxhist120
-variable vtcfhist120 equal c_vxhistav120/${up}+1.0
+variable cvcfhist120 equal c_vxhistav120/${up}+1.0
 
 variable vxhist130 atom d_vxhist130
 compute vxhistav130 bulk reduce ave v_vxhist130
-variable vtcfhist130 equal c_vxhistav130/${up}+1.0
+variable cvcfhist130 equal c_vxhistav130/${up}+1.0
 
 variable vxhist140 atom d_vxhist140
 compute vxhistav140 bulk reduce ave v_vxhist140
-variable vtcfhist140 equal c_vxhistav140/${up}+1.0
+variable cvcfhist140 equal c_vxhistav140/${up}+1.0
 
 variable vxhist150 atom d_vxhist150
 compute vxhistav150 bulk reduce ave v_vxhist150
-variable vtcfhist150 equal c_vxhistav150/${up}+1.0
+variable cvcfhist150 equal c_vxhistav150/${up}+1.0
 
 variable vxhist160 atom d_vxhist160
 compute vxhistav160 bulk reduce ave v_vxhist160
-variable vtcfhist160 equal c_vxhistav160/${up}+1.0
+variable cvcfhist160 equal c_vxhistav160/${up}+1.0
 
 variable vxhist170 atom d_vxhist170
 compute vxhistav170 bulk reduce ave v_vxhist170
-variable vtcfhist170 equal c_vxhistav170/${up}+1.0
+variable cvcfhist170 equal c_vxhistav170/${up}+1.0
 
 variable vxhist180 atom d_vxhist180
 compute vxhistav180 bulk reduce ave v_vxhist180
-variable vtcfhist180 equal c_vxhistav180/${up}+1.0
+variable cvcfhist180 equal c_vxhistav180/${up}+1.0
 
 variable vxhist190 atom d_vxhist190
 compute vxhistav190 bulk reduce ave v_vxhist190
-variable vtcfhist190 equal c_vxhistav190/${up}+1.0
+variable cvcfhist190 equal c_vxhistav190/${up}+1.0
 
 variable vxhist200 atom d_vxhist200
 compute vxhistav200 bulk reduce ave v_vxhist200
-variable vtcfhist200 equal c_vxhistav200/${up}+1.0
+variable cvcfhist200 equal c_vxhistav200/${up}+1.0
 
 run 0
 
-print """# t VTCF(t)
-$((010-v_leftwindow)*v_nevery*v_dt) ${vtcfhist010}
-$((020-v_leftwindow)*v_nevery*v_dt) ${vtcfhist020}
-$((030-v_leftwindow)*v_nevery*v_dt) ${vtcfhist030}
-$((040-v_leftwindow)*v_nevery*v_dt) ${vtcfhist040}
-$((050-v_leftwindow)*v_nevery*v_dt) ${vtcfhist050}
-$((060-v_leftwindow)*v_nevery*v_dt) ${vtcfhist060}
-$((070-v_leftwindow)*v_nevery*v_dt) ${vtcfhist070}
-$((080-v_leftwindow)*v_nevery*v_dt) ${vtcfhist080}
-$((090-v_leftwindow)*v_nevery*v_dt) ${vtcfhist090}
-$((100-v_leftwindow)*v_nevery*v_dt) ${vtcfhist100}
-$((110-v_leftwindow)*v_nevery*v_dt) ${vtcfhist110}
-$((120-v_leftwindow)*v_nevery*v_dt) ${vtcfhist120}
-$((130-v_leftwindow)*v_nevery*v_dt) ${vtcfhist130}
-$((140-v_leftwindow)*v_nevery*v_dt) ${vtcfhist140}
-$((150-v_leftwindow)*v_nevery*v_dt) ${vtcfhist150}
-$((160-v_leftwindow)*v_nevery*v_dt) ${vtcfhist160}
-$((170-v_leftwindow)*v_nevery*v_dt) ${vtcfhist170}
-$((180-v_leftwindow)*v_nevery*v_dt) ${vtcfhist180}
-$((190-v_leftwindow)*v_nevery*v_dt) ${vtcfhist190}
-$((200-v_leftwindow)*v_nevery*v_dt) ${vtcfhist200}""" &
-file vtcf.dat screen no
+print """# t CVCF(t)
+$((010-v_leftwindow)*v_nevery*v_dt) ${cvcfhist010}
+$((020-v_leftwindow)*v_nevery*v_dt) ${cvcfhist020}
+$((030-v_leftwindow)*v_nevery*v_dt) ${cvcfhist030}
+$((040-v_leftwindow)*v_nevery*v_dt) ${cvcfhist040}
+$((050-v_leftwindow)*v_nevery*v_dt) ${cvcfhist050}
+$((060-v_leftwindow)*v_nevery*v_dt) ${cvcfhist060}
+$((070-v_leftwindow)*v_nevery*v_dt) ${cvcfhist070}
+$((080-v_leftwindow)*v_nevery*v_dt) ${cvcfhist080}
+$((090-v_leftwindow)*v_nevery*v_dt) ${cvcfhist090}
+$((100-v_leftwindow)*v_nevery*v_dt) ${cvcfhist100}
+$((110-v_leftwindow)*v_nevery*v_dt) ${cvcfhist110}
+$((120-v_leftwindow)*v_nevery*v_dt) ${cvcfhist120}
+$((130-v_leftwindow)*v_nevery*v_dt) ${cvcfhist130}
+$((140-v_leftwindow)*v_nevery*v_dt) ${cvcfhist140}
+$((150-v_leftwindow)*v_nevery*v_dt) ${cvcfhist150}
+$((160-v_leftwindow)*v_nevery*v_dt) ${cvcfhist160}
+$((170-v_leftwindow)*v_nevery*v_dt) ${cvcfhist170}
+$((180-v_leftwindow)*v_nevery*v_dt) ${cvcfhist180}
+$((190-v_leftwindow)*v_nevery*v_dt) ${cvcfhist190}
+$((200-v_leftwindow)*v_nevery*v_dt) ${cvcfhist200}""" &
+file cvcf.dat screen no
