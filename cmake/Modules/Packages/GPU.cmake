@@ -146,11 +146,18 @@ if(GPU_API STREQUAL "CUDA")
       if(CUDA_VERSION VERSION_GREATER_EQUAL "11.1")
         string(APPEND GPU_CUDA_GENCODE " -gencode arch=compute_86,code=[sm_86,compute_86]")
       endif()
-      # Lovelace (GPU Arch 8.9) is supported by CUDA 11.8 and later
+      # Ada Lovelace (GPU Arch 8.9) and Hopper (GPU Arch 9.0) are supported by CUDA 11.8 and later
       if(CUDA_VERSION VERSION_GREATER_EQUAL "11.8")
         string(APPEND GPU_CUDA_GENCODE " -gencode arch=compute_90,code=[sm_90,compute_90]")
       endif()
-      # newer GPU Arch versions require CUDA 12.0 or later which is handled above
+      # Backwell (GPU Arch 100) is supported by CUDA 12.4 and later
+      if(CUDA_VERSION VERSION_GREATER_EQUAL "12.4")
+        string(APPEND GPU_CUDA_GENCODE " -gencode arch=compute_100,code=[sm_100,compute_100]")
+      endif()
+      # Rubin (GPU Arch 120) require CUDA 12.8 and later
+      if(CUDA_VERSION VERSION_GREATER_EQUAL "12.8")
+        string(APPEND GPU_CUDA_GENCODE " -gencode arch=compute_120,code=[sm_120,compute_120]")
+      endif()
     endif()
   endif()
 
@@ -331,11 +338,18 @@ elseif(GPU_API STREQUAL "HIP")
       if(CUDA_VERSION VERSION_GREATER_EQUAL "11.1")
         string(APPEND HIP_CUDA_GENCODE " -gencode arch=compute_86,code=[sm_86,compute_86]")
       endif()
-      # Lovelace (GPU Arch 8.9) is supported by CUDA 11.8 and later
+      # Ada Lovelace (GPU Arch 8.9) and Hopper (GPU Arch 9.0) are supported by CUDA 11.8 and later
       if(CUDA_VERSION VERSION_GREATER_EQUAL "11.8")
         string(APPEND HIP_CUDA_GENCODE " -gencode arch=compute_90,code=[sm_90,compute_90]")
       endif()
-      # newer GPU Arch versions require CUDA 12.0 or later which is handled above
+      # Backwell (GPU Arch 100) is supported by CUDA 12.4 and later
+      if(CUDA_VERSION VERSION_GREATER_EQUAL "12.4")
+        string(APPEND HIP_CUDA_GENCODE " -gencode arch=compute_100,code=[sm_100,compute_100]")
+      endif()
+      # Rubin (GPU Arch 120) require CUDA 12.8 and later
+      if(CUDA_VERSION VERSION_GREATER_EQUAL "12.8")
+        string(APPEND HIP_CUDA_GENCODE " -gencode arch=compute_120,code=[sm_120,compute_120]")
+      endif()
     endif()
   endif()
 
