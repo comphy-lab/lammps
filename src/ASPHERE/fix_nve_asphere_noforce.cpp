@@ -77,8 +77,8 @@ void FixNVEAsphereNoforce::initial_integrate_templated()
   int nlocal = atom->nlocal;
   if (igroup == atom->firstgroup) nlocal = atom->nfirst;
 
-  double *shape,*quat;
-  double inertia[3],omega[3];
+  double *shape,*quat, *inertia;
+  double inertia_to_compute[3],omega[3];
 
   // update positions and quaternions for all particles
 
@@ -93,13 +93,11 @@ void FixNVEAsphereNoforce::initial_integrate_templated()
 
       if (is_super) {
         quat = bonus_super[ellipsoid[i]].quat;
-
-        inertia[0] = bonus_super[ellipsoid[i]].inertia[0];
-        inertia[1] = bonus_super[ellipsoid[i]].inertia[1];
-        inertia[2] = bonus_super[ellipsoid[i]].inertia[2];
+        inertia = bonus_super[ellipsoid[i]].inertia;
       } else {
         shape = bonus[ellipsoid[i]].shape;
         quat = bonus[ellipsoid[i]].quat;
+        inertia = inertia_to_compute;
 
         inertia[0] = rmass[i] * (shape[1]*shape[1]+shape[2]*shape[2]) / 5.0;
         inertia[1] = rmass[i] * (shape[0]*shape[0]+shape[2]*shape[2]) / 5.0;

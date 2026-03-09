@@ -1402,7 +1402,7 @@ void ComputePropertyAtom::pack_shapez(int n)
       buf[n] = 2.0*bonus[ellipsoid[i]].shape[2];
     else buf[n] = 1.0;
     n += nvalues;
-  }
+    }
   } else {
     AtomVecEllipsoid::Bonus *bonus = avec_ellipsoid->bonus;
     for (int i = 0; i < nlocal; i++) {

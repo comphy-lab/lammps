@@ -64,6 +64,7 @@ void FixNVEAsphere::initial_integrate_templated()
   double dtfm;
   double omega[3];
   double *inertia,*quat, *shape;
+  double inertia_to_compute[3];
 
   AtomVecEllipsoid::Bonus *bonus = nullptr;
   AtomVecEllipsoid::BonusSuper *bonus_super = nullptr;
@@ -109,6 +110,7 @@ void FixNVEAsphere::initial_integrate_templated()
       } else {
         quat = bonus[j].quat;
         shape = bonus[j].shape;
+        inertia = inertia_to_compute;
 
         inertia[0] = INERTIA*rmass[i] * (shape[1]*shape[1]+shape[2]*shape[2]);
         inertia[1] = INERTIA*rmass[i] * (shape[0]*shape[0]+shape[2]*shape[2]);
