@@ -60,33 +60,34 @@ fields:
 * In both these force fields hydrogen atoms are treated as
   non-polarizable.
 
-The motion of he Drude particles can be calculated by minimizing the
+The motion of the Drude particles can be calculated by minimizing the
 energy of the induced dipoles at each timestep, by an iterative,
-self-consistent procedure. The Drude particles can be massless and
+self-consistent procedure.  The Drude particles can be massless and
 therefore do not contribute to the kinetic energy. However, the relaxed
-method is computational slow. An extended-lagrangian method can be used
-to calculate the positions of the Drude particles, but this requires
-them to have mass. It is important in this case to decouple the degrees
-of freedom associated with the Drude oscillators from those of the
-normal atoms. Thermalizing the Drude dipoles at temperatures comparable
-to the rest of the simulation leads to several problems (kinetic energy
-transfer, very short timestep, etc.), which can be remedied by the "cold
-Drude" technique (:ref:`Lamoureux and Roux <Lamoureux2>`).
+method is computationally slow.  An extended-lagrangian method can be
+used to calculate the positions of the Drude particles, but this
+requires them to have mass.  It is important in this case to decouple
+the degrees of freedom associated with the Drude oscillators from those
+of the normal atoms.  Thermalizing the Drude dipoles at temperatures
+comparable to the rest of the simulation leads to several problems
+(kinetic energy transfer, very short timestep, etc.), which can be
+remedied by the "cold Drude" technique (:ref:`Lamoureux and Roux
+<Lamoureux2>`).
 
 Two closely related models are used to represent polarization through
-"charges on a spring": the core-shell model and the Drude
-model. Although the basic idea is the same, the core-shell model is
-normally used for ionic/crystalline materials, whereas the Drude model
-is normally used for molecular systems and fluid states. In ionic
-crystals the symmetry around each ion and the distance between them
-are such that the core-shell model is sufficiently stable. But to be
-applicable to molecular/covalent systems the Drude model includes two
-important features:
+"charges on a spring": the core-shell model and the Drude model.
+Although the basic idea is the same, the core-shell model is normally
+used for ionic/crystalline materials, whereas the Drude model is
+normally used for molecular systems and fluid states.  In ionic crystals
+the symmetry around each ion and the distance between them are such that
+the core-shell model is sufficiently stable.  But to be applicable to
+molecular/covalent systems the Drude model includes two important
+features:
 
 #. The possibility to thermostat the additional degrees of freedom
    associated with the induced dipoles at very low temperature, in terms
    of the reduced coordinates of the Drude particles with respect to
-   their cores. This makes the trajectory close to that of relaxed
+   their cores.  This makes the trajectory close to that of relaxed
    induced dipoles.
 #. The Drude dipoles on covalently bonded atoms interact too strongly
    due to the short distances, so an atom may capture the Drude particle

@@ -372,12 +372,13 @@ bool file_is_writable(const std::string &path);
 
 /*! Return target path if the file is a 'redirect file'
  *
- * Git uses 'redirect file' instead of symbolic links on Windows since
+ * Git uses 'redirect files' instead of symbolic links on Windows since
  * the Windows file system has no symbolic links.  The redirect file
- * it a text file with just one line: the symbolic link target path.
- * This function opens the path parameter and reads a line. If that line
- * is a readable file, it returns that path. Otherwise it returns the
- * original path. The check is only performed when compiled for Windows.
+ * is a text file with just one line: the symbolic link target path.
+ * This function opens the path parameter and reads a line.  If that
+ * line is a readable file, it returns that path, otherwise the
+ * original path.  The check is only performed when compiled for
+ * Windows.  Otherwise the original path is always returned.
  *
  * \param path  file path to check
  * \return      the redirected path or the original path */

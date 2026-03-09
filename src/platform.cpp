@@ -18,6 +18,7 @@
 #include "platform.h"
 
 #include "fmt/format.h"
+#include "safe_pointers.h"
 #include "text_file_reader.h"
 #include "utils.h"
 
@@ -1015,13 +1016,13 @@ std::string platform::file_redirect(const std::string &path)
 {
 #if defined(_WIN32)
   // read the first (and only) line and see if it is a valid path
-  char buffer[1024];
-  char *target = (char *) path.c_str();
-  FILE *fp = fopen(target, "r");
+  SafeFilePtr fp = fopen(path.c_str(), "r");
   if (fp) {
-    char *target = fgets(buffer, 1024, fp);
-    fclose(fp);
-    if (target && platform::file_is_readable(target)) return {target};
+    char buffer[1024];
+    if (fgets(buffer, 1024, fp)) {
+      auto target = utils::trim(buffer);
+      if (platform::file_is_readable(target)) return target;
+    }
   }
 #endif
   return path;

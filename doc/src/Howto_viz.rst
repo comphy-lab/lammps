@@ -517,7 +517,7 @@ currently three approaches to make those bonds visible.
    hydrogen-hydrogen distance for hydrogen atoms bound to the same atom
    (e.g. in water, methane or hydrocarbon chains).
 
-#. Use use a combination of :doc:`fix bond/break <fix_bond_break>` and
+#. Use a combination of :doc:`fix bond/break <fix_bond_break>` and
    :doc:`fix bond/create/angle <fix_bond_create>` with :doc:`bond style
    zero <bond_zero>` to dynamically create and remove bonds that do not
    add any forces.  This also requires to tell the neighbor list code to
@@ -525,10 +525,10 @@ currently three approaches to make those bonds visible.
    corresponding pairs of atoms could be excluded from the neighbor list
    and thus the forces computed by the pair style incorrect) through
    using the :doc:`special_bonds <special_bonds>` command.  Unlike the
-   two other options, which had been around the same time this paragraph
-   was written, this method also works with older versions of LAMMPS.
-   Here is an example of the necessary commands for a carbon nanotube
-   modeled with the AIREBO potential:
+   two other options, which were added more recently, this method also
+   works with older versions of LAMMPS.  Here is an example of the
+   necessary commands for a carbon nanotube modeled with the AIREBO
+   potential:
 
    .. code-block:: LAMMPS
 

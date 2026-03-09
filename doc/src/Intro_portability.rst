@@ -118,6 +118,7 @@ contributions by the core LAMMPS developers themselves).
 We make use of a number of static code analysis tools for maintaining
 and improving the quality of the LAMMPS source code.  Tools used
 include:
+
 - `Coverity SCAN <https://scan.coverity.com/>`_
 - `CodeQL <https://codeql.github.com/>`_
 - `Clang Static Analyzer <https://clang-analyzer.llvm.org/>`_
