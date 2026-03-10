@@ -40,7 +40,7 @@ This compute
 calculates rotational kinetic energy which can be :doc:`output with
 thermodynamic info <Howto_output>`.
 
-This compute
+The compute
 
 * :doc:`compute fabric <compute_fabric>`
 
