@@ -1264,7 +1264,7 @@ then load this plugin at runtime with the :doc:`plugin command
       customized by setting the variable ``MBXLIB_URL`` when
       configuring with CMake (e.g. to use a local archive on machines
       without internet access).  Since CMake checks the validity of the
-      archive with ``md5sum`` you may also need to set ``MBXLIB_MD5``
+      archive with ``sha256sum`` you may also need to set ``MBXLIB_SHA256``
       if you provide a different library version than what is downloaded
       automatically.
 
@@ -1301,7 +1301,7 @@ folder and then load this plugin at runtime with the :doc:`plugin command <plugi
       customized by setting the variable ``PACELIB_URL`` when
       configuring with CMake (e.g. to use a local archive on machines
       without internet access).  Since CMake checks the validity of the
-      archive with ``md5sum`` you may also need to set ``PACELIB_MD5``
+      archive with ``sha256sum`` you may also need to set ``PACELIB_SHA256``
       if you provide a different library version than what is downloaded
       automatically.
 
