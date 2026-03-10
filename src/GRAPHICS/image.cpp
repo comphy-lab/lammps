@@ -1359,6 +1359,7 @@ void Image::draw_pixel(int ix, int iy, double depth,
                        const double *surface, const double *surfaceColor)
 {
   if (!std::isfinite(depth)) return; // reject pixels with invalid depth buffer values
+  if (!surfaceColor) return;         // reject pixels with an invalid color
 
   double diffuseKey,diffuseFill,diffuseBack,specularKey;
   if (depth < 0 || (depthBuffer[ix + iy*width] >= 0 && depth >= depthBuffer[ix + iy*width])) return;
