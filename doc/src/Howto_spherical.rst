@@ -51,16 +51,15 @@ individual particles, after then are created.
 The ellipsoid style defines particles that are ellipsoids and thus can
 be aspherical.  Each particle has a shape, specified by 3 diameters,
 and mass (or density).  Superellipsoid particles can be defined by
-specifying 2 blockiness exponents (block) and adding the `superellipsoid` 
+specifying 2 blockiness exponents (block) and adding the `superellipsoid`
 keyword to the `atom_style ellipsoid` command.  These particles store an angular
 momentum and their orientation (quaternion), and can be acted upon by
 torque.  They do not store an angular velocity (omega), which can be
 in a different direction than angular momentum, rather they compute it
-as needed.  The "set" command can be used to modify the diameter, orientation, 
+as needed.  The "set" command can be used to modify the diameter, orientation,
 and mass of individual particles, after they are created.
-The "set" command can also be used to modify the blockiness of superellipsoid 
-particles.
-It also has a brief explanation of what quaternions are.
+The "set" command can also be used to modify the blockiness of superellipsoid
+particles. It also has a brief explanation of what quaternions are.
 
 The line style defines line segment particles with two end points and
 a mass (or density).  They can be used in 2d simulations, and they can

@@ -19,6 +19,7 @@
 #define LMP_MATH_EXTRA_SUPERELLIPOIDS_H
 
 #include "math_extra.h"
+
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -116,6 +117,7 @@ double gaussian_curvature_superellipsoid(const double *shape, const double *bloc
 /* ----------------------------------------------------------------------
    determinant of a 4x4 matrix M with M[3][3] assumed to be zero
 ------------------------------------------------------------------------- */
+
 inline double MathExtraSuperellipsoids::det4_M44_zero(const double m[4][4])
 {
   // Define the 3x3 submatrices (M_41, M_42, M_43)
@@ -291,13 +293,14 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
   return true;
 }
 
-// algorithm from https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
-/* * Oriented Bounding Box intersection test.
- * Logic and optimization strategies adapted from LIGGGHTS (CFDEMproject).
- * See: src/math_extra_liggghts_nonspherical.cpp in LIGGGHTS distribution.
- * * This implementation uses the "cached separating axis" optimization 
- * for temporal coherence.
- */
+/* ----------------------------------------------------------------------
+   Oriented Bounding Box intersection test
+     Logic and optimization strategies adapted from LIGGGHTS (CFDEMproject)
+     See: src/math_extra_liggghts_nonspherical.cpp in LIGGGHTS distribution
+     This implementation uses the "cached separating axis" optimization for temporal coherence
+     Algorithm from https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
+------------------------------------------------------------------------- */
+
 inline bool MathExtraSuperellipsoids::check_oriented_bounding_boxes(
     const double *xc1, const double R1[3][3], const double *shape1, const double *xc2,
     const double R2[3][3], const double *shape2, double *cached_axis)
@@ -342,6 +345,8 @@ inline bool MathExtraSuperellipsoids::check_oriented_bounding_boxes(
   }
   return false;    // no separation found
 }
+
+/* ---------------------------------------------------------------------- */
 
 inline bool MathExtraSuperellipsoids::check_intersection_axis(const int axis_id,
                                                               const double C[3][3],
@@ -441,6 +446,8 @@ inline bool MathExtraSuperellipsoids::check_intersection_axis(const int axis_id,
   }
 }
 
+/* ---------------------------------------------------------------------- */
+
 inline bool MathExtraSuperellipsoids::check_intersection_axis_and_get_seed(
     const double *xc1, const double R1[3][3], const double *shape1, const double *xc2,
     const double R2[3][3], const double *shape2, double *cached_axis, double *contact_point)
@@ -455,8 +462,8 @@ inline bool MathExtraSuperellipsoids::check_intersection_axis_and_get_seed(
   const double eps = 1e-20;
   for (unsigned int i = 0; i < 3; i++) {
     for (unsigned int j = 0; j < 3; j++) {
-      AbsC[i][j] =
-          std::fabs(C[i][j]) + eps;    // Add epsilon to prevent division by zero in edge cases
+      // Add epsilon to prevent division by zero in edge cases
+      AbsC[i][j] = std::fabs(C[i][j]) + eps;
     }
   }
 

@@ -240,11 +240,11 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
       pack_choice[i] = &ComputePropertyAtom::pack_shapez;
 
     } else if (strcmp(arg[iarg],"block1") == 0) {
-      if (!avec_ellipsoid) 
+      if (!avec_ellipsoid || !atom->superellipsoid_flag)
         error->all(FLERR,"Compute property/atom {} requires atom style ellipsoid with super flag", arg[iarg]);
       pack_choice[i] = &ComputePropertyAtom::pack_block1;
     } else if (strcmp(arg[iarg],"block2") == 0) {
-      if (!avec_ellipsoid) 
+      if (!avec_ellipsoid || !atom->superellipsoid_flag)
         error->all(FLERR,"Compute property/atom {} requires atom style ellipsoid with super flag", arg[iarg]);
       pack_choice[i] = &ComputePropertyAtom::pack_block2;
     } else if (strcmp(arg[iarg],"quatw") == 0) {
@@ -264,15 +264,15 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
         error->all(FLERR,"Compute property/atom {} is not available", arg[iarg]);
       pack_choice[i] = &ComputePropertyAtom::pack_quatk;
     } else if (strcmp(arg[iarg],"inertiax") == 0) {
-      if (!avec_ellipsoid) 
+      if (!avec_ellipsoid || !atom->superellipsoid_flag)
         error->all(FLERR,"Compute property/atom {} requires atom style ellipsoid with super flag", arg[iarg]);
       pack_choice[i] = &ComputePropertyAtom::pack_inertiax;
     } else if (strcmp(arg[iarg],"inertiay") == 0) {
-      if (!avec_ellipsoid) 
+      if (!avec_ellipsoid || !atom->superellipsoid_flag)
         error->all(FLERR,"Compute property/atom {} requires atom style ellipsoid with super flag", arg[iarg]);
       pack_choice[i] = &ComputePropertyAtom::pack_inertiay;
     } else if (strcmp(arg[iarg],"inertiaz") == 0) {
-      if (!avec_ellipsoid) 
+      if (!avec_ellipsoid || !atom->superellipsoid_flag)
         error->all(FLERR,"Compute property/atom {} requires atom style ellipsoid with super flag", arg[iarg]);
       pack_choice[i] = &ComputePropertyAtom::pack_inertiaz;
     } else if (strcmp(arg[iarg],"tqx") == 0) {

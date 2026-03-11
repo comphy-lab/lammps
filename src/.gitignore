@@ -1201,6 +1201,8 @@
 /kissfft.h
 /lj_spica_common.h
 /math_complex.h
+/math_extra_superellipsoids.cpp
+/math_extra_superellipsoids.h
 /math_vector.h
 /message.cpp
 /message.h

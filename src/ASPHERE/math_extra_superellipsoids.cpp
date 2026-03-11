@@ -17,10 +17,11 @@
 ------------------------------------------------------------------------- */
 
 #include "math_extra_superellipsoids.h"
+
+#include "math_const.h"
 #include "math_extra.h"
+
 #include <cmath>
-// #include "math_special.h"
-// #include "math_const.h"
 
 namespace MathExtraSuperellipsoids {
 
@@ -39,11 +40,15 @@ static constexpr double TOL_OVERLAP = 1e-8;
 static constexpr unsigned int ITERMAX_OVERLAP = 20;
 static constexpr double MINSLOPE_OVERLAP = 1e-12;
 
+static constexpr double REGULARIZATION_EPSILON = 1e-12;
+static constexpr double MAX_B_FAST = 1e30;
+
 
 /* ----------------------------------------------------------------------
    curvature of superellipsoid
    source https://en.wikipedia.org/wiki/Mean_curvature
 ------------------------------------------------------------------------- */
+
 double mean_curvature_superellipsoid(const double *shape, const double *block, const int flag, const double R[3][3], const double *surf_global_point, const double *xc)
 {
   // this code computes the mean curvature on the superellipsoid surface
@@ -92,7 +97,7 @@ double gaussian_curvature_superellipsoid(const double *shape, const double *bloc
     {fxx, fxy, fxz, fx},
     {fxy, fyy, fyz, fy},
     {fxz, fyz, fzz, fz},
-    {fx,  fy,  fz, 0.0} 
+    {fx,  fy,  fz, 0.0}
   };
 
   double K = -det4_M44_zero(mat) / (F_mag*F_mag*F_mag*F_mag);
@@ -100,28 +105,31 @@ double gaussian_curvature_superellipsoid(const double *shape, const double *bloc
   return curvature;
 }
 
-  
+
 /* ----------------------------------------------------------------------
    express global (system level) to local (particle level) coordinates
 ------------------------------------------------------------------------- */
 
-void global2local_vector(const double *v, const double *quat, double *local_v){
+void global2local_vector(const double *v, const double *quat, double *local_v)
+{
     double qc[4];
     MathExtra::qconjugate(const_cast<double*>(quat), qc);
     MathExtra::quatrotvec(qc, const_cast<double*>(v), local_v);
 }
 
 /* ----------------------------------------------------------------------
-   Possible regularization for the shape functions 
+   Possible regularization for the shape functions
    Instead of F(x,y,z) = 0 we use (F(x,y,z)+1)^(1/n1) -1 = G(x,y,z) = 0
    We also scale G by the average radius to have better "midway" points
 ------------------------------------------------------------------------- */
-void apply_regularization_shape_function(double n1, const double avg_radius, double *value, double *grad, double hess[3][3]){
+
+void apply_regularization_shape_function(double n1, const double avg_radius, double *value, double *grad, double hess[3][3])
+{
   // value is F - 1
-  double base = std::fmax(*value + 1.0, 1e-12); 
+  double base = std::fmax(*value + 1.0, REGULARIZATION_EPSILON);
   const double inv_F = 1.0 / base;
   const double inv_n1 = 1.0 / n1;
-  
+
   // P = base^(1/n)
   const double F_pow_inv_n1 = std::pow(base, inv_n1);
 
@@ -148,11 +156,12 @@ void apply_regularization_shape_function(double n1, const double avg_radius, dou
   *value = avg_radius * (F_pow_inv_n1 - 1.0);
 };
 
-
 /* ----------------------------------------------------------------------
    shape function computations for superellipsoids
 ------------------------------------------------------------------------- */
-double shape_and_derivatives_local(const double* xlocal, const double* shape, const double* block, const int flag, double* grad, double hess[3][3]){
+
+double shape_and_derivatives_local(const double* xlocal, const double* shape, const double* block, const int flag, double* grad, double hess[3][3])
+{
   double shapefunc;
   // TODO: Not sure how to make flag values more clear
   // Cannot forward declare the enum AtomVecEllipsoid::BlockType
@@ -181,8 +190,12 @@ double shape_and_derivatives_local(const double* xlocal, const double* shape, co
   return shapefunc;
 }
 
-// General case for n1 != n2 > 2
-double shape_and_derivatives_local_superquad(const double* xlocal, const double* shape, const double* block, double* grad, double hess[3][3]) {
+/* ----------------------------------------------------------------------
+   General case for n1 != n2 > 2
+------------------------------------------------------------------------- */
+
+double shape_and_derivatives_local_superquad(const double* xlocal, const double* shape, const double* block, double* grad, double hess[3][3])
+{
   double a_inv = 1.0 / shape[0];
   double b_inv = 1.0 / shape[1];
   double c_inv = 1.0 / shape[2];
@@ -224,8 +237,12 @@ double shape_and_derivatives_local_superquad(const double* xlocal, const double*
   return (nu_pow_n1_n2_m1 * nu) + (z_c_pow_n1_m1 * z_c) - 1.0;
 }
 
-// Special case for n2 = n2 = n > 2
-double shape_and_derivatives_local_n1equaln2(const double* xlocal, const double* shape, const double n, double* grad, double hess[3][3]) {
+/* ----------------------------------------------------------------------
+   Special case for n2 = n2 = n > 2
+------------------------------------------------------------------------- */
+
+double shape_and_derivatives_local_n1equaln2(const double* xlocal, const double* shape, const double n, double* grad, double hess[3][3])
+{
   double a_inv = 1.0 / shape[0];
   double b_inv = 1.0 / shape[1];
   double c_inv = 1.0 / shape[2];
@@ -257,9 +274,12 @@ double shape_and_derivatives_local_n1equaln2(const double* xlocal, const double*
   return (x_a_pow_n_m1 * x_a) + (y_b_pow_n_m1 * y_b) + (z_c_pow_n_m1 * z_c) - 1.0;
 }
 
+/* ----------------------------------------------------------------------
+   Special case for n1 = n2 = 2
+------------------------------------------------------------------------- */
 
-// Special case for n1 = n2 = 2
-double shape_and_derivatives_local_ellipsoid(const double* xlocal, const double* shape, double* grad, double hess[3][3]) {
+double shape_and_derivatives_local_ellipsoid(const double* xlocal, const double* shape, double* grad, double hess[3][3])
+{
   double a = 2.0 / (shape[0] * shape[0]);
   double b = 2.0 / (shape[1] * shape[1]);
   double c = 2.0 / (shape[2] * shape[2]);
@@ -278,14 +298,15 @@ double shape_and_derivatives_local_ellipsoid(const double* xlocal, const double*
   return 0.5 * (grad[0]*xlocal[0] + grad[1]*xlocal[1] + grad[2]*xlocal[2]) - 1.0;
 }
 
+/* ---------------------------------------------------------------------- */
 
-double shape_and_derivatives_global(const double* xc, const double R[3][3], 
-    const double* shape, const double* block, const int flag, 
+double shape_and_derivatives_global(const double* xc, const double R[3][3],
+    const double* shape, const double* block, const int flag,
     const double* X0, double* grad, double hess[3][3],
-    const int formulation, const double avg_radius) 
+    const int formulation, const double avg_radius)
 {
   double xlocal[3], tmp_v[3], tmp_m[3][3];
-  MathExtra::sub3(X0, xc, tmp_v); 
+  MathExtra::sub3(X0, xc, tmp_v);
   MathExtra::transpose_matvec(R, tmp_v, xlocal);
   double shapefunc = shape_and_derivatives_local(xlocal, shape, block, flag, tmp_v, hess);
   if (formulation == FORMULATION_GEOMETRIC) {
@@ -312,11 +333,13 @@ double shape_and_derivatives_global(const double* xc, const double R[3][3],
 //          residual[3] * residual[3] / ((shapefunci + 1) * (shapefunci + 1));
 // }
 
-double compute_residual(const double shapefunci, const double* gradi_global, 
-                        const double shapefuncj, const double* gradj_global, 
-                        const double mu2, double* residual, 
-                        const int formulation, const double radius_scale) {
+/* ---------------------------------------------------------------------- */
 
+double compute_residual(const double shapefunci, const double* gradi_global,
+                        const double shapefuncj, const double* gradj_global,
+                        const double mu2, double* residual,
+                        const int formulation, const double radius_scale)
+{
   // Equation (23): Spatial residual (Gradient match)
   MathExtra::scaleadd3(mu2, gradj_global, gradi_global, residual);
   residual[3] = shapefunci - shapefuncj;
@@ -331,19 +354,22 @@ double compute_residual(const double shapefunci, const double* gradi_global,
 
   if (formulation == FORMULATION_GEOMETRIC) {
       // GEOMETRIC: G is a distance (Length).
-      scalar_denom = radius_scale; 
+      scalar_denom = radius_scale;
   } else {
       // ALGEBRAIC: F is dimensionless (approx 0 at surface).
       scalar_denom = shapefunci + 1.0;
   }
-  
+
   // Prevent division by zero in weird edge cases (e.g. very negative shape function)
   if (fabs(scalar_denom) < 1e-12) scalar_denom = 1.0;
 
   return spatial_norm + (residual[3] * residual[3]) / (scalar_denom * scalar_denom);
 }
 
-void compute_jacobian(const double* gradi_global, const double hessi_global[3][3], const double* gradj_global, const double hessj_global[3][3], const double mu2, double* jacobian) {
+/* ---------------------------------------------------------------------- */
+
+void compute_jacobian(const double* gradi_global, const double hessi_global[3][3], const double* gradj_global, const double hessj_global[3][3], const double mu2, double* jacobian)
+{
   // Jacobian (derivative of residual)
   // 1D column-major matrix for LAPACK/linalg compatibility
   for (int row = 0 ; row < 3 ; row++) {
@@ -358,21 +384,26 @@ void compute_jacobian(const double* gradi_global, const double hessi_global[3][3
   jacobian[15] = 0.0;
 }
 
+/* ---------------------------------------------------------------------- */
+
 double compute_residual_and_jacobian(const double* xci, const double Ri[3][3], const double* shapei, const double* blocki, const int flagi,
                                      const double* xcj, const double Rj[3][3], const double* shapej, const double* blockj, const int flagj,
-                                     const double* X, double* shapefunc, double* residual, double* jacobian, 
-                                     const int formulation, const double avg_radius_i, const double avg_radius_j) {
+                                     const double* X, double* shapefunc, double* residual, double* jacobian,
+                                     const int formulation, const double avg_radius_i, const double avg_radius_j)
+{
   double gradi[3], hessi[3][3], gradj[3], hessj[3][3];
   shapefunc[0] = shape_and_derivatives_global(xci, Ri, shapei, blocki, flagi, X, gradi, hessi, formulation, avg_radius_i);
   shapefunc[1] = shape_and_derivatives_global(xcj, Rj, shapej, blockj, flagj, X, gradj, hessj, formulation, avg_radius_j);
   compute_jacobian(gradi, hessi, gradj, hessj, X[3], jacobian);
-  return compute_residual(shapefunc[0], gradi, shapefunc[1], gradj, X[3], residual, formulation, (avg_radius_i + avg_radius_j)/2.0);
+  return compute_residual(shapefunc[0], gradi, shapefunc[1], gradj, X[3], residual, formulation, (avg_radius_i + avg_radius_j) * 0.5);
 }
 
+/* ---------------------------------------------------------------------- */
 
 int determine_contact_point(const double* xci, const double Ri[3][3], const double* shapei, const double* blocki, const int flagi,
                             const double* xcj, const double Rj[3][3], const double* shapej, const double* blockj, const int flagj,
-                            double* X0, double* nij, int formulation) {
+                            double* X0, double* nij, int formulation)
+{
   double norm, norm_old, shapefunc[2], residual[4], jacobian[16];
   double lsq = MathExtra::distsq3(xci, xcj);
   bool converged(false);
@@ -390,17 +421,17 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
   // avg radii for regularization if GEOMETRIC formulation
   double avg_radius_i = 1;
   double avg_radius_j = 1;
-  double max_step = sqrt(lsq) / 5.0;  
+  double max_step = sqrt(lsq) * 0.2;
   if (formulation == FORMULATION_GEOMETRIC) {
-    avg_radius_i = (shapei[0] + shapei[1] + shapei[2]) / 3.0;
-    avg_radius_j = (shapej[0] + shapej[1] + shapej[2]) / 3.0;
+    avg_radius_i = (shapei[0] + shapei[1] + shapei[2]) * LAMMPS_NS::MathConst::THIRD;
+    avg_radius_j = (shapej[0] + shapej[1] + shapej[2]) * LAMMPS_NS::MathConst::THIRD;
   }
 
   norm = compute_residual_and_jacobian(xci, Ri, shapei, blocki, flagi, xcj, Rj, shapej, blockj, flagj, X0, shapefunc, residual, jacobian, formulation, avg_radius_i, avg_radius_j);
   // testing for convergence before attempting Newton's method.
   // the initial guess is the old X0, so with temporal coherence, it might still pass tolerance if deformation is slow!
   if (norm < TOL_NR_RES) {
-    
+
     //  must compute the normal vector nij before returning since the Newton loop normally handles this upon convergence.
     double xilocal[3], tmp_v[3], gradi[3], val_dummy;
 
@@ -410,7 +441,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
 
     // Compute local gradient
     // Algebraic gradient is fine for direction even if we used Geometric for solving
-    // TODO: might use a simpler function to simply compute the gradient, to 
+    // TODO: might use a simpler function to simply compute the gradient, to
     // avoid computing quantities already computed in compute_residual_and_jacobian
     if (flagi <= 1)
       val_dummy = shape_and_gradient_local_n1equaln2_surfacesearch(xilocal, shapei, blocki[0], gradi);
@@ -422,9 +453,9 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
     MathExtra::normalize3(gradi, nij);
 
     // Return status
-    if (shapefunc[0] > 0.0 || shapefunc[1] > 0.0) 
+    if (shapefunc[0] > 0.0 || shapefunc[1] > 0.0)
       return 1; // Converged, but no contact (separated)
-    
+
     return 0; // Converged and Contacting
   }
 
@@ -443,25 +474,25 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
         }
     }
 
-    b_fast[0] = -residual[0]; b_fast[1] = -residual[1]; 
+    b_fast[0] = -residual[0]; b_fast[1] = -residual[1];
     b_fast[2] = -residual[2]; b_fast[3] = -residual[3];
 
     // Try Fast Solver
     gauss_elim_solved = MathExtraSuperellipsoids::solve_4x4_robust_unrolled(A_fast, b_fast);
-    
+
     // check for divergence or numerical issues in the fast solver
     // and fall back to regularized solver if necessary
-    bool fail0 = !std::isfinite(b_fast[0]) | (std::abs(b_fast[0]) > 1e30);
-    bool fail1 = !std::isfinite(b_fast[1]) | (std::abs(b_fast[1]) > 1e30);
-    bool fail2 = !std::isfinite(b_fast[2]) | (std::abs(b_fast[2]) > 1e30);
-    bool fail3 = !std::isfinite(b_fast[3]) | (std::abs(b_fast[3]) > 1e30);
+    bool fail0 = !std::isfinite(b_fast[0]) | (std::abs(b_fast[0]) > MAX_B_FAST);
+    bool fail1 = !std::isfinite(b_fast[1]) | (std::abs(b_fast[1]) > MAX_B_FAST);
+    bool fail2 = !std::isfinite(b_fast[2]) | (std::abs(b_fast[2]) > MAX_B_FAST);
+    bool fail3 = !std::isfinite(b_fast[3]) | (std::abs(b_fast[3]) > MAX_B_FAST);
     if (fail0 | fail1 | fail2 | fail3) {
         gauss_elim_solved = false;
     }
-    
-    rhs[0] = b_fast[0]; rhs[1] = b_fast[1]; 
+
+    rhs[0] = b_fast[0]; rhs[1] = b_fast[1];
     rhs[2] = b_fast[2]; rhs[3] = b_fast[3];
-    
+
     if (!gauss_elim_solved) {
       // restore matrix
       for(int r=0; r<4; ++r) {
@@ -469,7 +500,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
             A_fast[r*4 + c] = jacobian[c*4 + r];
         }
       }
-      b_fast[0] = -residual[0]; b_fast[1] = -residual[1]; 
+      b_fast[0] = -residual[0]; b_fast[1] = -residual[1];
       b_fast[2] = -residual[2]; b_fast[3] = -residual[3];
        // enforce a minimum regularization to avoid zero pivots in edge cases (flat on flat)
       double trace = jacobian[0] + jacobian[5] + jacobian[10];
@@ -479,7 +510,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
       A_fast[10] += diag_weight;
 
       if (MathExtraSuperellipsoids::solve_4x4_robust_unrolled(A_fast, b_fast)) {
-          rhs[0] = b_fast[0]; rhs[1] = b_fast[1]; 
+          rhs[0] = b_fast[0]; rhs[1] = b_fast[1];
           rhs[2] = b_fast[2]; rhs[3] = b_fast[3];
           gauss_elim_solved = true;
       }
@@ -494,12 +525,12 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
     int iter_ls;
 
     if (formulation == FORMULATION_GEOMETRIC) {
-      a = 1.0; // no need for multiplicity scaling 
+      a = 1.0; // no need for multiplicity scaling
     }
     // Limit the max step size to avoid jumping too far
     // normalize residual vector if step was limited
     double spatial_residual_norm = std::sqrt(rhs[0]*rhs[0] + rhs[1]*rhs[1] + rhs[2]*rhs[2]);
-    
+
     if (spatial_residual_norm > max_step) {
         double scale = max_step / spatial_residual_norm;
         rhs[0] *= scale;
@@ -532,7 +563,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
 
       // One alternative would be to store the intermediate variables from
       // the local gradient calculation when calling `shape_and_gradient_local()`,
-      // and re-use them during the local hessian calculation (function that 
+      // and re-use them during the local hessian calculation (function that
       // calculates only the Hessian from these intermediate values would need
       // to be implemented).
       // This seems a bit clunky just to save the few multiplications of the
@@ -543,12 +574,12 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
 
       double xilocal[3], gradi[3], hessi[3][3], xjlocal[3], gradj[3], hessj[3][3], tmp_v[3];
 
-      MathExtra::sub3(X_line, xci, tmp_v); 
+      MathExtra::sub3(X_line, xci, tmp_v);
       MathExtra::transpose_matvec(Ri, tmp_v, xilocal);
       shapefunc[0] = shape_and_derivatives_local(xilocal, shapei, blocki, flagi, tmp_v, hessi);
       if (formulation == FORMULATION_GEOMETRIC) {
           apply_regularization_shape_function(blocki[0], avg_radius_i, &shapefunc[0], tmp_v, hessi);
-      } 
+      }
       MathExtra::matvec(Ri, tmp_v, gradi);
 
       MathExtra::sub3(X_line, xcj, tmp_v);
@@ -564,7 +595,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
       if ((norm <= TOL_NR_RES) &&
           (MathExtra::lensq3(rhs) * a * a <= TOL_NR_POS * lsq)) {
         converged = true;
-        
+
         MathExtra::normalize3(gradi, nij);
         break;
       } else if (norm > norm_old - PARAMETER_LS * a * norm_old) { // Armijo - Goldstein condition not met
@@ -596,7 +627,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
         double xilocal[3], tmp_v[3], gradi[3], hess_dummy[3][3];
         MathExtra::sub3(X0, xci, tmp_v);
         MathExtra::transpose_matvec(Ri, tmp_v, xilocal);
-        
+
         // We only need the gradient for the normal
         shape_and_derivatives_local(xilocal, shapei, blocki, flagi, tmp_v, hess_dummy);
         if (formulation == FORMULATION_GEOMETRIC) {
@@ -630,10 +661,15 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
   return 0;
 }
 
-// Functions to compute shape function and gradient only when called for newton method
-// to avoid computing hessian when not needed and having smoother landscape for the line search
-// General case for n1 != n2 > 2
-double shape_and_gradient_local_superquad_surfacesearch(const double* xlocal, const double* shape, const double* block, double* grad) {
+/* ----------------------------------------------------------------------
+   Functions to compute shape function and gradient only when called for
+     newton method to avoid computing hessian when not needed and having
+     smoother landscape for the line search
+   General case for n1 != n2 > 2
+------------------------------------------------------------------------- */
+
+double shape_and_gradient_local_superquad_surfacesearch(const double* xlocal, const double* shape, const double* block, double* grad)
+{
   double a_inv = 1.0 / shape[0];
   double b_inv = 1.0 / shape[1];
   double c_inv = 1.0 / shape[2];
@@ -673,8 +709,12 @@ double shape_and_gradient_local_superquad_surfacesearch(const double* xlocal, co
   return std::pow(F, 1.0/n1) - 1.0;
 }
 
-// Special case for n2 = n2 = n > 2
-double shape_and_gradient_local_n1equaln2_surfacesearch(const double* xlocal, const double* shape, const double n, double* grad) {
+/* ----------------------------------------------------------------------
+   Special case for n2 = n2 = n > 2
+------------------------------------------------------------------------- */
+
+double shape_and_gradient_local_n1equaln2_surfacesearch(const double* xlocal, const double* shape, const double n, double* grad)
+{
   double a_inv = 1.0 / shape[0];
   double b_inv = 1.0 / shape[1];
   double c_inv = 1.0 / shape[2];
@@ -706,28 +746,32 @@ double shape_and_gradient_local_n1equaln2_surfacesearch(const double* xlocal, co
   return std::pow(F, 1.0/n) - 1.0;
 }
 
-// Newton Rapson method to find the overlap distance from the contact point given the normal
+/* ----------------------------------------------------------------------
+   Newton Rapson method to find the overlap distance from the contact point given the normal
+------------------------------------------------------------------------- */
+
 double compute_overlap_distance(
   const double* shape, const double* block, const double Rot[3][3], const int flag,
   const double* global_point, const double* global_normal,
-  const double* center) {
+  const double* center)
+{
   double local_point[3], local_normal[3];
   double del[3];
   double overlap;
   MathExtra::sub3(global_point, center, del);  // bring origin to 0.0
-  MathExtra::transpose_matvec(Rot, del, local_point); 
+  MathExtra::transpose_matvec(Rot, del, local_point);
   MathExtra::transpose_matvec(Rot, global_normal, local_normal);
-  
+
   double local_f;
   double local_grad[3];
-  
-  // elliposid analytical solution, might need to double check the math 
+
+  // elliposid analytical solution, might need to double check the math
   // there is an easy way to find this by parametrizing the straight line as
   // X0 + t * n anf then substituting in the ellipsoid equation  for x, y, z
   // this results in a quadratic equation and we take the positive solution since
   // we are taking the outward facing normal for each grain
 
-  if (flag == 0){
+  if (flag == 0) {
 
     double a_inv2 = 1.0 / (shape[0] * shape[0]);
     double b_inv2 = 1.0 / (shape[1] * shape[1]);
@@ -750,11 +794,11 @@ double compute_overlap_distance(
     double delta = B*B - 4.0*A*C;
 
     // Clamp delta to zero just in case numerical noise makes it negative
-    if (delta < 0.0) delta = 0.0; 
+    if (delta < 0.0) delta = 0.0;
     overlap = (-B + std::sqrt(delta)) / (2.0 * A);
   } else {
-      // --- Superquadric Case (Newton-Raphson on Distance Estimator) ---
-    
+    // --- Superquadric Case (Newton-Raphson on Distance Estimator) ---
+
     overlap = 0.0; // Distance along the normal
     double current_p[3];
     double val;
@@ -786,6 +830,6 @@ double compute_overlap_distance(
     }
   }
   return overlap;
-} 
+}
 
 } // namespace MathExtraSuperellipsoids

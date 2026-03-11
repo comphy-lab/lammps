@@ -938,15 +938,15 @@ void FixMove::initial_integrate(int /*vflag*/)
                 quat = avec_ellipsoid->bonus_super[ellipsoid[i]].quat;
                 inertia = avec_ellipsoid->bonus_super[ellipsoid[i]].inertia;
               } else {
-              quat = avec_ellipsoid->bonus[ellipsoid[i]].quat;
-              shape = avec_ellipsoid->bonus[ellipsoid[i]].shape;
-              inertia_ellipsoid[0] =
-                  INERTIA * rmass[i] * (shape[1] * shape[1] + shape[2] * shape[2]);
-              inertia_ellipsoid[1] =
-                  INERTIA * rmass[i] * (shape[0] * shape[0] + shape[2] * shape[2]);
-              inertia_ellipsoid[2] =
-                  INERTIA * rmass[i] * (shape[0] * shape[0] + shape[1] * shape[1]);
-              inertia = inertia_ellipsoid;
+                quat = avec_ellipsoid->bonus[ellipsoid[i]].quat;
+                shape = avec_ellipsoid->bonus[ellipsoid[i]].shape;
+                inertia_ellipsoid[0] =
+                    INERTIA * rmass[i] * (shape[1] * shape[1] + shape[2] * shape[2]);
+                inertia_ellipsoid[1] =
+                    INERTIA * rmass[i] * (shape[0] * shape[0] + shape[2] * shape[2]);
+                inertia_ellipsoid[2] =
+                    INERTIA * rmass[i] * (shape[0] * shape[0] + shape[1] * shape[1]);
+                inertia = inertia_ellipsoid;
               }
             } else if (tri_flag && tri[i] >= 0) {
               quat = avec_tri->bonus[tri[i]].quat;
