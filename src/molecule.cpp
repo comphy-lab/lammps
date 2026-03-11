@@ -165,8 +165,6 @@ void Molecule::command(int narg, char **arg, int &index)
       iarg += 2;
     } else if (strcmp(arg[iarg], "auto") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "molecule auto", error);
-      if (std::string(force->improper_style) == "hybrid")
-        error->all(FLERR, fileiarg, "Cannot infer improper type with improper_style hybrid");
 
       int i = 0;
       char option;
@@ -180,6 +178,8 @@ void Molecule::command(int narg, char **arg, int &index)
             auto_dihedralflag = 1;
             break;
           case 'i':
+            if (std::string(force->improper_style) == "hybrid")
+              error->all(FLERR, fileiarg, "Cannot infer improper type with improper_style hybrid");
             auto_improperflag = 1;
             break;
           default:
@@ -3844,13 +3844,6 @@ void Molecule::generate_impropers()
       atom2_found.push_back(atom2 + 1);
       atom3_found.push_back(atom3 + 1);
       atom4_found.push_back(atom4 + 1);
-
-      tagint *iptrs[4] = {&atom1_found[nimpropers - 1], &atom2_found[nimpropers - 1],
-        &atom3_found[nimpropers - 1], &atom4_found[nimpropers - 1]};
-      for (int j = 0; j < 4; j++) {
-        if (force->improper && force->improper->symmatoms[j] == 1)
-          std::swap(iptrs[1], iptrs[j]);
-      }
     }
   }
 
