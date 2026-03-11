@@ -3839,11 +3839,23 @@ void Molecule::generate_impropers()
         count[atom3]++;
         count[atom4]++;
       }
-      nimpropers++;
       atom1_found.push_back(atom1 + 1);
       atom2_found.push_back(atom2 + 1);
       atom3_found.push_back(atom3 + 1);
       atom4_found.push_back(atom4 + 1);
+
+      tagint *iptrs[4] = {&atom1_found[nimpropers], &atom2_found[nimpropers],
+        &atom3_found[nimpropers], &atom4_found[nimpropers]};
+      std::array<tagint, 4> tags = {atom1_found[nimpropers], atom2_found[nimpropers],
+        atom3_found[nimpropers], atom4_found[nimpropers]};
+      for (int iatom = 0; iatom < 4; iatom++) {
+        if (force->improper && force->improper->symmatoms[iatom] == 1) {
+          *iptrs[iatom] = tags[1];
+          *iptrs[1] = tags[iatom];
+        }
+      }
+
+      nimpropers++;
     }
   }
 
