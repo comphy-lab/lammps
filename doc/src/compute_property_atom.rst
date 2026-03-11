@@ -35,7 +35,9 @@ Syntax
 			     history[I][J],
                              vfrac, s0, espin, eradius, ervel, erforce,
                              rho, drho, e, de, cv, buckling,
-                             apip_lambda, apip_lambda_input, apip_e_fast, apip_e_precise
+                             apip_lambda, apip_lambda_input, apip_e_fast,
+                             apip_e_precise, apip_la_inp, apip_la_avg,
+                             apip_la_norm
 
   .. parsed-literal::
 
@@ -72,6 +74,16 @@ Syntax
            *i2_name[I]* = Ith column of custom integer array with name
            *d2_name[I]* = Ith column of custom floating-point array with name
            *history[I][J]* = Ith most recent history frame (1 to Nrepeat) for Jth attribute (1 to Nattribute)
+
+  .. parsed-literal::
+
+           APIP package per-atom properties:
+           *apip_lambda* = switching parameter
+           *apip_lambda_input* = input used to calculate the switching parameter
+           *apip_e_fast,apip_e_precise* = potential energies mixed by the adaptive-precision potential
+           *apip_la_inp* = input used for the local averaging of the descriptor
+           *apip_la_norm* = locally averaged radial weighting function used for normalization
+           *apip_la_avg* = locally averaged descriptor used to calculate the switching parameter
 
   .. parsed-literal::
 
@@ -201,6 +213,27 @@ segment particles and define the end points of each line segment.
 *corner2z*, *corner3x*, *corner3y*, *corner3z*, are defined for
 triangular particles and define the corner points of each triangle.
 
+The accessible quantities from the :doc:`APIP package <Howto_apip>`
+are explained in the doc pages of this package in detail.  In short:
+*apip_lambda* is the switching parameter :math:`\lambda\in[0,1]`.  The
+switching parameter can be calculated from *apip_lambda_input* and
+mixes the energies of a fast (*apip_e_fast*) and a precise
+(*apip_e_precise*) potential into an adaptive-precision energy.
+
+Alternatively, the switching parameter can be calculated from a
+locally averaged descriptor (*apip_la_avg*) to obtain a conservative
+potential.  The descriptor is calculated from an atomic property
+(*apip_la_inp*) and normalized with a locally averaged weighting
+function (*apip_la_norm*).
+
+.. note::
+
+   The energy according to the fast and the precise potential are only
+   computed for the subset of atoms, for which it is required, i.e.,
+   for an atom :math:`i` with :math:`\lambda_i=1` one does not need
+   :math:`E_i^\text{precise}` and with :math:`\lambda_i=0` one does
+   not need :math:`E_i^\text{fast}`.
+
 In addition, the various per-atom quantities listed above for specific
 packages are only accessible by this command.
 
@@ -244,7 +277,7 @@ For the spin quantities, *sp* is in the units of the Bohr magneton;
 
 Restrictions
 """"""""""""
- none
+none
 
 Related commands
 """"""""""""""""
