@@ -42,7 +42,7 @@ class Thermo : protected Pointers {
   void footer();
   void compute(int);
   int evaluate_keyword(const std::string &, double *);
-  void colname_auto(); 
+  void colname_auto();
 
   // for accessing cached thermo and related data
   void lock_cache();
