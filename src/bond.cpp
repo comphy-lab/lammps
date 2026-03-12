@@ -108,6 +108,7 @@ void Bond::settings(int narg, char **args)
      eflag_global != 0 if ENERGY_GLOBAL bit of eflag set
      eflag_atom   != 0 if ENERGY_ATOM bit of eflag set
      eflag_either != 0 if eflag_global or eflag_atom is set
+     eflag_only   != 0 if ENERGY_ONLY bit of eflag set
      vflag_global != 0 if VIRIAL_PAIR or VIRIAL_FDOTR bit of vflag set
      vflag_atom   != 0 if VIRIAL_ATOM or VIRIAL_CENTROID bit of vflag set
                        two-body and centroid stress are identical for bonds
@@ -123,6 +124,7 @@ void Bond::ev_setup(int eflag, int vflag, int alloc)
   eflag_either = eflag;
   eflag_global = eflag & ENERGY_GLOBAL;
   eflag_atom = eflag & ENERGY_ATOM;
+  eflag_only = eflag & ENERGY_ONLY;
 
   vflag_either = vflag;
   vflag_global = vflag & (VIRIAL_PAIR | VIRIAL_FDOTR);

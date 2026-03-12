@@ -892,6 +892,7 @@ void Pair::map_element2type(int narg, char **arg, bool update_setflag)
      eflag_global != 0 if ENERGY_GLOBAL bit of eflag set
      eflag_atom   != 0 if ENERGY_ATOM bit of eflag set
      eflag_either != 0 if eflag_global or eflag_atom is set
+     eflag_only   != 0 if ENERGY_ONLY bit of eflag set
      vflag_global != 0 if VIRIAL_PAIR bit of vflag set, OR
                        if VIRIAL_FDOTR bit of vflag is set but no_virial_fdotr = 1
      vflag_fdotr  != 0 if VIRIAL_FDOTR bit of vflag set and no_virial_fdotr = 0
@@ -915,6 +916,7 @@ void Pair::ev_setup(int eflag, int vflag, int alloc)
   eflag_either = eflag;
   eflag_global = eflag & ENERGY_GLOBAL;
   eflag_atom = eflag & ENERGY_ATOM;
+  eflag_only = eflag & ENERGY_ONLY;
 
   vflag_global = vflag & VIRIAL_PAIR;
   if (vflag & VIRIAL_FDOTR && no_virial_fdotr_compute == 1) vflag_global = 1;
@@ -1014,6 +1016,7 @@ void Pair::ev_unset()
   eflag_either = 0;
   eflag_global = 0;
   eflag_atom = 0;
+  eflag_only = 0;
 
   vflag_either = 0;
   vflag_global = 0;
