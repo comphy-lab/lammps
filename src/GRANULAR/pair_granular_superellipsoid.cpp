@@ -895,14 +895,16 @@ void PairGranularSuperellipsoid::unpack_forward_comm(int n, int first, double *b
    Transfer history
 ------------------------------------------------------------------------- */
 
-void PairGranularSuperellipsoid::transfer_history(double *source, double *target, int /*itype*/,
-                                                     int /*jtype*/)
+void PairGranularSuperellipsoid::transfer_history(double *source, double *target, int itype, int jtype)
 {
   // copy of all history variables (shear, contact point, axis)
-  // TODO: only shear needs to be reversed?
+
   for (int i = 0; i < size_history; i++) {
-    if (i < 3) target[i] = -source[i]; //shear
-    target[i] = source[i];
+    if (i > default_hist_size && tangential_model[itype][jtype] == LINEAR_HISTORY) {
+      target[i] = -source[i]; //shear
+    } else {
+      target[i] = source[i];
+    }
   }
 }
 
