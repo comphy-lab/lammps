@@ -940,9 +940,14 @@ bool PairGranularSuperellipsoid::check_contact()
   } else {
     bool skip_contact_detection(false);
     if (bounding_box) {
-      double *separating_axis = &history_data[4];
-      skip_contact_detection = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
+      int separating_axis = (int) (history_data[4]);
+      int new_axis = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
           xi, Ri, shapei, xj, Rj, shapej, separating_axis);
+      if (new_axis != -1) {
+        skip_contact_detection = true;
+        if (history_update)
+          history_data[4] = (double) new_axis;
+      }
     }
     if (skip_contact_detection) {
       touching = false;

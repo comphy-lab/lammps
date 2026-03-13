@@ -38,10 +38,10 @@ inline double det4_M44_zero(const double m[4][4]);
 // 4 by 4 sytems solvers, they all overwrite b with the solution
 inline bool solve_4x4_robust_unrolled(double A[16], double b[4]);
 
-inline bool check_oriented_bounding_boxes(const double *xc1, const double R1[3][3],
+inline int check_oriented_bounding_boxes(const double *xc1, const double R1[3][3],
                                           const double *shape1, const double *xc2,
                                           const double R2[3][3], const double *shape2,
-                                          double *cached_axis);
+                                          int cached_axis);
 
 inline bool check_intersection_axis(const int axis_id, const double C[3][3],
                                     const double AbsC[3][3], const double *center_distance_box1,
@@ -298,12 +298,11 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
      Algorithm from https://www.geometrictools.com/Documentation/DynamicCollisionDetection.pdf
 ------------------------------------------------------------------------- */
 
-inline bool MathExtraSuperellipsoids::check_oriented_bounding_boxes(
+inline int MathExtraSuperellipsoids::check_oriented_bounding_boxes(
     const double *xc1, const double R1[3][3], const double *shape1, const double *xc2,
-    const double R2[3][3], const double *shape2, double *cached_axis)
+    const double R2[3][3], const double *shape2, int axis)
 {
-  // cache axis is the axis that separated the boxes last time
-  // due to temporal coherence we check it first
+  // return -1 to skip contact detection
 
   bool separated = false;
 
@@ -324,23 +323,20 @@ inline bool MathExtraSuperellipsoids::check_oriented_bounding_boxes(
   MathExtra::transpose_matvec(R1, center_distance, center_distance_box1);
   MathExtra::transpose_matvec(R2, center_distance, center_distance_box2);
 
-  // first check the cached axis
-  const int axis = (int) (*cached_axis);
+  // first check the cached axis, for temporal coherence
   separated = check_intersection_axis(axis, C, AbsC, center_distance_box1, center_distance_box2,
                                       shape1, shape2);
 
-  if (separated) return true;
+  if (separated) return axis;
   // then check all the other axes
   for (int axis_id = 0; axis_id < 15; axis_id++) {
     if (axis_id == axis) continue;    // already checked
     separated = check_intersection_axis(axis_id, C, AbsC, center_distance_box1,
                                         center_distance_box2, shape1, shape2);
-    if (separated) {
-      *cached_axis = axis_id;    // update cached axis
-      return true;
-    }
+    if (separated)
+      return axis_id; // update cached axis
   }
-  return false;    // no separation found
+  return -1;    // no separation found
 }
 
 /* ---------------------------------------------------------------------- */
