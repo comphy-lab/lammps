@@ -25,6 +25,7 @@
 #include "group.h"
 #include "input.h"
 #include "memory.h"
+#include "label_map.h"
 #include "region.h"
 #include "update.h"
 #include "variable.h"
@@ -299,6 +300,10 @@ void Modify::init()
   if (comm->me == 0 && checkall)
     error->warning(FLERR, "One or more atoms are time integrated more than once"
                    + utils::errorurl(32));
+
+  // runtime check for type label self-consistency
+
+  if (atom->labelmapflag && atom->lmap->checkflag) atom->lmap->check_labels();
 }
 
 /* ----------------------------------------------------------------------
