@@ -4243,6 +4243,7 @@ void Molecule::skip_lines(int n, char *line, const std::string &section)
 
 void Molecule::check_labels()
 {
+  bool perfect_labels = true;
   if (atom->labelmapflag) {
     // in rare cases, bonds are not symmetric. only check if newton on for bonds
     if (force->newton_bond && check_which_labels[0]) {
@@ -4253,6 +4254,7 @@ void Molecule::check_labels()
           int atom2 = bond_atom[i][j];
           int inferred_type = atom->lmap->infer_bondtype(type[atom1-1], type[atom2-1]);
           if (inferred_type != btype) {
+            perfect_labels = false;
             std::string atom1_label = atom->lmap->find_label(type[atom1-1], Atom::ATOM);
             std::string atom2_label = atom->lmap->find_label(type[atom2-1], Atom::ATOM);
             std::string blabel = atom->lmap->find_label(btype, Atom::BOND);
@@ -4264,8 +4266,10 @@ void Molecule::check_labels()
           }
         }
       }
+      if (perfect_labels) utils::logmesg(lmp, "All bonds in molecule '{}' have self-consistent type labels\n", id);
     }
     // some angles are not symmetric, like class2
+    perfect_labels = true;
     if (check_which_labels[1]) {
       for (int i = 0; i < natoms; i++) {
         for (int j = 0; j < num_angle[i]; j++) {
@@ -4275,6 +4279,7 @@ void Molecule::check_labels()
           int atom3 = angle_atom3[i][j];
           int inferred_type = atom->lmap->infer_angletype(type[atom1-1], type[atom2-1], type[atom3-1]);
           if (inferred_type != atype) {
+            perfect_labels = false;
             std::string atom1_label = atom->lmap->find_label(type[atom1-1], Atom::ATOM);
             std::string atom2_label = atom->lmap->find_label(type[atom2-1], Atom::ATOM);
             std::string atom3_label = atom->lmap->find_label(type[atom3-1], Atom::ATOM);
@@ -4287,8 +4292,10 @@ void Molecule::check_labels()
           }
         }
       }
+      if (perfect_labels) utils::logmesg(lmp, "All angles in molecule '{}' have self-consistent type labels\n", id);
     }
     // some dihedrals are not symmetric, like class2
+    perfect_labels = true;
     if (check_which_labels[2]) {
       for (int i = 0; i < natoms; i++) {
         for (int j = 0; j < num_dihedral[i]; j++) {
@@ -4299,6 +4306,7 @@ void Molecule::check_labels()
           int atom4 = dihedral_atom4[i][j];
           int inferred_type = atom->lmap->infer_dihedraltype(type[atom1-1], type[atom2-1], type[atom3-1], type[atom4-1]);
           if (inferred_type != dtype) {
+            perfect_labels = false;
             std::string atom1_label = atom->lmap->find_label(type[atom1-1], Atom::ATOM);
             std::string atom2_label = atom->lmap->find_label(type[atom2-1], Atom::ATOM);
             std::string atom3_label = atom->lmap->find_label(type[atom3-1], Atom::ATOM);
@@ -4312,8 +4320,10 @@ void Molecule::check_labels()
           }
         }
       }
+      if (perfect_labels) utils::logmesg(lmp, "All dihedrals in molecule '{}' have self-consistent type labels\n", id);
     }
     // some impropers are not symmetric, like class2
+    perfect_labels = true;
     if (check_which_labels[3]) {
       for (int i = 0; i < natoms; i++) {
         for (int j = 0; j < num_improper[i]; j++) {
@@ -4324,6 +4334,7 @@ void Molecule::check_labels()
           int atom4 = improper_atom4[i][j];
           int inferred_type = atom->lmap->infer_impropertype(type[atom1-1], type[atom2-1], type[atom3-1], type[atom4-1]);
           if (inferred_type != itype) {
+            perfect_labels = false;
             std::string atom1_label = atom->lmap->find_label(type[atom1-1], Atom::ATOM);
             std::string atom2_label = atom->lmap->find_label(type[atom2-1], Atom::ATOM);
             std::string atom3_label = atom->lmap->find_label(type[atom3-1], Atom::ATOM);
@@ -4337,6 +4348,7 @@ void Molecule::check_labels()
           }
         }
       }
+      if (perfect_labels) utils::logmesg(lmp, "All impropers in molecule '{}' have self-consistent type labels\n", id);
     }
   }
 }
