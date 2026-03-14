@@ -71,6 +71,8 @@ LabelMap::~LabelMap()
 
 void LabelMap::reset_type_labels()
 {
+  for (int i = 0; i < 4; i++) check_which_labels[i] = 0;
+
   typelabel_map.clear();
   typelabel.resize(natomtypes);
   delete[] lmap2lmap.atom;
@@ -149,6 +151,17 @@ void LabelMap::modify_lmap(int narg, char **arg)
   } else if (tlabel == "write") {
     if (narg != 2) error->all(FLERR, "Incorrect number of arguments for labelmap write command");
     write_map(arg[1]);
+    return;
+  } else if (tlabel == "check_labels") {
+    if (strchr(arg[1], 'b'))
+      check_which_labels[0] = 1;
+    if (strchr(arg[1], 'a'))
+      check_which_labels[1] = 1;
+    if (strchr(arg[1], 'd'))
+      check_which_labels[2] = 1;
+    if (strchr(arg[1], 'i'))
+      check_which_labels[3] = 1;
+    check_labels();
     return;
   } else
     error->all(FLERR, "Unknown labelmap keyword {}", tlabel);
