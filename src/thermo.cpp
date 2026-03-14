@@ -1218,7 +1218,7 @@ void Thermo::colname_auto()
     ArgInfo argi(word);
     if (argi.get_type() == ArgInfo::COMPUTE) {
       auto *icompute = modify->get_compute_by_id(argi.get_name());
-      if (icompute->thermo_modify_colname) {
+      if (icompute != nullptr && icompute->thermo_modify_colname) {
         keyword_user[ifield] = icompute->get_thermo_colname(argindex1[ifield]-1);
         if ( argi.get_dim() == 2 )
           keyword_user[ifield] += fmt::format("[{}]", argindex2[ifield]);
@@ -1226,7 +1226,7 @@ void Thermo::colname_auto()
     }
     if (argi.get_type() == ArgInfo::FIX) {
       auto *ifix = modify->get_fix_by_id(argi.get_name());
-      if (ifix->thermo_modify_colname) {
+      if (ifix != nullptr && ifix->thermo_modify_colname) {
         keyword_user[ifield] = ifix->get_thermo_colname(argindex1[ifield]-1);
         if ( argi.get_dim() == 2 )
           keyword_user[ifield] += fmt::format("[{}]", argindex2[ifield]);
