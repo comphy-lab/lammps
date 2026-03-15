@@ -839,7 +839,7 @@ This list was last updated for version 4.7.1 of the Kokkos library.
 
       .. versionchanged:: 11Feb2026
 
-      The KOKKOS package no longer supports the the traditional make build.
+      The KOKKOS package no longer supports the traditional make build.
       You need to build LAMMPS with CMake.
 
 Advanced KOKKOS compilation settings
@@ -1259,15 +1259,20 @@ then load this plugin at runtime with the :doc:`plugin command
 
    .. tab:: CMake build
 
-      By default the MBX library will be downloaded from the git repository
-      and built automatically when the MBX package is enabled with
-      ``-D PKG_MBX=yes``.  The location for the sources may be
-      customized by setting the variable ``MBXLIB_URL`` when
-      configuring with CMake (e.g. to use a local archive on machines
-      without internet access).  Since CMake checks the validity of the
-      archive with ``md5sum`` you may also need to set ``MBXLIB_MD5``
-      if you provide a different library version than what is downloaded
-      automatically.
+      .. versionchanged:: TBD
+
+         Replaced MD5 checksums with SHA-256
+
+      By default the MBX library will be downloaded from the git
+      repository and built automatically when the MBX package is enabled
+      with ``-D PKG_MBX=yes``.  The location for the sources may be
+      customized by setting the variable ``MBXLIB_URL`` when configuring
+      with CMake (e.g. to use a local archive on machines without
+      internet access).  Since CMake checks the validity of the archive
+      using a SHA-256 checksum you may also need to set the
+      ``MBXLIB_SHA256`` variable to the corresponding checksum
+      (e.g. computed with ``sha256sum``) if you provide a different
+      library version than what is downloaded automatically.
 
 
    .. tab:: Traditional make
@@ -1296,16 +1301,20 @@ folder and then load this plugin at runtime with the :doc:`plugin command <plugi
 
    .. tab:: CMake build
 
+      .. versionchanged:: TBD
+
+         Replaced MD5 checksums with SHA-256
+
       By default the library will be downloaded from the git repository
       and built automatically when the ML-PACE package is enabled with
       ``-D PKG_ML-PACE=yes``.  The location for the sources may be
       customized by setting the variable ``PACELIB_URL`` when
       configuring with CMake (e.g. to use a local archive on machines
-      without internet access).  Since CMake checks the validity of the
-      archive with ``md5sum`` you may also need to set ``PACELIB_MD5``
-      if you provide a different library version than what is downloaded
-      automatically.
-
+      without internet access).    Since CMake checks the validity of the archive
+      using a SHA-256 checksum you may also need to set the
+      ``PACELIB_SHA256`` variable to the corresponding checksum
+      (e.g. computed with ``sha256sum``) if you provide a different
+      library version than what is downloaded automatically.
 
    .. tab:: Traditional make
 
@@ -2042,5 +2051,5 @@ your system.
 
       .. versionchanged:: 10Sep2025
 
-      The VTK package no longer supports the the traditional make build.
+      The VTK package no longer supports the traditional make build.
       You need to build LAMMPS with CMake.
