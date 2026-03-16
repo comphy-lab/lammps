@@ -70,6 +70,7 @@ class PairGranularSuperellipsoid : public Pair {
   int **tangential_model;
   int **limit_damping;
   int default_hist_size;
+  int contact_radius_flag;
 
   // Normal coefficients
   double **kn, **gamman;     // Hooke + Hertz
@@ -80,7 +81,7 @@ class PairGranularSuperellipsoid : public Pair {
   // Intermediate values for contact model
   int history_update, touchjj, itype, jtype;
   double Fnormal, forces[3], torquesi[3], torquesj[3];
-  double radi, radj, meff, Fntot;
+  double radi, radj, meff, Fntot, contact_radius;
   double *xi, *xj, *vi, *vj;
   double fs[3], ft[3];
   double dx[3], nx[3], r, rsq, rinv, Reff, radsum, delta, dR;
@@ -111,6 +112,8 @@ class PairGranularSuperellipsoid : public Pair {
   int curvature_model;
 
   int extra_svector;
+
+  void rotate_rescale_vec(double *hislocal, double *n);
 
   // Below not implemented. Placeholder if we decide not to compute local hessian in line search
   static double

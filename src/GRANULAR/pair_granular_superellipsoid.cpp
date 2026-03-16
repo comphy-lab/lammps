@@ -40,10 +40,11 @@ using namespace LAMMPS_NS;
 using namespace MathExtra;
 
 enum { HOOKE, HERTZ };
-enum { MASS_VELOCITY };
-enum { LINEAR_HISTORY };
+enum { MASS_VELOCITY , VISCOELASTIC};
+enum { CLASSIC , LINEAR_HISTORY};
 
 static constexpr int NUMSTEP_INITIAL_GUESS = 5;
+static constexpr double EPSILON = 1e-10;
 
 /* ---------------------------------------------------------------------- */
 
@@ -401,7 +402,7 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
     if (kn_one < 0.0 || gamman_one < 0.0) error->all(FLERR, "Illegal linear normal model");
     iarg += 3;
   } else if (strcmp(arg[iarg], "hertz") == 0) {
-    normal_one = HOOKE;
+    normal_one = HERTZ;
     if (iarg + 3 > narg) utils::missing_cmd_args(FLERR, "pair granular/superellipsoid", error);
     kn_one = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
     gamman_one = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
@@ -424,12 +425,23 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
         xmu_one = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
         if (kt_one < 0.0 || xt_one < 0.0 || xmu_one < 0.0) error->all(FLERR, "Illegal linear tangential model");
         iarg += 4;
+      } else if (strcmp(arg[iarg], "classic") == 0) {
+        tangential_one = CLASSIC;
+        if (iarg + 4 > narg) utils::missing_cmd_args(FLERR, "pair granular/superellipsoid", error);
+        kt_one = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
+        xt_one = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
+        xmu_one = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
+        if (kt_one < 0.0 || xt_one < 0.0 || xmu_one < 0.0) error->all(FLERR, "Illegal linear tangential model");
+        iarg += 4;
       } else {
         error->all(FLERR, "Unknown normal model {}", arg[iarg]);
       }
     } else if (strcmp(arg[iarg], "damping") == 0) {
       if (strcmp(arg[iarg], "mass_velocity") == 0) {
         damping_one = MASS_VELOCITY;
+        iarg += 1;
+      } else if (strcmp(arg[iarg], "viscoelastic") == 0) {
+        damping_one = VISCOELASTIC;
         iarg += 1;
       } else {
         error->all(FLERR, "Unknown normal model {}", arg[iarg]);
@@ -454,7 +466,11 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
 
   // Define default damping sub model if unspecified, has no coeffs
   if (damping_one == -1)
-    damping_one = MASS_VELOCITY; // default in pair granular is VISCOELASTIC
+    damping_one = VISCOELASTIC;
+
+  // granular model init
+  if (normal_one == HERTZ || damping_one == VISCOELASTIC)
+    contact_radius_flag = 1;
 
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
@@ -533,7 +549,7 @@ void PairGranularSuperellipsoid::init_style()
 
   for (int itype = 1; itype <= atom->ntypes; itype++)
     for (int jtype = 1; jtype <= atom->ntypes; jtype++)
-      if (tangential_model[itype][jtype] == LINEAR_HISTORY)
+      if (tangential_model[itype][jtype] == CLASSIC)
         size_history += 3;
 
   // check for FixFreeze and set freeze_group_bit
@@ -900,7 +916,7 @@ void PairGranularSuperellipsoid::transfer_history(double *source, double *target
   // copy of all history variables (shear, contact point, axis)
 
   for (int i = 0; i < size_history; i++) {
-    if (i > default_hist_size && tangential_model[itype][jtype] == LINEAR_HISTORY) {
+    if (i >= default_hist_size && tangential_model[itype][jtype] == CLASSIC) {
       target[i] = -source[i]; //shear
     } else {
       target[i] = source[i];
@@ -1070,44 +1086,30 @@ void PairGranularSuperellipsoid::calculate_forces()
   // compute directly the sum of relative translational velocity at contact point
   // since rotational velocity contribution is different for superellipsoids
   double cv1[3], cv2[3];
-
-  cv1[0] = vi[0] + omega_cross_r1[0];
-  cv1[1] = vi[1] + omega_cross_r1[1];
-  cv1[2] = vi[2] + omega_cross_r1[2];
-
-  cv2[0] = vj[0] + omega_cross_r2[0];
-  cv2[1] = vj[1] + omega_cross_r2[1];
-  cv2[2] = vj[2] + omega_cross_r2[2];
+  add3(vi, omega_cross_r1, cv1);
+  add3(vj, omega_cross_r2, cv2);
 
   // total relavtive velocity at contact point
-  double vr1 = cv1[0] - cv2[0];
-  double vr2 = cv1[1] - cv2[1];
-  double vr3 = cv1[2] - cv2[2];
+  double vr[3];
+  sub3(cv1, cv2, vr);
 
   // normal component
 
-  double vn1 = nij[0] * vr1;    // dot product
-  double vn2 = nij[1] * vr2;
-  double vn3 = nij[2] * vr3;
-
-  vnnr = vr1 * nij[0] + vr2 * nij[1] + vr3 * nij[2];    // magnitude
+  double vn[3];
+  double vnnr = dot3(vr, nij);
+  scale3(vnnr, nij, vn);
 
   // tangential component
 
-  double vtr1 = vr1 - vnnr * nij[0];
-  double vtr2 = vr2 - vnnr * nij[1];
-  double vtr3 = vr3 - vnnr * nij[2];
+  double vt[3];
+  sub3(vr, vn, vt);
 
-  vrel = vtr1 * vtr1 + vtr2 * vtr2 + vtr3 * vtr3;
-  vrel = sqrt(vrel);
+  vrel = len3(vt); // vtr in spherical model
 
-  // normal forces = elastic contact + normal velocity damping
+  // Approximate contact radius
 
-  double damp = meff * gamman[itype][jtype] * vnnr;
-  double ccel = kn[itype][jtype] * (overlap1 + overlap2) + damp;    // assuming we get the overlap depth
-
-  double polyhertz;
-  if (normal_model[itype][jtype] == HERTZ) {
+  // hertzian contact radius approximation
+  if (contact_radius_flag) {
     double surf_point_i[3], surf_point_j[3], curvature_i, curvature_j;
     MathExtra::scaleadd3(overlap1, nij, X0, surf_point_i);
     MathExtra::scaleadd3(overlap2, nji, X0, surf_point_j);
@@ -1125,76 +1127,152 @@ void PairGranularSuperellipsoid::calculate_forces()
     }
 
     // hertzian contact radius approximation
-    polyhertz = sqrt((overlap1 + overlap2) / (curvature_i + curvature_j));
-    ccel *= polyhertz;
+    contact_radius = sqrt((overlap1 + overlap2) / (curvature_i + curvature_j));
   }
 
-  if (limit_damping[itype][jtype] && (ccel < 0.0)) ccel = 0.0;
-
-  // shear history effects
-  double *shear = &history_data[default_hist_size];
-
-  if (history_update) {
-    shear[0] += vtr1 * dt;
-    shear[1] += vtr2 * dt;
-    shear[2] += vtr3 * dt;
-  }
-  double shrmag = sqrt(shear[0] * shear[0] + shear[1] * shear[1] + shear[2] * shear[2]);
-
-  if (history_update) {
-
-    // rotate shear displacements
-
-    double rsht = shear[0] * nij[0] + shear[1] * nij[1] + shear[2] * nij[2];
-    shear[0] -= rsht * nij[0];
-    shear[1] -= rsht * nij[1];
-    shear[2] -= rsht * nij[2];
+  if (normal_model[itype][jtype] == HOOKE) {
+    // assuming we get the overlap depth
+    Fnormal = kn[itype][jtype] * (overlap1 + overlap2);
+  } else if (normal_model[itype][jtype] == HERTZ) {
+    Fnormal = kn[itype][jtype] * (overlap1 + overlap2) * contact_radius;
   }
 
-  // tangential forces = shear + tangential velocity damping
-
-  double gammat = xt[itype][jtype] * gamman[itype][jtype];
-  double fs1 = -(kt[itype][jtype] * shear[0] + meff * gammat * vtr1);
-  double fs2 = -(kt[itype][jtype] * shear[1] + meff * gammat * vtr2);
-  double fs3 = -(kt[itype][jtype] * shear[2] + meff * gammat * vtr3);
-
-  if (normal_model[itype][jtype] == HERTZ) {
-    fs1 *= polyhertz;
-    fs2 *= polyhertz;
-    fs3 *= polyhertz;
+  double damp = gamman[itype][jtype];
+  double damp_prefactor, Fdamp;
+  if (damping_model[itype][jtype] == MASS_VELOCITY) {
+    damp_prefactor = damp * meff;
+    Fdamp = -damp_prefactor * vnnr;
+  } else {
+    damp_prefactor = damp * meff * contact_radius;
+    Fdamp = -damp_prefactor * vnnr;
   }
 
-  // rescale frictional displacements and forces if needed
+  // normal forces = elastic contact + normal velocity damping
 
-  double fs_mag = sqrt(fs1 * fs1 + fs2 * fs2 + fs3 * fs3);
-  double fn = xmu[itype][jtype] * fabs(ccel);
+  Fntot = Fnormal + Fdamp;
+  if (limit_damping[itype][jtype] && (Fntot < 0.0)) Fntot = 0.0;
+  double Fncrit = fabs(Fntot);
 
-  if (fs_mag > fn) {
-    if (shrmag != 0.0) {
-      shear[0] =
-          (fn / fs_mag) * (shear[0] + meff * gammat * vtr1 / kt[itype][jtype]) - meff * gammat * vtr1 / kt[itype][jtype];
-      shear[1] =
-          (fn / fs_mag) * (shear[1] + meff * gammat * vtr2 / kt[itype][jtype]) - meff * gammat * vtr2 / kt[itype][jtype];
-      shear[2] =
-          (fn / fs_mag) * (shear[2] + meff * gammat * vtr3 / kt[itype][jtype]) - meff * gammat * vtr3 / kt[itype][jtype];
-      fs1 *= fn / fs_mag;
-      fs2 *= fn / fs_mag;
-      fs3 *= fn / fs_mag;
-    } else
-      fs1 = fs2 = fs3 = 0.0;
+  // Tangential model
+
+  double temp_array[3];
+  double *history = &history_data[default_hist_size];
+  double Fscrit = Fncrit * xmu[itype][jtype];
+  double dampt = xt[itype][jtype] * damp_prefactor;
+  if (tangential_model[itype][jtype] == LINEAR_HISTORY) {
+    // rotate and update displacements / force.
+    // see e.g. eq. 17 of Luding, Gran. Matter 2008, v10,p235
+
+    int frame_update = 0;
+    if (history_update) {
+      double rsht = dot3(history, nij);
+      frame_update = (fabs(rsht) * kt[itype][jtype]) > (EPSILON * Fscrit);
+
+      if (frame_update) rotate_rescale_vec(history, nij);
+
+      // update history, tangential force using velocities at half step
+      // see e.g. eq. 18 of Thornton et al, Pow. Tech. 2013, v223,p30-46
+      scale3(dt, vtr, temp_array);
+      add3(history, temp_array, history);
+    }
+
+    // tangential forces = history + tangential velocity damping
+    scale3(-kt[itype][jtype], history, fs);
+
+    double vtr2[3];
+    copy3(vtr, vtr2);
+    scale3(dampt, vtr2, temp_array);
+    sub3(fs, temp_array, fs);
+
+    // rescale frictional displacements and forces if needed
+    double magfs = len3(fs);
+    if (magfs > Fscrit) {
+      double shrmag = len3(history);
+      if (shrmag != 0.0) {
+        double magfs_inv = 1.0 / magfs;
+        scale3(Fscrit * magfs_inv, fs, history);
+        scale3(damp, vtr, temp_array);
+        add3(history, temp_array, history);
+        scale3(-1.0 / kt[itype][jtype], history);
+        scale3(Fscrit * magfs_inv, fs);
+      } else {
+        zero3(fs);
+      }
+    }
+
+  } else if (tangential_model[itype][jtype] == CLASSIC) {
+
+    // shear history effects
+
+    if (history_update) {
+      scale3(dt, vtr, temp_array);
+      add3(history, temp_array, history);
+    }
+    double shrmag = len3(history);
+
+    if (history_update) {
+      // rotate shear displacements
+      double rsht = dot3(history, nij);
+      scale3(rsht, nij, temp_array);
+      sub3(history, temp_array, history);
+    }
+
+    // tangential forces = history + tangential velocity damping
+    double fs[3];
+    if (contact_radius_flag)
+      scale3(-kt[itype][jtype] * contact_radius, history, fs);
+    else
+      scale3(-kt[itype][jtype], history, fs);
+
+    scale3(dampt, vtr, temp_array);
+    sub3(fs, temp_array, fs);
+
+    // rescale frictional displacements and forces if needed
+
+    double magfs = len3(fs);
+
+    if (magfs > Fscrit) {
+      if (shrmag != 0.0) {
+        double magfs_inv = 1.0 / magfs;
+        scale3(Fscrit * magfs_inv, fs, history);
+        scale3(damp, vtr, temp_array);
+        add3(history, temp_array, history);
+        scale3(-1.0 / kt[itype][jtype], history);
+        scale3(Fscrit * magfs_inv, fs);
+      } else
+        zero3(fs);
+    }
   }
 
   // forces & torques
 
-  forces[0] = nji[0] * ccel + fs1;
-  forces[1] = nji[1] * ccel + fs2;
-  forces[2] = nji[2] * ccel + fs3;
+  scale3(Fntot, nji, forces);
+  add3(forces, fs, forces);
 
-  torquesi[0] = cr1[1] * forces[2] - cr1[2] * forces[1];
-  torquesi[1] = cr1[2] * forces[0] - cr1[0] * forces[2];
-  torquesi[2] = cr1[0] * forces[1] - cr1[1] * forces[0];
+  cross3(cr1, forces, torquesi);
+  cross3(forces, cr2, torquesj);
+}
 
-  torquesj[0] = -cr2[1] * forces[2] + cr2[2] * forces[1];
-  torquesj[1] = -cr2[2] * forces[0] + cr2[0] * forces[2];
-  torquesj[2] = -cr2[0] * forces[1] + cr2[1] * forces[0];
+/* ----------------------------------------------------------------------
+  rotate-rescale vector v so it is perpendicular to unit vector n
+  and has the same magnitude as before
+    Copied from GranSubMod
+  ---------------------------------------------------------------------- */
+void PairGranularSuperellipsoid::rotate_rescale_vec(double *v, double *n)
+{
+  double rsht, shrmag, prjmag, temp_dbl, temp_array[3];
+
+  rsht = dot3(v, n);
+  shrmag = len3(v);
+
+  scale3(rsht, n, temp_array);
+  sub3(v, temp_array, v);
+
+  // also rescale to preserve magnitude
+  prjmag = len3(v);
+  if (prjmag > 0)
+    temp_dbl = shrmag / prjmag;
+  else
+    temp_dbl = 0;
+  scale3(temp_dbl, v);
 }
