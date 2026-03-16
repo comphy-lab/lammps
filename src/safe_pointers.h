@@ -16,6 +16,8 @@
 
 // collection of smart pointers for specific purposes
 
+#include "platform.h"
+
 #include <cstdio>
 
 namespace LAMMPS_NS {
@@ -77,7 +79,7 @@ class SafeFilePtr {
   {
     if (fp) {
       if (use_pclose)
-        pclose(fp);
+        platform::pclose(fp);
       else
         fclose(fp);
     }
@@ -87,7 +89,7 @@ class SafeFilePtr {
   {
     if (fp && (fp != _fp)) {
       if (use_pclose)
-        pclose(fp);
+        platform::pclose(fp);
       else
         fclose(fp);
     }
