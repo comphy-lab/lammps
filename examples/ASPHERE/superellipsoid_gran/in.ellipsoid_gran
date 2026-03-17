@@ -16,11 +16,15 @@ group top id 2
 
 set             type 1 mass 1.0
 set             type 1 shape 2.0 1.0 1.0
-set             type 1 block 5.0 5.0
+set             type 1 block 2.0 2.0
 
-pair_style      gran/hooke/history/ellipsoid 1e3 NULL 0.0 0.0 0.5 0 bounding_box
-# pair_style      gran/hertz/history/ellipsoid 1e3 0.0 0.0 0.0 0.5 0
-pair_coeff      * *
+
+# pair_style      gran/hertz/history/ellipsoid 1e3 NULL 0.0 0.0 0.5 0 bounding_box
+# pair_coeff * *
+pair_style      granular/superellipsoid bounding_box
+# pair_coeff      * * hooke 1000.0 0.0 tangential linear_history 285 0.0 0.5 damping mass_velocity
+# Hertz model instead
+pair_coeff      * * hertz 1000.0 0.0 tangential linear_history 285.714 0.0 0.5 damping viscoelastic
 
 compute diameter all property/atom shapex shapey shapez
 compute orient all property/atom quatw quati quatj quatk

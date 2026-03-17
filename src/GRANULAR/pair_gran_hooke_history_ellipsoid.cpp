@@ -206,7 +206,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
       int ref_index = (atom->tag[i] < atom->tag[j]) ? i : j;
 
       // TODO: Below could be a `touch()` function
-      bool touching;
+      bool touching = false;
       if (rsq >= radsum * radsum) {
         touching = false;
       } else {
@@ -218,9 +218,13 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
         MathExtra::quat_to_mat(bonus[ellipsoid[j]].quat, Rj);
         bool skip_contact_detection(false);
         if (bounding_box) {
-          int separating_axis = (int) (allhistory[7 + size_history * jj]);
-          skip_contact_detection = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
-              x[i], Ri, shapei, x[j], Rj, shapej, separating_axis);
+          int cached_axis = (int) (allhistory[7 + size_history * jj]);
+          int new_axis = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
+              x[i], Ri, shapei, x[j], Rj, shapej, cached_axis);
+          if (new_axis != -1) {
+            skip_contact_detection = true;
+            allhistory[7 + size_history * jj] = (double) new_axis;
+          }
         }
         if (skip_contact_detection)
           touching = false;
@@ -835,12 +839,14 @@ double PairGranHookeHistoryEllipsoid::single(int i, int j, int /*itype*/, int /*
   MathExtra::copy3(bonus[ellipsoid[j]].block, blockj);
   MathExtra::quat_to_mat(bonus[ellipsoid[i]].quat, Ri);
   MathExtra::quat_to_mat(bonus[ellipsoid[j]].quat, Rj);
+  bool skip_contact_detection = false;
   if (bounding_box) {
-    int separating_axis = (int)
+    int cached_axis = (int)
         (allhistory[7 + size_history * neighprev]);    // Copy: no update of history in single
-    bool no_bouding_box_contact = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
-        x[i], Ri, shapei, x[j], Rj, shapej, separating_axis);
-    if (no_bouding_box_contact) {
+    int new_axis = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
+        x[i], Ri, shapei, x[j], Rj, shapej, cached_axis);
+    if (new_axis !=-1) skip_contact_detection = true;
+    if (skip_contact_detection) {
       fforce = 0.0;
       for (int m = 0; m < single_extra; m++) svector[m] = 0.0;
       return 0.0;

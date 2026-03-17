@@ -47,8 +47,12 @@ group           wall type 1
 group           mobile type 2
 
 # Interaction / Pair Style
-pair_style      gran/hooke/history/ellipsoid 1e4 NULL 20.0 0.0 0.5 0 bounding_box
-pair_coeff      * *
+# pair_style      gran/hooke/history/ellipsoid 1e4 NULL 20.0 0.0 0.5 0 bounding_box
+# pair_coeff      * *
+pair_style      granular/superellipsoid bounding_box
+pair_coeff      * * hooke 1000.0 0.0 tangential linear_history 285 0.0 0.5 damping mass_velocity
+# Hertz model instead
+# pair_coeff      * * hertz 1000.0 0.0 tangential linear_history 285.714 0.0 0.5 damping viscoelastic
 
 # Computes and Output
 compute         diameter all property/atom shapex shapey shapez
@@ -59,7 +63,7 @@ compute         block all property/atom block1 block2
 variable        phi atom "2/c_block[2]"
 variable        theta atom "2/c_block[1]"
 
-dump            mydump all custom 1000 dump_drop_algebraic_block_${blockiness}_friction.lammpstrj id type x y z fx fy fz tqx tqy tqz c_diameter[*] c_orient[*] v_phi v_theta
+dump            mydump all custom 100 dump_drop_algebraic_block_${blockiness}_friction.lammpstrj id type x y z fx fy fz tqx tqy tqz c_diameter[*] c_orient[*] v_phi v_theta
 # Explicit mapping for Ovito
 dump_modify     mydump colname c_orient[1] quatw colname c_orient[2] quati colname c_orient[3] quatj colname c_orient[4] quatk
 

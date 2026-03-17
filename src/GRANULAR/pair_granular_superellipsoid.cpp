@@ -238,6 +238,10 @@ void PairGranularSuperellipsoid::compute(int eflag, int vflag)
       flagi = bonus[ellipsoid[i]].type;
       flagj = bonus[ellipsoid[j]].type;
 
+      radsum = radi + radj;
+      sub3(xi, xj, dx);
+      rsq = dot3(dx, dx);
+
       MathExtra::copy3(bonus[ellipsoid[i]].shape, shapei0);
       MathExtra::copy3(bonus[ellipsoid[j]].shape, shapej0);
       MathExtra::copy3(bonus[ellipsoid[i]].block, blocki0);
@@ -350,22 +354,25 @@ void PairGranularSuperellipsoid::allocate()
 
 void PairGranularSuperellipsoid::settings(int narg, char **arg)
 {
-  if (narg == 1) {
-    cutoff_global = utils::numeric(FLERR, arg[0], false, lmp);
-  } else {
-    cutoff_global = -1;    // will be set based on particle sizes, model choice
-  }
+  cutoff_global = -1;    // default: will be set based on particle sizes, model choice
+  curvature_model = MathExtraSuperellipsoids::CURV_MEAN;
 
-  curvature_model = MathExtraSuperellipsoids::CURV_MEAN;    // Default to Mean curvature
-
-  for (int iarg = 1; iarg < narg; iarg++) {
-    if (strcmp(arg[iarg], "bounding_box") == 0)
+  int iarg = 0;
+  while (iarg < narg) {
+    if (strcmp(arg[iarg], "bounding_box") == 0) {
       bounding_box = 1;
-    else if (strcmp(arg[iarg], "geometric") == 0)
+      iarg++;
+    } else if (strcmp(arg[iarg], "geometric") == 0) {
       contact_formulation = MathExtraSuperellipsoids::FORMULATION_GEOMETRIC;
-    else if (strcmp(arg[iarg], "curvature_gaussian") == 0)
+      iarg++;
+    } else if (strcmp(arg[iarg], "curvature_gaussian") == 0) {
       curvature_model = MathExtraSuperellipsoids::CURV_GAUSSIAN;
-    else
+      iarg++;
+    } else if (iarg == 0) {
+      // if it is the first argument and not a keyword, assume it is a cutoff
+      cutoff_global = utils::numeric(FLERR, arg[iarg], false, lmp);
+      iarg++;
+    } else
       error->all(FLERR, "Illegal pair_style command");
   }
 
@@ -418,6 +425,7 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
   //Parse optional arguments
   while (iarg < narg) {
     if (strcmp(arg[iarg], "tangential") == 0) {
+      iarg++;
       if (strcmp(arg[iarg], "linear_history") == 0) {
         tangential_one = LINEAR_HISTORY;
         if (iarg + 4 > narg) utils::missing_cmd_args(FLERR, "pair granular/superellipsoid", error);
@@ -437,9 +445,10 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
           error->all(FLERR, "Illegal linear tangential model");
         iarg += 4;
       } else {
-        error->all(FLERR, "Unknown normal model {}", arg[iarg]);
+        error->all(FLERR, "Unknown tangential model {}", arg[iarg]);
       }
     } else if (strcmp(arg[iarg], "damping") == 0) {
+      iarg++;
       if (strcmp(arg[iarg], "mass_velocity") == 0) {
         damping_one = MASS_VELOCITY;
         iarg += 1;
@@ -559,7 +568,9 @@ void PairGranularSuperellipsoid::init_style()
 
   for (int itype = 1; itype <= atom->ntypes; itype++)
     for (int jtype = 1; jtype <= atom->ntypes; jtype++)
-      if (tangential_model[itype][jtype] == CLASSIC) size_history += 3;
+      if (tangential_model[itype][jtype] == CLASSIC ||
+          tangential_model[itype][jtype] == LINEAR_HISTORY)
+        size_history += 3;
 
   // check for FixFreeze and set freeze_group_bit
 
