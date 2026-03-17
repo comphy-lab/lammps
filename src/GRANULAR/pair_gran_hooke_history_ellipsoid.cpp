@@ -304,7 +304,10 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
 
         touch[jj] = 0;
         history = &allhistory[size_history * jj];
-        for (int k = 0; k < size_history; k++) history[k] = 0.0;
+        for (int k = 0; k < size_history; k++) {
+          if (bounding_box && k == 7) continue;    // Do not delete cached axis information
+          history[k] = 0.0;
+        }
       } else {
         // Store contact point with respect to grain i for next time step
         // This is crucial for periodic BCs when grains can move by large amount in one time step
@@ -841,11 +844,11 @@ double PairGranHookeHistoryEllipsoid::single(int i, int j, int /*itype*/, int /*
   MathExtra::quat_to_mat(bonus[ellipsoid[j]].quat, Rj);
   bool skip_contact_detection = false;
   if (bounding_box) {
-    int cached_axis = (int)
-        (allhistory[7 + size_history * neighprev]);    // Copy: no update of history in single
-    int new_axis = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
-        x[i], Ri, shapei, x[j], Rj, shapej, cached_axis);
-    if (new_axis !=-1) skip_contact_detection = true;
+    int cached_axis =
+        (int) (allhistory[7 + size_history * neighprev]);    // Copy: no update of history in single
+    int new_axis = MathExtraSuperellipsoids::check_oriented_bounding_boxes(x[i], Ri, shapei, x[j],
+                                                                           Rj, shapej, cached_axis);
+    if (new_axis != -1) skip_contact_detection = true;
     if (skip_contact_detection) {
       fforce = 0.0;
       for (int m = 0; m < single_extra; m++) svector[m] = 0.0;
@@ -1082,7 +1085,7 @@ void PairGranHookeHistoryEllipsoid::transfer_history(double *source, double *tar
 {
   // Simple direct copy of all history variables (shear, contact point, axis)
   for (int i = 0; i < size_history; i++) {
-    if (i < 3) target[i] = -source[i]; //shear
+    if (i < 3) target[i] = -source[i];    //shear
     target[i] = source[i];
   }
 }

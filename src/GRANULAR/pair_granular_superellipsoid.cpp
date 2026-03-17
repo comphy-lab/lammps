@@ -261,7 +261,10 @@ void PairGranularSuperellipsoid::compute(int eflag, int vflag)
         // unset non-touching neighbors
         touch[jj] = 0;
         history = &allhistory[size_history * jj];
-        for (k = 0; k < size_history; k++) history[k] = 0.0;
+        for (k = 0; k < size_history; k++) {
+          if (bounding_box && k == 4) continue;    // Do not delete cached axis information
+          history[k] = 0.0;
+        }
         continue;
       }
 
