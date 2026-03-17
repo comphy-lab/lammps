@@ -118,7 +118,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
   double shrmag, rsht;
   int *ilist, *jlist, *numneigh, **firstneigh;
   int *touch, **firsttouch;
-  double *shear, *X0_prev, *separating_axis, *history, *allhistory, **firsthistory;
+  double *shear, *X0_prev, *history, *allhistory, **firsthistory;
 
   double X0[4], nij[3], shapei[3], blocki[3], shapej[3], blockj[3], Ri[3][3], Rj[3][3], overlap1,
       overlap2, omegai[3], omegaj[3];
@@ -218,7 +218,7 @@ void PairGranHookeHistoryEllipsoid::compute(int eflag, int vflag)
         MathExtra::quat_to_mat(bonus[ellipsoid[j]].quat, Rj);
         bool skip_contact_detection(false);
         if (bounding_box) {
-          separating_axis = &allhistory[7 + size_history * jj];
+          int separating_axis = (int) (allhistory[7 + size_history * jj]);
           skip_contact_detection = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
               x[i], Ri, shapei, x[j], Rj, shapej, separating_axis);
         }
@@ -836,10 +836,10 @@ double PairGranHookeHistoryEllipsoid::single(int i, int j, int /*itype*/, int /*
   MathExtra::quat_to_mat(bonus[ellipsoid[i]].quat, Ri);
   MathExtra::quat_to_mat(bonus[ellipsoid[j]].quat, Rj);
   if (bounding_box) {
-    double separating_axis =
-        allhistory[7 + size_history * neighprev];    // Copy: no update of history in single
+    int separating_axis = (int)
+        (allhistory[7 + size_history * neighprev]);    // Copy: no update of history in single
     bool no_bouding_box_contact = MathExtraSuperellipsoids::check_oriented_bounding_boxes(
-        x[i], Ri, shapei, x[j], Rj, shapej, &separating_axis);
+        x[i], Ri, shapei, x[j], Rj, shapej, separating_axis);
     if (no_bouding_box_contact) {
       fforce = 0.0;
       for (int m = 0; m < single_extra; m++) svector[m] = 0.0;

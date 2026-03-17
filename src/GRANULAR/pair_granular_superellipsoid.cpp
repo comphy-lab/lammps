@@ -40,8 +40,8 @@ using namespace LAMMPS_NS;
 using namespace MathExtra;
 
 enum { HOOKE, HERTZ };
-enum { MASS_VELOCITY , VISCOELASTIC};
-enum { CLASSIC , LINEAR_HISTORY};
+enum { MASS_VELOCITY, VISCOELASTIC };
+enum { CLASSIC, LINEAR_HISTORY };
 
 static constexpr int NUMSTEP_INITIAL_GUESS = 5;
 static constexpr double EPSILON = 1e-10;
@@ -87,7 +87,7 @@ PairGranularSuperellipsoid::PairGranularSuperellipsoid(LAMMPS *lmp) : Pair(lmp)
   comm_forward = 1;
 
   default_hist_size = 5;
-  size_history = default_hist_size; // default of 5 values, x0[4] and separating axis
+  size_history = default_hist_size;    // default of 5 values, x0[4] and separating axis
 
   beyond_contact = 0;
   nondefault_history_transfer = 1;
@@ -97,7 +97,8 @@ PairGranularSuperellipsoid::PairGranularSuperellipsoid(LAMMPS *lmp) : Pair(lmp)
   // this is so final order of Modify:fix will conform to input script
 
   fix_history = nullptr;
-  fix_dummy = dynamic_cast<FixDummy *>(modify->add_fix("NEIGH_HISTORY_GRANULAR_SE_DUMMY all DUMMY"));
+  fix_dummy =
+      dynamic_cast<FixDummy *>(modify->add_fix("NEIGH_HISTORY_GRANULAR_SE_DUMMY all DUMMY"));
 
   contact_formulation = MathExtraSuperellipsoids::FORMULATION_ALGEBRAIC;
 }
@@ -108,8 +109,10 @@ PairGranularSuperellipsoid::~PairGranularSuperellipsoid()
 {
   delete[] svector;
 
-  if (!fix_history) modify->delete_fix("NEIGH_HISTORY_GRANULAR_SE_DUMMY");
-  else modify->delete_fix("NEIGH_HISTORY_GRANULAR_SE");
+  if (!fix_history)
+    modify->delete_fix("NEIGH_HISTORY_GRANULAR_SE_DUMMY");
+  else
+    modify->delete_fix("NEIGH_HISTORY_GRANULAR_SE");
 
   if (allocated) {
     memory->destroy(setflag);
@@ -301,7 +304,7 @@ void PairGranularSuperellipsoid::compute(int eflag, int vflag)
 
       if (evflag)
         ev_tally_xyz(i, j, nlocal, force->newton_pair, 0.0, 0.0, forces[0], forces[1], forces[2],
-            dx[0], dx[1], dx[2]); // Correct even for non-spherical particles
+                     dx[0], dx[1], dx[2]);    // Correct even for non-spherical particles
     }
   }
 
@@ -319,22 +322,21 @@ void PairGranularSuperellipsoid::allocate()
 
   memory->create(setflag, n + 1, n + 1, "pair:setflag");
   for (int i = 1; i <= n; i++)
-    for (int j = i; j <= n; j++)
-      setflag[i][j] = 0;
+    for (int j = i; j <= n; j++) setflag[i][j] = 0;
 
-  memory->create(cutsq,n+1,n+1,"pair:cutsq");
-  memory->create(cutoff_type,n+1,n+1,"pair:cutoff_type");
+  memory->create(cutsq, n + 1, n + 1, "pair:cutsq");
+  memory->create(cutoff_type, n + 1, n + 1, "pair:cutoff_type");
 
-  memory->create(limit_damping,n+1,n+1,"pair:limit_damping");
-  memory->create(normal_model,n+1,n+1,"pair:normal_model");
-  memory->create(damping_model,n+1,n+1,"pair:damping_model");
-  memory->create(tangential_model,n+1,n+1,"pair:tangential_model");
+  memory->create(limit_damping, n + 1, n + 1, "pair:limit_damping");
+  memory->create(normal_model, n + 1, n + 1, "pair:normal_model");
+  memory->create(damping_model, n + 1, n + 1, "pair:damping_model");
+  memory->create(tangential_model, n + 1, n + 1, "pair:tangential_model");
 
-  memory->create(kn,n+1,n+1,"pair:kn");
-  memory->create(gamman,n+1,n+1,"pair:gamman");
-  memory->create(kt,n+1,n+1,"pair:kt");
-  memory->create(xt,n+1,n+1,"pair:xt");
-  memory->create(xmu,n+1,n+1,"pair:xmu");
+  memory->create(kn, n + 1, n + 1, "pair:kn");
+  memory->create(gamman, n + 1, n + 1, "pair:gamman");
+  memory->create(kt, n + 1, n + 1, "pair:kt");
+  memory->create(xt, n + 1, n + 1, "pair:xt");
+  memory->create(xmu, n + 1, n + 1, "pair:xmu");
 
   onerad_dynamic = new double[n + 1];
   onerad_frozen = new double[n + 1];
@@ -349,9 +351,9 @@ void PairGranularSuperellipsoid::allocate()
 void PairGranularSuperellipsoid::settings(int narg, char **arg)
 {
   if (narg == 1) {
-    cutoff_global = utils::numeric(FLERR,arg[0],false,lmp);
+    cutoff_global = utils::numeric(FLERR, arg[0], false, lmp);
   } else {
-    cutoff_global = -1; // will be set based on particle sizes, model choice
+    cutoff_global = -1;    // will be set based on particle sizes, model choice
   }
 
   curvature_model = MathExtraSuperellipsoids::CURV_MEAN;    // Default to Mean curvature
@@ -381,14 +383,13 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
 {
   double cutoff_one = -1;
 
-  if (narg < 3)
-    error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
+  if (narg < 3) error->all(FLERR, "Incorrect args for pair coefficients" + utils::errorurl(21));
 
   if (!allocated) allocate();
 
-  int ilo,ihi,jlo,jhi;
-  utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
-  utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
+  int ilo, ihi, jlo, jhi;
+  utils::bounds(FLERR, arg[0], 1, atom->ntypes, ilo, ihi, error);
+  utils::bounds(FLERR, arg[1], 1, atom->ntypes, jlo, jhi, error);
 
   int normal_one, damping_one, tangential_one, limit_one;
   double kn_one, gamman_one, kt_one, xt_one, xmu_one;
@@ -423,7 +424,8 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
         kt_one = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
         xt_one = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
         xmu_one = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
-        if (kt_one < 0.0 || xt_one < 0.0 || xmu_one < 0.0) error->all(FLERR, "Illegal linear tangential model");
+        if (kt_one < 0.0 || xt_one < 0.0 || xmu_one < 0.0)
+          error->all(FLERR, "Illegal linear tangential model");
         iarg += 4;
       } else if (strcmp(arg[iarg], "classic") == 0) {
         tangential_one = CLASSIC;
@@ -431,7 +433,8 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
         kt_one = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
         xt_one = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
         xmu_one = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
-        if (kt_one < 0.0 || xt_one < 0.0 || xmu_one < 0.0) error->all(FLERR, "Illegal linear tangential model");
+        if (kt_one < 0.0 || xt_one < 0.0 || xmu_one < 0.0)
+          error->all(FLERR, "Illegal linear tangential model");
         iarg += 4;
       } else {
         error->all(FLERR, "Unknown normal model {}", arg[iarg]);
@@ -456,25 +459,24 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
     } else if (strcmp(arg[iarg], "cutoff") == 0) {
       if (iarg + 1 >= narg)
         error->all(FLERR, "Illegal pair_coeff command, not enough parameters for cutoff keyword");
-      cutoff_one = utils::numeric(FLERR,arg[iarg + 1],false,lmp);
+      cutoff_one = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
       iarg += 2;
     } else if (strcmp(arg[iarg], "limit_damping") == 0) {
       limit_one = 1;
       iarg += 1;
-    } else error->all(FLERR, "Illegal pair_coeff command {}", arg[iarg]);
+    } else
+      error->all(FLERR, "Illegal pair_coeff command {}", arg[iarg]);
   }
 
   // Define default damping sub model if unspecified, has no coeffs
-  if (damping_one == -1)
-    damping_one = VISCOELASTIC;
+  if (damping_one == -1) damping_one = VISCOELASTIC;
 
   // granular model init
-  if (normal_one == HERTZ || damping_one == VISCOELASTIC)
-    contact_radius_flag = 1;
+  if (normal_one == HERTZ || damping_one == VISCOELASTIC) contact_radius_flag = 1;
 
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
-    for (int j = MAX(jlo,i); j <= jhi; j++) {
+    for (int j = MAX(jlo, i); j <= jhi; j++) {
       cutoff_type[i][j] = cutoff_type[j][i] = cutoff_one;
       limit_damping[i][j] = limit_damping[j][i] = limit_one;
 
@@ -494,7 +496,7 @@ void PairGranularSuperellipsoid::coeff(int narg, char **arg)
     }
   }
 
-  if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
+  if (count == 0) error->all(FLERR, "Incorrect args for pair coefficients" + utils::errorurl(21));
 }
 
 /* ----------------------------------------------------------------------
@@ -508,16 +510,21 @@ void PairGranularSuperellipsoid::init_style()
   // error and warning checks
 
   if (!atom->radius_flag || !atom->rmass_flag || !atom->angmom_flag || !atom->superellipsoid_flag)
-    error->all(FLERR, "Pair granular/superellipsoid requires atom attributes radius, rmass, "
+    error->all(FLERR,
+               "Pair granular/superellipsoid requires atom attributes radius, rmass, "
                "angmom and superellipsoid flag");
   if (comm->ghost_velocity == 0)
     error->all(FLERR, "Pair granular/superellipsoid requires ghost atoms store velocity");
 
   if (heat_flag) {
     if (!atom->temperature_flag)
-      error->all(FLERR,"Heat conduction in pair granular/superellipsoid requires atom style with temperature property");
+      error->all(FLERR,
+                 "Heat conduction in pair granular/superellipsoid requires atom style with "
+                 "temperature property");
     if (!atom->heatflow_flag)
-      error->all(FLERR,"Heat conduction in pair granular/superellipsoid requires atom style with heatflow property");
+      error->all(FLERR,
+                 "Heat conduction in pair granular/superellipsoid requires atom style with "
+                 "heatflow property");
   }
 
   for (i = 0; i < atom->nlocal; i++)
@@ -535,22 +542,24 @@ void PairGranularSuperellipsoid::init_style()
   // this is so its order in the fix list is preserved
 
   if (fix_history == nullptr) {
-    fix_history = dynamic_cast<FixNeighHistory *>(modify->replace_fix("NEIGH_HISTORY_GRANULAR_SE_DUMMY",
-                                                          "NEIGH_HISTORY_GRANULAR_SE"
-                                                          " all NEIGH_HISTORY "
-                                                          + std::to_string(size_history),1));
+    fix_history =
+        dynamic_cast<FixNeighHistory *>(modify->replace_fix("NEIGH_HISTORY_GRANULAR_SE_DUMMY",
+                                                            "NEIGH_HISTORY_GRANULAR_SE"
+                                                            " all NEIGH_HISTORY " +
+                                                                std::to_string(size_history),
+                                                            1));
     fix_history->pair = this;
   } else {
-    fix_history = dynamic_cast<FixNeighHistory *>(modify->get_fix_by_id("NEIGH_HISTORY_GRANULAR_SE"));
-    if (!fix_history) error->all(FLERR,"Could not find pair fix neigh history ID");
+    fix_history =
+        dynamic_cast<FixNeighHistory *>(modify->get_fix_by_id("NEIGH_HISTORY_GRANULAR_SE"));
+    if (!fix_history) error->all(FLERR, "Could not find pair fix neigh history ID");
   }
 
   // grow history for contact models, right now this is superfluous and is just a placeholder
 
   for (int itype = 1; itype <= atom->ntypes; itype++)
     for (int jtype = 1; jtype <= atom->ntypes; jtype++)
-      if (tangential_model[itype][jtype] == CLASSIC)
-        size_history += 3;
+      if (tangential_model[itype][jtype] == CLASSIC) size_history += 3;
 
   // check for FixFreeze and set freeze_group_bit
 
@@ -569,7 +578,8 @@ void PairGranularSuperellipsoid::init_style()
     if (ifix->rigid_flag) {
       if (fix_rigid)
         error->all(FLERR, "Only one fix rigid command at a time allowed");
-      else fix_rigid = ifix;
+      else
+        fix_rigid = ifix;
     }
   }
 
@@ -608,8 +618,8 @@ void PairGranularSuperellipsoid::init_style()
       onerad_dynamic[type[i]] = MAX(onerad_dynamic[type[i]], radius[i]);
   }
 
-  MPI_Allreduce(&onerad_dynamic[1],&maxrad_dynamic[1],atom->ntypes,MPI_DOUBLE,MPI_MAX,world);
-  MPI_Allreduce(&onerad_frozen[1],&maxrad_frozen[1],atom->ntypes,MPI_DOUBLE,MPI_MAX,world);
+  MPI_Allreduce(&onerad_dynamic[1], &maxrad_dynamic[1], atom->ntypes, MPI_DOUBLE, MPI_MAX, world);
+  MPI_Allreduce(&onerad_frozen[1], &maxrad_frozen[1], atom->ntypes, MPI_DOUBLE, MPI_MAX, world);
 }
 
 /* ----------------------------------------------------------------------
@@ -622,15 +632,17 @@ double PairGranularSuperellipsoid::init_one(int i, int j)
 
   if (setflag[i][j] == 0) {
 
-    limit_damping[i][j] = MAX(limit_damping[i][i],limit_damping[j][j]);
+    limit_damping[i][j] = MAX(limit_damping[i][i], limit_damping[j][j]);
 
     if (normal_model[i][i] != normal_model[j][j] ||
         tangential_model[i][i] != tangential_model[j][j] ||
         damping_model[i][i] != damping_model[j][j])
-      error->all(FLERR,"Granular pair style functional forms are different, "
+      error->all(FLERR,
+                 "Granular pair style functional forms are different, "
                  "cannot mix coefficients for types {} and {}.\n"
                  "This combination must be set explicitly via a "
-                 "pair_coeff command",i,j);
+                 "pair_coeff command",
+                 i, j);
 
     kn[i][j] = mix_geom(kn[i][i], kn[j][j]);
     gamman[i][j] = mix_geom(gamman[i][i], gamman[j][j]);
@@ -651,9 +663,9 @@ double PairGranularSuperellipsoid::init_one(int i, int j)
 
   if (cutoff_type[i][j] < 0 && cutoff_global < 0) {
     if (((maxrad_dynamic[i] > 0.0) && (maxrad_dynamic[j] > 0.0)) ||
-        ((maxrad_dynamic[i] > 0.0) &&  (maxrad_frozen[j] > 0.0)) ||
+        ((maxrad_dynamic[i] > 0.0) && (maxrad_frozen[j] > 0.0)) ||
         // radius info about both i and j exist
-        ((maxrad_frozen[i] > 0.0)  && (maxrad_dynamic[j] > 0.0))) {
+        ((maxrad_frozen[i] > 0.0) && (maxrad_dynamic[j] > 0.0))) {
       cutoff = maxrad_dynamic[i] + maxrad_dynamic[j];
       cutoff = MAX(cutoff, maxrad_dynamic[i] + maxrad_frozen[j]);
       cutoff = MAX(cutoff, maxrad_frozen[i] + maxrad_dynamic[j]);
@@ -664,8 +676,8 @@ double PairGranularSuperellipsoid::init_one(int i, int j)
 
       double cutmax = 0.0;
       for (int k = 1; k <= atom->ntypes; k++) {
-        cutmax = MAX(cutmax,2.0*maxrad_dynamic[k]);
-        cutmax = MAX(cutmax,2.0*maxrad_frozen[k]);
+        cutmax = MAX(cutmax, 2.0 * maxrad_dynamic[k]);
+        cutmax = MAX(cutmax, 2.0 * maxrad_frozen[k]);
       }
       cutoff = cutmax;
     }
@@ -688,19 +700,19 @@ void PairGranularSuperellipsoid::write_restart(FILE *fp)
   int i, j;
   for (i = 1; i <= atom->ntypes; i++) {
     for (j = i; j <= atom->ntypes; j++) {
-      fwrite(&setflag[i][j],sizeof(int),1,fp);
+      fwrite(&setflag[i][j], sizeof(int), 1, fp);
       if (setflag[i][j]) {
-        fwrite(&cutoff_type[i][j],sizeof(double),1,fp);
-        fwrite(&limit_damping[i][j],sizeof(int),1,fp);
-        fwrite(&normal_model[i][j],sizeof(int),1,fp);
-        fwrite(&tangential_model[i][j],sizeof(int),1,fp);
-        fwrite(&damping_model[i][j],sizeof(int),1,fp);
+        fwrite(&cutoff_type[i][j], sizeof(double), 1, fp);
+        fwrite(&limit_damping[i][j], sizeof(int), 1, fp);
+        fwrite(&normal_model[i][j], sizeof(int), 1, fp);
+        fwrite(&tangential_model[i][j], sizeof(int), 1, fp);
+        fwrite(&damping_model[i][j], sizeof(int), 1, fp);
 
-        fwrite(&kn[i][j],sizeof(double),1,fp);
-        fwrite(&gamman[i][j],sizeof(double),1,fp);
-        fwrite(&kt[i][j],sizeof(double),1,fp);
-        fwrite(&xt[i][j],sizeof(double),1,fp);
-        fwrite(&xmu[i][j],sizeof(double),1,fp);
+        fwrite(&kn[i][j], sizeof(double), 1, fp);
+        fwrite(&gamman[i][j], sizeof(double), 1, fp);
+        fwrite(&kt[i][j], sizeof(double), 1, fp);
+        fwrite(&xt[i][j], sizeof(double), 1, fp);
+        fwrite(&xmu[i][j], sizeof(double), 1, fp);
       }
     }
   }
@@ -713,37 +725,37 @@ void PairGranularSuperellipsoid::write_restart(FILE *fp)
 void PairGranularSuperellipsoid::read_restart(FILE *fp)
 {
   allocate();
-  int i,j;
+  int i, j;
   int me = comm->me;
   for (i = 1; i <= atom->ntypes; i++) {
     for (j = i; j <= atom->ntypes; j++) {
-      if (me == 0) utils::sfread(FLERR,&setflag[i][j],sizeof(int),1,fp,nullptr,error);
-      MPI_Bcast(&setflag[i][j],1,MPI_INT,0,world);
+      if (me == 0) utils::sfread(FLERR, &setflag[i][j], sizeof(int), 1, fp, nullptr, error);
+      MPI_Bcast(&setflag[i][j], 1, MPI_INT, 0, world);
       if (setflag[i][j]) {
         if (me == 0) {
-          utils::sfread(FLERR,&cutoff_type[i][j],sizeof(double),1,fp,nullptr,error);
-          utils::sfread(FLERR,&limit_damping[i][j],sizeof(int),1,fp,nullptr,error);
-          utils::sfread(FLERR,&normal_model[i][j],sizeof(int),1,fp,nullptr,error);
-          utils::sfread(FLERR,&tangential_model[i][j],sizeof(int),1,fp,nullptr,error);
-          utils::sfread(FLERR,&damping_model[i][j],sizeof(int),1,fp,nullptr,error);
+          utils::sfread(FLERR, &cutoff_type[i][j], sizeof(double), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &limit_damping[i][j], sizeof(int), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &normal_model[i][j], sizeof(int), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &tangential_model[i][j], sizeof(int), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &damping_model[i][j], sizeof(int), 1, fp, nullptr, error);
 
-          utils::sfread(FLERR,&kn[i][j],sizeof(double),1,fp,nullptr,error);
-          utils::sfread(FLERR,&gamman[i][j],sizeof(double),1,fp,nullptr,error);
-          utils::sfread(FLERR,&kt[i][j],sizeof(double),1,fp,nullptr,error);
-          utils::sfread(FLERR,&xt[i][j],sizeof(double),1,fp,nullptr,error);
-          utils::sfread(FLERR,&xmu[i][j],sizeof(double),1,fp,nullptr,error);
+          utils::sfread(FLERR, &kn[i][j], sizeof(double), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &gamman[i][j], sizeof(double), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &kt[i][j], sizeof(double), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &xt[i][j], sizeof(double), 1, fp, nullptr, error);
+          utils::sfread(FLERR, &xmu[i][j], sizeof(double), 1, fp, nullptr, error);
         }
-        MPI_Bcast(&cutoff_type[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&limit_damping[i][j],1,MPI_INT,0,world);
-        MPI_Bcast(&normal_model[i][j],1,MPI_INT,0,world);
-        MPI_Bcast(&tangential_model[i][j],1,MPI_INT,0,world);
-        MPI_Bcast(&damping_model[i][j],1,MPI_INT,0,world);
+        MPI_Bcast(&cutoff_type[i][j], 1, MPI_DOUBLE, 0, world);
+        MPI_Bcast(&limit_damping[i][j], 1, MPI_INT, 0, world);
+        MPI_Bcast(&normal_model[i][j], 1, MPI_INT, 0, world);
+        MPI_Bcast(&tangential_model[i][j], 1, MPI_INT, 0, world);
+        MPI_Bcast(&damping_model[i][j], 1, MPI_INT, 0, world);
 
-        MPI_Bcast(&kn[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&gamman[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&kt[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&xt[i][j],1,MPI_DOUBLE,0,world);
-        MPI_Bcast(&xmu[i][j],1,MPI_DOUBLE,0,world);
+        MPI_Bcast(&kn[i][j], 1, MPI_DOUBLE, 0, world);
+        MPI_Bcast(&gamman[i][j], 1, MPI_DOUBLE, 0, world);
+        MPI_Bcast(&kt[i][j], 1, MPI_DOUBLE, 0, world);
+        MPI_Bcast(&xt[i][j], 1, MPI_DOUBLE, 0, world);
+        MPI_Bcast(&xmu[i][j], 1, MPI_DOUBLE, 0, world);
       }
     }
   }
@@ -759,8 +771,7 @@ void PairGranularSuperellipsoid::reset_dt()
 /* ---------------------------------------------------------------------- */
 
 double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jtype*/, double rsq,
-                                             double /*factor_coul*/, double factor_lj,
-                                             double &fforce)
+                                          double /*factor_coul*/, double factor_lj, double &fforce)
 {
   if (factor_lj == 0) {
     fforce = 0.0;
@@ -770,7 +781,7 @@ double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jty
 
   int nall = atom->nlocal + atom->nghost;
   if ((i >= nall) || (j >= nall))
-    error->all(FLERR,"Not enough atoms for pair granular single function");
+    error->all(FLERR, "Not enough atoms for pair granular single function");
 
   // Reset model and copy initial geometric data
 
@@ -779,7 +790,7 @@ double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jty
   int *jlist = list->firstneigh[i];
 
   if ((fix_history == nullptr) || (fix_history->firstvalue == nullptr))
-    error->one(FLERR,"Pair granular single computation needs history");
+    error->one(FLERR, "Pair granular single computation needs history");
   allhistory = fix_history->firstvalue[i];
   for (int jj = 0; jj < jnum; jj++) {
     neighprev++;
@@ -799,7 +810,7 @@ double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jty
   xref = atom->x[indx_ref];
   tagi = atom->tag[i];
   tagj = atom->tag[j];
-  history_update = 0; // Don't update history
+  history_update = 0;    // Don't update history
 
   auto avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
   AtomVecEllipsoid::BonusSuper *bonus = avec_ellipsoid->bonus_super;
@@ -872,19 +883,19 @@ double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jty
 
   // Superellipsoid specific values - were these included?
 
-  svector[12] = 0.0; //contact_point_and_Lagrange_multiplier[0]
-  svector[13] = 0.0; //contact_point_and_Lagrange_multiplier[1]
-  svector[14] = 0.0; //contact_point_and_Lagrange_multiplier[2]
-  svector[15] = 0.0; //contact_point_and_Lagrange_multiplier[3]
-  svector[16] = 0.0; //bounding_box_separating_axis_index
+  svector[12] = 0.0;    //contact_point_and_Lagrange_multiplier[0]
+  svector[13] = 0.0;    //contact_point_and_Lagrange_multiplier[1]
+  svector[14] = 0.0;    //contact_point_and_Lagrange_multiplier[2]
+  svector[15] = 0.0;    //contact_point_and_Lagrange_multiplier[3]
+  svector[16] = 0.0;    //bounding_box_separating_axis_index
 
   return 0.0;
 }
 
 /* ---------------------------------------------------------------------- */
 
-int PairGranularSuperellipsoid::pack_forward_comm(int n, int *list, double *buf,
-                                                     int /*pbc_flag*/, int * /*pbc*/)
+int PairGranularSuperellipsoid::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/,
+                                                  int * /*pbc*/)
 {
   int i, j, m;
 
@@ -911,13 +922,14 @@ void PairGranularSuperellipsoid::unpack_forward_comm(int n, int first, double *b
    Transfer history
 ------------------------------------------------------------------------- */
 
-void PairGranularSuperellipsoid::transfer_history(double *source, double *target, int itype, int jtype)
+void PairGranularSuperellipsoid::transfer_history(double *source, double *target, int itype,
+                                                  int jtype)
 {
   // copy of all history variables (shear, contact point, axis)
 
   for (int i = 0; i < size_history; i++) {
     if (i >= default_hist_size && tangential_model[itype][jtype] == CLASSIC) {
-      target[i] = -source[i]; //shear
+      target[i] = -source[i];    //shear
     } else {
       target[i] = source[i];
     }
@@ -963,8 +975,7 @@ bool PairGranularSuperellipsoid::check_contact()
           xi, Ri, shapei, xj, Rj, shapej, separating_axis);
       if (new_axis != -1) {
         skip_contact_detection = true;
-        if (history_update)
-          history_data[4] = (double) new_axis;
+        if (history_update) history_data[4] = (double) new_axis;
       }
     }
     if (skip_contact_detection) {
@@ -984,15 +995,18 @@ bool PairGranularSuperellipsoid::check_contact()
       X0[3] = X0_prev[3];
       // std::cout << "Using old contact point as initial guess between particle " << atom->tag[i] << " and particle " << atom->tag[j] << " : "
       //           << X0[0] << " " << X0[1] << " " << X0[2] << " Lagrange multiplier mu^2: " << X0[3] << std::endl;
-      int status = MathExtraSuperellipsoids::determine_contact_point(
-          xi, Ri, shapei, blocki, flagi, xj, Rj, shapej, blockj, flagj, X0, nij, contact_formulation);
+      int status = MathExtraSuperellipsoids::determine_contact_point(xi, Ri, shapei, blocki, flagi,
+                                                                     xj, Rj, shapej, blockj, flagj,
+                                                                     X0, nij, contact_formulation);
       if (status == 0) {
         touching = true;
       } else if (status == 1) {
         touching = false;
       } else {
-        error->warning(FLERR, "Ellipsoid contact detection (old contact) failed "
-                       "between particle {} and particle {} ", tagi, tagj);
+        error->warning(FLERR,
+                       "Ellipsoid contact detection (old contact) failed "
+                       "between particle {} and particle {} ",
+                       tagi, tagj);
       }
     } else {
       // New contact: Build initial guess incrementally by morphing the particles from spheres to actual shape
@@ -1020,10 +1034,9 @@ bool PairGranularSuperellipsoid::check_contact()
         // force ellipsoid flag for first initial guess iteration.
         // Avoid incorrect values of n1/n2 - 2 in second derivatives.
         int status = MathExtraSuperellipsoids::determine_contact_point(
-            xi, Ri, shapei, blocki,
-            iter_ig == 1 ? AtomVecEllipsoid::BlockType::ELLIPSOID : flagi, xj, Rj, shapej,
-            blockj, iter_ig == 1 ? AtomVecEllipsoid::BlockType::ELLIPSOID : flagj, X0, nij,
-            contact_formulation);
+            xi, Ri, shapei, blocki, iter_ig == 1 ? AtomVecEllipsoid::BlockType::ELLIPSOID : flagi,
+            xj, Rj, shapej, blockj, iter_ig == 1 ? AtomVecEllipsoid::BlockType::ELLIPSOID : flagj,
+            X0, nij, contact_formulation);
 
         if (status == 0) {
           touching = true;
@@ -1031,8 +1044,10 @@ bool PairGranularSuperellipsoid::check_contact()
           touching = false;
         } else if (iter_ig == NUMSTEP_INITIAL_GUESS) {
           // keep trying until last iteration to avoid erroring out too early
-          error->warning(FLERR, "Ellipsoid contact detection (new contact) failed"
-                         "between particle {} and particle {}", tagi, tagj);
+          error->warning(FLERR,
+                         "Ellipsoid contact detection (new contact) failed"
+                         "between particle {} and particle {}",
+                         tagi, tagj);
         }
       }
     }
@@ -1060,8 +1075,10 @@ void PairGranularSuperellipsoid::calculate_forces()
   double nji[3] = {-nij[0], -nij[1], -nij[2]};
   // compute overlap depth along normal direction for each grain
   // overlap is positive for both grains
-  double overlap1 = MathExtraSuperellipsoids::compute_overlap_distance(shapei, blocki, Ri, flagi, X0, nij, xi);
-  double overlap2 = MathExtraSuperellipsoids::compute_overlap_distance(shapej, blockj, Rj, flagj, X0, nji, xj);
+  double overlap1 =
+      MathExtraSuperellipsoids::compute_overlap_distance(shapei, blocki, Ri, flagi, X0, nij, xi);
+  double overlap2 =
+      MathExtraSuperellipsoids::compute_overlap_distance(shapej, blockj, Rj, flagj, X0, nji, xj);
 
   // branch vectors
   double cr1[3], cr2[3];
@@ -1072,11 +1089,9 @@ void PairGranularSuperellipsoid::calculate_forces()
 
   double ex_space[3], ey_space[3], ez_space[3], omegai[3], omegaj[3];
   MathExtra::q_to_exyz(quati, ex_space, ey_space, ez_space);
-  MathExtra::angmom_to_omega(angmomi, ex_space, ey_space, ez_space,
-                             inertiai, omegai);
+  MathExtra::angmom_to_omega(angmomi, ex_space, ey_space, ez_space, inertiai, omegai);
   MathExtra::q_to_exyz(quatj, ex_space, ey_space, ez_space);
-  MathExtra::angmom_to_omega(angmomj, ex_space, ey_space, ez_space,
-                             inertiaj, omegaj);
+  MathExtra::angmom_to_omega(angmomj, ex_space, ey_space, ez_space, inertiaj, omegaj);
 
   double omega_cross_r1[3], omega_cross_r2[3];
   MathExtra::cross3(omegai, cr1, omega_cross_r1);
@@ -1104,7 +1119,7 @@ void PairGranularSuperellipsoid::calculate_forces()
   double vt[3];
   sub3(vr, vn, vt);
 
-  vrel = len3(vt); // vtr in spherical model
+  vrel = len3(vt);    // vtr in spherical model
 
   // Approximate contact radius
 
@@ -1115,10 +1130,10 @@ void PairGranularSuperellipsoid::calculate_forces()
     MathExtra::scaleadd3(overlap2, nji, X0, surf_point_j);
 
     if (curvature_model == MathExtraSuperellipsoids::CURV_MEAN) {
-      curvature_i = MathExtraSuperellipsoids::mean_curvature_superellipsoid(
-          shapei, blocki, flagi, Ri, surf_point_i, xi);
-      curvature_j = MathExtraSuperellipsoids::mean_curvature_superellipsoid(
-          shapej, blockj, flagj, Rj, surf_point_j, xj);
+      curvature_i = MathExtraSuperellipsoids::mean_curvature_superellipsoid(shapei, blocki, flagi,
+                                                                            Ri, surf_point_i, xi);
+      curvature_j = MathExtraSuperellipsoids::mean_curvature_superellipsoid(shapej, blockj, flagj,
+                                                                            Rj, surf_point_j, xj);
     } else {
       curvature_i = MathExtraSuperellipsoids::gaussian_curvature_superellipsoid(
           shapei, blocki, flagi, Ri, surf_point_i, xi);
@@ -1172,7 +1187,7 @@ void PairGranularSuperellipsoid::calculate_forces()
 
       // update history, tangential force using velocities at half step
       // see e.g. eq. 18 of Thornton et al, Pow. Tech. 2013, v223,p30-46
-      scale3(dt, vtr, temp_array);
+      scale3(dt, vt, temp_array);
       add3(history, temp_array, history);
     }
 
@@ -1180,7 +1195,7 @@ void PairGranularSuperellipsoid::calculate_forces()
     scale3(-kt[itype][jtype], history, fs);
 
     double vtr2[3];
-    copy3(vtr, vtr2);
+    copy3(vt, vtr2);
     scale3(dampt, vtr2, temp_array);
     sub3(fs, temp_array, fs);
 
@@ -1191,7 +1206,7 @@ void PairGranularSuperellipsoid::calculate_forces()
       if (shrmag != 0.0) {
         double magfs_inv = 1.0 / magfs;
         scale3(Fscrit * magfs_inv, fs, history);
-        scale3(damp, vtr, temp_array);
+        scale3(dampt, vt, temp_array);
         add3(history, temp_array, history);
         scale3(-1.0 / kt[itype][jtype], history);
         scale3(Fscrit * magfs_inv, fs);
@@ -1205,7 +1220,7 @@ void PairGranularSuperellipsoid::calculate_forces()
     // shear history effects
 
     if (history_update) {
-      scale3(dt, vtr, temp_array);
+      scale3(dt, vt, temp_array);
       add3(history, temp_array, history);
     }
     double shrmag = len3(history);
@@ -1224,7 +1239,7 @@ void PairGranularSuperellipsoid::calculate_forces()
     else
       scale3(-kt[itype][jtype], history, fs);
 
-    scale3(dampt, vtr, temp_array);
+    scale3(dampt, vt, temp_array);
     sub3(fs, temp_array, fs);
 
     // rescale frictional displacements and forces if needed
@@ -1235,9 +1250,12 @@ void PairGranularSuperellipsoid::calculate_forces()
       if (shrmag != 0.0) {
         double magfs_inv = 1.0 / magfs;
         scale3(Fscrit * magfs_inv, fs, history);
-        scale3(damp, vtr, temp_array);
+        scale3(dampt, vt, temp_array);
         add3(history, temp_array, history);
-        scale3(-1.0 / kt[itype][jtype], history);
+        if (contact_radius_flag)
+          scale3(-1.0 / (kt[itype][jtype] * contact_radius), history);
+        else
+          scale3(-1.0 / kt[itype][jtype], history);
         scale3(Fscrit * magfs_inv, fs);
       } else
         zero3(fs);
