@@ -97,7 +97,7 @@ and improper type labels must contain their constituent atom types
 delimited by hyphens, e.g., 'c2-c2-c2-n' for a dihedral that contains
 three atoms of type 'c2' and one atom of 'n'.  If the constituent atoms
 do not have these atom types in the proper order, a warning will be
-generated when using this *check_types* keyword.
+generated when using this *check_labels* keyword.
 
 ----------
 
