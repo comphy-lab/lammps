@@ -234,24 +234,29 @@ void DumpAtomADIOS::init_style()
 
   // setup column string
 
-  std::vector<std::string> columnNames;
+  std::string default_columns;
 
-  if (scale_flag == 0 && image_flag == 0) {
-    columns = (char *) "id type x y z";
-    columnNames = {"id", "type", "x", "y", "z"};
-  } else if (scale_flag == 0 && image_flag == 1) {
-    columns = (char *) "id type x y z ix iy iz";
-    columnNames = {"id", "type", "x", "y", "z", "ix", "iy", "iz"};
-  } else if (scale_flag == 1 && image_flag == 0) {
-    columns = (char *) "id type xs ys zs";
-    columnNames = {"id", "type", "xs", "ys", "zs"};
-  } else if (scale_flag == 1 && image_flag == 1) {
-    columns = (char *) "id type xs ys zs ix iy iz";
-    columnNames = {"id", "type", "xs", "ys", "zs", "ix", "iy", "iz"};
+  if (scale_flag == 0 && image_flag == 0)
+    default_columns = "id type x y z";
+  else if (scale_flag == 0 && image_flag == 1)
+    default_columns = "id type x y z ix iy iz";
+  else if (scale_flag == 1 && image_flag == 0)
+    default_columns = "id type xs ys zs";
+  else if (scale_flag == 1 && image_flag == 1)
+    default_columns = "id type xs ys zs ix iy iz";
+
+  std::vector<std::string> columnNames = utils::split_words(default_columns);
+
+  int icol = 0;
+  columns.clear();
+  for (const auto &item : columnNames) {
+    if (columns.size()) columns += " ";
+    if (keyword_user[icol].size())
+      columns += keyword_user[icol];
+    else
+      columns += item;
+    ++icol;
   }
-
-  for (int icol = 0; icol < (int) columnNames.size(); ++icol)
-    if (keyword_user[icol].size()) columnNames[icol] = keyword_user[icol];
 
   // setup function ptrs
 
