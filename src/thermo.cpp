@@ -1230,7 +1230,7 @@ void Thermo::colname_auto()
       auto *ifix = modify->get_fix_by_id(argi.get_name());
       if (ifix != nullptr && ifix->thermo_modify_colname) {
         keyword_user[ifield] = ifix->get_thermo_colname(argindex1[ifield]-1);
-        if ( argi.get_dim() == 2 )
+        if (argi.get_dim() == 2)
           keyword_user[ifield] += fmt::format("[{}]", argindex2[ifield]);
       }
     }
