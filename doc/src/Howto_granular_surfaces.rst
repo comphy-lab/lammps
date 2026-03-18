@@ -321,22 +321,109 @@ command.
 
    For an object defined by two or more connected triangles/lines, it is
    an error to assign a motion and not include all the connected
-   triangles/lines, since this would break the connections.  LAMMPS does
-   **NOT** check that this requirement is met.  For this reason, one
-   must also be careful not to include *local* surfaces in an
-   integration fix as they may move apart from their connections.
-
-Note for Joel - can change this "note" if implement the check we've discussed.
+   triangles/lines, since this would break the connections.  LAMMPS checks
+   this for *global* surfaces but only checks that the fix group of any
+   instances of :doc:`fix move <fix_move>` include all or none of a
+   set of connnected *local* triangles/lines.
 
 ----------
 
 Calculation of forces
 """""""""""""""""""""
 
-NOTE for Joel - add to this sub-section
+After generating the surface connectivity, LAMMPS classifies each connection
+as being flat or non-flat based on the angular difference between normal vectors.
+For each non-flat connection, the two sides are then classified as being concave
+or convex.
 
-Concave, convex, flat
-Internal, external
+Each point or edge of a line or triangle are then classified as being internal,
+external, or unconnected based on the connectivity. For lines, an end point
+is internal if it only has flat connections, external if it has at least one
+non-flat (concave or convex) connection, and unconnected if it has no connections.
+The same is true for edges on a triangle. Corners on triangles inherit their
+classification from the two edges that meet at it. If either edge is unconnected,
+the corner is unconnected. Otherwise, the corner is external if either edge is
+external, and internal if both edges are internal.
+
+If a particle is in contact with a single line or triangle, the force is applied
+in the direction from the contact point to the particle center, :math:`\hat{n}_c`.
+The magnitude of the force then depends on the details of the pair style, but may
+be a function of the overlap distance :math:`\delta_f`, the relative (angular)
+velocity, and the type of the sphere/surface.
+
+If a particle is in contact with two or more connected lines or triangles,
+:math:`\hat{n}_f` depends on details of the connection and the classification of
+any points, edges, or corners involved in the contact. At a high level, this
+process combines all connected flat surfaces in contact with the particle into a
+single effective compsite surface that applies a single force on the particle.
+Forces are also adjusted near convex or concave turns or unconnected points/edges
+to prevent aphysical forces. For instance, surfaces on the other side of a convex
+turn may be hidden such that do not apply a force. Details follow below.
+
+To do this, LAMMPS first identifies which surface is closest to the particle. This
+primary contact is effectively the surface with the largest overlap with the
+particle, however, other criteria are used to break ties to ensure it is consistent
+and does not depend on machine precision. LAMMPS then identifies which side of the
+primary contact is in contact with the particle and recursively walks all
+connections to determine which side of all other surfaces are in contact. If
+there are unchecked surfaces, LAMMPS finds the next unchecked surface with the
+largest overlap and repeats the process.
+
+Now that all contacting surfaces know which side should be touching the particle,
+LAMMPS performs a second iteration through contacting surfaces to calculate forces.
+Starting from the primary contact, LAMMPS checks all connections. Flat connections
+are added to a growing set of composite surfaces and added to a list of surfaces
+which need to be walked. Concave connections are skipped while convex connections
+are flagged to be hidden if the convex surface has a smaller overlap. LAMMPS then
+iterates through the list of surfaces to be walked, effectively searching all
+1st flat neighbors of the primary contact, before repeating the process with their
+flat connections (2nd neighbors) and so forth until there are no more flat connections
+in contact with the particle. LAMMPS then calculates a force from the composite
+surface consisting of all flat connections (described in the following paragraph)
+before finding the next surface with the largest overlap and repeats the process with
+that surface. Continuing with this until all contacting surfaces have been processed
+and have had forces calculated. While checking for flat connections to a surface that
+was flagged as hidden due to a convex turn, LAMMPS passes along this flag to any such
+flat connections that have not already been processed. Thus a set of flat surfaces
+behind a convex turn can all be hidden as if they were a single surface. When
+calculating forces, surfaces are hidden by simply zeroing their overlap
+:math:`\delta_f`.
+
+Given a set of mutually flat surfaces that make up a single composite surface,
+LAMMPS calculates a single force using the maximum overlap across constituent
+surfaces :math:`\delta_f = \delta_\mathrm{max}` and an effective direction
+:math:`\hat{n}_f` of the contact force. This unit vector is a weighted average
+across all surfaces :math:`i` in the set :math:`\hat{n}_f = A \sum W_i \hat{n}_{f,i}`
+where :math:`\hat{n}_{f,i}` is the calculated direction of force for that surface
+and :math:`A` is a normalization factor.
+
+Before calculating contributions and weights for individual surfaces, LAMMPS first
+calculates a weight for externally and internally contacted surfaces defined as
+:math:`W_\mathrm{ext} \equiv (\delta_\mathrm{max,ext} / \delta_\mathrm{max})^2` and
+:math:`W_\mathrm{int} \equiv 1 - W_\mathrm{ext}`, respectively, where
+:math:`\delta_\mathrm{max,ext}` is the maximum overlap with an external boundary
+of a surface. As a reminder, external boundaries are points in 2D or edges in 3D
+between two non-flat surfaces. Corners in 3D inherit an external status from
+either of the two edges that meet at it. This weighting is used amplify contributions
+from externally-contacted surfaces as the particle moves around a concave or
+convex turn to smoothly interpolate :math:`\hat{n}_f`.
+
+In 2D, a surface's weight :math:`W_i` is simply the particle's overlap with
+that line :math:`delta_i` multiplied by either :math:`W_\mathrm{ext}` or
+or :math:`W_\mathrm{int}`. By default, :math:`\hat{n}_{f,i}` is simply the
+direction from that contact point to the particle :math:`\hat{n}_{r,i}`.
+If the contact point is inside of the line, :math:`\hat{n}_{r,i}` is
+equivalent to the surface normal :math:`\hat{n}_{s,i}`. However, if the
+contact point is at a concave corner, then
+:math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. If the contact point is at a convex
+corner and :math:`\hat{n}_{r,i}` has a component pointing into the the
+adjacent line :math:`j`, then set :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`.
+
+NOTE for Joel: diagram?
+
+Contributions in 3D (no free edges)
+
+Contributions in 3D (with free edges)
 
 ----------
 
@@ -359,12 +446,8 @@ identify the convex turn and censor forces from the rightmost vertical
 leg. However, if the particle is towards the top of the U and not in
 contact with the base, then there is no way for the particle to
 identify the convex turn and censor forces. Therefore, walls with very
-thin features separated by a gap less than the expected overlap can
-lead to unintended additional forces.
-
-NOTE for Joel: Clarify "overlap" in last sentence - does it mean
-"overlap distance between a particle and a surface" or something else
-?
+thin features separated by a gap less than the expected overlap distance
+between a particle and a surface can lead to unintended additional forces.
 
 NOTE for Joel: add diagram of U-shaped wall + particle ?
 
