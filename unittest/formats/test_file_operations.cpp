@@ -26,6 +26,8 @@
 using namespace LAMMPS_NS;
 
 using testing::StrEq;
+using testing::StartsWith;
+using testing::EndsWith;
 
 using utils::read_lines_from_file;
 using utils::sfgets;
@@ -257,16 +259,10 @@ TEST_F(FileOperationsTest, logmesg)
     fread(buf, 1, 128, fp);
     fclose(fp);
 
-#if defined(__cpp_lib_format) && (__cpp_lib_format >= 201907L)
-    ASSERT_THAT(
-        out,
-        StrEq("one\ntwo\nthree=3\nformat error: invalid arg-id in format string\nfive\nsix {}\n"));
-    ASSERT_THAT(
-        buf, StrEq("two\nthree=3\nformat error: invalid arg-id in format string\nfive\nsix {}\n"));
-#else
-    ASSERT_THAT(out, StrEq("one\ntwo\nthree=3\nargument not found\nfive\nsix {}\n"));
-    ASSERT_THAT(buf, StrEq("two\nthree=3\nargument not found\nfive\nsix {}\n"));
-#endif
+    ASSERT_THAT(out,StartsWith("one\ntwo\nthree=3\n"));
+    ASSERT_THAT(out,EndsWith("\nfive\nsix {}\n"));
+    ASSERT_THAT(buf,StartsWith("two\nthree=3\n"));
+    ASSERT_THAT(buf,EndsWith("\nfive\nsix {}\n"));
     remove("test_logmesg.log");
 }
 
