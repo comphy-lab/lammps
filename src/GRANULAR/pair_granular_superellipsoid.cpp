@@ -1184,7 +1184,7 @@ void PairGranularSuperellipsoid::calculate_forces()
 
   // Tangential model
 
-  double temp_array[3];
+  double hist_increment[3], fdamp[3];
   double *history = &history_data[default_hist_size];
   double Fscrit = Fncrit * xmu[itype][jtype];
   double dampt = xt[itype][jtype] * damp_prefactor;
@@ -1201,17 +1201,15 @@ void PairGranularSuperellipsoid::calculate_forces()
 
       // update history, tangential force using velocities at half step
       // see e.g. eq. 18 of Thornton et al, Pow. Tech. 2013, v223,p30-46
-      scale3(dt, vt, temp_array);
-      add3(history, temp_array, history);
+      scale3(dt, vt, hist_increment);
+      add3(history, hist_increment, history);
     }
 
     // tangential forces = history + tangential velocity damping
     scale3(-kt[itype][jtype], history, fs);
 
-    double vtr2[3];
-    copy3(vt, vtr2);
-    scale3(dampt, vtr2, temp_array);
-    sub3(fs, temp_array, fs);
+    scale3(-dampt, vt, fdamp);
+    add3(fs, fdamp, fs);
 
     // rescale frictional displacements and forces if needed
     double magfs = len3(fs);
@@ -1220,8 +1218,7 @@ void PairGranularSuperellipsoid::calculate_forces()
       if (shrmag != 0.0) {
         double magfs_inv = 1.0 / magfs;
         scale3(Fscrit * magfs_inv, fs, history);
-        scale3(dampt, vt, temp_array);
-        add3(history, temp_array, history);
+        sub3(history, fdamp, history);
         scale3(-1.0 / kt[itype][jtype], history);
         scale3(Fscrit * magfs_inv, fs);
       } else {
@@ -1234,16 +1231,16 @@ void PairGranularSuperellipsoid::calculate_forces()
     // shear history effects
 
     if (history_update) {
-      scale3(dt, vt, temp_array);
-      add3(history, temp_array, history);
+      scale3(dt, vt, hist_increment);
+      add3(history, hist_increment, history);
     }
     double shrmag = len3(history);
 
     if (history_update) {
       // rotate shear displacements
       double rsht = dot3(history, nij);
-      scale3(rsht, nij, temp_array);
-      sub3(history, temp_array, history);
+      scale3(rsht, nij, hist_increment);
+      sub3(history, hist_increment, history);
     }
 
     // tangential forces = history + tangential velocity damping
@@ -1253,8 +1250,8 @@ void PairGranularSuperellipsoid::calculate_forces()
     else
       scale3(-kt[itype][jtype], history, fs);
 
-    scale3(dampt, vt, temp_array);
-    sub3(fs, temp_array, fs);
+    scale3(-dampt, vt, fdamp);
+    add3(fs, fdamp, fs);
 
     // rescale frictional displacements and forces if needed
 
@@ -1262,15 +1259,18 @@ void PairGranularSuperellipsoid::calculate_forces()
 
     if (magfs > Fscrit) {
       if (shrmag != 0.0) {
-        double magfs_inv = 1.0 / magfs;
-        scale3(Fscrit * magfs_inv, fs, history);
-        scale3(dampt, vt, temp_array);
-        add3(history, temp_array, history);
+        // Rescale shear force
+        scale3(Fscrit / magfs, fs);
+
+        // Set shear to elastic component of rescaled force
+        //  has extra factor of kt (+ contact radius)
+        sub3(fs, fdamp, history);
+
+        // Remove extra prefactors from shear history
         if (contact_radius_flag)
           scale3(-1.0 / (kt[itype][jtype] * contact_radius), history);
         else
           scale3(-1.0 / kt[itype][jtype], history);
-        scale3(Fscrit * magfs_inv, fs);
       } else
         zero3(fs);
     }
