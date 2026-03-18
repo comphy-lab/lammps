@@ -81,23 +81,27 @@ label mappings to a file as a sequence of *labelmap* commands, so the
 file can be copied into a new LAMMPS input file or read in using the
 :doc:`include <include>` command.
 
+.. versionchanged:: TBD
+
 The *check_labels* keyword provides a warning if the type label of a
 bond, angle, dihedral, or improper defined in the simulation is not
-consistent with the atom types of its constituent atoms.  This check is
-performed at runtime, i.e., when the :doc:`run <run>` command is called.
-The *check_labels* value is a single string that should contain one or
-more of the characters 'b', 'a', 'd', and 'i', which correspond to
-bonds, angles, dihedrals, and impropers, respectively.  For example, the
-keyword/value pair 'check_labels badi' will check all the type labels of
-all higher-order interactions, while 'check_labels adi' will only check
-type labels for angles, dihedrals, and impropers.  The *check_labels*
-keyword requires a specific :doc:`type label<Howto_type_labels>` format
-to infer the types of higher-order interactions.  Bond, angle, dihedral,
-and improper type labels must contain their constituent atom types
-delimited by hyphens, e.g., 'c2-c2-c2-n' for a dihedral that contains
-three atoms of type 'c2' and one atom of 'n'.  If the constituent atoms
-do not have these atom types in the proper order, a warning will be
-generated when using this *check_types* keyword.
+consistent with the atom types of its constituent atoms.  This
+consistency check is performed only once, when the simulation is
+initialized by the first :doc:`run <run>` or :doc:`minimize <minimize>`
+command after this *labelmap* command.  The *check_labels* value is a
+single string that should contain one or more of the characters 'b',
+'a', 'd', and 'i', which correspond to bonds, angles, dihedrals, and
+impropers, respectively.  For example, the keyword/value pair
+'check_labels badi' will check all the type labels of all higher-order
+interactions, while 'check_labels adi' will only check type labels for
+angles, dihedrals, and impropers.  The *check_labels* keyword requires a
+specific :doc:`type label<Howto_type_labels>` format to infer the types
+of higher-order interactions.  Bond, angle, dihedral, and improper type
+labels must contain their constituent atom types delimited by hyphens,
+e.g., 'c2-c2-c2-n' for a dihedral that contains three atoms of type 'c2'
+and one atom of 'n'.  If the constituent atoms do not have these atom
+types in the proper order, a warning will be generated when using this
+*check_types* keyword.
 
 ----------
 

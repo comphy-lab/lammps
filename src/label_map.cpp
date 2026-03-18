@@ -51,6 +51,7 @@ LabelMap::LabelMap(LAMMPS *_lmp, int _natomtypes, int _nbondtypes, int _nanglety
 {
   lmap2lmap.atom = lmap2lmap.bond = lmap2lmap.angle = lmap2lmap.dihedral = lmap2lmap.improper =
       nullptr;
+  checkflag = 0;
   reset_type_labels();
 }
 
@@ -120,8 +121,6 @@ void LabelMap::modify_lmap(int narg, char **arg)
 
   if (lmp->citeme) lmp->citeme->add(cite_type_label_framework);
 
-  checkflag = 0;
-
   int ntypes;
   std::vector<std::string> *labels;
   std::unordered_map<std::string, int> *labels_map;
@@ -155,7 +154,8 @@ void LabelMap::modify_lmap(int narg, char **arg)
     write_map(arg[1]);
     return;
   } else if (tlabel == "check_labels") {
-    if (narg != 2) error->all(FLERR, "Incorrect number of arguments for labelmap write command");
+    if (narg != 2) error->all(FLERR, "Incorrect number of arguments for labelmap check_labels command");
+    for (int j = 0; j < 4; j++) check_which_labels[j] = 0;
     int i = 0;
     char option;
     while ((option = arg[1][i++]) != '\0') {
@@ -828,7 +828,6 @@ void LabelMap::check_labels()
       for (int j = 0; j < atom->num_bond[i]; j++) {
         int btype = atom->bond_type[i][j];
         int atom2 = atom->map(atom->bond_atom[i][j]);
-        if (atom2<0) printf("atom2 oops %d\n",atom2);
         int inferred_type = atom->lmap->infer_bondtype(type[atom1], type[atom2]);
         if (inferred_type != btype) {
           perfect_labels = 0;
@@ -836,18 +835,18 @@ void LabelMap::check_labels()
           std::string atom2_label = atom->lmap->find_label(type[atom2], Atom::ATOM);
           std::string blabel = atom->lmap->find_label(btype, Atom::BOND);
           if (inferred_type == -btype)
-            error->warning(FLERR, "Bond betwen atoms {}, {} has constituent atom types ({}, {}) in reverse order compared "
+            error->warning(FLERR, "Bond between atoms {}, {} has constituent atom types ({}, {}) in reverse order compared "
                                   "to its bond type label ({})", tag[atom1], tag[atom2], atom1_label, atom2_label, blabel);
           else error->warning(FLERR, "Bond between atoms {}, {} has constituent atom types ({}, {}) that do not match "
                                      "its type label ({})", tag[atom1], tag[atom2], atom1_label, atom2_label, blabel);
         }
       }
     }
-    MPI_Reduce(&perfect_labels, &globally_perfect_labels, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&perfect_labels, &globally_perfect_labels, 1, MPI_INT, MPI_SUM, 0, world);
     if (comm->me == 0 && globally_perfect_labels == comm->nprocs)
       utils::logmesg(lmp, "All bonds in the simulation have self-consistent type labels\n");
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(world);
   // some angles are not symmetric, like class2
   perfect_labels = 1;
   if (check_which_labels[1]) {
@@ -872,11 +871,11 @@ void LabelMap::check_labels()
         }
       }
     }
-    MPI_Reduce(&perfect_labels, &globally_perfect_labels, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&perfect_labels, &globally_perfect_labels, 1, MPI_INT, MPI_SUM, 0, world);
     if (comm->me == 0 && globally_perfect_labels == comm->nprocs)
       utils::logmesg(lmp, "All angles in the simulation have self-consistent type labels\n");
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(world);
   // some dihedrals are not symmetric, like class2
   perfect_labels = 1;
   if (check_which_labels[2]) {
@@ -903,11 +902,11 @@ void LabelMap::check_labels()
         }
       }
     }
-    MPI_Reduce(&perfect_labels, &globally_perfect_labels, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&perfect_labels, &globally_perfect_labels, 1, MPI_INT, MPI_SUM, 0, world);
     if (comm->me == 0 && globally_perfect_labels == comm->nprocs)
       utils::logmesg(lmp, "All dihedrals in the simulation have self-consistent type labels\n");
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(world);
   // some impropers are not symmetric, like class2
   perfect_labels = 1;
   if (check_which_labels[3]) {
@@ -934,8 +933,9 @@ void LabelMap::check_labels()
         }
       }
     }
-    MPI_Reduce(&perfect_labels, &globally_perfect_labels, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&perfect_labels, &globally_perfect_labels, 1, MPI_INT, MPI_SUM, 0, world);
     if (comm->me == 0 && globally_perfect_labels == comm->nprocs)
       utils::logmesg(lmp, "All impropers in the simulation have self-consistent type labels\n");
   }
+  checkflag = 0;
 }
