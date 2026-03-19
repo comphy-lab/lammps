@@ -338,8 +338,9 @@ Calculation of forces
 
 After generating the surface connectivity, LAMMPS classifies each connection
 as being flat or non-flat based on the angular difference between normal vectors.
-For each non-flat connection, the two sides are then classified as being concave
-or convex.
+The two sides are then classified as being concave or convex based on their
+normal vectors. In scenarios where flat surfaces are perfectly flat (parallel
+normal vectors) this designation is arbitrary.
 
 Each point or edge of a line or triangle are then classified as being internal,
 external, or unconnected based on the connectivity. For lines, an end point
@@ -394,13 +395,17 @@ behind a convex turn can all be hidden as if they were a single surface. When
 calculating forces, surfaces are hidden by simply zeroing their overlap
 :math:`\delta_f`.
 
-Given a set of mutually flat surfaces that make up a single composite surface,
-LAMMPS calculates a single force using the maximum overlap across constituent
+Given a set of mutually flat surfaces that make up a single composite surface
+(the size of which can be one if contact spans no flat connections), LAMMPS
+calculates a single force using the maximum overlap across constituent
 surfaces :math:`\delta_f = \delta_\mathrm{max}` and an effective direction
 :math:`\hat{n}_f` of the contact force. This unit vector is a weighted average
-across all surfaces :math:`i` in the set :math:`\hat{n}_f = A \sum W_i \hat{n}_{f,i}`
-where :math:`\hat{n}_{f,i}` is the calculated direction of force for that surface
-and :math:`A` is a normalization factor.
+across all surfaces :math:`i` in the set
+:math:`\hat{n}_f = A \sum W_i \delta_i \hat{n}_{f,i}` where :math:`\hat{n}_{f,i}`
+is the calculated direction of force for that surface and :math:`A` is a
+normalization factor. If the set is of size one and only contains a single
+surface :math:`i`, then these calculations reduce to :math:`\delta_f = \delta_i`
+and :math:`\hat{n}_f = \hat{n}_{f,i}`.
 
 Before calculating contributions and weights for individual surfaces, LAMMPS first
 calculates a weight for externally and internally contacted surfaces defined as
@@ -414,20 +419,35 @@ from externally-contacted surfaces as the particle moves around a concave or
 convex turn to smoothly interpolate :math:`\hat{n}_f`.
 
 In 2D, a surface's weight :math:`W_i` is simply the particle's overlap with
-that line :math:`delta_i` multiplied by either :math:`W_\mathrm{ext}` or
+that line :math:`\delta_i` multiplied by either :math:`W_\mathrm{ext}` or
 or :math:`W_\mathrm{int}`. By default, :math:`\hat{n}_{f,i}` is simply the
 direction from that contact point to the particle :math:`\hat{n}_{r,i}`.
 If the contact point is inside of the line, :math:`\hat{n}_{r,i}` is
-equivalent to the surface normal :math:`\hat{n}_{s,i}`. However, if the
-contact point is at a concave corner, then
-:math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. If the contact point is at a convex
-corner and :math:`\hat{n}_{r,i}` has a component pointing into the the
-adjacent line :math:`j`, then set :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`.
+equivalent to the surface normal :math:`\hat{n}_{s,i}`.
+
+If the contact is at a concave corner, then
+:math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. In the left panel of the figure below,
+a particle at various positions (red, green, blue) contacts a concave bend
+made up of two lines (coral brown). The direction of the force
+:math:`\hat{n}_{f,i}` of the leftmost surface is indicated by arrows. Along
+the entire contact, :math:`\hat{n}_{f,i} = \hat{n}_{s,i}` where the normal
+vectors for each line are indicated by gray arrows for clarifty. If
+alternatively :math:`\hat{n}_{f,i} = \hat{n}_{r,i}`, then the force at the
+right most positions (blue/purple) would have a relatively large component
+parallel to the adjacent line which would produce an aphysical wobble in
+the direction of the net force from the two lines. Note that this designation
+applies
 
 .. figure:: img/gransurf_nonflat_turn.jpg
             :figwidth: 33%
             :align: right
             :target: _images/gransurf_nonflat_turn.jpg
+
+If the contact point is at a convex corner (right) then
+:math:`\hat{n}_{f,i} = \hat{n}_{r,i}` unless :math:`\hat{n}_{r,i}` has a
+component pointing into the the adjacent line :math:`j`, in which case
+:math:`\hat{n}_{f,i} = \hat{n}_{s,j}`. This limit is, again, imposed to
+prevent potentially aphysical forces.
 
 Contributions in 3D (no free edges)
 
