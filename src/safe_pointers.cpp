@@ -1,4 +1,4 @@
-/* -*- c++ -*- ----------------------------------------------------------
+/* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
    LAMMPS development team: developers@lammps.org
@@ -9,16 +9,35 @@
    the GNU General Public License.
 
    See the README file in the top-level LAMMPS directory.
-
-   Contributed by Norbert Podhorszki (Oak Ridge National Laboratory)
 ------------------------------------------------------------------------- */
 
-#ifndef LMP_ADIOS_COMMON_H
-#define LMP_ADIOS_COMMON_H
+// collection of smart pointers for specific purposes
 
-// common definition for all ADIOS package classes
-namespace LAMMPS_ADIOS {
-extern const char *default_config;
+#include "safe_pointers.h"
+
+#include "platform.h"
+
+using namespace LAMMPS_NS;
+
+SafeFilePtr::~SafeFilePtr()
+{
+  if (fp) {
+    if (use_pclose)
+      platform::pclose(fp);
+    else
+      fclose(fp);
+  }
 }
 
-#endif
+SafeFilePtr &SafeFilePtr::operator=(FILE *_fp)
+{
+  if (fp && (fp != _fp)) {
+    if (use_pclose)
+      platform::pclose(fp);
+    else
+      fclose(fp);
+  }
+  fp = _fp;
+  if (_fp == nullptr) use_pclose = false;
+  return *this;
+}
