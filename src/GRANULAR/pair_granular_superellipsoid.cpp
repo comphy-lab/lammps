@@ -1091,15 +1091,15 @@ void PairGranularSuperellipsoid::calculate_forces()
   double nji[3] = {-nij[0], -nij[1], -nij[2]};
   // compute overlap depth along normal direction for each grain
   // overlap is positive for both grains
-  double overlap1 =
+  double overlap_i =
       MathExtraSuperellipsoids::compute_overlap_distance(shapei, blocki, Ri, flagi, X0, nij, xi);
-  double overlap2 =
+  double overlap_j =
       MathExtraSuperellipsoids::compute_overlap_distance(shapej, blockj, Rj, flagj, X0, nji, xj);
 
   // branch vectors
-  double cr1[3], cr2[3];
-  MathExtra::sub3(X0, xi, cr1);
-  MathExtra::sub3(X0, xj, cr2);
+  double cr_i[3], cr_j[3];
+  MathExtra::sub3(X0, xi, cr_i);
+  MathExtra::sub3(X0, xj, cr_j);
 
   // we need to take the cross product of omega
 
@@ -1109,41 +1109,38 @@ void PairGranularSuperellipsoid::calculate_forces()
   MathExtra::q_to_exyz(quatj, ex_space, ey_space, ez_space);
   MathExtra::angmom_to_omega(angmomj, ex_space, ey_space, ez_space, inertiaj, omegaj);
 
-  double omega_cross_r1[3], omega_cross_r2[3];
-  MathExtra::cross3(omegai, cr1, omega_cross_r1);
-  MathExtra::cross3(omegaj, cr2, omega_cross_r2);
+  double omega_cross_ri[3], omega_cross_rj[3];
+  MathExtra::cross3(omegai, cr_i, omega_cross_ri);
+  MathExtra::cross3(omegaj, cr_j, omega_cross_rj);
 
   // relative translational velocity
   // compute directly the sum of relative translational velocity at contact point
   // since rotational velocity contribution is different for superellipsoids
-  double cv1[3], cv2[3];
-  add3(vi, omega_cross_r1, cv1);
-  add3(vj, omega_cross_r2, cv2);
+  double cv_i[3], cv_j[3];
+  add3(vi, omega_cross_ri, cv_i);
+  add3(vj, omega_cross_rj, cv_j);
 
-  // total relavtive velocity at contact point
-  double vr[3];
-  sub3(cv1, cv2, vr);
+  // total relative velocity at contact point
+  sub3(cv_i, cv_j, vr);
 
   // normal component
 
-  double vn[3];
-  double vnnr = dot3(vr, nij);
+  vnnr = dot3(vr, nij);
   scale3(vnnr, nij, vn);
 
   // tangential component
 
-  double vt[3];
-  sub3(vr, vn, vt);
+  sub3(vr, vn, vtr);
 
-  vrel = len3(vt);    // vtr in spherical model
+  vrel = len3(vtr);   
 
   // Approximate contact radius
 
   // hertzian contact radius approximation
   if (contact_radius_flag) {
     double surf_point_i[3], surf_point_j[3], curvature_i, curvature_j;
-    MathExtra::scaleadd3(overlap1, nij, X0, surf_point_i);
-    MathExtra::scaleadd3(overlap2, nji, X0, surf_point_j);
+    MathExtra::scaleadd3(overlap_i, nij, X0, surf_point_i);
+    MathExtra::scaleadd3(overlap_j, nji, X0, surf_point_j);
 
     if (curvature_model == MathExtraSuperellipsoids::CURV_MEAN) {
       curvature_i = MathExtraSuperellipsoids::mean_curvature_superellipsoid(shapei, blocki, flagi,
@@ -1158,14 +1155,14 @@ void PairGranularSuperellipsoid::calculate_forces()
     }
 
     // hertzian contact radius approximation
-    contact_radius = sqrt((overlap1 + overlap2) / (curvature_i + curvature_j));
+    contact_radius = sqrt((overlap_i + overlap_j) / (curvature_i + curvature_j));
   }
 
   if (normal_model[itype][jtype] == HOOKE) {
     // assuming we get the overlap depth
-    Fnormal = kn[itype][jtype] * (overlap1 + overlap2);
+    Fnormal = kn[itype][jtype] * (overlap_i + overlap_j);
   } else if (normal_model[itype][jtype] == HERTZ) {
-    Fnormal = kn[itype][jtype] * (overlap1 + overlap2) * contact_radius;
+    Fnormal = kn[itype][jtype] * (overlap_i + overlap_j) * contact_radius;
   }
 
   double damp = gamman[itype][jtype];
@@ -1203,14 +1200,14 @@ void PairGranularSuperellipsoid::calculate_forces()
 
       // update history, tangential force using velocities at half step
       // see e.g. eq. 18 of Thornton et al, Pow. Tech. 2013, v223,p30-46
-      scale3(dt, vt, hist_increment);
+      scale3(dt, vtr, hist_increment);
       add3(history, hist_increment, history);
     }
 
     // tangential forces = history + tangential velocity damping
     scale3(-kt[itype][jtype], history, fs);
 
-    scale3(-dampt, vt, fdamp);
+    scale3(-dampt, vtr, fdamp);
     add3(fs, fdamp, fs);
 
     // rescale frictional displacements and forces if needed
@@ -1233,7 +1230,7 @@ void PairGranularSuperellipsoid::calculate_forces()
     // shear history effects
 
     if (history_update) {
-      scale3(dt, vt, hist_increment);
+      scale3(dt, vtr, hist_increment);
       add3(history, hist_increment, history);
     }
     double shrmag = len3(history);
@@ -1246,13 +1243,12 @@ void PairGranularSuperellipsoid::calculate_forces()
     }
 
     // tangential forces = history + tangential velocity damping
-    double fs[3];
     if (contact_radius_flag)
       scale3(-kt[itype][jtype] * contact_radius, history, fs);
     else
       scale3(-kt[itype][jtype], history, fs);
 
-    scale3(-dampt, vt, fdamp);
+    scale3(-dampt, vtr, fdamp);
     add3(fs, fdamp, fs);
 
     // rescale frictional displacements and forces if needed
@@ -1283,8 +1279,8 @@ void PairGranularSuperellipsoid::calculate_forces()
   scale3(Fntot, nji, forces);
   add3(forces, fs, forces);
 
-  cross3(cr1, forces, torquesi);
-  cross3(forces, cr2, torquesj);
+  cross3(cr_i, forces, torquesi);
+  cross3(forces, cr_j, torquesj);
 }
 
 /* ----------------------------------------------------------------------
