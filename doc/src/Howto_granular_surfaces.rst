@@ -435,8 +435,10 @@ vectors for each line are indicated by gray arrows for clarifty. If
 alternatively :math:`\hat{n}_{f,i} = \hat{n}_{r,i}`, then the force at the
 right most positions (blue/purple) would have a relatively large component
 parallel to the adjacent line which would produce an aphysical wobble in
-the direction of the net force from the two lines. Note that this designation
-applies
+the direction of the net force from the two lines. Note that the concave /
+convex designation is applied to flat and non-flat surfaces. If two flat
+lines are perfectly parallel, then :math:`\hat{n}_{f,i} = \hat{n}_{s,i}
+= \hat{n}_{s,j}`.
 
 .. figure:: img/gransurf_nonflat_turn.jpg
             :figwidth: 33%
@@ -447,11 +449,88 @@ If the contact point is at a convex corner (right) then
 :math:`\hat{n}_{f,i} = \hat{n}_{r,i}` unless :math:`\hat{n}_{r,i}` has a
 component pointing into the the adjacent line :math:`j`, in which case
 :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`. This limit is, again, imposed to
-prevent potentially aphysical forces.
+prevent potentially aphysical forces. In the above figure on the right,
+this transition is seen. As in the concave example, arrows indicated the
+direction :math:`\hat{n}_{f,i}` of the leftmost line. When the particle
+is furthest to the right (purple), :math:`\hat{n}_{r,i}` would point
+into the second line and therefore :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`.
+If this was a non-flat connection, this transition would never actually
+manifest as the convex turn would hide this force by setting
+:math:`\delta_i = 0`. However, this effect is apparent in convex flat
+connections. Note that if two flat lines were perfectly parallel, then
+:math:`\hat{n}_{f,i} = \hat{n}_{s,i} = \hat{n}_{s,j}`, equivalent to
+above such that the distinction of being concave vs. convex is irrelevant.
 
-Contributions in 3D (no free edges)
+In 3D, first consider a scenario where there are no contacts with free
+or unconnected edges. Surfaces that are contacted inside of the triangle
+set :math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. If the edge is contacted, it
+acts much like a point in 2D. If it's a concave connection, then
+:math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. If it's a convex connection, then
+:math:`\hat{n}_{f,i} = \hat{n}_{r,i}` unless :math:`\hat{n}_{r,i}` points
+within the adjacent triangle :math:`j` in which case
+:math:`\hat{n}_{f,i} = \hat{n}_{s,j}`. This is determined by comparing
+the three dot products between :math:`\hat{n}_{s,i}`,
+:math:`\hat{n}_{s,j}`, and :math:`\hat{n}_{r,i}`. Note, if an edge is
+shared by more than two triangles, then LAMMPS finds which connecting
+triangle has a normal vector closest to to :math:`i`.
 
-Contributions in 3D (with free edges)
+If the particle is contacting a corner, then the corner first calculates
+what the normal vector would be had the particle contacted either of the
+two edges, labeled :math:`a` and :math:`b`, :math:`\hat{n}_{f,i,a}` and
+:math:`\hat{n}_{f,i,b}`. For simplicity, the :math:`i` subscript is
+dropped for the remainder of this section as all discussion is focused
+only on that triangle unless otherwise specified. Each of these edges
+have normalized line vectors :math:`\hat{l,a}` and :math:`\hat{l,b}`
+pointing towards the corner.
+
+If :math:`\hat{n}_{f,a} \cdot \hat{l,b} < 0` (or if the force from
+that edge has a component pointing into the other edge), then
+:math:`\hat{n}_{f,a}` is replaced with :math:`\hat{n}_{s}`, and vice
+versa for edge :math:`b`, to avoid forces pointing into the triangle.
+A resulting :math:`\hat{n}_{f}` is then calculated by performing a
+weighted average of these two contributions such that the result
+interpolates between the two limits as a particle moves from contacting
+one edge, to the corner, to the other edge.
+
+The calculation of the two edge weights are fairly hairy, but a brief
+description is provided below to contextualize the code. Each weigh
+is primarily a function of several dot products including
+:math:`C_a = \hat{n}_{r} \cdot \hat{l}_{a}` and
+:math:`D_a = \hat{n}_{r,ip} \cdot \hat{l}_{a}` as well as equivalents
+for edge :math:`b` where :math:`\hat{n}_{r,ip}` is the component of
+:math:`\hat{n}_{r}` that lies within the plane of the triangle. If
+the contact is directly above the corner such that :math:`\hat{n}_{r}`
+is parallel to :math:`\hat{n}_{s}`, then :math:`\hat{n}_{f}` is simply
+set to :math:`\hat{n}_{s}` and this weighting is skipped. The base
+weights are then :math:`W_a = (1-C_a) D_b` and
+:math:`W_b = (1-C_b) D_a`. This construction ensures the weight for,
+say, edge :math:`a` approaches zero as :math:`\hat{n}_{r}` either
+aligns with :math:`\hat{l}_a` (at which point the edge cannot
+calculate a realistic force) or becomes perpendicular (in plane)
+to :math:`\hat{l}_b` such that its contribution dominates.
+
+When evaluating corner contacts, if either of the two edges, say
+:math:`a`, is a convex connection and is hiding another triangle,
+surface, an additional weight is required for that edge to ensure
+:math:`\hat{n}_{f}` continuously transitions as the particle moves
+across that convex turn to surface :math:`j`. This is calucalted in
+terms of the dot product
+:math:`E_a = \hat{n}_{r,a} \cdot (\delta_{s,i} + \delta_{s,i})/2`
+where :math:`\hat{n}_{r,a}` is :math:`\hat{n}_{r}` minus any component
+parallel to :math:`\hat{l}_a`. :math:`W_b` is then multiplied by
+:math:`(1-E_a)` which goes to zero as the particle approaches the
+threshold before switching to contacting surface :math:`j` which
+shares edge :math:`a`.
+
+Lastly, there are forces on particles from unconnected (free) edges
+or corners of triangles. First assume there is only one contacted
+triangle and it is not part of a set of flat composite surfaces.
+Forces from edges are calculated identically to a convex-connected
+edge. Unconnected corners (those that have at least one unconnected
+edge) also average contributions from their two edges. If both edges
+are connected (or unconnected), this average is the same. However,
+if one is connected and the other is unconnected then the contribution
+from the connected edge, say :math:`a`, is modified.
 
 ----------
 
