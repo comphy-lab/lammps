@@ -117,7 +117,6 @@ Thermo::Thermo(LAMMPS *_lmp, int narg, char **arg) :
   lostflag = lostbond = Thermo::ERROR;
   lostbefore = warnbefore = 0;
   flushflag = 0;
-  colnameautoflag = 0;
   triclinic_general = 0;
   firststep = 0;
   ntimestep = -1;
@@ -365,7 +364,6 @@ void Thermo::init()
 void Thermo::header()
 {
   if (lineflag == MULTILINE) return;
-  if (colnameautoflag) colname_auto();
 
   std::string hdr;
   if (lineflag == YAMLLINE) hdr = "---\nkeywords: [";
@@ -697,7 +695,7 @@ void Thermo::modify_params(int narg, char **arg)
         for (auto &item : keyword_user) item.clear();
         iarg += 2;
       } else if (strcmp(arg[iarg + 1], "auto") == 0) {
-        colnameautoflag = 1;
+        colname_auto();
         iarg += 2;
       } else {
         if (iarg + 3 > narg) utils::missing_cmd_args(FLERR, "thermo_modify colname", error);
