@@ -1812,23 +1812,38 @@ void DumpImage::create_image()
             color2 = color3 = image->color2rgb("white");
             opacity = 1.0;
           }
-          image->draw_trinorm(&objarray[i][1], &objarray[i][4], &objarray[i][7], &objarray[i][10],
-                              &objarray[i][13], &objarray[i][16], color, color, color, opacity);
+
+          p1 = &objarray[i][3];
+          p2 = &objarray[i][6];
+          p3 = &objarray[i][9];
+          if (static_cast<int>(iobj.flag1) % 2) {
+            image->draw_trinorm(p1, p2, p3, &objarray[i][12], &objarray[i][15], &objarray[i][18],
+                                color, color2, color3, opacity);
+          } else {
+            image->draw_cylinder(p1, p2, color, iobj.flag2, 3, opacity);
+            image->draw_cylinder(p2, p3, color, iobj.flag2, 3, opacity);
+            image->draw_cylinder(p3, p1, color, iobj.flag2, 3, opacity);
+          }
         }
+
       } else if (objvec[i] == Graphics::CYLINDER) {
         image->draw_cylinder(&objarray[i][1], &objarray[i][4], color, objarray[i][7] + iobj.flag2,
                              (int) iobj.flag1, opacity);
+
       } else if (objvec[i] == Graphics::TRIANGLE) {
         image->draw_triangle(&objarray[i][1], &objarray[i][4], &objarray[i][7], color, opacity);
+
       } else if (objvec[i] == Graphics::ARROW) {
         ArrowObj a(objarray[i][9]);
         a.draw(image, color, &objarray[i][1], objarray[i][7] + iobj.flag1, &objarray[i][4],
                objarray[i][8] + iobj.flag2, opacity);
+
       } else if (objvec[i] == Graphics::CONE) {
         ConeObj c(1.0, objarray[i][7] + iobj.flag2, objarray[i][8] + iobj.flag2,
                   (int) objarray[i][9]);
         c.draw(image, vec3{objarray[i][1], objarray[i][2], objarray[i][3]},
                vec3{objarray[i][4], objarray[i][5], objarray[i][6]}, color, opacity);
+
       } else if (objvec[i] == Graphics::PIXMAP) {
         // get pointer to pixmap buffer and get background transparency color
         const auto *pixmap = (const unsigned char *) ubuf(objarray[i][6]).i;    // NOLINT
@@ -1839,6 +1854,7 @@ void DumpImage::create_image()
         else    // coordinates are in image coordinates, ignore z
           image->draw_pixmap((int) objarray[i][1], (int) objarray[i][2], (int) objarray[i][4],
                              (int) objarray[i][5], pixmap, transcolor, objarray[i][10], opacity);
+
       } else if (objvec[i] == Graphics::BOND) {
         int type1 = static_cast<int>(objarray[i][0] - 1.0) % ntypes + 1;
         int type2 = static_cast<int>(objarray[i][1] - 1.0) % ntypes + 1;
