@@ -322,7 +322,7 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
         error->all(FLERR, iarg+1, "Dump image ellipsoid only supports color by type, atom, or index");
       estyle = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
       // unless the wireframe setting is requested, we draw rounded triangles
-      if (estyle !=2 ) estyle = 1;
+      if (estyle !=2) estyle = 1;
 
       elevel = utils::inumeric(FLERR,arg[iarg+3],false,lmp);
       if (elevel == 0) elevel = 4; // default setting

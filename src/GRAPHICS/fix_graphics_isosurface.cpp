@@ -91,9 +91,17 @@ void get_vertex(const gridcell &g, int c1, int c2, vec3 &vert, vec3 &norm, int &
 {
   const double diff = g.iso[c2] - g.iso[c1];
   const double fraction = (fabs(diff) > 0.0) ? -g.iso[c1] / diff : 0.0;
-  if (g.type[c1] && !g.type[c2]) type = g.type[c1];
-  if (!g.type[c1] && g.type[c2]) type = g.type[c2];
-  if (g.type[c1] && g.type[c2]) type = (fraction < 0.5) ? g.type[c1] : g.type[c2];
+
+  // assign type closest to vertex, if available
+  if (g.type[c1] && !g.type[c2]) {
+    type = g.type[c1];
+  } else if (!g.type[c1] && g.type[c2]) {
+    type = g.type[c2];
+  } else if (g.type[c1] && g.type[c2]) {
+    type = (fraction < 0.5) ? g.type[c1] : g.type[c2];
+  } else {
+    type = 0;
+  }
 
   for (int d = 0; d < 3; ++d) {
     vert[d] = g.pos[c1][d] + fraction * (g.pos[c2][d] - g.pos[c1][d]);

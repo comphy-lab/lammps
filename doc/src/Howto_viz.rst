@@ -608,6 +608,8 @@ faces (*bflag1* value 1), or both (*bflag1* value 3).
 Visualizing ellipsoid particles
 -------------------------------
 
+.. versionadded:: 11Feb2026
+
 Ellipsoidal particles are a generalization of spheres that may have
 three different radii to define the shape.  They can be modeled using
 pair styles like :doc:`gayberne <pair_gayberne>` or :doc:`resquared
@@ -618,9 +620,9 @@ follows the documented steps, those trajectory dump files can be
 `imported and visualized in OVITO
 <https://www.ovito.org/manual/advanced_topics/aspherical_particles.html>`_
 
-.. versionadded:: TBD
+.. versionchanged:: TBD
 
-   Now using curved triangles instead of flat ones; "both" option is removed
+   Now uses curved triangles instead of flat ones; "both" option is removed
 
 As an alternative, the ellipsoid particles can be visualized directly
 with :doc:`dump image <dump_image>` using the *ellipsoid* keyword.  The

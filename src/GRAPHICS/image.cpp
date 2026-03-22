@@ -877,7 +877,7 @@ void Image::draw_pixmap(int xc, int yc, int pixwidth, int pixheight, const unsig
       int ix = xlo + i - pixwidth/2;
       if (iy < 0 || iy >= height || ix < 0 || ix >= width) continue;
       if ((opacity < 1.0) && (transthresh[ix % TRANK][iy % TRANK] > opacity))
-          continue;
+        continue;
 
       // get color of pixel at x/y position of pixmap
 

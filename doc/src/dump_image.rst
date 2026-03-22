@@ -566,12 +566,17 @@ colors than atom types are desired, the *number of atom types* must be
 
 .. versionadded:: 11Feb2026
 
+.. versionchanged:: TBD
+
+   Now uses rounded triangles
+
 The *ellipsoid* keyword can be used when :doc:`atom_style ellipsoid
 <atom_style>` is used to define particles as ellipsoids, and will draw
 them as a mesh of rounded triangles or edges, depending on the setting
-for *eflag*\ (1 for rounded triangles, 2 for edges).  If edges are
-drawn, the *width* setting determines the diameters of the line
-segments.  If this keyword is not used, ellipsoid particles will be
+for *eflag*\ (1 for rounded triangles, 2 for edges, other values are
+accepted for backward compatibility but select rounded triangles).
+If edges are drawn, the *width* setting determines the diameters of the
+line segments.  If this keyword is not used, ellipsoid particles will be
 drawn as spheres, the same as if they were regular atoms.
 
 .. versionchanged:: TBD
