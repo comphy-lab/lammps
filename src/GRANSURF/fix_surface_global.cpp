@@ -4663,31 +4663,3 @@ double FixSurfaceGlobal::dist_away_from_edge(double* pt1x, double* pt2x, double*
 
   return -1;
 }
-
-/* ----------------------------------------------------------------------
-   Calculate distance of point outside of plane created by norm of two tris
-------------------------------------------------------------------------- */
-
-double FixSurfaceGlobal::dist_away_from_2_tris(double* jnorm, double *knorm, double *dr)
-{
-  double dotjk = MathExtra::dot3(jnorm, knorm);
-  double dotjr = MathExtra::dot3(jnorm, dr);
-  double dotkr = MathExtra::dot3(knorm, dr);
-
-  double dotmin = MIN(dotjk, dotjr);
-  dotmin = MIN(dotmin, dotkr);
-
-  double dist;
-  if (dotmin == dotjk) {
-    // Between the two vectors, calculate component out of plane
-    double jkcross[3];
-    MathExtra::cross3(jnorm, knorm, jkcross);
-    dist = MathExtra::dot3(jkcross, dr);
-  } else {
-    // Not between jk norms, just take component away from jnorm (k will check itself)
-    double residual[3];
-    MathExtra::scaleadd3(-dotjr, jnorm, dr, residual);
-    dist = MathExtra::len3(residual);
-  }
-  return dist;
-}
