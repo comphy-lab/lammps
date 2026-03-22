@@ -181,10 +181,10 @@ center.  The 4 mixer blades are in the shape of a large X and are made
 to rotate using the :doc:`fix_modify <fix_modify>` command (see
 below).
 
-.. figure:: img/gransurf_mixer.jpg
-            :figwidth: 33%
+.. figure:: img/gransurf_mixer.png
+            :figwidth: 50%
             :align: right
-            :target: _images/gransurf_mixer.jpg
+            :target: _images/gransurf_mixer.png
 
 The 2 blades could be defined by 2 line segments which cross each
 other at their centers (left).  Or the 2 blades could be defined by 4
@@ -206,10 +206,10 @@ defined by 3 line segments that all share a common endpoint at the center
 of the top of the T (right), then the connectivity would censor the force
 from the vertical segment (blue).
 
-.. figure:: img/gransurf_T_geom.jpg
-            :figwidth: 33%
+.. figure:: img/gransurf_T_geom.png
+            :figwidth: 50%
             :align: right
-            :target: _images/gransurf_T_geom.jpg
+            :target: _images/gransurf_T_geom.png
 
 See the next section on connectivity for how two triangles or line
 segments are treated if they share a common edge (triangle) or point
@@ -440,10 +440,10 @@ convex designation is applied to flat and non-flat surfaces. If two flat
 lines are perfectly parallel, then :math:`\hat{n}_{f,i} = \hat{n}_{s,i}
 = \hat{n}_{s,j}`.
 
-.. figure:: img/gransurf_nonflat_turn.jpg
-            :figwidth: 33%
+.. figure:: img/gransurf_nonflat_turn.png
+            :figwidth: 50%
             :align: right
-            :target: _images/gransurf_nonflat_turn.jpg
+            :target: _images/gransurf_nonflat_turn.png
 
 If the contact point is at a convex corner (right) then
 :math:`\hat{n}_{f,i} = \hat{n}_{r,i}` unless :math:`\hat{n}_{r,i}` has a
@@ -559,10 +559,10 @@ identify the convex turn and censor forces from the far vertical wall
 than the expected overlap distance between a particle and a surface can
 lead to unintended additional forces.
 
-.. figure:: img/gransurf_U_geom.jpg
-            :figwidth: 33%
+.. figure:: img/gransurf_U_geom.png
+            :figwidth: 50%
             :align: right
-            :target: _images/gransurf_U_geom.jpg
+            :target: _images/gransurf_U_geom.png
 
 As mentioned in the above section, forces resulting from contact with
 unconnected endpoints of lines do point in the expected direction and

@@ -4356,6 +4356,7 @@ double FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
         }
       }
 
+      // TODO: should this be in an else block? check this is necessary
       // for connected edges, find component outside of plane created by 2 surf norms
       if (which1 != -1) {
         m = contacts_map[contact_surfs[n].ck1];
