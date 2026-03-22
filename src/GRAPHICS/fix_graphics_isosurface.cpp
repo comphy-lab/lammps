@@ -57,12 +57,13 @@ using vec3 = std::array<double, 3>;
 using triangle = struct {
   std::array<vec3, 3> triangle;
   std::array<vec3, 3> normals;
-  int type;
+  std::array<int, 3> type;
 };
 using gridcell = struct {
   vec3 pos[8];
   double iso[8];
   vec3 grad[8];
+  int type[8];
 };
 
 inline vec3 operator-(const vec3 &a, const vec3 &b)
@@ -86,10 +87,13 @@ void compute_gradient(double ***isogrid, int cx, int cy, int cz, int nx, int ny,
 
 // get vertex position and interpolated normal for a grid cell edge
 // by interpolating between the two corners based on their iso values
-void get_vertex(const gridcell &g, int c1, int c2, vec3 &vert, vec3 &norm)
+void get_vertex(const gridcell &g, int c1, int c2, vec3 &vert, vec3 &norm, int &type)
 {
   const double diff = g.iso[c2] - g.iso[c1];
   const double fraction = (fabs(diff) > 0.0) ? -g.iso[c1] / diff : 0.0;
+  if (g.type[c1] && !g.type[c2]) type = g.type[c1];
+  if (!g.type[c1] && g.type[c2]) type = g.type[c2];
+  if (g.type[c1] && g.type[c2]) type = (fraction < 0.5) ? g.type[c1] : g.type[c2];
 
   for (int d = 0; d < 3; ++d) {
     vert[d] = g.pos[c1][d] + fraction * (g.pos[c2][d] - g.pos[c1][d]);
@@ -833,6 +837,14 @@ void FixGraphicsIsosurface::end_of_step()
         g.pos[5] = {gx+delta, gy,       gz+delta};
         g.pos[7] = {gx,       gy+delta, gz+delta};
         g.pos[6] = {gx+delta, gy+delta, gz+delta};
+        g.type[0] = typegrid[ix  ][iy  ][iz  ];
+        g.type[1] = typegrid[ix+1][iy  ][iz  ];
+        g.type[3] = typegrid[ix  ][iy+1][iz  ];
+        g.type[2] = typegrid[ix+1][iy+1][iz  ];
+        g.type[4] = typegrid[ix  ][iy  ][iz+1];
+        g.type[5] = typegrid[ix+1][iy  ][iz+1];
+        g.type[7] = typegrid[ix  ][iy+1][iz+1];
+        g.type[6] = typegrid[ix+1][iy+1][iz+1];
         // clang-format on
 
         // compute gradient at each corner for smooth normals
@@ -862,18 +874,19 @@ void FixGraphicsIsosurface::end_of_step()
         // compute the possible 12 triangle vertices and normals
         std::array<vec3, 12> vertices;
         std::array<vec3, 12> vnormals;
-        if (EDGETABLE[idx] & 1) get_vertex(g, 0, 1, vertices[0], vnormals[0]);
-        if (EDGETABLE[idx] & 2) get_vertex(g, 1, 2, vertices[1], vnormals[1]);
-        if (EDGETABLE[idx] & 4) get_vertex(g, 2, 3, vertices[2], vnormals[2]);
-        if (EDGETABLE[idx] & 8) get_vertex(g, 3, 0, vertices[3], vnormals[3]);
-        if (EDGETABLE[idx] & 16) get_vertex(g, 4, 5, vertices[4], vnormals[4]);
-        if (EDGETABLE[idx] & 32) get_vertex(g, 5, 6, vertices[5], vnormals[5]);
-        if (EDGETABLE[idx] & 64) get_vertex(g, 6, 7, vertices[6], vnormals[6]);
-        if (EDGETABLE[idx] & 128) get_vertex(g, 7, 4, vertices[7], vnormals[7]);
-        if (EDGETABLE[idx] & 256) get_vertex(g, 0, 4, vertices[8], vnormals[8]);
-        if (EDGETABLE[idx] & 512) get_vertex(g, 1, 5, vertices[9], vnormals[9]);
-        if (EDGETABLE[idx] & 1024) get_vertex(g, 2, 6, vertices[10], vnormals[10]);
-        if (EDGETABLE[idx] & 2048) get_vertex(g, 3, 7, vertices[11], vnormals[11]);
+        std::array<int, 12> vtypes;
+        if (EDGETABLE[idx] & 1) get_vertex(g, 0, 1, vertices[0], vnormals[0], vtypes[0]);
+        if (EDGETABLE[idx] & 2) get_vertex(g, 1, 2, vertices[1], vnormals[1], vtypes[1]);
+        if (EDGETABLE[idx] & 4) get_vertex(g, 2, 3, vertices[2], vnormals[2], vtypes[2]);
+        if (EDGETABLE[idx] & 8) get_vertex(g, 3, 0, vertices[3], vnormals[3], vtypes[3]);
+        if (EDGETABLE[idx] & 16) get_vertex(g, 4, 5, vertices[4], vnormals[4], vtypes[4]);
+        if (EDGETABLE[idx] & 32) get_vertex(g, 5, 6, vertices[5], vnormals[5], vtypes[5]);
+        if (EDGETABLE[idx] & 64) get_vertex(g, 6, 7, vertices[6], vnormals[6], vtypes[6]);
+        if (EDGETABLE[idx] & 128) get_vertex(g, 7, 4, vertices[7], vnormals[7], vtypes[7]);
+        if (EDGETABLE[idx] & 256) get_vertex(g, 0, 4, vertices[8], vnormals[8], vtypes[8]);
+        if (EDGETABLE[idx] & 512) get_vertex(g, 1, 5, vertices[9], vnormals[9], vtypes[9]);
+        if (EDGETABLE[idx] & 1024) get_vertex(g, 2, 6, vertices[10], vnormals[10], vtypes[10]);
+        if (EDGETABLE[idx] & 2048) get_vertex(g, 3, 7, vertices[11], vnormals[11], vtypes[11]);
 
         // compute the triangles for this grid cell and add them to the list
         for (int i = 0; TRITABLE[idx][i] != -1; i += 3)
@@ -882,7 +895,8 @@ void FixGraphicsIsosurface::end_of_step()
                         vertices[TRITABLE[idx][i + 2]]},
                        {vnormals[TRITABLE[idx][i]], vnormals[TRITABLE[idx][i + 1]],
                         vnormals[TRITABLE[idx][i + 2]]},
-                       typegrid[ix][iy][iz]});
+                       {vtypes[TRITABLE[idx][i]], vtypes[TRITABLE[idx][i + 1]],
+                        vtypes[TRITABLE[idx][i + 2]]}});
       }
     }
   }
@@ -894,7 +908,7 @@ void FixGraphicsIsosurface::end_of_step()
   memory->destroy(imgobjs);
   memory->destroy(imgparms);
   memory->create(imgobjs, numobjs, "fix_graphics:imgobjs");
-  memory->create(imgparms, numobjs, 19, "fix_graphics:imgparms");
+  memory->create(imgparms, numobjs, 21, "fix_graphics:imgparms");
 
   int n = 0;
   for (const auto &tri : triangles) {
@@ -905,25 +919,27 @@ void FixGraphicsIsosurface::end_of_step()
         if ((tri.triangle[i][j] < sublo[j]) || (tri.triangle[i][j] > subhi[j])) addme = false;
     if (addme) {
       imgobjs[n] = Graphics::TRINORM;
-      imgparms[n][0] = tri.type;
-      imgparms[n][1] = tri.triangle[0][0];
-      imgparms[n][2] = tri.triangle[0][1];
-      imgparms[n][3] = tri.triangle[0][2];
-      imgparms[n][4] = tri.triangle[1][0];
-      imgparms[n][5] = tri.triangle[1][1];
-      imgparms[n][6] = tri.triangle[1][2];
-      imgparms[n][7] = tri.triangle[2][0];
-      imgparms[n][8] = tri.triangle[2][1];
-      imgparms[n][9] = tri.triangle[2][2];
-      imgparms[n][10] = tri.normals[0][0];
-      imgparms[n][11] = tri.normals[0][1];
-      imgparms[n][12] = tri.normals[0][2];
-      imgparms[n][13] = tri.normals[1][0];
-      imgparms[n][14] = tri.normals[1][1];
-      imgparms[n][15] = tri.normals[1][2];
-      imgparms[n][16] = tri.normals[2][0];
-      imgparms[n][17] = tri.normals[2][1];
-      imgparms[n][18] = tri.normals[2][2];
+      imgparms[n][0] = tri.type[0];
+      imgparms[n][1] = tri.type[1];
+      imgparms[n][2] = tri.type[2];
+      imgparms[n][3] = tri.triangle[0][0];
+      imgparms[n][4] = tri.triangle[0][1];
+      imgparms[n][5] = tri.triangle[0][2];
+      imgparms[n][6] = tri.triangle[1][0];
+      imgparms[n][7] = tri.triangle[1][1];
+      imgparms[n][8] = tri.triangle[1][2];
+      imgparms[n][9] = tri.triangle[2][0];
+      imgparms[n][10] = tri.triangle[2][1];
+      imgparms[n][11] = tri.triangle[2][2];
+      imgparms[n][12] = tri.normals[0][0];
+      imgparms[n][13] = tri.normals[0][1];
+      imgparms[n][14] = tri.normals[0][2];
+      imgparms[n][15] = tri.normals[1][0];
+      imgparms[n][16] = tri.normals[1][1];
+      imgparms[n][17] = tri.normals[1][2];
+      imgparms[n][18] = tri.normals[2][0];
+      imgparms[n][19] = tri.normals[2][1];
+      imgparms[n][20] = tri.normals[2][2];
       ++n;
     }
   }
