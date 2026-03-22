@@ -52,7 +52,7 @@ Syntax
          width = numeric value for triangle edge width (distance units)
        *ellipsoid* = color eflag level width
          color = *type* or *index* or *atom*
-         eflag = 1 for triangles, 2 for wireframe, 3 for both
+         eflag = 1 for triangles, 2 for wireframe
          level = mesh refinement level, value between 1 (low resolution) and 6 (ultra high resolution)
          width = diameter of wireframe edges (distance units) (ignored for triangles)
        *body* = color bflag1 bflag2
@@ -568,11 +568,11 @@ colors than atom types are desired, the *number of atom types* must be
 
 The *ellipsoid* keyword can be used when :doc:`atom_style ellipsoid
 <atom_style>` is used to define particles as ellipsoids, and will draw
-them as a mesh of triangles or edges or both, depending on the setting
-for *eflag*\ .  If edges are drawn, the *width* setting determines the
-diameters of the line segments.  If this keyword is not used, ellipsoid
-particles will be drawn as spheres, the same as if they were regular
-atoms.
+them as a mesh of rounded triangles or edges, depending on the setting
+for *eflag*\ (1 for rounded triangles, 2 for edges).  If edges are
+drawn, the *width* setting determines the diameters of the line
+segments.  If this keyword is not used, ellipsoid particles will be
+drawn as spheres, the same as if they were regular atoms.
 
 .. versionchanged:: TBD
 
@@ -599,6 +599,10 @@ and repeats itself for types > 6.  This list can by changed with the
 colors than atom types are desired, the *number of atom types* must be
 *increased* correspondingly when using either the :doc:`create_box
 <create_box>` or the :doc:`read_data <read_data>` command.
+
+.. versionchanged:: TBD
+
+   changed initial geometry to icosahedron and use rounded triangles
 
 The *level* setting determines the number of triangles in the mesh of
 triangles and thus the resolution of the representation of the

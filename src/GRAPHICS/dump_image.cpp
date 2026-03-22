@@ -321,12 +321,13 @@ DumpImage::DumpImage(LAMMPS *lmp, int narg, char **arg) :
       else
         error->all(FLERR, iarg+1, "Dump image ellipsoid only supports color by type, atom, or index");
       estyle = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
-      if ((estyle < 0) || (estyle > 3))
-        error->all(FLERR, iarg+2, "Dump image ellipsoid only supports style setting 1, 2, or 3");
+      // unless the wireframe setting is requested, we draw rounded triangles
+      if (estyle !=2 ) estyle = 1;
+
       elevel = utils::inumeric(FLERR,arg[iarg+3],false,lmp);
       if (elevel == 0) elevel = 4; // default setting
-      if (elevel > 6)
-        error->all(FLERR, iarg+3, "Dump image ellipsoid mesh refinement level {} is too large", elevel);
+      if ((elevel < 0) || (elevel > 6))
+        error->all(FLERR, iarg+3, "Dump image ellipsoid invalid mesh refinement level {}", elevel);
       ediamvalue = utils::numeric(FLERR,arg[iarg+4],false,lmp);
       iarg += 5;
 
