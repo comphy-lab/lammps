@@ -4295,15 +4295,13 @@ double FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
   double w_connect = 1.0;
   if (uc_flag) {
     double max_dist_uc = 0.0;
-    double min_dist_c = BIG;
-
     for (auto it = 0; it < composite_surfs->size(); it++) {
       n = (*composite_surfs)[it];
       j = contact_surfs[n].index;
       flag = contact_surfs[n].flag;
 
       if (flag == 1) {
-        min_dist_c = 0.0;
+        max_dist_uc = 0.0;
         break;
       }
 
@@ -4355,26 +4353,10 @@ double FixSurfaceGlobal::calculate_3d_forces(std::vector<int> *composite_surfs)
           }
         }
       }
-
-      // TODO: should this be in an else block? check this is necessary
-      // for connected edges, find component outside of plane created by 2 surf norms
-      if (which1 != -1) {
-        m = contacts_map[contact_surfs[n].ck1];
-        MathExtra::copy3(contact_surfs[m].surf_norm, knorm);
-        dist = dist_away_from_2_tris(jnorm, knorm, dr);
-        min_dist_c = MIN(min_dist_c, dist * rmag);
-      }
-
-      if (which2 != -1) {
-        m = contacts_map[contact_surfs[n].ck2];
-        MathExtra::copy3(contact_surfs[m].surf_norm, knorm);
-        dist = dist_away_from_2_tris(jnorm, knorm, dr);
-        min_dist_c = MIN(min_dist_c, dist * rmag);
-      }
     }
 
     if (max_dist_uc > 0.0)
-      w_connect = MAX(0.0, MIN(1.0, 1.0 - MIN(min_dist_c, max_dist_uc) / max_overlap));
+      w_connect = MAX(0.0, MIN(1.0, 1.0 - max_dist_uc / max_overlap));
   }
 
   // -----------------------------------
