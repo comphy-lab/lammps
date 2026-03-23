@@ -10,10 +10,10 @@ Syntax
 
    pair_style granular/superellipsoid cutoff no_bounding_box curvature_gaussian
 
-Optional settings, see discussion below.
-* cutoff = global cutoff value
-* no_bounding_box = skip oriented bounding box check
-* curvature_gaussian = gaussian curvature coeff approximation for contact patch
+   Optional settings, see discussion below.
+   * cutoff = global cutoff value
+   * no_bounding_box = skip oriented bounding box check
+   * curvature_gaussian = gaussian curvature coeff approximation for contact patch
 
 Examples
 """"""""
