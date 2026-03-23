@@ -612,14 +612,7 @@ void EllipsoidObj::draw(Image *img, int flag, const double *color, const double 
       // set shape
       for (int i = 0; i < 3; ++i) {
         auto &t = tri[i];
-        if (dotri) {
-          // shift the cylinder positions inward by their diameter when using cylinders and
-          // triangles together for a smoother surface to avoid increasing the final size
-          double shapeplus[3] = {shape[0] - diameter, shape[1] - diameter, shape[1] - diameter};
-          t = radscale(shapeplus, t) * t;
-        } else {
-          t = radscale(shape, t) * t;
-        }
+        t = radscale(shape, t) * t;
       }
 
       // rotate
