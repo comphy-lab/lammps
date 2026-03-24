@@ -202,16 +202,22 @@ void ComputeRHEOPropertyAtom::setup()
 {
   if (thermal_flag) {
     auto fixes = modify->get_fix_by_style("rheo/thermal");
+    if (fixes.empty())
+      error->all(FLERR, "Cannot request thermal property without fix rheo/thermal");
     fix_thermal = dynamic_cast<FixRHEOThermal *>(fixes[0]);
   }
 
   if (pressure_flag) {
     auto fixes = modify->get_fix_by_style("rheo/pressure");
+    if (fixes.empty())
+      error->all(FLERR, "Cannot request pressure property without fix rheo/pressure");
     fix_pressure = dynamic_cast<FixRHEOPressure *>(fixes[0]);
   }
 
   if (shell_flag) {
     auto fixes = modify->get_fix_by_style("rheo/oxidation");
+    if (fixes.empty())
+      error->all(FLERR, "Cannot request nbond/shell without fix rheo/oxidation");
     fix_oxidation = dynamic_cast<FixRHEOOxidation *>(fixes[0]);
   }
 }
