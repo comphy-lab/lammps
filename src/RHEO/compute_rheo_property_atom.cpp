@@ -124,8 +124,10 @@ ComputeRHEOPropertyAtom::ComputeRHEOPropertyAtom(LAMMPS *lmp, int narg, char **a
     } else if (utils::strmatch(arg[iarg], "^grad/v/")) {
       i += add_tensor_component(arg[iarg], i, &ComputeRHEOPropertyAtom::pack_gradv) - 1;
     } else if (utils::strmatch(arg[iarg], "^stress/v/")) {
+      pressure_flag = 1;
       i += add_tensor_component(arg[iarg], i, &ComputeRHEOPropertyAtom::pack_viscous_stress) - 1;
     } else if (utils::strmatch(arg[iarg], "^stress/t/")) {
+      pressure_flag = 1;
       i += add_tensor_component(arg[iarg], i, &ComputeRHEOPropertyAtom::pack_total_stress) - 1;
     } else if (strcmp(arg[iarg], "energy") == 0) {
       avec_index[i] = atom->avec->property_atom("esph");
