@@ -72,8 +72,10 @@ if(DOWNLOAD_MBX)
       URL     ${MBXLIB_URL}
       URL_HASH SHA256=${MBXLIB_SHA256}
       BUILD_IN_SOURCE TRUE
-      PATCH_COMMAND patch -b -p0 < ${LAMMPS_SOURCE_DIR}/../cmake/patches/mbx-mingw.patch
-      CONFIGURE_COMMAND mingw64-configure ${MBX_CONFIG_FLAGS} --prefix=<INSTALL_DIR>
+      CONFIGURE_COMMAND mingw64-configure
+                        --prefix=<INSTALL_DIR>
+                        --disable-i-pi-plugin
+                        ${MBX_CONFIG_FLAGS}
       INSTALL_COMMAND make install prefix=-build includedir=/include bindir=/bin
                                  datadir=/share exec_prefix=/ infodir=/share/info
                                  libdir=/lib libexecdir=/libexec localstatedir=/var
@@ -87,6 +89,7 @@ if(DOWNLOAD_MBX)
       URL_HASH SHA256=${MBXLIB_SHA256}
       CONFIGURE_COMMAND <SOURCE_DIR>/configure
                         --prefix=<INSTALL_DIR>
+                        --disable-i-pi-plugin
                         ${MBX_CONFIG_FLAGS}
                         CXX=${MBX_CONFIG_CXX}
                         CC=${MBX_CONFIG_CC}
