@@ -351,171 +351,188 @@ classification from the two edges that meet at it. If either edge is unconnected
 the corner is unconnected. Otherwise, the corner is external if either edge is
 external, and internal if both edges are internal.
 
-If a particle is in contact with a single line or triangle, the force is applied
-in the direction from the contact point to the particle center, :math:`\hat{n}_c`.
-The magnitude of the force then depends on the details of the pair style, but may
-be a function of the overlap distance :math:`\delta_f`, the relative (angular)
-velocity, and the type of the sphere/surface.
+To calculate force on a particle, LAMMPS finds a set of all lines or triangles
+that are geometrically in contact with the particle, :math:`(S_i)_\mathrm{all}`.
+For each line or traingle *i*, LAMMPS calculates the geometric overlap
+:math:`\delta_i` and the normal vector between the contact point and the
+particle :math:`\hat{n}_{r,i}`.
 
-If a particle is in contact with two or more connected lines or triangles,
-:math:`\hat{n}_f` depends on details of the connection and the classification of
-any points, edges, or corners involved in the contact. At a high level, this
-process combines all connected flat surfaces in contact with the particle into a
-single effective compsite surface that applies a single force on the particle.
-Forces are also adjusted near convex or concave turns or unconnected points/edges
-to prevent aphysical forces. For instance, surfaces on the other side of a convex
-turn may be hidden such that do not apply a force. Details follow below.
+Depending on the contact model, the force between a particle and a surface
+can depend on many variables including relative velocities, angular
+velocities, sliding history, etc. Most importantly, the force depends on
+an effective overlap distance :math:`\delta_f` and an effective point of
+contact :math:`\vec{r}_c` or (equivalently) the direction of the normal
+force :math:`\hat{n}_f`. If a particle is in contact with a single line
+or triangle, there is an unambiguous geometrically-determined point of
+contact and overlap such that :math:`\delta_f = \delta_i` and
+:math:`\hat{n}_f = \hat{n}_{r,i}`. If a particle is in contact with two
+lines/triangles that are not connected, then two forces are applied
+with overlaps and directions determined from the geometric values for
+each line/triangle. However, if the particle is in contact with two (or
+more) connected lines/triangles, the calculation of :math:`\delta_f` and
+:math:`\hat{n}_f` is more complicated and is described in the remainder
+of this section.
 
-To do this, LAMMPS first identifies which surface is closest to the particle. This
-primary contact is effectively the surface with the largest overlap with the
-particle, however, other criteria are used to break ties to ensure it is consistent
-and does not depend on machine precision. LAMMPS then identifies which side of the
-primary contact is in contact with the particle and recursively walks all
-connections to determine which side of all other surfaces are in contact. If
-there are unchecked surfaces, LAMMPS finds the next unchecked surface with the
-largest overlap and repeats the process.
+First, LAMMPS needs to evaluate a set of consistent sides of contact
+for each line/triangle. For a single line/triangle, which side or
+face of the surface is in contact is unambiguous. However, if a particle
+is in contact with two or more connected lines/triangles this depends on
+the network of connectivity. For instance, the below figure highlights
+a particle (gray circle) in contact with two (green) lines. From a
+naive local determination, one would determine the particle is in
+contact with the sides/faces of the line with a surface normal
+oriented in the blue direction. However, through the context of the
+convex connection, one can identify the physical surface normals (red).
+LAMMPS evaluates a consistent set of sides/faces (setting the sign of
+:math:`\hat{n}_s`) by walking through all connections of contacted
+surfaces starting from the primary contact. If there are still unchecked
+surfaces, LAMMPS finds the unchecked surface with the largest overlap
+and repeats the process.
 
-Now that all contacting surfaces know which side should be touching the particle,
-LAMMPS performs a second iteration through contacting surfaces to calculate forces.
-Starting from the primary contact, LAMMPS checks all connections. Flat connections
-are added to a growing set of composite surfaces and added to a list of surfaces
-which need to be walked. Concave connections are skipped while convex connections
-are flagged to be hidden if the convex surface has a smaller overlap. LAMMPS then
-iterates through the list of surfaces to be walked, effectively searching all
-1st flat neighbors of the primary contact, before repeating the process with their
-flat connections (2nd neighbors) and so forth until there are no more flat connections
-in contact with the particle. LAMMPS then calculates a force from the composite
-surface consisting of all flat connections (described in the following paragraph)
-before finding the next surface with the largest overlap and repeats the process with
-that surface. Continuing with this until all contacting surfaces have been processed
-and have had forces calculated. While checking for flat connections to a surface that
-was flagged as hidden due to a convex turn, LAMMPS passes along this flag to any such
-flat connections that have not already been processed. Thus a set of flat surfaces
-behind a convex turn can all be hidden as if they were a single surface. When
-calculating forces, surfaces are hidden by simply zeroing their overlap
-:math:`\delta_f`.
+.. figure:: img/gransurf_consistent_side.png
+            :figwidth: 50%
+            :align: right
+            :target: _images/consistent_side.png
 
-Given a set of mutually flat surfaces that make up a single composite surface
-(the size of which can be one if contact spans no flat connections), LAMMPS
-calculates a single force using the maximum overlap across constituent
-surfaces :math:`\delta_f = \delta_\mathrm{max}` and an effective direction
-:math:`\hat{n}_f` of the contact force. This unit vector is a weighted average
-across all surfaces :math:`i` in the set
+Next, LAMMPS clusters all contacted lines/triangles into a set of composite
+surfaces each consisting of mututally flat line/triangle surfaces that act as one
+physical object. For composite surface *n*, this set is denoted :math:`(S_i)_{C,n}`.
+For instance, if a particle is touching two flat-connected surfaces
+and a third concave-connected surface, it will group them into two composite
+surfaces of size two and one. Each composite surface calculates an effective
+contact point and applies a single force on the particle. This clustering is
+performed by starting with the primary contact and checking all of its connections.
+Flat connections are added to the current composite surface and to a list of surfaces
+which need to be walked. Non-flat connections are skipped, however, convex connections
+with smaller overlaps are first flagged to be hidden (described below). LAMMPS then
+iterates one-by-one through the list of surfaces to be walked until it is empty. This
+effectively searches all 1st flat neighbors of the primary contact, then flat
+2nd neighbors, etc. LAMMPS then identifies the next unprocessed surface with the
+largest overlap (the new primary contact) and repeats the process until all
+contacting surfaces have been processed into a composite surface (which can
+consist of single surface). While performing this walk, any hidden flags are passed
+along to subsequently walked flat connecting surfaces.
+
+Given a set of flat surfaces that make up a single composite surface :math:`(S_i)_C`,
+LAMMPS calculates a single force from an effective net overlap :math:`\delta_f` and
+direction :math:`\hat{n}_f`. Before calculating :math:`\delta_f`, the individual
+overlap of any surface *i* flagged as hidden is zeroed, :math:`\delta_i` = 0.
+Then :math:`\delta_f = \mathrm(max)(\delta_i)`. The unit is a weighted average
+across all surfaces in the set :math:`(S_i)_C` or
 :math:`\hat{n}_f = A \sum W_i \delta_i \hat{n}_{f,i}` where :math:`\hat{n}_{f,i}`
-is the calculated direction of force for that surface and :math:`A` is a
-normalization factor. If the set is of size one and only contains a single
-surface :math:`i`, then these calculations reduce to :math:`\delta_f = \delta_i`
-and :math:`\hat{n}_f = \hat{n}_{f,i}`.
+is the calculated direction of force for that surface, :math:`W_i` is a per-surface
+weight, and :math:`A` is a normalization factor.
 
-Before calculating contributions and weights for individual surfaces, LAMMPS first
-calculates a weight for externally and internally contacted surfaces defined as
+Before calculating individual directions (:math:`\hat{n}_{f,i}`) and weights
+(:math:`W_i`) for individual surfaces in a composite surface, LAMMPS calculates
+a general weight for externally vs. internally contacted surfaces defined as
 :math:`W_\mathrm{ext} \equiv (\delta_\mathrm{max,ext} / \delta_\mathrm{max})^2` and
 :math:`W_\mathrm{int} \equiv 1 - W_\mathrm{ext}`, respectively, where
-:math:`\delta_\mathrm{max,ext}` is the maximum overlap with an external boundary
-of a surface. As a reminder, external boundaries are points in 2D or edges in 3D
-between two non-flat surfaces. Corners in 3D inherit an external status from
-either of the two edges that meet at it. This weighting is used amplify contributions
-from externally-contacted surfaces as the particle moves around a concave or
-convex turn to smoothly interpolate :math:`\hat{n}_f`.
+:math:`\delta_\mathrm{max,ext}` is the maximum overlap with an externally
+contacted surface in that composite set :math:`(S_i)_C`. This weighting is used
+to emphasize contributions from surfaces on a convex boundary as a particle
+moves along the convex turn.
 
-In 2D, a surface's weight :math:`W_i` is simply the particle's overlap with
-that line :math:`\delta_i` multiplied by either :math:`W_\mathrm{ext}` or
-or :math:`W_\mathrm{int}`. By default, :math:`\hat{n}_{f,i}` is simply the
-direction from that contact point to the particle :math:`\hat{n}_{r,i}`.
-If the contact point is inside of the line, :math:`\hat{n}_{r,i}` is
-equivalent to the surface normal :math:`\hat{n}_{s,i}`.
+In 2D, a surface's weight :math:`W_i` is either :math:`W_\mathrm{ext}` or
+:math:`W_\mathrm{int}` based on its status. By default, :math:`\hat{n}_{f,i}`
+is simply the direction from the local contact point on that surface to the
+particle, :math:`\hat{n}_{r,i}`. Note that if the contact point is inside of
+the line, :math:`\hat{n}_{r,i}` is equivalent to the surface normal
+:math:`\hat{n}_{s,i}`. Howevever, there are two exceptions. If the contact is
+at a concave-connected point then :math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. If
+the contact is at a convex-connected point and :math:`\hat{n}_{r,i}` has a
+component pointing into the neighboring line vector *j* then
+:math:`\hat{n}_{f_i} = \hat{n}_{s,j}`. These rules place limits on how
+how much a resulting force can point into the connected line to ensure smooth
+variations in :math:`\hat{n}_{f_i}` as the paricle turns the bend. Two details
+are worth noting. First, as non-flat connecting surfaces are hidden behind
+convex turns (:math:`\delta_i = 0`), the limit in the convex scenario is only
+relevant for flat and convex connections. Secondly, if two flat lines are
+perfectly parallel, then :math:`\hat{n}_{f,i} = \hat{n}_{s,i} = \hat{n}_{s,j}`
+implying the concave/convex designation has no effect.
 
-If the contact is at a concave corner, then
-:math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. In the left panel of the figure below,
-a particle at various positions (red, green, blue) contacts a concave bend
-made up of two lines (coral brown). The direction of the force
-:math:`\hat{n}_{f,i}` of the leftmost surface is indicated by arrows. Along
+To illustrate, these scenarios are visualized in the figure below. In the left
+panel, a particle at various positions (red, green, blue, and purple) contacts
+a concave bend made up of two lines (coral brown). Here the leftmost surface is
+labeled *i* and the rightmost surface is labelled *j*. The direction of the force
+:math:`\hat{n}_{f,i}` from the leftmost surface is indicated by arrows. Along
 the entire contact, :math:`\hat{n}_{f,i} = \hat{n}_{s,i}` where the normal
-vectors for each line are indicated by gray arrows for clarifty. If
+vectors for each line are indicated by gray arrows for clarity. If
 alternatively :math:`\hat{n}_{f,i} = \hat{n}_{r,i}`, then the force at the
 right most positions (blue/purple) would have a relatively large component
 parallel to the adjacent line which would produce an aphysical wobble in
-the direction of the net force from the two lines. Note that the concave /
-convex designation is applied to flat and non-flat surfaces. If two flat
-lines are perfectly parallel, then :math:`\hat{n}_{f,i} = \hat{n}_{s,i}
-= \hat{n}_{s,j}`.
+the direction of the net force from the two lines as the particle moved around
+the bend.
 
 .. figure:: img/gransurf_nonflat_turn.png
             :figwidth: 50%
             :align: right
             :target: _images/gransurf_nonflat_turn.png
 
-If the contact point is at a convex corner (right) then
-:math:`\hat{n}_{f,i} = \hat{n}_{r,i}` unless :math:`\hat{n}_{r,i}` has a
-component pointing into the the adjacent line :math:`j`, in which case
-:math:`\hat{n}_{f,i} = \hat{n}_{s,j}`. This limit is, again, imposed to
-prevent potentially aphysical forces. In the above figure on the right,
-this transition is seen. As in the concave example, arrows indicated the
-direction :math:`\hat{n}_{f,i}` of the leftmost line. When the particle
-is furthest to the right (purple), :math:`\hat{n}_{r,i}` would point
-into the second line and therefore :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`.
-If this was a non-flat connection, this transition would never actually
-manifest as the convex turn would hide this force by setting
-:math:`\delta_i = 0`. However, this effect is apparent in convex flat
-connections. Note that if two flat lines were perfectly parallel, then
-:math:`\hat{n}_{f,i} = \hat{n}_{s,i} = \hat{n}_{s,j}`, equivalent to
-above such that the distinction of being concave vs. convex is irrelevant.
+In the right panel, the contact point is at a convex corner such that
+:math:`\hat{n}_{f,i} = \hat{n}_{r,i}` (red, green) unless
+:math:`\hat{n}_{r,i}` has a component pointing into the the adjacent
+line :math:`j`, in which case :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`
+(blue, purple).
 
 In 3D, first consider a scenario where there are no contacts with free
-or unconnected edges. Surfaces that are contacted inside of the triangle
-set :math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. If the edge is contacted, it
-acts much like a point in 2D. If it's a concave connection, then
-:math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. If it's a convex connection, then
+or unconnected edges (all edges have at least one connection). Again,
+each composite set of surfaces :math:`{S_i}` calculates a single force.
+For each surface, if its contact point is inside of the triangle, then
+:math:`\hat{n}_{f,i} = \hat{n}_{s,i}`. If the contact is on an edge, it
+acts much like a point in 2D: a concave connection implies
+:math:`\hat{n}_{f,i} = \hat{n}_{s,i}` and a convex connection implies
 :math:`\hat{n}_{f,i} = \hat{n}_{r,i}` unless :math:`\hat{n}_{r,i}` points
-within the adjacent triangle :math:`j` in which case
+into the adjacent triangle :math:`j` in which case
 :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`. This is determined by comparing
 the three dot products between :math:`\hat{n}_{s,i}`,
 :math:`\hat{n}_{s,j}`, and :math:`\hat{n}_{r,i}`. Note, if an edge is
 shared by more than two triangles, then LAMMPS finds which connecting
-triangle has a normal vector closest to to :math:`i`.
+triangle has a normal vector closest to that :math:`i` in determining
+concave/convex status.
 
-If the particle is contacting a corner, then the corner first calculates
-what the normal vector would be had the particle contacted either of the
-two edges, labeled :math:`a` and :math:`b`, :math:`\hat{n}_{f,i,a}` and
+If a particle contacts a corner, then the corner first calculates what
+the :math:`hat{n}_{f,i}` would be had the particle contacted either of
+the two edges, labeled *a* and *b*, :math:`\hat{n}_{f,i,a}` and
 :math:`\hat{n}_{f,i,b}`. For simplicity, the :math:`i` subscript is
 dropped for the remainder of this section as all discussion is focused
 only on that triangle unless otherwise specified. Each of these edges
 have normalized line vectors :math:`\hat{l,a}` and :math:`\hat{l,b}`
-pointing towards the corner.
+pointing towards the corner in consideration.
 
 If :math:`\hat{n}_{f,a} \cdot \hat{l,b} < 0` (or if the force from
 that edge has a component pointing into the other edge), then
 :math:`\hat{n}_{f,a}` is replaced with :math:`\hat{n}_{s}`, and vice
 versa for edge :math:`b`, to avoid forces pointing into the triangle.
 A resulting :math:`\hat{n}_{f}` is then calculated by performing a
-weighted average of these two contributions such that the result
-interpolates between the two limits as a particle moves from contacting
-one edge, to the corner, to the other edge.
+weighted average of these two edge contributions such that the result
+interpolates between the two limits as a particle moves from
+contacting one edge to the corner to the other edge.
 
-The calculation of the two edge weights are fairly hairy, but a brief
-description is provided below to contextualize the code. Each weigh
-is primarily a function of several dot products including
+The calculation of the two edge weights is more complicated, but a
+brief description is provided below to contextualize the code. Each
+weight is primarily a function of several dot products including
 :math:`C_a = \hat{n}_{r} \cdot \hat{l}_{a}` and
 :math:`D_a = \hat{n}_{r,ip} \cdot \hat{l}_{a}` as well as equivalents
 for edge :math:`b` where :math:`\hat{n}_{r,ip}` is the component of
 :math:`\hat{n}_{r}` that lies within the plane of the triangle. If
 the contact is directly above the corner such that :math:`\hat{n}_{r}`
 is parallel to :math:`\hat{n}_{s}`, then :math:`\hat{n}_{f}` is simply
-set to :math:`\hat{n}_{s}` and this weighting is skipped. The base
+set to :math:`\hat{n}_{s}` and this procedure is skipped. The base
 weights are then :math:`W_a = (1-C_a) D_b` and
 :math:`W_b = (1-C_b) D_a`. This construction ensures the weight for,
 say, edge :math:`a` approaches zero as :math:`\hat{n}_{r}` either
-aligns with :math:`\hat{l}_a` (at which point the edge cannot
+aligns with :math:`\hat{l}_a` (at which point the edge cannot easily
 calculate a realistic force) or becomes perpendicular (in plane)
 to :math:`\hat{l}_b` such that its contribution dominates.
 
 When evaluating corner contacts, if either of the two edges, say
-:math:`a`, is a convex connection and is hiding another triangle,
-surface, an additional weight is required for that edge to ensure
+:math:`a`, has a convex connection and is hiding another triangle,
+an additional weight is required for that edge to ensure
 :math:`\hat{n}_{f}` continuously transitions as the particle moves
-across that convex turn to surface :math:`j`. This is calucalted in
+across that convex turn to surface :math:`j`. This is calculated in
 terms of the dot product
-:math:`E_a = \hat{n}_{r,a} \cdot (\delta_{s,i} + \delta_{s,i})/2`
+:math:`E_a = \hat{n}_{r,a} \cdot (\delta_{s,i} + \delta_{s,j})/2`
 where :math:`\hat{n}_{r,a}` is :math:`\hat{n}_{r}` minus any component
 parallel to :math:`\hat{l}_a`. :math:`W_b` is then multiplied by
 :math:`(1-E_a)` which goes to zero as the particle approaches the
@@ -531,6 +548,24 @@ edge) also average contributions from their two edges. If both edges
 are connected (or unconnected), this average is the same. However,
 if one is connected and the other is unconnected then the contribution
 from the connected edge, say :math:`a`, is modified.
+
+For interpolating between unconnected and connected limits, a general
+weighting :math:`W_c = \mathrm{max}(0.0, 1.0 - dr_{uc} / \delta_\mathrm{max})`
+is used where :math:`dr_{uc}` is the maximum in-plane distance outside of
+a triangle in the composite surface from an unconnected corner or edge.
+This weight goes to zero as the particle is on top of a surface and grows
+as the particle moves off of and away from the surface. It multiplies
+the weight :math:`W` for all surfaces that are not contacted on an
+unconnected feature. Additionally, these surfaces multiply :math:`W`
+by a factor of
+:math:`W_{ip} = \mathrm{min}(1.0, \hat{n}_{s} \cdot \hat{n}_{r} / (1 - W_c))`.
+This term effectively goes to zero as the particle moves within the plane of the
+surface. Practically, this should only happen when a particle is outside and
+away from the surface and is primarily contacting the unconnected edge.
+
+Lastly, when contacting an unconnected corner which has one unconnected edge
+and one connected edge, the contribution from the connected edge is multiplied
+by these two factors, :math:`W_c` and :math:`W_{ip}`.
 
 ----------
 
