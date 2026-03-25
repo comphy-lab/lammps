@@ -524,6 +524,7 @@ checkbox
 checkmark
 checkqeq
 checksum
+checksums
 chemflag
 chemistries
 Chemnitz
@@ -3006,6 +3007,7 @@ pc
 pcg
 pchain
 Pchain
+pclose
 pcmoves
 Pdamp
 pdb
