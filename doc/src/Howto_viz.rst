@@ -623,7 +623,7 @@ follows the documented steps, those trajectory dump files can be
 
 .. versionchanged:: TBD
 
-   Now uses curved triangles instead of flat ones; "both" option is removed
+   Now uses curved triangles instead of flat ones; "both" option is removed; support for superellipsoids was added
 
 As an alternative, the ellipsoid and superellipsoid particles can be
 visualized directly with :doc:`dump image <dump_image>` using the
@@ -672,6 +672,8 @@ commands to the ``in.ellipse.resquared`` input example:
    dump_modify viz pad 6 boxcolor goldenrod backcolor black backcolor2 white &
         color map1 0.459 0.055 0.075 color map2 0.000 0.227 0.427 &
         amap min max cf 0.0 5 min map1 0.1 map1 0.5 white 0.9 map2 max map2
+
+.. versionadded:: TBD
 
 The visualization of superellipsoids works exactly the same way as for
 ellipsoids by creating a triangle mesh of an icosahedron and refining
