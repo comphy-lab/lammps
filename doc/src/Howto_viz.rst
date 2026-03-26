@@ -690,7 +690,7 @@ visualizations of the ``in.drop_test``, the ``in.bowling``, and the
    :width: 31%
 
 |superellipsoid1|  |superellipsoid2|  |superellipsoid3|
-        
+
 -------------
 
 Visualizing regions
