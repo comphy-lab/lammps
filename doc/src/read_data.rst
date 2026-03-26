@@ -1335,7 +1335,7 @@ and a general discussion of how type labels can be used.
        atom-ID = ID of atom which is an ellipsoid
        shapex,shapey,shapez = 3 diameters of ellipsoid (distance units)
        quatw,quati,quatj,quatk = quaternion components for orientation of atom
-       block1,block2 = 2 blockiness parameters for superellipsoids only
+       block1,block2 = 2 blockiness parameters (for superellipsoids only)
 
 * examples:
 
