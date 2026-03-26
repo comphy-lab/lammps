@@ -605,14 +605,15 @@ faces (*bflag1* value 1), or both (*bflag1* value 3).
 
 -------------
 
-Visualizing ellipsoid particles
--------------------------------
+Visualizing ellipsoid and superellipsoid particles
+--------------------------------------------------
 
 .. versionadded:: 11Feb2026
 
 Ellipsoidal particles are a generalization of spheres that may have
-three different radii to define the shape.  They can be modeled using
-pair styles like :doc:`gayberne <pair_gayberne>` or :doc:`resquared
+three different radii to define the shape.  Superellipsoids are in turn
+a generalization of ellipsoids.  They can be modeled using pair styles
+like :doc:`gayberne <pair_gayberne>` or :doc:`resquared
 <pair_resquared>`.  The regular :doc:`dump custom <dump>` command can
 output the center of those bodies, the shape parameters and the
 orientation as quaternions.  If one follows the required conventions and
@@ -624,22 +625,22 @@ follows the documented steps, those trajectory dump files can be
 
    Now uses curved triangles instead of flat ones; "both" option is removed
 
-As an alternative, the ellipsoid particles can be visualized directly
-with :doc:`dump image <dump_image>` using the *ellipsoid* keyword.  The
-color and transparency settings can be changed by setting those
-properties for the corresponding atom types.  It is also possible to
-represent the ellipsoids via generating a triangle mesh and visualizing
-it as either wireframes (*eflag* value 2) or rounded faces (*eflag*
-value 1).  The use of a triangle mesh is currently required since the
-rasterizer built into LAMMPS does not offer a suitable graphics
-primitive for ellipsoids.  The mesh is constructed by iteratively
-refining a triangle mesh representing an icosahedron where each triangle
-is replaced by four triangles in each iteration.  For a sufficiently
-smooth representation a refinement level of 4 to 6 is required (see
-example images below).  A high refinement level can cause a significant
-slowdown of the rendering of the image due to the large number of
-triangles that need to be drawn.  This will be more pronounced when
-enabling FSAA or SSAO or both.
+As an alternative, the ellipsoid and superellipsoid particles can be
+visualized directly with :doc:`dump image <dump_image>` using the
+*ellipsoid* keyword.  The color and transparency settings can be changed
+by setting those properties for the corresponding atom types.  It is
+also possible to represent the ellipsoids via generating a triangle mesh
+and visualizing it as either wireframes (*eflag* value 2) or rounded
+faces (*eflag* value 1).  The use of a triangle mesh is currently
+required since the rasterizer built into LAMMPS does not offer a
+suitable graphics primitive for ellipsoids or superellipsoids.  The mesh
+is constructed by iteratively refining a triangle mesh representing an
+icosahedron where each triangle is replaced by four triangles in each
+iteration.  For a sufficiently smooth representation a refinement level
+of 4 to 6 is required (see example images below).  A high refinement
+level can cause a significant slowdown of the rendering of the image due
+to the large number of triangles that need to be drawn.  This will be
+more pronounced when enabling FSAA or SSAO or both.
 
 .. |ellipsoid1| image:: img/ellipsoid-level2.png
    :width: 33%
