@@ -1,4 +1,3 @@
-// clang-format off
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
@@ -13,7 +12,7 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing author: Jacopo Bilotto (EPFL), Jibril B. Coulibaly
+   Contributing authors: Jacopo Bilotto (EPFL), Jibril B. Coulibaly
 ------------------------------------------------------------------------- */
 
 #include "math_extra_superellipsoids.h"
@@ -23,26 +22,28 @@
 
 #include <cmath>
 
+namespace {
+constexpr double TIKHONOV_SCALE = 1e-14;
+
+constexpr int ITERMAX_NR = 100;
+constexpr double TOL_NR_RES = 1e-10 * 1e-10;
+constexpr double TOL_NR_POS = 1e-6 * 1e-6;
+
+constexpr int ITERMAX_LS = 10;
+constexpr double PARAMETER_LS = 1e-4;
+constexpr double CUTBACK_LS = 0.5;
+
+constexpr double TOL_OVERLAP = 1e-8;
+constexpr unsigned int ITERMAX_OVERLAP = 20;
+constexpr double MINSLOPE_OVERLAP = 1e-12;
+
+constexpr double REGULARIZATION_EPSILON = 1e-12;
+constexpr double MAX_B_FAST = 1e30;
+}    // namespace
+
+// clang-format off
+
 namespace MathExtraSuperellipsoids {
-
-inline constexpr double TIKHONOV_SCALE =
-    1e-14;
-
-static constexpr int ITERMAX_NR = 100;
-static constexpr double TOL_NR_RES = 1e-10 * 1e-10;
-static constexpr double TOL_NR_POS = 1e-6 * 1e-6;
-
-static constexpr int ITERMAX_LS = 10;
-static constexpr double PARAMETER_LS = 1e-4;
-static constexpr double CUTBACK_LS = 0.5;
-
-static constexpr double TOL_OVERLAP = 1e-8;
-static constexpr unsigned int ITERMAX_OVERLAP = 20;
-static constexpr double MINSLOPE_OVERLAP = 1e-12;
-
-static constexpr double REGULARIZATION_EPSILON = 1e-12;
-static constexpr double MAX_B_FAST = 1e30;
-
 
 /* ----------------------------------------------------------------------
    curvature of superellipsoid
@@ -54,10 +55,10 @@ double mean_curvature_superellipsoid(const double *shape, const double *block, c
   // this code computes the mean curvature on the superellipsoid surface
   // for the given global point
   double hess[3][3], grad[3], normal[3];
-  double shapefunc, xlocal[3], tmp_v[3];
+  double xlocal[3], tmp_v[3];
   MathExtra::sub3(surf_global_point, xc, tmp_v); // here tmp_v is the vector from center to surface point
   MathExtra::transpose_matvec(R, tmp_v, xlocal);
-  shapefunc = shape_and_derivatives_local(xlocal, shape, block, flag, grad, hess); // computation of curvature is independent of local or global frame
+  (void) shape_and_derivatives_local(xlocal, shape, block, flag, grad, hess); // computation of curvature is independent of local or global frame
   MathExtra::normalize3(grad, normal);
   MathExtra::matvec(hess, normal, tmp_v); // here tmp_v is intermediate product
   double F_mag = sqrt(MathExtra::dot3(grad, grad));
@@ -70,10 +71,10 @@ double gaussian_curvature_superellipsoid(const double *shape, const double *bloc
   // this code computes the gaussian curvature coefficient
   // for the given global point
   double hess[3][3], grad[3], normal[3];
-  double shapefunc, xlocal[3], tmp_v[3];
+  double xlocal[3], tmp_v[3];
   MathExtra::sub3(surf_global_point, xc, tmp_v); // here tmp_v is the vector from center to surface point
   MathExtra::transpose_matvec(R, tmp_v, xlocal);
-  shapefunc = shape_and_derivatives_local(xlocal, shape, block, flag, grad, hess); // computation of curvature is independent of local or global frame
+  (void) shape_and_derivatives_local(xlocal, shape, block, flag, grad, hess); // computation of curvature is independent of local or global frame
   MathExtra::normalize3(grad, normal);
 
   double temp[3];
@@ -126,12 +127,12 @@ void global2local_vector(const double *v, const double *quat, double *local_v)
 void apply_regularization_shape_function(double n1, const double avg_radius, double *value, double *grad, double hess[3][3])
 {
   // value is F - 1
-  double base = std::fmax(*value + 1.0, REGULARIZATION_EPSILON);
+  double base = fmax(*value + 1.0, REGULARIZATION_EPSILON);
   const double inv_F = 1.0 / base;
   const double inv_n1 = 1.0 / n1;
 
   // P = base^(1/n)
-  const double F_pow_inv_n1 = std::pow(base, inv_n1);
+  const double F_pow_inv_n1 = pow(base, inv_n1);
 
   // Scale for Gradient: S1 = R * (1/n) * base^(1/n - 1)
   const double scale_grad = avg_radius * inv_n1 * F_pow_inv_n1 * inv_F;
@@ -162,7 +163,7 @@ void apply_regularization_shape_function(double n1, const double avg_radius, dou
 
 double shape_and_derivatives_local(const double* xlocal, const double* shape, const double* block, const int flag, double* grad, double hess[3][3])
 {
-  double shapefunc;
+  double shapefunc = 0.0;
   // TODO: Not sure how to make flag values more clear
   // Cannot forward declare the enum AtomVecEllipsoid::BlockType
   // Could use scoped (enum class) but no implicit conversion:
@@ -199,21 +200,21 @@ double shape_and_derivatives_local_superquad(const double* xlocal, const double*
   double a_inv = 1.0 / shape[0];
   double b_inv = 1.0 / shape[1];
   double c_inv = 1.0 / shape[2];
-  double x_a = std::fabs(xlocal[0] * a_inv);
-  double y_b = std::fabs(xlocal[1] * b_inv);
-  double z_c = std::fabs(xlocal[2] * c_inv);
+  double x_a = fabs(xlocal[0] * a_inv);
+  double y_b = fabs(xlocal[1] * b_inv);
+  double z_c = fabs(xlocal[2] * c_inv);
   double n1 = block[0];
   double n2 = block[1];
-  double x_a_pow_n2_m2 = std::pow(x_a, n2 - 2.0);
+  double x_a_pow_n2_m2 = pow(x_a, n2 - 2.0);
   double x_a_pow_n2_m1 = x_a_pow_n2_m2 * x_a;
-  double y_b_pow_n2_m2 = std::pow(y_b, n2 - 2.0);
+  double y_b_pow_n2_m2 = pow(y_b, n2 - 2.0);
   double y_b_pow_n2_m1 = y_b_pow_n2_m2 * y_b;
 
   double nu = (x_a_pow_n2_m1 * x_a) + (y_b_pow_n2_m1 * y_b);
-  double nu_pow_n1_n2_m2 = std::pow(nu, n1/n2 - 2.0);
+  double nu_pow_n1_n2_m2 = pow(nu, n1/n2 - 2.0);
   double nu_pow_n1_n2_m1 = nu_pow_n1_n2_m2 * nu;
 
-  double z_c_pow_n1_m2 = std::pow(z_c, n1 -2.0);
+  double z_c_pow_n1_m2 = pow(z_c, n1 -2.0);
   double z_c_pow_n1_m1 = z_c_pow_n1_m2 * z_c;
 
   // Equation (14)
@@ -246,14 +247,14 @@ double shape_and_derivatives_local_n1equaln2(const double* xlocal, const double*
   double a_inv = 1.0 / shape[0];
   double b_inv = 1.0 / shape[1];
   double c_inv = 1.0 / shape[2];
-  double x_a = std::fabs(xlocal[0] * a_inv);
-  double y_b = std::fabs(xlocal[1] * b_inv);
-  double z_c = std::fabs(xlocal[2] * c_inv);
-  double x_a_pow_n_m2 = std::pow(x_a, n - 2.0);
+  double x_a = fabs(xlocal[0] * a_inv);
+  double y_b = fabs(xlocal[1] * b_inv);
+  double z_c = fabs(xlocal[2] * c_inv);
+  double x_a_pow_n_m2 = pow(x_a, n - 2.0);
   double x_a_pow_n_m1 = x_a_pow_n_m2 * x_a;
-  double y_b_pow_n_m2 = std::pow(y_b, n - 2.0);
+  double y_b_pow_n_m2 = pow(y_b, n - 2.0);
   double y_b_pow_n_m1 = y_b_pow_n_m2 * y_b;
-  double z_c_pow_n_m2 = std::pow(z_c, n - 2.0);
+  double z_c_pow_n_m2 = pow(z_c, n - 2.0);
   double z_c_pow_n_m1 = z_c_pow_n_m2 * z_c;
 
   // Equation (14)
@@ -265,7 +266,6 @@ double shape_and_derivatives_local_n1equaln2(const double* xlocal, const double*
   grad[2] = n * c_inv * z_c_pow_n_m1 * signz;
 
   // Equation (15)
-  double signxy = signx * signy;
   hess[0][0] = a_inv * a_inv * n * (n - 1.0) * x_a_pow_n_m2;
   hess[1][1] = b_inv * b_inv * n * (n - 1.0) * y_b_pow_n_m2;
   hess[2][2] = c_inv * c_inv * n * (n - 1.0) * z_c_pow_n_m2;
@@ -428,7 +428,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
   if (norm < TOL_NR_RES) {
 
     //  must compute the normal vector nij before returning since the Newton loop normally handles this upon convergence.
-    double xilocal[3], tmp_v[3], gradi[3], val_dummy;
+    double xilocal[3], tmp_v[3], gradi[3];
 
     // Transform global X0 to local frame of particle I
     MathExtra::sub3(X0, xci, tmp_v);
@@ -439,9 +439,9 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
     // TODO: might use a simpler function to simply compute the gradient, to
     // avoid computing quantities already computed in compute_residual_and_jacobian
     if (flagi <= 1)
-      val_dummy = shape_and_gradient_local_n1equaln2_surfacesearch(xilocal, shapei, blocki[0], tmp_v);
+      (void) shape_and_gradient_local_n1equaln2_surfacesearch(xilocal, shapei, blocki[0], tmp_v);
     else
-      val_dummy = shape_and_gradient_local_superquad_surfacesearch(xilocal, shapei, blocki, tmp_v);
+      (void) shape_and_gradient_local_superquad_surfacesearch(xilocal, shapei, blocki, tmp_v);
 
     // Rotate gradient back to global frame to get normal
     MathExtra::matvec(Ri, tmp_v, gradi);
@@ -475,11 +475,11 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
 
     // check for divergence or numerical issues in the fast solver
     // and fall back to regularized solver if necessary
-    bool fail0 = !std::isfinite(b_fast[0]) | (std::abs(b_fast[0]) > MAX_B_FAST);
-    bool fail1 = !std::isfinite(b_fast[1]) | (std::abs(b_fast[1]) > MAX_B_FAST);
-    bool fail2 = !std::isfinite(b_fast[2]) | (std::abs(b_fast[2]) > MAX_B_FAST);
-    bool fail3 = !std::isfinite(b_fast[3]) | (std::abs(b_fast[3]) > MAX_B_FAST);
-    if (fail0 | fail1 | fail2 | fail3) {
+    bool fail0 = !std::isfinite(b_fast[0]) || (fabs(b_fast[0]) > MAX_B_FAST);
+    bool fail1 = !std::isfinite(b_fast[1]) || (fabs(b_fast[1]) > MAX_B_FAST);
+    bool fail2 = !std::isfinite(b_fast[2]) || (fabs(b_fast[2]) > MAX_B_FAST);
+    bool fail3 = !std::isfinite(b_fast[3]) || (fabs(b_fast[3]) > MAX_B_FAST);
+    if (fail0 || fail1 || fail2 || fail3) {
         gauss_elim_solved = false;
     }
 
@@ -496,7 +496,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
       b_fast[2] = -residual[2]; b_fast[3] = -residual[3];
        // enforce a minimum regularization to avoid zero pivots in edge cases (flat on flat)
       double trace = jacobian[0] + jacobian[5] + jacobian[10];
-      double diag_weight = std::fmax(TIKHONOV_SCALE * trace, TIKHONOV_SCALE);
+      double diag_weight = fmax(TIKHONOV_SCALE * trace, TIKHONOV_SCALE);
       A_fast[0]  += diag_weight;
       A_fast[5]  += diag_weight;
       A_fast[10] += diag_weight;
@@ -517,7 +517,7 @@ int determine_contact_point(const double* xci, const double Ri[3][3], const doub
 
     // Limit the max step size to avoid jumping too far
     // normalize residual vector if step was limited
-    double spatial_residual_norm = std::sqrt(rhs[0]*rhs[0] + rhs[1]*rhs[1] + rhs[2]*rhs[2]);
+    double spatial_residual_norm = sqrt(rhs[0]*rhs[0] + rhs[1]*rhs[1] + rhs[2]*rhs[2]);
 
     if (spatial_residual_norm > max_step) {
         double scale = max_step / spatial_residual_norm;
@@ -658,21 +658,21 @@ double shape_and_gradient_local_superquad_surfacesearch(const double* xlocal, co
   double a_inv = 1.0 / shape[0];
   double b_inv = 1.0 / shape[1];
   double c_inv = 1.0 / shape[2];
-  double x_a = std::fabs(xlocal[0] * a_inv);
-  double y_b = std::fabs(xlocal[1] * b_inv);
-  double z_c = std::fabs(xlocal[2] * c_inv);
+  double x_a = fabs(xlocal[0] * a_inv);
+  double y_b = fabs(xlocal[1] * b_inv);
+  double z_c = fabs(xlocal[2] * c_inv);
   double n1 = block[0];
   double n2 = block[1];
-  double x_a_pow_n2_m2 = std::pow(x_a, n2 - 2.0);
+  double x_a_pow_n2_m2 = pow(x_a, n2 - 2.0);
   double x_a_pow_n2_m1 = x_a_pow_n2_m2 * x_a;
-  double y_b_pow_n2_m2 = std::pow(y_b, n2 - 2.0);
+  double y_b_pow_n2_m2 = pow(y_b, n2 - 2.0);
   double y_b_pow_n2_m1 = y_b_pow_n2_m2 * y_b;
 
   double nu = (x_a_pow_n2_m1 * x_a) + (y_b_pow_n2_m1 * y_b);
-  double nu_pow_n1_n2_m2 = std::pow(nu, n1/n2 - 2.0);
+  double nu_pow_n1_n2_m2 = pow(nu, n1/n2 - 2.0);
   double nu_pow_n1_n2_m1 = nu_pow_n1_n2_m2 * nu;
 
-  double z_c_pow_n1_m2 = std::pow(z_c, n1 -2.0);
+  double z_c_pow_n1_m2 = pow(z_c, n1 -2.0);
   double z_c_pow_n1_m1 = z_c_pow_n1_m2 * z_c;
 
   // Equation (14)
@@ -685,13 +685,13 @@ double shape_and_gradient_local_superquad_surfacesearch(const double* xlocal, co
 
   double F = (nu_pow_n1_n2_m1 * nu) + (z_c_pow_n1_m1 * z_c);
 
-  double scale_factor = std::pow(F, 1.0/n1 -1.0) / n1;
+  double scale_factor = pow(F, 1.0/n1 -1.0) / n1;
 
   grad[0] *= scale_factor;
   grad[1] *= scale_factor;
   grad[2] *= scale_factor;
 
-  return std::pow(F, 1.0/n1) - 1.0;
+  return pow(F, 1.0/n1) - 1.0;
 }
 
 /* ----------------------------------------------------------------------
@@ -703,14 +703,14 @@ double shape_and_gradient_local_n1equaln2_surfacesearch(const double* xlocal, co
   double a_inv = 1.0 / shape[0];
   double b_inv = 1.0 / shape[1];
   double c_inv = 1.0 / shape[2];
-  double x_a = std::fabs(xlocal[0] * a_inv);
-  double y_b = std::fabs(xlocal[1] * b_inv);
-  double z_c = std::fabs(xlocal[2] * c_inv);
-  double x_a_pow_n_m2 = std::pow(x_a, n - 2.0);
+  double x_a = fabs(xlocal[0] * a_inv);
+  double y_b = fabs(xlocal[1] * b_inv);
+  double z_c = fabs(xlocal[2] * c_inv);
+  double x_a_pow_n_m2 = pow(x_a, n - 2.0);
   double x_a_pow_n_m1 = x_a_pow_n_m2 * x_a;
-  double y_b_pow_n_m2 = std::pow(y_b, n - 2.0);
+  double y_b_pow_n_m2 = pow(y_b, n - 2.0);
   double y_b_pow_n_m1 = y_b_pow_n_m2 * y_b;
-  double z_c_pow_n_m2 = std::pow(z_c, n - 2.0);
+  double z_c_pow_n_m2 = pow(z_c, n - 2.0);
   double z_c_pow_n_m1 = z_c_pow_n_m2 * z_c;
 
   // Equation (14)
@@ -722,13 +722,13 @@ double shape_and_gradient_local_n1equaln2_surfacesearch(const double* xlocal, co
   grad[2] = n * c_inv * z_c_pow_n_m1 * signz;
 
   double F = (x_a_pow_n_m1 * x_a) + (y_b_pow_n_m1 * y_b) + (z_c_pow_n_m1 * z_c);
-  double scale_factor = std::pow(F, 1.0/n -1.0) / n;
+  double scale_factor = pow(F, 1.0/n -1.0) / n;
 
   grad[0] *= scale_factor;
   grad[1] *= scale_factor;
   grad[2] *= scale_factor;
 
-  return std::pow(F, 1.0/n) - 1.0;
+  return pow(F, 1.0/n) - 1.0;
 }
 
 /* ----------------------------------------------------------------------
@@ -747,7 +747,6 @@ double compute_overlap_distance(
   MathExtra::transpose_matvec(Rot, del, local_point);
   MathExtra::transpose_matvec(Rot, global_normal, local_normal);
 
-  double local_f;
   double local_grad[3];
 
   // elliposid analytical solution, might need to double check the math
@@ -780,7 +779,7 @@ double compute_overlap_distance(
 
     // Clamp delta to zero just in case numerical noise makes it negative
     if (delta < 0.0) delta = 0.0;
-    overlap = (-B + std::sqrt(delta)) / (2.0 * A);
+    overlap = (-B + sqrt(delta)) / (2.0 * A);
   } else {
     // --- Superquadric Case (Newton-Raphson on Distance Estimator) ---
 
@@ -801,7 +800,7 @@ double compute_overlap_distance(
       }
 
       // Convergence Check
-      if (std::fabs(val) < TOL_OVERLAP) break;
+      if (fabs(val) < TOL_OVERLAP) break;
 
       // Newton Step
       double slope = local_grad[0] * local_normal[0] +
@@ -809,7 +808,7 @@ double compute_overlap_distance(
                      local_grad[2] * local_normal[2];
 
       // Safety check to prevent divide-by-zero if ray grazes surface
-      if (std::fabs(slope) < MINSLOPE_OVERLAP) break;
+      if (fabs(slope) < MINSLOPE_OVERLAP) break;
 
       overlap -= val / slope;
     }

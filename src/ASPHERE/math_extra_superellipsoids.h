@@ -21,8 +21,8 @@
 #include "math_extra.h"
 
 #include <cmath>
-#include <iostream>
 #include <limits>
+#include <utility>
 
 namespace MathExtraSuperellipsoids {
 
@@ -39,9 +39,9 @@ inline double det4_M44_zero(const double m[4][4]);
 inline bool solve_4x4_robust_unrolled(double A[16], double b[4]);
 
 inline int check_oriented_bounding_boxes(const double *xc1, const double R1[3][3],
-                                          const double *shape1, const double *xc2,
-                                          const double R2[3][3], const double *shape2,
-                                          int cached_axis);
+                                         const double *shape1, const double *xc2,
+                                         const double R2[3][3], const double *shape2,
+                                         int cached_axis);
 
 inline bool check_intersection_axis(const int axis_id, const double C[3][3],
                                     const double AbsC[3][3], const double *center_distance_box1,
@@ -145,20 +145,20 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
   // --- COLUMN 0 ---
   // 1. Find Pivot in Col 0
   int p = 0;
-  double max_val = std::abs(A[0]);
+  double max_val = fabs(A[0]);
   double val;
 
-  val = std::abs(A[4]);
+  val = fabs(A[4]);
   if (val > max_val) {
     max_val = val;
     p = 1;
   }
-  val = std::abs(A[8]);
+  val = fabs(A[8]);
   if (val > max_val) {
     max_val = val;
     p = 2;
   }
-  val = std::abs(A[12]);
+  val = fabs(A[12]);
   if (val > max_val) {
     max_val = val;
     p = 3;
@@ -201,14 +201,14 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
   // --- COLUMN 1 ---
   // 1. Find Pivot in Col 1 (starting from row 1)
   p = 1;
-  max_val = std::abs(A[5]);
+  max_val = fabs(A[5]);
 
-  val = std::abs(A[9]);
+  val = fabs(A[9]);
   if (val > max_val) {
     max_val = val;
     p = 2;
   }
-  val = std::abs(A[13]);
+  val = fabs(A[13]);
   if (val > max_val) {
     max_val = val;
     p = 3;
@@ -244,9 +244,9 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
   // --- COLUMN 2 ---
   // 1. Find Pivot in Col 2 (starting from row 2)
   p = 2;
-  max_val = std::abs(A[10]);
+  max_val = fabs(A[10]);
 
-  val = std::abs(A[14]);
+  val = fabs(A[14]);
   if (val > max_val) {
     max_val = val;
     p = 3;
@@ -273,7 +273,7 @@ inline bool MathExtraSuperellipsoids::solve_4x4_robust_unrolled(double A[16], do
 
   // --- BACKWARD SUBSTITUTION ---
   // Check last pivot
-  if (std::abs(A[15]) <= 0.0) return false;
+  if (fabs(A[15]) <= 0.0) return false;
 
   double inv3 = 1.0 / A[15];
   b[3] *= inv3;
@@ -311,7 +311,7 @@ inline int MathExtraSuperellipsoids::check_oriented_bounding_boxes(
   MathExtra::transpose_times3(R1, R2, C);    // C = R1^T * R2
   for (unsigned int i = 0; i < 3; i++) {
     for (unsigned int j = 0; j < 3; j++) {
-      AbsC[i][j] = std::fabs(C[i][j]);    // for when absolute values are needed
+      AbsC[i][j] = fabs(C[i][j]);    // for when absolute values are needed
     }
   }
 
@@ -333,8 +333,7 @@ inline int MathExtraSuperellipsoids::check_oriented_bounding_boxes(
     if (axis_id == axis) continue;    // already checked
     separated = check_intersection_axis(axis_id, C, AbsC, center_distance_box1,
                                         center_distance_box2, shape1, shape2);
-    if (separated)
-      return axis_id; // update cached axis
+    if (separated) return axis_id;    // update cached axis
   }
   return -1;    // no separation found
 }
@@ -358,77 +357,77 @@ inline bool MathExtraSuperellipsoids::check_intersection_axis(const int axis_id,
     case 0:    // A0
       R1 = a[0];
       R2 = b[0] * AbsC[0][0] + b[1] * AbsC[0][1] + b[2] * AbsC[0][2];
-      R = std::fabs(center_distance_box1[0]);
+      R = fabs(center_distance_box1[0]);
       break;
     case 1:    // A1
       R1 = a[1];
       R2 = b[0] * AbsC[1][0] + b[1] * AbsC[1][1] + b[2] * AbsC[1][2];
-      R = std::fabs(center_distance_box1[1]);
+      R = fabs(center_distance_box1[1]);
       break;
     case 2:    // A2
       R1 = a[2];
       R2 = b[0] * AbsC[2][0] + b[1] * AbsC[2][1] + b[2] * AbsC[2][2];
-      R = std::fabs(center_distance_box1[2]);
+      R = fabs(center_distance_box1[2]);
       break;
     case 3:    // B0
       R1 = a[0] * AbsC[0][0] + a[1] * AbsC[1][0] + a[2] * AbsC[2][0];
       R2 = b[0];
-      R = std::fabs(center_distance_box2[0]);
+      R = fabs(center_distance_box2[0]);
       break;
     case 4:    // B1
       R1 = a[0] * AbsC[0][1] + a[1] * AbsC[1][1] + a[2] * AbsC[2][1];
       R2 = b[1];
-      R = std::fabs(center_distance_box2[1]);
+      R = fabs(center_distance_box2[1]);
       break;
     case 5:    // B2
       R1 = a[0] * AbsC[0][2] + a[1] * AbsC[1][2] + a[2] * AbsC[2][2];
       R2 = b[2];
-      R = std::fabs(center_distance_box2[2]);
+      R = fabs(center_distance_box2[2]);
       break;
     case 6:    // A0 x B0
       R1 = a[1] * AbsC[2][0] + a[2] * AbsC[1][0];
       R2 = b[1] * AbsC[0][2] + b[2] * AbsC[0][1];
-      R = std::fabs(center_distance_box1[2] * C[1][0] - center_distance_box1[1] * C[2][0]);
+      R = fabs(center_distance_box1[2] * C[1][0] - center_distance_box1[1] * C[2][0]);
       break;
     case 7:    // A0 x B1
       R1 = a[1] * AbsC[2][1] + a[2] * AbsC[1][1];
       R2 = b[0] * AbsC[0][2] + b[2] * AbsC[0][0];
-      R = std::fabs(center_distance_box1[2] * C[1][1] - center_distance_box1[1] * C[2][1]);
+      R = fabs(center_distance_box1[2] * C[1][1] - center_distance_box1[1] * C[2][1]);
       break;
     case 8:    // A0 x B2
       R1 = a[1] * AbsC[2][2] + a[2] * AbsC[1][2];
       R2 = b[0] * AbsC[0][1] + b[1] * AbsC[0][0];
-      R = std::fabs(center_distance_box1[2] * C[1][2] - center_distance_box1[1] * C[2][2]);
+      R = fabs(center_distance_box1[2] * C[1][2] - center_distance_box1[1] * C[2][2]);
       break;
     case 9:    // A1 x B0
       R1 = a[0] * AbsC[2][0] + a[2] * AbsC[0][0];
       R2 = b[1] * AbsC[1][2] + b[2] * AbsC[1][1];
-      R = std::fabs(center_distance_box1[0] * C[2][0] - center_distance_box1[2] * C[0][0]);
+      R = fabs(center_distance_box1[0] * C[2][0] - center_distance_box1[2] * C[0][0]);
       break;
     case 10:    // A1 x B1
       R1 = a[0] * AbsC[2][1] + a[2] * AbsC[0][1];
       R2 = b[0] * AbsC[1][2] + b[2] * AbsC[1][0];
-      R = std::fabs(center_distance_box1[0] * C[2][1] - center_distance_box1[2] * C[0][1]);
+      R = fabs(center_distance_box1[0] * C[2][1] - center_distance_box1[2] * C[0][1]);
       break;
     case 11:    // A1 x B2
       R1 = a[0] * AbsC[2][2] + a[2] * AbsC[0][2];
       R2 = b[0] * AbsC[1][1] + b[1] * AbsC[1][0];
-      R = std::fabs(center_distance_box1[0] * C[2][2] - center_distance_box1[2] * C[0][2]);
+      R = fabs(center_distance_box1[0] * C[2][2] - center_distance_box1[2] * C[0][2]);
       break;
     case 12:    // A2 x B0
       R1 = a[0] * AbsC[1][0] + a[1] * AbsC[0][0];
       R2 = b[1] * AbsC[2][2] + b[2] * AbsC[2][1];
-      R = std::fabs(center_distance_box1[1] * C[0][0] - center_distance_box1[0] * C[1][0]);
+      R = fabs(center_distance_box1[1] * C[0][0] - center_distance_box1[0] * C[1][0]);
       break;
     case 13:    // A2 x B1
       R1 = a[0] * AbsC[1][1] + a[1] * AbsC[0][1];
       R2 = b[0] * AbsC[2][2] + b[2] * AbsC[2][0];
-      R = std::fabs(center_distance_box1[1] * C[0][1] - center_distance_box1[0] * C[1][1]);
+      R = fabs(center_distance_box1[1] * C[0][1] - center_distance_box1[0] * C[1][1]);
       break;
     case 14:    // A2 x B2
       R1 = a[0] * AbsC[1][2] + a[1] * AbsC[0][2];
       R2 = b[0] * AbsC[2][1] + b[1] * AbsC[2][0];
-      R = std::fabs(center_distance_box1[1] * C[0][2] - center_distance_box1[0] * C[1][2]);
+      R = fabs(center_distance_box1[1] * C[0][2] - center_distance_box1[0] * C[1][2]);
       break;
   }
 
@@ -456,7 +455,7 @@ inline bool MathExtraSuperellipsoids::check_intersection_axis_and_get_seed(
   for (unsigned int i = 0; i < 3; i++) {
     for (unsigned int j = 0; j < 3; j++) {
       // Add epsilon to prevent division by zero in edge cases
-      AbsC[i][j] = std::fabs(C[i][j]) + eps;
+      AbsC[i][j] = fabs(C[i][j]) + eps;
     }
   }
 
@@ -483,77 +482,77 @@ inline bool MathExtraSuperellipsoids::check_intersection_axis_and_get_seed(
       case 0:    // A0
         R1_rad = shape1[0];
         R2_rad = shape2[0] * AbsC[0][0] + shape2[1] * AbsC[0][1] + shape2[2] * AbsC[0][2];
-        dist = std::fabs(center_distance_box1[0]);
+        dist = fabs(center_distance_box1[0]);
         break;
       case 1:    // A1
         R1_rad = shape1[1];
         R2_rad = shape2[0] * AbsC[1][0] + shape2[1] * AbsC[1][1] + shape2[2] * AbsC[1][2];
-        dist = std::fabs(center_distance_box1[1]);
+        dist = fabs(center_distance_box1[1]);
         break;
       case 2:    // A2
         R1_rad = shape1[2];
         R2_rad = shape2[0] * AbsC[2][0] + shape2[1] * AbsC[2][1] + shape2[2] * AbsC[2][2];
-        dist = std::fabs(center_distance_box1[2]);
+        dist = fabs(center_distance_box1[2]);
         break;
       case 3:    // B0
         R1_rad = shape1[0] * AbsC[0][0] + shape1[1] * AbsC[1][0] + shape1[2] * AbsC[2][0];
         R2_rad = shape2[0];
-        dist = std::fabs(center_distance_box2[0]);
+        dist = fabs(center_distance_box2[0]);
         break;
       case 4:    // B1
         R1_rad = shape1[0] * AbsC[0][1] + shape1[1] * AbsC[1][1] + shape1[2] * AbsC[2][1];
         R2_rad = shape2[1];
-        dist = std::fabs(center_distance_box2[1]);
+        dist = fabs(center_distance_box2[1]);
         break;
       case 5:    // B2
         R1_rad = shape1[0] * AbsC[0][2] + shape1[1] * AbsC[1][2] + shape1[2] * AbsC[2][2];
         R2_rad = shape2[2];
-        dist = std::fabs(center_distance_box2[2]);
+        dist = fabs(center_distance_box2[2]);
         break;
       case 6:    // A0 x B0
         R1_rad = shape1[1] * AbsC[2][0] + shape1[2] * AbsC[1][0];
         R2_rad = shape2[1] * AbsC[0][2] + shape2[2] * AbsC[0][1];
-        dist = std::fabs(center_distance_box1[2] * C[1][0] - center_distance_box1[1] * C[2][0]);
+        dist = fabs(center_distance_box1[2] * C[1][0] - center_distance_box1[1] * C[2][0]);
         break;
       case 7:    // A0 x B1
         R1_rad = shape1[1] * AbsC[2][1] + shape1[2] * AbsC[1][1];
         R2_rad = shape2[0] * AbsC[0][2] + shape2[2] * AbsC[0][0];
-        dist = std::fabs(center_distance_box1[2] * C[1][1] - center_distance_box1[1] * C[2][1]);
+        dist = fabs(center_distance_box1[2] * C[1][1] - center_distance_box1[1] * C[2][1]);
         break;
       case 8:    // A0 x B2
         R1_rad = shape1[1] * AbsC[2][2] + shape1[2] * AbsC[1][2];
         R2_rad = shape2[0] * AbsC[0][1] + shape2[1] * AbsC[0][0];
-        dist = std::fabs(center_distance_box1[2] * C[1][2] - center_distance_box1[1] * C[2][2]);
+        dist = fabs(center_distance_box1[2] * C[1][2] - center_distance_box1[1] * C[2][2]);
         break;
       case 9:    // A1 x B0
         R1_rad = shape1[0] * AbsC[2][0] + shape1[2] * AbsC[0][0];
         R2_rad = shape2[1] * AbsC[1][2] + shape2[2] * AbsC[1][1];
-        dist = std::fabs(center_distance_box1[0] * C[2][0] - center_distance_box1[2] * C[0][0]);
+        dist = fabs(center_distance_box1[0] * C[2][0] - center_distance_box1[2] * C[0][0]);
         break;
       case 10:    // A1 x B1
         R1_rad = shape1[0] * AbsC[2][1] + shape1[2] * AbsC[0][1];
         R2_rad = shape2[0] * AbsC[1][2] + shape2[2] * AbsC[1][0];
-        dist = std::fabs(center_distance_box1[0] * C[2][1] - center_distance_box1[2] * C[0][1]);
+        dist = fabs(center_distance_box1[0] * C[2][1] - center_distance_box1[2] * C[0][1]);
         break;
       case 11:    // A1 x B2
         R1_rad = shape1[0] * AbsC[2][2] + shape1[2] * AbsC[0][2];
         R2_rad = shape2[0] * AbsC[1][1] + shape2[1] * AbsC[1][0];
-        dist = std::fabs(center_distance_box1[0] * C[2][2] - center_distance_box1[2] * C[0][2]);
+        dist = fabs(center_distance_box1[0] * C[2][2] - center_distance_box1[2] * C[0][2]);
         break;
       case 12:    // A2 x B0
         R1_rad = shape1[0] * AbsC[1][0] + shape1[1] * AbsC[0][0];
         R2_rad = shape2[1] * AbsC[2][2] + shape2[2] * AbsC[2][1];
-        dist = std::fabs(center_distance_box1[1] * C[0][0] - center_distance_box1[0] * C[1][0]);
+        dist = fabs(center_distance_box1[1] * C[0][0] - center_distance_box1[0] * C[1][0]);
         break;
       case 13:    // A2 x B1
         R1_rad = shape1[0] * AbsC[1][1] + shape1[1] * AbsC[0][1];
         R2_rad = shape2[0] * AbsC[2][2] + shape2[2] * AbsC[2][0];
-        dist = std::fabs(center_distance_box1[1] * C[0][1] - center_distance_box1[0] * C[1][1]);
+        dist = fabs(center_distance_box1[1] * C[0][1] - center_distance_box1[0] * C[1][1]);
         break;
       case 14:    // A2 x B2
         R1_rad = shape1[0] * AbsC[1][2] + shape1[1] * AbsC[0][2];
         R2_rad = shape2[0] * AbsC[2][1] + shape2[1] * AbsC[2][0];
-        dist = std::fabs(center_distance_box1[1] * C[0][2] - center_distance_box1[0] * C[1][2]);
+        dist = fabs(center_distance_box1[1] * C[0][2] - center_distance_box1[0] * C[1][2]);
         break;
       default:
         return false;
@@ -592,9 +591,7 @@ inline bool MathExtraSuperellipsoids::check_intersection_axis_and_get_seed(
     // Face-to-Face contact logic: Project "Incident" box onto "Reference" face, clip to find overlap center.
     // Pointers to define who is Reference (the face) and who is Incident
     const double *posRef = xc1;
-    const double *posInc = xc2;
-    const double(*RRef)[3] = R1;
-    const double(*RInc)[3] = R2;
+    const double (*RRef)[3] = R1;
     const double *shapeRef = shape1;
     const double *shapeInc = shape2;
     double *D_local_Ref = center_distance_box1;    // Center dist in Ref frame
@@ -604,9 +601,7 @@ inline bool MathExtraSuperellipsoids::check_intersection_axis_and_get_seed(
     // Swap if Reference is Box 2 (Indices 3, 4, 5)
     if (best_axis >= 3) {
       posRef = xc2;
-      posInc = xc1;
       RRef = R2;
-      RInc = R1;
       shapeRef = shape2;
       shapeInc = shape1;
       D_local_Ref = center_distance_box2;
@@ -754,9 +749,9 @@ inline int MathExtraSuperellipsoids::determine_contact_point_wall(
     X0_local[2] = c * c * nz * inv_norm;
   } else {
     // General Superellipsoid
-    double nx_abs = std::fabs(nx);
-    double ny_abs = std::fabs(ny);
-    double nz_abs = std::fabs(nz);
+    double nx_abs = fabs(nx);
+    double ny_abs = fabs(ny);
+    double nz_abs = fabs(nz);
     double n1 = blocki[0];
     double n2 = blocki[1];
 
@@ -771,22 +766,20 @@ inline int MathExtraSuperellipsoids::determine_contact_point_wall(
       double p1 = 1.0 / (n1 - 1.0);
 
       if (nx_abs > ny_abs) {
-        double alpha = std::pow((b * ny_abs) / (a * nx_abs), p2);
-        double gamma = std::pow(1.0 + std::pow(alpha, n2), n1 / n2 - 1.0);
-        double beta = std::pow((c * nz_abs) / (a * nx_abs) * gamma, p1);
+        double alpha = pow((b * ny_abs) / (a * nx_abs), p2);
+        double gamma = pow(1.0 + pow(alpha, n2), n1 / n2 - 1.0);
+        double beta = pow((c * nz_abs) / (a * nx_abs) * gamma, p1);
 
-        double den =
-            std::pow(std::pow(1.0 + std::pow(alpha, n2), n1 / n2) + std::pow(beta, n1), 1.0 / n1);
+        double den = pow(pow(1.0 + pow(alpha, n2), n1 / n2) + pow(beta, n1), 1.0 / n1);
         x = 1.0 / den;
         y = alpha * x;
         z = beta * x;
       } else {
-        double alpha = std::pow((a * nx_abs) / (b * ny_abs), p2);
-        double gamma = std::pow(1.0 + std::pow(alpha, n2), n1 / n2 - 1.0);
-        double beta = std::pow((c * nz_abs) / (b * ny_abs) * gamma, p1);
+        double alpha = pow((a * nx_abs) / (b * ny_abs), p2);
+        double gamma = pow(1.0 + pow(alpha, n2), n1 / n2 - 1.0);
+        double beta = pow((c * nz_abs) / (b * ny_abs) * gamma, p1);
 
-        double den =
-            std::pow(std::pow(1.0 + std::pow(alpha, n2), n1 / n2) + std::pow(beta, n1), 1.0 / n1);
+        double den = pow(pow(1.0 + pow(alpha, n2), n1 / n2) + pow(beta, n1), 1.0 / n1);
         y = 1.0 / den;
         x = alpha * y;
         z = beta * y;

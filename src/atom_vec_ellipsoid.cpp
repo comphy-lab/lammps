@@ -35,8 +35,8 @@ static constexpr double EPSILON_BLOCK = 1.0e-3;
 /* ---------------------------------------------------------------------- */
 
 AtomVecEllipsoid::AtomVecEllipsoid(LAMMPS *lmp) :
-    AtomVec(lmp), bonus(nullptr), ellipsoid(nullptr), rmass(nullptr), angmom(nullptr),
-    quat_hold(nullptr), bonus_super(nullptr)
+    AtomVec(lmp), bonus(nullptr), bonus_super(nullptr), ellipsoid(nullptr), rmass(nullptr),
+    angmom(nullptr), quat_hold(nullptr)
 {
   molecular = Atom::ATOMIC;
   bonus_flag = 1;
@@ -598,7 +598,7 @@ void AtomVecEllipsoid::data_atom_bonus(int m, const std::vector<std::string> &va
 
     double *block = bonus_super[nlocal_bonus].block;
     BlockType &type = bonus_super[nlocal_bonus].type;
-    if (ivalue == values.size()) {
+    if (ivalue == (int)values.size()) {
       block[0] = block[1] = 2.0;
       type = BlockType::ELLIPSOID;
     } else {
@@ -1014,7 +1014,7 @@ AtomVecEllipsoid::BlockType AtomVecEllipsoid::determine_type(double *block)
 
 double AtomVecEllipsoid::radius_ellipsoid(double *shape, double *block, BlockType flag_type)
 {
-  if (flag_type == BlockType::ELLIPSOID) return std::max(std::max(shape[0], shape[1]), shape[2]);
+  if (flag_type == BlockType::ELLIPSOID) return std::max({shape[0], shape[1], shape[2]});
 
   // Super ellipsoid
   double a = shape[0], b = shape[1], c = shape[2];
@@ -1099,13 +1099,13 @@ void AtomVecEllipsoid::process_args(int narg, char **arg)
       size_data_bonus = 10;
 
       // Add radius to the arrays for communication
-      fields_grow.push_back("radius");
-      fields_copy.push_back("radius");
-      fields_border.push_back("radius");
-      fields_border_vel.push_back("radius");
-      fields_exchange.push_back("radius");
-      fields_restart.push_back("radius");
-      fields_create.push_back("radius");
+      fields_grow.emplace_back("radius");
+      fields_copy.emplace_back("radius");
+      fields_border.emplace_back("radius");
+      fields_border_vel.emplace_back("radius");
+      fields_exchange.emplace_back("radius");
+      fields_restart.emplace_back("radius");
+      fields_create.emplace_back("radius");
 
       setup_fields();
 

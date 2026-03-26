@@ -785,13 +785,13 @@ void FixColvars::end_of_step()
 {
   if (store_forces) {
 
-    const tagint * const tag = atom->tag;
-    double * const * const f = atom->f;
+    const tagint *const tag = atom->tag;
+    double *const *const f = atom->f;
     const int nlocal = atom->nlocal;
 
     /* check and potentially grow local communication buffers. */
-    int i,nmax_new,nme=0;
-    for (i=0; i < num_coords; ++i) {
+    int i, nmax_new, nme = 0;
+    for (i = 0; i < num_coords; ++i) {
       const tagint k = atom->map(taglist[i]);
       if ((k >= 0) && (k < nlocal))
         ++nme;
@@ -813,7 +813,7 @@ void FixColvars::end_of_step()
       // store old force data
       std::vector<cvm::rvector> &of = *(proxy->modify_atom_total_forces());
 
-      for (i=0; i<num_coords; ++i) {
+      for (i = 0; i < num_coords; ++i) {
         const tagint k = atom->map(taglist[i]);
         if ((k >= 0) && (k < nlocal)) {
 
@@ -829,7 +829,7 @@ void FixColvars::end_of_step()
       }
 
       /* loop over procs to receive remote data */
-      for (i=1; i < comm->nprocs; ++i) {
+      for (i = 1; i < comm->nprocs; ++i) {
         int maxbuf = nmax*size_one;
         MPI_Irecv(comm_buf, maxbuf, MPI_BYTE, i, 0, world, &request);
         MPI_Send(&tmp, 0, MPI_INT, i, 0, world);
@@ -837,7 +837,7 @@ void FixColvars::end_of_step()
         MPI_Get_count(&status, MPI_BYTE, &ndata);
         ndata /= size_one;
 
-        for (int k=0; k<ndata; ++k) {
+        for (int k = 0; k < ndata; ++k) {
           auto search = idmap.find(comm_buf[k].tag);
           if (search != idmap.end()) {
             const int j = search->second;
@@ -852,8 +852,8 @@ void FixColvars::end_of_step()
     } else { // me != 0
       /* copy total force data into communication buffer */
       nme = 0;
-      for (i=0; i<num_coords; ++i) {
-        const tagint k = atom->map(taglist[i]);
+      for (i = 0; i < num_coords; ++i) {
+        const auto k = atom->map(taglist[i]);
         if ((k >= 0) && (k < nlocal)) {
           comm_buf[nme].tag  = tag[k];
           comm_buf[nme].x    = f[k][0];

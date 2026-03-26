@@ -191,10 +191,9 @@ void PairGranularSuperellipsoid::compute(int eflag, int vflag)
 
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
-  int newton_pair = force->newton_pair;
   double *special_lj = force->special_lj;
 
-  auto avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
+  auto *avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
   AtomVecEllipsoid::BonusSuper *bonus = avec_ellipsoid->bonus_super;
   int *ellipsoid = atom->ellipsoid;
 
@@ -788,7 +787,7 @@ void PairGranularSuperellipsoid::reset_dt()
 
 /* ---------------------------------------------------------------------- */
 
-double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jtype*/, double rsq,
+double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jtype*/, double /*rsq*/,
                                           double /*factor_coul*/, double factor_lj, double &fforce)
 {
   if (factor_lj == 0) {
@@ -821,8 +820,6 @@ double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jty
   xj = atom->x[j];
   radi = atom->radius[i];
   radj = atom->radius[j];
-  itype = itype;
-  jtype = jtype;
   history_data = &allhistory[size_history * neighprev];
   int indx_ref = (atom->tag[i] < atom->tag[j]) ? i : j;
   xref = atom->x[indx_ref];
@@ -830,7 +827,7 @@ double PairGranularSuperellipsoid::single(int i, int j, int /*itype*/, int /*jty
   tagj = atom->tag[j];
   history_update = 0;    // Don't update history
 
-  auto avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
+  auto *avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
   AtomVecEllipsoid::BonusSuper *bonus = avec_ellipsoid->bonus_super;
   int *ellipsoid = atom->ellipsoid;
 
@@ -982,7 +979,7 @@ double PairGranularSuperellipsoid::mix_mean(double val1, double val2)
 
 bool PairGranularSuperellipsoid::check_contact()
 {
-  bool touching;
+  bool touching = false;
   if (rsq >= radsum * radsum) {
     touching = false;
   } else {
@@ -1011,8 +1008,6 @@ bool PairGranularSuperellipsoid::check_contact()
       X0[1] = X0_prev[1] + xref[1];
       X0[2] = X0_prev[2] + xref[2];
       X0[3] = X0_prev[3];
-      // std::cout << "Using old contact point as initial guess between particle " << atom->tag[i] << " and particle " << atom->tag[j] << " : "
-      //           << X0[0] << " " << X0[1] << " " << X0[2] << " Lagrange multiplier mu^2: " << X0[3] << std::endl;
       int status = MathExtraSuperellipsoids::determine_contact_point(xi, Ri, shapei, blocki, flagi,
                                                                      xj, Rj, shapej, blockj, flagj,
                                                                      X0, nij, contact_formulation);
