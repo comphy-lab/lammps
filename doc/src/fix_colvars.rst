@@ -170,7 +170,10 @@ reason, the "output" keyword is required for fix colvars.
 
 .. versionadded:: TBD
 
-This fix accesses a global array of the current values of each collective variable computed in the Colvars module. The number of rows of the global array is equal to the number of collective variables and the columns are:
+This fix provides access to a global array of the current values of each
+collective variable computed in the Colvars module.  The number of rows
+of the global array is equal to the number of collective variables and
+the columns are:
 
 * `f_ID[I][1]` for a scalar-valued collective variable
 * `f_ID[I][1], ..., f_ID[I][N]` for a vector-valued collective variable
