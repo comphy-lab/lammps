@@ -50,17 +50,17 @@ The interaction styles listed below compute force field formulas that
 are consistent with common options in CHARMM or AMBER.  See each
 command's documentation for the formula it computes.
 
-* :doc:`bond_style <bond_harmonic>` harmonic
-* :doc:`angle_style <angle_charmm>` charmm
-* :doc:`dihedral_style <dihedral_charmm>` charmmfsh
-* :doc:`dihedral_style <dihedral_charmm>` charmm
-* :doc:`pair_style <pair_charmm>` lj/charmmfsw/coul/charmmfsh
-* :doc:`pair_style <pair_charmm>` lj/charmmfsw/coul/long
-* :doc:`pair_style <pair_charmm>` lj/charmm/coul/charmm
-* :doc:`pair_style <pair_charmm>` lj/charmm/coul/charmm/implicit
-* :doc:`pair_style <pair_charmm>` lj/charmm/coul/long
-* :doc:`special_bonds <special_bonds>` charmm
-* :doc:`special_bonds <special_bonds>` amber
+* :doc:`bond_style harmonic <bond_harmonic>`
+* :doc:`angle_style charmm <angle_charmm>`
+* :doc:`dihedral_style charmmfsh <dihedral_charmm>`
+* :doc:`dihedral_style charmm <dihedral_charmm>`
+* :doc:`pair_style lj/charmmfsw/coul/charmmfsh <pair_charmm>`
+* :doc:`pair_style lj/charmmfsw/coul/long <pair_charmm>`
+* :doc:`pair_style lj/charmm/coul/charmm <pair_charmm>`
+* :doc:`pair_style lj/charmm/coul/charmm/implicit <pair_charmm>`
+* :doc:`pair_style lj/charmm/coul/long <pair_charmm>`
+* :doc:`special_bonds charmm <special_bonds>`
+* :doc:`special_bonds amber <special_bonds>`
 
 The pair styles compute Lennard Jones (LJ) and Coulombic interactions
 with additional switching or shifting functions that ramp the energy
@@ -174,19 +174,21 @@ These interaction styles listed below compute force field formulas that
 are consistent with the COMPASS force field.  See each command's
 documentation for the formula it computes.
 
-* :doc:`bond_style <bond_class2>` class2
-* :doc:`angle_style <angle_class2>` class2
-* :doc:`dihedral_style <dihedral_class2>` class2
-* :doc:`improper_style <improper_class2>` class2
+* :doc:`bond_style class2 <bond_class2>`
+* :doc:`angle_style class2 <angle_class2>`
+* :doc:`dihedral_style class2 <dihedral_class2>`
+* :doc:`improper_style class2 <improper_class2>`
 
-* :doc:`pair_style <pair_class2>` lj/class2
-* :doc:`pair_style <pair_class2>` lj/class2/coul/cut
-* :doc:`pair_style <pair_class2>` lj/class2/coul/long
+* :doc:`pair_style lj/class2 <pair_class2>`
+* :doc:`pair_style lj/class2/coul/cut <pair_class2>`
+* :doc:`pair_style  lj/class2/coul/long<pair_class2>`
 
-* :doc:`special_bonds <special_bonds>` lj/coul 0 0 1
+* :doc:`special_bonds lj/coul 0 0 1 <special_bonds>`
 
 ClassII-xe
 ----------
+
+.. versionadded:: TBD
 
 The computationally efficient simulation of condensed phase materials
 such as metals, polymers, and composites can be achieved with fixed bond
@@ -199,42 +201,41 @@ ClassII-based force fields add inter-molecular coupling via cross-term
 interactions, which also add in more complex vibrational modes. The
 primary materials that COMPASS and PCFF allow for modeling are
 structural, where it is often desired to be able to computationally
-predict the mechanical response of the material. However, the
-underlying harmonic bonds and harmonic cross-terms limit the reliability
-of the physics during a straining simulation. To overcome the harmonic
-bonding limitations, a Morse bond :ref:`(Morse) <howto-Morse>` can be
-used in place of the quartic bond; however the cross-terms are still
+predict the mechanical response of the material. However, the underlying
+harmonic bonds and harmonic cross-terms limit the reliability of the
+physics during a straining simulation. To overcome the harmonic bonding
+limitations, a Morse bond :ref:`(Morse) <howto-Morse>` can be used in
+place of the quartic bond; however the cross-terms are still
 harmonic. To overcome the limitation of the cross-terms that couple bond
 stretch to other higher-order interactions (angles, dihedrals, and
 impropers), those respective cross-terms also need to be modified.
 
 The cross-term potentials that model bond stretch coupling to
 higher-order interactions are like the harmonic bonding potential.
-Thus, the exponential function that :ref:`(Morse) <howto-Morse>`
-derived for converting a harmonic bonding potential to a bonding
-potential that models bond dissociation (which approximates larger bond
-stretches of the Hamiltonian operator); can be implemented into the
-cross-terms. This defines the naming convention for the ClassII-xe
-functional form, where x refers to cross-term and e refers to an
-exponential function, and defines the purpose of the ClassII-xe
-functional form. The purpose is to allow bond dissociation in a
-ClassII-based force field via a consistent definition of bond
-dissociation via the Morse bonding potential and the higher-order
-cross-term coupling potentials. See
-:ref:`(Kemppainen) <howto-Kemppainen>` for a description of the
-ClassII-xe functional form. The interaction styles listed below
-compute the force field formulas for the ClassII-xe functional form:
+Thus, the exponential function that :ref:`(Morse) <howto-Morse>` derived
+for converting a harmonic bonding potential to a bonding potential that
+models bond dissociation (which approximates larger bond stretches of
+the Hamiltonian operator); can be implemented into the cross-terms. This
+defines the naming convention for the ClassII-xe functional form, where
+x refers to cross-term and e refers to an exponential function, and
+defines the purpose of the ClassII-xe functional form. The purpose is to
+allow bond dissociation in a ClassII-based force field via a consistent
+definition of bond dissociation via the Morse bonding potential and the
+higher-order cross-term coupling potentials. See :ref:`(Kemppainen)
+<howto-Kemppainen>` for a description of the ClassII-xe functional
+form. The interaction styles listed below compute the force field
+formulas for the ClassII-xe functional form:
 
-* :doc:`bond_style <bond_morse>` morse
-* :doc:`angle_style <angle_class2>` class2xe
-* :doc:`dihedral_style <dihedral_class2>` class2xe
-* :doc:`improper_style <improper_class2>` class2
+* :doc:`bond_style morse <bond_morse>`
+* :doc:`angle_style class2xe <angle_class2>`
+* :doc:`dihedral_style class2xe <dihedral_class2>`
+* :doc:`improper_style class2 <improper_class2>`
 
-* :doc:`pair_style <pair_class2>` lj/class2
-* :doc:`pair_style <pair_class2>` lj/class2/coul/cut
-* :doc:`pair_style <pair_class2>` lj/class2/coul/long
+* :doc:`pair_style lj/class2 <pair_class2>`
+* :doc:`pair_style lj/class2/coul/cut <pair_class2>`
+* :doc:`pair_style lj/class2/coul/long <pair_class2>`
 
-* :doc:`special_bonds <special_bonds>` lj/coul 0 0 1
+* :doc:`special_bonds lj/coul 0 0 1 <special_bonds>`
 
 Since both COMPASS and PCFF are Class II-based, their parameters can be
 converted into the ClassII-xe functional form. Thus, any structural
@@ -242,17 +243,16 @@ material that COMPASS and PCFF can model can have higher fidelity
 straining simulations to compute the mechanical response of the given
 material, simply by converting their parameters to the ClassII-xe
 functional form. The conversion from ClassII to ClassII-xe functional
-form requires a bit of reparameterization since the cross-terms make
-up a bulk of the parameters in the force field. To overcome this
-reparameterization, see the
-`Pre/Post processing <https://www.lammps.org/prepost.html>`_
-page for LUNAR, where LUNAR can be used to build a model from scratch
-in either COMPASS or PCFF (using atom_typing and all2lmp) and then
-convert that model to COMPASS-xe or PCFF-xe (using
-auto_morse_bond_update). To establish a consistent naming convention
-for the new ClassII-xe functional form when converting from a parent
-force field, the -xe suffix should be added to the parent force field
-name (e.g. PCFF vs. PCFF-xe).
+form requires a bit of re-parameterization since the cross-terms make up
+a bulk of the parameters in the force field. To overcome this
+re-parameterization, see the `Pre/Post processing
+<https://www.lammps.org/prepost.html>`_ page for LUNAR, where LUNAR can
+be used to build a model from scratch in either COMPASS or PCFF (using
+atom_typing and all2lmp) and then convert that model to COMPASS-xe or
+PCFF-xe (using auto_morse_bond_update). To establish a consistent naming
+convention for the new ClassII-xe functional form when converting from a
+parent force field, the -xe suffix should be added to the parent force
+field name (e.g. PCFF vs. PCFF-xe).
 
 The usage of the ClassII-xe functional form can only let a bond
 dissociate; however, to disconnect the dissociated bond and remove the
@@ -326,28 +326,28 @@ The interaction styles listed below compute force field formulas that
 are consistent with the DREIDING force field.  See each command's
 documentation for the formula it computes.
 
-* :doc:`bond_style <bond_harmonic>` harmonic
-* :doc:`bond_style <bond_morse>` morse
+* :doc:`bond_style harmonic <bond_harmonic>`
+* :doc:`bond_style morse <bond_morse>`
 
-* :doc:`angle_style <angle_cosine_squared>` cosine/squared
-* :doc:`angle_style <angle_harmonic>` harmonic
-* :doc:`angle_style <angle_cosine>` cosine
-* :doc:`angle_style <angle_cosine_periodic>` cosine/periodic
+* :doc:`angle_style cosine/squared <angle_cosine_squared>`
+* :doc:`angle_style harmonic <angle_harmonic>`
+* :doc:`angle_style cosine <angle_cosine>`
+* :doc:`angle_style cosine/periodic <angle_cosine_periodic>`
 
-* :doc:`dihedral_style <dihedral_charmm>` charmm
-* :doc:`improper_style <improper_umbrella>` umbrella
+* :doc:`dihedral_style charmm <dihedral_charmm>`
+* :doc:`improper_style umbrella <improper_umbrella>`
 
-* :doc:`pair_style <pair_buck>` buck
-* :doc:`pair_style <pair_buck>` buck/coul/cut
-* :doc:`pair_style <pair_buck>` buck/coul/long
-* :doc:`pair_style <pair_lj>` lj/cut
-* :doc:`pair_style <pair_lj_cut_coul>` lj/cut/coul/cut
-* :doc:`pair_style <pair_lj_cut_coul>` lj/cut/coul/long
+* :doc:`pair_style buck <pair_buck>`
+* :doc:`pair_style buck/coul/cut <pair_buck>`
+* :doc:`pair_style buck/coul/long <pair_buck>`
+* :doc:`pair_style lj/cut <pair_lj>`
+* :doc:`pair_style lj/cut/coul/cut <pair_lj_cut_coul>`
+* :doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul>`
 
-* :doc:`pair_style <pair_hbond_dreiding>` hbond/dreiding/lj
-* :doc:`pair_style <pair_hbond_dreiding>` hbond/dreiding/morse
+* :doc:`pair_style hbond/dreiding/lj <pair_hbond_dreiding>`
+* :doc:`pair_style hbond/dreiding/morse <pair_hbond_dreiding>`
 
-* :doc:`special_bonds <special_bonds>` dreiding
+* :doc:`special_bonds dreiding <special_bonds>`
 
 OPLS
 ----
@@ -372,16 +372,16 @@ are fully or in part consistent with the OPLS style force fields.  See
 each command's documentation for the formula it computes.  Some are only
 compatible with a subset of OPLS interactions.
 
-* :doc:`bond_style <bond_harmonic>` harmonic
-* :doc:`angle_style <angle_harmonic>` harmonic
-* :doc:`dihedral_style <dihedral_opls>` opls
-* :doc:`improper_style <improper_cvff>` cvff
-* :doc:`improper_style <improper_fourier>` fourier
-* :doc:`improper_style <improper_harmonic>` harmonic
-* :doc:`pair_style <pair_lj_cut_coul>` lj/cut/coul/cut
-* :doc:`pair_style <pair_lj_cut_coul>` lj/cut/coul/long
-* :doc:`pair_modify <pair_modify>` geometric
-* :doc:`special_bonds <special_bonds>` lj/coul 0.0 0.0 0.5
+* :doc:`bond_style harmonic <bond_harmonic>`
+* :doc:`angle_style harmonic <angle_harmonic>`
+* :doc:`dihedral_style opls <dihedral_opls>`
+* :doc:`improper_style cvff <improper_cvff>`
+* :doc:`improper_style fourier <improper_fourier>`
+* :doc:`improper_style harmonic <improper_harmonic>`
+* :doc:`pair_style lj/cut/coul/cut <pair_lj_cut_coul>`
+* :doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul>`
+* :doc:`pair_modify geometric <pair_modify>`
+* :doc:`special_bonds lj/coul 0.0 0.0 0.5 <special_bonds>`
 
 ----------
 
