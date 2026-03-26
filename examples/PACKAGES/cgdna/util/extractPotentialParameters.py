@@ -471,7 +471,7 @@ print("")
 
 # Write coaxstk
 print("* * coaxstk %21.15le %21.15le %21.15le %21.15le %21.15le 2.0 2.891592653589793 0.65 1.3 0.0 0.8 0.9 0.0 0.95 0.9 0.0 0.95 40.0 3.116592653589793" %\
-        ((58.5*conversion_factors.energy/conversion_factors.length/conversion_factors.length),\
+        ((71.53230010095517*conversion_factors.energy/conversion_factors.length/conversion_factors.length),\
          (0.370011*conversion_factors.length), (0.570011*conversion_factors.length),\
          (0.190011*conversion_factors.length), (0.550011*conversion_factors.length)), end=" ")
 print("")
