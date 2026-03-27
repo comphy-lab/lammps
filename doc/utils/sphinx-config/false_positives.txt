@@ -1765,6 +1765,7 @@ isenthalpic
 ish
 Ishida
 iso
+isochoric
 isodemic
 isoenergetic
 isoenthalpic
