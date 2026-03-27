@@ -168,7 +168,7 @@ Aside from the state information in a ".colvars.state" file, other
 are produced by Colvars depending on the type of simulation.  For this
 reason, the "output" keyword is required for fix colvars.
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 This fix provides access to a global array of the current values of each
 collective variable computed in the Colvars module.  The number of rows

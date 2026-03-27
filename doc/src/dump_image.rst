@@ -496,7 +496,7 @@ is used to define particles as line segments, and will draw them as
 lines.  If this keyword is not used, such particles will be drawn as
 spheres, the same as if they were regular atoms.
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
    added *index* and *atom* color styles
 
@@ -536,7 +536,7 @@ edges are drawn, the *width* setting determines the diameters of the
 line segments.  If this keyword is not used, triangle particles will
 be drawn as spheres, the same as if they were regular atoms.
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
    added *index* and *atom* color styles
 
@@ -566,7 +566,7 @@ colors than atom types are desired, the *number of atom types* must be
 
 .. versionadded:: 11Feb2026
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
    Now uses rounded triangles
 
@@ -579,7 +579,7 @@ If edges are drawn, the *width* setting determines the diameters of the
 line segments.  If this keyword is not used, ellipsoid particles will be
 drawn as spheres, the same as if they were regular atoms.
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
    added *index* and *atom* color styles
 
@@ -605,7 +605,7 @@ colors than atom types are desired, the *number of atom types* must be
 *increased* correspondingly when using either the :doc:`create_box
 <create_box>` or the :doc:`read_data <read_data>` command.
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
    changed initial geometry to icosahedron and use rounded triangles
 
@@ -650,7 +650,7 @@ parameters mean for each body style.
 
    added *index* color style
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
    added *atom* color style
 
@@ -1183,7 +1183,7 @@ dump_modify color option.
 
 ----------
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
    add support for entering colors in hexadecimal
 

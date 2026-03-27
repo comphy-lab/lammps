@@ -620,7 +620,7 @@ follows the documented steps, those trajectory dump files can be
 `imported and visualized in OVITO
 <https://www.ovito.org/manual/advanced_topics/aspherical_particles.html>`_
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
    Now uses curved triangles instead of flat ones; "both" option is removed
 

@@ -541,7 +541,7 @@ other. Note that the SPH smoothing kernel diameter used for computing
 long range, nonlocal interactions, is set using the *diameter*
 keyword.
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 Keyword *block* sets the blockiness of the selected atoms.  The
 particles must be ellipsoids as defined by the :doc:`atom_style

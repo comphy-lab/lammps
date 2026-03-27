@@ -30,7 +30,7 @@ Examples
 Description
 """""""""""
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 The *granular/superellipsoid* style calculates granular contact forces
 between superellipsoidal particles (see :doc:`atom style ellipsoid

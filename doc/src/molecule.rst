@@ -168,7 +168,7 @@ complex and are described on the doc page for each improper style in the
    <read_restart>`, thus binary restart files need to be converted to
    data files first.
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 The *auto* keyword allows the molecule command to generate new angles,
 dihedrals, and/or impropers, and assign their angle types, dihedral
