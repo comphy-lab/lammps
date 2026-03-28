@@ -826,9 +826,9 @@ void FixAdapt::change_settings()
         if (scaleflag) scale = value / previous_diam_scale;
 
         // mass must not become zero and radius must not be negative
-        if (massflag && (scale == 0.0) || (value == 0.0))
+        if (massflag && ((scale == 0.0) || (value == 0.0)))
           error->all(FLERR, Error::NOLASTLINE, "Fix adapt particle mass has become 0.0");
-        if (!massflag && (scale < 0.0) || (value < 0.0))
+        if (!massflag && ((scale < 0.0) || (value < 0.0)))
           error->all(FLERR, Error::NOLASTLINE, "Fix adapt particle diameter has become negative");
 
         for (i = 0; i < nall; i++) {
