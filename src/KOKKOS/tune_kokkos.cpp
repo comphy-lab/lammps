@@ -19,14 +19,18 @@
 #include "tune_kokkos.h"
 
 #include "comm.h"
+#include "error.h"
 #include "lammps.h"
 #include "kokkos.h"
-#include "error.h"
+#include "memory.h"
 #include "timer.h"
 #include "update.h"
 
+#include <algorithm>
+
 using namespace LAMMPS_NS;
 
+enum { MAX_VALUE=0, AVERAGE_VALUE=1, MEDIAN_VALUE=2};
 //#define TUNE_DEBUG
 
 /* ---------------------------------------------------------------------- */
@@ -41,6 +45,8 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
   opt_perf = 0.0;
   scanning_completed = 0;
   relative_tolerance = 0.20;    // 20% performance degradation allowed
+  nsamples = 5;
+  mode = MAX_VALUE;             // by default, select the parameter set with the maximum performance among multiple samples
   if (_name)
     name = _name;
   else
@@ -83,7 +89,8 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
 
 TuneKokkos::~TuneKokkos()
 {
-  if (performance) delete[] performance;
+  memory->destroy(performance);
+
   if (tuning_logfile) {
     fclose(tuning_logfile);
     tuning_logfile = nullptr;
@@ -153,11 +160,12 @@ void TuneKokkos::allocate(int num_params)
   //   cols = team sizes (pair/team/size or bond/chunk/size = 64, 96, ..., 512)
   //   rows = vector sizes (threads/per/atom = 1, 2, 4, 8, .., max_vectorsize)
 
-  if (performance) delete[] performance;
-  performance = new double[ncombinations];
+  memory->destroy(performance);
+  memory->create(performance, ncombinations, nsamples, "tune_kokkos:performance");
 
   scanning_completed = 0;
   combination_idx = 0;
+  sample_idx = 0;
   allocated = 1;
 }
 
@@ -205,13 +213,13 @@ void TuneKokkos::tuning_kernel_params()
 
       // store the performance of the current parameter set
 
-      performance[combination_idx] = 1.0 / tps;
+      performance[combination_idx][sample_idx] = 1.0 / tps;
 
       if (tuning_logfile) {
         std::string mesg = fmt::format("t = {}: combination_idx {}: team size = {} ",
                             update->ntimestep, combination_idx, current_team_size);
         mesg += fmt::format("vector size = {} ", current_vector_size);
-        mesg += fmt::format("perf = {:.1f} TPS\n", performance[combination_idx]);
+        mesg += fmt::format("perf = {:.1f} TPS\n", performance[combination_idx][sample_idx]);
         utils::print(tuning_logfile, "{}", mesg.c_str());
         fflush(tuning_logfile);
 
@@ -224,16 +232,27 @@ void TuneKokkos::tuning_kernel_params()
 
       combination_idx++;
 
-      // suppose that interval is sufficiently long to get a stable TPS
-      // so that we only need a single pass over all the parameter combinations
+      if (combination_idx == ncombinations) {
 
-      if (combination_idx >= ncombinations) scanning_completed = 1;
+        // move to the next sample
+        // reset combination_idx to zero to start the next scan
+        //   if there are more samples to collect
+
+        sample_idx++;
+        combination_idx = 0;
+
+        // if all samples collected, mark scanning as completed
+        //   to trigger the selection of optimal parameter set
+        if (sample_idx == nsamples)
+          scanning_completed = 1;
+      }
+
     }
   }
 
   // if scanning just completed, find the parameter set with the optimal performance
 
-  if (scanning_completed && combination_idx == ncombinations) {
+  if (scanning_completed) {
     int opt_idx = get_optimal_combination_idx();
     set_param_values(opt_idx);
 
@@ -248,10 +267,11 @@ void TuneKokkos::tuning_kernel_params()
       fflush(tuning_logfile);
     }
 
-    // reset combination_idx to zero to be ready for another scan if needed
+    // reset combination_idx and sample_idx to zero to be ready for another scan if needed
     // and to avoid repeating this block
 
     combination_idx = 0;
+    sample_idx = 0;
   }
 
   // check if the performance is within acceptable range of the optimal performance
@@ -278,11 +298,12 @@ void TuneKokkos::set_team_size_values(const std::vector<int>& tsizes)
   //   cols = team sizes (pair/team/size or bond/block/size = 64, 96, ..., 512)
   //   rows = vector sizes (threads/per/atom = 1, 2, 4, 8, .., max_vectorsize)
 
-  if (performance) delete[] performance;
-  performance = new double[ncombinations];
+  memory->destroy(performance);
+  memory->create(performance, ncombinations, nsamples, "tune_kokkos:performance");
 
   scanning_completed = 0;
   combination_idx = 0;
+  sample_idx = 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -303,11 +324,12 @@ void TuneKokkos::set_vector_size_values(const std::vector<int>& vsizes)
   //   cols = team sizes (pair/team/size or bond/block/size = 64, 96, ..., 512)
   //   rows = vector sizes (threads/per/atom = 1, 2, 4, 8, .., max_vectorsize)
 
-  if (performance) delete[] performance;
-  performance = new double[ncombinations];
+  memory->destroy(performance);
+  memory->create(performance, ncombinations, nsamples, "tune_kokkos:performance");
 
   scanning_completed = 0;
   combination_idx = 0;
+  sample_idx = 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -415,14 +437,43 @@ void TuneKokkos::set_param_values(int cidx)
 
 int TuneKokkos::get_optimal_combination_idx()
 {
-  if (ncombinations == 0 || performance == nullptr)
+  if (performance == nullptr || ncombinations == 0 || nsamples == 0)
     error->all(FLERR,"No performance data available for Kokkos kernel tuning");
 
-  opt_perf = performance[0];
+  opt_perf = performance[0][0];
   int opt_idx = 0;
-  for (int i = 1; i < ncombinations; i++) {
-    if (performance[i] > opt_perf) {
-      opt_perf = performance[i];
+
+  // iterate through the combinations to find the one with the best performance (highest TPS)
+
+  for (int i = 0; i < ncombinations; i++) {
+
+    double p_i = 0;
+    if (mode == MAX_VALUE) {
+      double p = performance[i][0];
+      for (int s = 1; s < nsamples; s++) {
+        if (performance[i][s] > p)
+          p = performance[i][s];
+      }
+      p_i = p;
+
+    } else if (mode == AVERAGE_VALUE) {
+      double ave = 0.0;
+      for (int s = 0; s < nsamples; s++) {
+        ave += performance[i][s];
+      }
+      p_i = ave / nsamples;
+
+    } else if (mode == MEDIAN_VALUE) {
+      // sort the array performance[i]
+      std::sort(performance[i], performance[i] + nsamples);
+      if (nsamples % 2 != 0)
+        p_i = performance[i][nsamples / 2];
+      else
+        p_i = (performance[i][nsamples / 2 - 1] + performance[i][nsamples / 2]) / 2.0;
+    }
+
+    if (p_i > opt_perf) {
+      opt_perf = p_i;
       opt_idx = i;
     }
   }

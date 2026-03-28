@@ -43,12 +43,14 @@ class TuneKokkos : protected Pointers {
   std::vector<int> vector_sizes; // parameter values for the vector size (the 2nd dimension of thread block)
 
   int num_params;            // number of parameters to tune: 1 (team size only) or 2 (team size and threads per atom)
-  double* performance;       // array to store the performance data for each parameter set
+  double** performance;      // array to store the performance data for each parameter set
   int ncombinations;         // total number of parameter combinations
   int combination_idx;       // current combination index during scanning
   int scanning_completed;    // 0 if still scanning, 1 if scanning completed
   int allocated;             // 1 if the performance array is allocated and param values set up
-
+  int nsamples;              // number of samples collected for each parameter combination
+  int sample_idx;            // current sample index for the current parameter combination
+  int mode;                  // how to determine the optimal performance among multiple samples for each parameter combination: MAX_VALUE, AVERAGE_VALUE, or MEDIAN_VALUE
   double opt_perf;           // stored the optimal performance
   double relative_tolerance; // acceptable threshold for performance degradation wrt opt_perf
 
