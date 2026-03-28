@@ -30,7 +30,7 @@
 
 using namespace LAMMPS_NS;
 
-enum { MAX_VALUE=0, AVERAGE_VALUE=1, MEDIAN_VALUE=2};
+enum { MAX_VALUE,AVERAGE_VALUE, MEDIAN_VALUE};
 //#define TUNE_DEBUG
 
 /* ---------------------------------------------------------------------- */
@@ -40,13 +40,17 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
   interval(nevery), num_params(_nparams), performance(nullptr), tuning_logfile(nullptr)
 {
   ncombinations = 0;
+  nsamples = 5;
+  mode = AVERAGE_VALUE;
+
   allocated = 0;
   firststep = 1;
   opt_perf = 0.0;
   scanning_completed = 0;
-  relative_tolerance = 0.20;    // 20% performance degradation allowed
-  nsamples = 5;
-  mode = MAX_VALUE;             // by default, select the parameter set with the maximum performance among multiple samples
+
+  // trigger rescaning if performance drop by more than 20% after scanning is completed
+  relative_tolerance = 0.20;
+
   if (_name)
     name = _name;
   else
@@ -216,8 +220,8 @@ void TuneKokkos::tuning_kernel_params()
       performance[combination_idx][sample_idx] = 1.0 / tps;
 
       if (tuning_logfile) {
-        std::string mesg = fmt::format("t = {}: combination_idx {}: team size = {} ",
-                            update->ntimestep, combination_idx, current_team_size);
+        std::string mesg = fmt::format("t = {}: combination_idx {} sample {}: team size = {} ",
+                            update->ntimestep, combination_idx, sample_idx, current_team_size);
         mesg += fmt::format("vector size = {} ", current_vector_size);
         mesg += fmt::format("perf = {:.1f} TPS\n", performance[combination_idx][sample_idx]);
         utils::print(tuning_logfile, "{}", mesg.c_str());
@@ -250,16 +254,16 @@ void TuneKokkos::tuning_kernel_params()
     }
   }
 
-  // if scanning just completed, find the parameter set with the optimal performance
+  // if scanning has just completed, find the parameter set with the optimal performance
 
-  if (scanning_completed) {
+  if (scanning_completed && sample_idx == nsamples) {
     int opt_idx = get_optimal_combination_idx();
     set_param_values(opt_idx);
 
     if (tuning_logfile) {
       int opt_ts = 0, opt_vs = 0;
       get_current_params(opt_idx, opt_ts, opt_vs);
-      std::string mesg = fmt::format("Finished tuning. Found the optimal params: ");
+      std::string mesg = fmt::format("Finished tuning at t = {}. Found the optimal params: ", update->ntimestep);
       mesg += fmt::format("team size = {} vector size = {} ",
                       opt_ts, opt_vs);
       mesg += fmt::format(" perf = {:.1f} TPS\n", opt_perf);
