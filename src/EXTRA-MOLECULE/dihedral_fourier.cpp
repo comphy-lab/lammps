@@ -290,6 +290,7 @@ void DihedralFourier::coeff(int narg, char **arg)
   int multiplicity_one;
   double shift_one;
   int nterms_one = utils::inumeric(FLERR,arg[1],false,lmp);
+  nterms_max = MAX(nterms_max,nterms_one);
 
   if (nterms_one < 1)
     error->all(FLERR,"Incorrect number of terms arg for dihedral coefficients");
@@ -300,7 +301,6 @@ void DihedralFourier::coeff(int narg, char **arg)
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
     nterms[i] = nterms_one;
-    nterms_max = MAX(nterms_max,nterms_one);
     delete[] k[i];
     delete[] multiplicity[i];
     delete[] shift[i];
