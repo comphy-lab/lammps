@@ -71,6 +71,7 @@ Syntax
        *scaleyz* value = *yes* or *no* = scale yz with lz
        *scalexz* value = *yes* or *no* = scale xz with lz
        *flip* value = *yes* or *no* = allow or disallow box flips when it becomes highly skewed
+       *isochoric* = *x* or *y* or *z* or *xy* or *yz* or *xz*
        *fixedpoint* values = x y z
          x,y,z = perform barostat dilation/contraction around this point (distance units)
        *update* value = *dipole* or *dipole/dlm*
@@ -374,6 +375,24 @@ efficiently, due to the large volume of communication needed to
 acquire ghost atoms around a processor's irregular-shaped subdomain.
 For extreme values of tilt, LAMMPS may also lose atoms and generate an
 error.
+
+The *isochoric* keyword allows to maintain constant volume when barostating
+up to two dimensions with this fix. The values following the isochoric keyword indicates the
+dimensions to use in that regard: "x" indicates the x dimension, "yz" (no
+space) indicates the y and z dimensions, etc. The selected dimensions are scaled to
+compensate the strain induced by the barostat and keep the system at a constant volume
+(or area in 2d). It is not possible to use this keyword if all the
+dimensions are coupled to barostats. In the case of 2d simulations, only x and
+y dimensions can be used to maintain a constant plane area. If you want to perform
+strain with constant volume, the :doc:`fix deform <fix_deform>` command using
+*volume* keyword is more likely to suit your needs.
+
+.. note::
+   If large strains are caused by the barostat because the initial configuration
+   is far from pressure equilibrium or equilibrated too fast, the system will
+   see large strains on the other dimensions as well. It is recommended to
+   perform preliminary NPT equilibration if necessary using standard NPT
+   simulations.
 
 The *fixedpoint* keyword specifies the fixed point for barostat volume
 changes. By default, it is the center of the box.  Whatever point is
@@ -702,10 +721,10 @@ Related commands
 Default
 """""""
 
-The keyword defaults are tchain = 3, pchain = 3, mtk = yes, tloop = 1,
-ploop = 1, nreset = 0, drag = 0.0, dilate = all, couple = none,
-flip = yes, scaleyz = scalexz = scalexy = yes if periodic in second
-dimension and not coupled to barostat, otherwise no.
+The keyword defaults are tchain = 3, pchain = 3, mtk = yes, tloop = 1, ploop =
+1, nreset = 0, drag = 0.0, dilate = all, couple = none, flip = yes, scaleyz =
+scalexz = scalexy = yes if periodic in second dimension and not coupled to
+barostat, otherwise no.
 
 ----------
 

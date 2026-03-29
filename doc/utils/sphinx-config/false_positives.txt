@@ -37,6 +37,7 @@ Addington
 addstep
 addtorque
 adf
+adi
 Adhikari
 adiam
 adim
@@ -238,6 +239,7 @@ Babaei
 Baconnier
 backcolor
 Baczewski
+badi
 Baer
 Bagchi
 Bagi

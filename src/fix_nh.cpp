@@ -88,6 +88,7 @@ FixNH::FixNH(LAMMPS *lmp, int narg, char **arg) :
   dipole_flag = 0;
   dlm_flag = 0;
   p_temp_flag = 0;
+  isochoric = 0;
 
   tcomputeflag = 0;
   pcomputeflag = 0;
@@ -120,6 +121,7 @@ FixNH::FixNH(LAMMPS *lmp, int narg, char **arg) :
   for (int i = 0; i < 6; i++) {
     p_start[i] = p_stop[i] = p_period[i] = p_target[i] = 0.0;
     p_flag[i] = 0;
+    if (i < 3) p_isoch[i] = 0;
   }
 
   // process keywords
@@ -335,6 +337,17 @@ FixNH::FixNH(LAMMPS *lmp, int narg, char **arg) :
         dlm_flag = 1;
       } else error->all(FLERR, "Invalid fix {} update argument: {}", style, arg[iarg+1]);
       iarg += 2;
+    } else if (strcmp(arg[iarg],"isochoric") == 0) {
+      if (iarg+2 > narg) utils::missing_cmd_args(FLERR, fmt::format("fix {} isochoric", style), error);
+      if (strcmp(arg[iarg+1], "x") == 0) p_isoch[0] = 1;
+      else if (strcmp(arg[iarg+1], "y") == 0) p_isoch[1] = 1;
+      else if (strcmp(arg[iarg+1], "z") == 0) p_isoch[2] = 1;
+      else if (strcmp(arg[iarg+1], "xy") == 0) p_isoch[0] = p_isoch[1] = 1;
+      else if (strcmp(arg[iarg+1], "yz") == 0) p_isoch[1] = p_isoch[2] = 1;
+      else if (strcmp(arg[iarg+1], "xz") == 0) p_isoch[0] = p_isoch[2] = 1;
+      else error->all(FLERR,"Illegal fix {} isochoric option: {}", style, arg[iarg+1]);
+      isochoric = 1;
+      iarg += 2;
     } else if (strcmp(arg[iarg],"fixedpoint") == 0) {
       if (iarg+4 > narg)
         utils::missing_cmd_args(FLERR, fmt::format("fix {} fixedpoint", style), error);
@@ -461,6 +474,32 @@ FixNH::FixNH(LAMMPS *lmp, int narg, char **arg) :
     }
   }
 
+  if (isochoric) {
+    for (int i; i < 3; i++) {
+      if (p_flag[i]) {
+        if (p_isoch[i]) {
+          error->all(FLERR,"Cannot use barostated dimension as isochoric dimension.");
+        }
+      }
+    }
+    if (dimension == 3 && (p_flag[0] + p_flag[1] + p_flag[2] > 2)) {
+      error->all(FLERR,"Cannot perform isochoric NPT with all dimensions barostated.");
+    } else if (dimension == 2 && (p_flag[0] + p_flag[1] > 1)) {
+      error->all(FLERR,"Cannot perform 2d isochoric NPT with all dimensions barostated.");
+    } else if (p_flag[0] + p_flag[1] + p_flag[2] == 0) {
+      error->all(FLERR,"Isochoric simulation requires at least 1 diagonal dimension to be barostated.");
+    }
+    if (dimension == 3) {
+      if (domain->xperiodic * p_isoch[0] + domain->yperiodic * p_isoch[1] + domain->zperiodic * p_isoch[2] == 0)
+        error->all(FLERR, "Isochoric NPT requires periodic boundary conditions along isochoric dimensions.");
+    } else {
+      if (domain->xperiodic * p_isoch[0] + domain->yperiodic * p_isoch[0] == 0)
+        error->all(FLERR, "Isochoric NPT requires periodic boundary conditions along isochoric dimensions.");
+      if (p_isoch[2])
+        error->all(FLERR, "2d Isochoric NPT cannot use z dimension.");
+    }
+  }
+
   if ((tstat_flag && t_period <= 0.0) ||
       (p_flag[0] && p_period[0] <= 0.0) ||
       (p_flag[1] && p_period[1] <= 0.0) ||
@@ -490,6 +529,16 @@ FixNH::FixNH(LAMMPS *lmp, int narg, char **arg) :
     if (p_flag[3]) box_change |= BOX_CHANGE_YZ;
     if (p_flag[4]) box_change |= BOX_CHANGE_XZ;
     if (p_flag[5]) box_change |= BOX_CHANGE_XY;
+    // In the isochoric case, dimensions can change size while not being
+    // barostated to maintain volume/area
+    if (isochoric) {
+      if (dimension == 3) vol_start = domain->xprd * domain->yprd * domain->zprd;
+      else vol_start = domain->xprd * domain->yprd;
+
+      if (p_isoch[0]) box_change |= BOX_CHANGE_X;
+      if (p_isoch[1]) box_change |= BOX_CHANGE_Y;
+      if (dimension == 3 && p_isoch[2]) box_change |= BOX_CHANGE_Z;
+    }
     no_change_box = 1;
     if (allremap == 0) restart_pbc = 1;
 
@@ -1072,12 +1121,16 @@ void FixNH::remap()
 {
   int i;
   double oldlo,oldhi;
-  double expfac;
+  double expfac, isofac;
 
   double **x = atom->x;
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
   double *h = domain->h;
+  double old_volume, new_volume;
+
+  if (dimension == 3) old_volume = domain->xprd * domain->yprd * domain->zprd;
+  else old_volume = domain->xprd * domain->yprd;
 
   // omega is not used, except for book-keeping
 
@@ -1148,6 +1201,7 @@ void FixNH::remap()
 
   // scale diagonal components
   // scale tilt factors with cell, if set
+  if (isochoric) isofac = vol_start;
 
   if (p_flag[0]) {
     oldlo = domain->boxlo[0];
@@ -1155,6 +1209,7 @@ void FixNH::remap()
     expfac = exp(dto*omega_dot[0]);
     domain->boxlo[0] = (oldlo-fixedpoint[0])*expfac + fixedpoint[0];
     domain->boxhi[0] = (oldhi-fixedpoint[0])*expfac + fixedpoint[0];
+    if (isochoric) isofac /= domain->boxhi[0] - domain->boxlo[0];
   }
 
   if (p_flag[1]) {
@@ -1163,6 +1218,7 @@ void FixNH::remap()
     expfac = exp(dto*omega_dot[1]);
     domain->boxlo[1] = (oldlo-fixedpoint[1])*expfac + fixedpoint[1];
     domain->boxhi[1] = (oldhi-fixedpoint[1])*expfac + fixedpoint[1];
+    if (isochoric) isofac /= domain->boxhi[1] - domain->boxlo[1];
     if (scalexy) h[5] *= expfac;
   }
 
@@ -1172,8 +1228,42 @@ void FixNH::remap()
     expfac = exp(dto*omega_dot[2]);
     domain->boxlo[2] = (oldlo-fixedpoint[2])*expfac + fixedpoint[2];
     domain->boxhi[2] = (oldhi-fixedpoint[2])*expfac + fixedpoint[2];
+    if (isochoric) isofac /= domain->boxhi[2] - domain->boxlo[2];
     if (scalexz) h[4] *= expfac;
     if (scaleyz) h[3] *= expfac;
+  }
+
+  if (isochoric) {
+
+    // We remove remaining dimensions so that only scale factors are left
+    // in isofac
+    for (int i = 0; i < 3; i++) {
+      if (p_isoch[i] || !p_flag[i]) isofac /= (domain->boxhi[i]-domain->boxlo[i]);
+    }
+    int iso_sum = p_isoch[0] + p_isoch[1] + p_isoch[2];
+    if (iso_sum == 2) isofac = sqrt(isofac);
+
+    if (p_isoch[0]) {
+      oldlo = domain->boxlo[0];
+      oldhi = domain->boxhi[0];
+      domain->boxlo[0] = (oldlo-fixedpoint[0])*isofac + fixedpoint[0];
+      domain->boxhi[0] = (oldhi-fixedpoint[0])*isofac + fixedpoint[0];
+    }
+    if (p_isoch[1]) {
+      oldlo = domain->boxlo[1];
+      oldhi = domain->boxhi[1];
+      domain->boxlo[1] = (oldlo-fixedpoint[1])*isofac + fixedpoint[1];
+      domain->boxhi[1] = (oldhi-fixedpoint[1])*isofac + fixedpoint[1];
+      if (scalexy) h[5] *= isofac;
+    }
+    if (p_isoch[2]) {
+      oldlo = domain->boxlo[2];
+      oldhi = domain->boxhi[2];
+      domain->boxlo[2] = (oldlo-fixedpoint[2])*isofac + fixedpoint[2];
+      domain->boxhi[2] = (oldhi-fixedpoint[2])*isofac + fixedpoint[2];
+      if (scalexz) h[4] *= isofac;
+      if (scaleyz) h[3] *= isofac;
+    }
   }
 
   // off-diagonal components, second half
@@ -1271,8 +1361,9 @@ int FixNH::size_restart_global()
   int nsize = 2;
   if (tstat_flag) nsize += 1 + 2*mtchain;
   if (pstat_flag) {
-    nsize += 16 + 2*mpchain;
+    nsize += 17 + 2*mpchain;
     if (deviatoric_flag) nsize += 6;
+    if (isochoric) nsize += 4;
   }
 
   return nsize;
@@ -1328,6 +1419,13 @@ int FixNH::pack_restart_data(double *list)
       list[n++] = h0_inv[4];
       list[n++] = h0_inv[5];
     }
+    list[n++] = isochoric;
+    if (isochoric) {
+        list[n++] = p_isoch[0];
+        list[n++] = p_isoch[1];
+        list[n++] = p_isoch[2];
+        list[n++] = vol_start;
+    }
   }
 
   return n;
@@ -1382,6 +1480,13 @@ void FixNH::restart(char *buf)
       h0_inv[3] = list[n++];
       h0_inv[4] = list[n++];
       h0_inv[5] = list[n++];
+    }
+    flag = static_cast<int> (list[n++]);
+    if (flag) {
+      p_isoch[0] = list[n++];
+      p_isoch[1] = list[n++];
+      p_isoch[2] = list[n++];
+      vol_start = list[n++];
     }
   }
 }
