@@ -2299,6 +2299,8 @@ Maxfoo
 maxima
 maxit
 maxiter
+Maxmol
+maxmol
 maxsize
 maxspecial
 maxSteps
@@ -3564,6 +3566,7 @@ Sano
 Sanyal
 Sanz
 Sarath
+sawteeth
 sc
 scafacos
 SCAFACOS
@@ -3714,6 +3717,7 @@ Smallint
 smallsmall
 smatb
 smax
+smaxtype
 smd
 SMD
 smi
