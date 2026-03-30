@@ -67,6 +67,8 @@ class KokkosLMP : protected Pointers {
   int bond_chunk_size;
   int bond_chunk_size_set;
   int autotuning;
+  int perf_nsamples;
+  int perf_mode;
 
   static int is_finalized;
   static int init_ngpus;

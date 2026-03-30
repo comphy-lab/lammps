@@ -30,31 +30,36 @@
 
 using namespace LAMMPS_NS;
 
-enum { MAX_VALUE,AVERAGE_VALUE, MEDIAN_VALUE};
+// determine the representative value based on the collected samples for each parameter combination
+enum { MAX_VALUE=0, AVERAGE_VALUE=1, MEDIAN_VALUE=2 };
+
 //#define TUNE_DEBUG
 
 /* ---------------------------------------------------------------------- */
 
 TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
-  int _nparams, const char* _name) : Pointers(lmp), kernel_type(_kernel_type),
-  interval(nevery), num_params(_nparams), performance(nullptr), tuning_logfile(nullptr)
+  int _nparams, const char* _name, int _nsamples, int _mode, double _rel_tol) : Pointers(lmp),
+  kernel_type(_kernel_type), interval(nevery), num_params(_nparams),
+  performance(nullptr), tuning_logfile(nullptr)
 {
   ncombinations = 0;
-  nsamples = 5;
-  mode = AVERAGE_VALUE;
+  nsamples = _nsamples;
+  mode = _mode;
 
   allocated = 0;
   firststep = 1;
   opt_perf = 0.0;
   scanning_completed = 0;
 
-  // trigger rescaning if performance drop by more than 20% after scanning is completed
-  relative_tolerance = 0.20;
+  // trigger rescaning if performance drop below relative_tolerance
+  //   compared to the optimal performance obtained from the last scanning
 
-  if (_name)
-    name = _name;
-  else
-    name = "default";
+  relative_tolerance = _rel_tol;
+
+  // tuner name used for logging
+
+  if (_name) my_name = _name;
+  else my_name = "default";
 
   // ensure that relevant kokkos parameters are allowed to be specified
 
@@ -77,7 +82,7 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
     error->all(FLERR,"Kokkos tuning_kernel_params: kernel type not yet supported");
 
   if (comm->me == 0) {
-    std::string filename = fmt::format("tuning-{}.log", name);
+    std::string filename = fmt::format("tuning-{}.log", my_name);
     tuning_logfile = fopen(filename.c_str(),"w");
     if (tuning_logfile == nullptr)
       error->all(FLERR,"Cannot open Kokkos tuning logfile {}: {}",

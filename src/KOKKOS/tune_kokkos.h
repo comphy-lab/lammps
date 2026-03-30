@@ -21,7 +21,8 @@ namespace LAMMPS_NS {
 
 class TuneKokkos : protected Pointers {
  public:
-  TuneKokkos(class LAMMPS *, int kernel_type, int nevery, int nparams=2, const char* name=nullptr);
+  TuneKokkos(class LAMMPS *, int kernel_type, int nevery, int nparams=2,
+    const char* name=nullptr, int nsamples=5, int mode=0, double rel_tol=0.2);
   ~TuneKokkos() override;
   void allocate(int);
   void tuning_kernel_params();
@@ -59,7 +60,7 @@ class TuneKokkos : protected Pointers {
   int firststep;             // 1 if first timestep for timing info collection
 
   FILE *tuning_logfile;      // logfile
-  std::string name;          // name of the tuner instance
+  std::string my_name;       // name of the tuner instance
 
   double get_timing_info();                   // get the elapsed time from the last call
   int get_current_team_size();                // get the team size for the current combination index

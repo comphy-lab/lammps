@@ -136,6 +136,8 @@ KokkosLMP::KokkosLMP(LAMMPS *lmp, int narg, char **arg) : Pointers(lmp)
   bond_chunk_size = 128;
   bond_chunk_size_set = 0;
   autotuning = 0;
+  perf_nsamples = 5;
+  perf_mode = 0;
 
   int iarg = 0;
   while (iarg < narg) {
@@ -626,9 +628,14 @@ void KokkosLMP::accelerator(int narg, char **arg)
       bond_chunk_size_set = 1;
       iarg += 2;
     } else if (strcmp(arg[iarg],"auto/tuning") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal package kokkos command");
+      if (iarg+4 > narg) error->all(FLERR,"Illegal package kokkos command for auto/tuning");
       autotuning = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
-      iarg += 2;
+      perf_nsamples = utils::inumeric(FLERR, arg[iarg+2], false, lmp);
+      if (strcmp(arg[iarg+3], "max") == 0) perf_mode = 0;
+      else if (strcmp(arg[iarg+3], "ave") == 0) perf_mode = 1;
+      else if (strcmp(arg[iarg+3], "median") == 0) perf_mode = 2;
+      else error->all(FLERR,"Illegal package kokkos command for auto/tuning: must be 'max', 'ave', or 'median'");
+      iarg += 4;
     } else error->all(FLERR,"Illegal package kokkos command");
   }
 
@@ -717,8 +724,11 @@ void KokkosLMP::accelerator(int narg, char **arg)
     }
   }
 
-  if (autotuning)
-    utils::logmesg(lmp,"  autotuning is enabled\n");
+  if (autotuning) {
+    utils::logmesg(lmp,"  autotuning is enabled: nevery = {} samples = {} mode = {}\n",
+      perf_nsamples, (perf_mode == 0) ? "max" : (perf_mode == 1) ? "ave" : "median");
+  }
+
 
 #else  // LMP_KOKKOS_GPU not defined
 

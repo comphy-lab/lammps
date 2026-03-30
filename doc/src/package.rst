@@ -132,8 +132,10 @@ Syntax
           chunksize = # of iterations each thread will perform for the flat neighbor build method
         *bond/chunk/size = blocksize
           chunksize = # of iterations each thread will perform for the bond force computation
-        *auto/tuning = nevery
+        *auto/tuning = nevery nsamples mode
           nevery = # timesteps between autotuning adjustments (default = 0, no autotuning)
+          nsamples = # samples the tuner(s) collects per parameter set (default = 5)
+          mode = how to pick a representative value from the samples to a parameter set, i.e. maximum, average or median value
     *omp* args = Nthreads keyword value ...
       Nthreads = # of OpenMP threads to associate with each MPI process
       zero or more keyword/value pairs may be appended
@@ -672,10 +674,11 @@ of this parameter is determined based on the GPU architecture at runtime.
 .. versionadded:: TBD
 
 The *auto/tuning* keyword enables the auto-tuning feature of
-the KOKKOS package.  When enabled, the KOKKOS pair style in use will scan
+the KOKKOS package.  When enabled, the KOKKOS styles in use will scan
 through the possible values of the kernel parameters such as
 *pair/team/size* and *threads/per/atom* for pair styles and *bond/chunk/size*
-for bond styles, and find the combination that gives the best performance.
+for bond styles, and find the combination that gives the best overall
+erformance in terms of the number of timesteps per second.
 The optimal combination of the kernel parameters are then fixed
 for the remaining part of the run, unless the performance drops below a certain
 relative threshold compared to the found optimal performance.
@@ -684,12 +687,21 @@ When the degradation is detected, the scanning is re-triggered automatically.
 The *nevery* keyword controls the interval used to estimate
 the overall performance for a combination of these two parameters.
 *nevery* needs to be large enough to have a stable estimate
-of the performance, to achive a sufficiently large number of kernel calls,
+of the performance, to achieve a sufficiently large number of kernel calls,
 while small enough to reduce the time required for scanning
 over all the combinations. *nevery* = 100 is usually a reasonable value.
 
-This feature is disabled by default.  When *auto/tuning* is enabled,
-*neigh/thread* will be set to *on* internally.
+The *nsamples* keyword indicates the number of samples the tuners will
+collect for each parameter set.  *nsamples* = 5 is usually a reasonable value.
+
+The *mode* keyword controls how the representative performance of a paramter set
+is selected from the collected samples: *max* means the maximum value,
+*ave* means the arithmetic average value, and *median* means the median
+value.
+
+This feature is disabled by default.  Unless specified otherwise,
+*auto/tuning* is only available for KOKKOS pair styles that are
+compatible with *neigh/thread on*.
 
 OPENMP package settings
 ^^^^^^^^^^^^^^^^^^^^^^^
