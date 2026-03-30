@@ -1455,7 +1455,7 @@ void FixGCMC::attempt_molecule_insertion()
     vnew[0] = random_equal->gaussian()*sigma;
     vnew[1] = random_equal->gaussian()*sigma;
     vnew[2] = random_equal->gaussian()*sigma;
-    random_unequal->gaussian(); // this ensures exact restart
+    random_equal->gaussian(); // this ensures exact restart
 
     for (int i = 0; i < natoms_per_molecule; i++) {
       if (procflag[i]) {
@@ -2124,7 +2124,7 @@ void FixGCMC::attempt_molecule_insertion_full()
   vnew[0] = random_equal->gaussian()*sigma;
   vnew[1] = random_equal->gaussian()*sigma;
   vnew[2] = random_equal->gaussian()*sigma;
-  random_unequal->gaussian(); // this ensures exact restart
+  random_equal->gaussian(); // this ensures exact restart
 
   for (int i = 0; i < natoms_per_molecule; i++) {
     double xtmp[3];
