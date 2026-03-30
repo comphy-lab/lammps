@@ -438,7 +438,7 @@ double BondBPMCorotational::corotational_forces(int i1, int i2, int type,
 
     // bending
     double dtheta = wrap_2pi(theta - theta_prior) * dt_inv;
-    Tb_mag +=  gb[type] * dtheta;
+    Tb_mag += gb[type] * dtheta;
 
     bondstore[4] = gamma;
     bondstore[5] = theta;
@@ -523,8 +523,8 @@ double BondBPMCorotational::standard_forces(int i1, int i2, int type,
   double gamma_prior, theta_prior, psi_prior;
   if (damping_style == DERIVATIVE) {
     gamma_prior = bondstore[4];
-    theta_prior = bondstore[4];
-    psi_prior = bondstore[4];
+    theta_prior = bondstore[5];
+    psi_prior = bondstore[6];
   }
 
   double **quat = atom->quat;
@@ -664,7 +664,7 @@ double BondBPMCorotational::standard_forces(int i1, int i2, int type,
     // radial
     double **v = atom->v;
     double dv[3], rhat[3];
-    MathExtra::sub3(v[i1], v[i2], dv);
+    MathExtra::sub3(v[i2], v[i1], dv);
     MathExtra::scale3(r_mag_inv, r, rhat);
     double dvdotr = MathExtra::dot3(dv, rhat);
     Fr += gr[type] * dvdotr;
@@ -801,7 +801,7 @@ void BondBPMCorotational::dem_damping_forces(int i1, int i2, int type, double *r
   MathExtra::sub3(wxn1, wxn2, vroll);    // Eq. 31
   MathExtra::cross3(r, vroll, tdamp);
 
-  MathExtra::scale3(0.5 * gt[type], tdamp);
+  MathExtra::scale3(0.5 * gb[type], tdamp);
   MathExtra::add3(torque1on2, tdamp, torque1on2);
   MathExtra::scale3(-1.0, tdamp);
   MathExtra::add3(torque2on1, tdamp, torque2on1);
@@ -814,7 +814,7 @@ void BondBPMCorotational::dem_damping_forces(int i1, int i2, int type, double *r
   MathExtra::scale3(w2dotr, rhat, wn2);
 
   MathExtra::sub3(wn1, wn2, tdamp);    // Eq. 38
-  MathExtra::scale3(0.5 * gb[type], tdamp);
+  MathExtra::scale3(0.5 * gt[type], tdamp);
   MathExtra::add3(torque1on2, tdamp, torque1on2);
   MathExtra::scale3(-1.0, tdamp);
   MathExtra::add3(torque2on1, tdamp, torque2on1);
