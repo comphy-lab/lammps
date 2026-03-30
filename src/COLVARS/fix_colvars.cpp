@@ -854,13 +854,13 @@ double FixColvars::compute_array(int m, int n)
   double value = 0.0;
   if (comm->me == 0) {
     const auto& variables = *proxy->colvars->variables();
-    if (m >= variables.size()) {
+    if (m >= (int)variables.size()) {
       error->all(FLERR, Error::NOLASTLINE, "f_{}[{}][{}] out-of-bounds: {} collective variables "
                  "available.", id, m+1, n+1, variables.size());
     }
     const auto& variable = variables[m]->value();
     const auto& name = variables[m]->name;
-    if (n >= variable.size()) {
+    if (n >= (int)variable.size()) {
       error->all(FLERR, Error::NOLASTLINE, "f_{}[{}][{}] out-of-bounds: collective variable {} "
                  "has size {}.", id, m+1, n+1, name, variable.size());
     }
