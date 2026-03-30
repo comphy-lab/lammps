@@ -99,7 +99,7 @@ void BondQuarticExp::compute(int eflag, int vflag)
       ebond += ebond_exp;
       fbond += ebond_exp/b/r;
     }
-    
+
     // apply force to each of 2 atoms
 
     if (newton_bond || i1 < nlocal) {
@@ -202,10 +202,10 @@ void BondQuarticExp::read_restart(FILE *fp)
   allocate();
 
   if (comm->me == 0) {
-    fread(&r0[1],sizeof(double),atom->nbondtypes,fp);  
+    fread(&r0[1],sizeof(double),atom->nbondtypes,fp);
     fread(&k2[1],sizeof(double),atom->nbondtypes,fp);
     fread(&k3[1],sizeof(double),atom->nbondtypes,fp);
-    fread(&k4[1],sizeof(double),atom->nbondtypes,fp);    
+    fread(&k4[1],sizeof(double),atom->nbondtypes,fp);
     fread(&A[1],sizeof(double),atom->nbondtypes,fp);
     fread(&B[1],sizeof(double),atom->nbondtypes,fp);
   }
@@ -243,7 +243,7 @@ double BondQuarticExp::single(int type, double rsq, int /*i*/, int /*j*/,
   if (r > 0.0) fforce = -de_bond/r;
   else fforce = 0.0;
   return (k2[type]*dr2 + k3[type]*dr3 + k4[type]*dr4);
-  
+
 }
 
 /* ----------------------------------------------------------------------
@@ -255,7 +255,7 @@ void *BondQuarticExp::extract(const char *str, int &dim)
   if (strcmp(str,"r0")==0) return (void*) r0;
   if (strcmp(str,"k2")==0) return (void*) k2;
   if (strcmp(str,"k3")==0) return (void*) k3;
-  if (strcmp(str,"k4")==0) return (void*) k4;  
+  if (strcmp(str,"k4")==0) return (void*) k4;
   if (strcmp(str,"A")==0) return (void*) A;
   if (strcmp(str,"B")==0) return (void*) B;
   return NULL;
