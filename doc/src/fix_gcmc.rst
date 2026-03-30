@@ -402,7 +402,10 @@ Restart, fix_modify, output, run start/stop, minimize info
 This fix writes the state of the fix to :doc:`binary restart files
 <restart>`.  This includes information about the random number
 generator seed, the next timestep for MC exchanges, the number of MC
-step attempts and successes etc.  See the :doc:`read_restart
+step attempts and successes etc. This ensures that the
+sequence of Monte Carlo moves generated after reading from a restart
+file are exactly the same as those that are generated in the original
+run. See the :doc:`read_restart
 <read_restart>` command for info on how to re-specify a fix in an
 input script that reads a restart file, so that the operation of the
 fix continues in an uninterrupted fashion.

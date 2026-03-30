@@ -74,6 +74,7 @@ OPT.
    * :doc:`charmm (iko) <angle_charmm>`
    * :doc:`class2 (ko) <angle_class2>`
    * :doc:`class2/p6 <angle_class2>`
+   * :doc:`class2xe <angle_class2>`
    * :doc:`cosine (ko) <angle_cosine>`
    * :doc:`cosine/buck6d <angle_cosine_buck6d>`
    * :doc:`cosine/delta (o) <angle_cosine_delta>`
@@ -122,6 +123,7 @@ OPT.
    * :doc:`charmm (iko) <dihedral_charmm>`
    * :doc:`charmmfsw (k) <dihedral_charmm>`
    * :doc:`class2 (ko) <dihedral_class2>`
+   * :doc:`class2xe <dihedral_class2>`
    * :doc:`cosine/shift/exp (o) <dihedral_cosine_shift_exp>`
    * :doc:`cosine/squared/restricted <dihedral_cosine_squared_restricted>`
    * :doc:`fourier (iko) <dihedral_fourier>`
