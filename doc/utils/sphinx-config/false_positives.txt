@@ -4397,6 +4397,7 @@ Xcm
 Xcode
 xCORE
 xdmf
+xe
 Xeon
 xflag
 xhi
