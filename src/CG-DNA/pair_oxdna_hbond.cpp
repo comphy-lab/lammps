@@ -70,6 +70,7 @@ PairOxdnaHbond::PairOxdnaHbond(LAMMPS *lmp) : Pair(lmp)
   alpha_hb[3][2] = 1.00000;
   alpha_hb[3][3] = 1.00000;
 
+  idc = nullptr;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -221,6 +222,13 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
 
       btype = type[b];
       blocal = atom->map(tag[b]);
+
+      if( idc != nullptr ) { // unique base pairing enabled
+      // skip pair if no matching complement, but don't if complement ID<=0
+        if( idc[a] != tag[b] && idc[a] > 0 && idc[b] > 0 ) {
+          continue;
+        }
+      }
 
       bx[0] = nxyz_xtrct[blocal][0];
       bx[1] = nxyz_xtrct[blocal][1];
@@ -922,12 +930,32 @@ void PairOxdnaHbond::coeff(int narg, char **arg)
 ------------------------------------------------------------------------- */
 void PairOxdnaHbond::init_style()
 {
+  int ifix;
+
+  // initialise fix for local reference frame
   fix_lrf = nullptr;
   auto fixes = modify->get_fix_by_style("^oxdna/lrf");
   if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
   else fix_lrf = dynamic_cast<FixOxdnaLRF *>(fixes[0]);
 
   neighbor->add_request(this, NeighConst::REQ_DEFAULT);
+
+  // optionally initialise fix for unique base pairing
+  ifix = modify->find_fix("ubp");
+
+  if (ifix < 0) {
+    if (comm->me == 0) utils::logmesg(lmp,"Parsing normal base pairing\n");
+  }
+  else {
+    if (comm->me == 0) utils::logmesg(lmp,"Parsing unique base pairing\n");
+ 
+    int idx, flag, cols;
+    idx = atom->find_custom("idc", flag, cols);
+    if (idx >= 0 && flag == 0) {
+      idc = atom->ivector[idx];
+    }
+  }
+
 }
 
 /* ----------------------------------------------------------------------

@@ -61,6 +61,7 @@ class PairOxdnaHbond : public Pair {
   double **a_hb8, **theta_hb8_0, **dtheta_hb8_ast;
   double **b_hb8, **dtheta_hb8_c;
   double **nxyz_xtrct;    // per-atom arrays for local unit vectors
+  int *idc; // id of complementary nucleotide for unique base pairing
   int seqdepflag;
 
   virtual void allocate();
