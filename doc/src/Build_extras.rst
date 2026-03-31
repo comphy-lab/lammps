@@ -1259,7 +1259,7 @@ then load this plugin at runtime with the :doc:`plugin command
 
    .. tab:: CMake build
 
-      .. versionchanged:: TBD
+      .. versionchanged:: 30Mar2026
 
          Replaced MD5 checksums with SHA-256
 
@@ -1301,7 +1301,7 @@ folder and then load this plugin at runtime with the :doc:`plugin command <plugi
 
    .. tab:: CMake build
 
-      .. versionchanged:: TBD
+      .. versionchanged:: 30Mar2026
 
          Replaced MD5 checksums with SHA-256
 

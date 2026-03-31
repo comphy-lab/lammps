@@ -37,6 +37,7 @@ Addington
 addstep
 addtorque
 adf
+adi
 Adhikari
 adiam
 adim
@@ -238,6 +239,7 @@ Babaei
 Baconnier
 backcolor
 Baczewski
+badi
 Baer
 Bagchi
 Bagi
@@ -347,7 +349,10 @@ Blaise
 blanchedalmond
 blength
 blo
+blockier
+blockiness
 blocksize
+blocky
 blueviolet
 bn
 bni
@@ -524,6 +529,7 @@ checkbox
 checkmark
 checkqeq
 checksum
+checksums
 chemflag
 chemistries
 Chemnitz
@@ -991,6 +997,7 @@ Eb
 Eba
 Ebeling
 ebend
+Eberly
 ebond
 ebook
 ebt
@@ -1383,6 +1390,7 @@ Geocomputing
 georg
 Georg
 Geotechnica
+Geotechnics
 germain
 Germann
 Germano
@@ -1597,6 +1605,7 @@ Hookean
 hostname
 hotpink
 Houlle
+Houlsby
 howto
 Howto
 Hoy
@@ -1647,6 +1656,7 @@ icc
 iceblue
 ico
 icosahedral
+icosahedron
 idealgas
 IDR
 idx
@@ -1759,6 +1769,7 @@ isenthalpic
 ish
 Ishida
 iso
+isochoric
 isodemic
 isoenergetic
 isoenthalpic
@@ -3008,6 +3019,7 @@ pc
 pcg
 pchain
 Pchain
+pclose
 pcmoves
 Pdamp
 pdb
@@ -3083,6 +3095,7 @@ pIp
 pipelining
 Pirani
 pirani
+Pirker
 Pisarev
 Pishevar
 Pitera
@@ -3113,6 +3126,7 @@ Pmoltrans
 pN
 png
 podd
+Podlozhnyuk
 Podgornik
 Podhorszki
 Poiseuille
@@ -3837,6 +3851,11 @@ SumN
 sumsq
 Sunderland
 supercell
+superellipses
+superellipsoid
+superellipsoids
+Superellipsoids
+superellipsoidal
 superset
 supersphere
 Supinski
@@ -3966,6 +3985,7 @@ THz
 Tieleman
 Tigran
 Tij
+Tikhonov
 Tildesley
 Timan
 timeflag
@@ -4379,6 +4399,7 @@ Xcm
 Xcode
 xCORE
 xdmf
+xe
 Xeon
 xflag
 xhi
