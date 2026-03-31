@@ -257,7 +257,6 @@ void PairOxdnaStk::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
-  tagint *tag = atom->tag;
   int *type = atom->type;
 
   int nlocal = atom->nlocal;
@@ -269,7 +268,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
   tagint *id3p = atom->id3p;
   tagint *id5p = atom->id5p;
 
-  int a,b,btemp,in,a3ptype,atype,btype,b5ptype,alocal,blocal;
+  int a,b,btemp,in,a3ptype,atype,btype,b5ptype;
 
   double f1,f4t4,f4t5,f4t6,f5c1,f5c2;
   double df1,df4t4,df4t5,df4t6,df5c1,df5c2;
@@ -288,7 +287,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     b = bondlist[in][1];
 
     // directionality test: a -> b is 3' -> 5'
-    if(tag[b] != id5p[a]) {
+    if(atom->tag[b] != id5p[a]) {
 
       btemp = b;
       b = a;
@@ -296,17 +295,14 @@ void PairOxdnaStk::compute(int eflag, int vflag)
 
     }
 
-    alocal = atom->map(tag[a]);
-    blocal = atom->map(tag[b]);
-
     // a now in 3' direction, b in 5' direction
 
-    ax[0] = nxyz_xtrct[alocal][0];
-    ax[1] = nxyz_xtrct[alocal][1];
-    ax[2] = nxyz_xtrct[alocal][2];
-    bx[0] = nxyz_xtrct[blocal][0];
-    bx[1] = nxyz_xtrct[blocal][1];
-    bx[2] = nxyz_xtrct[blocal][2];
+    ax[0] = nxyz_xtrct[a][0];
+    ax[1] = nxyz_xtrct[a][1];
+    ax[2] = nxyz_xtrct[a][2];
+    bx[0] = nxyz_xtrct[b][0];
+    bx[1] = nxyz_xtrct[b][1];
+    bx[2] = nxyz_xtrct[b][2];
     // (a/b)y/z not needed here as oxDNA(1) co-linear
 
     // vector COM a - stacking site a
@@ -371,12 +367,12 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     // early rejection criterium
     if (f1 != 0.0) {
 
-    az[0] = nxyz_xtrct[alocal][6];
-    az[1] = nxyz_xtrct[alocal][7];
-    az[2] = nxyz_xtrct[alocal][8];
-    bz[0] = nxyz_xtrct[blocal][6];
-    bz[1] = nxyz_xtrct[blocal][7];
-    bz[2] = nxyz_xtrct[blocal][8];
+    az[0] = nxyz_xtrct[a][6];
+    az[1] = nxyz_xtrct[a][7];
+    az[2] = nxyz_xtrct[a][8];
+    bz[0] = nxyz_xtrct[b][6];
+    bz[1] = nxyz_xtrct[b][7];
+    bz[2] = nxyz_xtrct[b][8];
 
     // theta4 angle and correction
     cost4 = MathExtra::dot3(bz,az);
@@ -403,12 +399,12 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     // early rejection criterium
     if (f4t5 != 0.0) {
 
-    ay[0] = nxyz_xtrct[alocal][3];
-    ay[1] = nxyz_xtrct[alocal][4];
-    ay[2] = nxyz_xtrct[alocal][5];
-    by[0] = nxyz_xtrct[blocal][3];
-    by[1] = nxyz_xtrct[blocal][4];
-    by[2] = nxyz_xtrct[blocal][5];
+    ay[0] = nxyz_xtrct[a][3];
+    ay[1] = nxyz_xtrct[a][4];
+    ay[2] = nxyz_xtrct[a][5];
+    by[0] = nxyz_xtrct[b][3];
+    by[1] = nxyz_xtrct[b][4];
+    by[2] = nxyz_xtrct[b][5];
 
     cost6p = MathExtra::dot3(delr_stkstk_norm,az);
     if (cost6p >  1.0) cost6p =  1.0;

@@ -148,7 +148,7 @@ void BondOxdnaFene::ev_tally_xyz(int i, int j, int nlocal, int newton_bond, doub
 ------------------------------------------------------------------------- */
 void BondOxdnaFene::compute(int eflag, int vflag)
 {
-  int a, b, btemp, in, type, alocal, blocal;
+  int a, b, btemp, in, type;
   int a3ptype, atype, btype, b5ptype;    // tetramer types
   double delf[3], delta[3], deltb[3];    // force, torque increment
   double delr_bkbk[3], ebond, fbond;
@@ -163,7 +163,6 @@ void BondOxdnaFene::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
-  tagint *tag = atom->tag;
 
   int **bondlist = neighbor->bondlist;
   int nbondlist = neighbor->nbondlist;
@@ -200,27 +199,24 @@ void BondOxdnaFene::compute(int eflag, int vflag)
 
     // a now in 3' direction, b in 5' direction
 
-    alocal = atom->map(tag[a]);
-    blocal = atom->map(tag[b]);
-
-    ax[0] = nxyz_xtrct[alocal][0];
-    ax[1] = nxyz_xtrct[alocal][1];
-    ax[2] = nxyz_xtrct[alocal][2];
-    ay[0] = nxyz_xtrct[alocal][3];
-    ay[1] = nxyz_xtrct[alocal][4];
-    ay[2] = nxyz_xtrct[alocal][5];
-    az[0] = nxyz_xtrct[alocal][6];
-    az[1] = nxyz_xtrct[alocal][7];
-    az[2] = nxyz_xtrct[alocal][8];
-    bx[0] = nxyz_xtrct[blocal][0];
-    bx[1] = nxyz_xtrct[blocal][1];
-    bx[2] = nxyz_xtrct[blocal][2];
-    by[0] = nxyz_xtrct[blocal][3];
-    by[1] = nxyz_xtrct[blocal][4];
-    by[2] = nxyz_xtrct[blocal][5];
-    bz[0] = nxyz_xtrct[blocal][6];
-    bz[1] = nxyz_xtrct[blocal][7];
-    bz[2] = nxyz_xtrct[blocal][8];
+    ax[0] = nxyz_xtrct[a][0];
+    ax[1] = nxyz_xtrct[a][1];
+    ax[2] = nxyz_xtrct[a][2];
+    ay[0] = nxyz_xtrct[a][3];
+    ay[1] = nxyz_xtrct[a][4];
+    ay[2] = nxyz_xtrct[a][5];
+    az[0] = nxyz_xtrct[a][6];
+    az[1] = nxyz_xtrct[a][7];
+    az[2] = nxyz_xtrct[a][8];
+    bx[0] = nxyz_xtrct[b][0];
+    bx[1] = nxyz_xtrct[b][1];
+    bx[2] = nxyz_xtrct[b][2];
+    by[0] = nxyz_xtrct[b][3];
+    by[1] = nxyz_xtrct[b][4];
+    by[2] = nxyz_xtrct[b][5];
+    bz[0] = nxyz_xtrct[b][6];
+    bz[1] = nxyz_xtrct[b][7];
+    bz[2] = nxyz_xtrct[b][8];
 
     // determine tetramer types
     // 3'neighbor a - a - b - 5'neighbor b

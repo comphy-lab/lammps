@@ -172,7 +172,6 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
-  tagint *tag = atom->tag;
   int *type = atom->type;
 
   int nlocal = atom->nlocal;
@@ -180,7 +179,7 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
   int *alist,*blist,*numneigh,**firstneigh;
   double *special_lj = force->special_lj;
 
-  int a,b,ia,ib,anum,bnum,atype,btype,alocal,blocal;
+  int a,b,ia,ib,anum,bnum,atype,btype;
 
   double f1,f4t1,f4t4,f4t2,f4t3,f4t7,f4t8;
   double df1,df4t1,df4t4,df4t2,df4t3,df4t7,df4t8;
@@ -202,11 +201,10 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
 
     a = alist[ia];
     atype = type[a];
-    alocal = atom->map(tag[a]);
 
-    ax[0] = nxyz_xtrct[alocal][0];
-    ax[1] = nxyz_xtrct[alocal][1];
-    ax[2] = nxyz_xtrct[alocal][2];
+    ax[0] = nxyz_xtrct[a][0];
+    ax[1] = nxyz_xtrct[a][1];
+    ax[2] = nxyz_xtrct[a][2];
 
     // vector COM - base site a
     compute_base_site(atype%4, ax,ay,az,ra_cbs);
@@ -221,18 +219,17 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
       b &= NEIGHMASK;
 
       btype = type[b];
-      blocal = atom->map(tag[b]);
 
       if( idc != nullptr ) { // unique base pairing enabled
       // skip pair if no matching complement, but don't if complement ID<=0
-        if( idc[a] != tag[b] && idc[a] > 0 && idc[b] > 0 ) {
+        if( idc[a] != atom->tag[b] && idc[a] > 0 && idc[b] > 0 ) {
           continue;
         }
       }
 
-      bx[0] = nxyz_xtrct[blocal][0];
-      bx[1] = nxyz_xtrct[blocal][1];
-      bx[2] = nxyz_xtrct[blocal][2];
+      bx[0] = nxyz_xtrct[b][0];
+      bx[1] = nxyz_xtrct[b][1];
+      bx[2] = nxyz_xtrct[b][2];
 
       // vector COM - base site b
       compute_base_site(btype%4, bx,by,bz,rb_cbs);
@@ -290,12 +287,12 @@ void PairOxdnaHbond::compute(int eflag, int vflag)
       // early rejection criterium
       if (f4t3 != 0.0) {
 
-      az[0] = nxyz_xtrct[alocal][6];
-      az[1] = nxyz_xtrct[alocal][7];
-      az[2] = nxyz_xtrct[alocal][8];
-      bz[0] = nxyz_xtrct[blocal][6];
-      bz[1] = nxyz_xtrct[blocal][7];
-      bz[2] = nxyz_xtrct[blocal][8];
+      az[0] = nxyz_xtrct[a][6];
+      az[1] = nxyz_xtrct[a][7];
+      az[2] = nxyz_xtrct[a][8];
+      bz[0] = nxyz_xtrct[b][6];
+      bz[1] = nxyz_xtrct[b][7];
+      bz[2] = nxyz_xtrct[b][8];
 
       cost4 = MathExtra::dot3(az,bz);
       if (cost4 >  1.0) cost4 =  1.0;
