@@ -107,12 +107,7 @@ cross-stacking *oxdna/xstk* and coaxial stacking interaction
 *oxdna/coaxstk* as well as the hydrogen-bonding interaction
 *oxdna/hbond* between complementary pairs of nucleotides on opposite
 strands. Average sequence or sequence-dependent stacking and
-base-pairing strengths are supported :ref:`(Sulc) <Sulc1>`. Quasi-unique
-base-pairing between nucleotides can be achieved by using more
-complementary pairs of atom types like 5-8 and 6-7, 9-12 and 10-11,
-13-16 and 14-15, etc.  This prevents the hybridization of in principle
-complementary bases within Ntypes/4 bases up and down along the
-backbone.
+base-pairing strengths are supported :ref:`(Sulc) <Sulc1>`.
 
 The exact functional form of the pair styles is rather complex.  The
 individual potentials consist of products of modulation factors, which
