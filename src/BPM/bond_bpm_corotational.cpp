@@ -122,7 +122,7 @@ BondBPMCorotational::BondBPMCorotational(LAMMPS *_lmp) :
   update_flag = 1;
   // History: [0]=ri_mag, [1-3]=ri_hat
   //  if derivative damping: [4]=gamma, [5]=theta, [6]=psi
-  nhistory = 4;
+  nhistory = 7;
   id_fix_bond_history = utils::strdup("HISTORY_BPM_COROTATIONAL");
 
   single_extra = 7;
@@ -313,7 +313,8 @@ double BondBPMCorotational::corotational_forces(int i1, int i2, int type,
   MathExtra::quatrotvec(qcf_inv, rf, rc);
   double rc_norm = MathExtra::len3(rc);
   double Fr_c[3];
-  double Fr_mag = Kr_type * (rc_norm - ri_norm);
+  double Fr_elastic_mag = Kr_type * (rc_norm - ri_norm);
+  double Fr_mag = Fr_elastic_mag;
 
   // Shear force in C frame
   double ri_dot_rc = MathExtra::dot3(ri, rc);
@@ -483,7 +484,7 @@ double BondBPMCorotational::corotational_forces(int i1, int i2, int type,
   double Tt_undamped = Kt[type] * fabs(psi);
   double Tb_undamped = Kb[type] * theta;
 
-  double breaking = fabs(Fr_mag) / Fcr[type] + Fs_undamped / Fcs[type] +
+  double breaking = fabs(Fr_elastic_mag) / Fcr[type] + Fs_undamped / Fcs[type] +
                     Tb_undamped / Tcb[type] + Tt_undamped / Tct[type];
   if (breaking < 0.0) breaking = 0.0;
 
@@ -503,7 +504,7 @@ double BondBPMCorotational::corotational_forces(int i1, int i2, int type,
 ------------------------------------------------------------------------- */
 
 double BondBPMCorotational::standard_forces(int i1, int i2, int type,
-                                            double *r0, double *r,
+                                            double *r0_neg, double *r,
                                             double *force1on2, double *torque1on2,
                                             double *torque2on1, double &ebond,
                                             double *bondstore)
@@ -515,7 +516,7 @@ double BondBPMCorotational::standard_forces(int i1, int i2, int type,
 
   double q1[4], q2[4];
   double q2inv[4], mq[4], mqinv[4], qp21[4], q21[4], qtmp[4];
-  double rb[3], rb_x_r0[3], s[3], t[3];
+  double r0[3], rb[3], rb_x_r0[3], s[3], t[3];
   double Fr, Fn[3], Fs[3], Fsr[3], Fsrt[3], Fsrp[3], F_rot[3], Ftmp[3];
   double Tsr[3], Tst[3], Tb[3], Tt[3], Tbp[3], Ttp[3], Tsrp[3], T_rot[3], Ttmp[3];
 
@@ -530,7 +531,7 @@ double BondBPMCorotational::standard_forces(int i1, int i2, int type,
   double **quat = atom->quat;
   double r_mag = MathExtra::len3(r);
   double r_mag_inv = 1.0 / r_mag;
-  double r0_mag = MathExtra::len3(r0);
+  double r0_mag = MathExtra::len3(r0_neg);
   double r0_mag_inv = 1.0 / r0_mag;
   double Kr_type = Kr[type];
   double Ks_type = Ks[type];
@@ -553,7 +554,7 @@ double BondBPMCorotational::standard_forces(int i1, int i2, int type,
   MathExtra::qconjugate(q2, q2inv);
   MathExtra::quatrotvec(q2inv, r, rb);
   MathExtra::negate3(rb); // Note, reverse of Mora & Wang and corotational
-  MathExtra::negate3(r0);
+  MathExtra::scale3(-1.0, r0_neg, r0);
   Fr = Kr_type * (r_mag - r0_mag);
 
   // Calculate forces due to tangential displacements (no rotation)
@@ -727,6 +728,7 @@ double BondBPMCorotational::standard_forces(int i1, int i2, int type,
   Tt_mag = MathExtra::len3(Tt);
   Tb_mag = MathExtra::len3(Tb);
 
+  // Includes damping contribution (unlike corotational)
   breaking = Fr / Fcr[type] + Fs_mag / Fcs[type] + Tb_mag / Tcb[type] + Tt_mag / Tct[type];
   if (breaking < 0.0) breaking = 0.0;
 
@@ -1030,15 +1032,15 @@ void BondBPMCorotational::settings(int narg, char **arg)
   for (std::size_t i = 0; i < leftover_iarg.size(); i++) {
     iarg = leftover_iarg[i];
     if (strcmp(arg[iarg], "smooth") == 0) {
-      if (iarg + 1 > narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational smooth", error);
+      if (iarg + 1 >= narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational smooth", error);
       smooth_flag = utils::logical(FLERR, arg[iarg + 1], false, lmp);
       i += 1;
     } else if (strcmp(arg[iarg], "normalize") == 0) {
-      if (iarg + 1 > narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational normalize", error);
+      if (iarg + 1 >= narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational normalize", error);
       normalize_flag = utils::logical(FLERR, arg[iarg + 1], false, lmp);
       i += 1;
     } else if (strcmp(arg[iarg], "frame") == 0) {
-      if (iarg + 1 > narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational frame", error);
+      if (iarg + 1 >= narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational frame", error);
       if (strcmp(arg[iarg + 1], "standard") == 0)
         frame_style = STANDARD;
       else if (strcmp(arg[iarg + 1], "corotational") == 0)
@@ -1047,7 +1049,7 @@ void BondBPMCorotational::settings(int narg, char **arg)
         error->all(FLERR, "Unknown frame style {}", arg[iarg + 1]);
       i += 1;
     } else if (strcmp(arg[iarg], "damping") == 0) {
-      if (iarg + 1 > narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational damping", error);
+      if (iarg + 1 >= narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational damping", error);
       if (strcmp(arg[iarg + 1], "dem") == 0)
         damping_style = DEM;
       else if (strcmp(arg[iarg + 1], "derivative") == 0)
@@ -1060,8 +1062,8 @@ void BondBPMCorotational::settings(int narg, char **arg)
     }
   }
 
-  if (damping_style == DERIVATIVE)
-    nhistory += 3; // [4]=gamma, [5]=theta, [6]=psi
+  if (damping_style == DEM)
+    nhistory = 4;
 
   if (smooth_flag && !break_flag)
     error->all(FLERR, "Illegal bond bpm command, must turn off smoothing with break no option");
@@ -1138,6 +1140,8 @@ void BondBPMCorotational::write_restart_settings(FILE *fp)
 {
   fwrite(&smooth_flag, sizeof(int), 1, fp);
   fwrite(&normalize_flag, sizeof(int), 1, fp);
+  fwrite(&damping_style, sizeof(int), 1, fp);
+  fwrite(&frame_style, sizeof(int), 1, fp);
 }
 
 /* ----------------------------------------------------------------------
@@ -1149,9 +1153,13 @@ void BondBPMCorotational::read_restart_settings(FILE *fp)
   if (comm->me == 0) {
     utils::sfread(FLERR, &smooth_flag, sizeof(int), 1, fp, nullptr, error);
     utils::sfread(FLERR, &normalize_flag, sizeof(int), 1, fp, nullptr, error);
+    utils::sfread(FLERR, &damping_style, sizeof(int), 1, fp, nullptr, error);
+    utils::sfread(FLERR, &frame_style, sizeof(int), 1, fp, nullptr, error);
   }
   MPI_Bcast(&smooth_flag, 1, MPI_INT, 0, world);
   MPI_Bcast(&normalize_flag, 1, MPI_INT, 0, world);
+  MPI_Bcast(&damping_style, 1, MPI_INT, 0, world);
+  MPI_Bcast(&frame_style, 1, MPI_INT, 0, world);
 }
 
 /* ---------------------------------------------------------------------- */
