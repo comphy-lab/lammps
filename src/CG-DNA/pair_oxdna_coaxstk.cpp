@@ -162,7 +162,6 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double **torque = atom->torque;
-  tagint *tag = atom->tag;
   int *type = atom->type;
 
   int nlocal = atom->nlocal;
@@ -170,7 +169,7 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
   int *alist,*blist,*numneigh,**firstneigh;
   double *special_lj = force->special_lj;
 
-  int a,b,ia,ib,anum,bnum,atype,btype,alocal,blocal;
+  int a,b,ia,ib,anum,bnum,atype,btype;
 
   double f2,f4t1,f4t4,f4t5,f4t6,f5c3;
   double df2,df4t1,df4t4,df4t5,df4t6,df5c3,rsint;
@@ -192,11 +191,10 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
 
     a = alist[ia];
     atype = type[a];
-    alocal = atom->map(tag[a]);
 
-    ax[0] = nxyz_xtrct[alocal][0];
-    ax[1] = nxyz_xtrct[alocal][1];
-    ax[2] = nxyz_xtrct[alocal][2];
+    ax[0] = nxyz_xtrct[a][0];
+    ax[1] = nxyz_xtrct[a][1];
+    ax[2] = nxyz_xtrct[a][2];
 
     // vector COM a - stacking site a
     compute_stacking_site(ax,ay,az,ra_cstk);
@@ -214,11 +212,10 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
       b &= NEIGHMASK;
 
       btype = type[b];
-      blocal = atom->map(tag[b]);
 
-      bx[0] = nxyz_xtrct[blocal][0];
-      bx[1] = nxyz_xtrct[blocal][1];
-      bx[2] = nxyz_xtrct[blocal][2];
+      bx[0] = nxyz_xtrct[b][0];
+      bx[1] = nxyz_xtrct[b][1];
+      bx[2] = nxyz_xtrct[b][2];
 
       // vector COM b - stacking site b
       compute_stacking_site(bx,by,bz,rb_cstk);
@@ -266,12 +263,12 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
       // early rejection criterium
       if (f4t1 != 0.0) {
 
-      az[0] = nxyz_xtrct[alocal][6];
-      az[1] = nxyz_xtrct[alocal][7];
-      az[2] = nxyz_xtrct[alocal][8];
-      bz[0] = nxyz_xtrct[blocal][6];
-      bz[1] = nxyz_xtrct[blocal][7];
-      bz[2] = nxyz_xtrct[blocal][8];
+      az[0] = nxyz_xtrct[a][6];
+      az[1] = nxyz_xtrct[a][7];
+      az[2] = nxyz_xtrct[a][8];
+      bz[0] = nxyz_xtrct[b][6];
+      bz[1] = nxyz_xtrct[b][7];
+      bz[2] = nxyz_xtrct[b][8];
 
       cost4 = MathExtra::dot3(az,bz);
       if (cost4 >  1.0) cost4 =  1.0;
@@ -403,9 +400,9 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
       // cosphi3 and cosphi4 (=cosphi3) force and virial
       if (cosphi3 != 0.0) {
 
-        ay[0] = nxyz_xtrct[alocal][3];
-        ay[1] = nxyz_xtrct[alocal][4];
-        ay[2] = nxyz_xtrct[alocal][5];
+        ay[0] = nxyz_xtrct[a][3];
+        ay[1] = nxyz_xtrct[a][4];
+        ay[2] = nxyz_xtrct[a][5];
 
         finc   = -f2 * f4t1* f4t4 * f4t5 * f4t6 * 2.0 * f5c3 * df5c3 * factor_lj;
 
