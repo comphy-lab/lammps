@@ -1124,12 +1124,12 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
 
   // smoothing - determined through continuity and differentiability
 
-  // smoothing strength coincidentially identical for all pairs, hence use AAAA tetramer value below
+  // smoothing strength coincidentally identical for all pairs, hence use AAAA tetramer value below
   b_xst_lo_one = 0.25 * (cut_xst_lo_33[1][1][1][1] - cut_xst_0_33[1][1][1][1]) * (cut_xst_lo_33[1][1][1][1] - cut_xst_0_33[1][1][1][1])/
         (0.5 * (cut_xst_lo_33[1][1][1][1] - cut_xst_0_33[1][1][1][1]) * (cut_xst_lo_33[1][1][1][1] - cut_xst_0_33[1][1][1][1]) -
         k_xst_one * 0.5 * (cut_xst_0_33[1][1][1][1] -cut_xst_c_33[1][1][1][1]) * (cut_xst_0_33[1][1][1][1] - cut_xst_c_33[1][1][1][1])/k_xst_one);
 
-  // smoothing strength coincidentially identical for all pairs, hence use AAAA tetramer value below
+  // smoothing strength coincidentally identical for all pairs, hence use AAAA tetramer value below
   b_xst_hi_one = 0.25 * (cut_xst_hi_33[1][1][1][1] - cut_xst_0_33[1][1][1][1]) * (cut_xst_hi_33[1][1][1][1] - cut_xst_0_33[1][1][1][1])/
         (0.5 * (cut_xst_hi_33[1][1][1][1] - cut_xst_0_33[1][1][1][1]) * (cut_xst_hi_33[1][1][1][1] - cut_xst_0_33[1][1][1][1]) -
         k_xst_one * 0.5 * (cut_xst_0_33[1][1][1][1] -cut_xst_c_33[1][1][1][1]) * (cut_xst_0_33[1][1][1][1] - cut_xst_c_33[1][1][1][1])/k_xst_one);

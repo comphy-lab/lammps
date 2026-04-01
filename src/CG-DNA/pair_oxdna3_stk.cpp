@@ -308,25 +308,25 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
   // smoothing - determined through continuity and differentiability
 
-  // smoothing strength identical for all pairs ij, hence use average tetramer value below
-  b_st_lo_one = 2*a_st_one*exp(-a_st_one*(cut_st_lo[0][0][0][0]-cut_st_0[0][0][0][0]))*
-      2*a_st_one*exp(-a_st_one*(cut_st_lo[0][0][0][0]-cut_st_0[0][0][0][0]))*
-      (1-exp(-a_st_one*(cut_st_lo[0][0][0][0]-cut_st_0[0][0][0][0])))*
-      (1-exp(-a_st_one*(cut_st_lo[0][0][0][0]-cut_st_0[0][0][0][0])))/
-      (4*((1-exp(-a_st_one*(cut_st_lo[0][0][0][0] -cut_st_0[0][0][0][0])))*
-      (1-exp(-a_st_one*(cut_st_lo[0][0][0][0]-cut_st_0[0][0][0][0])))-
-      (1-exp(-a_st_one*(cut_st_c[0][0][0][0] -cut_st_0[0][0][0][0])))*
-      (1-exp(-a_st_one*(cut_st_c[0][0][0][0]-cut_st_0[0][0][0][0])))));
+  // smoothing strength coincidentally identical for all pairs ij, hence use AAAA tetramer value below
+  b_st_lo_one = 2*a_st_one*exp(-a_st_one*(cut_st_lo[1][1][1][1]-cut_st_0[1][1][1][1]))*
+      2*a_st_one*exp(-a_st_one*(cut_st_lo[1][1][1][1]-cut_st_0[1][1][1][1]))*
+      (1-exp(-a_st_one*(cut_st_lo[1][1][1][1]-cut_st_0[1][1][1][1])))*
+      (1-exp(-a_st_one*(cut_st_lo[1][1][1][1]-cut_st_0[1][1][1][1])))/
+      (4*((1-exp(-a_st_one*(cut_st_lo[1][1][1][1] -cut_st_0[1][1][1][1])))*
+      (1-exp(-a_st_one*(cut_st_lo[1][1][1][1]-cut_st_0[1][1][1][1])))-
+      (1-exp(-a_st_one*(cut_st_c[1][1][1][1] -cut_st_0[1][1][1][1])))*
+      (1-exp(-a_st_one*(cut_st_c[1][1][1][1]-cut_st_0[1][1][1][1])))));
 
-  // smoothing strength identical for all pairs ij, hence use average tetramer value below
-  b_st_hi_one = 2*a_st_one*exp(-a_st_one*(cut_st_hi[0][0][0][0]-cut_st_0[0][0][0][0]))*
-      2*a_st_one*exp(-a_st_one*(cut_st_hi[0][0][0][0]-cut_st_0[0][0][0][0]))*
-      (1-exp(-a_st_one*(cut_st_hi[0][0][0][0]-cut_st_0[0][0][0][0])))*
-      (1-exp(-a_st_one*(cut_st_hi[0][0][0][0]-cut_st_0[0][0][0][0])))/
-      (4*((1-exp(-a_st_one*(cut_st_hi[0][0][0][0] -cut_st_0[0][0][0][0])))*
-      (1-exp(-a_st_one*(cut_st_hi[0][0][0][0]-cut_st_0[0][0][0][0])))-
-      (1-exp(-a_st_one*(cut_st_c[0][0][0][0] -cut_st_0[0][0][0][0])))*
-      (1-exp(-a_st_one*(cut_st_c[0][0][0][0]-cut_st_0[0][0][0][0])))));
+  // smoothing strength coincidentally identical for all pairs ij, hence use AAAA tetramer value below
+  b_st_hi_one = 2*a_st_one*exp(-a_st_one*(cut_st_hi[1][1][1][1]-cut_st_0[1][1][1][1]))*
+      2*a_st_one*exp(-a_st_one*(cut_st_hi[1][1][1][1]-cut_st_0[1][1][1][1]))*
+      (1-exp(-a_st_one*(cut_st_hi[1][1][1][1]-cut_st_0[1][1][1][1])))*
+      (1-exp(-a_st_one*(cut_st_hi[1][1][1][1]-cut_st_0[1][1][1][1])))/
+      (4*((1-exp(-a_st_one*(cut_st_hi[1][1][1][1] -cut_st_0[1][1][1][1])))*
+      (1-exp(-a_st_one*(cut_st_hi[1][1][1][1]-cut_st_0[1][1][1][1])))-
+      (1-exp(-a_st_one*(cut_st_c[1][1][1][1] -cut_st_0[1][1][1][1])))*
+      (1-exp(-a_st_one*(cut_st_c[1][1][1][1]-cut_st_0[1][1][1][1])))));
 
   b_st5_one = a_st5_one*a_st5_one*dtheta_st5_ast_one*dtheta_st5_ast_one/
       (1-a_st5_one*dtheta_st5_ast_one*dtheta_st5_ast_one);
@@ -354,7 +354,6 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
       a_st[i][j] = a_st_one;
       b_st_lo[i][j] = b_st_lo_one;
       b_st_hi[i][j] = b_st_hi_one;
-
       theta_st4_0[i][j] = theta_st4_0_one;
 
       a_st5[i][j] = a_st5_one;
