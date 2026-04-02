@@ -2063,7 +2063,7 @@ int Neighbor::choose_stencil(NeighRequest *rq)
     mask = stencilmasks[i];
 
     //printf("III %d: half %d full %d ghost %d ssa %d\n",
-    //       i, Mask & NS_HALF, Mask & NS_FULL, Mask & NS_GHOST, Mask & NS_SSA);
+    //       i, mask & NS_HALF, mask & NS_FULL, mask & NS_GHOST, mask & NS_SSA);
 
     // exactly one of half or full is set and must match
 
