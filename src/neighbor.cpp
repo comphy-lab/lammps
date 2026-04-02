@@ -1792,6 +1792,22 @@ void Neighbor::print_pairwise_info()
   if (style != Neighbor::NSQ && style != Neighbor::MULTI)
     out += fmt::format("  binsize = {:.8g}, bins = {:g} {:g} {:g}\n", binsize,
                        ceil(bbox[0] / binsize), ceil(bbox[1] / binsize), ceil(bbox[2] / binsize));
+  else if (style == Neighbor::MULTI) {
+
+    int icollectionmin = 0;
+    for (int n = 0; n < ncollections; n++)
+      if (cutcollectionsq[n][n] < cutcollectionsq[icollectionmin][icollectionmin])
+        icollectionmin = n;
+
+    for (int n = 0; n < ncollections; n++) {
+      if (n == icollectionmin && binsizeflag) binsize = binsize_user;
+      else binsize = 0.5 * sqrt(cutcollectionsq[n][n]);
+      if (binsize == 0.0) binsize = bbox[0];
+
+      out += fmt::format("  collection {} binsize = {:.8g}, bins = {:g} {:g} {:g}\n", n + 1, binsize,
+                         ceil(bbox[0] / binsize), ceil(bbox[1] / binsize), ceil(bbox[2] / binsize));
+    }
+  }
   out += fmt::format("  {} neighbor lists, perpetual/occasional/extra = {} {} {}\n",
                      nlist, nperpetual, noccasional, nextra);
 
