@@ -10,7 +10,7 @@ Syntax
 
    bond_style bpm/rotational keyword value attribute1 attribute2 ...
 
-* optional keyword = *overlay/pair* or *store/local* or *smooth* or *break* or *frame* or *damping*
+* optional keyword = *store/local* or *overlay/pair* or *smooth* or *normalize* or *break* or *frame* or *damping*
 
   .. parsed-literal::
 
@@ -36,7 +36,7 @@ Syntax
        *break* value = *yes* or *no*
           indicates whether bonds break during a run
 
-       *frame* value = *corotational* or *standard*
+       *frame* value = *average* or *particle*
           what frame is used for calculating rotations
 
        *damping* value = *derivative* or *dem*
@@ -44,8 +44,8 @@ Syntax
 
 .. note::
 
-   Versions of LAMMPS before .. versionadded:: TBD used *frame* standard
-   and *dem* damping
+   In versions of LAMMPS before .. versionadded:: TBD, the bond style
+   was equivalent to using *frame* *particle* and *damping* *dem*.
 
 Examples
 """"""""
@@ -55,7 +55,7 @@ Examples
    bond_style bpm/rotational
    bond_coeff 1 1.0 0.2 0.02 0.02 0.20 0.04 0.04 0.04 0.1 0.02 0.002 0.002
 
-   bond_style bpm/rotational frame standard damping derivative
+   bond_style bpm/rotational frame particle damping derivative
    bond_coeff 1 1.0 0.2 0.02 0.02 0.20 0.04 0.04 0.04 0.1 0.02 0.002 0.002
 
    bond_style bpm/rotational store/local myfix 1000 time id1 id2
@@ -112,7 +112,12 @@ variables :math:`f_{r,c}` :math:`f_{s,c}`, :math:`\tau_{b,c}`, and
 :math:`\tau_{t,c}` are critical limits to each force or torque.  If
 :math:`B` is ever equal to or exceeds one, the bond will break.  This
 is done by setting the bond type to 0 such that forces and
-torques are no longer computed.
+torques are no longer computed. 
+
+.. note::
+   The breaking criterion uses undamped forces and torques for *frame* *average*
+   and damped forces and torques for *frame* *particle* to maintain backwards 
+   compatibility with previous versions of this bond style.
 
 After computing the base magnitudes of the forces and torques, they
 can be optionally multiplied by an extra factor :math:`w` to smoothly
@@ -202,10 +207,10 @@ coefficients. One cannot use *break no* with *smooth yes*.
 .. versionadded:: TBD
 
 The *frame* setting determines the reference used to calculate relative
-rotations. The *standard* option uses the frame of one particle as
+rotations. The *particle* option uses the frame of one particle as
 described in :ref:`(Wang) <Wang2009>` and :ref:`(Wang and Mora) <Wang2009b>`.
-This determination is based on particle ID in LAMMPS. Alternatively,
-the *corotational* option (the default) defines a central frame across
+This determination is based on particle ID in LAMMPS.
+The *average* option (the default) defines a central frame across
 the two particles as described in :ref:`(Alkuino et al.) <Alkuino2026>`.
 The latter option implies forces do not depend on particle IDs and can be
 more stable, particularly in simulations of thin or high distorted
@@ -320,7 +325,7 @@ Related commands
 Default
 """""""
 
-The option defaults are *overlay/pair* = *no*, *smooth* = *yes*, *normalize* = *no*, *break* = *yes*, *frame* = *corotational*, and *damping* = *derivative*
+The option defaults are *overlay/pair* = *no*, *smooth* = *yes*, *normalize* = *no*, *break* = *yes*, *frame* = *average*, and *damping* = *derivative*
 
 ----------
 

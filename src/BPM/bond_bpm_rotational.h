@@ -44,10 +44,10 @@ class BondBPMRotational : public BondBPM {
   int smooth_flag, normalize_flag;
   int frame_style, damping_style;
 
-  double corotational_forces(int, int, int, double *, double *, double *, double *,
-                                   double *, double &, double *);
-  double standard_forces(int, int, int, double *, double *, double *, double *,
-                                   double *, double &, double *);
+  double average_frame_forces(int, int, int, double *, double *, double *, double *,
+                              double *, double &, double *);
+  double particle_frame_forces(int, int, int, double *, double *, double *, double *,
+                               double *, double &, double *);
   void dem_damping_forces(int, int, int, double *, double *, double *, double *);
 
   void allocate();

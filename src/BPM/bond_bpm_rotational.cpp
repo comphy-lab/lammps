@@ -12,8 +12,8 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing author: Gabriel Alkuino (SyracuseU)
-                        Joel Clemmer (SNL)
+   Contributing author: Joel Clemmer (SNL)
+                        Gabriel Alkuino (SyracuseU)
                         Teng Zhang (SyracuseU)
 ------------------------------------------------------------------------- */
 
@@ -38,7 +38,7 @@
 static constexpr double EPSILON = 1e-10;
 
 enum { DEM, DERIVATIVE };
-enum { COROTATIONAL, STANDARD };
+enum { AVERAGE, PARTICLE };
 
 using namespace LAMMPS_NS;
 using MathConst::MY_SQRT2;
@@ -116,14 +116,14 @@ BondBPMRotational::BondBPMRotational(LAMMPS *_lmp) :
   normalize_flag = 0;
   writedata = 0;
 
-  frame_style = COROTATIONAL;
+  frame_style = AVERAGE;
   damping_style = DERIVATIVE;
 
   update_flag = 1;
   // History: [0]=ri_mag, [1-3]=ri_hat
   //  if derivative damping: [4]=gamma, [5]=theta, [6]=psi
   nhistory = 7;
-  id_fix_bond_history = utils::strdup("HISTORY_BPM_COROTATIONAL");
+  id_fix_bond_history = utils::strdup("HISTORY_BPM_ROTATIONAL");
 
   single_extra = 7;
   svector = new double[7];
@@ -267,11 +267,11 @@ void BondBPMRotational::store_data()
 }
 
 /* ----------------------------------------------------------------------
-  Corotational construction of elastic forces + derivative-based damping
-    Alkuino 2026
+  Construction of elastic forces + derivative-based damping based on
+  Alkuino et al. 2026
 ------------------------------------------------------------------------- */
 
-double BondBPMRotational::corotational_forces(int i1, int i2, int type,
+double BondBPMRotational::average_frame_forces(int i1, int i2, int type,
                                                 double *ri, double *rf,
                                                 double *force1on2, double *torque1on2,
                                                 double *torque2on1, double &ebond,
@@ -330,12 +330,14 @@ double BondBPMRotational::corotational_forces(int i1, int i2, int type,
 
   double rc_hat[3];
   MathExtra::normalize3(rc, rc_hat);
+  double Fs_elastic_mag = 0.0;
   double Fs_mag = 0.0;
   if (rixrc_mag > EPSILON) {
     MathExtra::normalize3(rixrc, t_hat);
     MathExtra::cross3(t_hat, rc_hat, s_hat);
     MathExtra::norm3(s_hat);
-    Fs_mag = Ks_type * rc_norm * gamma;
+    Fs_elastic_mag = Ks_type * rc_norm * gamma;
+    Fs_mag = Fs_elastic_mag;
   }
 
   // Orientation of atom2 w.r.t. C frame
@@ -412,8 +414,10 @@ double BondBPMRotational::corotational_forces(int i1, int i2, int type,
 
   // Torques in C' frame with damping
   double Tt_p[3], Tb_p[3];
-  double Tt_mag = Kt[type] * psi;
-  double Tb_mag = Kb[type] * theta;
+  double Tt_elastic_mag = Kt[type] * psi;
+  double Tt_mag = Tt_elastic_mag;
+  double Tb_elastic_mag = Kb[type] * theta;
+  double Tb_mag = Tb_elastic_mag;
 
   // Damping forces, if relevant
 
@@ -480,12 +484,8 @@ double BondBPMRotational::corotational_forces(int i1, int i2, int type,
   MathExtra::quatrotvec(qcf, T2_c, torque1on2);
 
   // Breaking criterion (use undamped magnitudes)
-  double Fs_undamped = Ks_type * rc_norm * gamma;
-  double Tt_undamped = Kt[type] * fabs(psi);
-  double Tb_undamped = Kb[type] * theta;
-
-  double breaking = fabs(Fr_elastic_mag) / Fcr[type] + Fs_undamped / Fcs[type] +
-                    Tb_undamped / Tcb[type] + Tt_undamped / Tct[type];
+  double breaking = fabs(Fr_elastic_mag) / Fcr[type] + Fs_elastic_mag / Fcs[type] +
+                    Tb_elastic_mag / Tcb[type] + Tt_elastic_mag / Tct[type];
   if (breaking < 0.0) breaking = 0.0;
 
   // Approximate bond energy:
@@ -498,12 +498,12 @@ double BondBPMRotational::corotational_forces(int i1, int i2, int type,
 }
 
 /* ----------------------------------------------------------------------
-  Standard construction of elastic forces + derivative-based damping
+  Construction of elastic forces + derivative-based damping based on:
     1) Y. Wang Acta Geotechnica 2009
     2) P. Mora & Y. Wang Advances in Geomcomputing 2009
 ------------------------------------------------------------------------- */
 
-double BondBPMRotational::standard_forces(int i1, int i2, int type,
+double BondBPMRotational::particle_frame_forces(int i1, int i2, int type,
                                             double *r0_neg, double *r,
                                             double *force1on2, double *torque1on2,
                                             double *torque2on1, double &ebond,
@@ -553,7 +553,7 @@ double BondBPMRotational::standard_forces(int i1, int i2, int type,
   // Calculate normal forces, rb = bond vector in particle 1's frame
   MathExtra::qconjugate(q2, q2inv);
   MathExtra::quatrotvec(q2inv, r, rb);
-  MathExtra::negate3(rb); // Note, reverse of Mora & Wang and corotational
+  MathExtra::negate3(rb); // Note, reverse of Mora & Wang and Alkuino et al.
   MathExtra::scale3(-1.0, r0_neg, r0);
   Fr = Kr_type * (r_mag - r0_mag);
 
@@ -728,7 +728,7 @@ double BondBPMRotational::standard_forces(int i1, int i2, int type,
   Tt_mag = MathExtra::len3(Tt);
   Tb_mag = MathExtra::len3(Tb);
 
-  // Includes damping contribution (unlike corotational)
+  // Includes damping contribution (unlike in average_frame_forces) for backwards compatibility
   breaking = Fr / Fcr[type] + Fs_mag / Fcs[type] + Tb_mag / Tcb[type] + Tt_mag / Tct[type];
   if (breaking < 0.0) breaking = 0.0;
 
@@ -755,7 +755,7 @@ void BondBPMRotational::dem_damping_forces(int i1, int i2, int type, double *r,
   double vn1[3], vn2[3], vt1[3], vt2[3], vroll[3];
   double wxn1[3], wxn2[3], wn1[3], wn2[3];
 
-  // Note: 1 <-> 2 swapped from older 2025 version, pre-corotation/derivative
+  // Note: 1 <-> 2 swapped from older 2025 version (before average frame and derivative damping)
   MathExtra::normalize3(r, rhat);
 
   double **v = atom->v;
@@ -875,11 +875,11 @@ void BondBPMRotational::compute(int eflag, int vflag)
     // rf = x[i2] - x[i1]
     MathExtra::sub3(x[i2], x[i1], rf);
 
-    if (frame_style == COROTATIONAL) {
-      breaking = corotational_forces(i1, i2, type, ri, rf,
+    if (frame_style == AVERAGE) {
+      breaking = average_frame_forces(i1, i2, type, ri, rf,
                                   force1on2, torque1on2, torque2on1, ebond, bondstore[n]);
     } else {
-      breaking = standard_forces(i1, i2, type, ri, rf,
+      breaking = particle_frame_forces(i1, i2, type, ri, rf,
                                 force1on2, torque1on2, torque2on1, ebond, bondstore[n]);
     }
 
@@ -1014,12 +1014,12 @@ void BondBPMRotational::init_style()
   BondBPM::init_style();
 
   if (!atom->quat_flag || !atom->radius_flag || !atom->omega_flag)
-    error->all(FLERR, "Bond bpm/corotational requires atom style bpm/sphere");
+    error->all(FLERR, "Bond bpm/rotational requires atom style bpm/sphere");
   if (comm->ghost_velocity == 0)
-    error->all(FLERR, "Bond bpm/corotational requires ghost atoms store velocity");
+    error->all(FLERR, "Bond bpm/rotational requires ghost atoms store velocity");
 
   if (domain->dimension == 2)
-    error->warning(FLERR, "Bond style bpm/corotational not intended for 2d use");
+    error->warning(FLERR, "Bond style bpm/rotational not intended for 2d use");
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1041,10 +1041,10 @@ void BondBPMRotational::settings(int narg, char **arg)
       i += 1;
     } else if (strcmp(arg[iarg], "frame") == 0) {
       if (iarg + 1 >= narg) utils::missing_cmd_args(FLERR, "bond_style bpm/rotational frame", error);
-      if (strcmp(arg[iarg + 1], "standard") == 0)
-        frame_style = STANDARD;
-      else if (strcmp(arg[iarg + 1], "corotational") == 0)
-        frame_style = COROTATIONAL;
+      if (strcmp(arg[iarg + 1], "particle") == 0)
+        frame_style = PARTICLE;
+      else if (strcmp(arg[iarg + 1], "average") == 0)
+        frame_style = AVERAGE;
       else
         error->all(FLERR, "Unknown frame style {}", arg[iarg + 1]);
       i += 1;
@@ -1201,11 +1201,11 @@ double BondBPMRotational::single(int type, double rsq, int i, int j, double &ffo
 
   // Note, derivative damping will update bondstore, but this doesn't affect real values
   double breaking;
-  if (frame_style == COROTATIONAL) {
-    breaking = corotational_forces(i, j, type, ri, rf,
+  if (frame_style == AVERAGE) {
+    breaking = average_frame_forces(i, j, type, ri, rf,
                                 force1on2, torque1on2, torque2on1, ebond, bondstore);
   } else {
-    breaking = standard_forces(i, j, type, ri, rf,
+    breaking = particle_frame_forces(i, j, type, ri, rf,
                               force1on2, torque1on2, torque2on1, ebond, bondstore);
   }
 
