@@ -127,7 +127,7 @@ TEST_F(KSpaceAutoSlabTest, EwaldAutoMatchesTightReferenceWithinTenXAccuracy)
     const auto trial = run_total_ewald_forces(accuracy, "auto");
     const double error = relative_l2_error(reference, trial);
     EXPECT_LT(error, 10.0 * tolerance) << "accuracy=" << accuracy;
-    if (lmp->comm->me == 0) {
+    if (verbose && (lmp->comm->me == 0)) {
       fmt::print("accuracy={} auto_force_l2_rel_err={} bound={}\n", accuracy, error,
                  10.0 * tolerance);
     }
