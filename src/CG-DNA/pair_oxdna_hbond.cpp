@@ -938,7 +938,7 @@ void PairOxdnaHbond::init_style()
   neighbor->add_request(this, NeighConst::REQ_DEFAULT);
 
   // optionally initialise fix for unique base pairing
-  ifix = modify->find_fix("ubp");
+  ifix = modify->find_fix("Basepairs");
 
   if (ifix < 0) {
     if (comm->me == 0) utils::logmesg(lmp,"Parsing normal base pairing\n");
