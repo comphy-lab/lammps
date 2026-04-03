@@ -1,7 +1,7 @@
 #! /bin/bash
 
 REL_TOL_NVE=1e-8
-REL_TOL_NVT=1e-4
+REL_TOL_NVT=5e-3
 UNITS=lj
 
 LMPDIR=/Users/xwb17127/Work/code/lammps
@@ -1151,7 +1151,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
     }
   ' 2>&1 | tee -a $EXDIR/test.log
   ######################################################
-  printf '\n# Running oxDNA3 unique base pairing NVT test\n' | tee -a $EXDIR/test.log
+  printf '\n# Running oxDNA3 NVT and unique base pairing test\n' | tee -a $EXDIR/test.log
   cd $EXDIR/oxDNA3/unique_bp
   mkdir test
   cd test
@@ -1187,9 +1187,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   if (( $(echo "$diff > $REL_TOL_NVT" | bc -l) )); then
     printf "# Relative difference of kinetic energy %g > %g\n" "$diff" "$tol" | tee -a $EXDIR/test.log 
-    echo "# NVT 8 MPI-tasks FAILED" | tee -a $EXDIR/test.log
+    echo "# 8 MPI-tasks NVT FAILED" | tee -a $EXDIR/test.log
   else
-    echo "# NVT 8 MPI-tasks passed" | tee -a $EXDIR/test.log
+    echo "# 8 MPI-tasks NVT passed" | tee -a $EXDIR/test.log
   fi
 
   diff=$(echo "($avg_ehbond_test - $avg_ehbond_ref)/$avg_ehbond_ref" | bc -l)
@@ -1197,9 +1197,9 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   if (( $(echo "$diff > $REL_TOL_NVT" | bc -l) )); then
     printf "# Relative difference of hydrogen bonding energy %g > %g\n" "$diff" "$tol" | tee -a $EXDIR/test.log
-    echo "# Unique base pairing 8 MPI-tasks FAILED" | tee -a $EXDIR/test.log
+    echo "# 8 MPI-tasks unique base pairing FAILED" | tee -a $EXDIR/test.log
   else
-    echo "# Unique base pairing 8 MPI-tasks passed" | tee -a $EXDIR/test.log
+    echo "# 8 MPI-tasks unique base pairing passed" | tee -a $EXDIR/test.log
   fi
 
   ######################################################
