@@ -73,6 +73,7 @@ class KokkosLMP : protected Pointers {
   int autotuning;
   int perf_nsamples;
   int perf_mode;
+  double perf_rel_tol;
 
   static int is_finalized;
   static int init_ngpus;

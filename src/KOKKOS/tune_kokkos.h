@@ -54,6 +54,7 @@ class TuneKokkos : protected Pointers {
   int mode;                  // how to determine the optimal performance among multiple samples for each parameter combination: MAX_VALUE, AVERAGE_VALUE, or MEDIAN_VALUE
   double opt_perf;           // stored the optimal performance
   double relative_tolerance; // acceptable threshold for performance degradation wrt opt_perf
+  int nperf_degraded;        // number of consecutive times the performance is degraded beyond the relative tolerance
 
   bigint last_step;          // last timestep when timing info was collected
   double last_cpu;           // last CPU time when timing info was collected

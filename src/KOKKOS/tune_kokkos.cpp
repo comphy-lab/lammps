@@ -55,6 +55,7 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
   //   compared to the optimal performance obtained from the last scanning
 
   relative_tolerance = _rel_tol;
+  nperf_degraded = 0;
 
   // tuner name used for logging
 
@@ -79,13 +80,24 @@ TuneKokkos::TuneKokkos(LAMMPS *lmp, int _kernel_type, int nevery,
     // leaving it for the pair/bond/fix/compute style to decide
 
   } else
-    error->all(FLERR,"Kokkos tuning_kernel_params: kernel type not yet supported");
+    error->all(FLERR,"KOKKOS tuning_kernel_params: kernel type not yet supported");
+
+  // error check the auto-tuning parameters
+
+  if (interval < 0)
+    error->all(FLERR,"Interval for KOKKOS auto-tuning must be non-negative");
+
+  if (nsamples < 0)
+    error->all(FLERR,"Number of samples for KOKKOS auto-tuning must be non-negative");
+
+  if (relative_tolerance < 0.0)
+    error->all(FLERR,"Relative tolerance for KOKKOS auto-tuning must be non-negative");
 
   if (comm->me == 0) {
     std::string filename = fmt::format("tuning-{}.log", my_name);
     tuning_logfile = fopen(filename.c_str(),"w");
     if (tuning_logfile == nullptr)
-      error->all(FLERR,"Cannot open Kokkos tuning logfile {}: {}",
+      error->all(FLERR,"Cannot open tuning logfile {}: {}",
         filename.c_str(), utils::getsyserror());
   } else {
     tuning_logfile = nullptr;
@@ -281,6 +293,7 @@ void TuneKokkos::tuning_kernel_params()
 
     combination_idx = 0;
     sample_idx = 0;
+    nperf_degraded = 0;
   }
 
   // check if the performance is within acceptable range of the optimal performance
@@ -467,9 +480,8 @@ int TuneKokkos::get_optimal_combination_idx()
 
     } else if (mode == AVERAGE_VALUE) {
       double ave = 0.0;
-      for (int s = 0; s < nsamples; s++) {
+      for (int s = 0; s < nsamples; s++)
         ave += performance[i][s];
-      }
       p_i = ave / nsamples;
 
     } else if (mode == MEDIAN_VALUE) {
@@ -503,7 +515,6 @@ void TuneKokkos::regular_performance_check()
   bigint elapsed_steps = update->ntimestep - update->beginstep;
   if (elapsed_steps == 0) return;
 
-  int delay = 10 * interval; // delay period before re-triggering scan
   if (!scanning_completed || elapsed_steps % interval != 0) return;
 
   double tps = get_timing_info();
@@ -534,18 +545,38 @@ void TuneKokkos::regular_performance_check()
   else
     diff = 0.0;
 
-  // if performance degraded beyond acceptable threshold after a delay period
+  // if performance degraded beyond acceptable threshold after a number of samples
 
-  if (diff > relative_tolerance && elapsed_steps > delay) {
+  if (diff > relative_tolerance) {
+    if (nperf_degraded < nsamples) {
+      if (comm->me == 0) {
+        std::string mesg = fmt::format("t = {}: Performance degraded by {:.2f} after {} steps, "
+                                       " but still collecting samples for the current parameter set. ",
+                                         update->ntimestep, diff * 100.0, elapsed_steps);
+        mesg += fmt::format("opt perf = {:.1f} current perf = {:.1f} ",
+                          opt_perf, perf);
+        mesg += fmt::format("Continue collecting samples for the current parameter set.\n");
+        utils::print(tuning_logfile, "{}", mesg.c_str());
+        fflush(tuning_logfile);
+        #ifdef TUNE_DEBUG
+        utils::logmesg(lmp, mesg);
+        #endif
+      }
+      nperf_degraded++;
+      return;
+    }
+
     scanning_completed = 0;
     combination_idx = 0;
+    sample_idx = 0;
+    nperf_degraded = 0;
     firststep = 1;
 
     if (comm->me == 0) {
       std::string mesg = fmt::format("t = {}: Performance degraded by {:.2f} after {} steps.",
                         update->ntimestep, diff * 100.0, elapsed_steps);
       mesg += fmt::format(" opt perf = {:.1f} current perf = {:.1f} ", opt_perf, perf);
-      mesg += fmt::format("Re-triggering scan\n");
+      mesg += fmt::format("\nTriggering a re-scan (disabled by setting relative tolerance to be 1.0)..\n");
       utils::print(tuning_logfile, "{}", mesg.c_str());
       fflush(tuning_logfile);
       #ifdef TUNE_DEBUG

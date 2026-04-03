@@ -140,6 +140,7 @@ KokkosLMP::KokkosLMP(LAMMPS *lmp, int narg, char **arg) : Pointers(lmp)
   autotuning = 0;
   perf_nsamples = 5;
   perf_mode = 0;
+  perf_rel_tol = 0.2;
 
   int iarg = 0;
   while (iarg < narg) {
@@ -656,14 +657,15 @@ void KokkosLMP::accelerator(int narg, char **arg)
       bond_chunk_size_set = 1;
       iarg += 2;
     } else if (strcmp(arg[iarg],"auto/tuning") == 0) {
-      if (iarg+4 > narg) error->all(FLERR,"Illegal package kokkos command for auto/tuning");
+      if (iarg+5 > narg) error->all(FLERR,"Illegal package kokkos command for auto/tuning");
       autotuning = utils::inumeric(FLERR, arg[iarg+1], false, lmp);
       perf_nsamples = utils::inumeric(FLERR, arg[iarg+2], false, lmp);
       if (strcmp(arg[iarg+3], "max") == 0) perf_mode = 0;
       else if (strcmp(arg[iarg+3], "ave") == 0) perf_mode = 1;
       else if (strcmp(arg[iarg+3], "median") == 0) perf_mode = 2;
       else error->all(FLERR,"Illegal package kokkos command for auto/tuning: must be 'max', 'ave', or 'median'");
-      iarg += 4;
+      perf_rel_tol = utils::numeric(FLERR, arg[iarg+4], false, lmp);
+      iarg += 5;
     } else error->all(FLERR,"Illegal package kokkos command");
   }
 
