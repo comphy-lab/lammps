@@ -88,6 +88,7 @@ class KSpace : protected Pointers {
                             // for LJ coefficients
   bool conp_one_step;       // calculate A matrix in one step with pppm
   int slabflag, wireflag;
+  int slab_auto;
   int scalar_pressure_flag;    // 1 if using MSM fast scalar pressure
   double slab_volfactor, wire_volfactor;
 
