@@ -427,9 +427,9 @@ unit style. The automatic choice is not artificially clamped
 above 1.0, so it can in principle approach the original box size if
 the formula permits. The quasi-2D error estimate used for the
 automatic choice is discussed in :ref:`(Gao2025) <Gao2025>` and
-:ref:`(Gan2025) <Gan2025>`.  For related error estimates and 
-parameter-selection guidance in the more general dielectric-confined 
-setting, see :ref:`(Gao2025) <Gao2025>`. The *auto* setting is 
+:ref:`(Gan2025) <Gan2025>`.  For related error estimates and
+parameter-selection guidance in the more general dielectric-confined
+setting, see :ref:`(Gao2025) <Gao2025>`. The *auto* setting is
 currently supported by :doc:`kspace_style <kspace_style>` *ewald*, *pppm*,
 *pppm/cg*, *pppm/tip4p*, *pppm/stagger*, and the corresponding
 OpenMP/GPU/Intel variants that reuse the same slab-correction setup.
