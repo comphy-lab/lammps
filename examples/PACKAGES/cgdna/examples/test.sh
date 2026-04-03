@@ -1,6 +1,7 @@
 #! /bin/bash
 
-REL_TOL=1e-8
+REL_TOL_NVE=1e-8
+REL_TOL_NVT=1e-4
 UNITS=lj
 
 LMPDIR=/Users/xwb17127/Work/code/lammps
@@ -53,7 +54,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -101,7 +102,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -142,7 +143,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   ' 2>&1 | tee -a $EXDIR/test.log
 
   ######################################################
-  printf '\n# Running oxDNA duplex2 NVT test\n' | tee -a $EXDIR/test.log
+  printf '\n# Running oxDNA duplex2 NVE test\n' | tee -a $EXDIR/test.log
   cd $EXDIR/oxDNA/duplex2
   mkdir test
   cd test
@@ -158,7 +159,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -206,7 +207,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -268,7 +269,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -316,7 +317,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -373,7 +374,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -421,7 +422,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -462,7 +463,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   ' 2>&1 | tee -a $EXDIR/test.log
 
   ######################################################
-  printf '\n# Running oxDNA2 duplex2 NVT test\n' | tee -a $EXDIR/test.log
+  printf '\n# Running oxDNA2 duplex2 NVE test\n' | tee -a $EXDIR/test.log
   cd $EXDIR/oxDNA2/duplex2
   mkdir test
   cd test
@@ -478,7 +479,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -526,7 +527,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -583,7 +584,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -631,7 +632,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -672,207 +673,6 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   ' 2>&1 | tee -a $EXDIR/test.log
 
   ######################################################
-  printf '\n# Running oxDNA2 unique_bp NVT test\n' | tee -a $EXDIR/test.log
-  cd $EXDIR/oxDNA2/unique_bp
-  mkdir test
-  cd test
-  cp $SRCDIR/lmp_mpi .
-  cp ../in.duplex4.4type .
-  cp ../in.duplex4.8type .
-  cp ../data.duplex4.4type .
-  cp ../data.duplex4.8type .
-
-  ### 1 MPI-task ###
-  mpirun -np 1 ./lmp_mpi -in in.duplex4.4type > /dev/null
-  mv log.lammps log.$DATE.duplex4.4type.g++.1
-  grep -e '[0-9]  ekin' log.$DATE.duplex4.4type.g++.1 > e_test.4type.1.dat
-  grep -e '[0-9]  ekin' ../log*4type*1 > e_ref.4type.1.dat
-
-  paste e_ref.4type.1.dat e_test.4type.1.dat |
-
-  awk -v tol="$REL_TOL" '
-    failed == 0 {
-      diff = ($4-$20)/$4
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $4, $20, diff, tol
-        printf "# 1 MPI-task 4 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($8-$24)/$8
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $8, $24, diff, tol
-        printf "# 1 MPI-task 4 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($12-$28)/$12
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $12, $28, diff, tol
-        printf "# 1 MPI-task 4 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($16-$32)/$16
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $16, $32, diff, tol
-        printf "# 1 MPI-task 4 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-    }
-    END {
-      if (failed == 0) print "# 1 MPI-task 4 types passed"
-    }
-  ' 2>&1 | tee -a $EXDIR/test.log
-
-  mpirun -np 1 ./lmp_mpi -in in.duplex4.8type > /dev/null
-  mv log.lammps log.$DATE.duplex4.8type.g++.1
-  grep -e '[0-9]  ekin' log.$DATE.duplex4.8type.g++.1 > e_test.8type.1.dat
-  grep -e '[0-9]  ekin' ../log*8type*1 > e_ref.8type.1.dat
-
-  paste e_ref.8type.1.dat e_test.8type.1.dat |
-
-  awk -v tol="$REL_TOL" '
-    failed == 0 {
-      diff = ($4-$20)/$4
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $4, $20, diff, tol
-        printf "# 1 MPI-task 8 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($8-$24)/$8
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $8, $24, diff, tol
-        printf "# 1 MPI-task 8 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($12-$28)/$12
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $12, $28, diff, tol
-        printf "# 1 MPI-task 8 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($16-$32)/$16
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $16, $32, diff, tol
-        printf "# 1 MPI-task 8 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-    }
-    END {
-      if (failed == 0) print "# 1 MPI-task 8 types passed"
-    }
-  ' 2>&1 | tee -a $EXDIR/test.log
-
-  ### 4 MPI-tasks ###
-  mpirun -np 4 ./lmp_mpi -in in.duplex4.4type > /dev/null
-  mv log.lammps log.$DATE.duplex4.4type.g++.4
-  grep -e '[0-9]  ekin' log.$DATE.duplex4.4type.g++.4 > e_test.4type.4.dat
-  grep -e '[0-9]  ekin' ../log*4type*4 > e_ref.4type.4.dat
-
-  paste e_ref.4type.4.dat e_test.4type.4.dat |
-
-  awk -v tol="$REL_TOL" '
-    failed == 0 {
-      diff = ($4-$20)/$4
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $4, $20, diff, tol
-        printf "# 4 MPI-tasks 4 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($8-$24)/$8
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $8, $24, diff, tol
-        printf "# 4 MPI-tasks 4 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($12-$28)/$12
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $12, $28, diff, tol
-        printf "# 4 MPI-tasks 4 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($16-$32)/$16
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $16, $32, diff, tol
-        printf "# 4 MPI-tasks 4 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-    }
-    END {
-      if (failed == 0) print "# 4 MPI-task 4 types passed"
-    }
-  ' 2>&1 | tee -a $EXDIR/test.log
-
-  mpirun -np 4 ./lmp_mpi -in in.duplex4.8type > /dev/null
-  mv log.lammps log.$DATE.duplex4.8type.g++.4
-  grep -e '[0-9]  ekin' log.$DATE.duplex4.8type.g++.4 > e_test.8type.4.dat
-  grep -e '[0-9]  ekin' ../log*8type*4 > e_ref.8type.4.dat
-
-  paste e_ref.8type.4.dat e_test.8type.4.dat |
-
-  awk -v tol="$REL_TOL" '
-    failed == 0 {
-      diff = ($4-$20)/$4
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $4, $20, diff, tol
-        printf "# 4 MPI-tasks 8 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($8-$24)/$8
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $8, $24, diff, tol
-        printf "# 4 MPI-tasks 8 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($12-$28)/$12
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $12, $28, diff, tol
-        printf "# 4 MPI-tasks 8 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-      diff = ($16-$32)/$16
-      if (diff < 0) diff = -diff
-      if (diff > tol) {
-        printf "# Line %d: %g vs %g (relative difference = %g > %g)\n", NR, $16, $32, diff, tol
-        printf "# 4 MPI-tasks 8 types FAILED\n"
-        failed = 1
-        exit 1
-      }
-    }
-    END {
-      if (failed == 0) print "# 4 MPI-task 8 types passed"
-    }
-  ' 2>&1 | tee -a $EXDIR/test.log
-
-  ######################################################
   printf '\n# Running oxDNA2 dsring NVE test\n' | tee -a $EXDIR/test.log
   cd $EXDIR/oxDNA2/dsring
   mkdir test
@@ -889,7 +689,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -937,7 +737,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -999,7 +799,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -1047,7 +847,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -1109,7 +909,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = 0
       if($4!=0) diff = ($4-$52)/$4
@@ -1234,7 +1034,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = 0
       if($4!=0) diff = ($4-$52)/$4
@@ -1350,6 +1150,57 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
       if (failed == 0) print "# 4 MPI-tasks passed"
     }
   ' 2>&1 | tee -a $EXDIR/test.log
+  ######################################################
+  printf '\n# Running oxDNA3 unique base pairing NVT test\n' | tee -a $EXDIR/test.log
+  cd $EXDIR/oxDNA3/unique_bp
+  mkdir test
+  cd test
+  cp $SRCDIR/lmp_mpi .
+  cp ../in.dsring2 .
+  cp ../data.dsring2 .
+
+  ### 8 MPI-tasks ###
+  mpirun -np 8 ./lmp_mpi -in in.dsring2 > /dev/null
+  mv log.lammps log.$DATE.dsring2.g++.8
+  grep -e '[0-9]  ekin' log.$DATE.dsring2.g++.8 | awk '{print $1, $12}' > edyn_test.8.dat
+  grep -e '[0-9]  ekin' log.$DATE.dsring2.g++.8 | awk '{print $1, $28}' > ehbond_test.8.dat
+  grep -e '[0-9]  ekin' ../log*dsring2.g++.8 | awk '{print $1, $12}' > edyn_ref.8.dat
+  grep -e '[0-9]  ekin' ../log*dsring2.g++.8 | awk '{print $1, $28}' > ehbond_ref.8.dat
+
+  avg_edyn_test=$(awk '{sum += $2; n++} END {if (n > 0) print sum / n}' edyn_test.8.dat)
+  avg_edyn_ref=$(awk '{sum += $2; n++} END {if (n > 0) print sum / n}' edyn_ref.8.dat)
+  avg_ehbond_test=$(awk 'NR > 2000 {sum += $2; n++} END {if (n > 0) print sum / n}' ehbond_test.8.dat) 
+  avg_ehbond_ref=$(awk 'NR > 2000 {sum += $2; n++} END {if (n > 0) print sum / n}' ehbond_ref.8.dat)
+
+  tol=$REL_TOL_NVT
+
+  if [ $UNITS = lj ]; then
+    ekin=44.4
+  fi  
+
+  if [ $UNITS = real ]; then
+    ekin=264.6956072509588
+  fi
+
+  diff=$(echo "($avg_edyn_test - $ekin)/$ekin" | bc -l)
+  diff=$(echo "if ($diff < 0) -1 * $diff else $diff" | bc -l)
+
+  if (( $(echo "$diff > $REL_TOL_NVT" | bc -l) )); then
+    printf "# Relative difference of kinetic energy %g > %g\n" "$diff" "$tol" | tee -a $EXDIR/test.log 
+    echo "# NVT 8 MPI-tasks FAILED" | tee -a $EXDIR/test.log
+  else
+    echo "# NVT 8 MPI-tasks passed" | tee -a $EXDIR/test.log
+  fi
+
+  diff=$(echo "($avg_ehbond_test - $avg_ehbond_ref)/$avg_ehbond_ref" | bc -l)
+  diff=$(echo "if ($diff < 0) -1 * $diff else $diff" | bc -l)
+
+  if (( $(echo "$diff > $REL_TOL_NVT" | bc -l) )); then
+    printf "# Relative difference of hydrogen bonding energy %g > %g\n" "$diff" "$tol" | tee -a $EXDIR/test.log
+    echo "# Unique base pairing 8 MPI-tasks FAILED" | tee -a $EXDIR/test.log
+  else
+    echo "# Unique base pairing 8 MPI-tasks passed" | tee -a $EXDIR/test.log
+  fi
 
   ######################################################
   printf '\n# Running oxRNA2 duplex2 NVE test\n' | tee -a $EXDIR/test.log
@@ -1368,7 +1219,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -1416,7 +1267,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -1478,7 +1329,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.1.dat e_test.1.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -1526,7 +1377,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   paste e_ref.4.dat e_test.4.dat |
 
-  awk -v tol="$REL_TOL" '
+  awk -v tol="$REL_TOL_NVE" '
     failed == 0 {
       diff = ($4-$20)/$4
       if (diff < 0) diff = -diff
@@ -1596,6 +1447,7 @@ elif [ $# -eq 1 ] && [ $1 = clean ]; then
   rm -rf $EXDIR/oxDNA2/dsring/test
   rm -rf $EXDIR/oxDNA2/potential_file/test
   rm -rf $EXDIR/oxDNA3/duplex2/test
+  rm -rf $EXDIR/oxDNA3/unique_bp/test
   rm -rf $EXDIR/oxRNA2/duplex2/test
   rm -rf $EXDIR/oxRNA2/potential_file/test
   rm -rf $EXDIR/test.log

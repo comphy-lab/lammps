@@ -1,7 +1,7 @@
 # LAMMPS input file in real units via oxdna lj2real.py, date 2026-03-03
 variable number	equal 2
-variable ofreq	equal 100
-variable efreq	equal 100
+variable ofreq	equal 1000
+variable efreq	equal 1000
 variable T      equal 300.0
 
 units real
@@ -42,7 +42,7 @@ pair_coeff * * oxdna/coaxstk 3.779604210550065 3.4072 5.1108 1.87396 4.94044 2.0
 
 # NVE ensemble
 fix 1 all nve/asphere
-fix 2 all langevin ${T} ${T} 4263.83 457145 angmom 10
+#fix 2 all langevin ${T} ${T} 4263.83 457145 angmom 10
 
 timestep 0.017055
 
@@ -65,7 +65,7 @@ dump out all custom ${ofreq} out.${number}.lammpstrj id mol type x y z ix iy iz 
 dump_modify out sort id
 dump_modify out format line "%d %d %d  %22.15le %22.15le %22.15le  %d %d %d  %22.15le %22.15le %22.15le  %22.15le %22.15le %22.15le %22.15le  %22.15le %22.15le %22.15le"
 
-run 1000
+run 10000
 
 write_data last_config.${number}.* nocoeff
 #write_restart last_config.${number}.*
