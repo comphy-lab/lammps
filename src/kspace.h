@@ -249,7 +249,7 @@ class KSpace : protected Pointers {
   double **gcons, **dgcons;    // accumulated per-atom energy/virial
 
   int evflag, evflag_atom;
-  int eflag_either, eflag_global, eflag_atom;
+  int eflag_either, eflag_global, eflag_atom, eflag_only;
   int vflag_either, vflag_global, vflag_atom;
   int maxeatom, maxvatom;
 
@@ -262,7 +262,7 @@ class KSpace : protected Pointers {
     if (eflag || vflag)
       ev_setup(eflag, vflag, alloc);
     else
-      evflag = evflag_atom = eflag_either = eflag_global = eflag_atom = vflag_either =
+      evflag = evflag_atom = eflag_either = eflag_global = eflag_atom = eflag_only = vflag_either =
           vflag_global = vflag_atom = 0;
   }
   void ev_setup(int, int, int alloc = 1);
