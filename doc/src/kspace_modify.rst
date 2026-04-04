@@ -414,6 +414,8 @@ option is explained in the paper by :ref:`(Yeh) <Yeh>`.  The *slab*
 option is also extended to non-neutral systems :ref:`(Ballenegger)
 <Ballenegger>`.
 
+.. versionadded:: TBD
+
 As an alternative to specifying a fixed volfactor, the keyword
 *auto* can be used to determine the extended z dimension from the
 current normalized force tolerance, the lateral dimensions of the
