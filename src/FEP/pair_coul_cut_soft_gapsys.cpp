@@ -381,7 +381,7 @@ double PairCoulCutSoftGapsys::single(int i, int j, int itype, int jtype,
   } else {
 
     forcecoul = - 2.0 * atom->q[i] * atom->q[j] / pow(cut_inner, 3);
-	phicoul = force->qqrd2e * atom->q[i] * atom->q[j] *
+    phicoul = force->qqrd2e * atom->q[i] * atom->q[j] *
           (rsq / pow(cut_inner, 3) - 3 * sqrt(rsq) / pow(cut_inner, 2) + 3 / cut_inner);
 
   }

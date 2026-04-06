@@ -379,6 +379,8 @@ used.
 
 ----------
 
+.. versionadded:: TBD
+
 A place to include the functional form of the pair_style gapsys :ref:`(Gapsys) <Gapsys>`
 
 ----------
