@@ -96,7 +96,7 @@ void PairCoulCutSoftGapsys::compute(int eflag, int vflag)
       rsq = delx*delx + dely*dely + delz*delz;
       jtype = type[j];
 
-      cut_inner = (1.0 + sigmaq * abs(qtmp * q[j])) * alphaq * pow(lambda[itype][jtype], 1.0 / 6.0);
+      cut_inner = (1.0 + sigmaq * fabs(qtmp * q[j])) * alphaq * pow(lambda[itype][jtype], 1.0 / 6.0);
 
       if (rsq < cut_inner * cut_inner) {
 
