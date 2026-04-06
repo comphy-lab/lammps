@@ -1782,6 +1782,7 @@ void Neighbor::print_pairwise_info()
     else nperpetual++;
   }
 
+  int nbinz;
   std::string out = "Neighbor list info ...\n";
   out += fmt::format("  update: every = {} steps, delay = {} steps, check = {}\n",
                      every, delay, dist_check ? "yes" : "no");
@@ -1789,10 +1790,12 @@ void Neighbor::print_pairwise_info()
                      oneatom, pgsize);
   out += fmt::format("  master list distance cutoff = {:.8g}\n", cutneighmax);
   out += fmt::format("  ghost atom cutoff = {:.8g}\n", cutghost);
-  if (style != Neighbor::NSQ && style != Neighbor::MULTI)
+  if (style != Neighbor::NSQ && style != Neighbor::MULTI) {
+    if (domain->dimension == 2) nbinz = 1
+    else nbinz = ceil(bbox[2] / binsize);
     out += fmt::format("  binsize = {:.8g}, bins = {:g} {:g} {:g}\n", binsize,
-                       ceil(bbox[0] / binsize), ceil(bbox[1] / binsize), ceil(bbox[2] / binsize));
-  else if (style == Neighbor::MULTI) {
+                       ceil(bbox[0] / binsize), ceil(bbox[1] / binsize), nbinz);
+  } else if (style == Neighbor::MULTI) {
 
     int icollectionmin = 0;
     for (int n = 0; n < ncollections; n++)
@@ -1804,8 +1807,11 @@ void Neighbor::print_pairwise_info()
       else binsize = 0.5 * sqrt(cutcollectionsq[n][n]);
       if (binsize == 0.0) binsize = bbox[0];
 
+      if (domain->dimension == 2) nbinz = 1
+      else nbinz = ceil(bbox[2] / binsize);
+
       out += fmt::format("  collection {} binsize = {:.8g}, bins = {:g} {:g} {:g}\n", n + 1, binsize,
-                         ceil(bbox[0] / binsize), ceil(bbox[1] / binsize), ceil(bbox[2] / binsize));
+                         ceil(bbox[0] / binsize), ceil(bbox[1] / binsize), nbinz);
     }
   }
   out += fmt::format("  {} neighbor lists, perpetual/occasional/extra = {} {} {}\n",
