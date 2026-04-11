@@ -32,6 +32,7 @@ modules:
       - -D CMAKE_Fortran_COMPILER=gfortran
       - -D DOWNLOAD_POTENTIALS=no
       - -D PKG_AMOEBA=yes
+      - -D PKG_APIP=yes
       - -D PKG_ASPHERE=yes
       - -D PKG_BOCS=yes
       - -D PKG_BODY=yes
@@ -66,6 +67,9 @@ modules:
       - -D PKG_GPU=no
       - -D GPU_API=opencl
       - -D PKG_INTERLAYER=yes
+      - -D PKG_KOKKOS=yes
+      - -D Kokkos_ENABLE_SERIAL=yes
+      - -D Kokkos_ENABLE_OPENMP=yes
       - -D PKG_KSPACE=yes
       - -D PKG_LEPTON=yes
       - -D PKG_MACHDYN=yes
