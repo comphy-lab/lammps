@@ -27,6 +27,7 @@
 #include "force.h"
 #include "improper.h"
 #include "kspace.h"
+#include "math_special.h"
 #include "modify.h"
 #include "pair.h"
 #include "update.h"
@@ -35,6 +36,7 @@
 #include <cstring>
 
 using namespace LAMMPS_NS;
+using MathSpecial::powint;
 
 /* ---------------------------------------------------------------------- */
 
@@ -194,8 +196,7 @@ double ComputePressureBocs::get_cg_p_corr(int N_basis, double *phi_coeff,
 {
   double correction = 0.0;
   for (int i = 1; i <= N_basis; ++i)
-    correction -= phi_coeff[i-1] * ( N_mol * i / vavg ) *
-      pow( ( 1 / vavg ) * ( vCG - vavg ),i-1);
+    correction -= phi_coeff[i-1] * (N_mol * i / vavg) * powint((1 / vavg) * (vCG - vavg), i - 1);
   return correction;
 }
 
@@ -306,12 +307,9 @@ double ComputePressureBocs::compute_scalar()
     volume = (domain->xprd * domain->yprd * domain->zprd);
 
     /* MRD NJD if block */
-    if (p_basis_type == BASIS_ANALYTIC)
-    {
+    if (p_basis_type == BASIS_ANALYTIC) {
       correction = get_cg_p_corr(N_basis,phi_coeff,N_mol,vavg,volume);
-    }
-    else if (p_basis_type == BASIS_LINEAR_SPLINE || p_basis_type == BASIS_CUBIC_SPLINE)
-    {
+    } else if (p_basis_type == BASIS_LINEAR_SPLINE || p_basis_type == BASIS_CUBIC_SPLINE) {
       correction = get_cg_p_corr(splines, p_basis_type, volume);
     }
 
