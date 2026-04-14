@@ -127,15 +127,15 @@ std::pair<int, int> FixMBX::parse_dp1_range(const std::string &dp1_str)
 // throws specific errors if the arguments are malformed
 bool FixMBX::validateMBXFixParameters(int narg, char **arg)
 {
-  if (narg < 2) error->all(FLERR, ("[MBX] Input line too short"));
+  if (narg < 2) error->all(FLERR, "[MBX] Input line too short");
 
   int num_monomers = 0;
   try {
     num_monomers = std::stoi(arg[0]);
   } catch (...) {
-    error->all(FLERR, ("[MBX] num_monomers is not a valid integer: " + std::string(arg[0])));
+    error->all(FLERR, "[MBX] num_monomers is not a valid integer: {}", arg[0]);
   }
-  if (num_monomers < 1) error->all(FLERR, ("[MBX] num_monomers must be positive"));
+  if (num_monomers < 1) error->all(FLERR, "[MBX] num_monomers must be positive");
 
   std::map<int, std::string> mbx_atom_id_mapping;    // atom ID mapping for all monomers
 
@@ -144,9 +144,7 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
   // Lambda to check dp1 monomer syntax
   auto check_external_dp1 = [&](int n_atoms, char **current_monomer_atoms) -> bool {
     if (n_atoms != 1)
-      error->all(
-          FLERR,
-          ("[MBX] Wrong number of arguments for dp1: expected 1, got " + std::to_string(n_atoms)));
+      error->all(FLERR, "[MBX] Wrong number of arguments for dp1: expected 1, got {}", n_atoms);
     const std::string atom_id_str = current_monomer_atoms[0];
 
     int start_index, end_index;
@@ -220,22 +218,21 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
     // atom ID mapping must match expected, such as OHH for h2o
     for (size_t i = 0; i < atom_ids.size(); ++i) {
       int at = atom_ids[i];
-      if (!atom_mapping.count(at))    // first time seeing this atom ID
+      if (!atom_mapping.count(at)) {   // first time seeing this atom ID
         atom_mapping[at] = expected_monomer_atom_ids[i];
-      else if (atom_mapping[at] != expected_monomer_atom_ids[i]) {    // inconsistent mapping detected
+      } else if (atom_mapping[at] != expected_monomer_atom_ids[i]) {    // inconsistent mapping detected
         // construct error message
-        std::string expected_monomer_atom_ids_string = "";
-        for (const auto &mat : expected_monomer_atom_ids) { expected_monomer_atom_ids_string += mat + " "; }
-        std::string atom_ids_string = "";
-        for (const auto &at2 : atom_ids) { atom_ids_string += std::to_string(at2) + " "; }
-        error->all(FLERR,
-                   ("[MBX] Incorrect atom ID mapping in " + current_monomer_name + ". Expected " +
-                    expected_monomer_atom_ids_string + "but got " + atom_ids_string));
+        std::string expected_monomer_atom_ids_string;
+        for (const auto &mat : expected_monomer_atom_ids)
+          expected_monomer_atom_ids_string += mat + " ";
+        std::string atom_ids_string;
+        for (const auto &at2 : atom_ids) atom_ids_string += std::to_string(at2) + " ";
+        error->all(FLERR, "[MBX] Incorrect atom ID mapping in {}. Expected {} but got {}",
+                   current_monomer_name, expected_monomer_atom_ids_string, atom_ids_string);
       }
       if (mbx_atom_id_mapping.count(at))    // atom ID already defined in another monomer
-        error->all(FLERR,
-                   ("[MBX] Already defined atom IDs found in " + current_monomer_name + ": " +
-                    std::to_string(at)));
+        error->all(FLERR, "[MBX] Already defined atom IDs found in {}: {}",
+                   current_monomer_name, at);
     }
 
     // check that atom IDs are contiguous
@@ -243,9 +240,8 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
     int maximum_index = *std::max_element(atom_ids.begin(), atom_ids.end());
     for (int i = minimum_index; i <= maximum_index; ++i) {
       if (std::find(atom_ids.begin(), atom_ids.end(), i) == atom_ids.end())
-        error->all(FLERR,
-                   ("[MBX] Atom IDs must be contiguous in " + current_monomer_name + ". Missing " +
-                    std::to_string(i)));
+        error->all(FLERR, "[MBX] Atom IDs must be contiguous in {}. Missing {}",
+                   current_monomer_name, i);
     }
     for (const auto &kv : atom_mapping)    // transfer monomer mapping to global mapping
       mbx_atom_id_mapping[kv.first] = kv.second;
