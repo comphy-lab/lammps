@@ -632,12 +632,7 @@ void FixMBX::mbx_fill_system_information_from_atom()
   const int nghost = atom->nghost;
   const int nall = nlocal + nghost;
 
-
-  bigint natoms = atom->natoms;
-
   tagint *tag = atom->tag;
-  int *molecule = atom->molecule;
-  double **x = atom->x;
 
   int mtype = -1;
   for (int i = 0; i < nall; ++i) {
@@ -721,11 +716,6 @@ void FixMBX::post_neighbor()
 
   const int nlocal = atom->nlocal;
   const int nghost = atom->nghost;
-  const int nall = nlocal + nghost;
-
-  tagint *tag = atom->tag;
-  int *molecule = atom->molecule;
-  double **x = atom->x;
 
   mbx_fill_system_information_from_atom();
 
@@ -857,10 +847,8 @@ void FixMBX::pre_exchange()
 
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
-  tagint *tag = atom->tag;
-  double **x = atom->x;
 
-  if (mbx_num_atoms_local == 0) { return; }
+  if (mbx_num_atoms_local == 0) return;
 
   for (int h = 0; h < aspc_num_hist; ++h) {
     std::vector<double> mbx_dip_history = mbx_impl->ptr_mbx_local->GetDipoleHistory(h);
@@ -925,7 +913,6 @@ void FixMBX::mbx_get_dipoles_local()
 
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
-  tagint *tag = atom->tag;
 
   // conversion factor for e*Anstrom --> Debye
   // const double qe_Debye = 1.0 / 0.2081943;
