@@ -171,7 +171,7 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
     std::string current_monomer_name = current_monomer[0];
     std::vector<std::string> current_monomer_atoms;
 
-    for (int i = 1; i <= n_atoms; ++i) current_monomer_atoms.push_back(current_monomer[i]);
+    for (int i = 1; i <= n_atoms; ++i) current_monomer_atoms.emplace_back(current_monomer[i]);
     std::vector<std::string> expected_monomer_atom_ids;
 
     // special handling for dp1 monomer
@@ -2051,71 +2051,71 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e)
 void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n)
 {
   if (strcmp("h2o", name) == 0) {
-    n.push_back("O");
-    n.push_back("H");
-    n.push_back("H");
+    n.emplace_back("O");
+    n.emplace_back("H");
+    n.emplace_back("H");
   } else if (strcmp("li+", name) == 0) {
-    n.push_back("Li");
+    n.emplace_back("Li");
   } else if (strcmp("na+", name) == 0) {
-    n.push_back("Na");
+    n.emplace_back("Na");
   } else if (strcmp("k+", name) == 0) {
-    n.push_back("K");
+    n.emplace_back("K");
   } else if (strcmp("rb+", name) == 0) {
-    n.push_back("Rb");
+    n.emplace_back("Rb");
   } else if (strcmp("cs+", name) == 0) {
-    n.push_back("Cs");
+    n.emplace_back("Cs");
   } else if (strcmp("f-", name) == 0) {
-    n.push_back("F");
+    n.emplace_back("F");
   } else if (strcmp("cl-", name) == 0) {
-    n.push_back("Cl");
+    n.emplace_back("Cl");
   } else if (strcmp("br-", name) == 0) {
-    n.push_back("Br");
+    n.emplace_back("Br");
   } else if (strcmp("i-", name) == 0) {
-    n.push_back("I");
+    n.emplace_back("I");
   } else if (strcmp("he", name) == 0) {
-    n.push_back("He");
+    n.emplace_back("He");
   } else if (strcmp("co2", name) == 0) {
-    n.push_back("C");
-    n.push_back("O");
-    n.push_back("O");
+    n.emplace_back("C");
+    n.emplace_back("O");
+    n.emplace_back("O");
   } else if (strcmp("ch4", name) == 0) {
-    n.push_back("C");
-    n.push_back("H");
-    n.push_back("H");
-    n.push_back("H");
-    n.push_back("H");
+    n.emplace_back("C");
+    n.emplace_back("H");
+    n.emplace_back("H");
+    n.emplace_back("H");
+    n.emplace_back("H");
   } else if (strcmp("ar", name) == 0) {
-    n.push_back("Ar");
+    n.emplace_back("Ar");
   } else if (strcmp("h2", name) == 0) {
-    n.push_back("H");
-    n.push_back("H");
+    n.emplace_back("H");
+    n.emplace_back("H");
   } else if (strcmp("n2o5", name) == 0) {
-    n.push_back("O");
-    n.push_back("N");
-    n.push_back("N");
-    n.push_back("O");
-    n.push_back("O");
-    n.push_back("O");
-    n.push_back("O");
+    n.emplace_back("O");
+    n.emplace_back("N");
+    n.emplace_back("N");
+    n.emplace_back("O");
+    n.emplace_back("O");
+    n.emplace_back("O");
+    n.emplace_back("O");
   } else if (strcmp("so4a", name) == 0) {
-    n.push_back("S");
-    n.push_back("O");
-    n.push_back("O");
-    n.push_back("O");
-    n.push_back("O");
+    n.emplace_back("S");
+    n.emplace_back("O");
+    n.emplace_back("O");
+    n.emplace_back("O");
+    n.emplace_back("O");
   } else if (strcmp("co3a", name) == 0) {
-    n.push_back("C");
-    n.push_back("O");
-    n.push_back("O");
-    n.push_back("O");
+    n.emplace_back("C");
+    n.emplace_back("O");
+    n.emplace_back("O");
+    n.emplace_back("O");
   } else if (strcmp("no3a", name) == 0) {
-    n.push_back("N");
-    n.push_back("O");
-    n.push_back("O");
-    n.push_back("O");
+    n.emplace_back("N");
+    n.emplace_back("O");
+    n.emplace_back("O");
+    n.emplace_back("O");
   } else if (strcmp("dp2", name) == 0) {
-    n.push_back("X");
-    n.push_back("X");
+    n.emplace_back("X");
+    n.emplace_back("X");
   }
   else
     error->one(FLERR, "Unsupported molecule type in MBX");
