@@ -29,12 +29,16 @@
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
-enum{NOBIAS,BIAS};
-enum{ISO,ANISO,TRICLINIC};
+namespace {
+enum{NOBIAS, BIAS};
+enum{ISO, ANISO, TRICLINIC};
 
-static constexpr double TILTMAX = 1.5;
+constexpr double TILTMAX = 1.5;
 
-using dbl3_t = struct { double x,y,z; };
+using dbl3_t = struct {
+  double x,y,z;
+};
+}
 
 /* ----------------------------------------------------------------------
    change box size
