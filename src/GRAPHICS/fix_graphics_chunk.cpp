@@ -16,6 +16,7 @@
 #include "atom.h"
 #include "comm.h"
 #include "compute_chunk_atom.h"
+#include "domain.h"
 #include "error.h"
 #include "graphics.h"
 #include "image_objects.h"
@@ -39,7 +40,7 @@ FixGraphicsChunk::FixGraphicsChunk(LAMMPS *lmp, int narg, char **arg) :
   // parse mandatory args
 
   nevery = utils::inumeric(FLERR, arg[3], false, lmp);
-  if (nevery <= 0) error->all(FLERR, 3, "Illegal fix graphics/chunk nevery value {}", nevery);
+  if (nevery <= 0) error->all(FLERR, 3, "Fix graphics/chunk nevery value {} must be > 0", nevery);
   global_freq = nevery;
   dynamic_group_allow = 1;
 
@@ -61,7 +62,8 @@ FixGraphicsChunk::FixGraphicsChunk(LAMMPS *lmp, int narg, char **arg) :
     if (strcmp(arg[iarg], "radius") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/chunk radius", error);
       radius = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
-      if (radius < 0.0) error->all(FLERR, iarg + 1, "Illegal fix graphics/chunk radius value");
+      if (radius < 0.0)
+        error->all(FLERR, iarg + 1, "Fix graphics/chunk radius value must be >= 0");
       iarg += 2;
     } else if (strcmp(arg[iarg], "shading") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/chunk shading", error);

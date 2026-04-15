@@ -59,6 +59,11 @@ Special cases are handled automatically:
 * Chunks with exactly two atoms are rendered as a capped cylinder.
 * Chunks with three or more atoms produce a full 3-D convex hull.
 
+For the special cases of one or two atoms, a minimum visible radius of
+0.1 (in distance units) is used if the effective radius would otherwise
+be zero (i.e., when neither the *radius* keyword is set nor per-atom
+radii exist).  This ensures that point particles are still visible.
+
 The convex hull triangles are colored per vertex using the atom type of
 the closest atom (from the point set that built the hull) when the
 *type* or *element* coloring scheme is selected in :doc:`dump image
@@ -68,10 +73,11 @@ instead.  The color can be set with the *fcolor* keyword of the
 
 The optional *radius* keyword inflates the hull outward from the
 centroid of each chunk by the specified distance.  If per-atom radii
-exist (e.g. from :doc:`atom_style sphere <atom_style>`), they are used
-instead and the larger of the per-atom radius and the specified value is
-taken.  The default value of 0 corresponds to point particles with no
-inflation.
+exist (e.g. from :doc:`atom_style sphere <atom_style>`), the maximum
+per-atom radius across all atoms in each chunk is used as the inflation
+distance for that chunk.  The *radius* keyword value serves as the
+default when no per-atom radii are available.  The default value of 0
+corresponds to point particles with no inflation.
 
 The optional *shading* keyword selects the normal computation used for
 rendering.  *smooth* (the default) computes averaged per-vertex normals

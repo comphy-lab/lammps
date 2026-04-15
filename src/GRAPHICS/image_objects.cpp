@@ -833,6 +833,8 @@ void PlaneObj::draw(Image *img, int flag, const double *color, const double *cen
 // ConvexHullObj: build and draw convex hulls from a set of 3D points
 // ======================================================================
 
+constexpr double MIN_VISIBLE_RADIUS = 0.1;    // minimum visible radius for point particles
+
 // Build a convex hull from a set of 3D points with optional radius inflation.
 // Handles special cases: 0 points (empty), 1 point (sphere), 2 points (cylinder),
 // 3+ points (incremental convex hull algorithm).
@@ -863,7 +865,7 @@ void ConvexHullObj::build(const std::vector<vec3> &points, double radius, bool s
 void ConvexHullObj::build_sphere(const vec3 &center, double radius,
                                  const std::vector<vec3> &points, bool smooth)
 {
-  if (radius <= 0.0) radius = 0.1;    // minimum visible radius for point particles
+  if (radius <= 0.0) radius = MIN_VISIBLE_RADIUS;
 
   // Create icosahedron-based sphere with 2 refinement levels
   constexpr double A = 0.5257311121191336;
@@ -932,7 +934,7 @@ void ConvexHullObj::build_sphere(const vec3 &center, double radius,
 void ConvexHullObj::build_cylinder(const vec3 &p1, const vec3 &p2, double radius,
                                    const std::vector<vec3> &points, bool smooth)
 {
-  if (radius <= 0.0) radius = 0.1;    // minimum visible radius for point particles
+  if (radius <= 0.0) radius = MIN_VISIBLE_RADIUS;
 
   constexpr int resolution = 24;
   vec3 axis = p2 - p1;
@@ -1056,7 +1058,7 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &original_points, double 
 
   if (maxdist < SMALL * SMALL) {
     // all points are coincident -> sphere
-    build_sphere(centroid, radius > 0.0 ? radius : 0.1, original_points, smooth);
+    build_sphere(centroid, radius > 0.0 ? radius : MIN_VISIBLE_RADIUS, original_points, smooth);
     return;
   }
 
@@ -1078,7 +1080,7 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &original_points, double 
 
   if (i2 < 0 || maxdist < SMALL * SMALL) {
     // all points are collinear -> cylinder
-    build_cylinder(points[i0], points[i1], radius > 0.0 ? radius : 0.1, original_points, smooth);
+    build_cylinder(points[i0], points[i1], radius > 0.0 ? radius : MIN_VISIBLE_RADIUS, original_points, smooth);
     return;
   }
 
@@ -1288,15 +1290,6 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &original_points, double 
       hull_color_idx.push_back({faces[f].v[0], faces[f].v[1], faces[f].v[2]});
     }
   }
-}
-
-// assign color indices based on closest atom to each vertex
-
-void ConvexHullObj::assign_colors(const std::vector<vec3> & /*points*/)
-{
-  // hull_color_idx already stores the point index for each vertex
-  // no additional assignment needed since build_hull() sets this up
-  // This method is a placeholder for potential future extensions
 }
 
 // draw the convex hull using per-vertex normals and colors

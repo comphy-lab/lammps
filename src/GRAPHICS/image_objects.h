@@ -120,6 +120,7 @@ namespace ImageObjects {
     std::vector<triangle> triangles;
     void refine();
   };
+
   class ConvexHullObj {
    public:
     // build convex hull from a set of points with optional radius inflation
@@ -145,7 +146,6 @@ namespace ImageObjects {
     void build_cylinder(const vec3 &p1, const vec3 &p2, double radius,
                         const std::vector<vec3> &points, bool smooth);
     void build_hull(const std::vector<vec3> &points, double radius, bool smooth);
-    void assign_colors(const std::vector<vec3> &points);
   };
 }    // namespace ImageObjects
 }    // namespace LAMMPS_NS
