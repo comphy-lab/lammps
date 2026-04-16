@@ -812,7 +812,7 @@ void PairRuNNer::compute(int eflag, int vflag)
           FLERR,
           "Maximal number of allowed extrapolations have been exceeded during the simulation!\n"
           "Current extrapolation count: {:10.3e}",
-          (bigint) global_extrap_count_total);
+          double(global_extrap_count_total));
     }
 
     // Prints a summary of the recorded extrapolations at every interval until the timestep is
