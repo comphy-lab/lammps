@@ -42,8 +42,6 @@ class BondOxdnaFene : public Bond {
   double **nxyz_xtrct;              // per-atom arrays for local unit vectors
 
   void allocate();
-  void ev_tally_xyz(int, int, int, int, double, double, double, double, double, double, double);
-
   class FixOxdnaLRF *fix_lrf;    // ptr to oxdna/lrf fix
 };
 
