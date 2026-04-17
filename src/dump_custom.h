@@ -33,6 +33,8 @@ class DumpCustom : public Dump {
   const int FORMAT_REVISION = 0x0002;
   const int ENDIAN = 0x0001;
 
+  double memory_usage() override;
+
  protected:
   int nevery;               // dump frequency for output
   char *idregion;           // region ID, nullptr if no region
@@ -104,7 +106,6 @@ class DumpCustom : public Dump {
   void pack(tagint *) override;
   int convert_string(int, double *) override;
   void write_data(int, double *) override;
-  double memory_usage() override;
 
   int parse_fields(int, char **);
   int add_compute(const char *);
