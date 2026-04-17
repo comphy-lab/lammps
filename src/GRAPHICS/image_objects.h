@@ -141,10 +141,6 @@ namespace ImageObjects {
     std::vector<triangle> hull_normals;
     std::vector<std::array<int, 3>> hull_color_idx;    // index into colors per vertex
 
-    void build_sphere(const vec3 &center, double radius,
-                      const std::vector<vec3> &points, bool smooth);
-    void build_cylinder(const vec3 &p1, const vec3 &p2, double radius,
-                        const std::vector<vec3> &points, bool smooth);
     void build_hull(const std::vector<vec3> &points, double radius, bool smooth);
   };
 }    // namespace ImageObjects

@@ -23,7 +23,7 @@ enum {
   LINE,        // a cylinder with diameter given through fflag2
   TRI,         // a surface mesh as triangles or cylinder mesh based on fflag1, fflag2 sets diameter
   CYLINDER,    // a cylinder with diameter given by fix, fflag1 choose caps, fflag2 adjusts diameter
-  STICK,       // a capped cylinder with diameter given by fix, fflag2 adjusts diameter
+  STICK,       // a capped cylinder with diameter given by fix
   TRIANGLE,    // a regular triangle, no settings apply
   TRINORM,     // a curved triangle with surface normals and a color for each corner
                //   or a cylinder mesh based on fflag1, fflag2 sets diameter

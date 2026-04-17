@@ -95,8 +95,8 @@ Dump image info
 
 Fix graphics/chunk is designed to be used with the *fix* keyword of
 :doc:`dump image <dump_image>`.  The fix constructs a list of graphics
-objects based the size and geometry of the chunks in the fix group and
-passes the information to the image renderer.
+objects based on the size and geometry of the chunks in the fix group
+and passes the information to the image renderer.
 
 The *fflag1* setting of *dump image fix* determines whether the hull is
 rendered as connected rounded triangles (1) or as a wireframe mesh of
