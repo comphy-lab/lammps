@@ -33,6 +33,7 @@ class PairGranularSuperellipsoid : public Pair {
  public:
   PairGranularSuperellipsoid(class LAMMPS *);
   ~PairGranularSuperellipsoid() override;
+
   void compute(int, int) override;
   void settings(int, char **) override;
   void coeff(int, char **) override;
@@ -42,6 +43,7 @@ class PairGranularSuperellipsoid : public Pair {
   void read_restart(FILE *) override;
   void reset_dt() override;
   double single(int, int, int, int, double, double, double, double &) override;
+
   int pack_forward_comm(int, int *, double *, int, int *) override;
   void unpack_forward_comm(int, int, double *) override;
   double memory_usage() override;
@@ -73,10 +75,10 @@ class PairGranularSuperellipsoid : public Pair {
   int contact_radius_flag;
 
   // Normal coefficients
-  double **kn, **gamman;     // Hooke + Hertz
+  double **kn, **gamman;    // Hooke + Hertz
 
   // Tangential coefficients
-  double **kt, **xt, **xmu;  // linear_history
+  double **kt, **xt, **xmu;    // linear_history
 
   // Intermediate values for contact model
   int history_update, touchjj, itype, jtype;

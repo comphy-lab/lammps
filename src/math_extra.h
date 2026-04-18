@@ -24,6 +24,7 @@ namespace MathExtra {
 
 // 3 vector operations
 
+inline void copy2(const double *v, double *ans);
 inline void copy3(const double *v, double *ans);
 inline void zero3(double *v);
 inline void norm3(double *v);
@@ -135,6 +136,16 @@ void tribbox(double *, double, double *);
 double beta(double x, double y);
 
 }    // namespace MathExtra
+
+/* ----------------------------------------------------------------------
+   copy a vector, return in ans
+------------------------------------------------------------------------- */
+
+inline void MathExtra::copy2(const double *v, double *ans)
+{
+  ans[0] = v[0];
+  ans[1] = v[1];
+}
 
 /* ----------------------------------------------------------------------
    copy a vector, return in ans

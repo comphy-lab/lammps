@@ -1125,7 +1125,8 @@ void Set::invoke_apip_lambda(Action *action)
 void Set::process_block(int &iarg, int narg, char **arg, Action *action)
 {
   if (!atom->superellipsoid_flag)
-    error->all(FLERR,"Cannot set attribute {} for atom style {} (available with ellipsoid with superellipsoid flag)", arg[iarg], atom->get_style());
+    error->all(FLERR,"Cannot set attribute {} for atom style {} (only available for ellipsoid "
+               "with superellipsoid flag)", arg[iarg], atom->get_style());
   if (iarg+3 > narg) utils::missing_cmd_args(FLERR, "set block", error);
   if (utils::strmatch(arg[iarg+1],"^v_")) varparse(arg[iarg+1],1,action);
   else {
@@ -1140,11 +1141,11 @@ void Set::process_block(int &iarg, int narg, char **arg, Action *action)
   iarg += 3;
 }
 
-
 void Set::invoke_block(Action *action)
 {
   int nlocal = atom->nlocal;
   auto *avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
+  if (!avec_ellipsoid) return;
 
   int varflag = action->varflag;
   double block1 = 0.0, block2 = 0.0;

@@ -725,7 +725,8 @@ void FixColvars::end_of_step()
     if (comm->me == 0) {
       // store old force data
       std::vector<cvm::rvector> &of = *(proxy->modify_atom_total_forces());
-      for (i=0; i<num_coords; ++i) {
+
+      for (i = 0; i < num_coords; ++i) {
         const tagint k = atom->map(taglist[i]);
         if ((k >= 0) && (k < nlocal)) {
           auto search = idmap.find(tag[k]);
@@ -738,14 +739,15 @@ void FixColvars::end_of_step()
         }
       }
       /* loop over procs to receive remote data */
-      for (i=1; i < comm->nprocs; ++i) {
+      for (i = 1; i < comm->nprocs; ++i) {
         int maxbuf = nmax*size_one;
         MPI_Irecv(comm_buf, maxbuf, MPI_BYTE, i, 0, world, &request);
         MPI_Send(&tmp, 0, MPI_INT, i, 0, world);
         MPI_Wait(&request, &status);
         MPI_Get_count(&status, MPI_BYTE, &ndata);
         ndata /= size_one;
-        for (int k=0; k<ndata; ++k) {
+
+        for (int k = 0; k < ndata; ++k) {
           auto search = idmap.find(comm_buf[k].tag);
           if (search != idmap.end()) {
             const int j = search->second;
@@ -758,8 +760,8 @@ void FixColvars::end_of_step()
     } else { // me != 0
       /* copy total force data into communication buffer */
       nme = 0;
-      for (i=0; i<num_coords; ++i) {
-        const tagint k = atom->map(taglist[i]);
+      for (i = 0; i < num_coords; ++i) {
+        const auto k = atom->map(taglist[i]);
         if ((k >= 0) && (k < nlocal)) {
           comm_buf[nme].tag  = tag[k];
           comm_buf[nme].x    = f[k][0];
@@ -852,13 +854,13 @@ double FixColvars::compute_array(int m, int n)
   double value = 0.0;
   if (comm->me == 0) {
     const auto& variables = *proxy->colvars->variables();
-    if (m >= variables.size()) {
+    if (m >= (int)variables.size()) {
       error->all(FLERR, Error::NOLASTLINE, "f_{}[{}][{}] out-of-bounds: {} collective variables "
                  "available.", id, m+1, n+1, variables.size());
     }
     const auto& variable = variables[m]->value();
     const auto& name = variables[m]->name;
-    if (n >= variable.size()) {
+    if (n >= (int)variable.size()) {
       error->all(FLERR, Error::NOLASTLINE, "f_{}[{}][{}] out-of-bounds: collective variable {} "
                  "has size {}.", id, m+1, n+1, name, variable.size());
     }

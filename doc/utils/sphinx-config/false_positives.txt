@@ -1769,6 +1769,7 @@ isenthalpic
 ish
 Ishida
 iso
+isochoric
 isodemic
 isoenergetic
 isoenthalpic
@@ -3563,6 +3564,7 @@ Sandia
 sandybrown
 sanitizer
 Sano
+Santangelo
 Sanyal
 Sanz
 Sarath
@@ -4406,6 +4408,7 @@ Xcm
 Xcode
 xCORE
 xdmf
+xe
 Xeon
 xflag
 xhi
