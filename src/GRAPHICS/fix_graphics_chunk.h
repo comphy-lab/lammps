@@ -37,10 +37,11 @@ class FixGraphicsChunk : public Fix {
   int image(int *&, double **&) override;
 
  private:
-  double radius;           // global atom radius for hull inflation
-  bool has_global_radius;  // override auto-determined radius with global value
-  bool smooth;             // smooth vs flat shading
-  char *id_chunk;          // compute chunk/atom ID
+  double radius;             // global atom radius for hull inflation
+  double alpha;              // triangulation algorithm parameter determining curvature
+  bool has_global_radius;    // override auto-determined radius with global value
+  bool smooth;               // smooth vs flat shading
+  char *id_chunk;            // compute chunk/atom ID
   ComputeChunkAtom *cchunk;
 
   int numobjs;

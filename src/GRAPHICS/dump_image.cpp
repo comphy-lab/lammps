@@ -2278,7 +2278,7 @@ void DumpImage::create_image()
             if (reg.ptr->match(pos[0], pos[1], pos[2])) pts.push_back(pos);
           }
           ConvexHullObj hull;
-          hull.build(pts);
+          hull.build(pts, true, 7.5);
           hull.draw(image, (reg.style == FRAME) ? 2 : 1, reg.color, reg.diameter,
                     (reg.style == TRANSPARENT) ? reg.opacity : 1.0);
 

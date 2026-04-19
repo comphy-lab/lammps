@@ -101,7 +101,7 @@ Syntax
          opacity  = level of opacity (from 0.0 to 1.0, only for drawstyle *transparent*)
          npoints  = number of attempted points (only for drawstyle *points*)
          diameter = diameter of wireframe or points (only for drawstyles *frame* and *points*)
-         hull_points npoints = set number of points for creating a convex hull (optional)
+         hull_points npoints = set number of points for creating a Delaunay triangulation (optional)
        *subbox* values = lines diam = draw outline of processor subdomains
          lines = *yes* or *no* = do or do not draw subdomain lines
          diam = diameter of subdomain lines as fraction of shortest box length
@@ -722,7 +722,7 @@ and fix commands are in the :doc:`Howto_viz` howto.
 
 .. versionchanged:: TBD
 
-   draw convex hull from points for region style *intersect* or *union*
+   draw triangulated hull from random points for region style *intersect* or *union*
 
 The *region* keyword can be used to create a graphical representation of
 a :doc:`region <region>`.  This can be helpful in debugging the location
@@ -747,11 +747,10 @@ are within the region.  This uses the same test than what is used to
 determine if an atom is inside the region but ignores any open faces
 (which would match *all* positions as "inside").  When using draw styles
 *filled*\, *transparent*\, or *frame* with unions or intersections of
-multiple regions a convex hull is first created from a point cloud
-similar to the *points* draw style.  The number of points used for the
-hull approximation (default is 100000) can be set by the optional
-*hull_points* keyword.
-
+multiple regions an enclosing hull is first created from a point cloud
+that is generated the same way as in the *points* draw style.  The
+number of points used for the hull approximation (default is 100000) can
+be set by the optional *hull_points* keyword.
 
 Recommended transparency values are 0.25, 0.5, or 0.75 when used in
 combination with *fsaa on*.

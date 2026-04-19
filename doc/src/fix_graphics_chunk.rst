@@ -15,11 +15,12 @@ Syntax
 * Nevery = update graphics information every this many time steps
 * chunkID = ID of :doc:`compute chunk/atom <compute_chunk_atom>` command
 * zero or more keyword/args pairs may be appended
-* keyword = *radius* or *shading*
+* keyword = *radius* or *shading* or *alpha*
 
   .. parsed-literal::
 
-     *radius* value = radius for hull inflation (distance units, default 0.0)
+     *radius* value = override per-atom or per-type radius if > 0.0 (distance units, default 0.0)
+     *alpha* value  = override multiplier for alpha shape extraction (distance units)
      *shading* value = *smooth* or *flat*
         *smooth* = compute per-vertex normals for smooth shading (default)
         *flat* = use face normals for flat shading
@@ -32,7 +33,7 @@ Examples
    compute cc1 all chunk/atom molecule
    fix hull all graphics/chunk 100 cc1
    fix hull all graphics/chunk 100 cc1 radius 1.0 shading smooth
-   fix hull all graphics/chunk 100 cc1 radius 0.5 shading flat
+   fix hull all graphics/chunk 100 cc1 shading flat alpha 10.0
 
 Description
 """""""""""
@@ -44,11 +45,12 @@ This fix generates graphics objects from chunks of atoms defined by the
 represented by a point cloud created by replacing each atom position
 with the corners of an octahedron scaled to the radius of the atom.  A
 triangulated surface is created from that point cloud using a 3-D
-`Delaunay triangulation <https://en.wikipedia.org/wiki/Delaunay_triangulation>`_
-combined with `alpha shape <https://en.wikipedia.org/wiki/Alpha_shape>`_
-extraction.  This allows the resulting surface to follow concave features
-of the molecular geometry rather than always producing a convex hull.
-The resulting list of graphics objects is passed to :doc:`dump image
+`Delaunay triangulation
+<https://en.wikipedia.org/wiki/Delaunay_triangulation>`_ combined with
+`alpha shape <https://en.wikipedia.org/wiki/Alpha_shape>`_ extraction.
+This allows the resulting surface to follow concave features of the
+molecular geometry rather than always producing a convex hull.  The
+resulting list of graphics objects is passed to :doc:`dump image
 <dump_image>` for rendering via the *fix* keyword.
 
 The positions used for the generation of the graphics are based on
@@ -79,8 +81,14 @@ to determine the size of the represented graphics by scaling the
 octahedron positions that represents each atom for computing the
 surface.  If available, the per-atom radius (e.g. for simulations using
 :doc:`atom style sphere <atom_style>`) is used, otherwise half of the
-value of the Lennard-Jones *sigma* parameter for the atom type is
-used.  The fallback value is 0.1 length units.
+value of the Lennard-Jones *sigma* parameter for the atom type is used.
+
+The optional *alpha* keyword allows to adjust the alpha shape extraction
+algorithm which determines how closely the generated triangulation
+follows the shape of chunks of atoms.  It should be at least about 3x
+the average distance of closest neighbors.  For larger values, the
+generated shape will become mostly a conventional convex hull. A value
+of 0.0 (the default) triggers an estimation of a suitable value.
 
 The optional *shading* keyword selects how triangle normals are
 determined for rendering surfaces.  The *smooth* setting (the default)
@@ -143,4 +151,4 @@ Related commands
 Defaults
 """"""""
 
-radius = 0.0, shading = smooth
+radius = 0.0, alpha = 0.0, shading = smooth

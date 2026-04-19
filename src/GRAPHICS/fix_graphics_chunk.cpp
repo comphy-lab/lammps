@@ -66,6 +66,7 @@ FixGraphicsChunk::FixGraphicsChunk(LAMMPS *lmp, int narg, char **arg) :
   // defaults
   numobjs = 0;
   radius = 0.0;
+  alpha = 0.0;
   has_global_radius = false;
   smooth = true;
 
@@ -77,6 +78,12 @@ FixGraphicsChunk::FixGraphicsChunk(LAMMPS *lmp, int narg, char **arg) :
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/chunk radius", error);
       radius = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
       if (radius < 0.0) error->all(FLERR, iarg + 1, "Fix graphics/chunk radius value must be >= 0");
+      has_global_radius = true;
+      iarg += 2;
+    } else if (strcmp(arg[iarg], "alpha") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/chunk alpha", error);
+      alpha = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
+      if (alpha < 0.0) error->all(FLERR, iarg + 1, "Fix graphics/chunk alpha value must be >= 0");
       has_global_radius = true;
       iarg += 2;
     } else if (strcmp(arg[iarg], "shading") == 0) {
@@ -226,7 +233,7 @@ void FixGraphicsChunk::end_of_step()
     }
 
     // build convex hull
-    hull.build(pts, smooth);
+    hull.build(pts, smooth, alpha);
 
     const auto &tris = hull.get_triangles();
     const auto &norms = hull.get_normals();
