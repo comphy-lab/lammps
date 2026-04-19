@@ -1124,6 +1124,23 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
 
   constexpr double INSPHERE_REL_EPS = 1.0e-7;
 
+  // Randomize insertion order to prevent pathological O(n^2) cavity growth
+  // when points are spatially coherent (e.g. per-atom icosahedra in a
+  // planar arrangement).  For near-coplanar point clouds the 3D
+  // circumsphere test reduces to a 2D circumcircle test, and sequential
+  // spatial insertion is the worst case for 2D Delaunay, producing O(k)
+  // cavities at step k.  A random permutation gives O(1) expected cavity
+  // size per insertion.  The deterministic Fisher-Yates shuffle with a
+  // multiplicative hash ensures reproducibility.
+
+  std::vector<int> ins_order(npts);
+  for (int j = 0; j < npts; ++j) ins_order[j] = j;
+  for (int j = npts - 1; j > 0; --j) {
+    auto h = static_cast<unsigned int>(j) * 2654435761u;
+    int k = static_cast<int>(h % static_cast<unsigned int>(j + 1));
+    std::swap(ins_order[j], ins_order[k]);
+  }
+
   // Pre-allocate work vectors outside the loop to avoid per-iteration allocations
 
   std::vector<int> bad;
@@ -1133,7 +1150,8 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
   };
   std::map<std::array<int, 3>, CavityFace> face_map;
 
-  for (int i = 0; i < npts; ++i) {
+  for (int idx = 0; idx < npts; ++idx) {
+    const int i = ins_order[idx];
     const vec3 &p = pts[i];
 
     // Find all tetrahedra whose circumsphere contains p
