@@ -1050,6 +1050,30 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
   constexpr double ONE_THIRD = 1.0 / 3.0;
 
   std::vector<vec3> pts = points;    // copy, will append super-tet vertices
+
+  // Tiny deterministic perturbation to break co-spherical degeneracies.
+  // Points on the same sphere (e.g. all 12 icosahedron vertices per atom)
+  // would otherwise cause ambiguous in-circumsphere tests: the point's
+  // distance to the circumcenter equals the circumradius to floating-point
+  // precision, so strict '<' may randomly include or exclude the tet.
+  // This creates degenerate tetrahedra with enormous circumradii that
+  // cause the Bowyer-Watson algorithm to stall.  The perturbation only
+  // affects the working copy 'pts' used for triangulation connectivity;
+  // the output triangles use the original unperturbed 'points' positions.
+
+  {
+    constexpr double PERT_SCALE = 1.0e-10;
+    constexpr double GOLD = 0.6180339887498949;     // golden ratio conjugate
+    constexpr double SQRT2 = 1.4142135623730951;
+    constexpr double SQRT3 = 1.7320508075688772;
+    double mag = PERT_SCALE * std::max(maxext, SMALL);
+    for (int i = 0; i < npts; ++i) {
+      pts[i][0] += mag * (std::fmod((i + 1) * GOLD, 1.0) - 0.5);
+      pts[i][1] += mag * (std::fmod((i + 1) * SQRT2, 1.0) - 0.5);
+      pts[i][2] += mag * (std::fmod((i + 1) * SQRT3, 1.0) - 0.5);
+    }
+  }
+
   pts.push_back({centroid[0], centroid[1], centroid[2] + R});
   pts.push_back({centroid[0], centroid[1] + R * TWO_SQRT2_OVER_3, centroid[2] - R * ONE_THIRD});
   pts.push_back({centroid[0] - R * SQRT6_OVER_3, centroid[1] - R * SQRT2_OVER_3,
