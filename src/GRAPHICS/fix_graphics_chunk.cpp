@@ -229,7 +229,7 @@ void FixGraphicsChunk::end_of_step()
 
     // replace atom positions with icosahedron scaled to radius
     std::vector<vec3> pts;
-    pts.reserve(6 * natoms);
+    pts.reserve(NUM_POINTS * natoms);
     for (const auto &ai : iatoms) {
       for (const auto &ico : icosahedron) {
         pts.push_back({ai.rad * ico[0] + ai.pos[0] - offset[0],

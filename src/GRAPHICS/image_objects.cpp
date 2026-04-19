@@ -1089,23 +1089,26 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
     tets.push_back(st);
   }
 
-  // Use a relative tolerance for the in-circumsphere test to handle
-  // numerical near-degeneracies (e.g. co-spherical octahedron points).
-
-  constexpr double INSPHERE_REL_EPS = 1.0e-7;
-
-  // Bowyer-Watson: insert original points one by one
+  // Bowyer-Watson: insert original points one by one.
+  // The in-circumsphere test uses strict less-than (no tolerance) to
+  // avoid a pathological O(n^2) blowup in tetrahedra count when many
+  // points are co-spherical (e.g. the 12 vertices of each icosahedron
+  // all lie on the same sphere).  A relative tolerance would force ALL
+  // tetrahedra sharing that circumsphere to be marked "bad", creating
+  // a massive cavity at each insertion and cascading the tet count.
+  // Without tolerance, floating-point arithmetic resolves the ambiguity
+  // naturally, producing an O(n) triangulation.
 
   for (int i = 0; i < npts; ++i) {
     const vec3 &p = pts[i];
 
-    // Find all tetrahedra whose circumsphere contains p
+    // Find all tetrahedra whose circumsphere strictly contains p
     std::vector<int> bad;
     for (int t = 0; t < static_cast<int>(tets.size()); ++t) {
       if (!tets[t].valid) continue;
       vec3 diff = p - tets[t].cc;
       double dist_sq = vec3dot(diff, diff);
-      if (dist_sq < tets[t].cr_sq * (1.0 + INSPHERE_REL_EPS)) { bad.push_back(t); }
+      if (dist_sq < tets[t].cr_sq) { bad.push_back(t); }
     }
 
     if (bad.empty()) continue;    // outside all circumspheres (shouldn't happen with super-tet)
