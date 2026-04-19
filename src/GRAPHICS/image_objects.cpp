@@ -21,7 +21,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <map>
+#include <numeric>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -898,44 +899,57 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
 {
   const int npts = static_cast<int>(points.size());
 
-  // compute centroid
+  // compute centroid and bounding box in a single pass (O(n))
   vec3 centroid = {0.0, 0.0, 0.0};
+  vec3 bbmin = points[0], bbmax = points[0];
   for (const auto &p : points) {
     centroid[0] += p[0];
     centroid[1] += p[1];
     centroid[2] += p[2];
+    for (int d = 0; d < 3; ++d) {
+      bbmin[d] = std::min(bbmin[d], p[d]);
+      bbmax[d] = std::max(bbmax[d], p[d]);
+    }
   }
   centroid[0] /= npts;
   centroid[1] /= npts;
   centroid[2] /= npts;
 
-  // Find initial tetrahedron from 4 non-coplanar points
-  // Start by finding the two most distant points
+  double maxext = std::max({bbmax[0] - bbmin[0], bbmax[1] - bbmin[1], bbmax[2] - bbmin[2]});
 
-  int i0 = 0, i1 = 1;
-  double maxdist = 0.0;
-  for (int i = 0; i < npts; ++i) {
-    for (int j = i + 1; j < npts; ++j) {
-      vec3 d = points[j] - points[i];
-      double dist = vec3dot(d, d);
-      if (dist > maxdist) {
-        maxdist = dist;
+  // Find initial tetrahedron from 4 non-coplanar points.
+  // Use bounding box extremes to find well-separated seed points in O(n).
+
+  int i0 = 0, i1 = 0;
+  {
+    // Find pair of points maximizing extent along the longest axis
+    int axis = 0;
+    if (bbmax[1] - bbmin[1] > bbmax[axis] - bbmin[axis]) axis = 1;
+    if (bbmax[2] - bbmin[2] > bbmax[axis] - bbmin[axis]) axis = 2;
+    double lo = bbmax[axis], hi = bbmin[axis];
+    for (int i = 0; i < npts; ++i) {
+      if (points[i][axis] < lo) {
+        lo = points[i][axis];
         i0 = i;
-        i1 = j;
+      }
+      if (points[i][axis] > hi) {
+        hi = points[i][axis];
+        i1 = i;
       }
     }
   }
 
-  if (maxdist < SMALL * SMALL) {
-    // all points are coincident -> cannot construct hull
-    return;
+  if (i0 == i1) i1 = (i0 + 1) % npts;
+  {
+    vec3 d = points[i1] - points[i0];
+    if (vec3dot(d, d) < SMALL * SMALL) return;    // all points coincident
   }
 
   // Find the point farthest from the line i0-i1
 
   vec3 line = points[i1] - points[i0];
   int i2 = -1;
-  maxdist = 0.0;
+  double maxdist = 0.0;
   for (int i = 0; i < npts; ++i) {
     if (i == i0 || i == i1) continue;
     vec3 d = points[i] - points[i0];
@@ -947,10 +961,7 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
     }
   }
 
-  if (i2 < 0 || maxdist < SMALL * SMALL) {
-    // all points are collinear -> cannot construct hull
-    return;
-  }
+  if (i2 < 0 || maxdist < SMALL * SMALL) return;    // all points collinear
 
   // Find the point farthest from the plane defined by i0, i1, i2
 
@@ -1030,16 +1041,6 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
 
   // === 3D Bowyer-Watson Delaunay Triangulation ===
 
-  // Compute bounding box extent for super-tetrahedron sizing
-  vec3 bbmin = points[0], bbmax = points[0];
-  for (const auto &p : points) {
-    for (int d = 0; d < 3; ++d) {
-      bbmin[d] = std::min(bbmin[d], p[d]);
-      bbmax[d] = std::max(bbmax[d], p[d]);
-    }
-  }
-  double maxext = std::max({bbmax[0] - bbmin[0], bbmax[1] - bbmin[1], bbmax[2] - bbmin[2]});
-
   // Create extended point list: original points + 4 super-tetrahedron vertices.
   // The super-tetrahedron is a regular tetrahedron much larger than the bounding box.
 
@@ -1095,6 +1096,11 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
   std::vector<Tet> tets;
   tets.reserve(npts * 8);
 
+  // Maintain a list of valid tet indices to avoid scanning dead tets.
+  // This provides a significant speedup as the triangulation grows.
+  std::vector<int> valid_tets;
+  valid_tets.reserve(npts * 8);
+
   // Initialize with positively-oriented super-tetrahedron
   {
     Tet st;
@@ -1111,26 +1117,58 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
 
     compute_circumsphere(pts[st.v[0]], pts[st.v[1]], pts[st.v[2]], pts[st.v[3]], st.cc, st.cr_sq);
     tets.push_back(st);
+    valid_tets.push_back(0);
   }
 
-  // Bowyer-Watson: insert original points one by one.
-  // The in-circumsphere test uses strict less-than (no tolerance) to
-  // avoid a pathological O(n^2) blowup in tetrahedra count when many
-  // points are co-spherical (e.g. the 12 vertices of each icosahedron
-  // all lie on the same sphere).  A relative tolerance would force ALL
-  // tetrahedra sharing that circumsphere to be marked "bad", creating
-  // a massive cavity at each insertion and cascading the tet count.
-  // Without tolerance, floating-point arithmetic resolves the ambiguity
-  // naturally, producing an O(n) triangulation.
+  // Spatially sort insertion order: sort point indices by coordinate along
+  // the longest bounding-box axis.  Spatially coherent insertion keeps the
+  // cavity search localized and dramatically reduces the average number of
+  // tetrahedra inspected per insertion, especially for large point clouds.
+
+  std::vector<int> ins_order(npts);
+  std::iota(ins_order.begin(), ins_order.end(), 0);
+  {
+    int axis = 0;
+    if (bbmax[1] - bbmin[1] > bbmax[axis] - bbmin[axis]) axis = 1;
+    if (bbmax[2] - bbmin[2] > bbmax[axis] - bbmin[axis]) axis = 2;
+    std::sort(ins_order.begin(), ins_order.end(),
+              [&pts, axis](int a, int b) { return pts[a][axis] < pts[b][axis]; });
+  }
+
+  // Bowyer-Watson: insert points in spatially-sorted order.
+  // The in-circumsphere test uses a small relative tolerance combined with
+  // the deterministic point perturbation above.  The perturbation breaks
+  // co-spherical degeneracies so that the tolerance does not cause the
+  // pathological O(n^2) blowup that would occur with unperturbed points.
+
+  // Hash function for face keys (sorted arrays of 3 ints)
+  struct FaceHash {
+    size_t operator()(const std::array<int, 3> &f) const
+    {
+      size_t h = static_cast<size_t>(f[0]) * 73856093UL;
+      h ^= static_cast<size_t>(f[1]) * 19349669UL;
+      h ^= static_cast<size_t>(f[2]) * 83492791UL;
+      return h;
+    }
+  };
 
   constexpr double INSPHERE_REL_EPS = 1.0e-7;
-  for (int i = 0; i < npts; ++i) {
+  std::vector<int> bad;
+  struct CavityFace {
+    int v[3];    // face vertices (unsorted order from tet)
+    int count;
+  };
+  std::unordered_map<std::array<int, 3>, CavityFace, FaceHash> face_map;
+
+  for (int idx = 0; idx < npts; ++idx) {
+    const int i = ins_order[idx];
     const vec3 &p = pts[i];
 
-    // Find all tetrahedra whose circumsphere strictly contains p
-    std::vector<int> bad;
-    for (int t = 0; t < static_cast<int>(tets.size()); ++t) {
-      if (!tets[t].valid) continue;
+    // Find all tetrahedra whose circumsphere contains p.
+    // Only scan the valid tet list, not the entire (potentially much larger) tet array.
+    bad.clear();
+    for (int vi = 0; vi < static_cast<int>(valid_tets.size()); ++vi) {
+      int t = valid_tets[vi];
       vec3 diff = p - tets[t].cc;
       double dist_sq = vec3dot(diff, diff);
       if (dist_sq < tets[t].cr_sq * (1.0 + INSPHERE_REL_EPS)) { bad.push_back(t); }
@@ -1141,11 +1179,7 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
     // Find boundary faces of the cavity formed by the bad tetrahedra.
     // A boundary face appears in exactly one bad tetrahedron.
 
-    struct CavityFace {
-      int v[3];    // face vertices (unsorted order from tet)
-      int count;
-    };
-    std::map<std::array<int, 3>, CavityFace> face_map;
+    face_map.clear();
 
     for (int t_idx : bad) {
       const auto &tet = tets[t_idx];
@@ -1166,8 +1200,17 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
       }
     }
 
-    // Mark bad tetrahedra as invalid
+    // Mark bad tetrahedra as invalid and remove from valid list
     for (int t_idx : bad) tets[t_idx].valid = false;
+
+    // Rebuild valid_tets: remove bad entries
+    {
+      int write = 0;
+      for (int vi = 0; vi < static_cast<int>(valid_tets.size()); ++vi) {
+        if (tets[valid_tets[vi]].valid) valid_tets[write++] = valid_tets[vi];
+      }
+      valid_tets.resize(write);
+    }
 
     // Create new tetrahedra from boundary faces and the new point
     for (const auto &[key, cf] : face_map) {
@@ -1192,7 +1235,9 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
         nt.cr_sq = 1.0e30;
         nt.cc = 0.25 * (pts[nt.v[0]] + pts[nt.v[1]] + pts[nt.v[2]] + pts[nt.v[3]]);
       }
+      int new_idx = static_cast<int>(tets.size());
       tets.push_back(nt);
+      valid_tets.push_back(new_idx);
     }
   }
 
@@ -1215,20 +1260,82 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
     alpha_sq = alpha * alpha;
   } else {
     // Auto-compute alpha from the average nearest-neighbor distance.
-    // This adapts to the local point density.
+    // Use a 3D grid to accelerate the search from O(n^2) to O(n).
 
-    double sum_nn = 0.0;
-    for (int i = 0; i < npts; ++i) {
-      double min_dsq = 1.0e30;
-      for (int j = 0; j < npts; ++j) {
-        if (i == j) continue;
-        vec3 d = points[j] - points[i];
-        double dsq = vec3dot(d, d);
-        if (dsq < min_dsq) min_dsq = dsq;
+    double avg_nn;
+    constexpr int MIN_GRID_PTS = 64;    // below this, brute force is fine
+
+    if (npts < MIN_GRID_PTS) {
+      // brute-force for small point clouds
+      double sum_nn = 0.0;
+      for (int i = 0; i < npts; ++i) {
+        double min_dsq = 1.0e30;
+        for (int j = 0; j < npts; ++j) {
+          if (i == j) continue;
+          vec3 d = points[j] - points[i];
+          double dsq = vec3dot(d, d);
+          if (dsq < min_dsq) min_dsq = dsq;
+        }
+        sum_nn += std::sqrt(min_dsq);
       }
-      sum_nn += std::sqrt(min_dsq);
+      avg_nn = sum_nn / npts;
+    } else {
+      // Grid-based nearest-neighbor search: O(n) expected time.
+      // Estimate cell size from the bounding box and point count.
+      double vol = (bbmax[0] - bbmin[0]) * (bbmax[1] - bbmin[1]) * (bbmax[2] - bbmin[2]);
+      if (vol < SMALL) vol = maxext * maxext * maxext;
+      double cell_size = std::cbrt(vol / npts) * 2.0;
+      if (cell_size < SMALL) cell_size = maxext;
+
+      int nx = std::max(1, static_cast<int>((bbmax[0] - bbmin[0]) / cell_size) + 1);
+      int ny = std::max(1, static_cast<int>((bbmax[1] - bbmin[1]) / cell_size) + 1);
+      int nz = std::max(1, static_cast<int>((bbmax[2] - bbmin[2]) / cell_size) + 1);
+
+      // Clamp grid dimensions to avoid excessive memory for degenerate bounding boxes
+      constexpr int MAX_CELLS = 256;
+      nx = std::min(nx, MAX_CELLS);
+      ny = std::min(ny, MAX_CELLS);
+      nz = std::min(nz, MAX_CELLS);
+
+      // Build grid: map each point to a cell
+      std::vector<std::vector<int>> grid(nx * ny * nz);
+      for (int i = 0; i < npts; ++i) {
+        int cx = std::min(static_cast<int>((points[i][0] - bbmin[0]) / cell_size), nx - 1);
+        int cy = std::min(static_cast<int>((points[i][1] - bbmin[1]) / cell_size), ny - 1);
+        int cz = std::min(static_cast<int>((points[i][2] - bbmin[2]) / cell_size), nz - 1);
+        grid[cx * ny * nz + cy * nz + cz].push_back(i);
+      }
+
+      // For each point, search its cell and 26 neighbors
+      double sum_nn = 0.0;
+      for (int i = 0; i < npts; ++i) {
+        int cx = std::min(static_cast<int>((points[i][0] - bbmin[0]) / cell_size), nx - 1);
+        int cy = std::min(static_cast<int>((points[i][1] - bbmin[1]) / cell_size), ny - 1);
+        int cz = std::min(static_cast<int>((points[i][2] - bbmin[2]) / cell_size), nz - 1);
+
+        double min_dsq = 1.0e30;
+        for (int dx = -1; dx <= 1; ++dx) {
+          int gx = cx + dx;
+          if (gx < 0 || gx >= nx) continue;
+          for (int dy = -1; dy <= 1; ++dy) {
+            int gy = cy + dy;
+            if (gy < 0 || gy >= ny) continue;
+            for (int dz = -1; dz <= 1; ++dz) {
+              int gz = cz + dz;
+              if (gz < 0 || gz >= nz) continue;
+              for (int j : grid[gx * ny * nz + gy * nz + gz]) {
+                if (i == j) continue;
+                vec3 dd = points[j] - points[i];
+                double dsq = vec3dot(dd, dd);
+                if (dsq < min_dsq) min_dsq = dsq;
+              }
+            }
+          }
+        }
+        sum_nn += std::sqrt(min_dsq);
+      }
+      avg_nn = sum_nn / npts;
     }
-    double avg_nn = sum_nn / npts;
 
     // The alpha multiplier controls how tightly the surface wraps around
     // the point cloud.  A value of 2.5 is conservative enough to produce
@@ -1245,7 +1352,7 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, dou
     int v[3];    // oriented outward (away from opposite vertex)
     int count;
   };
-  std::map<std::array<int, 3>, AlphaFace> alpha_faces;
+  std::unordered_map<std::array<int, 3>, AlphaFace, FaceHash> alpha_faces;
 
   for (const auto &tet : tets) {
     if (!tet.valid) continue;

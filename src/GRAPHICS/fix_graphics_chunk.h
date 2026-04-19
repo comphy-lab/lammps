@@ -39,6 +39,7 @@ class FixGraphicsChunk : public Fix {
  private:
   double radius;             // global atom radius for hull inflation
   double alpha;              // triangulation algorithm parameter determining curvature
+  int quality;               // icosahedron refinement level (0=12pts, 1=42pts, 2=162pts)
   bool has_global_radius;    // override auto-determined radius with global value
   bool smooth;               // smooth vs flat shading
   char *id_chunk;            // compute chunk/atom ID

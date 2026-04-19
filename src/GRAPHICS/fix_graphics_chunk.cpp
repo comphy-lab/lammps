@@ -28,7 +28,10 @@
 #include "update.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
+#include <map>
+#include <utility>
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -43,11 +46,72 @@ using ImageObjects::vec3;
 // phi = (1 + sqrt(5)) / 2; A = 1 / sqrt(1 + phi^2); B = phi / sqrt(1 + phi^2)
 constexpr double A = 0.5257311121191336;
 constexpr double B = 0.8506508083520399;
-const std::vector<vec3> icosahedron = {
+
+// Base icosahedron: 12 vertices, 20 faces
+const std::vector<vec3> ico_vertices = {
     {-A, B, 0.0},  {A, B, 0.0},  {-A, -B, 0.0}, {A, -B, 0.0}, {0.0, -A, B},  {0.0, A, B},
     {0.0, -A, -B}, {0.0, A, -B}, {B, 0.0, -A},  {B, 0.0, A},  {-B, 0.0, -A}, {-B, 0.0, A},
 };
-constexpr int NUM_POINTS = 12;
+
+struct IcoFace {
+  int v[3];
+};
+const std::vector<IcoFace> ico_faces = {
+    {0, 5, 11},  {0, 1, 5},  {0, 7, 1},  {0, 10, 7}, {0, 11, 10}, {1, 9, 5},  {5, 4, 11},
+    {11, 2, 10}, {10, 6, 7}, {7, 8, 1},  {3, 4, 9},  {3, 2, 4},   {3, 6, 2},  {3, 8, 6},
+    {3, 9, 8},   {4, 5, 9},  {2, 11, 4}, {6, 10, 2}, {8, 7, 6},   {9, 1, 8},
+};
+
+// Generate refined icosahedron points at given level (0=12 pts, 1=42, 2=162).
+// Each refinement splits every triangle into 4 sub-triangles and projects
+// the new midpoint vertices onto the unit sphere.
+
+std::vector<vec3> generate_sphere_points(int level)
+{
+  // Start with icosahedron vertices
+  std::vector<vec3> verts = ico_vertices;
+  std::vector<IcoFace> faces(ico_faces.begin(), ico_faces.end());
+
+  for (int lev = 0; lev < level; ++lev) {
+    // midpoint cache: edge -> new vertex index
+    std::map<std::pair<int, int>, int> edge_map;
+    std::vector<IcoFace> new_faces;
+    new_faces.reserve(faces.size() * 4);
+
+    for (const auto &f : faces) {
+      int mid[3];
+      for (int e = 0; e < 3; ++e) {
+        int a = f.v[e], b = f.v[(e + 1) % 3];
+        auto key = std::make_pair(std::min(a, b), std::max(a, b));
+        auto it = edge_map.find(key);
+        if (it != edge_map.end()) {
+          mid[e] = it->second;
+        } else {
+          // Compute midpoint and project onto unit sphere
+          vec3 mp = {(verts[a][0] + verts[b][0]) * 0.5, (verts[a][1] + verts[b][1]) * 0.5,
+                     (verts[a][2] + verts[b][2]) * 0.5};
+          double len =
+              std::sqrt(mp[0] * mp[0] + mp[1] * mp[1] + mp[2] * mp[2]);
+          if (len > 0.0) {
+            mp[0] /= len;
+            mp[1] /= len;
+            mp[2] /= len;
+          }
+          mid[e] = static_cast<int>(verts.size());
+          edge_map[key] = mid[e];
+          verts.push_back(mp);
+        }
+      }
+      new_faces.push_back({f.v[0], mid[0], mid[2]});
+      new_faces.push_back({mid[0], f.v[1], mid[1]});
+      new_faces.push_back({mid[2], mid[0], mid[1]});
+      new_faces.push_back({mid[2], mid[1], f.v[2]});
+    }
+    faces = std::move(new_faces);
+  }
+  return verts;
+}
+
 }    // namespace
 
 /* ---------------------------------------------------------------------- */
@@ -74,6 +138,7 @@ FixGraphicsChunk::FixGraphicsChunk(LAMMPS *lmp, int narg, char **arg) :
   numobjs = 0;
   radius = 0.0;
   alpha = 0.0;
+  quality = 0;
   has_global_radius = false;
   smooth = true;
 
@@ -91,6 +156,13 @@ FixGraphicsChunk::FixGraphicsChunk(LAMMPS *lmp, int narg, char **arg) :
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/chunk alpha", error);
       alpha = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
       if (alpha < 0.0) error->all(FLERR, iarg + 1, "Fix graphics/chunk alpha value must be >= 0");
+      iarg += 2;
+    } else if (strcmp(arg[iarg], "quality") == 0) {
+      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/chunk quality", error);
+      quality = utils::inumeric(FLERR, arg[iarg + 1], false, lmp);
+      if (quality < 0 || quality > 2)
+        error->all(FLERR, iarg + 1,
+                   "Fix graphics/chunk quality value must be 0, 1, or 2");
       iarg += 2;
     } else if (strcmp(arg[iarg], "shading") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix graphics/chunk shading", error);
@@ -207,13 +279,20 @@ void FixGraphicsChunk::end_of_step()
     chunk_atoms[ic - 1].push_back({unwrapped, atom_radius, double(type[i])});
   }
 
-  // build convex hulls for each chunk and collect all TRINORM objects
+  // build hulls for each chunk and collect all TRINORM objects
 
   struct ObjData {
     double type0, type1, type2;
     vec3 v0, v1, v2;
     vec3 n0, n1, n2;
   };
+
+  // Generate sphere sample points based on quality level:
+  // quality 0: 12 points (icosahedron)
+  // quality 1: 42 points (one refinement)
+  // quality 2: 162 points (two refinements)
+  const std::vector<vec3> sphere_pts = generate_sphere_points(quality);
+  const int nsp = static_cast<int>(sphere_pts.size());
 
   std::vector<ObjData> all_objs;
   ImageObjects::ConvexHullObj hull;
@@ -237,18 +316,18 @@ void FixGraphicsChunk::end_of_step()
     domain->remap(wrapped.data());
     vec3 offset{center[0] - wrapped[0], center[1] - wrapped[1], center[2] - wrapped[2]};
 
-    // replace atom positions with icosahedron scaled to radius
+    // replace atom positions with sphere sample points scaled to radius
     std::vector<vec3> pts;
-    pts.reserve(NUM_POINTS * natoms);
+    pts.reserve(nsp * natoms);
     for (const auto &ai : iatoms) {
-      for (const auto &ico : icosahedron) {
-        pts.push_back({ai.rad * ico[0] + ai.pos[0] - offset[0],
-                       ai.rad * ico[1] + ai.pos[1] - offset[1],
-                       ai.rad * ico[2] + ai.pos[2] - offset[2]});
+      for (const auto &sp : sphere_pts) {
+        pts.push_back({ai.rad * sp[0] + ai.pos[0] - offset[0],
+                       ai.rad * sp[1] + ai.pos[1] - offset[1],
+                       ai.rad * sp[2] + ai.pos[2] - offset[2]});
       }
     }
 
-    // build convex hull
+    // build hull
     hull.build(pts, smooth, alpha);
 
     const auto &tris = hull.get_triangles();
@@ -258,9 +337,9 @@ void FixGraphicsChunk::end_of_step()
     for (size_t t = 0; t < tris.size(); ++t) {
 
       // get index into original atoms array for access to atom type
-      int ci0 = cidx[t][0] / NUM_POINTS;
-      int ci1 = cidx[t][1] / NUM_POINTS;
-      int ci2 = cidx[t][2] / NUM_POINTS;
+      int ci0 = cidx[t][0] / nsp;
+      int ci1 = cidx[t][1] / nsp;
+      int ci2 = cidx[t][2] / nsp;
       if ((ci0 < 0) || (ci0 >= (int) iatoms.size())) ci0 = 0;
       if ((ci1 < 0) || (ci1 >= (int) iatoms.size())) ci1 = 0;
       if ((ci2 < 0) || (ci2 >= (int) iatoms.size())) ci2 = 0;

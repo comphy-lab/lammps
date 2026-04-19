@@ -15,7 +15,7 @@ Syntax
 * Nevery = update graphics information every this many time steps
 * chunkID = ID of :doc:`compute chunk/atom <compute_chunk_atom>` command
 * zero or more keyword/args pairs may be appended
-* keyword = *radius* or *shading* or *alpha*
+* keyword = *radius* or *shading* or *alpha* or *quality*
 
   .. parsed-literal::
 
@@ -24,6 +24,10 @@ Syntax
      *shading* value = *smooth* or *flat*
         *smooth* = compute per-vertex normals for smooth shading (default)
         *flat* = use face normals for flat shading
+     *quality* value = 0 or 1 or 2
+        *0* = 12-point icosahedron per atom (default, fast)
+        *1* = 42-point refined icosahedron per atom (smoother)
+        *2* = 162-point refined icosahedron per atom (smoothest)
 
 Examples
 """"""""
@@ -34,6 +38,7 @@ Examples
    fix hull all graphics/chunk 100 cc1
    fix hull all graphics/chunk 100 cc1 radius 1.0 shading smooth
    fix hull all graphics/chunk 100 cc1 shading flat alpha 10.0
+   fix hull all graphics/chunk 100 cc1 quality 1
 
 Description
 """""""""""
@@ -43,8 +48,8 @@ Description
 This fix generates graphics objects from chunks of atoms defined by the
 :doc:`compute chunk/atom <compute_chunk_atom>` command.  Each chunk is
 represented by a point cloud created by replacing each atom position
-with the corners of an octahedron scaled to the radius of the atom.  A
-triangulated surface is created from that point cloud using a 3-D
+with the vertices of an icosahedron scaled to the radius of the atom.
+A triangulated surface is created from that point cloud using a 3-D
 `Delaunay triangulation
 <https://en.wikipedia.org/wiki/Delaunay_triangulation>`_ combined with
 `alpha shape <https://en.wikipedia.org/wiki/Alpha_shape>`_ extraction.
@@ -78,7 +83,7 @@ and the color between vertices is interpolated.
 
 The optional *radius* keyword allows to override the radius value used
 to determine the size of the represented graphics by scaling the
-octahedron positions that represents each atom for computing the
+icosahedron positions that represents each atom for computing the
 surface.  If available, the per-atom radius (e.g. for simulations using
 :doc:`atom style sphere <atom_style>`) is used, otherwise half of the
 value of the Lennard-Jones *sigma* parameter for the atom type is used.
@@ -89,6 +94,19 @@ follows the shape of chunks of atoms.  It should be at least about 3x
 the average distance of closest neighbors.  For larger values, the
 generated shape will become mostly a conventional convex hull. A value
 of 0.0 (the default) triggers an estimation of a suitable value.
+
+The optional *quality* keyword controls the number of sample points
+generated per atom on the unit sphere.  Higher values produce smoother
+surfaces at the cost of more computation.
+
+.. versionadded:: TBD
+
+The default value of 0 uses the 12 vertices of an icosahedron.  A value
+of 1 refines the icosahedron once to 42 points, and a value of 2 refines
+it twice to 162 points.  For small molecules (fewer than ~20 atoms per
+chunk) a quality of 1 or 2 produces noticeably smoother surfaces.  For
+large point clouds the default of 0 is usually sufficient because the
+surface is already well-sampled by the many overlapping icosahedra.
 
 The optional *shading* keyword selects how triangle normals are
 determined for rendering surfaces.  The *smooth* setting (the default)
@@ -151,4 +169,4 @@ Related commands
 Defaults
 """"""""
 
-radius = 0.0, alpha = 0.0, shading = smooth
+radius = 0.0, alpha = 0.0, quality = 0, shading = smooth
