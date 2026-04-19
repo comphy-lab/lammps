@@ -123,12 +123,16 @@ namespace ImageObjects {
 
   class ConvexHullObj {
    public:
-    // build convex hull from a set of points with optional radius inflation
+    // Build a triangulated surface from a set of 3D points using Delaunay
+    // triangulation with alpha shape extraction.  This allows the surface
+    // to follow concave features of the point cloud.
     // smooth=true: per-vertex normals for smooth shading
     // smooth=false: flat normals (face normal used for all three vertices)
-    void build(const std::vector<vec3> &points, bool smooth = true);
+    // alpha=0: auto-compute alpha from point cloud density
+    // alpha>0: use specified alpha value for the alpha shape test
+    void build(const std::vector<vec3> &points, bool smooth = true, double alpha = 0.0);
 
-    // draw the convex hull using Image draw calls with constant color
+    // draw the surface mesh using Image draw calls with constant color
     // draw smooth triangle mesh with flag 1, wireframe with  flag 2
     void draw(Image *img, int flag, const double *color, double diameter, double opacity = 1.0);
 
@@ -142,7 +146,7 @@ namespace ImageObjects {
     std::vector<triangle> hull_normals;
     std::vector<std::array<int, 3>> hull_color_idx;    // index into colors per vertex
 
-    void build_hull(const std::vector<vec3> &points, bool smooth);
+    void build_hull(const std::vector<vec3> &points, bool smooth, double alpha);
   };
 }    // namespace ImageObjects
 }    // namespace LAMMPS_NS

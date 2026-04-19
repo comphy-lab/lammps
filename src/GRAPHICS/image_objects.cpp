@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <map>
 #include <utility>
 #include <vector>
 
@@ -836,27 +837,64 @@ void PlaneObj::draw(Image *img, int flag, const double *color, const double *cen
 }
 
 // ======================================================================
-// ConvexHullObj: build and draw convex hulls from a set of 3D points
+// ConvexHullObj: build triangulated surface from a set of 3D points
+// using 3D Delaunay triangulation with alpha shape extraction.
 // ======================================================================
+
+namespace {
 
 constexpr double MIN_VISIBLE_RADIUS = 0.1;    // minimum visible radius for point particles
 
-// Build a convex hull from a set of 3D points with optional radius inflation.
-// Requires at least 4 points.
+// Compute the circumsphere of tetrahedron (p0, p1, p2, p3).
+// Returns true on success, false for degenerate (zero-volume) tetrahedra.
 
-void ConvexHullObj::build(const std::vector<vec3> &points, bool smooth)
+bool compute_circumsphere(const vec3 &p0, const vec3 &p1, const vec3 &p2, const vec3 &p3,
+                           vec3 &center, double &radius_sq)
+{
+  vec3 a = p1 - p0;
+  vec3 b = p2 - p0;
+  vec3 c = p3 - p0;
+
+  double a2 = vec3dot(a, a);
+  double b2 = vec3dot(b, b);
+  double c2 = vec3dot(c, c);
+
+  vec3 bxc = vec3cross(b, c);
+  vec3 cxa = vec3cross(c, a);
+  vec3 axb = vec3cross(a, b);
+
+  double denom = 2.0 * vec3dot(a, bxc);
+  if (std::fabs(denom) < SMALL * SMALL) return false;
+
+  double inv = 1.0 / denom;
+  vec3 rel = {(a2 * bxc[0] + b2 * cxa[0] + c2 * axb[0]) * inv,
+              (a2 * bxc[1] + b2 * cxa[1] + c2 * axb[1]) * inv,
+              (a2 * bxc[2] + b2 * cxa[2] + c2 * axb[2]) * inv};
+
+  center = rel + p0;
+  radius_sq = vec3dot(rel, rel);
+  return true;
+}
+
+}    // namespace
+
+// Build a triangulated surface from a set of 3D points.
+// Uses Delaunay triangulation with alpha shape extraction to follow
+// concave features of the point cloud.  Requires at least 4 points.
+
+void ConvexHullObj::build(const std::vector<vec3> &points, bool smooth, double alpha)
 {
   hull_triangles.clear();
   hull_normals.clear();
   hull_color_idx.clear();
 
   if (points.size() < 4) return;
-  build_hull(points, smooth);
+  build_hull(points, smooth, alpha);
 }
 
-// 3D incremental convex hull algorithm
+// 3D Bowyer-Watson Delaunay triangulation followed by alpha shape extraction
 
-void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth)
+void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth, double alpha)
 {
   const int npts = static_cast<int>(points.size());
 
@@ -889,7 +927,7 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth)
   }
 
   if (maxdist < SMALL * SMALL) {
-    // all points are coincident -> connot construct hull
+    // all points are coincident -> cannot construct hull
     return;
   }
 
@@ -990,98 +1028,273 @@ void ConvexHullObj::build_hull(const std::vector<vec3> &points, bool smooth)
     return;
   }
 
-  // We have 4 non-coplanar points. Build initial tetrahedron.
-  // Ensure outward-facing normals by checking orientation
+  // === 3D Bowyer-Watson Delaunay Triangulation ===
 
-  double orient = vec3dot(points[i3] - points[i0], normal);
+  // Compute bounding box extent for super-tetrahedron sizing
+  vec3 bbmin = points[0], bbmax = points[0];
+  for (const auto &p : points) {
+    for (int d = 0; d < 3; ++d) {
+      bbmin[d] = std::min(bbmin[d], p[d]);
+      bbmax[d] = std::max(bbmax[d], p[d]);
+    }
+  }
+  double maxext = std::max({bbmax[0] - bbmin[0], bbmax[1] - bbmin[1], bbmax[2] - bbmin[2]});
 
-  // face structure: stores which point indices form each face
+  // Create extended point list: original points + 4 super-tetrahedron vertices.
+  // The super-tetrahedron is a regular tetrahedron much larger than the bounding box.
+
+  double R = 10.0 * maxext;
+  constexpr double SQRT2_3 = 0.9428090415820634;     // 2*sqrt(2)/3
+  constexpr double SQRT6_3 = 0.8164965809277261;     // sqrt(6)/3
+  constexpr double SQRT2_DIV3 = 0.4714045207910317;  // sqrt(2)/3
+  constexpr double ONE_THIRD = 1.0 / 3.0;
+
+  std::vector<vec3> pts = points;    // copy, will append super-tet vertices
+  pts.push_back({centroid[0], centroid[1], centroid[2] + R});
+  pts.push_back({centroid[0], centroid[1] + R * SQRT2_3, centroid[2] - R * ONE_THIRD});
+  pts.push_back({centroid[0] - R * SQRT6_3, centroid[1] - R * SQRT2_DIV3,
+                 centroid[2] - R * ONE_THIRD});
+  pts.push_back({centroid[0] + R * SQRT6_3, centroid[1] - R * SQRT2_DIV3,
+                 centroid[2] - R * ONE_THIRD});
+
+  const int sv0 = npts, sv1 = npts + 1, sv2 = npts + 2, sv3 = npts + 3;
+
+  // Tetrahedron structure for the Delaunay triangulation
+
+  struct Tet {
+    int v[4];
+    vec3 cc;           // circumcenter
+    double cr_sq;      // circumradius squared
+    bool valid;
+  };
+
+  std::vector<Tet> tets;
+  tets.reserve(npts * 8);
+
+  // Initialize with positively-oriented super-tetrahedron
+  {
+    Tet st;
+    st.v[0] = sv0;
+    st.v[1] = sv1;
+    st.v[2] = sv2;
+    st.v[3] = sv3;
+    st.valid = true;
+
+    vec3 ab = pts[sv1] - pts[sv0];
+    vec3 ac = pts[sv2] - pts[sv0];
+    vec3 ad = pts[sv3] - pts[sv0];
+    if (vec3dot(ab, vec3cross(ac, ad)) < 0.0) std::swap(st.v[2], st.v[3]);
+
+    compute_circumsphere(pts[st.v[0]], pts[st.v[1]], pts[st.v[2]], pts[st.v[3]], st.cc, st.cr_sq);
+    tets.push_back(st);
+  }
+
+  // Use a relative tolerance for the in-circumsphere test to handle
+  // numerical near-degeneracies (e.g. co-spherical octahedron points).
+
+  constexpr double INSPHERE_REL_EPS = 1.0e-7;
+
+  // Bowyer-Watson: insert original points one by one
+
+  for (int i = 0; i < npts; ++i) {
+    const vec3 &p = pts[i];
+
+    // Find all tetrahedra whose circumsphere contains p
+    std::vector<int> bad;
+    for (int t = 0; t < static_cast<int>(tets.size()); ++t) {
+      if (!tets[t].valid) continue;
+      vec3 diff = p - tets[t].cc;
+      double dist_sq = vec3dot(diff, diff);
+      if (dist_sq < tets[t].cr_sq * (1.0 + INSPHERE_REL_EPS)) { bad.push_back(t); }
+    }
+
+    if (bad.empty()) continue;    // outside all circumspheres (shouldn't happen with super-tet)
+
+    // Find boundary faces of the cavity formed by the bad tetrahedra.
+    // A boundary face appears in exactly one bad tetrahedron.
+
+    struct CavityFace {
+      int v[3];        // face vertices (unsorted order from tet)
+      int count;
+    };
+    std::map<std::array<int, 3>, CavityFace> face_map;
+
+    for (int t_idx : bad) {
+      const auto &tet = tets[t_idx];
+      for (int skip = 0; skip < 4; ++skip) {
+        int fv[3], k = 0;
+        for (int j = 0; j < 4; ++j) {
+          if (j != skip) fv[k++] = tet.v[j];
+        }
+        std::array<int, 3> key = {fv[0], fv[1], fv[2]};
+        std::sort(key.begin(), key.end());
+
+        auto it = face_map.find(key);
+        if (it != face_map.end()) {
+          it->second.count++;
+        } else {
+          face_map[key] = {{fv[0], fv[1], fv[2]}, 1};
+        }
+      }
+    }
+
+    // Mark bad tetrahedra as invalid
+    for (int t_idx : bad) tets[t_idx].valid = false;
+
+    // Create new tetrahedra from boundary faces and the new point
+    for (const auto &[key, cf] : face_map) {
+      if (cf.count != 1) continue;    // interior face of cavity, skip
+
+      Tet nt;
+      nt.v[0] = cf.v[0];
+      nt.v[1] = cf.v[1];
+      nt.v[2] = cf.v[2];
+      nt.v[3] = i;
+      nt.valid = true;
+
+      // Ensure positive orientation (signed volume > 0)
+      vec3 ab = pts[nt.v[1]] - pts[nt.v[0]];
+      vec3 ac = pts[nt.v[2]] - pts[nt.v[0]];
+      vec3 ad = pts[nt.v[3]] - pts[nt.v[0]];
+      if (vec3dot(ab, vec3cross(ac, ad)) < 0.0) std::swap(nt.v[0], nt.v[1]);
+
+      if (!compute_circumsphere(pts[nt.v[0]], pts[nt.v[1]], pts[nt.v[2]], pts[nt.v[3]], nt.cc,
+                                 nt.cr_sq)) {
+        // Degenerate tet: assign very large circumradius so it won't pass alpha test
+        nt.cr_sq = 1.0e30;
+        nt.cc = 0.25 * (pts[nt.v[0]] + pts[nt.v[1]] + pts[nt.v[2]] + pts[nt.v[3]]);
+      }
+      tets.push_back(nt);
+    }
+  }
+
+  // Remove tetrahedra connected to super-tetrahedron vertices
+  for (auto &tet : tets) {
+    if (!tet.valid) continue;
+    for (int k = 0; k < 4; ++k) {
+      if (tet.v[k] >= npts) {
+        tet.valid = false;
+        break;
+      }
+    }
+  }
+
+  // === Alpha Shape Extraction ===
+
+  double alpha_sq;
+
+  if (alpha > 0.0) {
+    alpha_sq = alpha * alpha;
+  } else {
+    // Auto-compute alpha from the average nearest-neighbor distance.
+    // This adapts to the local point density.
+
+    double sum_nn = 0.0;
+    for (int i = 0; i < npts; ++i) {
+      double min_dsq = 1.0e30;
+      for (int j = 0; j < npts; ++j) {
+        if (i == j) continue;
+        vec3 d = points[j] - points[i];
+        double dsq = vec3dot(d, d);
+        if (dsq < min_dsq) min_dsq = dsq;
+      }
+      sum_nn += std::sqrt(min_dsq);
+    }
+    double avg_nn = sum_nn / npts;
+
+    // alpha = 2.5 * average NN distance is conservative enough to produce
+    // closed surfaces while still revealing concavities larger than 2-3x
+    // the typical point spacing.
+    alpha_sq = 6.25 * avg_nn * avg_nn;    // (2.5 * avg_nn)^2
+  }
+
+  // A face of the alpha shape boundary is one that belongs to exactly one
+  // tetrahedron whose circumradius^2 <= alpha^2 (an "alpha-interior" tet).
+
+  struct AlphaFace {
+    int v[3];        // oriented outward (away from opposite vertex)
+    int count;
+  };
+  std::map<std::array<int, 3>, AlphaFace> alpha_faces;
+
+  for (const auto &tet : tets) {
+    if (!tet.valid) continue;
+    if (tet.cr_sq > alpha_sq) continue;    // not alpha-interior
+
+    for (int skip = 0; skip < 4; ++skip) {
+      int fv[3], k = 0;
+      for (int j = 0; j < 4; ++j) {
+        if (j != skip) fv[k++] = tet.v[j];
+      }
+
+      // Orient face outward: normal should point away from the opposite vertex
+      vec3 e1 = pts[fv[1]] - pts[fv[0]];
+      vec3 e2 = pts[fv[2]] - pts[fv[0]];
+      vec3 fn = vec3cross(e1, e2);
+      vec3 to_opp = pts[tet.v[skip]] - pts[fv[0]];
+      if (vec3dot(fn, to_opp) > 0.0) std::swap(fv[1], fv[2]);
+
+      std::array<int, 3> key = {fv[0], fv[1], fv[2]};
+      std::sort(key.begin(), key.end());
+
+      auto it = alpha_faces.find(key);
+      if (it != alpha_faces.end()) {
+        it->second.count++;
+      } else {
+        alpha_faces[key] = {{fv[0], fv[1], fv[2]}, 1};
+      }
+    }
+  }
+
+  // Collect boundary faces (those appearing exactly once)
   struct Face {
     int v[3];
   };
-
   std::vector<Face> faces;
-  if (orient > 0.0) {
-    // i3 is above the plane of (i0,i1,i2): reverse winding of base
-    faces.push_back({i0, i2, i1});
-    faces.push_back({i0, i1, i3});
-    faces.push_back({i1, i2, i3});
-    faces.push_back({i2, i0, i3});
-  } else {
-    faces.push_back({i0, i1, i2});
-    faces.push_back({i0, i3, i1});
-    faces.push_back({i1, i3, i2});
-    faces.push_back({i2, i3, i0});
+  faces.reserve(alpha_faces.size());
+  for (const auto &[key, af] : alpha_faces) {
+    if (af.count == 1) faces.push_back({af.v[0], af.v[1], af.v[2]});
   }
 
-  // incremental convex hull: add remaining points one by one
+  // If alpha shape produced no faces (alpha too small), fall back to using
+  // all valid Delaunay tetrahedra as interior (equivalent to convex hull)
 
-  for (int i = 0; i < npts; ++i) {
-    if (i == i0 || i == i1 || i == i2 || i == i3) continue;
-
-    // find visible faces (those whose outward normal points toward the new point)
-    std::vector<bool> visible(faces.size(), false);
-    bool any_visible = false;
-    for (size_t f = 0; f < faces.size(); ++f) {
-      vec3 fn = vec3cross(points[faces[f].v[1]] - points[faces[f].v[0]],
-                          points[faces[f].v[2]] - points[faces[f].v[0]]);
-      double d = vec3dot(fn, points[i] - points[faces[f].v[0]]);
-      if (d > SMALL) {
-        visible[f] = true;
-        any_visible = true;
-      }
-    }
-
-    if (!any_visible) continue;    // point is inside the current hull
-
-    // find horizon edges: edges shared between one visible and one non-visible face
-    // an edge is represented as a pair of vertex indices (ordered by the visible face)
-    struct Edge {
-      int v0, v1;
-    };
-    std::vector<Edge> horizon;
-
-    for (size_t f = 0; f < faces.size(); ++f) {
-      if (!visible[f]) continue;
-      for (int e = 0; e < 3; ++e) {
-        int ea = faces[f].v[e];
-        int eb = faces[f].v[(e + 1) % 3];
-        // check if the adjacent face sharing edge (ea, eb) is not visible
-        bool found_adjacent_invisible = false;
-        for (size_t g = 0; g < faces.size(); ++g) {
-          if (g == f || visible[g]) continue;
-          // check if face g shares edge (eb, ea) - reverse order
-          for (int e2 = 0; e2 < 3; ++e2) {
-            if (faces[g].v[e2] == eb && faces[g].v[(e2 + 1) % 3] == ea) {
-              found_adjacent_invisible = true;
-              break;
-            }
-          }
-          if (found_adjacent_invisible) break;
+  if (faces.empty()) {
+    alpha_faces.clear();
+    for (const auto &tet : tets) {
+      if (!tet.valid) continue;
+      for (int skip = 0; skip < 4; ++skip) {
+        int fv[3], k = 0;
+        for (int j = 0; j < 4; ++j) {
+          if (j != skip) fv[k++] = tet.v[j];
         }
-        if (found_adjacent_invisible) horizon.push_back({ea, eb});
+        vec3 e1 = pts[fv[1]] - pts[fv[0]];
+        vec3 e2 = pts[fv[2]] - pts[fv[0]];
+        vec3 fn = vec3cross(e1, e2);
+        vec3 to_opp = pts[tet.v[skip]] - pts[fv[0]];
+        if (vec3dot(fn, to_opp) > 0.0) std::swap(fv[1], fv[2]);
+
+        std::array<int, 3> key = {fv[0], fv[1], fv[2]};
+        std::sort(key.begin(), key.end());
+
+        auto it = alpha_faces.find(key);
+        if (it != alpha_faces.end()) {
+          it->second.count++;
+        } else {
+          alpha_faces[key] = {{fv[0], fv[1], fv[2]}, 1};
+        }
       }
     }
-
-    // remove visible faces
-    std::vector<Face> newfaces;
-    for (size_t f = 0; f < faces.size(); ++f) {
-      if (!visible[f]) newfaces.push_back(faces[f]);
+    for (const auto &[key, af] : alpha_faces) {
+      if (af.count == 1) faces.push_back({af.v[0], af.v[1], af.v[2]});
     }
-
-    // add new faces connecting horizon edges to the new point
-    for (const auto &edge : horizon) { newfaces.push_back({edge.v0, edge.v1, i}); }
-
-    faces = std::move(newfaces);
   }
 
-  // Convert faces to triangles with normals
+  // === Convert faces to triangles with normals ===
+
   hull_triangles.reserve(faces.size());
   hull_normals.reserve(faces.size());
   hull_color_idx.reserve(faces.size());
-
-  // compute per-vertex normals if smooth shading is requested
-  // each vertex normal is the average of adjacent face normals
 
   if (smooth) {
     // compute face normals

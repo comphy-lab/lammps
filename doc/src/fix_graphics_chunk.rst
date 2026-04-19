@@ -40,12 +40,16 @@ Description
 .. versionadded:: TBD
 
 This fix generates graphics objects from chunks of atoms defined by the
-:doc:`compute chunk/atom <compute_chunk_atom>` command.  Each chunck is
+:doc:`compute chunk/atom <compute_chunk_atom>` command.  Each chunk is
 represented by a point cloud created by replacing each atom position
 with the corners of an octahedron scaled to the radius of the atom.  A
-triangulated convex hull is created from that point cloud. The resulting
-list of graphics objects is passed to :doc:`dump image <dump_image>` for
-rendering via the *fix* keyword.
+triangulated surface is created from that point cloud using a 3-D
+`Delaunay triangulation <https://en.wikipedia.org/wiki/Delaunay_triangulation>`_
+combined with `alpha shape <https://en.wikipedia.org/wiki/Alpha_shape>`_
+extraction.  This allows the resulting surface to follow concave features
+of the molecular geometry rather than always producing a convex hull.
+The resulting list of graphics objects is passed to :doc:`dump image
+<dump_image>` for rendering via the *fix* keyword.
 
 The positions used for the generation of the graphics are based on
 unwrapped coordinates which are then mapped back into the simulation
@@ -67,23 +71,23 @@ selected in :doc:`dump image <dump_image>` command.  With the *type* or
 below, with the *const* coloring scheme a uniform color is used instead.
 This color can be set with the *fcolor* keyword of the :doc:`dump modify
 <dump_image>` command.  When using atom type based colors the vertices
-of the convex hull are colored using the atom type of the closest atom
+of the surface are colored using the atom type of the closest atom
 and the color between vertices is interpolated.
 
 The optional *radius* keyword allows to override the radius value used
 to determine the size of the represented graphics by scaling the
-octahedron positions that represents each atom for computing the convex
-hull.  If available, the per-atom radius (e.g. for simulations using
+octahedron positions that represents each atom for computing the
+surface.  If available, the per-atom radius (e.g. for simulations using
 :doc:`atom style sphere <atom_style>`) is used, otherwise half of the
 value of the Lennard-Jones *sigma* parameter for the atom type is
 used.  The fallback value is 0.1 length units.
 
 The optional *shading* keyword selects how triangle normals are
-determined for rendering convex hulls.  The *smooth* setting (the
-default) computes averaged per-vertex normals so that adjacent triangles
-appear curved and blend smoothly (except for sharp edges).  The *flat*
-uses the face normal for all three corners of each triangle, giving the
-hull a faceted appearance.
+determined for rendering surfaces.  The *smooth* setting (the default)
+computes averaged per-vertex normals so that adjacent triangles appear
+curved and blend smoothly (except for sharp edges).  The *flat* uses
+the face normal for all three corners of each triangle, giving the
+surface a faceted appearance.
 
 ----------
 
@@ -95,7 +99,7 @@ Fix graphics/chunk is designed to be used with the *fix* keyword of
 objects based on the size and geometry of the chunks in the fix group
 and passes the information to the image renderer.
 
-The *fflag1* setting of *dump image fix* determines whether the hull is
+The *fflag1* setting of *dump image fix* determines whether the surface is
 rendered as connected rounded triangles (1) or as a wireframe mesh of
 cylinders (2).  If using a wireframe mesh, the *fflag2* setting
 determines the diameter of the cylinders.
