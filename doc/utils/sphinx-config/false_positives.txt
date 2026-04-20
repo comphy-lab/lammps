@@ -2298,6 +2298,7 @@ Maxfoo
 maxima
 maxit
 maxiter
+maxreplace
 maxsize
 maxspecial
 maxSteps

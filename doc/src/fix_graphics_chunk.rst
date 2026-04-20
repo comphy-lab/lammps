@@ -34,7 +34,7 @@ Examples
    compute cc1 all chunk/atom molecule
    fix hull all graphics/chunk 100 cc1
    fix hull all graphics/chunk 100 cc1 radius 1.0 shading smooth
-   fix hull all graphics/chunk 100 cc1 shading flat alpha 10.0
+   fix hull all graphics/chunk 100 cc1 shading flat alpha 10.0 maxreplace 50
 
 Description
 """""""""""
@@ -42,24 +42,31 @@ Description
 .. versionadded:: TBD
 
 This fix generates graphics objects from chunks of atoms defined by the
-:doc:`compute chunk/atom <compute_chunk_atom>` command.  Each chunk is
-represented by a point cloud created from the atom positions.  For clusters
-with by replacing each atom position
-with the corners of an octahedron scaled to the radius of the atom.  A
-triangulated surface is created from that point cloud using a 3-D
-`Delaunay triangulation
+:doc:`compute chunk/atom <compute_chunk_atom>` command.  For each chunk
+a point cloud is created from the atom positions.  By default, for
+clusters with up to 100 atoms, each atom is replaced by the the
+positions of an icosahedron scaled to the radius of the atom.  For
+larger clusters the point cloud only uses atom positions that shifted
+away from the center of the cluster by the atom radius.  The threshold
+value can be set by the *maxreplace* keyword.  A triangulated surface is
+created from that point cloud using a 3-D `Delaunay triangulation
 <https://en.wikipedia.org/wiki/Delaunay_triangulation>`_ combined with
 `alpha shape <https://en.wikipedia.org/wiki/Alpha_shape>`_ extraction.
-This allows the resulting surface to follow concave features of the
-molecular geometry rather than always producing a convex hull.  The
-resulting list of graphics objects is passed to :doc:`dump image
+This allows the resulting surface to follow the shape of the chunks.
+The resulting list of graphics objects is passed to :doc:`dump image
 <dump_image>` for rendering via the *fix* keyword.
 
 The positions used for the generation of the graphics are based on
 unwrapped coordinates which are then mapped back into the simulation
-cell based on the position of the first atom in the cluster.  When a
-cluster will straddle a periodic boundary it should be drawn only on one
-side of the boundary.
+cell based on the position of the center of the cluster.  When a cluster
+will straddle a periodic boundary it should be drawn only on one side of
+the boundary.
+
+If available, the per-atom radius (e.g. for simulations using :doc:`atom
+style sphere <atom_style>`) is used, otherwise - if available - half of
+the value of the Lennard-Jones *sigma* parameter for the atom type is
+used.  If neither is available, half of the lattice spacing in
+x-direction is used as estimate for atom radii.
 
 The *group-ID* selects the atoms included in the hull computation.  Only
 atoms that belong to the specified group **and** are assigned to a chunk
@@ -75,15 +82,13 @@ selected in :doc:`dump image <dump_image>` command.  With the *type* or
 below, with the *const* coloring scheme a uniform color is used instead.
 This color can be set with the *fcolor* keyword of the :doc:`dump modify
 <dump_image>` command.  When using atom type based colors the vertices
-of the surface are colored using the atom type of the closest atom
-and the color between vertices is interpolated.
+of the surface are colored using the atom type of the closest atom and
+the color between vertices is interpolated.
 
 The optional *radius* keyword allows to override the radius value used
 to determine the size of the represented graphics by scaling the
 octahedron positions that represents each atom for computing the
-surface.  If available, the per-atom radius (e.g. for simulations using
-:doc:`atom style sphere <atom_style>`) is used, otherwise half of the
-value of the Lennard-Jones *sigma* parameter for the atom type is used.
+surface.
 
 The optional *alpha* keyword allows to adjust the alpha shape extraction
 algorithm which determines how closely the generated triangulation
@@ -91,6 +96,11 @@ follows the shape of chunks of atoms.  It should be at least about 3x
 the average distance of closest neighbors.  For larger values, the
 generated shape will become mostly a conventional convex hull. A value
 of 0.0 (the default) triggers an estimation of a suitable value.
+
+The optional *maxreplace* keyword allows to set up to which cluster size
+the atoms positions are replaced by those of an icosahedron to produce
+smoother surfaces.  For larger clusters, this step has few advantages
+and can slow down the triangulation significantly.
 
 The optional *shading* keyword selects how triangle normals are
 determined for rendering surfaces.  The *smooth* setting (the default)
