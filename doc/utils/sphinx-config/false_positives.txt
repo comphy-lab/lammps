@@ -3768,6 +3768,7 @@ springgreen
 spx
 spz
 sqdistharm
+sqr
 sqrt
 src
 srd
