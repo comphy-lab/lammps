@@ -260,7 +260,6 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
       nrepeat_history = utils::inumeric(FLERR,arg[iarg+2],false,lmp);
       nfreq_history = utils::inumeric(FLERR,arg[iarg+3],false,lmp);
       iarg += 4;
-    } else error->all(FLERR,"Unknown fix store/state keyword: {}", arg[iarg]);
     } else if (strcmp(arg[iarg],"thresh") == 0) {
       if (iarg+4 > narg) utils::missing_cmd_args(FLERR,"fix store/state thresh", error);
       if (threshflag)
@@ -604,7 +603,7 @@ void FixStoreState::end_of_step()
   if (cfv_any && nevery) modify->clearstep_compute();
 
   // fill avalues with per-atom values
-  // for historyflag, avalues will be copied to avalues_history at the end 
+  // for historyflag, avalues will be copied to avalues_history at the end
 
   if (avalues) vbuf = &avalues[0][0];
   else vbuf = nullptr;
@@ -737,7 +736,7 @@ double FixStoreState::memory_usage()
 void FixStoreState::grow_arrays(int nmax)
 {
   memory->grow(avalues,nmax,values.size(),"store/state:avalues");
-	 
+
   if (values.size() == 1) {
     if (nmax) vector_atom = &avalues[0][0];
     else vector_atom = nullptr;
