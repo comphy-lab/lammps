@@ -112,9 +112,10 @@ visualize the atom positions from the different replica or the spread.
 |replica1|  |replica2|
 
 
-The following lines can be added to the ``neb.hop1`` example to visualize
-the atom positions across the minimum energy path.  The images below show
-the initial and the final state.
+The following commands can be added to the ``neb.hop1`` example to show
+the initial (left image below) and final (right image below) state of
+the minimized transition path between adjacent energy minima.  Each
+yellow sphere represents the same atom in different replicas.
 
 .. code-block:: LAMMPS
 
