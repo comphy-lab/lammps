@@ -34,7 +34,7 @@ Syntax
                              corner2x, corner2y, corner2z,
                              corner3x, corner3y, corner3z,
                              i_name, d_name, i2_name[I], d2_name[I],
-			     history[I][J],
+              history[I][J],
                              vfrac, s0, espin, eradius, ervel, erforce,
                              rho, drho, e, de, cv, buckling,
                              apip_lambda, apip_lambda_input, apip_e_fast,

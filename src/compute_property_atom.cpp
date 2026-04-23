@@ -458,8 +458,8 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
       strcpy(fixID,arg[iarg+1]);
       fixhistory = modify->get_fix_by_id(fixID);
       if (!fixhistory) error->all(FLERR, iarg+1,
-				  "Could not find compute {} history fix ID: {}",
-				  style, arg[iarg+1]);
+          "Could not find compute {} history fix ID: {}",
+          style, arg[iarg+1]);
       iarg += 2;
     } else {
       error->all(FLERR,"Invalid keyword {} for atom style {} in compute property/atom command", arg[iarg], atom->get_style());
@@ -494,14 +494,14 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
 
     for (int i = 0; i < nvalues; i++) {
       if (pack_choice[i] == &ComputePropertyAtom::pack_history) {
-	if (index[i] < 1 || index[i] > nrepeat_history)
-	  error->all(FLERR,
-		     "Compute {} history references invalid history frame {} from fix store/state",
-		     style, index[i]);
-	if (colindex[i] < 1 || colindex[i] > nattribute_history)
-	  error->all(FLERR,
-		     "Compute {} history references invalid attribute {} from fix store/state",
-		     style, colindex[i]);
+  if (index[i] < 1 || index[i] > nrepeat_history)
+    error->all(FLERR,
+         "Compute {} history references invalid history frame {} from fix store/state",
+         style, index[i]);
+  if (colindex[i] < 1 || colindex[i] > nattribute_history)
+    error->all(FLERR,
+         "Compute {} history references invalid attribute {} from fix store/state",
+         style, colindex[i]);
       }
     }
   }
@@ -560,10 +560,10 @@ void ComputePropertyAtom::compute_peratom()
   if (historyflag) {
     if (nfreq_history == 0 && update->ntimestep % nevery_history)
       error->all(FLERR,"Compute {} not accessing history ot compatible times{}",
-		 style, utils::errorurl(7));
+     style, utils::errorurl(7));
     if (nfreq_history && update->ntimestep % nfreq_history)
       error->all(FLERR,"Compute {} not accessing history ot compatible times{}",
-		 style, utils::errorurl(7));
+     style, utils::errorurl(7));
   }
 
   // fill vector or array with per-atom values
