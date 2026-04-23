@@ -181,10 +181,10 @@ void FixGraphicsReplica::end_of_step()
   }
 
   if (me == 0) {
-    MPI_Reduce(MPI_IN_PLACE, types.data(), 3 * nper, MPI_INT, MPI_SUM, 0, world);
+    MPI_Reduce(MPI_IN_PLACE, types.data(), nper, MPI_INT, MPI_SUM, 0, world);
     MPI_Reduce(MPI_IN_PLACE, coords.data(), 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
   } else {
-    MPI_Reduce(types.data(), nullptr, 3 * nper, MPI_INT, MPI_SUM, 0, world);
+    MPI_Reduce(types.data(), nullptr, nper, MPI_INT, MPI_SUM, 0, world);
     MPI_Reduce(coords.data(), nullptr, 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
   }
 
