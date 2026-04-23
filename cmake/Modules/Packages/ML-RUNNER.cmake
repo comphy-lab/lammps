@@ -98,25 +98,9 @@ if(BUILD_MPI)
   # Ensure the Fortran MPI components are found
   find_package(MPI REQUIRED COMPONENTS CXX Fortran)
 
-  # Check if the mpi_f08 module is available
-  include(CheckFortranSourceCompiles)
-
-  # Temporarily link against MPI::MPI_Fortran to test compilation
-  set(CMAKE_REQUIRED_LIBRARIES MPI::MPI_Fortran)
-  check_fortran_source_compiles("
-    program test_mpi_f08
-      use mpi_f08
-      implicit none
-      integer :: ierr
-      call MPI_Init(ierr)
-      call MPI_Finalize(ierr)
-    end program test_mpi_f08
-  " HAS_MPI_F08)
-  unset(CMAKE_REQUIRED_LIBRARIES)
-
-  # Fail gracefully if mpi_f08 is missing
-  if(NOT HAS_MPI_F08)
-    message(FATAL_ERROR "RuNNer requires the Fortran 2008 MPI bindings (mpi_f08), but your MPI installation does not support it. Please upgrade your MPI library (e.g., OpenMPI or MPICH).")
+  # Fail if the required mpi_f08 module is missing
+  if(NOT MPI_Fortran_HAVE_F08_MODULE)
+    message(FATAL_ERROR "RuNNer requires the Fortran 2008 MPI bindings (mpi_f08), but your MPI installation does not support it.")
   endif()
 endif()
 
@@ -162,6 +146,7 @@ if(DOWNLOAD_RUNNER)
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
+      -DCMAKE_REQUEST_PIC=yes
       -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/runner_install
       -DBUILD_SHARED_LIB=${RUNNER_SHARED_LIB}
       ${RUNNER_CMAKE_ARGS}
