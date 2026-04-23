@@ -47,8 +47,6 @@ set(FFT_VALUES KISS FFTW3 MKL NVPL)
 set(FFT ${FFT} CACHE STRING "FFT library for RUNNER package")
 set_property(CACHE FFT PROPERTY STRINGS ${FFT_VALUES})
 
-# Ensure the selected option is valid.
-# validate_option(FFT FFT_VALUES) # Make sure this custom function is defined in your project
 string(TOUPPER ${FFT} FFT_UPPER)
 message(STATUS "Using ${FFT_UPPER} for FFT calculations.")
 
