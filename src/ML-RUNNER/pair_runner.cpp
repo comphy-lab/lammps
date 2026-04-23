@@ -734,7 +734,7 @@ void PairRuNNer::compute(int eflag, int vflag)
   // the threshold defined by `max_extrap`.
   // - Resets the number of total number of recorded extrapolations during a simulation if
   // the timestep is a multiple of `reset_ew_freq` and larger than 0.
-  // - Prints a summary of the recorded extrapolations at every intervall until the timestep is
+  // - Prints a summary of the recorded extrapolations at every interval until the timestep is
   // a multiple of `sum_ew_freq` and larger than 0.
   if (lcheck_extrap) {
 
