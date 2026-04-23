@@ -542,6 +542,8 @@
 /angle_class2.h
 /angle_class2_p6.cpp
 /angle_class2_p6.h
+/angle_class2xe.cpp
+/angle_class2xe.h
 /angle_cosine_buck6d.cpp
 /angle_cosine_buck6d.h
 /angle_cosine.cpp
@@ -778,6 +780,8 @@
 /dihedral_charmm.h
 /dihedral_class2.cpp
 /dihedral_class2.h
+/dihedral_class2xe.cpp
+/dihedral_class2xe.h
 /dihedral_cosine_shift_exp.cpp
 /dihedral_cosine_shift_exp.h
 /dihedral_cosine_squared_restricted.cpp
