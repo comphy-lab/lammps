@@ -81,6 +81,8 @@ Examples
 Description
 -----------
 
+.. versionadded:: TBD
+
 This pair style provides an interface to the `RuNNer 2 <https://gitlab.com/runner-suite/runner2>`_ (Ruhr University Neural Network Energy Representation) library. It implements High-Dimensional Neural Network Potentials (HDNNPs) as introduced in (:ref:`Behler and Parrinello 2007 <Behler_2007>`). HDNNPs are machine learning potentials that represent the total energy of a system as a sum of environment-dependent atomic contributions.
 
 
