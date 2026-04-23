@@ -45,7 +45,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
 
   peratom_flag = 1;
   nvalues = narg - 3;    // may be reset below
-  
+
   // parse input values
   // customize a new keyword by adding to if statement
 
@@ -55,7 +55,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
   historyflag = 0;
   fixID = nullptr;
   fixhistory = nullptr;
-  
+
   avec_ellipsoid = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
   avec_body = dynamic_cast<AtomVecBody *>(atom->style_match("body"));
   avec_line = dynamic_cast<AtomVecLine *>(atom->style_match("line"));
@@ -367,7 +367,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
         error->all(FLERR,"Compute property/atom property {} does not exist", pname);
 
       // custom vectors
-      
+
       if ((cols == 0) && (arg[iarg][1] == '_')) {
         if (argi.get_dim() != 0)
           error->all(FLERR,"Compute property/atom custom vector {} is incorrectly indexed",pname);
@@ -384,9 +384,9 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
             error->all(FLERR,"Compute property/atom floating-point vector {} does not exist",pname);
         }
       }
-      
+
       // custom arrays
-      
+
       else if ((cols > 0) && (arg[iarg][1] == '2')) {
         if (argi.get_dim() != 1)
           error->all(FLERR,"Compute property/atom custom array {} is not indexed",pname);
@@ -410,7 +410,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
     // colindex[i] = J index of history[I][J] for fix SS value (1 to Nattribute)
 
     // NOTE for Axel: correct way to write regex ?
-      
+
     } else if (utils::strmatch(arg[iarg],"^history\\[\\d+\\]\\[\\d+\\]$")) {
       historyflag = 1;
       pack_choice[i] = &ComputePropertyAtom::pack_history;
@@ -425,10 +425,10 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
       *ptrstop = '\0';
       colindex[i] = utils::inumeric(FLERR,ptrstart+1,true,lmp);
       *ptrstop = ']';
-      
+
     // any other attribute could be recognized by atom style
     // otherwise break for processing optional args
-      
+
     } else {
       index[i] = atom->avec->property_atom(arg[iarg]);
       if (index[i] < 0) break;
@@ -439,14 +439,14 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
   }
 
   // reset nvalues in case there are optional args
-  
+
   nvalues = iarg - 3;
   if (nvalues == 1) size_peratom_cols = 0;
   else size_peratom_cols = nvalues;
 
   // optional arg required if history attribute used
   // otherwise error for attribute not recognized by atom style
-  
+
   while (iarg < narg) {
     if (strcmp(arg[iarg],"history") == 0) {
       if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "history fixID", error);
@@ -461,7 +461,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
 				  "Could not find compute {} history fix ID: {}",
 				  style, arg[iarg+1]);
       iarg += 2;
-    } else { 
+    } else {
       error->all(FLERR,"Invalid keyword {} for atom style {} in compute property/atom command", arg[iarg], atom->get_style());
     }
   }
@@ -505,7 +505,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
       }
     }
   }
-  
+
   nmax = 0;
 }
 
@@ -517,7 +517,7 @@ ComputePropertyAtom::~ComputePropertyAtom()
   delete[] index;
   delete[] colindex;
   delete[] fixID;
-  
+
   memory->destroy(vector_atom);
 }
 
@@ -565,7 +565,7 @@ void ComputePropertyAtom::compute_peratom()
       error->all(FLERR,"Compute {} not accessing history ot compatible times{}",
 		 style, utils::errorurl(7));
   }
-  
+
   // fill vector or array with per-atom values
 
   if (nvalues == 1) {
