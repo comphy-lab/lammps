@@ -164,6 +164,8 @@ PairRuNNer::PairRuNNer(LAMMPS *lmp) :
   // variable for output using pair compute
   nextra = 0;
   pvector = nullptr;
+
+  if (atom->natoms > MAXSMALLINT/4) error->all(FLERR, "Too many total atoms");
 }
 
 PairRuNNer::~PairRuNNer()
