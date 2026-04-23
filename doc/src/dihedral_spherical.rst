@@ -4,7 +4,7 @@
 dihedral_style spherical command
 ================================
 
-Accelertor Variant: *spherical/omp*
+Accelerator Variant: *spherical/omp*
 
 Syntax
 """"""
