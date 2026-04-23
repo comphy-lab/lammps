@@ -94,6 +94,32 @@ else() # Fallback to KISSFFT
   target_compile_definitions(lammps PRIVATE -DFFT_KISS)
 endif()
 
+if(BUILD_MPI)
+  # Ensure the Fortran MPI components are found
+  find_package(MPI REQUIRED COMPONENTS CXX Fortran)
+
+  # Check if the mpi_f08 module is available
+  include(CheckFortranSourceCompiles)
+
+  # Temporarily link against MPI::MPI_Fortran to test compilation
+  set(CMAKE_REQUIRED_LIBRARIES MPI::MPI_Fortran)
+  check_fortran_source_compiles("
+    program test_mpi_f08
+      use mpi_f08
+      implicit none
+      integer :: ierr
+      call MPI_Init(ierr)
+      call MPI_Finalize(ierr)
+    end program test_mpi_f08
+  " HAS_MPI_F08)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+
+  # Fail gracefully if mpi_f08 is missing
+  if(NOT HAS_MPI_F08)
+    message(FATAL_ERROR "RuNNer requires the Fortran 2008 MPI bindings (mpi_f08), but your MPI installation does not support it. Please upgrade your MPI library (e.g., OpenMPI or MPICH).")
+  endif()
+endif()
+
 if(DOWNLOAD_RUNNER)
   # Include ExternalProject module
   include(ExternalProject)
@@ -214,3 +240,8 @@ endif()
 
 # Link lammps to the found RuNNer library
 target_link_libraries(lammps PRIVATE RuNNer::RuNNer ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+
+if(BUILD_MPI)
+  # explicitly link Fortran MPI libraries so the C++ linker can resolve mpi_f08 symbols
+  target_link_libraries(lammps PRIVATE MPI::MPI_Fortran)
+endif()
