@@ -23,12 +23,12 @@
 #include "domain.h"
 #include "error.h"
 #include "force.h"
+#include "lmptype.h"
 #include "memory.h"
 #include "neigh_list.h"
 #include "neighbor.h"
 #include "potential_file_reader.h"
 #include "update.h"
-#include "lmptype.h"
 
 #include <cmath>
 #include <cstring>
@@ -44,7 +44,8 @@ void runner_lammps_interface_init(const char *path, int *npath, double *cutoff, 
 
 void runner_lammps_interface_transfer_atoms_and_neighbor_lists(
     int *nlocal, int *nghost, int *atomic_numbers, int *inum, int *sum_num_neigh, int *ilist,
-    int *num_neigh, int *first_neigh, int *neigh, double *lattice, double *xyz, bool *lperiodic, int *lstress);
+    int *num_neigh, int *first_neigh, int *neigh, double *lattice, double *xyz, bool *lperiodic,
+    int *lstress);
 
 void runner_interface_short_range(int *nlocal, int *nghost, int *inum, int *nmax, int *ilist,
                                   double *energy, double *forces, double *d_energy_d_strain,
@@ -98,12 +99,13 @@ void runner_interface_hirshfeld_vdw(int *nlocal, int *nghost, int *inum, int *il
 void runner_interface_two_body(int *nlocal, int *nghost, double *energy, double *forces,
                                double *d_energy_d_strain);
 
-void runner_interface_extrapolation_warnings(char **c_ptr_extrap_msg, int *len_extrap_msg, int *global_atom_ids, int *nlocal);
+void runner_interface_extrapolation_warnings(char **c_ptr_extrap_msg, int *len_extrap_msg,
+                                             int *global_atom_ids, int *nlocal);
 
 void runner_interface_dealloc_extrapolation_warnings();
 
-void runner_interface_extrapolation_count(int64_t *extraplation_count, int64_t *total_extrapolation_count,
-                                          bool *lreset);
+void runner_interface_extrapolation_count(int64_t *extraplation_count,
+                                          int64_t *total_extrapolation_count, bool *lreset);
 }
 
 using namespace LAMMPS_NS;
@@ -122,15 +124,9 @@ enum {
 }
 
 PairRuNNer::PairRuNNer(LAMMPS *lmp) :
-  Pair(lmp),
-  map(nullptr),
-  atomic_charge(nullptr),
-  hirshfeld_volume(nullptr),
-  electronegativity(nullptr),
-  lagrange_charges(nullptr),
-  de_dq(nullptr),
-  screening_de_dq(nullptr),
-  committee_storage(nullptr)
+    Pair(lmp), map(nullptr), atomic_charge(nullptr), hirshfeld_volume(nullptr),
+    electronegativity(nullptr), lagrange_charges(nullptr), de_dq(nullptr), screening_de_dq(nullptr),
+    committee_storage(nullptr)
 {
   // HDNNP is not pairwise additive, due to three body terms
   single_enable = 0;
@@ -165,7 +161,7 @@ PairRuNNer::PairRuNNer(LAMMPS *lmp) :
   nextra = 0;
   pvector = nullptr;
 
-  if (atom->natoms > MAXSMALLINT/4) error->all(FLERR, "Too many total atoms");
+  if (atom->natoms > MAXSMALLINT / 4) error->all(FLERR, "Too many total atoms");
 }
 
 PairRuNNer::~PairRuNNer()
@@ -342,7 +338,8 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   runner_lammps_interface_transfer_atoms_and_neighbor_lists(
       &nlocal, &nghost, runner_types.data(), &inum, &num_neigh_sum, ilist, runner_num_neigh.data(),
-      runner_first_neighbor.data(), runner_jlist.data(), lattice, &x[0][0], &lperiodic, &vflag_global);
+      runner_first_neighbor.data(), runner_jlist.data(), lattice, &x[0][0], &lperiodic,
+      &vflag_global);
 
   runner_interface_short_range(&nlocal, &nghost, &inum, &nmax, ilist, committee_energy.data(),
                                committee_force.data(), committee_d_energy_d_strain.data(),
@@ -491,8 +488,7 @@ void PairRuNNer::compute(int eflag, int vflag)
 
         runner_interface_evaluate_electrostatics_3g_part_2(
             &nlocal, &nghost, &natoms, icomm_fortran, &runner_elec_energy,
-            runner_elec_forces.data(), de_dq, &de_dq_sum_global,
-            runner_elec_d_energy_d_strain);
+            runner_elec_forces.data(), de_dq, &de_dq_sum_global, runner_elec_d_energy_d_strain);
 
         // Add electrostatic interactions to short-range results
         committee_energy[i] += runner_elec_energy - screening_energy;
@@ -523,7 +519,8 @@ void PairRuNNer::compute(int eflag, int vflag)
         std::vector<double> q_global(natoms, 0.0);
 
         pack_atomic_property(rank, size, natoms, inum, ilist, tag,
-                             &committee_electronegativity[nmax * i], electronegativity_global.data());
+                             &committee_electronegativity[nmax * i],
+                             electronegativity_global.data());
 
         pack_atomic_property(rank, size, natoms, inum, ilist, tag, &committee_hardness[nmax * i],
                              hardness_global.data());
@@ -613,8 +610,8 @@ void PairRuNNer::compute(int eflag, int vflag)
 
         MPI_Barrier(world);
 
-        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, lagrange_global.data(),
-                                       lagrange_charges);
+        unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1,
+                                       lagrange_global.data(), lagrange_charges);
 
         // communicate lagrange charges from local atoms to ghost
         // atoms for calculation of force trick part 2
@@ -747,7 +744,8 @@ void PairRuNNer::compute(int eflag, int vflag)
       char *c_ptr_extrap_msg = nullptr;
       int len_extrap_msg = 0;
 
-      runner_interface_extrapolation_warnings(&c_ptr_extrap_msg, &len_extrap_msg, global_atom_ids.data(), &nlocal);
+      runner_interface_extrapolation_warnings(&c_ptr_extrap_msg, &len_extrap_msg,
+                                              global_atom_ids.data(), &nlocal);
 
       if (rank == 0) {
         // Write extrapolation message owned by rank 0
@@ -839,7 +837,6 @@ void PairRuNNer::compute(int eflag, int vflag)
 
   MPI_Barrier(world);
   runner_interface_finalize_step();
-
 }
 
 void PairRuNNer::settings(int narg, char **arg)
@@ -1280,8 +1277,7 @@ void PairRuNNer::pack_atomic_property(int rank, int size, int natoms, int inum, 
 
 void PairRuNNer::unpack_local_atomic_properties(int rank, int size, int natoms, int inum,
                                                 int *ilist, tagint *tag, int nprop,
-                                                double *global_properties,
-                                                double *local_properties)
+                                                double *global_properties, double *local_properties)
 {
   int i, ii, iprop;
   int start;
@@ -1301,4 +1297,3 @@ void PairRuNNer::unpack_local_atomic_properties(int rank, int size, int natoms, 
     }
   }
 }
-
