@@ -36,13 +36,9 @@ class FixGraphicsReplica : public Fix {
 
  protected:
   bool dflag;
-  int dtype;
-  double dradius;
-  double dtrans;
   bool aflag;
-  int atype;
+  double dradius;
   double aradius;
-  double atrans;
 
   int numobjs;
   int *imgobjs;

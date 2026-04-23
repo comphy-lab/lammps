@@ -17,21 +17,15 @@ Syntax
 
   .. parsed-literal::
 
-     *display* args = type radius transparency
-       type = zero to retain the atom type or an atom type to set the color to that of that atom type
-       radius = radius for the atoms
-       transparency = transparency setting for the atoms, a value from 0 (invisible) to 1 (fully opaque)
-     *average* args = type radius transparency
-       type = zero to retain the atom type or an atom type to set the color to that of that atom type
-       radius = radius for the atoms or 0 to set the radius to that of the largest distance from the center
-       transparency = transparency setting for the atoms, a value from 0 (invisible) to 1 (fully opaque)
+     *display* radius = radius for the atoms or -1 to use the radius dump image uses for the atom type
+     *average* radius = radius for the atoms or 0 to set the radius to that of the largest distance from the center
 
 Examples
 """"""""
 
 .. code-block:: LAMMPS
 
-   fix sf1 water graphics/replica 200 display 0 0.2 1.0 average 3 0.0 0.25
+   fix sf1 water graphics/replica 200 display 1.0 average 0
 
 Description
 """""""""""
@@ -52,22 +46,15 @@ with an error message if the settings for this fix and the dump command
 are not compatible.
 
 There are two keywords available that determine what is shown: *display*
-and *average*.  With *display* all atoms from all replica and are in the
-fix group will be displayed.  With *average* only the average position
-of the atoms with the same atom-ID across all replica will be shown.
+and *average*.  With *display* all atoms in the fix group from all
+replica will be displayed.  With *average* only the average position of
+the atoms with the same atom-ID across all replica will be shown.
 
-The *type* quantity determines the color of the objects.  Its represents
-an *atom* type and the atoms will be colored the same as the
-corresponding atom type when the *type* coloring scheme is used in the
-:doc:`dump image fix <dump_image>` command.  If the value of *type* is
-0 then the atom type of the individual atoms is used.
-
-The *radius* quantity determines the radius of the atoms.  The value of
-*radius* is 0 then largest distance of an atom to the average position
-from all replicas is used.
-
-The *transparency* quantity determines the transparency of the objects.
-Its value must be between 0 (invisible) and 1 (fully opaque).
+The *radius* quantity determines the radius of the atoms.  A value > 0
+sets an explicit radius; a value < 0 will use the same radius used by
+dump image for local atoms of the same atom type.  For the keyword
+*average*, a *radius* sets the atom radius to the largest distance of
+an atom to the average position across all replica.
 
 -----------
 
@@ -84,8 +71,8 @@ are included in the rendered image.
 The *fflag1* setting of *dump image fix* are currently ignored.
 
 and *fflag2* setting of *dump image fix* is used as an adjustment
-to the radius of the rendered sphere.  Since the radius is already
-determined by this fix, it is recommended to set this flag to 0.0.
+to the radius of the rendered sphere.  This can be used to grow or
+shrink the radius that is selected by *dump image* for the atom type.
 
 Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""

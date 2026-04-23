@@ -47,32 +47,24 @@ FixGraphicsReplica::FixGraphicsReplica(LAMMPS *lmp, int narg, char **arg) :
   dynamic_group_allow = 1;
 
   dflag = false;
-  dtype = 0;
-  dradius = 1.0;
-  dtrans = 1.0;
   aflag = false;
-  atype = 0;
+  dradius = 1.0;
   aradius = 1.0;
-  atrans = 1.0;
 
   int iarg = 4;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "display") == 0) {
-      if (iarg + 4 > narg)
+      if (iarg + 2 > narg)
         error->universe_all(FLERR, "Too few arguments for fix graphics/replica display");
       dflag = true;
-      dtype = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
-      dradius = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
-      dtrans = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
-      iarg += 4;
+      dradius = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
+      iarg += 2;
     } else if (strcmp(arg[iarg], "average") == 0) {
-      if (iarg + 4 > narg)
+      if (iarg + 2 > narg)
         error->universe_all(FLERR, "Too few arguments for fix graphics/replica average");
       aflag = true;
-      atype = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
-      aradius = utils::numeric(FLERR, arg[iarg + 2], false, lmp);
-      atrans = utils::numeric(FLERR, arg[iarg + 3], false, lmp);
-      iarg += 4;
+      aradius = utils::numeric(FLERR, arg[iarg + 1], false, lmp);
+      iarg += 2;
     } else {
       error->universe_all(FLERR, std::string("Unknown fix graphics/replica keyword: ") + arg[iarg]);
     }
@@ -120,9 +112,9 @@ void FixGraphicsReplica::end_of_step()
 
   // count atoms in group and across replica
 
-  bigint nper = 0;
+  bigint nper = group->count(igroup);
+  nper = (me == 0) ? nper : 0;
   bigint nall = 0;
-  if (me == 0) nper = group->count(igroup);
   MPI_Allreduce(&nper, &nall, 1, MPI_LMP_BIGINT, MPI_SUM, universe->uworld);
 
   // ensure the group has the same number of atoms on each replica
@@ -187,15 +179,20 @@ void FixGraphicsReplica::end_of_step()
     ++n;
   }
 
-  MPI_Reduce(MPI_IN_PLACE, types.data(), 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
-  MPI_Reduce(MPI_IN_PLACE, coords.data(), 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
+  if (me == 0) {
+    MPI_Reduce(MPI_IN_PLACE, types.data(), 3 * nper, MPI_INT, MPI_SUM, 0, world);
+    MPI_Reduce(MPI_IN_PLACE, coords.data(), 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
+  } else {
+    MPI_Reduce(types.data(), nullptr, 3 * nper, MPI_INT, MPI_SUM, 0, world);
+    MPI_Reduce(coords.data(), nullptr, 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
+  }
 
   // now we are ready to create the graphics items
   // only universe root creates the objects
 
   if (universe->me == 0) {
     memory->create(imgobjs, numobjs, "fix_graphics:imgobjs");
-    memory->create(imgparms, numobjs, 6, "fix_graphics:imgparms");
+    memory->create(imgparms, numobjs, 5, "fix_graphics:imgparms");
 
     // reset counter for total graphics objects
     int n = 0;
@@ -208,13 +205,12 @@ void FixGraphicsReplica::end_of_step()
     if (dflag) {
       for (int i = 0; i < nper; ++i) {
         imgobjs[n] = Graphics::SPHERE;
-        imgparms[n][0] = (dtype) ? dtype : type[i];
+        imgparms[n][0] = types[i];
         domain->remap(buf.data() + 3 * i);
         imgparms[n][1] = buf[3 * i];
         imgparms[n][2] = buf[3 * i + 1];
         imgparms[n][3] = buf[3 * i + 2];
         imgparms[n][4] = dradius;
-        imgparms[n][5] = dtrans;
         ++n;
       }
     }
@@ -222,7 +218,7 @@ void FixGraphicsReplica::end_of_step()
     // now get data from other replicas
 
     for (int j = 1; j < universe->nworlds; ++j) {
-      MPI_Recv(buf.data(), 3 * nper, MPI_DOUBLE, MPI_ANY_SOURCE, 0, universe->uworld,
+      MPI_Recv(buf.data(), 3 * nper, MPI_DOUBLE, universe->root_proc[j], 0, universe->uworld,
                MPI_STATUS_IGNORE);
       for (int i = 0; i < nper; ++i) {
         if (aflag) {
@@ -235,13 +231,12 @@ void FixGraphicsReplica::end_of_step()
         }
         if (dflag) {
           imgobjs[n] = Graphics::SPHERE;
-          imgparms[n][0] = (dtype) ? dtype : type[i];
+          imgparms[n][0] = types[i];
           domain->remap(buf.data() + 3 * i);
           imgparms[n][1] = buf[3 * i];
           imgparms[n][2] = buf[3 * i + 1];
           imgparms[n][3] = buf[3 * i + 2];
           imgparms[n][4] = dradius;
-          imgparms[n][5] = dtrans;
           ++n;
         }
       }
@@ -250,7 +245,7 @@ void FixGraphicsReplica::end_of_step()
       double norm = 1.0 / (double) universe->nworlds;
       for (int i = 0; i < nper; ++i) {
         imgobjs[n] = Graphics::SPHERE;
-        imgparms[n][0] = (atype) ? atype : type[i];
+        imgparms[n][0] = types[i];
         var[3 * i] *= norm;
         var[3 * i + 1] *= norm;
         var[3 * i + 2] *= norm;
@@ -258,16 +253,14 @@ void FixGraphicsReplica::end_of_step()
         imgparms[n][1] = avg[3 * i];
         imgparms[n][2] = avg[3 * i + 1];
         imgparms[n][3] = avg[3 * i + 2];
-        imgparms[n][4] = (aradius == 0.0) ? 1.0
-                                          : aradius * norm *
-                sqrt(square(var[3 * i]) + square(var[3 * i + 1]) + square(var[3 * i + 2]));
-
-        imgparms[n][5] = atrans;
+        imgparms[n][4] =
+            (aradius == 0.0) ? 1.0 : aradius * sqrt(var[3 * i] + var[3 * i + 1] + var[3 * i + 2]);
         ++n;
       }
     }
   } else {
-    if (me == 0) MPI_Send(coords.data(), 3 * nper, MPI_DOUBLE, 0, 0, universe->uworld);
+    if (me == 0)
+      MPI_Send(coords.data(), 3 * nper, MPI_DOUBLE, universe->root_proc[0], 0, universe->uworld);
   }
 }
 
