@@ -160,12 +160,12 @@ message and before the include guards for the class definition:
 
    #endif
 
-This block between ``#ifdef PAIR_CLASS`` and ``#else`` will be
-included by the ``Force`` class in ``force.cpp`` to build a map of
-"factory functions" that will create an instance of these classes and
-return a pointer to it.  The map connects the name of the pair style,
+This block between ``#ifdef PAIR_CLASS`` and ``#else`` will be included
+by the ``Force`` class in ``force.cpp`` to build a map of "factory
+functions" that will create an instance of these classes and return a
+pointer to it.  The map connects the name of the pair style,
 "born/gauss", to the name of the class, ``PairBornGauss``.  During
-compilation, LAMMPS constructs a file ``style_pair.h`` that contains
+compilation, LAMMPS generates a file ``style_pair.h`` that contains
 ``#include`` statements for all "installed" pair styles.  Before
 including ``style_pair.h`` into ``force.cpp``, the ``PAIR_CLASS`` define
 is set and the ``PairStyle(name,class)`` macro defined.  The code of the

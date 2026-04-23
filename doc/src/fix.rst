@@ -263,6 +263,7 @@ accelerated styles exist.
 * :doc:`gld <fix_gld>` - generalized Langevin dynamics integrator
 * :doc:`gle <fix_gle>` - generalized Langevin equation thermostat
 * :doc:`graphics/arrows <fix_graphics_arrows>` - add arrow graphics objects to :doc:`dump image <dump_image>` output
+* :doc:`graphics/chunk <fix_graphics_chunk>` - add convex hull graphics for :doc:`chunks <compute_chunk_atom>` to :doc:`dump image <dump_image>` output
 * :doc:`graphics/isosurface <fix_graphics_isosurface>` - add an isosurface for a group of atoms to :doc:`dump image <dump_image>` output
 * :doc:`graphics/labels <fix_graphics_labels>` - add images or text as graphics objects to :doc:`dump image <dump_image>` output
 * :doc:`graphics/lines <fix_graphics_lines>` - add a trace of atom positions to :doc:`dump image <dump_image>` output

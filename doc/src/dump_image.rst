@@ -90,7 +90,7 @@ Syntax
          axes = *yes* or *no* or *center* or *lowerleft* or *lowerright* or *upperleft* or *upperright* = do or do not draw xyz axes arrows and select location
          length = length of axes lines as fraction of respective box lengths
          diam = diameter of axes lines as fraction of shortest box length
-       *region* values = region-ID color drawstyle [opacity (optional) npoints (optional) diameter (optional)]
+       *region* values = region-ID color drawstyle [opacity (optional) npoints (optional) diameter (optional)] [hull_points npoints (optional)]
          region-ID = ID of the region to render
          color = color name for region graphics
          drawstyle = *filled* or *transparent* or *frame* or *points*
@@ -101,6 +101,7 @@ Syntax
          opacity  = level of opacity (from 0.0 to 1.0, only for drawstyle *transparent*)
          npoints  = number of attempted points (only for drawstyle *points*)
          diameter = diameter of wireframe or points (only for drawstyles *frame* and *points*)
+         hull_points npoints = set number of points for creating a Delaunay triangulation (optional)
        *subbox* values = lines diam = draw outline of processor subdomains
          lines = *yes* or *no* = do or do not draw subdomain lines
          diam = diameter of subdomain lines as fraction of shortest box length
@@ -667,6 +668,10 @@ and fix commands are in the :doc:`Howto_viz` howto.
 
    draw style *transparent* was added
 
+.. versionchanged:: TBD
+
+   draw triangulated hull from random points for region style *intersect* or *union*
+
 The *region* keyword can be used to create a graphical representation of
 a :doc:`region <region>`.  This can be helpful in debugging the location
 and extent of regions, especially when those have parameters controlled
@@ -688,10 +693,12 @@ this draw style.  The fourth draw style, *points*\, generates a random
 point cloud inside the simulation box and draws only those points that
 are within the region.  This uses the same test than what is used to
 determine if an atom is inside the region but ignores any open faces
-(which would match *all* positions as "inside").  Draw styles *filled*\,
-*transparent*\, and *frame* support only "primitive" region styles (no
-unions or intersections of multiple regions), but the *points* draw
-style supports *all* region styles.
+(which would match *all* positions as "inside").  When using draw styles
+*filled*\, *transparent*\, or *frame* with unions or intersections of
+multiple regions an enclosing hull is first created from a point cloud
+that is generated the same way as in the *points* draw style.  The
+number of points used for the hull approximation (default is 100000) can
+be set by the optional *hull_points* keyword.
 
 Recommended transparency values are 0.25, 0.5, or 0.75 when used in
 combination with *fsaa on*.

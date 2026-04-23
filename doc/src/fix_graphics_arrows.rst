@@ -190,6 +190,7 @@ The *dipole* mode requires the use of :doc:`atom style dipole
 Related commands
 """"""""""""""""
 
+:doc:`fix graphics/chunk <fix_graphics_chunk>`,
 :doc:`fix graphics/labels <fix_graphics_labels>`,
 :doc:`fix graphics/isosurface <fix_graphics_isosurface>`,
 :doc:`fix graphics/lines <fix_graphics_lines>`,
