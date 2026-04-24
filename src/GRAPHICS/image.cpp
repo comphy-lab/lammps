@@ -2269,7 +2269,7 @@ ColorMap::ColorMap(LAMMPS *lmp, Image *caller) : Pointers(lmp)
 
 ColorMap::~ColorMap()
 {
-  delete [] mentry;
+  delete[] mentry;
 }
 
 /* ----------------------------------------------------------------------
@@ -2430,6 +2430,8 @@ int ColorMap::minmax(double mindynamic, double maxdynamic)
   return 0;
 }
 
+// clang-format on
+
 int ColorMap::info(double &min, double &max)
 {
   min = locurrent;
@@ -2444,14 +2446,16 @@ int ColorMap::info(double &min, double &max)
 
 double *ColorMap::value2color(double value)
 {
-  double lo;//,hi;
+  double lo;    //,hi;
 
-  value = MAX(value,locurrent);
-  value = MIN(value,hicurrent);
+  value = MAX(value, locurrent);
+  value = MIN(value, hicurrent);
 
   if (mrange == FRACTIONAL) {
-    if (locurrent == hicurrent) value = 0.0;
-    else value = (value-locurrent) / (hicurrent-locurrent);
+    if (locurrent == hicurrent)
+      value = 0.0;
+    else
+      value = (value - locurrent) / (hicurrent - locurrent);
     lo = 0.0;
     //hi = 1.0;
   } else {
@@ -2460,25 +2464,27 @@ double *ColorMap::value2color(double value)
   }
 
   if (mstyle == CONTINUOUS) {
-    for (int i = 0; i < nentry-1; i++)
-      if (value >= mentry[i].svalue && value <= mentry[i+1].svalue) {
-        double fraction = (value-mentry[i].svalue) /
-          (mentry[i+1].svalue-mentry[i].svalue);
-        interpolate[0] = mentry[i].color[0] +
-          fraction*(mentry[i+1].color[0]-mentry[i].color[0]);
-        interpolate[1] = mentry[i].color[1] +
-          fraction*(mentry[i+1].color[1]-mentry[i].color[1]);
-        interpolate[2] = mentry[i].color[2] +
-          fraction*(mentry[i+1].color[2]-mentry[i].color[2]);
+    for (int i = 0; i < nentry - 1; i++)
+      if (value >= mentry[i].svalue && value <= mentry[i + 1].svalue) {
+        if (mentry[i].color) {
+          double fraction = (value - mentry[i].svalue) / (mentry[i + 1].svalue - mentry[i].svalue);
+          interpolate[0] =
+              mentry[i].color[0] + fraction * (mentry[i + 1].color[0] - mentry[i].color[0]);
+          interpolate[1] =
+              mentry[i].color[1] + fraction * (mentry[i + 1].color[1] - mentry[i].color[1]);
+          interpolate[2] =
+              mentry[i].color[2] + fraction * (mentry[i + 1].color[2] - mentry[i].color[2]);
+        } else {
+          interpolate[0] = interpolate[1] = interpolate[2] = 1.0;
+        }
         return interpolate;
       }
   } else if (mstyle == DISCRETE) {
     for (int i = 0; i < nentry; i++)
-      if (value >= mentry[i].lvalue && value <= mentry[i].hvalue)
-        return mentry[i].color;
+      if (value >= mentry[i].lvalue && value <= mentry[i].hvalue) return mentry[i].color;
   } else {
-    int ibin = static_cast<int>((value-lo) * mbinsizeinv);
-    return mentry[ibin%nentry].color;
+    int ibin = static_cast<int>((value - lo) * mbinsizeinv);
+    return mentry[ibin % nentry].color;
   }
 
   // always return a non-NULL pointer
