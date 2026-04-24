@@ -123,11 +123,18 @@ enum {
 };
 }
 
+// Initialize the static instance counter
+int PairRuNNer::instances = 0;
+
 PairRuNNer::PairRuNNer(LAMMPS *lmp) :
     Pair(lmp), map(nullptr), atomic_charge(nullptr), hirshfeld_volume(nullptr),
     electronegativity(nullptr), lagrange_charges(nullptr), de_dq(nullptr), screening_de_dq(nullptr),
     committee_storage(nullptr)
 {
+  // Sanity check: Prevent multiple instances due to static Fortran interface
+  if (instances > 0) { error->all(FLERR, "Only one pair runner instance can be active at a time"); }
+  instances++;
+
   // HDNNP is not pairwise additive, due to three body terms
   single_enable = 0;
   // Do not write binary restart files
@@ -166,6 +173,9 @@ PairRuNNer::PairRuNNer(LAMMPS *lmp) :
 
 PairRuNNer::~PairRuNNer()
 {
+  // Decrement instance counter
+  instances--;
+
   // Deallocate member variables
   if (allocated) {
     memory->destroy(setflag);
