@@ -269,6 +269,7 @@ accelerated styles exist.
 * :doc:`graphics/lines <fix_graphics_lines>` - add a trace of atom positions to :doc:`dump image <dump_image>` output
 * :doc:`graphics/objects <fix_graphics_objects>` - add graphics objects to :doc:`dump image <dump_image>` output
 * :doc:`graphics/periodic <fix_graphics_periodic>` - add selected periodic images of atoms and bonds to :doc:`dump image <dump_image>` output
+* :doc:`graphics/replica <fix_graphics_replica>` - add atoms from other replica to :doc:`dump image <dump_image>` output
 * :doc:`gravity <fix_gravity>` - add gravity to atoms in a granular simulation
 * :doc:`grem <fix_grem>` - implements the generalized replica exchange method
 * :doc:`halt <fix_halt>` - terminate a dynamics run or minimization

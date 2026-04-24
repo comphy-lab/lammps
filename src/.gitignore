@@ -1741,6 +1741,8 @@
 /fix_drude.h
 /fix_drude_transform.cpp
 /fix_drude_transform.h
+/fix_graphics_replica.cpp
+/fix_graphics_replica.h
 /fix_langevin_drude.cpp
 /fix_langevin_drude.h
 /fix_mol_swap.cpp

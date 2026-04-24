@@ -820,6 +820,7 @@ and fix styles:
    * :doc:`fix graphics/lines <fix_graphics_lines>`
    * :doc:`fix graphics/objects <fix_graphics_objects>`
    * :doc:`fix graphics/periodic <fix_graphics_periodic>`
+   * :doc:`fix graphics/replica <fix_graphics_replica>`
    * :doc:`fix atom/swap <fix_atom_swap>`
    * :doc:`fix bond/break <fix_bond_break>`
    * :doc:`fix bond/create <fix_bond_create>`

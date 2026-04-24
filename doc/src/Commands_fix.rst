@@ -90,6 +90,7 @@ OPT.
    * :doc:`graphics/lines <fix_graphics_lines>`
    * :doc:`graphics/objects <fix_graphics_objects>`
    * :doc:`graphics/periodic <fix_graphics_periodic>`
+   * :doc:`graphics/replica <fix_graphics_replica>`
    * :doc:`gravity (ko) <fix_gravity>`
    * :doc:`grem <fix_grem>`
    * :doc:`halt <fix_halt>`
