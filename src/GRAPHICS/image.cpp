@@ -51,8 +51,6 @@ using MathConst::MY_PI4;
 
 // clang-format on
 namespace {
-constexpr int NCOLORS = 140;
-constexpr int NELEMENTS = 109;
 constexpr double EPSILON = 1.0e-6;
 constexpr double TRANS_DELTA = 0.01;
 
