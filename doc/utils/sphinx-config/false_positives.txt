@@ -1371,11 +1371,13 @@ gammaA
 gammaFactor
 gammaR
 gamR
+gapsys
 Gan
 GaN
 ganzenmueller
 Ganzenmuller
 Gao
+Gapsys
 Gathert
 Gaus
 gauss
@@ -3617,6 +3619,7 @@ Secor
 sectoring
 sed
 Seddon
+Seeliger
 segmental
 Seibold
 Seifert

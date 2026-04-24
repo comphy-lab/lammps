@@ -1415,6 +1415,8 @@
 /pair_lj_coul.h
 /pair_coul_cut_soft.cpp
 /pair_coul_cut_soft.h
+/pair_coul_cut_soft_gapsys.cpp
+/pair_coul_cut_soft_gapsys.h
 /pair_coul_long_soft.cpp
 /pair_coul_long_soft.h
 /pair_lj_cut_coul_cut_soft.cpp
@@ -1739,6 +1741,8 @@
 /fix_drude.h
 /fix_drude_transform.cpp
 /fix_drude_transform.h
+/fix_graphics_replica.cpp
+/fix_graphics_replica.h
 /fix_langevin_drude.cpp
 /fix_langevin_drude.h
 /fix_mol_swap.cpp
