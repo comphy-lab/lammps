@@ -1365,7 +1365,7 @@ the quaternion that represents its new orientation is given by
 LAMMPS normalizes each atom's quaternion in case (a,b,c) is not
 specified as a unit vector.
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 The blockiness values *block1*, *block2* generalize the geometry to a
 super ellipsoid for use in granular simulations. Sections through the

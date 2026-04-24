@@ -167,13 +167,13 @@ If :doc:`newton bond off <newton>` is set, it will be tallied with both atom
 The quantities *shapex*, *shapey*, and *shapez* are defined for ellipsoidal
 particles and define the 3d shape of each particle.
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 The quantities *block1*, and *block2*, are defined for superellipsoidal
 particles and define the blockiness of each superellipsoid particle.
 See the :doc:`set <set>` command for an explanation of the blockiness.
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 The quantities *inertiax*, *inertiay*, and *inertiaz* are defined for
 superellipsoidal particles and define the 3 principal moments of inertia
@@ -201,7 +201,7 @@ the energies of a
 fast (*apip_e_fast*) and a precise (*apip_e_precise*) potential into an
 adaptive-precision energy.
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
 Alternatively, the switching parameter can be calculated from a
 locally averaged descriptor (*apip_la_avg*) to obtain a conservative

@@ -30,7 +30,7 @@ Examples
 Description
 """""""""""
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 The *granular/superellipsoid* style calculates granular contact forces
 between superellipsoidal particles (see :doc:`atom style ellipsoid
@@ -286,7 +286,7 @@ m_j/(m_i + m_j)` is the effective mass.  Use *damping mass_velocity* to
 reproduce the damping behavior of *pair gran/hooke/\**.
 
 The *damping viscoelastic* model is based on the viscoelastic treatment
-of :ref:`(Brilliantov et al) <Brill1996>`, where the normal damping is
+of :ref:`(Brilliantov et al) <Brill1996_2>`, where the normal damping is
 given by:
 
 .. math::
@@ -336,16 +336,14 @@ The normal damping prefactor :math:`\eta_n` is determined by the choice
 of the *damping* keyword, as discussed above.  Thus, the *damping*
 keyword also affects the tangential damping.  The parameter
 :math:`x_{\gamma,t}` is a scaling coefficient.  Several works in the
-literature use :math:`x_{\gamma,t} = 1` (:ref:`Marshall <Marshall2009>`,
-:ref:`Tsuji et al <Tsuji1992>`, :ref:`Silbert et al <Silbert2001>`).
+literature use :math:`x_{\gamma,t} = 1` (:ref:`Marshall <Marshall2009_2>`,
+:ref:`Tsuji et al <Tsuji1992_2>`, :ref:`Silbert et al <Silbert2001_2>`).
 The relative tangential velocity at the point of contact is given by
 :math:`\mathbf{v}_{t, rel} = \mathbf{v}_{t} -
 (R_i\boldsymbol{\Omega}_i + R_j\boldsymbol{\Omega}_j) \times
 \mathbf{n}`, where :math:`\mathbf{v}_{t} = \mathbf{v}_r -
 \mathbf{v}_r\cdot\mathbf{n}\ \mathbf{n}`, :math:`\mathbf{v}_r =
-\mathbf{v}_j - \mathbf{v}_i` .  The direction of the applied force is
-:math:`\mathbf{t} = \mathbf{v_{t,rel}}/\|\mathbf{v_{t,rel}}\|` .
-
+\mathbf{v}_j - \mathbf{v}_i` .
 The normal force value :math:`F_{n0}` used to compute the critical force
 depends on the form of the contact model.  It is given by the magnitude
 of the normal force:
@@ -364,9 +362,15 @@ For *tangential linear_history*, the tangential force is given by:
 
 .. math::
 
-   \mathbf{F}_t =  -\min(\mu_t F_{n0}, \|-k_t\mathbf{\xi} + \mathbf{F}_\mathrm{t,damp}\|) \mathbf{t}
+   \mathbf{F}_t =  \min(\mu_t F_{n0}, \|-k_t\mathbf{\xi} + \mathbf{F}_\mathrm{t,damp}\|) \mathbf{t}
 
-Here, :math:`\mathbf{\xi}` is the tangential displacement accumulated
+Here, :math:`\mathbf{t}` is the direction of the tangential force given by:
+
+.. math::
+
+   \mathbf{t} = \frac{-k_t\mathbf{\xi} + \mathbf{F}_\mathrm{t,damp}}{\|-k_t\mathbf{\xi} + \mathbf{F}_\mathrm{t,damp}\|}
+
+and, :math:`\mathbf{\xi}` is the tangential displacement accumulated
 during the entire duration of the contact:
 
 .. math::
@@ -386,7 +390,7 @@ former mode of motion are made by rotating the accumulated displacement
 into the plane that is tangential to the contact vector at each step, or
 equivalently removing any component of the tangential displacement that
 lies along :math:`\mathbf{n}`, and rescaling to preserve the magnitude.
-This follows the discussion in :ref:`Luding <Luding2008>`, see equation
+This follows the discussion in :ref:`Luding <Luding2008_2>`, see equation
 17 and relevant discussion in that work:
 
 .. math::
@@ -402,7 +406,7 @@ simulations.
 
 Furthermore, when the tangential force exceeds the critical force, the
 tangential displacement is re-scaled to match the value for the critical
-force (see :ref:`Luding <Luding2008>`, equation 20 and related
+force (see :ref:`Luding <Luding2008_2>`, equation 20 and related
 discussion):
 
 .. math::
@@ -531,24 +535,31 @@ For the *pair_coeff* settings: *damping viscoelastic*
 References
 """"""""""
 
-.. _Brill1996:
+.. _Brill1996_2:
 
 **(Brilliantov et al, 1996)** Brilliantov, N. V., Spahn, F., Hertzsch,
 J. M., & Poschel, T. (1996).  Model for collisions in granular
 gases. Physical review E, 53(5), 5382.
 
-.. _Luding2008:
+.. _Tsuji1992_2:
+
+**(Tsuji et al, 1992)** Tsuji, Y., Tanaka, T., & Ishida,
+T. (1992). Lagrangian numerical simulation of plug flow of
+cohesionless particles in a horizontal pipe. Powder technology, 71(3),
+239-250.
+
+.. _Luding2008_2:
 
 **(Luding, 2008)** Luding, S. (2008). Cohesive, frictional powders:
 contact models for tension. Granular matter, 10(4), 235.
 
-.. _Marshall2009:
+.. _Marshall2009_2:
 
 **(Marshall, 2009)** Marshall, J. S. (2009). Discrete-element modeling
 of particulate aerosol flows.  Journal of Computational Physics,
 228(5), 1541-1561.
 
-.. _Silbert2001:
+.. _Silbert2001_2:
 
 **(Silbert, 2001)** Silbert, L. E., Ertas, D., Grest, G. S., Halsey,
 T. C., Levine, D., & Plimpton, S. J. (2001).  Granular flow down an
@@ -556,19 +567,19 @@ inclined plane: Bagnold scaling and rheology. Physical Review E,
 64(5), 051302.
 
 
-.. _Thornton1991:
+.. _Thornton1991_2:
 
 **(Thornton, 1991)** Thornton, C. (1991). Interparticle sliding in the
 presence of adhesion.  J. Phys. D: Appl. Phys. 24 1942
 
-.. _Thornton2013:
+.. _Thornton2013_2:
 
 **(Thornton et al, 2013)** Thornton, C., Cummins, S. J., & Cleary,
 P. W. (2013).  An investigation of the comparative behavior of
 alternative contact force models during inelastic collisions. Powder
 Technology, 233, 30-46.
 
-.. _WaltonPC:
+.. _WaltonPC_2:
 
 **(Otis R. Walton)** Walton, O.R., Personal Communication
 
