@@ -132,9 +132,7 @@ PairRuNNer::PairRuNNer(LAMMPS *lmp) :
     committee_storage(nullptr)
 {
   // Sanity check: Prevent multiple instances due to static Fortran interface
-  if (instances > 0) {
-    error->all(FLERR, "Only one pair runner instance can be active at a time");
-  }
+  if (instances > 0) { error->all(FLERR, "Only one pair runner instance can be active at a time"); }
   instances++;
 
   // HDNNP is not pairwise additive, due to three body terms
