@@ -197,7 +197,8 @@ Related commands
 :doc:`fix graphics/objects <fix_graphics_objects>`,
 :doc:`fix graphics/periodic <fix_graphics_periodic>`,
 :doc:`fix graphics/replica <fix_graphics_replica>`,
-:doc:`compute hbond/local <compute_hbond_local>`
+:doc:`compute hbond/local <compute_hbond_local>`,
+:doc:`dump image <dump_image>`
 
 Default
 """""""
