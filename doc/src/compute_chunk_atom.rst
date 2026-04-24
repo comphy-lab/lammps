@@ -638,14 +638,46 @@ The per-atom vector values are unitless chunk IDs, ranging from 1 to
 *Nchunk* (inclusive) for atoms assigned to chunks, and 0 for atoms not
 belonging to a chunk.  The scalar contains the value of *Nchunk*.
 
+-----------
+
+Dump image info
+"""""""""""""""
+
+Compute *chunk/atom* can be used with the *compute* keyword of
+:doc:`dump image <dump_image>`.  The compute will add graphics to the
+rendered image to visualize the bin boundaries.  Currently, only the
+*bin/1d*, *bin/2d*, and *bin/3d* modes are supported.  For 3d systems,
+triangles are used to form rectangles representing the bin
+boundaries.  For 2d systems, cylinders are used to represent the bin
+boundaries as lines.
+
+The color of the rectangles or lines is by default that of the first
+atom type when using color styles "type" or "element".  With color style
+"const" the default value of "white" can be changed using
+:doc:`dump_modify ccolor <dump_image>`.  The transparency is by default
+fully opaque and can be changed with *dump\_modify ctrans*\ .
+
+For 2d systems, the *fflag1* setting determines whether the cylinders
+representing the wall are capped with a sphere at the ends: 0 means no caps, 1
+means the lower end is capped, 2 means the upper end is capped, and 3
+means both ends are capped.  The *fflag2* setting allows to adjust the
+radius of the rendered cylinder.  It should be set to a value > 0 or the
+cylinder will not be visible since the diameter is set internally to
+zero due to lack of a suitable heuristic for deriving a meaningful
+diameter for all types of walls and unit settings.
+
+For 3d systems, both the *cflag1* and *cflag2* settings are ignored.
+
+---------
+
 Restrictions
 """"""""""""
 
-Even if the *nchunk* keyword is set to *once*, the chunk IDs assigned
-to each atom are not stored in a restart files.  This means you cannot
-expect those assignments to persist in a restarted simulation.
-Instead you must re-specify this command and assign atoms to chunks when
-the restarted simulation begins.
+Even if the *nchunk* keyword is set to *once*, the chunk IDs assigned to
+each atom are not stored in restart files.  This means you cannot expect
+those assignments to persist in a restarted simulation.  Instead you
+must re-specify this command and assign atoms to chunks when the
+restarted simulation begins.
 
 Related commands
 """"""""""""""""

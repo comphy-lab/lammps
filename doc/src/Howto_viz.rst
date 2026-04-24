@@ -812,6 +812,7 @@ and fix styles:
 .. table_from_list::
    :columns: 4
 
+   * :doc:`compute chunk/atom <compute_chunk_atom>`
    * :doc:`compute hbond/local <compute_hbond_local>`
    * :doc:`fix graphics/arrows <fix_graphics_arrows>`
    * :doc:`fix graphics/chunk <fix_graphics_chunk>`
