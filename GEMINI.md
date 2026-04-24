@@ -60,8 +60,7 @@ This document provides specialized instructions and context for the Google Gemin
 cd src && make check
 
 # Recommended build sequence
-rm -rf build-gemini
-mkdir build-gemini
+mkdir -p build-gemini
 cmake -S cmake -B build-gemini -C cmake/presets/gcc.cmake -C cmake/presets/most.cmake -D ENABLE_TESTING=on -G Ninja
 cmake --build build-gemini
 
