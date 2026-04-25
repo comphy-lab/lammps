@@ -109,6 +109,7 @@ class Neighbor : protected Pointers {
 
   // optional type grouping for multi
 
+  int hash_storage;                // 1 if using hash tables to stores bin atoms
   int custom_collection_flag;      // 1 if custom collections are defined for multi
   int interval_collection_flag;    // 1 if custom collections use intervals
   int finite_cut_flag;             // 1 if multi considers finite atom size

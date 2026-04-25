@@ -218,6 +218,7 @@ pairclass(nullptr), pairnames(nullptr), pairmasks(nullptr)
 
   // Multi data
 
+  hash_storage = 0;
   type2collection = nullptr;
   collection2cut = nullptr;
   collection = nullptr;
@@ -2882,7 +2883,12 @@ void Neighbor::modify_params(int narg, char **arg)
       }
 
       iarg += 2 + ncollections;
-    } else error->all(FLERR, iarg, "Unknown neigh_modify keyword: {}", arg[iarg]);
+    } else if (strcmp(arg[iarg],"hash/storage") == 0) {
+      if (style != Neighbor::MULTI)
+        error->all(FLERR, iarg, "Cannot use hash/storage command without multi setting");
+      hash_storage = 1;
+      iarg += 1;
+     } else error->all(FLERR, iarg, "Unknown neigh_modify keyword: {}", arg[iarg]);
   }
 }
 

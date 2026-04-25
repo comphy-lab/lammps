@@ -32,6 +32,7 @@ NBin::NBin(LAMMPS *lmp) : Pointers(lmp)
   bins = nullptr;
   atom2bin = nullptr;
 
+  hash_storeage = 0;
   nbinx_multi = nullptr; nbiny_multi = nullptr; nbinz_multi = nullptr;
   mbins_multi = nullptr;
   mbinx_multi = nullptr; mbiny_multi = nullptr, mbinz_multi = nullptr;
@@ -113,6 +114,7 @@ void NBin::copy_neighbor_info()
   bboxlo = neighbor->bboxlo;
   bboxhi = neighbor->bboxhi;
 
+  hash_storage = neighbor->hash_storage;
   ncollections = neighbor->ncollections;
   cutcollectionsq = neighbor->cutcollectionsq;
 
