@@ -120,7 +120,6 @@ accelerated styles exist.
 * :doc:`airebo/morse <pair_airebo>` - AIREBO with Morse instead of LJ
 * :doc:`amoeba <pair_amoeba>` -
 * :doc:`atm <pair_atm>` - Axilrod-Teller-Muto potential
-* :doc:`awpmd/cut <pair_awpmd>` - Antisymmetrized Wave Packet MD potential for atoms and electrons
 * :doc:`beck <pair_beck>` - Beck potential
 * :doc:`body/nparticle <pair_body_nparticle>` - interactions between body particles
 * :doc:`body/rounded/polygon <pair_body_rounded_polygon>` - granular-style 2d polygon potential
@@ -202,9 +201,10 @@ accelerated styles exist.
 * :doc:`gauss/cut <pair_gauss>` - generalized Gaussian potential
 * :doc:`gayberne <pair_gayberne>` - Gay-Berne ellipsoidal potential
 * :doc:`granular <pair_granular>` - Generalized granular potential
+* :doc:`granular/superellipsoid <pair_granular_superellipsoid>` - Generalized granular potential for superellipsoids
 * :doc:`gran/hertz/history <pair_gran>` - granular potential with Hertzian interactions
-* :doc:`gran/hooke <pair_gran>` - granular potential with history effects
-* :doc:`gran/hooke/history <pair_gran>` - granular potential without history effects
+* :doc:`gran/hooke <pair_gran>` - granular potential without history effects
+* :doc:`gran/hooke/history <pair_gran>` - granular potential with history effects
 * :doc:`gw <pair_gw>` - Gao-Weber potential
 * :doc:`gw/zbl <pair_gw>` - Gao-Weber potential with a repulsive ZBL core
 * :doc:`harmonic/cut <pair_harmonic_cut>` - repulsive-only harmonic potential
@@ -292,6 +292,7 @@ accelerated styles exist.
 * :doc:`lubricate/poly <pair_lubricate>` - Hydrodynamic lubrication forces with polydispersity
 * :doc:`lubricateU <pair_lubricateU>` - Hydrodynamic lubrication forces for Fast Lubrication Dynamics
 * :doc:`lubricateU/poly <pair_lubricateU>` - Hydrodynamic lubrication forces for Fast Lubrication with polydispersity
+* :doc:`mbx <pair_mbx>` - Many-Body eXpansion (MBX) potential
 * :doc:`mdpd <pair_mesodpd>` - mDPD particle interactions
 * :doc:`mdpd/rhosum <pair_mesodpd>` - mDPD particle interactions for mass density
 * :doc:`meam <pair_meam>` - Modified embedded atom method (MEAM)
@@ -355,6 +356,7 @@ accelerated styles exist.
 * :doc:`rheo/solid <pair_rheo_solid>` - solid interactions in RHEO package
 * :doc:`resquared <pair_resquared>` - Everaers RE-Squared ellipsoidal potential
 * :doc:`saip/metal <pair_saip_metal>` - Interlayer potential for hetero-junctions formed with hexagonal 2D materials and metal surfaces
+* :doc:`saip/metal/tmd <pair_saip_metal>` - Interlayer potential for transition-metal dichalcogenide / metal interfaces
 * :doc:`sdpd/taitwater/isothermal <pair_sdpd_taitwater_isothermal>` - Smoothed dissipative particle dynamics for water at isothermal conditions
 * :doc:`smatb <pair_smatb>` - Second Moment Approximation to the Tight Binding
 * :doc:`smatb/single <pair_smatb>` - Second Moment Approximation to the Tight Binding for single-element systems
