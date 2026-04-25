@@ -2847,5 +2847,25 @@ int DumpImage::modify_param(int narg, char **arg)
     return 3;
   }
 
+  if (strcmp(arg[0], "lights") == 0) {
+    if (narg < 5) utils::missing_cmd_args(FLERR, "dump_modify lights", error);
+    double ambient = utils::numeric(FLERR, arg[1], false, lmp);
+    if ((ambient < 0.0) || (ambient > 1.0))
+      error->all(FLERR, argoff + 1, "Illegal ambient light value {}", ambient);
+    double key = utils::numeric(FLERR, arg[2], false, lmp);
+    if ((key < 0.0) || (key > 1.0))
+      error->all(FLERR, argoff + 2, "Illegal key light value {}", key);
+    double fill = utils::numeric(FLERR, arg[3], false, lmp);
+    if ((fill < 0.0) || (fill > 1.0))
+      error->all(FLERR, argoff + 3, "Illegal fill light value {}", fill);
+    double back = utils::numeric(FLERR, arg[4], false, lmp);
+    if ((back < 0.0) || (back > 1.0))
+      error->all(FLERR, argoff + 4, "Illegal back light value {}", back);
+
+    restore_lighting({ambient, key, fill, back}, image);
+
+    return 5;
+  }
+
   return 0;
 }
