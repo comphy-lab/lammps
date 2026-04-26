@@ -32,7 +32,7 @@ NBin::NBin(LAMMPS *lmp) : Pointers(lmp)
   bins = nullptr;
   atom2bin = nullptr;
 
-  hash_storage = 0;
+  bin_hash = 0;
   nbinx_multi = nullptr; nbiny_multi = nullptr; nbinz_multi = nullptr;
   mbins_multi = nullptr;
   mbinx_multi = nullptr; mbiny_multi = nullptr, mbinz_multi = nullptr;
@@ -113,8 +113,7 @@ void NBin::copy_neighbor_info()
   binsize_user = neighbor->binsize_user;
   bboxlo = neighbor->bboxlo;
   bboxhi = neighbor->bboxhi;
-
-  hash_storage = neighbor->hash_storage;
+  bin_hash = neighbor->bin_hash;
   ncollections = neighbor->ncollections;
   cutcollectionsq = neighbor->cutcollectionsq;
 
@@ -172,7 +171,6 @@ int NBin::coord2bin(double *x)
   return (iz-mbinzlo)*mbiny*mbinx + (iy-mbinylo)*mbinx + (ix-mbinxlo);
 }
 
-
 /* ----------------------------------------------------------------------
    convert atom coords into local bin # for a particular collection
 ------------------------------------------------------------------------- */
@@ -209,10 +207,51 @@ int NBin::coord2bin_multi(double *x, int ic)
   } else
     iz = static_cast<int> ((x[2]-bboxlo[2])*bininvz_multi[ic]) - 1;
 
-
   ibin = (iz-mbinzlo_multi[ic])*mbiny_multi[ic]*mbinx_multi[ic]
        + (iy-mbinylo_multi[ic])*mbinx_multi[ic]
        + (ix-mbinxlo_multi[ic]);
   return ibin;
 }
 
+
+/* ----------------------------------------------------------------------
+   convert atom coords into local bin # for a particular collection
+------------------------------------------------------------------------- */
+
+bigint NBin::coord2bin_multi_big(double *x, int ic)
+{
+  int ix,iy,iz;
+  int ibin;
+
+  if (!std::isfinite(x[0]) || !std::isfinite(x[1]) || !std::isfinite(x[2]))
+    error->one(FLERR,"Non-numeric positions - simulation unstable" + utils::errorurl(6));
+
+  if (x[0] >= bboxhi[0])
+    ix = static_cast<int> ((x[0]-bboxhi[0])*bininvx_multi[ic]) + nbinx_multi[ic];
+  else if (x[0] >= bboxlo[0]) {
+    ix = static_cast<int> ((x[0]-bboxlo[0])*bininvx_multi[ic]);
+    ix = MIN(ix,nbinx_multi[ic]-1);
+  } else
+    ix = static_cast<int> ((x[0]-bboxlo[0])*bininvx_multi[ic]) - 1;
+
+  if (x[1] >= bboxhi[1])
+    iy = static_cast<int> ((x[1]-bboxhi[1])*bininvy_multi[ic]) + nbiny_multi[ic];
+  else if (x[1] >= bboxlo[1]) {
+    iy = static_cast<int> ((x[1]-bboxlo[1])*bininvy_multi[ic]);
+    iy = MIN(iy,nbiny_multi[ic]-1);
+  } else
+    iy = static_cast<int> ((x[1]-bboxlo[1])*bininvy_multi[ic]) - 1;
+
+  if (x[2] >= bboxhi[2])
+    iz = static_cast<int> ((x[2]-bboxhi[2])*bininvz_multi[ic]) + nbinz_multi[ic];
+  else if (x[2] >= bboxlo[2]) {
+    iz = static_cast<int> ((x[2]-bboxlo[2])*bininvz_multi[ic]);
+    iz = MIN(iz,nbinz_multi[ic]-1);
+  } else
+    iz = static_cast<int> ((x[2]-bboxlo[2])*bininvz_multi[ic]) - 1;
+
+  ibin = ((bigint) iz - mbinzlo_multi[ic]) * mbiny_multi[ic] * mbinx_multi[ic]
+       + ((bigint) iy - mbinylo_multi[ic]) * mbinx_multi[ic]
+       + ((bigint) ix - mbinxlo_multi[ic]);
+  return ibin;
+}

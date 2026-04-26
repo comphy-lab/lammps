@@ -99,6 +99,7 @@ void NPair::copy_neighbor_info()
 
   // multi info
 
+  bin_hash = neighbor->bin_hash;
   ncollections = neighbor->ncollections;
   cutcollectionsq = neighbor->cutcollectionsq;
 
@@ -142,7 +143,6 @@ void NPair::copy_bin_info()
   bins = nb->bins;
   binhead = nb->binhead;
 
-  hash_storage = nb->hash_storage;
   nbinx_multi = nb->nbinx_multi;
   nbiny_multi = nb->nbiny_multi;
   nbinz_multi = nb->nbinz_multi;
@@ -271,12 +271,54 @@ int NPair::coord2bin(double *x, int &ix, int &iy, int &iz)
   return iz*mbiny*mbinx + iy*mbinx + ix;
 }
 
-
 /* ----------------------------------------------------------------------
    multi version of coord2bin for a given collection
 ------------------------------------------------------------------------- */
 
 int NPair::coord2bin(double *x, int ic)
+{
+  int ix,iy,iz;
+  int ibin;
+
+  if (!std::isfinite(x[0]) || !std::isfinite(x[1]) || !std::isfinite(x[2]))
+    error->one(FLERR,"Non-numeric positions - simulation unstable" + utils::errorurl(6));
+
+  if (x[0] >= bboxhi[0])
+    ix = static_cast<int> ((x[0]-bboxhi[0])*bininvx_multi[ic]) + nbinx_multi[ic];
+  else if (x[0] >= bboxlo[0]) {
+    ix = static_cast<int> ((x[0]-bboxlo[0])*bininvx_multi[ic]);
+    ix = MIN(ix,nbinx_multi[ic]-1);
+  } else
+    ix = static_cast<int> ((x[0]-bboxlo[0])*bininvx_multi[ic]) - 1;
+
+  if (x[1] >= bboxhi[1])
+    iy = static_cast<int> ((x[1]-bboxhi[1])*bininvy_multi[ic]) + nbiny_multi[ic];
+  else if (x[1] >= bboxlo[1]) {
+    iy = static_cast<int> ((x[1]-bboxlo[1])*bininvy_multi[ic]);
+    iy = MIN(iy,nbiny_multi[ic]-1);
+  } else
+    iy = static_cast<int> ((x[1]-bboxlo[1])*bininvy_multi[ic]) - 1;
+
+  if (x[2] >= bboxhi[2])
+    iz = static_cast<int> ((x[2]-bboxhi[2])*bininvz_multi[ic]) + nbinz_multi[ic];
+  else if (x[2] >= bboxlo[2]) {
+    iz = static_cast<int> ((x[2]-bboxlo[2])*bininvz_multi[ic]);
+    iz = MIN(iz,nbinz_multi[ic]-1);
+  } else
+    iz = static_cast<int> ((x[2]-bboxlo[2])*bininvz_multi[ic]) - 1;
+
+  ix -= mbinxlo_multi[ic];
+  iy -= mbinylo_multi[ic];
+  iz -= mbinzlo_multi[ic];
+  ibin = iz*mbiny_multi[ic]*mbinx_multi[ic] + iy*mbinx_multi[ic] + ix;
+  return ibin;
+}
+
+/* ----------------------------------------------------------------------
+   bigint version for hash bins
+------------------------------------------------------------------------- */
+
+bigint NPair::coord2bin_big(double *x, int ic)
 {
   int ix,iy,iz;
   int ibin;

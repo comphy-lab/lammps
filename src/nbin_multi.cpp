@@ -42,7 +42,7 @@ void NBinMulti::bin_atoms_setup(int nall)
   // binhead_multi[n] = per-bin vector mbins in length mbins_multi[n]
 
   for (int n = 0; n < maxcollections; n++) {
-    if (!hash_storage) {
+    if (!bin_hash) {
       if (mbins_multi[n] > maxbins_multi[n]) {
         maxbins_multi[n] = mbins_multi[n];
         memory->destroy(binhead_multi[n]);
@@ -59,12 +59,12 @@ void NBinMulti::bin_atoms_setup(int nall)
 
   if (nall > maxatom) {
     maxatom = nall;
-    if (!hash_storage) {
+    if (!bin_hash) {
       memory->destroy(bins);
       memory->create(bins,maxatom,"neigh:bins");
+      memory->destroy(atom2bin);
+      memory->create(atom2bin,maxatom,"neigh:atom2bin");
     }
-    memory->destroy(atom2bin);
-    memory->create(atom2bin,maxatom,"neigh:atom2bin");
   }
 }
 
@@ -98,7 +98,7 @@ void NBinMulti::setup_bins(int /*style*/)
 
     // Clear any/all memory for existing groupings
     for (n = 0; n < maxcollections; n++) {
-      if (!hash_storage) {
+      if (!bin_hash) {
         memory->destroy(binhead_multi[n]);
       } else {
         binatoms_hash_multi[n].clear();
@@ -107,7 +107,7 @@ void NBinMulti::setup_bins(int /*style*/)
 
     maxcollections = ncollections;
 
-    if (!hash_storage) {
+    if (!bin_hash) {
       delete [] binhead_multi;
       binhead_multi = new int*[maxcollections]();
     } else {
@@ -299,7 +299,10 @@ void NBinMulti::setup_bins(int /*style*/)
 
     bigint bbin = ((bigint) mbinx_multi[n])
       * ((bigint) mbiny_multi[n]) * ((bigint) mbinz_multi[n]) + 1;
-    if (bbin > MAXSMALLINT) error->one(FLERR,"Too many neighbor bins" + utils::errorurl(9));
+    if (!bin_hash)
+      if (bbin > MAXSMALLINT) error->one(FLERR,"Too many neighbor bins" + utils::errorurl(9));
+    else
+      if (bbin > MAXBIGINT) error->one(FLERR,"Too many neighbor bins" + utils::errorurl(9));
     mbins_multi[n] = bbin;
   }
 }
@@ -311,9 +314,10 @@ void NBinMulti::setup_bins(int /*style*/)
 void NBinMulti::bin_atoms()
 {
   int i,ibin,n;
+  bigint ibinbig,
 
   last_bin = update->ntimestep;
-  if (!hash_storage) {
+  if (!bin_hash) {
     for (n = 0; n < ncollections; n++)
       for (i = 0; i < mbins_multi[n]; i++)
         binhead_multi[n][i] = -1;
@@ -332,7 +336,7 @@ void NBinMulti::bin_atoms()
   int nlocal = atom->nlocal;
   int nall = nlocal + atom->nghost;
 
-  if (!hash_storage) {
+  if (!bin_hash) {
     if (includegroup) {
       int bitmask = group->bitmask[includegroup];
       for (i = nall-1; i >= nlocal; i--) {
@@ -366,23 +370,20 @@ void NBinMulti::bin_atoms()
       for (i = nall-1; i >= nlocal; i--) {
         if (mask[i] & bitmask) {
           n = collection[i];
-          ibin = coord2bin_multi(x[i], n);
-          atom2bin[i] = ibin;
-          binatoms_hash_multi[n][ibin].push_back(i);
+          ibinbig = coord2bin_multi_big(x[i], n);
+          binatoms_hash_multi[n][ibinbig].push_back(i);
         }
       }
       for (i = atom->nfirst-1; i >= 0; i--) {
         n = collection[i];
-        ibin = coord2bin_multi(x[i], n);
-        atom2bin[i] = ibin;
-        binatoms_hash_multi[n][ibin].push_back(i);
+        ibinbig = coord2bin_multi(x[i], n);
+        binatoms_hash_multi[n][ibinbig].push_back(i);
       }
     } else {
       for (i = nall-1; i >= 0; i--) {
         n = collection[i];
-        ibin = coord2bin_multi(x[i], n);
-        atom2bin[i] = ibin;
-        binatoms_hash_multi[n][ibin].push_back(i);
+        ibinbig = coord2bin_multi_big(x[i], n);
+        binatoms_hash_multi[n][ibinbig].push_back(i);
       }
     }
   }

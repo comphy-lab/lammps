@@ -83,14 +83,14 @@ class NPair : protected Pointers {
   int *atom2bin, *bins;
   int *binhead;
 
-  int hash_storage;
+  int bin_hash;
   int *nbinx_multi, *nbiny_multi, *nbinz_multi;
   int *mbins_multi;
   int *mbinx_multi, *mbiny_multi, *mbinz_multi;
   int *mbinxlo_multi, *mbinylo_multi, *mbinzlo_multi;
   double *bininvx_multi, *bininvy_multi, *bininvz_multi;
   int **binhead_multi;
-  std::vector<std::unordered_map<int, std::vector<int>>> *binatoms_hash_multi;
+  std::vector<std::unordered_map<bigint, std::vector<int>>> *binatoms_hash_multi;
 
   // data from NStencil class
 
@@ -117,6 +117,7 @@ class NPair : protected Pointers {
   int coord2bin(double *, int &, int &, int &);                // ditto
 
   int coord2bin(double *, int);    // mapping atom coord to group bin
+  bigint coord2bin_big(double *, int);
 
   // find_special: determine if atom j is in special list of atom i
   // if it is not, return 0
