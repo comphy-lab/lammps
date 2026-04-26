@@ -90,6 +90,8 @@ void NPairMulti<HALF, NEWTON, TRI, SIZE, ATOMONLY>::build(NeighList *list)
   int **firstneigh = list->firstneigh;
   MyPage<int> *ipage = list->ipage;
 
+  std::unordered_map<int, std::vector<int>> *bin_hash;
+
   int inum = 0;
   ipage->reset();
 
@@ -125,106 +127,112 @@ void NPairMulti<HALF, NEWTON, TRI, SIZE, ATOMONLY>::build(NeighList *list)
       ns = nstencil_multi[icollection][jcollection];
 
       for (k = 0; k < ns; k++) {
-        js = binhead_multi[jcollection][jbin + s[k]];
+        if (!hash_storage) {
+          js = binhead_multi[jcollection][jbin + s[k]];
 
-        // For half-newton-ortho, first check self bin (k == 0, always half)
-        // if checking its own binlist, skip all before i in linked list
-        if (HALF && NEWTON && !TRI)
-          if ((k == 0) && (icollection == jcollection)) js = bins[i];
+          // For half-newton-ortho, first check self bin (k == 0, always half)
+          // if checking its own binlist, skip all before i in linked list
+          if (HALF && NEWTON && !TRI)
+            if ((k == 0) && (icollection == jcollection)) js = bins[i];
 
-        for (j = js; j >= 0; j = bins[j]) {
-          if (!HALF) {
-            // Full neighbor list, only uses full stencils
-            // only skip i = j
-            if (i == j) continue;
-          } else if (!NEWTON) {
-            // Half neighbor list, newton off, only uses full stencils
-            // only store pair if i < j
-            // stores own/own pairs only once
-            // stores own/ghost pairs on both procs
-            if (j <= i) continue;
-          } else if (TRI) {
-            // Half neighbor list, newton on, triclinic, only uses full stencils
-            // If different sizes -> full stencil (accept all, one-way search)
-            // If same size -> half stencil, exclude half of interactions
-            //     stencil is empty if i larger than j
-            //     stencil is full if i smaller than j
-            //     stencil is full if i same size as j
-            //   for i smaller than j:
-            //     must use itag/jtag to eliminate half the I/J interactions
-            //     cannot use I/J exact coord comparision
-            //       b/c transforming orthog -> lambda -> orthog for ghost atoms
-            //   with an added PBC offset can shift all 3 coords by epsilon
-
-            if (flag_same_multi[icollection][jcollection]) {
+          for (j = js; j >= 0; j = bins[j]) {
+            if (!HALF) {
+              // Full neighbor list, only uses full stencils
+              // only skip i = j
+              if (i == j) continue;
+            } else if (!NEWTON) {
+              // Half neighbor list, newton off, only uses full stencils
+              // only store pair if i < j
+              // stores own/own pairs only once
+              // stores own/ghost pairs on both procs
               if (j <= i) continue;
-              if (j >= nlocal) {
-                jtag = tag[j];
-                if (itag > jtag) {
-                  if ((itag + jtag) % 2 == 0) continue;
-                } else if (itag < jtag) {
-                  if ((itag + jtag) % 2 == 1) continue;
-                } else {
-                  if (fabs(x[j][2] - ztmp) > delta) {
-                    if (x[j][2] < ztmp) continue;
-                  } else if (fabs(x[j][1] - ytmp) > delta) {
-                    if (x[j][1] < ytmp) continue;
+            } else if (TRI) {
+              // Half neighbor list, newton on, triclinic, only uses full stencils
+              // If different sizes -> full stencil (accept all, one-way search)
+              // If same size -> half stencil, exclude half of interactions
+              //     stencil is empty if i larger than j
+              //     stencil is full if i smaller than j
+              //     stencil is full if i same size as j
+              //   for i smaller than j:
+              //     must use itag/jtag to eliminate half the I/J interactions
+              //     cannot use I/J exact coord comparision
+              //       b/c transforming orthog -> lambda -> orthog for ghost atoms
+              //   with an added PBC offset can shift all 3 coords by epsilon
+
+              if (flag_same_multi[icollection][jcollection]) {
+                if (j <= i) continue;
+                if (j >= nlocal) {
+                  jtag = tag[j];
+                  if (itag > jtag) {
+                    if ((itag + jtag) % 2 == 0) continue;
+                  } else if (itag < jtag) {
+                    if ((itag + jtag) % 2 == 1) continue;
                   } else {
-                    if (x[j][0] < xtmp) continue;
+                    if (fabs(x[j][2] - ztmp) > delta) {
+                      if (x[j][2] < ztmp) continue;
+                    } else if (fabs(x[j][1] - ytmp) > delta) {
+                      if (x[j][1] < ytmp) continue;
+                    } else {
+                      if (x[j][0] < xtmp) continue;
+                    }
+                  }
+                }
+              }
+            } else {
+              // Half neighbor list, newton on, orthonormal, uses a mix of stencils
+              // If different sizes -> full stencil (accept all, one-way search)
+              // If same size -> half stencil (first includes a self bin search)
+              if (k == 0 && flag_same_multi[icollection][jcollection]) {
+                // if same collection,
+                //   if j is owned atom, store it, since j is beyond i in linked list
+                //   if j is ghost, only store if j coords are "above and to the right" of i
+
+                // if different collections,
+                //   if j is owned atom, store it if j > i
+                //   if j is ghost, only store if j coords are "above and to the right" of i
+
+                if ((icollection != jcollection) && (j < i)) continue;
+
+                if (j >= nlocal) {
+                  if (x[j][2] < ztmp) continue;
+                  if (x[j][2] == ztmp) {
+                    if (x[j][1] < ytmp) continue;
+                    if (x[j][1] == ytmp && x[j][0] < xtmp) continue;
                   }
                 }
               }
             }
-          } else {
-            // Half neighbor list, newton on, orthonormal, uses a mix of stencils
-            // If different sizes -> full stencil (accept all, one-way search)
-            // If same size -> half stencil (first includes a self bin search)
-            if (k == 0 && flag_same_multi[icollection][jcollection]) {
-              // if same collection,
-              //   if j is owned atom, store it, since j is beyond i in linked list
-              //   if j is ghost, only store if j coords are "above and to the right" of i
 
-              // if different collections,
-              //   if j is owned atom, store it if j > i
-              //   if j is ghost, only store if j coords are "above and to the right" of i
+            jtype = type[j];
+            if (exclude && exclusion(i, j, itype, jtype, mask, molecule)) continue;
 
-              if ((icollection != jcollection) && (j < i)) continue;
+            delx = xtmp - x[j][0];
+            dely = ytmp - x[j][1];
+            delz = ztmp - x[j][2];
+            rsq = delx * delx + dely * dely + delz * delz;
 
-              if (j >= nlocal) {
-                if (x[j][2] < ztmp) continue;
-                if (x[j][2] == ztmp) {
-                  if (x[j][1] < ytmp) continue;
-                  if (x[j][1] == ytmp && x[j][0] < xtmp) continue;
-                }
-              }
+            if (SIZE) {
+              radsum = radius[i] + radius[j];
+              cut = radsum + skin;
+              cutsq = cut * cut;
+            } else {
+              cutsq = cutneighsq[itype][jtype];
             }
-          }
-
-          jtype = type[j];
-          if (exclude && exclusion(i, j, itype, jtype, mask, molecule)) continue;
-
-          delx = xtmp - x[j][0];
-          dely = ytmp - x[j][1];
-          delz = ztmp - x[j][2];
-          rsq = delx * delx + dely * dely + delz * delz;
-
-          if (SIZE) {
-            radsum = radius[i] + radius[j];
-            cut = radsum + skin;
-            cutsq = cut * cut;
 
             if (ATOMONLY) {
               if (rsq <= cutsq) {
                 jh = j;
-                if (history && rsq < (radsum * radsum))
-                  jh = jh ^ mask_history;
+                if (SIZE)
+                  if (history && rsq < (radsum * radsum))
+                    jh = jh ^ mask_history;
                 neighptr[n++] = jh;
               }
             } else {
               if (rsq <= cutsq) {
                 jh = j;
-                if (history && rsq < (radsum * radsum))
-                  jh = jh ^ mask_history;
+                if (SIZE)
+                  if (history && rsq < (radsum * radsum))
+                    jh = jh ^ mask_history;
 
                 if (molecular != Atom::ATOMIC) {
                   if (!moltemplate)
@@ -244,11 +252,110 @@ void NPairMulti<HALF, NEWTON, TRI, SIZE, ATOMONLY>::build(NeighList *list)
                   neighptr[n++] = jh;
               }
             }
-          } else {
-            if (ATOMONLY) {
-              if (rsq <= cutneighsq[itype][jtype]) neighptr[n++] = j;
+          }
+        } else {
+
+          auto it = (*binatoms_hash_multi)[jcollection].find(jbin + s[k]);
+
+          if (it == (*binatoms_hash_multi)[jcollection].end())
+            continue; //error->one(FLERR, "Missing bin in bin map");
+
+          for (auto jtmp : (it->second)) {
+            j = jtmp;
+            if (i == j) continue;
+
+            if (!HALF) {
+              // Full neighbor list, only uses full stencils
+              // only skip i = j
+              if (i == j) continue;
+            } else if (!NEWTON) {
+              // Half neighbor list, newton off, only uses full stencils
+              // only store pair if i < j
+              // stores own/own pairs only once
+              // stores own/ghost pairs on both procs
+              if (j <= i) continue;
+            } else if (TRI) {
+              // Half neighbor list, newton on, triclinic, only uses full stencils
+              // If different sizes -> full stencil (accept all, one-way search)
+              // If same size -> half stencil, exclude half of interactions
+              //     stencil is empty if i larger than j
+              //     stencil is full if i smaller than j
+              //     stencil is full if i same size as j
+              //   for i smaller than j:
+              //     must use itag/jtag to eliminate half the I/J interactions
+              //     cannot use I/J exact coord comparision
+              //       b/c transforming orthog -> lambda -> orthog for ghost atoms
+              //   with an added PBC offset can shift all 3 coords by epsilon
+
+              if (flag_same_multi[icollection][jcollection]) {
+                if (j <= i) continue;
+                if (j >= nlocal) {
+                  jtag = tag[j];
+                  if (itag > jtag) {
+                    if ((itag + jtag) % 2 == 0) continue;
+                  } else if (itag < jtag) {
+                    if ((itag + jtag) % 2 == 1) continue;
+                  } else {
+                    if (fabs(x[j][2] - ztmp) > delta) {
+                      if (x[j][2] < ztmp) continue;
+                    } else if (fabs(x[j][1] - ytmp) > delta) {
+                      if (x[j][1] < ytmp) continue;
+                    } else {
+                      if (x[j][0] < xtmp) continue;
+                    }
+                  }
+                }
+              }
             } else {
-              if (rsq <= cutneighsq[itype][jtype]) {
+              if (k == 0 && flag_same_multi[icollection][jcollection]) {
+                if ((icollection != jcollection) && (j < i)) continue;
+                if (j >= nlocal) {
+                  if (x[j][2] < ztmp) continue;
+                  if (x[j][2] == ztmp) {
+                    if (x[j][1] < ytmp) continue;
+                    if (x[j][1] == ytmp && x[j][0] < xtmp) continue;
+                  }
+                }
+              }
+            }
+
+            // For half-newton-ortho, first check self bin (k == 0, always half)
+            // if checking its own binlist, skip all ghosts or atoms with larger tags
+            if (HALF && NEWTON && !TRI)
+              if ((k == 0) && (icollection == jcollection) && (j < nlocal) && (itag >= tag[j]))
+                continue;
+
+            jtype = type[j];
+            if (exclude && exclusion(i, j, itype, jtype, mask, molecule)) continue;
+
+            delx = xtmp - x[j][0];
+            dely = ytmp - x[j][1];
+            delz = ztmp - x[j][2];
+            rsq = delx * delx + dely * dely + delz * delz;
+
+            if (SIZE) {
+              radsum = radius[i] + radius[j];
+              cut = radsum + skin;
+              cutsq = cut * cut;
+            } else {
+              cutsq = cutneighsq[itype][jtype];
+            }
+
+            if (ATOMONLY) {
+              if (rsq <= cutsq) {
+                jh = j;
+                if (SIZE)
+                  if (history && rsq < (radsum * radsum))
+                    jh = jh ^ mask_history;
+                neighptr[n++] = jh;
+              }
+            } else {
+              if (rsq <= cutsq) {
+                jh = j;
+                if (SIZE)
+                  if (history && rsq < (radsum * radsum))
+                    jh = jh ^ mask_history;
+
                 if (molecular != Atom::ATOMIC) {
                   if (!moltemplate)
                     which = find_special(special[i], nspecial[i], tag[j]);
@@ -258,13 +365,13 @@ void NPairMulti<HALF, NEWTON, TRI, SIZE, ATOMONLY>::build(NeighList *list)
                   else
                     which = 0;
                   if (which == 0)
-                    neighptr[n++] = j;
+                    neighptr[n++] = jh;
                   else if (domain->minimum_image_check(delx, dely, delz))
-                    neighptr[n++] = j;
+                    neighptr[n++] = jh;
                   else if (which > 0)
-                    neighptr[n++] = j ^ (which << SBBITS);
+                    neighptr[n++] = jh ^ (which << SBBITS);
                 } else
-                  neighptr[n++] = j;
+                  neighptr[n++] = jh;
               }
             }
           }

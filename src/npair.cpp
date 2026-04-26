@@ -142,6 +142,7 @@ void NPair::copy_bin_info()
   bins = nb->bins;
   binhead = nb->binhead;
 
+  hash_storage = nb->hash_storage;
   nbinx_multi = nb->nbinx_multi;
   nbiny_multi = nb->nbiny_multi;
   nbinz_multi = nb->nbinz_multi;
@@ -158,6 +159,8 @@ void NPair::copy_bin_info()
   bininvz_multi = nb->bininvz_multi;
 
   binhead_multi = nb->binhead_multi;
+
+  binatoms_hash_multi = &nb->binatoms_hash_multi;
 }
 
 /* ----------------------------------------------------------------------

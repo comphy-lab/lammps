@@ -16,6 +16,8 @@
 
 #include "pointers.h"    // IWYU pragma: keep
 
+#include <unordered_map>
+
 namespace LAMMPS_NS {
 
 class NBin : protected Pointers {
@@ -49,7 +51,7 @@ class NBin : protected Pointers {
   double *bininvx_multi, *bininvy_multi, *bininvz_multi;
 
   int **binhead_multi;
-  std::vector<std::unordered_map<int, std::vector<int>> binatoms_hash_multi;
+  std::vector<std::unordered_map<int, std::vector<int>>> binatoms_hash_multi;
 
   NBin(class LAMMPS *);
   ~NBin() override;

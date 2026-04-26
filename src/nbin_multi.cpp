@@ -313,10 +313,14 @@ void NBinMulti::bin_atoms()
   int i,ibin,n;
 
   last_bin = update->ntimestep;
-  if (hash_storage)
+  if (!hash_storage) {
     for (n = 0; n < ncollections; n++)
       for (i = 0; i < mbins_multi[n]; i++)
         binhead_multi[n][i] = -1;
+  } else {
+    for (n = 0; n < ncollections; n++)
+      binatoms_hash_multi[n].clear();
+  }
 
   // for standard storage, bin in reverse order so linked list will be in forward order
   // also puts ghost atoms at end of list, which is necessary
@@ -328,7 +332,7 @@ void NBinMulti::bin_atoms()
   int nlocal = atom->nlocal;
   int nall = nlocal + atom->nghost;
 
-  if (hash_storage) {
+  if (!hash_storage) {
     if (includegroup) {
       int bitmask = group->bitmask[includegroup];
       for (i = nall-1; i >= nlocal; i--) {

@@ -32,7 +32,7 @@ NBin::NBin(LAMMPS *lmp) : Pointers(lmp)
   bins = nullptr;
   atom2bin = nullptr;
 
-  hash_storeage = 0;
+  hash_storage = 0;
   nbinx_multi = nullptr; nbiny_multi = nullptr; nbinz_multi = nullptr;
   mbins_multi = nullptr;
   mbinx_multi = nullptr; mbiny_multi = nullptr, mbinz_multi = nullptr;
