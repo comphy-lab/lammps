@@ -2,14 +2,68 @@ OpenMP Parallelism
 ^^^^^^^^^^^^^^^^^^
 
 The styles in the INTEL, KOKKOS, and OPENMP packages offer to use OpenMP
-thread parallelism to predominantly distribute loops over local data
-and thus follow an orthogonal parallelization strategy to the
-decomposition into spatial domains used by the :doc:`MPI partitioning
+thread parallelism to predominantly distribute loops over local data and
+thus follow an orthogonal parallelization strategy to the decomposition
+into spatial domains used by the :doc:`MPI partitioning
 <Developer_par_part>`.  For clarity, this section discusses only the
 implementation in the OPENMP package, as it is the simplest. The INTEL
 and KOKKOS packages offer additional options and are more complex since
-they support more features and different hardware like co-processors
-or GPUs.
+they support more features and different hardware like co-processors or
+GPUs.  A practical discussion of the actual changes to the source code
+can be found in the manual section on :doc:`writing styles for the
+OPENMP package <Developer_write_openmp>`.
+
+Rationale for OpenMP Integration
+""""""""""""""""""""""""""""""""
+
+While LAMMPS is already well-parallelized using MPI-based domain
+decomposition, OpenMP provides additional benefits, particularly on
+modern multi-core hardware and at high node counts:
+
+- **Efficient Resource Utilization**: On multi-core machines, MPI tasks
+  can be communication-bandwidth limited because all MPI communication
+  has to share the same network link for communication between nodes.
+  Running fewer MPI tasks and using OpenMP threads can improve
+  performance by reducing communication overhead and memory contention.
+  However, the in-node memory bandwidth demands for multi-threading are
+  higher, since domain decomposition promotes CPU cache locality, while
+  the multi-thread implementation uses replicated per-thread storage to
+  avoid data races. This has the additional overhead or requiring a
+  reduction, which is most efficient for small numbers of threads.
+- **PPPM Scaling**: Long-range electrostatics solvers like PPPM have
+  scaling limitations with MPI communication at high node counts because
+  the 3d-FFTs require all-to-all communications and with smaller
+  domains the ratio of computation versus communication become less
+  favorable. Using OpenMP threads can allow running these solvers on a
+  subset of MPI tasks, improving overall scaling.
+- **Parallelization Granularity**: OpenMP allows parallelization over
+  particles/neighbors within a node, providing a finer grain of parallelism
+  than domain decomposition alone.
+- **Load Balancing Considerations**: The domain decomposition based
+  MPI parallelization implicitly assumes that the simulated system is
+  homogeneous and thus roughly the same amount of work needs to be done
+  by each MPI rank. However, for inhomogeneous systems, this is not
+  always the case and the available load-balancing options have limitations, too.
+  By shifting the parallelization to OpenMP, the subdomains per MPI
+  rank become larger and load balancing is usually more effective then.
+- **Capability Computing**: Hybrid MPI+OpenMP is often essential for
+  achieving optimal performance on large supercomputing systems.
+
+Data Race Avoidance Strategy
+""""""""""""""""""""""""""""
+
+A key problem when implementing thread parallelism in an MD code is to
+avoid data races when updating accumulated properties like forces,
+energies, and stresses. The OPENMP package uses **replicated per-thread
+data structures** (Option 5 in the :ref:`Methods for avoiding data races
+discussion <openmp_avoid_races>` below). This approach retains the
+performance for the case of a single thread and keeps the code more
+maintainable than other strategies like restructuring or atomic
+operations.  The downside is that the overhead of the reduction
+operations grows with the number of threads used, making this strategy
+best for a smaller number of threads (2-8), which is typically
+equivalent to the number of CPU cores per CPU socket on high-end
+supercomputers.
 
 One of the key decisions when implementing the OPENMP package was to
 keep the changes to the source code small, so that it would be easier to
@@ -36,8 +90,10 @@ reset and re-fetched.  ``FixOMP`` finally manages the "multi-thread
 state" like settings and access to per-thread storage, it is activated
 by the :doc:`package omp <package>` command.
 
-Avoiding data races
-"""""""""""""""""""
+.. _openmp_avoid_races:
+
+Methods for avoiding data races
+"""""""""""""""""""""""""""""""
 
 A key problem when implementing thread parallelism in an MD code is
 to avoid data races when updating accumulated properties like forces,
