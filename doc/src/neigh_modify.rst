@@ -53,6 +53,9 @@ Syntax
        *collection/interval* values = N arg1 ... argN
          N = number of custom collections
          arg = N separate cutoffs for intervals (see below)
+       *bin/hash* value = *yes* or *no*
+         *yes* = use a hash table to store atoms in bins
+         *no* = use a linked list to store atoms in bins
 
 Examples
 """"""""
@@ -258,6 +261,18 @@ This command is particularly useful for granular pair styles where the
 interaction distance of particles depends on their radius and may not
 depend on their atom type.
 
+The *bin/hash* option toggle whether the atoms in a bin are stored in
+a linked list (default) or a hash table where each bin is a key that
+maps to a set of all atoms contained in that bin. This reduces memory
+usage in scenarios where there are lots of bins that do not contain
+atoms. For instance, in a binary system with a large disparity in
+atom sizes/cutoffs, the total number of bins will be determined by the
+size of the smallest particle. However, almost all bins that lie within
+the span of the largest particle will be empty. The hash option is only
+available for the *multi* neighbor mode. One may need to also adjust how
+atoms are sorted using the :doc:`atom_modify <atom_modify>` command to
+avoid creating too many bins in these scenarios.
+
 Restrictions
 """"""""""""
 
@@ -283,4 +298,4 @@ Default
 
 The option defaults are delay = 0, every = 1, check = yes, once = no,
 cluster = no, include = all (same as no include option defined),
-exclude = none, page = 100000, one = 2000, and binsize = 0.0.
+exclude = none, page = 100000, one = 2000, bin/hash no, and binsize = 0.0.
