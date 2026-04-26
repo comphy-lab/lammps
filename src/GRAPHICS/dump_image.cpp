@@ -78,10 +78,10 @@ enum { NO = 0, YES = 1, AUTO = 2 };
 enum { FILLED, FRAME, POINTS, TRANSPARENT };
 enum { OFF = 0, CENTER, LOWERLEFT, LOWERRIGHT, UPPERLEFT, UPPERRIGHT };
 
-const std::vector<std::string> default_colors{"darkgray",  "red",        "green",    "blue",
-                                              "yellow",    "cyan",       "magenta",  "silver",
-                                              "orange",    "chartreuse", "gray",     "darkred",
-                                              "darkgreen", "darkblue",   "darkcyan", "darkmagenta"};
+const std::vector<std::string> default_colors{
+    "darkgray",  "red",      "forestgreen", "blue",       "gold", "cyan",
+    "magenta",   "silver",   "orange",      "lime", "gray",   "darkred",
+    "darkgreen", "darkblue", "darkcyan",    "darkmagenta"};
 
 //  convenience functions to change and restore lighting, assuming uncolored light
 
