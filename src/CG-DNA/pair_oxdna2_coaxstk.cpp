@@ -294,7 +294,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       f4t4 = F4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype],
                 dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
                 dtheta_cxst4_c[atype][btype]) + 
-             F4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype] - MY_PI,
+             F4(theta4, a_cxst4[atype][btype], MY_PI - theta_cxst4_0[atype][btype],
                 dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
                 dtheta_cxst4_c[atype][btype]);
 
@@ -372,7 +372,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       df4t4 = (DF4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype],
                   dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
                   dtheta_cxst4_c[atype][btype]) +
-               DF4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype] - MY_PI,
+               DF4(theta4, a_cxst4[atype][btype], MY_PI - theta_cxst4_0[atype][btype],
                   dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
                   dtheta_cxst4_c[atype][btype]))*rsint;
 
