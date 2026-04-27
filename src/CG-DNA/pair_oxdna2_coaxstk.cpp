@@ -293,6 +293,9 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
 
       f4t4 = F4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype],
                 dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
+                dtheta_cxst4_c[atype][btype]) + 
+             F4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype] - MY_PI,
+                dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
                 dtheta_cxst4_c[atype][btype]);
 
       // early rejection criterium
@@ -321,9 +324,11 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
       theta6p = MY_PI - theta6;
 
       f4t6 = F4(theta6, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
-                dtheta_cxst6_ast[atype][btype], b_cxst6[atype][btype], dtheta_cxst6_c[atype][btype]) +
+                dtheta_cxst6_ast[atype][btype], b_cxst6[atype][btype],
+                dtheta_cxst6_c[atype][btype]) +
              F4(theta6p, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
-                dtheta_cxst6_ast[atype][btype], b_cxst6[atype][btype], dtheta_cxst6_c[atype][btype]);
+                dtheta_cxst6_ast[atype][btype], b_cxst6[atype][btype],
+                dtheta_cxst6_c[atype][btype]);
 
       MathExtra::cross3(delr_bkbk_norm,ax,v1tmp);
       cosphi3 = MathExtra::dot3(delr_stkstk_norm,v1tmp);
@@ -344,10 +349,9 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
         k_cxst_ab = 0.5*(k_cxst[atype][btype]+k_cxst[btype][atype]);
       }
 
-      f2 = F2(r_stkstk, k_cxst_ab, cut_cxst_0[atype][btype],
-              cut_cxst_lc[atype][btype], cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype],
-              cut_cxst_hi[atype][btype], b_cxst_lo[atype][btype], b_cxst_hi[atype][btype],
-              cut_cxst_c[atype][btype]);
+      f2 = F2(r_stkstk, k_cxst_ab, cut_cxst_0[atype][btype], cut_cxst_lc[atype][btype],
+              cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype], cut_cxst_hi[atype][btype],
+              b_cxst_lo[atype][btype], b_cxst_hi[atype][btype], cut_cxst_c[atype][btype]);
 
       evdwl = f2 * f4f6t1 * f4t4 * f4t5 * f4t6 * factor_lj;
 
@@ -359,30 +363,34 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
                 cut_cxst_hi[atype][btype], b_cxst_lo[atype][btype], b_cxst_hi[atype][btype]);
 
       rsint = 1.0/sin(theta1);
-      df4f6t1 = DF4(theta1, a_cxst1[atype][btype], theta_cxst1_0[atype][btype],
+      df4f6t1 = (DF4(theta1, a_cxst1[atype][btype], theta_cxst1_0[atype][btype],
                     dtheta_cxst1_ast[atype][btype], b_cxst1[atype][btype],
-                    dtheta_cxst1_c[atype][btype])*rsint +
-                DF6(theta1, AA_cxst1[atype][btype], BB_cxst1[atype][btype])*rsint;
+                    dtheta_cxst1_c[atype][btype]) +
+                 DF6(theta1, AA_cxst1[atype][btype], BB_cxst1[atype][btype]))*rsint;
 
-      df4t4 = DF4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype],
+      rsint = 1.0/sin(theta4);
+      df4t4 = (DF4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype],
                   dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
-                  dtheta_cxst4_c[atype][btype])/sin(theta4);
+                  dtheta_cxst4_c[atype][btype]) +
+               DF4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype] - MY_PI,
+                  dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
+                  dtheta_cxst4_c[atype][btype]))*rsint;
 
       rsint = 1.0/sin(theta5);
-      df4t5 = DF4(theta5, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
+      df4t5 = (DF4(theta5, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
                   dtheta_cxst5_ast[atype][btype],
-                  b_cxst5[atype][btype], dtheta_cxst5_c[atype][btype])*rsint -
-              DF4(theta5p, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
+                  b_cxst5[atype][btype], dtheta_cxst5_c[atype][btype]) -
+               DF4(theta5p, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
                   dtheta_cxst5_ast[atype][btype], b_cxst5[atype][btype],
-                  dtheta_cxst5_c[atype][btype])*rsint;
+                  dtheta_cxst5_c[atype][btype]))*rsint;
 
       rsint = 1.0/sin(theta6);
-      df4t6 = DF4(theta6, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
+      df4t6 = (DF4(theta6, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
                   dtheta_cxst6_ast[atype][btype], b_cxst6[atype][btype],
-                  dtheta_cxst6_c[atype][btype])*rsint -
-              DF4(theta6p, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
+                  dtheta_cxst6_c[atype][btype]) -
+               DF4(theta6p, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
                   dtheta_cxst6_ast[atype][btype], b_cxst6[atype][btype],
-                  dtheta_cxst6_c[atype][btype])*rsint;
+                  dtheta_cxst6_c[atype][btype]))*rsint;
 
       // force, torque and virial contribution for forces between stacking sites
 
