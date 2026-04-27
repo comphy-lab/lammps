@@ -1,3 +1,4 @@
+// clang-format off
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
@@ -19,10 +20,9 @@
 #include "improper_distharm_omp.h"
 #include "atom.h"
 #include "comm.h"
-#include "neighbor.h"
 #include "domain.h"
 #include "force.h"
-#include "timer.h"
+#include "neighbor.h"
 
 #include <cmath>
 
@@ -56,7 +56,7 @@ void ImproperDistHarmOMP::compute(int eflag, int vflag)
     loop_setup_thr(ifrom, ito, tid, inum, nthreads);
     ThrData *thr = fix->get_thr(tid);
     thr->timer(Timer::START);
-    ev_setup_thr(eflag, vflag, nall, eatom, vatom, nullptr, thr);
+    ev_setup_thr(eflag, vflag, nall, eatom, vatom, cvatom, thr);
 
     if (inum > 0) {
       if (evflag) {
@@ -85,6 +85,7 @@ void ImproperDistHarmOMP::eval(int nfrom, int nto, ThrData * const thr)
   double xac, yac, zac; // bond 1-3
   double xad, yad, zad; // bond 1-4
   double xbc, ybc, zbc; // bond 2-3
+  double xbd, ybd, zbd; // bond 2-4
   double xcd, ycd, zcd; // bond 3-4
   double xna, yna, zna, rna; // normal
   double da;
@@ -105,35 +106,47 @@ void ImproperDistHarmOMP::eval(int nfrom, int nto, ThrData * const thr)
     i4 = improperlist[n].d;
     type = improperlist[n].t;
 
+    // geometry of 4-body
+    // 4 is the central atom
+    // 1-2-3 are ment to be equivalent
+    // I need the bonds between 2-3 and 3-4 to get the plane normal
+    // Then I need the bond 1-4 to project it onto the normal to the plane
+
     // bond 1->2
     xab = x[i2].x - x[i1].x;
     yab = x[i2].y - x[i1].y;
     zab = x[i2].z - x[i1].z;
-    domain->minimum_image(FLERR,xab,yab,zab);
+    domain->minimum_image(FLERR, xab,yab,zab);
 
     // bond 1->3
     xac = x[i3].x - x[i1].x;
     yac = x[i3].y - x[i1].y;
     zac = x[i3].z - x[i1].z;
-    domain->minimum_image(FLERR,xac,yac,zac);
+    domain->minimum_image(FLERR, xac,yac,zac);
 
     // bond 1->4
     xad = x[i4].x - x[i1].x;
     yad = x[i4].y - x[i1].y;
     zad = x[i4].z - x[i1].z;
-    domain->minimum_image(FLERR,xad,yad,zad);
+    domain->minimum_image(FLERR, xad,yad,zad);
 
     // bond 2-3
     xbc = x[i3].x - x[i2].x;
     ybc = x[i3].y - x[i2].y;
     zbc = x[i3].z - x[i2].z;
-    domain->minimum_image(FLERR,xbc,ybc,zbc);
+    domain->minimum_image(FLERR, xbc,ybc,zbc);
+
+    // bond 2-4
+    xbd = x[i4].x - x[i2].x;
+    ybd = x[i4].y - x[i2].y;
+    zbd = x[i4].z - x[i2].z;
+    domain->minimum_image(FLERR, xbd,ybd,zbd);
 
     // bond 3-4
     xcd = x[i4].x - x[i3].x;
     ycd = x[i4].y - x[i3].y;
     zcd = x[i4].z - x[i3].z;
-    domain->minimum_image(FLERR,xcd,ycd,zcd);
+    domain->minimum_image(FLERR, xcd,ycd,zcd);
 
     xna =   ybc*zcd - zbc*ycd;
     yna = -(xbc*zcd - zbc*xcd);

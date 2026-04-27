@@ -11,6 +11,10 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------------
+   Contributing author: Axel Kohlmeyer (Temple U)
+------------------------------------------------------------------------- */
+
 #ifdef ANGLE_CLASS
 // clang-format off
 AngleStyle(class2/p6/omp,AngleClass2P6OMP);
@@ -28,7 +32,7 @@ namespace LAMMPS_NS {
 class AngleClass2P6OMP : public AngleClass2P6, public ThrOMP {
 
  public:
-  AngleClass2P6OMP(class LAMMPS *);
+  AngleClass2P6OMP(class LAMMPS *lmp);
   void compute(int, int) override;
 
  private:

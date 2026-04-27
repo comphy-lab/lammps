@@ -11,9 +11,13 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------------
+   Contributing author: Axel Kohlmeyer (Temple U)
+------------------------------------------------------------------------- */
+
 #ifdef ANGLE_CLASS
 // clang-format off
-AngleStyle(cosine/buck6d/omp, AngleCosineBuck6dOMP);
+AngleStyle(cosine/buck6d/omp,AngleCosineBuck6dOMP);
 // clang-format on
 #else
 
@@ -28,7 +32,7 @@ namespace LAMMPS_NS {
 class AngleCosineBuck6dOMP : public AngleCosineBuck6d, public ThrOMP {
 
  public:
-  AngleCosineBuck6dOMP(class LAMMPS *);
+  AngleCosineBuck6dOMP(class LAMMPS *lmp);
   void compute(int, int) override;
 
  private:

@@ -22,7 +22,6 @@
 #include "comm.h"
 #include "force.h"
 #include "neighbor.h"
-#include "timer.h"
 
 #include <cmath>
 
@@ -136,6 +135,7 @@ void AngleMM3OMP::eval(int nfrom, int nto, ThrData * const thr)
     dtheta2 = dtheta*dtheta;
     dtheta3 = dtheta2*dtheta;
     dtheta4 = dtheta3*dtheta;
+    // MM3 angle term, taking into account that dtheta is expressed in rad
     de_angle = 2.0*k2[type]*dtheta*(1.0-1.203211*dtheta+0.367674*dtheta2-0.3239159*dtheta3+0.711270*dtheta4);
 
     a = -de_angle*s;
@@ -150,7 +150,7 @@ void AngleMM3OMP::eval(int nfrom, int nto, ThrData * const thr)
     f3[0] = a22*delx2 + a12*delx1;
     f3[1] = a22*dely2 + a12*dely1;
     f3[2] = a22*delz2 + a12*delz1;
-
+    // MM3 angle term, taking into account that dtheta is expressed in rad
     if (EFLAG) eangle = k2[type]*dtheta2*(1.0-0.802141*dtheta+0.183837*dtheta2-0.131664*dtheta3+0.237090*dtheta4);
 
     // apply force to each of 3 atoms
@@ -174,6 +174,6 @@ void AngleMM3OMP::eval(int nfrom, int nto, ThrData * const thr)
     }
 
     if (EVFLAG) ev_tally_thr(this,i1,i2,i3,nlocal,NEWTON_BOND,eangle,f1,f3,
-                             delx1,dely1,delz1,delx2,dely2,delz2,thr);
+                              delx1,dely1,delz1,delx2,dely2,delz2,thr);
   }
 }

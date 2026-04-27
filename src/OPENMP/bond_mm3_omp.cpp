@@ -1,3 +1,4 @@
+// clang-format off
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
@@ -21,7 +22,6 @@
 #include "comm.h"
 #include "force.h"
 #include "neighbor.h"
-#include "timer.h"
 
 #include <cmath>
 
@@ -89,6 +89,11 @@ void BondMM3OMP::eval(int nfrom, int nto, ThrData * const thr)
   const int nlocal = atom->nlocal;
   ebond = 0.0;
 
+  /*
+  E = K(r-r0)^2 [1-2.55*(r-r0)+(7/12)*2.55^(2)*(r-r0)^2]
+  with -2.55 in angstrom^(-1) and (7/12)*2.55^(2) in angstrom^(-2)
+  These prefactors are converted here to the correct units
+  */
   K3 = -2.55/force->angstrom;
   K4 = 7.0/12.0*2.55*2.55/force->angstrom/force->angstrom;
 

@@ -11,6 +11,10 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------------
+   Contributing author: Axel Kohlmeyer (Temple U)
+------------------------------------------------------------------------- */
+
 #ifdef IMPROPER_CLASS
 // clang-format off
 ImproperStyle(inversion/harmonic/omp,ImproperInversionHarmonicOMP);
@@ -28,22 +32,22 @@ namespace LAMMPS_NS {
 class ImproperInversionHarmonicOMP : public ImproperInversionHarmonic, public ThrOMP {
 
  public:
-  ImproperInversionHarmonicOMP(class LAMMPS *);
+  ImproperInversionHarmonicOMP(class LAMMPS *lmp);
   void compute(int, int) override;
 
  private:
   template <int EVFLAG, int EFLAG, int NEWTON_BOND>
   void eval(int ifrom, int ito, ThrData *const thr);
 
-  void invang_thr(const int i1, const int i2, const int i3, const int i4, const int type,
-                  const int evflag, const int eflag, const int newton_bond,
-                  const double vb1x, const double vb1y, const double vb1z,
-                  const double rrvb1, const double rr2vb1,
-                  const double vb2x, const double vb2y, const double vb2z,
-                  const double rrvb2, const double rr2vb2,
-                  const double vb3x, const double vb3y, const double vb3z,
-                  const double rrvb3, const double rr2vb3,
-                  dbl3_t * const f, ThrData * const thr);
+  template <int EVFLAG, int EFLAG, int NEWTON_BOND>
+  void invang(const int &i1, const int &i2, const int &i3, const int &i4, const int &type,
+              const double &vb1x, const double &vb1y, const double &vb1z,
+              const double &rrvb1, const double &rr2vb1,
+              const double &vb2x, const double &vb2y, const double &vb2z,
+              const double &rrvb2, const double &rr2vb2,
+              const double &vb3x, const double &vb3y, const double &vb3z,
+              const double &rrvb3, const double &rr2vb3,
+              dbl3_t * _noalias const f, ThrData * const thr);
 };
 
 }    // namespace LAMMPS_NS

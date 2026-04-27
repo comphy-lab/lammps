@@ -13,7 +13,9 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing author: Axel Kohlmeyer (Temple U)
+   Contributing authors: Hendrik Heenen (Technical University of Munich)
+                         and Rochus Schmid (Ruhr-Universitaet Bochum)
+                         (OMP threading by Axel Kohlmeyer, Temple U)
 ------------------------------------------------------------------------- */
 
 #include "omp_compat.h"
@@ -22,21 +24,19 @@
 #include "comm.h"
 #include "force.h"
 #include "neighbor.h"
-#include "timer.h"
-#include "math_const.h"
+#include "pair.h"
 
 #include <cmath>
 
 #include "suffix.h"
 using namespace LAMMPS_NS;
-using namespace MathConst;
 
 static constexpr double SMALL = 0.001;
 
 /* ---------------------------------------------------------------------- */
 
-AngleCosineBuck6dOMP::AngleCosineBuck6dOMP(LAMMPS *lmp) :
-  AngleCosineBuck6d(lmp), ThrOMP(lmp, THR_ANGLE)
+AngleCosineBuck6dOMP::AngleCosineBuck6dOMP(class LAMMPS *lmp)
+  : AngleCosineBuck6d(lmp), ThrOMP(lmp,THR_ANGLE|THR_CHARMM)
 {
   suffix_flag |= Suffix::OMP;
 }
@@ -45,7 +45,12 @@ AngleCosineBuck6dOMP::AngleCosineBuck6dOMP(LAMMPS *lmp) :
 
 void AngleCosineBuck6dOMP::compute(int eflag, int vflag)
 {
-  ev_init(eflag, vflag);
+  ev_init(eflag,vflag);
+
+  // ensure pair->ev_tally() will use 1-3 virial contribution
+
+  if (vflag_global == VIRIAL_FDOTR)
+    force->pair->vflag_either = force->pair->vflag_global = 1;
 
   const int nall = atom->nlocal + atom->nghost;
   const int nthreads = comm->nthreads;
@@ -81,29 +86,26 @@ void AngleCosineBuck6dOMP::compute(int eflag, int vflag)
   } // end of omp parallel region
 }
 
-/* ---------------------------------------------------------------------- */
-
 template <int EVFLAG, int EFLAG, int NEWTON_BOND>
 void AngleCosineBuck6dOMP::eval(int nfrom, int nto, ThrData * const thr)
 {
-  int i1, i2, i3, n, type, itype, jtype;
-  double delx1, dely1, delz1, delx2, dely2, delz2;
-  double eangle, f1[3], f3[3];
-  double rsq1, rsq2, r1, r2, c, s, a, a11, a12, a22;
+  int i1,i2,i3,n,type,itype,jtype;
+  double delx1,dely1,delz1,delx2,dely2,delz2;
+  double eangle,f1[3],f3[3];
+  double rsq1,rsq2,r1,r2,c,s,a,a11,a12,a22;
   double tk;
 
-  // extra lj variables
-  double delx3, dely3, delz3, rsq3, r3;
-  double rexp, r32inv, r36inv, r314inv, forcebuck6d, fpair;
-  double term1, term2, term3, term4, term5, ebuck6d, evdwl;
-  double rcu, rqu, sme, smf;
+  // extra buck6d variables
+  double delx3,dely3,delz3,rsq3,r3;
+  double rexp,r32inv,r36inv,r314inv,forcebuck6d,fpair;
+  double term1,term2,term3,term4,term5,ebuck6d,evdwl;
+  double rcu,rqu,sme,smf;
 
   const auto * _noalias const x = (dbl3_t *) atom->x[0];
   auto * _noalias const f = (dbl3_t *) thr->get_f()[0];
   const int4_t * _noalias const anglelist = (int4_t *) neighbor->anglelist[0];
-  const int nlocal = atom->nlocal;
-  const int newton_pair = force->newton_pair;
   const int * _noalias const atomtype = atom->type;
+  const int nlocal = atom->nlocal;
   eangle = 0.0;
 
   for (n = nfrom; n < nto; n++) {
@@ -143,7 +145,7 @@ void AngleCosineBuck6dOMP::eval(int nfrom, int nto, ThrData * const thr)
 
     // force & energy
 
-    // explicit lj-contribution
+    // explicit buck6d-contribution
 
     itype = atomtype[i1];
     jtype = atomtype[i3];
@@ -152,6 +154,7 @@ void AngleCosineBuck6dOMP::eval(int nfrom, int nto, ThrData * const thr)
     dely3 = x[i1].y - x[i3].y;
     delz3 = x[i1].z - x[i3].z;
     rsq3 = delx3*delx3 + dely3*dely3 + delz3*delz3;
+    r32inv = 0.0;
 
     if (rsq3 < cut_ljsq[itype][jtype]) {
       r3 = sqrt(rsq3);
@@ -177,19 +180,19 @@ void AngleCosineBuck6dOMP::eval(int nfrom, int nto, ThrData * const thr)
         smf = 5.0*c5[itype][jtype]*rqu + 4.0*c4[itype][jtype]*rcu +
               3.0*c3[itype][jtype]*rsq3 + 2.0*c2[itype][jtype]*r3 + c1[itype][jtype];
         forcebuck6d = forcebuck6d*sme + ebuck6d*smf;
-        if (EFLAG) ebuck6d *= sme;
+        ebuck6d *= sme;
       }
     } else forcebuck6d = 0.0;
 
-    // add forces of additional LJ interaction
+    // add forces of additional buck6d interaction
 
     fpair = forcebuck6d * r32inv;
-    if (newton_pair || i1 < nlocal) {
+    if (NEWTON_BOND || i1 < nlocal) {
       f[i1].x += delx3*fpair;
       f[i1].y += dely3*fpair;
       f[i1].z += delz3*fpair;
     }
-    if (newton_pair || i3 < nlocal) {
+    if (NEWTON_BOND || i3 < nlocal) {
       f[i3].x -= delx3*fpair;
       f[i3].y -= dely3*fpair;
       f[i3].z -= delz3*fpair;
@@ -202,15 +205,14 @@ void AngleCosineBuck6dOMP::eval(int nfrom, int nto, ThrData * const thr)
       }
     }
 
-    //update pair energy and velocities
+    // update pair energy and virial
 
-    if (EVFLAG) ev_tally13_thr(this, i1, i3, nlocal, newton_pair,
-                                evdwl, fpair, delx3, dely3, delz3, thr);
+    if (EVFLAG) ev_tally_thr(force->pair,i1,i3,nlocal,NEWTON_BOND,
+                              evdwl,0.0,fpair,delx3,dely3,delz3,thr);
 
     tk = multiplicity[type]*acos(c)-th0[type];
 
     if (EFLAG) eangle = k[type]*(1.0+cos(tk));
-    else eangle = 0.0;
 
     a = k[type]*multiplicity[type]*sin(tk)*s;
 
@@ -246,6 +248,6 @@ void AngleCosineBuck6dOMP::eval(int nfrom, int nto, ThrData * const thr)
     }
 
     if (EVFLAG) ev_tally_thr(this,i1,i2,i3,nlocal,NEWTON_BOND,eangle,f1,f3,
-                             delx1,dely1,delz1,delx2,dely2,delz2,thr);
+                              delx1,dely1,delz1,delx2,dely2,delz2,thr);
   }
 }
