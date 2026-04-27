@@ -79,11 +79,13 @@ Examples
 .. note::
 
    The coefficients are provided in forms compatible with both 
-   *units lj* and *units real* (see documentation  of :doc:`units <units>`).
+   *units lj* and *units real*. The potential file unit system
+   must align with the units defined via the :doc:`units <units>` command. 
    In case of oxDNA3 almost all coefficients have to be read from a potential
    file with correct unit style by specifying the name of the file. The 
    potential files for each unit style are included in the ``potentials``
    directory of the LAMMPS distribution.
+
 
 Description
 """""""""""
@@ -140,10 +142,73 @@ for a detailed description of the oxDNA3 force field.
    binary restart files produced with :doc:`write_restart <write_restart>`.
 
 Example input and data files for DNA duplexes can be found in
-``examples/PACKAGES/cgdna/examples/oxDNA3/``.  A
-simple python setup tool which creates single straight or helical DNA
+``examples/PACKAGES/cgdna/examples/lj_units/oxDNA3/`` or in the
+corresponding folder for real units.
+A simple python setup tool which creates single straight or helical DNA
 strands, DNA duplexes or arrays of DNA duplexes can be found in
 ``examples/PACKAGES/cgdna/util/``.
+
+----------
+
+Unique base pairing
+""""""""""""""""""""""
+
+Unique base pairing describes the restriction on the specific complementary 
+nucleotide with which a particular base can pair. This can be used to prevent 
+asymmetric base pairs or to simplify the free energy landscape. With unique
+base pairing enabled base pairs can only form between complementary nucleotides 
+with specific atom IDs. This functionality draws on :doc:`fix property/atom <fix_property_atom>`
+and a modified :doc:`read_data <read_data>` command.
+
+To use unique base pairing, the data file of a system with N nucleotides must contain a section like
+
+.. code-block:: LAMMPS
+
+   Basepairs # i_idc
+
+   1 idc1
+   2 idc2
+   3 idc3
+   4 idc4
+   ...
+   N idcN 
+   
+where idc is the non-negative atom ID of a complementary nucleotide that binds uniquely
+to the preceding atom ID.
+
+Unique base pairing can be combined with normal base pairing by setting a zero or negative value for idc.
+For instance, in a 4-mer with 8 nucleotides consisting of a ssDNA strand 3'-A-A-A-A-5' with atom IDs 3'-1-2-3-4-5'
+and a complementary strand 5'-T-T-T-T-3' with atom IDs 5'-8-7-6-5-3' set up as
+
+.. code-block:: LAMMPS
+
+   Basepairs # i_idc
+
+   1 8
+   2 -1
+   3 -1
+   4 5
+   5 4
+   6 -1
+   7 -1
+   8 1
+ 
+the A nucleotide with ID 1 can only hybridize with the T nucleotide with ID 8 and
+the A nucleotide with ID 4 can only hybridize with the T nucleotide with ID 5, 
+whereas the A nucleotides with ID 2 and 3 can hybridize with either T nucleotide with ID 6 and 7.
+
+The input file requires an instance of the :doc:`fix property/atom <fix_property_atom>` and a 
+:doc:`read_data <read_data>` command as follows:
+
+.. code-block:: LAMMPS
+
+   fix Basepairs all property/atom i_idc ghost yes
+   read_data file fix Basepairs NULL Basepairs
+
+where *file* is the name of the data file and the only modifiable argument.
+An example input and data file for a dsDNA ring can be found in
+``examples/PACKAGES/cgdna/examples/lj_units/oxDNA3/unique_bp``
+or in the corresponding folder for real units.
 
 Please cite :ref:`(Henrich) <Henrich6>` in any publication that uses
 this implementation. An updated documentation that contains general
@@ -152,59 +217,6 @@ the structure of the data and input file can be found `here
 <PDF/CG-DNA.pdf>`_.
 
 Please cite also the relevant oxDNA3 publication :ref:`(Bonato) <Bonato2>`.
-
-----------
-
-Potential file reading
-""""""""""""""""""""""
-
-For each pair style above the first non-modifiable argument can be a
-filename (with exception of Debye-Hueckel, for which the effective
-charge argument can be a filename), and if it is, no further arguments
-should be supplied.  Therefore the following command:
-
-.. code-block:: LAMMPS
-
-   pair_coeff 1 4 oxdna2/hbond   seqdep oxdna_real.cgdna
-
-will be interpreted as a request to read the corresponding hydrogen
-bonding potential parameters from the file with the given name.  The
-file can define multiple potential parameters for both bonded and pair
-interactions, but for the example pair interaction above there must
-exist in the file a line of the form:
-
-.. code-block:: LAMMPS
-
-  1 4 hbond     <coefficients>
-
-If potential customization is required, the potential file reading can
-be mixed with the manual specification of the potential parameters. For
-example, the following command:
-
-.. code-block:: LAMMPS
-
-   pair_style hybrid/overlay oxdna2/excv oxdna2/stk oxdna2/hbond oxdna2/xstk oxdna2/coaxstk oxdna2/dh
-   pair_coeff * * oxdna2/excv    2.0 0.7 0.675 2.0 0.515 0.5 2.0 0.33 0.32
-   pair_coeff * * oxdna2/stk     seqdep 0.1 oxdna2_lj.cgdna
-   pair_coeff * * oxdna2/hbond   seqdep oxdna2_lj.cgdna
-   pair_coeff 1 4 oxdna2/hbond   seqdep oxdna2_lj.cgdna
-   pair_coeff 2 3 oxdna2/hbond   seqdep oxdna2_lj.cgdna
-   pair_coeff * * oxdna2/xstk    oxdna2_lj.cgdna
-   pair_coeff * * oxdna2/coaxstk oxdna2_lj.cgdna
-   pair_coeff * * oxdna2/dh      0.1 0.5 0.815
-
-will read the excluded volume and Debye-Hueckel effective charge *qeff*
-parameters from the manual specification and all others from the
-potential file *oxdna2_lj.cgdna*.
-
-There are sample potential files for each unit style in the ``potentials``
-directory of the LAMMPS distribution. The potential file unit system
-must align with the units defined via the :doc:`units <units>`
-command. For conversion between different *LJ* and *real* unit systems
-for oxDNA, the python tool *lj2real.py* located in the
-``examples/PACKAGES/cgdna/util/`` directory can be used. This tool assumes
-similar file structure to the examples found in
-``examples/PACKAGES/cgdna/examples/``.
 
 ----------
 
