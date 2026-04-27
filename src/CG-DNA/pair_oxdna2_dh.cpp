@@ -117,7 +117,7 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // nxyz_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
+  // nxyz_xtrct = extracted local unit vectors in lab frame from fix OXDNA/LRF
   nxyz_xtrct = fix_lrf->array_atom;
 
   // loop over pair interaction neighbors of my atoms
@@ -305,10 +305,11 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
   int nlocal = atom->nlocal;
   tagint *qeff = atom->qeff;
   tagint *id3p = atom->id3p;
+  tagint *id5p = atom->id5p;
 
   double T, rhos_dh_one, qeff_dh_one;
 
-  no_3p_charge_flag = 0;
+  half_charged_ends_flag = 0;
 
   T = utils::numeric(FLERR,arg[2],false,lmp);
   rhos_dh_one = utils::numeric(FLERR,arg[3],false,lmp);
@@ -340,8 +341,8 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
     MPI_Bcast(&qeff_dh_one, 1, MPI_DOUBLE, 0, world);
   } else qeff_dh_one = utils::numeric(FLERR,arg[4],false,lmp); // else, it is effective charge
 
-  if (narg == 6 && strcmp(arg[5],"no_3p_charge")  == 0) {
-    no_3p_charge_flag = 1;
+  if (narg == 6 && strcmp(arg[5],"half_charged_ends")  == 0) {
+    half_charged_ends_flag = 1;
   }
 
   double lambda_dh_one, kappa_dh_one, qeff_dh_pf_one;
@@ -413,10 +414,10 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
     }
   }
 
-  // optionally remove charge from 3'-end
   for (int in = 0; in < nlocal; in++) {
     qeff[in] = 1;
-    if (id3p[in] == -1 && no_3p_charge_flag) qeff[in] = 0;
+    // optionally distribute terminal charge equally
+    if ((id3p[in] == -1 || id5p[in] == -1) && half_charged_ends_flag == 1) qeff[in] = 0.5;
   }
 
   if (count == 0) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
@@ -428,8 +429,8 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 void PairOxdna2Dh::init_style()
 {
   fix_lrf = nullptr;
-  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
-  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  auto fixes = modify->get_fix_by_style("^OXDNA/LRF");
+  if (fixes.size() == 0) error->all(FLERR, "Fix OXDNA/LRF not found. Ensure pair oxdna/excv is present");
   else fix_lrf = dynamic_cast<FixOxdnaLRF *>(fixes[0]);
 
   neighbor->add_request(this, NeighConst::REQ_DEFAULT);

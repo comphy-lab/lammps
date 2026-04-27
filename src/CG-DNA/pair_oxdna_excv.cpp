@@ -771,7 +771,7 @@ void PairOxdnaExcv::init_style()
 {
   // ensure fix oxdna/lrf is added for backward-compatability
   if (!fix_lrf)
-    fix_lrf = dynamic_cast<FixOxdnaLRF *>(modify->add_fix("lrf all oxdna/lrf"));
+    fix_lrf = dynamic_cast<FixOxdnaLRF *>(modify->add_fix("lrf all OXDNA/LRF"));
 
   neighbor->add_request(this, NeighConst::REQ_DEFAULT);
 }

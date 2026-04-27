@@ -182,7 +182,7 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // nxyz_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
+  // nxyz_xtrct = extracted local unit vectors in lab frame from fix OXDNA/LRF
   nxyz_xtrct = fix_lrf->array_atom;
 
   // loop over pair interaction neighbors of my atoms
@@ -951,8 +951,8 @@ void PairOxdnaCoaxstk::coeff(int narg, char **arg)
 void PairOxdnaCoaxstk::init_style()
 {
   fix_lrf = nullptr;
-  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
-  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  auto fixes = modify->get_fix_by_style("^OXDNA/LRF");
+  if (fixes.size() == 0) error->all(FLERR, "Fix OXDNA/LRF not found. Ensure pair oxdna/excv is present");
   else fix_lrf = dynamic_cast<FixOxdnaLRF *>(fixes[0]);
 
   neighbor->add_request(this, NeighConst::REQ_DEFAULT);
