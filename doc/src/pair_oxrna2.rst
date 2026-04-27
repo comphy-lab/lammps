@@ -170,9 +170,10 @@ description of the oxRNA2 force field.
    binary restart files produced with :doc:`write_restart <write_restart>`.
 
 Example input and data files for DNA duplexes can be found in
-``examples/PACKAGES/cgdna/examples/oxRNA2/``.  A simple python
-setup tool which creates single straight or helical DNA strands, DNA
-duplexes or arrays of DNA duplexes can be found in
+``examples/PACKAGES/cgdna/examples/lj_units/oxRNA2/`` or in the 
+corresponding folder for real units.
+A simple python setup tool which creates single straight or helical 
+DNA strands, DNA duplexes or arrays of DNA duplexes can be found in
 ``examples/PACKAGES/cgdna/util/``.
 
 Please cite :ref:`(Henrich) <Henrich3>` in any publication that uses
