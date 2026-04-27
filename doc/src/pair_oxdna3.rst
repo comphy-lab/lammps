@@ -160,7 +160,7 @@ base pairing enabled base pairs can only form between complementary nucleotides
 with specific atom IDs. This functionality draws on :doc:`fix property/atom <fix_property_atom>`
 and a modified :doc:`read_data <read_data>` command.
 
-To use unique base pairing, the data file must contain a section like
+To use unique base pairing, the data file of a system with N nucleotides must contain a section like
 
 .. code-block:: LAMMPS
 
