@@ -277,7 +277,7 @@ void PairOxrna2Stk::compute(int eflag, int vflag)
   evdwl = 0.0;
   ev_init(eflag,vflag);
 
-  // nxyz_xtrct = extracted local unit vectors in lab frame from fix oxdna/lrf
+  // nxyz_xtrct = extracted local unit vectors in lab frame from fix OXDNA/LRF
   nxyz_xtrct = fix_lrf->array_atom;
 
   // loop over stacking interaction neighbors using bond topology
@@ -1111,8 +1111,8 @@ void PairOxrna2Stk::init_style()
   }
 
   fix_lrf = nullptr;
-  auto fixes = modify->get_fix_by_style("^oxdna/lrf");
-  if (fixes.size() == 0) error->all(FLERR, "Fix oxdna/lrf not found. Ensure pair oxdna/excv is present");
+  auto fixes = modify->get_fix_by_style("^OXDNA/LRF");
+  if (fixes.size() == 0) error->all(FLERR, "Fix OXDNA/LRF not found. Ensure pair oxdna/excv is present");
   else fix_lrf = dynamic_cast<FixOxdnaLRF *>(fixes[0]);
 }
 
