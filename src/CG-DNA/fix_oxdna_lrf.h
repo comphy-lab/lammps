@@ -13,7 +13,7 @@
 
 #ifdef FIX_CLASS
 // clang-format off
-FixStyle(oxdna/lrf,FixOxdnaLRF);
+FixStyle(OXDNA/LRF,FixOxdnaLRF);
 // clang-format on
 #else
 
