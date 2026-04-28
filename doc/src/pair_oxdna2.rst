@@ -30,7 +30,7 @@ Syntax
 
    pair_style style1
 
-   pair_coeff * * style2 args (keyword value)
+   pair_coeff * * style2 args [keyword value]
 
 * style1 = *hybrid/overlay oxdna2/excv oxdna2/stk oxdna2/hbond oxdna2/xstk oxdna2/coaxstk oxdna2/dh*
 * style2 = *oxdna2/excv* or *oxdna2/stk* or *oxdna2/hbond* or *oxdna2/xstk* or *oxdna2/coaxstk* or *oxdna2/dh*
@@ -146,8 +146,10 @@ description of the oxDNA2 force field.
    corresponding *real unit* equivalents in the above examples), the
    first coefficient after *oxdna2/hbond* (seq=seqdep in the above
    example) and the two coefficients after *oxdna2/dh* (T=0.1 and
-   rhos=0.5 in the above example). When using a Langevin
-   thermostat e.g. through :doc:`fix langevin <fix_langevin>` or
+   rhos=0.5 in the above example).
+   *oxdna2/dh* has the option to set half a charge at terminal nucleotides 
+   (half_charged_ends yes) to aid coaxial stacking. When using a 
+   Langevin thermostat e.g. through :doc:`fix langevin <fix_langevin>` or
    :doc:`fix nve/dotc/langevin <fix_nve_dotc_langevin>` the temperature
    coefficients have to be matched to the one used in the fix.
 

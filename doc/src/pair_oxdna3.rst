@@ -122,8 +122,10 @@ for a detailed description of the oxDNA3 force field.
    (T=0.1 and corresponding *real unit* equivalents in the above examples)
    and the two coefficients after *oxdna3/dh* (T=0.1 and rhos=0.2 in the 
    above example) have to be set to the temperature and salt concentration
-   of the system. When using a Langevin thermostat e.g. through 
-   :doc:`fix langevin <fix_langevin>` or
+   of the system.
+   *oxdna3/dh* has the option to set half a charge at terminal nucleotides 
+   (half_charged_ends yes) to aid coaxial stacking. When using a 
+   Langevin thermostat e.g. through :doc:`fix langevin <fix_langevin>` or
    :doc:`fix nve/dotc/langevin <fix_nve_dotc_langevin>` the temperature
    coefficients have to be matched to the one used in the fix.
 
