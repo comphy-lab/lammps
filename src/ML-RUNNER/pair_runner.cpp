@@ -812,7 +812,7 @@ void PairRuNNer::compute(int eflag, int vflag)
           FLERR,
           "Maximal number of allowed extrapolations have been exceeded during the simulation!\n"
           "Current extrapolation count: {:10.3e}",
-          double(global_extrap_count_total));
+          static_cast<double>(global_extrap_count_total));
     }
 
     // Prints a summary of the recorded extrapolations at every interval until the timestep is
@@ -825,8 +825,8 @@ void PairRuNNer::compute(int eflag, int vflag)
         utils::logmesg(lmp,
                        "RuNNer2: HDNNP Extrapolation Summary\n"
                        "Timestep: {:10d} Sum: {:10.3e} Frequency: {:10.3e} per timestep\n",
-                       timestep, double(global_extrap_sum),
-                       double(global_extrap_sum) / double(sum_ew_freq));
+                       timestep, static_cast<double>(global_extrap_sum),
+                       static_cast<double>(global_extrap_sum) / static_cast<double>(sum_ew_freq));
       }
       local_extrap_sum = 0;
     }
