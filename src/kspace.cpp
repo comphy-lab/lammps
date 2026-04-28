@@ -56,7 +56,7 @@ KSpace::KSpace(LAMMPS *lmp) :
   // default to using MPI collectives for FFT/remap only on IBM BlueGene
 
 #ifdef __bg__
-  collective_flag = 3;
+  collective_flag = 1;
 #else
   collective_flag = 0;
 #endif
