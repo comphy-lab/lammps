@@ -46,7 +46,7 @@ Syntax
      *oxdna3/hbond* args = oxdna3_lj.cgdna or oxdna3_real.cgdna
      *oxdna3/xstk* args = oxdna3_lj.cgdna or oxdna3_real.cgdna
      *oxdna3/coaxstk* args = oxdna3_lj.cgdna or oxdna3_real.cgdna
-     *oxdna3/dh* args (keyword value) = T rhos oxdna3_lj.cgdna or oxdna3_real.cgdna (half_charged_ends = no or yes)
+     *oxdna3/dh* args [keyword value] = T rhos oxdna3_lj.cgdna or oxdna3_real.cgdna [half_charged_ends no|yes]
        T = temperature (LJ units: 0.1 = 300 K, real units: 300 = 300 K)
        rhos = salt concentration (mole per litre)
        half_charged_ends yes = set half charge at terminal nucleotides
