@@ -30,12 +30,13 @@ Syntax
 
    pair_style style1
 
-   pair_coeff * * style2 args
+   pair_coeff * * style2 args (keyword value)
 
 * style1 = *hybrid/overlay oxdna3/excv oxdna3/stk oxdna3/hbond oxdna3/xstk oxdna3/coaxstk oxdna3/dh*
-
 * style2 = *oxdna3/excv* or *oxdna3/stk* or *oxdna3/hbond* or *oxdna3/xstk* or *oxdna3/coaxstk* or *oxdna3/dh*
 * args = list of arguments for these particular styles
+* zero or one keyword/value pair may be appended to *oxdna3/dh*
+* keyword = *half_charged_ends*
 
 .. parsed-literal::
 
@@ -45,9 +46,11 @@ Syntax
      *oxdna3/hbond* args = oxdna3_lj.cgdna or oxdna3_real.cgdna
      *oxdna3/xstk* args = oxdna3_lj.cgdna or oxdna3_real.cgdna
      *oxdna3/coaxstk* args = oxdna3_lj.cgdna or oxdna3_real.cgdna
-     *oxdna3/dh* args = T rhos oxdna3_lj.cgdna or oxdna3_real.cgdna
+     *oxdna3/dh* args (keyword value) = T rhos oxdna3_lj.cgdna or oxdna3_real.cgdna (half_charged_ends = no or yes)
        T = temperature (LJ units: 0.1 = 300 K, real units: 300 = 300 K)
        rhos = salt concentration (mole per litre)
+       half_charged_ends yes = set half charge at terminal nucleotides
+       half_charged_ends no  = set full charge at terminal nucleotides 
 
 Examples
 """"""""
@@ -240,7 +243,7 @@ Related commands
 Default
 """""""
 
-none
+The option default is half_charged_ends = no.
 
 ----------
 

@@ -30,12 +30,13 @@ Syntax
 
    pair_style style1
 
-   pair_coeff * * style2 args
+   pair_coeff * * style2 args (keyword value)
 
 * style1 = *hybrid/overlay oxdna2/excv oxdna2/stk oxdna2/hbond oxdna2/xstk oxdna2/coaxstk oxdna2/dh*
-
 * style2 = *oxdna2/excv* or *oxdna2/stk* or *oxdna2/hbond* or *oxdna2/xstk* or *oxdna2/coaxstk* or *oxdna2/dh*
 * args = list of arguments for these particular styles
+* zero or one keyword/value pair may be appended to *oxdna2/dh*
+* keyword = *half_charged_ends*
 
 .. parsed-literal::
 
@@ -47,10 +48,12 @@ Syntax
      *oxdna2/hbond* args = seq eps 8.0 0.4 0.75 0.34 0.7 1.5 0 0.7 1.5 0 0.7 1.5 0 0.7 0.46 3.141592653589793 0.7 4.0 1.5707963267948966 0.45 4.0 1.5707963267948966 0.45
        seq = seqav (for average sequence base-pairing strength) or seqdep (for sequence-dependent base-pairing strength)
        eps = 1.0678 (LJ units) or 6.36589157849259 (real units), average hydrogen bonding strength between A-T and C-G Watson-Crick base pairs, 0 between all other pairs
-     *oxdna2/dh* args = T rhos qeff
+     *oxdna2/dh* args (keyword value) = T rhos qeff (half_charged_ends = no or yes)
        T = temperature (LJ units: 0.1 = 300 K, real units: 300 = 300 K)
        rhos = salt concentration (mole per litre)
        qeff = 0.815 (effective charge in elementary charges)
+       half_charged_ends yes = set half charge at terminal nucleotides
+       half_charged_ends no  = set full charge at terminal nucleotides
 
 Examples
 """"""""
