@@ -190,10 +190,10 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
         }
         else {
 
-          fpair = 2.0 * b_dh[atype][btype] * (cut_dh_c[atype][btype] - r) * rinv;
+          fpair = 2.0 * qeff[a]*qeff[b] * b_dh[atype][btype] * (cut_dh_c[atype][btype] - r) * rinv;
 
           if (eflag) {
-            evdwl = b_dh[atype][btype] * (r - cut_dh_c[atype][btype]) * (r - cut_dh_c[atype][btype]);
+            evdwl = qeff[a]*qeff[b] * b_dh[atype][btype] * (r - cut_dh_c[atype][btype]) * (r - cut_dh_c[atype][btype]);
           }
 
         }
@@ -293,7 +293,7 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
 {
   int count;
 
-  if (narg != 5 && narg != 6) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
+  if (narg != 5 && narg != 7) error->all(FLERR,"Incorrect args for pair coefficients in oxdna2/dh" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi;
@@ -341,8 +341,8 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
     MPI_Bcast(&qeff_dh_one, 1, MPI_DOUBLE, 0, world);
   } else qeff_dh_one = utils::numeric(FLERR,arg[4],false,lmp); // else, it is effective charge
 
-  if (narg == 6 && strcmp(arg[5],"half_charged_ends")  == 0) {
-    half_charged_ends_flag = 1;
+  if (narg == 7 && strcmp(arg[5],"half_charged_ends")  == 0) {
+    half_charged_ends_flag = utils::logical(FLERR, arg[6], false, lmp);
   }
 
   double lambda_dh_one, kappa_dh_one, qeff_dh_pf_one;
