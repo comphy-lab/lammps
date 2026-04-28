@@ -97,23 +97,26 @@ same atoms.
 Without a significant rewrite of the code, there are three main approaches
 to avoid data races.
 
-* Use locks or **atomic operations** to guarantee that only one thread will
-  update the per-thread data.
+* Use locks or **atomic operations** to guarantee that only one thread
+  at a time updates per-thread data.  This is most commonly used when
+  the access conflicts are rare.
 * Compute per-atom properties **multiple times** for all threads that
   "own" one or more atoms of a tuple and store only the data for those
-  "owned" atom.
+  "owned" atom.  This is most effective for a large number of threads
+  and thus commonly used with GPU acceleration.
 * Have **per-thread copies** of the per-atom data and update them
   independently and use a reduction to combine the per-thread data
-  into the regular per-atom storage.
+  into the regular per-atom storage.  This requires additional steps
+  to set up, manage, clear, and combine the collected data.
 
 The OPENMP package uses **replicated per-thread data structures** because
 this approach:
 
-* Retains the performance for the single-thread case.
-* Keeps code highly maintainable and very similar to the non-threaded code
-* Is most efficient for a small number of threads (2-8), which is a common
-  use case, since the OpenMP parallelization is typically the secondary
-  option after using MPI based parallelization.
+* retains the performance for the single-thread case unlike the other options,
+* keeps the code maintainable and similar to the non-threaded version,
+* and is most efficient for a small number of threads (2-8), which is a
+  common use case, since OpenMP is typically the secondary parallelization
+  option after MPI.
 
 .. _openmp_scheduling:
 
