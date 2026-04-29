@@ -1409,7 +1409,10 @@ void Variable::grow()
 
   reader = (VarReader **)
     memory->srealloc(reader,maxvar*sizeof(VarReader *),"var:reader");
-  for (int i = old; i < maxvar; i++) reader[i] = nullptr;
+  for (int i = old; i < maxvar; i++) {
+    reader[i] = nullptr;
+    style[i] = UNASSIGNED;
+  }
 
   data = (char ***) memory->srealloc(data,maxvar*sizeof(char **),"var:data");
   memory->grow(dvalue,maxvar,"var:dvalue");
