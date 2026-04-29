@@ -22,8 +22,10 @@
 #include "comm.h"
 #include "error.h"
 #include "potential_file_reader.h"
+#include "math_special.h"
 
 using namespace LAMMPS_NS;
+using namespace MathSpecial;
 
 /* ----------------------------------------------------------------------
    set coeffs
@@ -116,8 +118,8 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
     }
     for (int j = 1; j <= n; j++) {
       for (int k = 1; k <= n; k++) {
-        Delta[ilo][0][j][k][0] /= pow(n,2);
-        r0[ilo][0][j][k][0] /= pow(n,2);
+        Delta[ilo][0][j][k][0] /= powint(n,2);
+        r0[ilo][0][j][k][0] /= powint(n,2);
       }
     }
 
