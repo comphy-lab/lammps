@@ -32,6 +32,7 @@
 #include "neigh_list.h"
 #include "neighbor.h"
 #include "potential_file_reader.h"
+#include "math_special.h"
 
 #include <cmath>
 #include <cstring>
@@ -39,6 +40,7 @@
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
+using namespace MathSpecial;
 using namespace MFOxdna;
 
 /* ---------------------------------------------------------------------- */
@@ -133,7 +135,7 @@ PairOxdna3Xstk::~PairOxdna3Xstk()
 ----------------------------------------------------------------- */
 inline void PairOxdna3Xstk::compute_base_site(int type, double e1[3],
   double /*e2*/[3], double /*e3*/[3], double rbs[3]) const
-{ 
+{
   NucleotideOxdna3 oxdna3;
   switch (type) {
     case 0:
@@ -149,7 +151,7 @@ inline void PairOxdna3Xstk::compute_base_site(int type, double e1[3],
       oxdna3.base_site<3>(e1, NULL, NULL, rbs);
       break;
   }
-} 
+}
 
 /* ----------------------------------------------------------------------
    compute function for oxDNA pair interactions
@@ -190,7 +192,7 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
   tagint *id5p = atom->id5p;
 
   int a,b,ia,ib,anum,bnum;
-  int a3ptype,atype,a5ptype,b3ptype,btype,b5ptype; 
+  int a3ptype,atype,a5ptype,b3ptype,btype,b5ptype;
 
   double f2_33,f2_55,f4t1,f4t2,f4t3,f4t4_33,f4t4_55,f4t7_33,f4t7_55,f4t8_33,f4t8_55;
   double df2_33,df2_55,df4t1,df4t2,df4t3,df4t4_33,df4t4_55,df4t7_33,df4t7_55,df4t8_33,df4t8_55;
@@ -330,11 +332,11 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
       if (cost4 < -1.0) cost4 = -1.0;
       theta4 = acos(cost4);
 
-      f4t4_33 = F4(theta4, a_xst4_33[a3ptype][atype][btype][b3ptype], theta_xst4_0_33[a3ptype][atype][btype][b3ptype], 
+      f4t4_33 = F4(theta4, a_xst4_33[a3ptype][atype][btype][b3ptype], theta_xst4_0_33[a3ptype][atype][btype][b3ptype],
                   dtheta_xst4_ast_33[a3ptype][atype][btype][b3ptype], b_xst4_33[a3ptype][atype][btype][b3ptype],
                   dtheta_xst4_c_33[a3ptype][atype][btype][b3ptype]);
 
-      f4t4_55 = F4(theta4, a_xst4_55[a5ptype][atype][btype][b5ptype], theta_xst4_0_55[a5ptype][atype][btype][b5ptype], 
+      f4t4_55 = F4(theta4, a_xst4_55[a5ptype][atype][btype][b5ptype], theta_xst4_0_55[a5ptype][atype][btype][b5ptype],
                   dtheta_xst4_ast_55[a5ptype][atype][btype][b5ptype], b_xst4_55[a5ptype][atype][btype][b5ptype],
                   dtheta_xst4_c_55[a5ptype][atype][btype][b5ptype]);
 
@@ -1011,7 +1013,7 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
                  arg[2], arg[0], arg[1]);
   }
 
-  // calculate sequence-averaged parameters for terminal base step j-k 
+  // calculate sequence-averaged parameters for terminal base step j-k
   for (int i = nlo; i <= nhi; i++) {
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
@@ -1060,23 +1062,23 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
   }
   for (int j = nlo; j <= nhi; j++) {
     for (int k = nlo; k <= nhi; k++) {
-      cut_xst_0_33[0][j][k][0] /= pow(nhi,2);
-      cut_xst_c_33[0][j][k][0] /= pow(nhi,2);
-      cut_xst_lo_33[0][j][k][0] /= pow(nhi,2);
-      cut_xst_hi_33[0][j][k][0] /= pow(nhi,2);
+      cut_xst_0_33[0][j][k][0] /= powint(nhi,2);
+      cut_xst_c_33[0][j][k][0] /= powint(nhi,2);
+      cut_xst_lo_33[0][j][k][0] /= powint(nhi,2);
+      cut_xst_hi_33[0][j][k][0] /= powint(nhi,2);
 
-      cut_xst_0_55[0][j][k][0] /= pow(nhi,2);
-      cut_xst_c_55[0][j][k][0] /= pow(nhi,2);
-      cut_xst_lo_55[0][j][k][0] /= pow(nhi,2);
-      cut_xst_hi_55[0][j][k][0] /= pow(nhi,2);
+      cut_xst_0_55[0][j][k][0] /= powint(nhi,2);
+      cut_xst_c_55[0][j][k][0] /= powint(nhi,2);
+      cut_xst_lo_55[0][j][k][0] /= powint(nhi,2);
+      cut_xst_hi_55[0][j][k][0] /= powint(nhi,2);
 
-      a_xst4_33[0][j][k][0] /= pow(nhi,2);
-      theta_xst4_0_33[0][j][k][0] /= pow(nhi,2);
-      dtheta_xst4_ast_33[0][j][k][0] /= pow(nhi,2);
+      a_xst4_33[0][j][k][0] /= powint(nhi,2);
+      theta_xst4_0_33[0][j][k][0] /= powint(nhi,2);
+      dtheta_xst4_ast_33[0][j][k][0] /= powint(nhi,2);
 
-      a_xst4_55[0][j][k][0] /= pow(nhi,2);
-      theta_xst4_0_55[0][j][k][0] /= pow(nhi,2);
-      dtheta_xst4_ast_55[0][j][k][0] /= pow(nhi,2);
+      a_xst4_55[0][j][k][0] /= powint(nhi,2);
+      theta_xst4_0_55[0][j][k][0] /= powint(nhi,2);
+      dtheta_xst4_ast_55[0][j][k][0] /= powint(nhi,2);
     }
   }
 

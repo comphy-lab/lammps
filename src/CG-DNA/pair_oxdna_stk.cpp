@@ -434,7 +434,7 @@ void PairOxdnaStk::compute(int eflag, int vflag)
     if (evdwl != 0.0) {
 
     df1 = DF1(r_stkstk, epsilon_st[atype][btype], a_st[atype][btype], cut_st_0[a3ptype][atype][btype][b5ptype],
-        cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype], cut_st_lo[a3ptype][atype][btype][b5ptype], 
+        cut_st_lc[a3ptype][atype][btype][b5ptype], cut_st_hc[a3ptype][atype][btype][b5ptype], cut_st_lo[a3ptype][atype][btype][b5ptype],
         cut_st_hi[a3ptype][atype][btype][b5ptype], b_st_lo[atype][btype], b_st_hi[atype][btype]);
 
     df4t4 = DF4(theta4, a_st4[a3ptype][atype][btype][b5ptype], theta_st4_0[atype][btype],

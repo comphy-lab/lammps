@@ -28,12 +28,14 @@
 #include "neighbor.h"
 #include "neigh_list.h"
 #include "potential_file_reader.h"
+#include "math_special.h"
 
 #include <cmath>
 #include <cstring>
 #include <cassert>
 
 using namespace LAMMPS_NS;
+using namespace MathSpecial;
 using namespace MFOxdna;
 
 /* ---------------------------------------------------------------------- */
@@ -119,7 +121,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
           cut_st_lo[i][j][k][l] = 0.0;
           cut_st_hi[i][j][k][l] = 0.0;
           a_st4[i][j][k][l] = 0.0;
-          dtheta_st4_ast[i][j][k][l] = 0.0; 
+          dtheta_st4_ast[i][j][k][l] = 0.0;
         }
       }
     }
@@ -139,7 +141,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
         potential_name = values.next_string();
         if (iloc == arg[0] && jloc == arg[1] && potential_name == "stk") {
 
-          xi_st_one = values.next_double(); 
+          xi_st_one = values.next_double();
           kappa_st_one = values.next_double();
           epsilon_st_one = stacking_strength(xi_st_one, kappa_st_one, T);
 
@@ -198,9 +200,9 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
               for (int k = nlo; k <= nhi; k++) {
                 for (int l = nlo; l <= nhi; l++) {
                   a_st4[i][j][k][l] = values.next_double();
-                  a_st4[i][j][k][0] += a_st4[i][j][k][l]; 
-                  a_st4[0][j][k][l] += a_st4[i][j][k][l]; 
-                  a_st4[0][j][k][0] += a_st4[i][j][k][l]; 
+                  a_st4[i][j][k][0] += a_st4[i][j][k][l];
+                  a_st4[0][j][k][l] += a_st4[i][j][k][l];
+                  a_st4[0][j][k][0] += a_st4[i][j][k][l];
                 }
               }
             }
@@ -252,7 +254,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
           cut_st_c[i][j][k][0] /= nhi;
           cut_st_lo[i][j][k][0] /= nhi;
           cut_st_hi[i][j][k][0] /= nhi;
-          a_st4[i][j][k][0] /= nhi; 
+          a_st4[i][j][k][0] /= nhi;
           dtheta_st4_ast[i][j][k][0] /= nhi;
         }
       }
@@ -264,21 +266,21 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
           cut_st_c[0][j][k][l] /= nhi;
           cut_st_lo[0][j][k][l] /= nhi;
           cut_st_hi[0][j][k][l] /= nhi;
-          a_st4[0][j][k][l] /= nhi; 
+          a_st4[0][j][k][l] /= nhi;
           dtheta_st4_ast[0][j][k][l] /= nhi;
         }
-      } 
-    } 
+      }
+    }
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
-        cut_st_0[0][j][k][0] /= pow(nhi,2);
-        cut_st_c[0][j][k][0] /= pow(nhi,2);
-        cut_st_lo[0][j][k][0] /= pow(nhi,2);
-        cut_st_hi[0][j][k][0] /= pow(nhi,2);
-        a_st4[0][j][k][0] /= pow(nhi,2); 
-        dtheta_st4_ast[0][j][k][0] /= pow(nhi,2);
+        cut_st_0[0][j][k][0] /= powint(nhi,2);
+        cut_st_c[0][j][k][0] /= powint(nhi,2);
+        cut_st_lo[0][j][k][0] /= powint(nhi,2);
+        cut_st_hi[0][j][k][0] /= powint(nhi,2);
+        a_st4[0][j][k][0] /= powint(nhi,2);
+        dtheta_st4_ast[0][j][k][0] /= powint(nhi,2);
       }
-    } 
+    }
 
   }
 
@@ -387,11 +389,11 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
       for (int k = nlo; k <= nhi; k++) {
         for (int l = 0; l <= nhi; l++) {
 
-          cut_st_lc[i][j][k][l] = cut_st_lo[i][j][k][l] 
+          cut_st_lc[i][j][k][l] = cut_st_lo[i][j][k][l]
                 - a_st_one*exp(-a_st_one*(cut_st_lo[i][j][k][l]-cut_st_0[i][j][k][l]))*
                 (1-exp(-a_st_one*(cut_st_lo[i][j][k][l]-cut_st_0[i][j][k][l])))/b_st_lo_one;
 
-          cut_st_hc[i][j][k][l] = cut_st_hi[i][j][k][l] 
+          cut_st_hc[i][j][k][l] = cut_st_hi[i][j][k][l]
                 - a_st_one*exp(-a_st_one*(cut_st_hi[i][j][k][l]-cut_st_0[i][j][k][l]))*
                 (1-exp(-a_st_one*(cut_st_hi[i][j][k][l]-cut_st_0[i][j][k][l])))/b_st_hi_one;
 

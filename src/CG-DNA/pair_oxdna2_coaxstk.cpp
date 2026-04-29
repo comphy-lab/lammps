@@ -293,7 +293,7 @@ void PairOxdna2Coaxstk::compute(int eflag, int vflag)
 
       f4t4 = F4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype],
                 dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
-                dtheta_cxst4_c[atype][btype]) + 
+                dtheta_cxst4_c[atype][btype]) +
              F4(theta4, a_cxst4[atype][btype], MY_PI - theta_cxst4_0[atype][btype],
                 dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
                 dtheta_cxst4_c[atype][btype]);
@@ -763,27 +763,27 @@ void PairOxdna2Coaxstk::coeff(int narg, char **arg)
   for (int i = ilo; i <= ihi; i++) {
     imod4 = i%4;
     if (imod4 == 0) imod4 = 4;
-      
+
     for (int j = jlo; j <= jhi; j++) {
       jmod4 = j%4;
       if (jmod4 == 0) jmod4 = 4;
-          
+
       k_cxst[i][j] = k_cxst_one * eta_cxst[imod4-1][jmod4-1];
-            
-    } 
-  }  
+
+    }
+  }
 
   // uniform parameters
   b_cxst_lo_one = 0.25 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one)/
         (0.5 * (cut_cxst_lo_one - cut_cxst_0_one) * (cut_cxst_lo_one - cut_cxst_0_one) -
          0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one));
-        
+
   cut_cxst_lc_one = cut_cxst_lo_one - 0.5 * (cut_cxst_lo_one - cut_cxst_0_one)/b_cxst_lo_one;
-  
+
   b_cxst_hi_one = 0.25 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one)/
         (0.5 * (cut_cxst_hi_one - cut_cxst_0_one) * (cut_cxst_hi_one - cut_cxst_0_one) -
          0.5 * (cut_cxst_0_one -cut_cxst_c_one) * (cut_cxst_0_one - cut_cxst_c_one));
-  
+
   cut_cxst_hc_one = cut_cxst_hi_one - 0.5* (cut_cxst_hi_one - cut_cxst_0_one)/b_cxst_hi_one;
 
   b_cxst1_one = a_cxst1_one*a_cxst1_one*dtheta_cxst1_ast_one*dtheta_cxst1_ast_one/(1-a_cxst1_one*dtheta_cxst1_ast_one*dtheta_cxst1_ast_one);

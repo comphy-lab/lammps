@@ -24,6 +24,7 @@
 #include "neighbor.h"
 #include "pair.h"
 #include "update.h"
+#include <cstring>
 
 using namespace LAMMPS_NS;
 using namespace FixConst;

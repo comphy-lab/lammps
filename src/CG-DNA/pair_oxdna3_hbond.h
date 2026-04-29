@@ -28,7 +28,7 @@ namespace LAMMPS_NS {
 class PairOxdna3Hbond : public PairOxdnaHbond {
  public:
   PairOxdna3Hbond(class LAMMPS *lmp);
-  // inline below has to be here in the header file, otherwise KOKKOS 
+  // inline below has to be here in the header file, otherwise KOKKOS
   // compilation fails due to undefined vtable symbols.
   inline void compute_base_site(int type, double e1[3],
    double /*e2*/[3], double /*e3*/[3], double rbs[3]) const override
