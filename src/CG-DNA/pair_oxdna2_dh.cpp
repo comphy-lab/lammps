@@ -415,8 +415,8 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
   }
 
   for (int in = 0; in < nlocal; in++) {
-    qeff[in] = 1;
-    // optionally distribute terminal charge equally
+    qeff[in] = 1.0;
+    // optionally set half a charge at terminal nucleotides to distribute charge equally
     if ((id3p[in] == -1 || id5p[in] == -1) && half_charged_ends_flag == 1) qeff[in] = 0.5;
   }
 
