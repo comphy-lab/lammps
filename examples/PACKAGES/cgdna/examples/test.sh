@@ -6,6 +6,7 @@ UNITS=lj
 
 LMPDIR=/Users/xwb17127/Work/code/lammps
 SRCDIR=$LMPDIR/src
+BUILDDIR=$LMPDIR/build
 
 DAY=$(grep -e 'LAMMPS_VERSION' $SRCDIR/version.h | awk '{print $3}' | sed 's/"//g') 
 MONTH=$(grep -e 'LAMMPS_VERSION' $SRCDIR/version.h | awk '{print $4}' | sed 's/"//g') 
@@ -28,21 +29,22 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
 
   fi
 
-  echo '# Compiling executable in' $SRCDIR | tee -a $EXDIR/test.log
+  echo '# Compiling executable in' $BUILDDIR | tee -a $EXDIR/test.log
 
-  cd $SRCDIR
-  make clean-all | tee -a $EXDIR/test.log
-  make purge | tee -a $EXDIR/test.log
-  make pu | tee -a $EXDIR/test.log
-  make ps | tee -a $EXDIR/test.log
-  make -j14 mpi | tee -a $EXDIR/test.log
+  cd $LMPDIR
+  rm -rf $BUILDDIR
+  mkdir $BUILDDIR
+  cd $BUILDDIR
+  cmake ../cmake/ -DBUILD_MPI=yes -DLAMMPS_MACHINE=mpi -DPKG_ASPHERE=on -DPKG_MOLECULE=on -DPKG_CG-DNA=on -DCMAKE_CXX_STANDARD=23  | tee -a $EXDIR/test.log
+  cmake --build . --target clean | tee -a $EXDIR/test.log
+  cmake --build . -j14 | tee -a $EXDIR/test.log
 
   ######################################################
   printf '\n# Running oxDNA duplex1 NVE test\n' | tee -a $EXDIR/test.log
   cd $EXDIR/oxDNA/duplex1
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex1 .
   cp ../data.duplex1 .
 
@@ -147,7 +149,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA/duplex2
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex2 .
   cp ../data.duplex2 .
 
@@ -252,7 +254,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA/potential_file
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex1 .
   cp ../data.duplex1 .
   if [ $UNITS = lj ]; then
@@ -362,7 +364,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA2/duplex1
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex1 .
   cp ../data.duplex1 .
 
@@ -467,7 +469,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA2/duplex2
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex2 .
   cp ../data.duplex2 .
 
@@ -572,7 +574,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA2/duplex3
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex3 .
   cp ../data.duplex3 .
 
@@ -677,7 +679,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA2/dsring
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.dsring .
   cp ../data.dsring .
 
@@ -782,7 +784,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA2/potential_file
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex1 .
   cp ../data.duplex1 .
   if [ $UNITS = lj ]; then
@@ -892,7 +894,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA3/duplex2
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex2 .
   cp ../data.duplex2 .
   if [ $UNITS = lj ]; then
@@ -1155,7 +1157,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxDNA3/unique_bp
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.dsring2 .
   cp ../data.dsring2 .
 
@@ -1207,7 +1209,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxRNA2/duplex2
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex2 .
   cp ../data.duplex2 .
 
@@ -1312,7 +1314,7 @@ if [ $# -eq 1 ] && [ $1 = run ]; then
   cd $EXDIR/oxRNA2/potential_file
   mkdir test
   cd test
-  cp $SRCDIR/lmp_mpi .
+  cp $BUILDDIR/lmp_mpi .
   cp ../in.duplex2 .
   cp ../data.duplex2 .
   if [ $UNITS = lj ]; then
