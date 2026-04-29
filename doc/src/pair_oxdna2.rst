@@ -147,8 +147,8 @@ description of the oxDNA2 force field.
    first coefficient after *oxdna2/hbond* (seq=seqdep in the above
    example) and the two coefficients after *oxdna2/dh* (T=0.1 and
    rhos=0.5 in the above example).
-   *oxdna2/dh* has the option to set half a charge at terminal nucleotides 
-   (half_charged_ends yes) to aid coaxial stacking. When using a 
+   *oxdna2/dh* has the option to set half a charge at terminal nucleotides
+   (half_charged_ends yes) to aid coaxial stacking. When using a
    Langevin thermostat e.g. through :doc:`fix langevin <fix_langevin>` or
    :doc:`fix nve/dotc/langevin <fix_nve_dotc_langevin>` the temperature
    coefficients have to be matched to the one used in the fix.
@@ -166,12 +166,12 @@ description of the oxDNA2 force field.
 
    If data files are produced with :doc:`write_data <write_data>`, then
    the :doc:`newton <newton>` command should be set to *newton on*.
-   Otherwise the data files will not have the same 3'-to-5' polarity 
+   Otherwise the data files will not have the same 3'-to-5' polarity
    as the initial data file. This limitation does not apply to
    binary restart files produced with :doc:`write_restart <write_restart>`.
 
 Example input and data files for DNA duplexes can be found in
-``examples/PACKAGES/cgdna/examples/lj_units/oxDNA2/`` or in the 
+``examples/PACKAGES/cgdna/examples/lj_units/oxDNA2/`` or in the
 corresponding folder for real units.
 A simple python setup tool which creates single straight or helical DNA
 strands, DNA duplexes or arrays of DNA duplexes can be found in
@@ -244,10 +244,10 @@ similar file structure to the examples found in
 Unique base pairing
 """"""""""""""""""""""
 
-Unique base pairing describes the restriction on the specific complementary 
-nucleotide with which a particular base can pair. This can be used to prevent 
+Unique base pairing describes the restriction on the specific complementary
+nucleotide with which a particular base can pair. This can be used to prevent
 asymmetric base pairs or to simplify the free energy landscape. With unique
-base pairing enabled base pairs can only form between complementary nucleotides 
+base pairing enabled base pairs can only form between complementary nucleotides
 with specific atom IDs. This functionality draws on :doc:`fix property/atom <fix_property_atom>`
 and a modified :doc:`read_data <read_data>` command.
 
@@ -262,8 +262,8 @@ To use unique base pairing, the data file of a system with N nucleotides must co
    3 idc3
    4 idc4
    ...
-   N idcN 
-   
+   N idcN
+
 where idc is the non-negative atom ID of a complementary nucleotide that binds uniquely
 to the preceding atom ID.
 
@@ -283,12 +283,12 @@ and a complementary strand 5'-T-T-T-T-3' with atom IDs 5'-8-7-6-5-3' set up as
    6 -1
    7 -1
    8 1
- 
+
 the A nucleotide with ID 1 can only hybridize with the T nucleotide with ID 8 and
-the A nucleotide with ID 4 can only hybridize with the T nucleotide with ID 5, 
+the A nucleotide with ID 4 can only hybridize with the T nucleotide with ID 5,
 whereas the A nucleotides with ID 2 and 3 can hybridize with either T nucleotide with ID 6 and 7.
 
-The input file requires an instance of the :doc:`fix property/atom <fix_property_atom>` and a 
+The input file requires an instance of the :doc:`fix property/atom <fix_property_atom>` and a
 :doc:`read_data <read_data>` command as follows:
 
 .. code-block:: LAMMPS

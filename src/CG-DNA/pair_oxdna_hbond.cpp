@@ -945,7 +945,7 @@ void PairOxdnaHbond::init_style()
   }
   else {
     if (comm->me == 0) utils::logmesg(lmp,"Parsing unique base pairing\n");
- 
+
     int idx, flag, cols;
     idx = atom->find_custom("idc", flag, cols);
     if (idx >= 0 && flag == 0) {

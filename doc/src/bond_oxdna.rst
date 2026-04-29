@@ -65,9 +65,9 @@ Examples
    cannot be changed without reparameterizing the entire model. They are
    provided in forms compatible with both *units lj* and *units real*
    (see documentation of :doc:`units <units>`).  These can also be read
-   from a potential file (sole option for oxDNA3) with correct 
+   from a potential file (sole option for oxDNA3) with correct
    unit style by specifying the name of the file. Several potential files
-   for each unit style are included in the ``potentials`` directory of 
+   for each unit style are included in the ``potentials`` directory of
    the LAMMPS distribution.
 
 Description
@@ -104,7 +104,7 @@ in the data file or restart files read by the :doc:`read_data
    bond style the analogous pair styles *oxdna2/excv* , *oxdna2/stk* ,
    *oxdna2/xstk* , *oxdna2/coaxstk* , *oxdna2/hbond* and an additional
    Debye-Hueckel pair style *oxdna2/dh* have to be defined. The same
-   applies to the oxDNA3 :ref:`(Bonato) <Bonato>` 
+   applies to the oxDNA3 :ref:`(Bonato) <Bonato>`
    and oxRNA2 :ref:`(Sulc1) <Sulc01>` styles.
 
 .. note::
@@ -120,7 +120,7 @@ in the data file or restart files read by the :doc:`read_data
 
    If data files are produced with :doc:`write_data <write_data>`, then
    the :doc:`newton <newton>` command should be set to *newton on*.
-   Otherwise the data files will not have the same 3'-to-5' polarity 
+   Otherwise the data files will not have the same 3'-to-5' polarity
    as the initial data file. This limitation does not apply to
    binary restart files produced with :doc:`write_restart <write_restart>`.
 

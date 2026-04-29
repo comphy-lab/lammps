@@ -258,7 +258,7 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
       f4t1 = F4(theta1, a_cxst1[atype][btype], theta_cxst1_0[atype][btype],
                 dtheta_cxst1_ast[atype][btype], b_cxst1[atype][btype],
                 dtheta_cxst1_c[atype][btype]) +
-             F4(theta1p, a_cxst1[atype][btype], theta_cxst1_0[atype][btype], 
+             F4(theta1p, a_cxst1[atype][btype], theta_cxst1_0[atype][btype],
                 dtheta_cxst1_ast[atype][btype], b_cxst1[atype][btype],
                 dtheta_cxst1_c[atype][btype]);
 
