@@ -371,7 +371,7 @@ void PairOxdna3Xstk::compute(int eflag, int vflag)
       evdwl = f4t1 * f4t2 * f4t3 * (f2_33 * f4t4_33 * f4t7_33 * f4t8_33 + f2_55 * f4t4_55 * f4t7_55 * f4t8_55) * factor_lj;
 
       // early rejection criterium
-      if (evdwl) {
+      if (evdwl != 0.0) {
 
       df2_33 = DF2(r_bsbs, k_xst[atype][btype], cut_xst_0_33[a3ptype][atype][btype][b3ptype],
                  cut_xst_lc_33[a3ptype][atype][btype][b3ptype], cut_xst_hc_33[a3ptype][atype][btype][b3ptype],
