@@ -93,6 +93,8 @@ Examples
 Description
 """""""""""
 
+.. versionadded:: 30Mar2026
+
 The *oxdna3* pair styles compute the pairwise-additive parts of the
 oxDNA force field for coarse-grained modelling of DNA. The effective
 interaction between the nucleotides consists of potentials for the

@@ -514,7 +514,7 @@ void Atom::peratom_create()
 
   add_peratom("id3p",&id3p,tagintsize,0);
   add_peratom("id5p",&id5p,tagintsize,0);
-  add_peratom("qeff",&qeff,tagintsize,0);
+  add_peratom("qeff",&qeff,DOUBLE,0);
 
   // DPD-REACT package
 

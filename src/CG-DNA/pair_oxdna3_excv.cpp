@@ -60,10 +60,10 @@ void PairOxdna3Excv::coeff(int narg, char **arg)
   double epsilon_bsbs_one, sigma_bsbs_one;
   double cut_bsbs_ast_one, cut_bsbs_c_one, b_bsbs_one;
 
-  for (int i = 0; i <= nhi; i++) {
+  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
     for (int j = 0; j <= nhi; j++) {
       for (int k = 0; k <= nhi; k++) {
-        for (int l = 0; l <= nhi; l++) {
+        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
           sigma4_bsbs[i][j][k][l] = 0.0;
           cut4_bsbs_ast[i][j][k][l] = 0.0;
         }

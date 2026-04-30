@@ -112,10 +112,10 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
 
   T = utils::numeric(FLERR,arg[2],false,lmp);
 
-  for (int i = 0; i <= nhi; i++) {
+  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
     for (int j = 0; j <= nhi; j++) {
       for (int k = 0; k <= nhi; k++) {
-        for (int l = 0; l <= nhi; l++) {
+        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
           cut_st_0[i][j][k][l] = 0.0;
           cut_st_c[i][j][k][l] = 0.0;
           cut_st_lo[i][j][k][l] = 0.0;
@@ -242,7 +242,7 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
     }
     if ((iloc != arg[0]) || (jloc != arg[1]) || (potential_name != "stk"))
       error->one(FLERR, "No corresponding stk potential found in file {} for pair type {} {}",
-                 arg[4], arg[0], arg[1]);
+                 arg[3], arg[0], arg[1]);
 
 
 
@@ -384,10 +384,10 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   }
 
   // parameters depending on tetramer
-  for (int i = 0; i <= nhi; i++) {
+  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
     for (int j = nlo; j <= nhi; j++) {
       for (int k = nlo; k <= nhi; k++) {
-        for (int l = 0; l <= nhi; l++) {
+        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
 
           cut_st_lc[i][j][k][l] = cut_st_lo[i][j][k][l]
                 - a_st_one*exp(-a_st_one*(cut_st_lo[i][j][k][l]-cut_st_0[i][j][k][l]))*

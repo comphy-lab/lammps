@@ -768,10 +768,10 @@ void PairOxdna3Xstk::coeff(int narg, char **arg)
   double b_xst8_one, dtheta_xst8_c_one;
 
 
-  for (int i = 0; i <= nhi; i++) {
+  for (int i = 0; i <= nhi; i++) { // type 0 for terminal j
     for (int j = 0; j <= nhi; j++) {
       for (int k = 0; k <= nhi; k++) {
-        for (int l = 0; l <= nhi; l++) {
+        for (int l = 0; l <= nhi; l++) { // type 0 for terminal k
           cut_xst_0_33[i][j][k][l] = 0.0;
           cut_xst_0_55[i][j][k][l] = 0.0;
           cut_xst_c_33[i][j][k][l] = 0.0;

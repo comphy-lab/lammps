@@ -113,6 +113,7 @@ Examples
 
 Description
 """""""""""
+.. versionadded:: 30Mar2026
 
 The *oxdna2* pair styles compute the pairwise-additive parts of the
 oxDNA force field for coarse-grained modelling of DNA. The effective

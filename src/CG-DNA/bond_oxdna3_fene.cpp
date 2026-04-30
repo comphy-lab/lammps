@@ -134,10 +134,10 @@ void BondOxdna3Fene::coeff(int narg, char **arg)
   int count = 0;
   for (int ib = ilo; ib <= ihi; ib++) {
     k[ib] = k[ilo];
-    for (int i = 0; i <= n; i++) {
+    for (int i = 0; i <= n; i++) { // type 0 for terminal j
       for (int j = 0; j <= n; j++) {
         for (int k = 0; k <= n; k++) {
-          for (int l = 0; l <= n; l++) {
+          for (int l = 0; l <= n; l++) { // type 0 for terminal k
             Delta[ib][i][j][k][l] = Delta[ilo][i][j][k][l];
             r0[ib][i][j][k][l] = r0[ilo][i][j][k][l];
           }

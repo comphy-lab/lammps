@@ -100,7 +100,7 @@ void PairOxdna2Dh::compute(int eflag, int vflag)
   double **f = atom->f;
   double **torque = atom->torque;
   int *type = atom->type;
-  tagint *qeff = atom->qeff;
+  double *qeff = atom->qeff;
 
   int nlocal = atom->nlocal;
   int newton_pair = force->newton_pair;
@@ -303,7 +303,7 @@ void PairOxdna2Dh::coeff(int narg, char **arg)
   count = 0;
 
   int nlocal = atom->nlocal;
-  tagint *qeff = atom->qeff;
+  double *qeff = atom->qeff;
   tagint *id3p = atom->id3p;
   tagint *id5p = atom->id5p;
 

@@ -148,7 +148,6 @@ void BondOxdnaFene::compute(int eflag, int vflag)
 
     if (id5p[b] != -1) {
       b5ptype = atomtype[atom->map(id5p[b])];
-      b5ptype = atomtype[atom->map(id5p[b])];
     }
     else b5ptype = 0;
 
@@ -318,10 +317,10 @@ void BondOxdnaFene::coeff(int narg, char **arg)
 
   for (int i = ilo; i <= ihi; i++) {
     k[i] = k_one;
-    for (int n1 = 0; n1 <= n; n1++) {
+    for (int n1 = 0; n1 <= n; n1++) { // type 0 for terminal n2
       for (int n2 = 0; n2 <= n; n2++) {
         for (int n3 = 0; n3 <= n; n3++) {
-          for (int n4 = 0; n4 <= n; n4++) {
+          for (int n4 = 0; n4 <= n; n4++) { // type 0 for terminal n3
             Delta[i][n1][n2][n3][n4] = Delta_one;
             r0[i][n1][n2][n3][n4] = r0_one;
           }
