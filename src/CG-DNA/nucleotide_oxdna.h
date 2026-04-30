@@ -41,24 +41,24 @@ class NucleotideOxdna {
 ------------------------------------------------------------------------- */
 class NucleotideOxdna1 : public NucleotideOxdna<NucleotideOxdna1> {
  public:
-  void backbone_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rbk[3]) {
+  inline void backbone_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rbk[3]) {
     double dx_cbk_oxdna1 = ConstantsOxdna::get_dx_cbk_oxdna1();
     rbk[0] = dx_cbk_oxdna1 * e1[0];
     rbk[1] = dx_cbk_oxdna1 * e1[1];
     rbk[2] = dx_cbk_oxdna1 * e1[2];
   }
-  void stacking_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rstk[3]) {
+  inline void stacking_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rstk[3]) {
     double dx_cstk_oxdna1 = ConstantsOxdna::get_dx_cstk_oxdna1();
     rstk[0] = dx_cstk_oxdna1 * e1[0];
     rstk[1] = dx_cstk_oxdna1 * e1[1];
     rstk[2] = dx_cstk_oxdna1 * e1[2];
   }
   template <int N>
-  void base_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rbs[3]);
+  inline void base_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rbs[3]);
 };
 
 template <>
-void NucleotideOxdna1::base_site<0>(double e1[3], double /*e2*/[3],
+inline void NucleotideOxdna1::base_site<0>(double e1[3], double /*e2*/[3],
   double /*e3*/[3], double rbs[3]) {
   double dx_cbs_oxdna1 = ConstantsOxdna::get_dx_cbs_oxdna1();
   rbs[0] = dx_cbs_oxdna1*e1[0];
@@ -71,7 +71,7 @@ void NucleotideOxdna1::base_site<0>(double e1[3], double /*e2*/[3],
 ------------------------------------------------------------------------- */
 class NucleotideOxdna2 : public NucleotideOxdna<NucleotideOxdna2> {
  public:
-  void backbone_site(double e1[3], double e2[3], double /*e3*/[3], double rbk[3]) {
+  inline void backbone_site(double e1[3], double e2[3], double /*e3*/[3], double rbk[3]) {
     double dx_cbk_oxdna2 = ConstantsOxdna::get_dx_cbk_oxdna2();
     double dy_cbk_oxdna2 = ConstantsOxdna::get_dy_cbk_oxdna2();
     rbk[0] = dx_cbk_oxdna2 * e1[0] + dy_cbk_oxdna2 * e2[0];
@@ -85,18 +85,18 @@ class NucleotideOxdna2 : public NucleotideOxdna<NucleotideOxdna2> {
 ------------------------------------------------------------------------- */
 class NucleotideOxdna3 : public NucleotideOxdna<NucleotideOxdna3> {
  public:
-  void stacking_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rstk[3]) {
+  inline void stacking_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rstk[3]) {
     double dx_cstk_oxdna3 = ConstantsOxdna::get_dx_cstk_oxdna3();
     rstk[0] = dx_cstk_oxdna3 * e1[0];
     rstk[1] = dx_cstk_oxdna3 * e1[1];
     rstk[2] = dx_cstk_oxdna3 * e1[2];
   }
   template <int N>
-  void base_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rbs[3]);
+  inline void base_site(double e1[3], double /*e2*/[3], double /*e3*/[3], double rbs[3]);
 };
 
 template <>
-void NucleotideOxdna3::base_site<0>(double e1[3], double /*e2*/[3],
+inline void NucleotideOxdna3::base_site<0>(double e1[3], double /*e2*/[3],
   double /*e3*/[3], double rbs[3]) {
   double dx_cbs_pyr_oxdna3 = ConstantsOxdna::get_dx_cbs_pyr_oxdna3();
   rbs[0] = dx_cbs_pyr_oxdna3*e1[0];
@@ -104,7 +104,7 @@ void NucleotideOxdna3::base_site<0>(double e1[3], double /*e2*/[3],
   rbs[2] = dx_cbs_pyr_oxdna3*e1[2];
 }
 template <>
-void NucleotideOxdna3::base_site<1>(double e1[3], double /*e2*/[3],
+inline void NucleotideOxdna3::base_site<1>(double e1[3], double /*e2*/[3],
   double /*e3*/[3], double rbs[3]) {
   double dx_cbs_pur_oxdna3 = ConstantsOxdna::get_dx_cbs_pur_oxdna3();
   rbs[0] = dx_cbs_pur_oxdna3*e1[0];
@@ -112,7 +112,7 @@ void NucleotideOxdna3::base_site<1>(double e1[3], double /*e2*/[3],
   rbs[2] = dx_cbs_pur_oxdna3*e1[2];
 }
 template <>
-void NucleotideOxdna3::base_site<2>(double e1[3], double /*e2*/[3],
+inline void NucleotideOxdna3::base_site<2>(double e1[3], double /*e2*/[3],
   double /*e3*/[3], double rbs[3]) {
   double dx_cbs_pyr_oxdna3 = ConstantsOxdna::get_dx_cbs_pyr_oxdna3();
   rbs[0] = dx_cbs_pyr_oxdna3*e1[0];
@@ -120,7 +120,7 @@ void NucleotideOxdna3::base_site<2>(double e1[3], double /*e2*/[3],
   rbs[2] = dx_cbs_pyr_oxdna3*e1[2];
 }
 template <>
-void NucleotideOxdna3::base_site<3>(double e1[3], double /*e2*/[3],
+inline void NucleotideOxdna3::base_site<3>(double e1[3], double /*e2*/[3],
   double /*e3*/[3], double rbs[3]) {
   double dx_cbs_pur_oxdna3 = ConstantsOxdna::get_dx_cbs_pur_oxdna3();
   rbs[0] = dx_cbs_pur_oxdna3*e1[0];
@@ -133,7 +133,7 @@ void NucleotideOxdna3::base_site<3>(double e1[3], double /*e2*/[3],
 ------------------------------------------------------------------------- */
 class NucleotideOxrna2 : public NucleotideOxdna<NucleotideOxrna2> {
  public:
-  void backbone_site(double e1[3], double /*e2*/[3], double e3[3], double rbk[3]) {
+  inline void backbone_site(double e1[3], double /*e2*/[3], double e3[3], double rbk[3]) {
     double dx_cbk_oxrna2 = ConstantsOxdna::get_dx_cbk_oxrna2();
     double dz_cbk_oxrna2 = ConstantsOxdna::get_dz_cbk_oxrna2();
     rbk[0] = dx_cbk_oxrna2 * e1[0] + dz_cbk_oxrna2 * e3[0];
