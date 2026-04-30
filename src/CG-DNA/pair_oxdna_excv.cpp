@@ -111,7 +111,7 @@ inline void PairOxdnaExcv::compute_backbone_site(double e1[3], double /*e2*/[3],
     double /*e3*/[3], double rbk[3]) const
 {
   NucleotideOxdna1 oxdna1;
-  oxdna1.backbone_site(e1, NULL, NULL, rbk);
+  oxdna1.backbone_site(e1, nullptr, nullptr, rbk);
 }
 
 /* ---------------------------------------------------------------------
@@ -122,7 +122,7 @@ inline void PairOxdnaExcv::compute_base_site(int /*type*/, double e1[3],
   double /*e2*/[3], double /*e3*/[3], double rbs[3]) const
 {
   NucleotideOxdna1 oxdna1;
-  oxdna1.base_site<0>(e1, NULL, NULL, rbs);
+  oxdna1.base_site<0>(e1, nullptr, nullptr, rbs);
 }
 
 /* ----------------------------------------------------------------------
@@ -156,10 +156,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
   int newton_pair = force->newton_pair;
   int *alist,*blist,*numneigh,**firstneigh;
 
-  auto *avec = dynamic_cast<AtomVecEllipsoid *>(atom->style_match("ellipsoid"));
-  AtomVecEllipsoid::Bonus *bonus = avec->bonus;
-
-  int a,b,in,ia,ib,anum,bnum,atype,btype;
+  int a,b,ia,ib,anum,bnum,atype,btype;
   tagint *id3p = atom->id3p;
   tagint *id5p = atom->id5p;
   int _3ptype,_5ptype;
@@ -437,7 +434,7 @@ void PairOxdnaExcv::compute(int eflag, int vflag)
         }
       }
 
-      if (evdwl) {
+      if (evdwl != 0.0) {
 
         delf[0] = delr_bsbs[0]*fpair;
         delf[1] = delr_bsbs[1]*fpair;

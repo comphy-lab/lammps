@@ -30,22 +30,22 @@ class PairOxdna3Hbond : public PairOxdnaHbond {
   PairOxdna3Hbond(class LAMMPS *lmp);
   // inline below has to be here in the header file, otherwise KOKKOS
   // compilation fails due to undefined vtable symbols.
-  inline void compute_base_site(int type, double e1[3],
+  void compute_base_site(int type, double e1[3],
    double /*e2*/[3], double /*e3*/[3], double rbs[3]) const override
   {
    NucleotideOxdna3 oxdna3;
    switch (type) {
      case 0:
-       oxdna3.base_site<0>(e1, NULL, NULL, rbs);
+       oxdna3.base_site<0>(e1, nullptr, nullptr, rbs);
        break;
      case 1:
-       oxdna3.base_site<1>(e1, NULL, NULL, rbs);
+       oxdna3.base_site<1>(e1, nullptr, nullptr, rbs);
        break;
      case 2:
-       oxdna3.base_site<2>(e1, NULL, NULL, rbs);
+       oxdna3.base_site<2>(e1, nullptr, nullptr, rbs);
        break;
      case 3:
-       oxdna3.base_site<3>(e1, NULL, NULL, rbs);
+       oxdna3.base_site<3>(e1, nullptr, nullptr, rbs);
        break;
    }
   };

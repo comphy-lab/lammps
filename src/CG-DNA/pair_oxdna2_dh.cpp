@@ -75,7 +75,7 @@ inline void PairOxdna2Dh::compute_backbone_site(double e1[3], double e2[3],
   double /*e3*/[3], double rbk[3]) const
 {
   NucleotideOxdna2 oxdna2;
-  oxdna2.backbone_site(e1, e2, NULL, rbk);
+  oxdna2.backbone_site(e1, e2, nullptr, rbk);
 }
 
 /* ----------------------------------------------------------------------
