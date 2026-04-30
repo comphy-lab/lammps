@@ -149,9 +149,9 @@ void omega_thermostat_kokkos();
     KK_FLOAT boltz,dt,mvv2e,ftm2v,fran_prop_const;
 
     // For omega thermostat
-    typename ArrayTypes<DeviceType>::t_f_array d_torque;
-    typename ArrayTypes<DeviceType>::t_v_array d_omega; 
-    typename ArrayTypes<DeviceType>::t_float_1d d_radius;
+    typename AT::t_kkacc_1d_3 d_torque;  
+    typename AT::t_kkfloat_1d_3 d_omega;  
+    typename AT::t_kkfloat_1d d_radius;   
 
     void compute_target();
     // For angmom thermostat
