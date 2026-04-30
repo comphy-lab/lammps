@@ -66,7 +66,7 @@ fix OXDNA/LRF
 
 Fix OXDNA/LRF calculates the local reference frame of ellipsoids from the quaternions.
 All oxDNA bond and pair styles require the Cartesian local reference frame during the force,
-torque and energy calculation. The fix is invoked internally at the pre-force stage 
+torque and energy calculation. The fix is invoked internally at the pre-force stage
 and not to be used in an input script.
 
 fix STORE/ATOM
