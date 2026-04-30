@@ -30,11 +30,11 @@ class PairOxdna3Stk : public PairOxdnaStk {
   PairOxdna3Stk(class LAMMPS *lmp);
   // inline below has to be here in the header file, otherwise KOKKOS
   // compilation fails due to undefined vtable symbols.
-  inline void compute_stacking_site(double e1[3], double /*e2*/[3],
+  void compute_stacking_site(double e1[3], double /*e2*/[3],
    double /*e3*/[3], double rstk[3]) const override
   {
    NucleotideOxdna3 oxdna3;
-   oxdna3.stacking_site(e1, NULL, NULL, rstk);
+   oxdna3.stacking_site(e1, nullptr, nullptr, rstk);
   };
   void coeff(int, char **) override;
 

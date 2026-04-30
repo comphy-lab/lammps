@@ -139,16 +139,16 @@ inline void PairOxdna3Xstk::compute_base_site(int type, double e1[3],
   NucleotideOxdna3 oxdna3;
   switch (type) {
     case 0:
-      oxdna3.base_site<0>(e1, NULL, NULL, rbs);
+      oxdna3.base_site<0>(e1, nullptr, nullptr, rbs);
       break;
     case 1:
-      oxdna3.base_site<1>(e1, NULL, NULL, rbs);
+      oxdna3.base_site<1>(e1, nullptr, nullptr, rbs);
       break;
     case 2:
-      oxdna3.base_site<2>(e1, NULL, NULL, rbs);
+      oxdna3.base_site<2>(e1, nullptr, nullptr, rbs);
       break;
     case 3:
-      oxdna3.base_site<3>(e1, NULL, NULL, rbs);
+      oxdna3.base_site<3>(e1, nullptr, nullptr, rbs);
       break;
   }
 }

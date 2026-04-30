@@ -130,7 +130,7 @@ inline void PairOxdna2Coaxstk::compute_backbone_site(double e1[3], double /*e2*/
   double /*e3*/[3], double rbk[3]) const
 {
   NucleotideOxdna1 oxdna1;
-  oxdna1.backbone_site(e1, NULL, NULL, rbk);
+  oxdna1.backbone_site(e1, nullptr, nullptr, rbk);
 }
 
 /* ----------------------------------------------------------------------
@@ -141,7 +141,7 @@ inline void PairOxdna2Coaxstk::compute_stacking_site(double e1[3], double /*e2*/
     double /*e3*/[3], double rstk[3]) const
 {
   NucleotideOxdna1 oxdna1;
-  oxdna1.stacking_site(e1, NULL, NULL, rstk);
+  oxdna1.stacking_site(e1, nullptr, nullptr, rstk);
 }
 
 /* ----------------------------------------------------------------------

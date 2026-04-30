@@ -111,7 +111,7 @@ inline void PairOxrna2Xstk::compute_base_site(int /*type*/, double e1[3],
   double /*e2*/[3], double /*e3*/[3], double rbs[3]) const
 {
   NucleotideOxdna1 oxdna1;
-  oxdna1.base_site<0>(e1, NULL, NULL, rbs);
+  oxdna1.base_site<0>(e1, nullptr, nullptr, rbs);
 }
 
 /* ----------------------------------------------------------------------
