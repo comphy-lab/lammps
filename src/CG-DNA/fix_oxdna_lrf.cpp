@@ -29,8 +29,7 @@
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
-FixOxdnaLRF::FixOxdnaLRF(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), nxyz(nullptr)
+FixOxdnaLRF::FixOxdnaLRF(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg), nxyz(nullptr)
 {
   comm_forward = 9;
 
@@ -43,8 +42,7 @@ FixOxdnaLRF::FixOxdnaLRF(LAMMPS *lmp, int narg, char **arg) :
 
   int nlocal = atom->nlocal;
   for (int i = 0; i < nlocal; i++)
-    for (int j = 0; j < size_peratom_cols; j++)
-      nxyz[i][j] = 0.0;
+    for (int j = 0; j < size_peratom_cols; j++) nxyz[i][j] = 0.0;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -237,7 +235,6 @@ void FixOxdnaLRF::compute_lrf()
       nxyz[i][6] = nz_temp[0];
       nxyz[i][7] = nz_temp[1];
       nxyz[i][8] = nz_temp[2];
-
     }
   }
 

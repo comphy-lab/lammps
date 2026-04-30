@@ -38,8 +38,8 @@ class BondOxdnaFene : public Bond {
   double single(int, double, int, int, double &) override;
 
  protected:
-  double *k, *****Delta, *****r0;   // FENE
-  double **nxyz_xtrct;              // per-atom arrays for local unit vectors
+  double *k, *****Delta, *****r0;    // FENE
+  double **nxyz_xtrct;               // per-atom arrays for local unit vectors
 
   void allocate();
   class FixOxdnaLRF *fix_lrf;    // ptr to oxdna/lrf fix
