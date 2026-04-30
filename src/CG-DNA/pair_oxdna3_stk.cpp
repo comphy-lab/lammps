@@ -94,12 +94,8 @@ void PairOxdna3Stk::coeff(int narg, char **arg)
   // stacking interaction
   count = 0;
 
+  double tmp, theta_st4_0_one;
   double T, epsilon_st_one, xi_st_one, kappa_st_one, a_st_one, b_st_lo_one, b_st_hi_one;
-  double cut_st_0_one, cut_st_c_one, cut_st_lo_one, cut_st_hi_one;
-  double cut_st_lc_one, cut_st_hc_one, tmp, shift_st_one;
-
-  double a_st4_one, theta_st4_0_one, dtheta_st4_ast_one;
-  double b_st4_one, dtheta_st4_c_one;
 
   double a_st5_one, theta_st5_0_one, dtheta_st5_ast_one;
   double b_st5_one, dtheta_st5_c_one;

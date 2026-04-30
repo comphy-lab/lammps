@@ -113,7 +113,7 @@ void FixOxdnaLRF::grow_arrays(int nmax)
 
 /* ---------------------------------------------------------------------- */
 
-void FixOxdnaLRF::copy_arrays(int i, int j, int delflag)
+void FixOxdnaLRF::copy_arrays(int i, int j, int /*delflag*/)
 {
   memcpy(nxyz[j], nxyz[i], sizeof(double) * size_peratom_cols);
 }
