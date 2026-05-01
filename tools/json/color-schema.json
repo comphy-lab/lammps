@@ -23,7 +23,8 @@
         "colors": {"type": "array",
                    "items": {
                        "properties" : {
-                           "red" : { "type": "number"}, 
+                           "name" : { "type": "string"},
+                           "red" : { "type": "number"},
                            "green" : { "type": "number"},
                            "blue" : { "type": "number"}
                        },
