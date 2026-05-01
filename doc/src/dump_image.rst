@@ -127,7 +127,7 @@ Syntax
    dump_modify dump-ID keyword values ...
 
 * these keywords apply only to the *image* and *movie* styles and are documented on this page
-* keyword = *acolor* or *adiam* or *amap* or *gmap* or *atrans* or *backcolor* or *backcolor2* or *bcolor* or *bdiam* or *btrans* or *bitrate* or *boxcolor* or *color* or *framerate* or *axestrans* or *boxtrans* or *subboxtrans* or *ccolor* or *ctrans* or *fcolor* or *ftrans*
+* keyword = *acolor* or *adiam* or *amap* or *gmap* or *atrans* or *backcolor* or *backcolor2* or *bcolor* or *bdiam* or *btrans* or *bitrate* or *boxcolor* or *color* or *lights* or *loadcolors* or *savecolors* or *framerate* or *axestrans* or *boxtrans* or *subboxtrans* or *ccolor* or *ctrans* or *fcolor* or *ftrans*
 * see the :doc:`dump modify <dump_modify>` doc page for more general keywords
 
   .. parsed-literal::
@@ -188,6 +188,10 @@ Syntax
          hex = 24-bit RGB color in hexadecimal
        *lights* args = ambient key fill back
          ambient key fill back = set light intensity value from 0.0 to 1.0
+       *loadcolors* arg = filename
+         filename = load color definitions, per-type colors, and lights from JSON format file
+       *savecolors* arg = filename
+         filename = save per-type colors and lights to JSON format file
        *ccolor* args = computeID color
          computeID = ID of the compute
          color = name of color for image objects provided by this compute when using "const" color style
@@ -1238,6 +1242,55 @@ directions. The *key* light is the primary light source and creates
 the main highlights. The *fill* light is a secondary light source that
 softens shadows created by the key light. The *back* light illuminates
 the scene from behind the camera to provide depth.
+
+----------
+
+.. versionadded:: TBD
+
+The *loadcolors* and *savecolors* keywords can be used to read or write
+the current per-atom-type color assignments and their definitions from
+or to as `JSON format <https://www.json.org/>`_ file.  Also, the current
+*lights* settings are read and applied or stored.  These files can be
+read, modified interactively, and written by `LAMMPS-GUI
+<https://lammps-gui.lammps.org>`_.  This provides a convenient way to
+have custom color definitions and custom color to type assignments.
+When the system has more atom types than colors, colors are named
+"type#" with "#" being the number of the atom type so that the color
+names are unique.  Per-element colors cannot currently be saved or
+customized currently.
+
+Below is a simple example for a colors file for a system with two
+atom types using the default color and light settings:
+
+.. code-block:: json
+
+   {
+        "application": "LAMMPS",
+        "format": "colors",
+        "revision": 1,
+        "title": "per-type colors for dump image",
+        "schema": "https://download.lammps.org/json/color-schema.json",
+        "colors": [
+           {
+                "name": "red",
+                "red": 1.0,
+                "green": 0.0,
+                "blue": 0.0
+            },
+            {
+                "name": "forestgreen",
+                "red": 0.133,
+                "green": 0.545,
+                "blue": 0.133
+            }
+        ],
+        "lights": {
+            "ambient": 0.0,
+            "key": 0.9,
+            "fill": 0.45,
+            "back": 0.9
+        }
+   }
 
 ----------
 
