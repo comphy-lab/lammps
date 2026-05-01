@@ -59,10 +59,13 @@
 #include "update.h"
 #include "variable.h"
 
+#include <algorithm>
+#include <array>
 #include <cctype>
 #include <cinttypes>
 #include <cmath>
 #include <cstring>
+#include <unordered_set>
 
 // clang-format on
 
@@ -111,10 +114,14 @@ savedLights reset_lighting(Image *image, double ambient, double key, double fill
 
 void restore_lighting(const savedLights &saved, Image *image)
 {
-  image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] = saved.ambient;
-  image->keyLightColor[0] = image->keyLightColor[1] = image->keyLightColor[2] = saved.key;
-  image->fillLightColor[0] = image->fillLightColor[1] = image->fillLightColor[2] = saved.fill;
-  image->backLightColor[0] = image->backLightColor[1] = image->backLightColor[2] = saved.back;
+  image->ambientColor[0] = image->ambientColor[1] = image->ambientColor[2] =
+      std::clamp(0.0, 1.0, saved.ambient);
+  image->keyLightColor[0] = image->keyLightColor[1] = image->keyLightColor[2] =
+      std::clamp(0.0, 1.0, saved.key);
+  image->fillLightColor[0] = image->fillLightColor[1] = image->fillLightColor[2] =
+      std::clamp(0.0, 1.0, saved.fill);
+  image->backLightColor[0] = image->backLightColor[1] = image->backLightColor[2] =
+      std::clamp(0.0, 1.0, saved.back);
 }
 
 }    // namespace
@@ -2877,7 +2884,7 @@ int DumpImage::modify_param(int narg, char **arg)
     if (comm->me == 0) {
       SafeFilePtr fp = fopen(arg[1], "w");
       if (fp == nullptr)
-        error->one(FLERR, argoff + 1, "Cannot open color JSON file {} for writing: {}", filename,
+        error->one(FLERR, argoff + 1, "Cannot open color JSON file {} for writing: {}", arg[1],
                    utils::getsyserror());
 
       json colordata;
@@ -2986,35 +2993,51 @@ int DumpImage::modify_param(int narg, char **arg)
         utils::logmesg(lmp, "Read JSON color file {} with {} colors{}\n", arg[1], ncolors, title);
       }
 
-      // reset all named colors from JSON data
-      for (const auto &c : colordata["colors"]) {
-        if (!c.contains("name")) continue;
-        std::string name = c["name"];
-        double r = 0.0;
-        double g = 0.0;
-        double b = 0.0;
-        if (c.contains("red")) r = c["red"];
-        if (c.contains("green")) g = c["green"];
-        if (c.contains("blue")) b = c["blue"];
-        image->addcolor(name, r, g, b);
+      if (ncolors > 0) {
+
+        // reset all named colors from JSON data
+        for (const auto &c : colordata["colors"]) {
+          if (!c.contains("name")) continue;
+          std::string name = c["name"];
+          double r = 0.0;
+          double g = 0.0;
+          double b = 0.0;
+          if (c.contains("red")) r = c["red"];
+          if (c.contains("green")) g = c["green"];
+          if (c.contains("blue")) b = c["blue"];
+          if (int i = image->addcolor(name, r, g, b)) {
+            error->all(FLERR, "Invalid value for {} component of color {}: {}\n",
+                       std::array<std::string, 4>{"none", "red", "green", "blue"}[i], name,
+                       std::array<double, 4>{0.0, r, g, b}[i]);
+          }
+        }
+        // create additional named colors, if needed
+        for (int itype = ncolors + 1; itype <= atom->ntypes; ++itype) {
+          std::string name = fmt::format("type{}", itype);
+          double r = 0.0;
+          double g = 0.0;
+          double b = 0.0;
+          int i = (itype - 1) % ncolors;
+          const auto &c = colordata["colors"][i];
+          if (c.contains("red")) r = c["red"];
+          if (c.contains("green")) g = c["green"];
+          if (c.contains("blue")) b = c["blue"];
+          image->addcolor(name, r, g, b);
+        }
+        // set per-type colors. use a separate loop to avoid invalid pointers due to rehashes
+        for (int itype = 1; itype <= atom->ntypes; ++itype) {
+          std::string name = fmt::format("type{}", itype);
+          int i = (itype - 1) % ncolors;
+          const auto &c = colordata["colors"][i];
+          // if we have more types than colors, don't use the name but use type<itype>
+          // the corresponding entry has been created in the previous loop
+          if (itype <= ncolors)
+            if (c.contains("name")) name = c["name"];
+          auto *rgb = image->color2rgb(name);
+          if (rgb) colortype[itype] = rgb;
+        }
       }
-      // store all per-type colors, create additional named colors, if needed
-      for (int itype = 1; itype <= atom->ntypes; ++itype) {
-        std::string name = fmt::format("type{}", itype);
-        double r = 0.0;
-        double g = 0.0;
-        double b = 0.0;
-        int i = (itype - 1) % ncolors;
-        const auto &c = colordata["colors"][i];
-        // if we have more types than colors, don't use the name but use type<itype>
-        if (itype <= ncolors)
-          if (c.contains("name")) name = c["name"];
-        if (c.contains("red")) r = c["red"];
-        if (c.contains("green")) g = c["green"];
-        if (c.contains("blue")) b = c["blue"];
-        image->addcolor(name, r, g, b);
-        colortype[itype] = image->color2rgb(name);
-      }
+
       // apply lights, if present
       if (colordata.contains("lights")) {
         savedLights lights;

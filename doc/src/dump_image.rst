@@ -1249,15 +1249,15 @@ the scene from behind the camera to provide depth.
 
 The *loadcolors* and *savecolors* keywords can be used to read or write
 the current per-atom-type color assignments and their definitions from
-or to as `JSON format <https://www.json.org/>`_ file.  Also, the current
+or to a `JSON format <https://www.json.org/>`_ file.  Also, the current
 *lights* settings are read and applied or stored.  These files can be
 read, modified interactively, and written by `LAMMPS-GUI
 <https://lammps-gui.lammps.org>`_.  This provides a convenient way to
 have custom color definitions and custom color to type assignments.
 When the system has more atom types than colors, colors are named
 "type#" with "#" being the number of the atom type so that the color
-names are unique.  Per-element colors cannot currently be saved or
-customized currently.
+names are unique.  Per-element colors currently cannot be saved or
+customized.
 
 Below is a simple example for a colors file for a system with two
 atom types using the default color and light settings:

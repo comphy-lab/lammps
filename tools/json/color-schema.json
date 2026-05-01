@@ -18,30 +18,80 @@
             "minimum": 1,
             "maximum": 1
         },
-        "schema": {"type": "string"},
-        "title": {"type": "string"},
-        "colors": {"type": "array",
-                   "items": {
-                       "properties" : {
-                           "name" : { "type": "string"},
-                           "red" : { "type": "number"},
-                           "green" : { "type": "number"},
-                           "blue" : { "type": "number"}
-                       },
-                       "required": ["red", "green", "blue"]
-                   },
-                   "minItems": 1
-                  },
+        "schema": {
+            "type": "string"
+        },
+        "title": {
+            "type": "string"
+        },
+        "colors": {
+            "type": "array",
+            "items": {
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "red": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0
+                    },
+                    "green": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0
+                    },
+                    "blue": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0
+                    }
+                },
+                "required": [
+                    "red",
+                    "green",
+                    "blue"
+                ]
+            },
+            "minItems": 1
+        },
         "lights": {
             "type": "object",
             "properties": {
-                "ambient": {"type": "number"},
-                "key": {"type": "number"},
-                "fill": {"type": "number"},
-                "back": {"type": "number"}
+                "ambient": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "key": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "fill": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                },
+                "back": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                }
             },
-            "required": ["ambient", "key", "fill", "back"]
+            "required": [
+                "ambient",
+                "key",
+                "fill",
+                "back"
+            ]
         }
     },
-    "required": ["application", "format", "revision", "colors", "lights"]
+    "required": [
+        "application",
+        "format",
+        "revision",
+        "colors",
+        "lights"
+    ]
 }

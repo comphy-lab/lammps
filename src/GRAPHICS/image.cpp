@@ -2194,9 +2194,7 @@ std::string Image::rgb2color(const double *rgb) const
   if (!rgb) return "";
 
   for (auto c = rgbcolors.cbegin(); c != rgbcolors.cend(); ++c) {
-    if ((rgb[0] == c->second[0]) && (rgb[1] == c->second[1]) && (rgb[2] == c->second[2])) {
-      return c->first;
-    }
+    if (rgb == c->second.data()) return c->first;
   }
   return "";
 }
