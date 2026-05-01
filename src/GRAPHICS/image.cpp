@@ -2145,21 +2145,6 @@ int Image::addcolor(const std::string &name, double r, double g, double b)
 }
 
 /* ----------------------------------------------------------------------
-   return a pointer to the 3 floating point RGB values or nullptr if didn't find
-------------------------------------------------------------------------- */
-
-double *Image::color2rgb(const std::string &color)
-{
-  if (color == "none") return nullptr;
-
-  auto i = rgbcolors.find(color);
-  if (i == rgbcolors.end())
-    return nullptr;
-  else
-    return i->second.data();
-}
-
-/* ----------------------------------------------------------------------
    return a pointer to the 3 floating point RGB values for the given element
 ------------------------------------------------------------------------- */
 
@@ -2176,7 +2161,7 @@ double *Image::element2color(const std::string &element)
    return the covalent radius for the given element
 ------------------------------------------------------------------------- */
 
-double Image::element2diam(const std::string &element)
+double Image::element2diam(const std::string &element) const
 {
   auto i = elementdata.find(element);
   if (i == elementdata.end())
@@ -2185,6 +2170,36 @@ double Image::element2diam(const std::string &element)
     return i->second.diam;
 }
 
+/* ----------------------------------------------------------------------
+   return a pointer to the 3 floating point RGB values or nullptr if didn't find
+------------------------------------------------------------------------- */
+
+double *Image::color2rgb(const std::string &color)
+{
+  if (color == "none") return nullptr;
+
+  auto i = rgbcolors.find(color);
+  if (i == rgbcolors.end())
+    return nullptr;
+  else
+    return i->second.data();
+}
+
+/* ----------------------------------------------------------------------
+   return first color name matching the 3 floating point RGB values or empty string
+------------------------------------------------------------------------- */
+
+std::string Image::rgb2color(const double *rgb) const
+{
+  if (!rgb) return "";
+
+  for (auto c = rgbcolors.cbegin(); c != rgbcolors.cend(); ++c) {
+    if ((rgb[0] == c->second[0]) && (rgb[1] == c->second[1]) && (rgb[2] == c->second[2])) {
+      return c->first;
+    }
+  }
+  return "";
+}
 // ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
 // ColorMap class
