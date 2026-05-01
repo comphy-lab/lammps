@@ -136,12 +136,17 @@ before proceeding to more complex simulations.
 
 .. note::
 
-   For good performance, LAMMPS should be built with the compiler
-   flags "-O3 -msse3 -funroll-loops" when including this pair style.  The
-   src/MAKE/OPTIONS/Makefile.mgptfast is an example machine Makefile with
-   these options included as part of a standard MPI build.  Note that it
-   as provided, it will build with whatever low-level compiler (g++, icc,
-   etc) is the default for your MPI installation.
+   For good performance on x86 architecture machines , LAMMPS should be
+   built with the compiler flags "-O3 -msse3 -funroll-loops" when
+   including this pair style.  The src/MAKE/OPTIONS/Makefile.mgptfast is
+   an example machine Makefile with these options included as part of a
+   standard MPI build.  Note that it as provided, it will build with
+   whatever low-level compiler (g++, icc, etc) is the default for your
+   MPI installation.
+
+   .. deprecated:: TBD
+
+      Support for (obsolete) IBM BlueGene machines has been removed.
 
 ----------
 
