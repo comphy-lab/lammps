@@ -108,7 +108,7 @@ template<class DeviceType>
 void FixLangevinKokkos<DeviceType>::init()
 {
   FixLangevin::init();
-  
+
   if (oflag) {
     // oflag thermostats rotational dof via omega on finite-size spheres.
     // Extend datamasks so torque / omega / radius are synced to/from device.
@@ -574,15 +574,15 @@ void FixLangevinKokkos<DeviceType>::omega_thermostat_item(int i) const
 
     // Calculate moment of inertia: I = 0.4 * r^2 * m
     double inertiaone = SINERTIA * d_radius(i) * d_radius(i) * rmass(i);
-    
+
     // Drag prefactor gamma1
     double gamma1 = -tendivthree * inertiaone / t_period / ftm2v;
-    
+
     // Random force prefactor gamma2
     // Uses 80.0 to match the CPU version's rotational fluctuation-dissipation
     double gamma2 = sqrt(inertiaone) *
                     sqrt(80.0 * boltz / t_period / dt / mvv2e) / ftm2v;
-    
+
     gamma1 *= 1.0 / d_ratio(type(i));
     gamma2 *= 1.0 / sqrt(d_ratio(type(i))) * tsqrt_t;
 

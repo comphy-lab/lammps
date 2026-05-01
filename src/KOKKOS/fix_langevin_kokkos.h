@@ -107,7 +107,7 @@ KOKKOS_INLINE_FUNCTION
 void omega_thermostat_kokkos();
 
 
-    
+
 // NOLINTNEXTLINE
     KOKKOS_INLINE_FUNCTION
       void angmom_thermostat_item(int i) const;
@@ -149,9 +149,9 @@ void omega_thermostat_kokkos();
     KK_FLOAT boltz,dt,mvv2e,ftm2v,fran_prop_const;
 
     // For omega thermostat
-    typename AT::t_kkacc_1d_3 d_torque;  
-    typename AT::t_kkfloat_1d_3 d_omega;  
-    typename AT::t_kkfloat_1d d_radius;   
+    typename AT::t_kkacc_1d_3 d_torque;
+    typename AT::t_kkfloat_1d_3 d_omega;
+    typename AT::t_kkfloat_1d d_radius;
 
     void compute_target();
     // For angmom thermostat
