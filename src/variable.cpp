@@ -320,8 +320,9 @@ void Variable::set(int narg, char **arg)
       fprintf(fp, "%d\n", universe->nworlds);
     }
 
-    for (int jvar = 0; jvar < ivar; jvar++)
-      if (num[jvar] && (style[jvar] == UNIVERSE || style[jvar] == ULOOP) && num[ivar] != num[jvar])
+    for (int jvar = 0; jvar < nvar; jvar++)
+      if (((style[jvar] == UNIVERSE) || (style[jvar] == ULOOP))
+          && num[jvar] && (jvar != ivar) && (num[ivar] != num[jvar]))
         error->all(FLERR, "All universe/uloop variables must have same # of values");
 
     // STRING
