@@ -185,7 +185,10 @@ void PairMM3Switch3CoulGaussLongOMP::eval(int iifrom, int iito, ThrData * const 
             prefactor2 = -qqrd2e*qtmp*q[j]/r;
             forcecoul2 = prefactor2*(erfc2+EWALD_F*rrij*expn2);
           }
-        }
+          // VDW energy must be computed unconditionally: it is needed for the
+          // switching/truncation force term even when energy is not requested
+          evdwl = expb-lj4[itype][jtype]*r6inv-offset[itype][jtype];
+        } else evdwl = 0.0;
 
         if (EFLAG) {
           if (rsq < cut_coulsq) {
@@ -198,10 +201,8 @@ void PairMM3Switch3CoulGaussLongOMP::eval(int iifrom, int iito, ThrData * const 
             if (factor_coul < 1.0) ecoul -= (1.0-factor_coul)*prefactor;
           } else ecoul = 0.0;
 
-          if (rsq < cut_ljsq[itype][jtype]) {
+          if (rsq < cut_ljsq[itype][jtype])
             ecoul += prefactor2*erfc2*factor_coul;
-            evdwl = expb-lj4[itype][jtype]*r6inv-offset[itype][jtype];
-          } else evdwl = 0.0;
         }
 
         // Truncation, see Yaff Switch3
