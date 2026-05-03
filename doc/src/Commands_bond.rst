@@ -73,7 +73,7 @@ OPT.
    * :doc:`amoeba <angle_amoeba>`
    * :doc:`charmm (iko) <angle_charmm>`
    * :doc:`class2 (ko) <angle_class2>`
-   * :doc:`class2/p6 <angle_class2>`
+   * :doc:`class2/p6 (o) <angle_class2>`
    * :doc:`class2xe (o) <angle_class2>`
    * :doc:`cosine (ko) <angle_cosine>`
    * :doc:`cosine/buck6d <angle_cosine_buck6d>`
