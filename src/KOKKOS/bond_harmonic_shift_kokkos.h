@@ -85,7 +85,7 @@ class BondHarmonicShiftKokkos : public BondHarmonicShift {
   typename AT::t_kkfloat_1d d_r0;
   typename AT::t_kkfloat_1d d_r1;
 
-  void allocate() override;
+  void allocate();
 };
 
 }

@@ -230,9 +230,6 @@ void BondHarmonicShiftKokkos<DeviceType>::coeff(int narg, char **arg)
   k_k.modify_host();
   k_r0.modify_host();
   k_r1.modify_host();
-  k_k.template sync<DeviceType>();
-  k_r0.template sync<DeviceType>();
-  k_r1.template sync<DeviceType>();
 }
 
 /* ----------------------------------------------------------------------
@@ -254,9 +251,6 @@ void BondHarmonicShiftKokkos<DeviceType>::read_restart(FILE *fp)
   k_k.modify_host();
   k_r0.modify_host();
   k_r1.modify_host();
-  k_k.template sync<DeviceType>();
-  k_r0.template sync<DeviceType>();
-  k_r1.template sync<DeviceType>();
 }
 
 /* ----------------------------------------------------------------------
