@@ -186,6 +186,8 @@ Syntax
          name = name of color
          R,G,B = red/green/blue numeric values from 0.0 to 1.0
          hex = 24-bit RGB color in hexadecimal
+       *lights* args = ambient key fill back
+         ambient key fill back = set light intensity value from 0.0 to 1.0
        *ccolor* args = computeID color
          computeID = ID of the compute
          color = name of color for image objects provided by this compute when using "const" color style
@@ -1221,6 +1223,24 @@ The arguments for the *gmap* keyword are identical to those for the
 
 ----------
 
+.. versionadded:: TBD
+
+The *lights* keyword can be used to set the relative intensities of the
+four light sources used to illuminate the scene: *ambient*, *key*,
+*fill*, and *back*.  Each value must be between 0.0 and 1.0.
+
+.. code-block:: LAMMPS
+
+   dump_modify 1 lights 0.3 0.7 0.4 0.2
+
+The *ambient* light provides base-level illumination from all
+directions. The *key* light is the primary light source and creates
+the main highlights. The *fill* light is a secondary light source that
+softens shadows created by the key light. The *back* light illuminates
+the scene from behind the camera to provide depth.
+
+----------
+
 Restrictions
 """"""""""""
 
@@ -1316,6 +1336,7 @@ The defaults for the dump_modify keywords specific to dump image and dump movie 
 * boxtrans = 1.0
 * subboxtrans = 1.0
 * color = 140 color names are pre-defined as listed below
+* lights = 0.0 0.9 0.45 0.9
 * bitrate = 2000
 * framerate = 24
 * gmap = min max cf 0.0 2 min blue max red
@@ -1356,7 +1377,7 @@ equivalent 0.0 to 1.0 value.
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
 | cyan = 0, 255, 255            | darkblue = 0, 0, 139                 | darkcyan = 0, 139, 139          | darkgoldenrod = 184, 134, 11   | darkgray = 169, 169, 169       |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
-| darkgreen = 0, 100, 0         | darkkhaki = 189, 183, 107            | darkmagenta = 139, 0, 139       | darkolivegreen = 85, 107, 47   | darkorange = 255, 140, 0       |
+| darkgreen = 0, 100, 0         | darkkhaki = 189, 183, 107            | darkmagenta = 139, 0, 139       | darkolivegreen = 85, 107, 47   | darkorange = 139, 69, 0        |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
 | darkorchid = 153, 50, 204     | darkred = 139, 0, 0                  | darksalmon = 233, 150, 122      | darkseagreen = 143, 188, 143   | darkslateblue = 72, 61, 139    |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
@@ -1366,7 +1387,7 @@ equivalent 0.0 to 1.0 value.
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
 | fuchsia = 255, 0, 255         | gainsboro = 220, 220, 220            | ghostwhite = 248, 248, 255      | gold = 255, 215, 0             | goldenrod = 218, 165, 32       |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
-| gray = 128, 128, 128          | green = 0, 128, 0                    | greenyellow = 173, 255, 47      | honeydew = 240, 255, 240       | hotpink = 255, 105, 180        |
+| gray = 128, 128, 128          | green = 0, 255, 0                    | greenyellow = 173, 255, 47      | honeydew = 240, 255, 240       | hotpink = 255, 105, 180        |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
 | indianred = 205, 92, 92       | indigo = 75, 0, 130                  | ivory = 255, 240, 240           | khaki = 240, 230, 140          | lavender = 230, 230, 250       |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
@@ -1384,9 +1405,9 @@ equivalent 0.0 to 1.0 value.
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
 | midnightblue = 25, 25, 112    | mintcream = 245, 255, 250            | mistyrose = 255, 228, 225       | moccasin = 255, 228, 181       | navajowhite = 255, 222, 173    |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
-| navy = 0, 0, 128              | oldlace = 253, 245, 230              | olive = 128, 128, 0             | olivedrab = 107, 142, 35       | orange = 255, 165, 0           |
+| navy = 0, 0, 128              | oldlace = 253, 245, 230              | olive = 128, 128, 0             | olivedrab = 107, 142, 35       | orange = 255, 128, 0           |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
-| orangered = 255, 69, 0        | orchid = 218, 112, 214               | palegoldenrod = 238, 232, 170   | palegreen = 152, 251, 152      | paleturquoise = 175, 238, 238  |
+| orangered = 255, 64, 0        | orchid = 218, 112, 214               | palegoldenrod = 238, 232, 170   | palegreen = 152, 251, 152      | paleturquoise = 175, 238, 238  |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+
 | palevioletred = 219, 112, 147 | papayawhip = 255, 239, 213           | peachpuff = 255, 239, 213       | peru = 205, 133, 63            | pink = 255, 192, 203           |
 +-------------------------------+--------------------------------------+---------------------------------+--------------------------------+--------------------------------+

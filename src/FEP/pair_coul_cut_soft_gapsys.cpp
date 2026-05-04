@@ -29,8 +29,10 @@ using namespace LAMMPS_NS;
 
 /* ---------------------------------------------------------------------- */
 
-PairCoulCutSoftGapsys::PairCoulCutSoftGapsys(LAMMPS *lmp) : Pair(lmp) {
+PairCoulCutSoftGapsys::PairCoulCutSoftGapsys(LAMMPS *lmp) : Pair(lmp), cut(nullptr), lambda(nullptr)
+{
   centroidstressflag = CENTROID_SAME;
+  cut_global = sigmaq = alphaq = 0.0;
 }
 
 /* ---------------------------------------------------------------------- */

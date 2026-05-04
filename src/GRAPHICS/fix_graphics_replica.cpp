@@ -172,7 +172,7 @@ void FixGraphicsReplica::end_of_step()
   // collect unwrapped positions and atom type data
   // for selected atoms sorted by ID on the root of each replica
 
-  std::vector<double> coords(3 * nper, 0.0);
+  std::vector<double> pos(3 * nper, 0.0);
   std::vector<int> types(nper, 0);
   int n = 0;
   for (const auto id : taglist) {
@@ -180,9 +180,9 @@ void FixGraphicsReplica::end_of_step()
     if ((i >= 0) && (i < nlocal)) {
       double tmp[3] = {x[i][0], x[i][1], x[i][2]};
       domain->unmap(tmp, image[i]);
-      coords[3 * n] = tmp[0];
-      coords[3 * n + 1] = tmp[1];
-      coords[3 * n + 2] = tmp[2];
+      pos[3 * n] = tmp[0];
+      pos[3 * n + 1] = tmp[1];
+      pos[3 * n + 2] = tmp[2];
       types[n] = type[i];
     }
     ++n;
@@ -190,10 +190,10 @@ void FixGraphicsReplica::end_of_step()
 
   if (me == 0) {
     MPI_Reduce(MPI_IN_PLACE, types.data(), nper, MPI_INT, MPI_SUM, 0, world);
-    MPI_Reduce(MPI_IN_PLACE, coords.data(), 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
+    MPI_Reduce(MPI_IN_PLACE, pos.data(), 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
   } else {
     MPI_Reduce(types.data(), nullptr, nper, MPI_INT, MPI_SUM, 0, world);
-    MPI_Reduce(coords.data(), nullptr, 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
+    MPI_Reduce(pos.data(), nullptr, 3 * nper, MPI_DOUBLE, MPI_SUM, 0, world);
   }
 
   // now we are ready to create the graphics items
@@ -207,18 +207,17 @@ void FixGraphicsReplica::end_of_step()
     int n = 0;
 
     // first process our own data;
-    std::vector<double> buf(coords);
-    std::vector<double> avg(coords);
+    std::vector<double> avg(pos);
     std::vector<double> var(3 * nper, 0.0);
 
     if (dflag) {
       for (int i = 0; i < nper; ++i) {
         imgobjs[n] = Graphics::SPHERE;
         imgparms[n][0] = types[i];
-        domain->remap(buf.data() + 3 * i);
-        imgparms[n][1] = buf[3 * i];
-        imgparms[n][2] = buf[3 * i + 1];
-        imgparms[n][3] = buf[3 * i + 2];
+        domain->remap(pos.data() + 3 * i);
+        imgparms[n][1] = pos[3 * i];
+        imgparms[n][2] = pos[3 * i + 1];
+        imgparms[n][3] = pos[3 * i + 2];
         imgparms[n][4] = dradius;
         ++n;
       }
@@ -227,24 +226,24 @@ void FixGraphicsReplica::end_of_step()
     // now get data from other replicas
 
     for (int j = 1; j < universe->nworlds; ++j) {
-      MPI_Recv(buf.data(), 3 * nper, MPI_DOUBLE, universe->root_proc[j], 0, universe->uworld,
+      MPI_Recv(pos.data(), 3 * nper, MPI_DOUBLE, universe->root_proc[j], 0, universe->uworld,
                MPI_STATUS_IGNORE);
       for (int i = 0; i < nper; ++i) {
         if (aflag) {
-          var[3 * i] += (double) j / ((double) j + 1) * square(buf[3 * i] - avg[3 * i]);
-          var[3 * i + 1] += (double) j / ((double) j + 1) * square(buf[3 * i + 1] - avg[3 * i + 1]);
-          var[3 * i + 2] += (double) j / ((double) j + 1) * square(buf[3 * i + 2] - avg[3 * i + 2]);
-          avg[3 * i] += (buf[3 * i] - avg[3 * i]) / ((double) j + 1.0);
-          avg[3 * i + 1] += (buf[3 * i + 1] - avg[3 * i + 1]) / ((double) j + 1.0);
-          avg[3 * i + 2] += (buf[3 * i + 2] - avg[3 * i + 2]) / ((double) j + 1.0);
+          var[3 * i] += (double) j / ((double) j + 1) * square(pos[3 * i] - avg[3 * i]);
+          var[3 * i + 1] += (double) j / ((double) j + 1) * square(pos[3 * i + 1] - avg[3 * i + 1]);
+          var[3 * i + 2] += (double) j / ((double) j + 1) * square(pos[3 * i + 2] - avg[3 * i + 2]);
+          avg[3 * i] += (pos[3 * i] - avg[3 * i]) / ((double) j + 1.0);
+          avg[3 * i + 1] += (pos[3 * i + 1] - avg[3 * i + 1]) / ((double) j + 1.0);
+          avg[3 * i + 2] += (pos[3 * i + 2] - avg[3 * i + 2]) / ((double) j + 1.0);
         }
         if (dflag) {
           imgobjs[n] = Graphics::SPHERE;
           imgparms[n][0] = types[i];
-          domain->remap(buf.data() + 3 * i);
-          imgparms[n][1] = buf[3 * i];
-          imgparms[n][2] = buf[3 * i + 1];
-          imgparms[n][3] = buf[3 * i + 2];
+          domain->remap(pos.data() + 3 * i);
+          imgparms[n][1] = pos[3 * i];
+          imgparms[n][2] = pos[3 * i + 1];
+          imgparms[n][3] = pos[3 * i + 2];
           imgparms[n][4] = dradius;
           ++n;
         }
@@ -269,7 +268,7 @@ void FixGraphicsReplica::end_of_step()
     }
   } else {
     if (me == 0)
-      MPI_Send(coords.data(), 3 * nper, MPI_DOUBLE, universe->root_proc[0], 0, universe->uworld);
+      MPI_Send(pos.data(), 3 * nper, MPI_DOUBLE, universe->root_proc[0], 0, universe->uworld);
   }
 }
 

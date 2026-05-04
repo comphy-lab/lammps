@@ -1471,19 +1471,11 @@ void DumpImage::create_image()
         else if (bodyvec[k] == Graphics::LINE)
           image->draw_cylinder(&bodyarray[k][0],&bodyarray[k][3],color,bodyarray[k][6],3,opacity);
         else if (bodyvec[k] == Graphics::TRI) {
-          // brighten flat surfaces somewhat
-          auto saved = reset_lighting(image, 0.3, 0.8, 0.45, 0.8);
           image->draw_triangle(&bodyarray[k][0],&bodyarray[k][3],&bodyarray[k][6],color,opacity);
-          // restore previous settings
-          restore_lighting(saved, image);
         } else if (bodyvec[k] == Graphics::TRINORM) {
-          // brighten surfaces a little bit
-          auto saved = reset_lighting(image, 0.6, 0.3, 0.5, 0.7);
           image->draw_trinorm(&bodyarray[k][0],&bodyarray[k][3],&bodyarray[k][6],
                               &bodyarray[k][9],&bodyarray[k][12],&bodyarray[k][15],
                               color,color,color,opacity);
-          // restore previous settings
-          restore_lighting(saved, image);
         }
       }
 
@@ -2853,6 +2845,26 @@ int DumpImage::modify_param(int narg, char **arg)
     }
     if (!match) error->all(FLERR, argoff + 1, "Fix ID {} is not included in dump {}", arg[1], id);
     return 3;
+  }
+
+  if (strcmp(arg[0], "lights") == 0) {
+    if (narg < 5) utils::missing_cmd_args(FLERR, "dump_modify lights", error);
+    double ambient = utils::numeric(FLERR, arg[1], false, lmp);
+    if ((ambient < 0.0) || (ambient > 1.0))
+      error->all(FLERR, argoff + 1, "Illegal ambient light value {}", ambient);
+    double key = utils::numeric(FLERR, arg[2], false, lmp);
+    if ((key < 0.0) || (key > 1.0))
+      error->all(FLERR, argoff + 2, "Illegal key light value {}", key);
+    double fill = utils::numeric(FLERR, arg[3], false, lmp);
+    if ((fill < 0.0) || (fill > 1.0))
+      error->all(FLERR, argoff + 3, "Illegal fill light value {}", fill);
+    double back = utils::numeric(FLERR, arg[4], false, lmp);
+    if ((back < 0.0) || (back > 1.0))
+      error->all(FLERR, argoff + 4, "Illegal back light value {}", back);
+
+    restore_lighting({ambient, key, fill, back}, image);
+
+    return 5;
   }
 
   return 0;
