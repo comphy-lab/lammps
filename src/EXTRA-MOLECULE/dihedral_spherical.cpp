@@ -47,7 +47,8 @@ DihedralSpherical::DihedralSpherical(LAMMPS *lmp) : Dihedral(lmp)
 
 DihedralSpherical::~DihedralSpherical()
 {
-  if (allocated && !copymode) {
+  if (copymode) return;
+  if (allocated) {
     memory->destroy(setflag);
     memory->destroy(nterms);
 
