@@ -85,7 +85,7 @@ class BondMorseKokkos : public BondMorse {
   typename AT::t_kkfloat_1d d_alpha;
   typename AT::t_kkfloat_1d d_r0;
 
-  void allocate();
+  void allocate() override;
 };
 
 }

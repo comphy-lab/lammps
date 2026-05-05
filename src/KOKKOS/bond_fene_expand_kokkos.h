@@ -92,7 +92,7 @@ class BondFENEExpandKokkos : public BondFENEExpand {
   typename AT::t_kkfloat_1d d_sigma;
   typename AT::t_kkfloat_1d d_shift;
 
-  void allocate();
+  void allocate() override;
 };
 
 }

@@ -85,7 +85,7 @@ class BondNonlinearKokkos : public BondNonlinear {
   typename AT::t_kkfloat_1d d_r0;
   typename AT::t_kkfloat_1d d_lamda;
 
-  void allocate();
+  void allocate() override;
 };
 
 }
