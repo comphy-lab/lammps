@@ -35,6 +35,7 @@ class RegIntersect : public Region {
   void shape_update() override;
   void pretransform() override;
   void set_velocity() override;
+  void velocity_contact(double *, double *, int) override;
   void length_restart_string(int &) override;
   void write_restart(FILE *) override;
   int restart(char *, int &) override;
@@ -42,6 +43,12 @@ class RegIntersect : public Region {
 
  private:
   char **idsub;
+
+  struct ContactIndx {
+    int ilist;         // index of contact in list of regions
+    int ic;            // index in subregions list of contacts
+  };
+  ContactIndx *contact_indx;
 };
 
 }    // namespace LAMMPS_NS

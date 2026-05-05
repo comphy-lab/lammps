@@ -258,6 +258,11 @@ consisting of the volume that is common to all the listed regions.
    from their list of sub-regions.  Thus you cannot delete the
    sub-regions after defining a *union* or *intersection* region.
 
+.. note::
+   The *union* and *intersect* regions require all subregions have
+   the same *move* and *rotation* settings to ensure all regions
+   move in unison
+
 ----------
 
 The *side* keyword determines whether the region is considered to be
