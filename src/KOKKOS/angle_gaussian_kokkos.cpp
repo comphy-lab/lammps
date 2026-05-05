@@ -66,7 +66,7 @@ void AngleGaussianKokkos<DeviceType>::sync_kokkos()
   int n = atom->nangletypes;
   int new_max = 0;
   for (int i = 1; i <= n; i++)
-    if (setflag[i] && nterms[i] > new_max) new_max = nterms[i];
+    if (nterms[i] > new_max) new_max = nterms[i];
 
   if (new_max > max_nterms) {
     max_nterms = new_max;
