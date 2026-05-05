@@ -48,7 +48,7 @@ class DihedralSpherical : public Dihedral {
   double **theta2_shift;
   double **theta2_offset;
 
-  void allocate();
+  virtual void allocate();
 };
 
 }    // namespace LAMMPS_NS
