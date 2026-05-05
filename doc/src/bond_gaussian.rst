@@ -1,7 +1,10 @@
 .. index:: bond_style gaussian
+.. index:: bond_style gaussian/omp
 
 bond_style gaussian command
 ================================
+
+Accelerator Variants: *gaussian/omp*
 
 Syntax
 """"""
@@ -46,6 +49,11 @@ or :doc:`read_restart <read_restart>` commands:
 * :math:`w_n` (> 0, distance)
 * :math:`r_n` (>= 0, distance)
 
+----------
+
+.. include:: accel_styles.rst
+
+----------
 
 Restrictions
 """"""""""""
@@ -53,6 +61,10 @@ Restrictions
 This bond style can only be used if LAMMPS was built with the
 EXTRA-MOLECULE package.  See the :doc:`Build package <Build_package>`
 doc page for more info.
+
+.. versionadded:: TBD
+
+   The *gaussian/omp* style
 
 Related commands
 """"""""""""""""
