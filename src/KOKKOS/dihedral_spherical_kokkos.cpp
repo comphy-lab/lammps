@@ -51,7 +51,6 @@ DihedralSphericalKokkos<DeviceType>::DihedralSphericalKokkos(LAMMPS *lmp) : Dihe
 
   centroidstressflag = CENTROID_NOTAVAIL;
 
-  nterms_max = 0;
   allocated_kokkos = 0;
 }
 
@@ -517,12 +516,6 @@ template<class DeviceType>
 void DihedralSphericalKokkos<DeviceType>::coeff(int narg, char **arg)
 {
   DihedralSpherical::coeff(narg, arg);
-
-  // Compute nterms_max across all types
-  int n = atom->ndihedraltypes;
-  for (int i = 1; i <= n; i++)
-    if (nterms[i] > nterms_max) nterms_max = nterms[i];
-
   allocate_kokkos();
 
   int ilo,ihi;
@@ -565,15 +558,9 @@ template<class DeviceType>
 void DihedralSphericalKokkos<DeviceType>::read_restart(FILE *fp)
 {
   DihedralSpherical::read_restart(fp);
-
-  int n = atom->ndihedraltypes;
-
-  // Compute nterms_max
-  for (int i = 1; i <= n; i++)
-    if (nterms[i] > nterms_max) nterms_max = nterms[i];
-
   allocate_kokkos();
 
+  int n = atom->ndihedraltypes;
   for (int i = 1; i <= n; i++) {
     k_nterms.view_host()[i] = nterms[i];
     for (int j = 0; j < nterms[i]; j++) {

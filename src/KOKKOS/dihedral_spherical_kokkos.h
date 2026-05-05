@@ -107,7 +107,6 @@ class DihedralSphericalKokkos : public DihedralSpherical {
   typename AT::t_kkfloat_2d d_theta2_shift;
   typename AT::t_kkfloat_2d d_theta2_offset;
 
-  int nterms_max;
   int allocated_kokkos;
 
   void allocate_kokkos();
