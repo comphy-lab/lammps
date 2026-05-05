@@ -77,14 +77,18 @@ void DihedralClass2xeKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   // reallocate per-atom arrays if necessary
 
   if (eflag_atom) {
-    memoryKK->destroy_kokkos(k_eatom,eatom);
-    memoryKK->create_kokkos(k_eatom,eatom,maxeatom,"dihedral:eatom");
-    d_eatom = k_eatom.template view<DeviceType>();
+    if ((int)k_eatom.extent(0) < maxeatom) {
+      memoryKK->destroy_kokkos(k_eatom,eatom);
+      memoryKK->create_kokkos(k_eatom,eatom,maxeatom,"dihedral:eatom");
+      d_eatom = k_eatom.template view<DeviceType>();
+    } else Kokkos::deep_copy(d_eatom,0.0);
   }
   if (vflag_atom) {
-    memoryKK->destroy_kokkos(k_vatom,vatom);
-    memoryKK->create_kokkos(k_vatom,vatom,maxvatom,"dihedral:vatom");
-    d_vatom = k_vatom.template view<DeviceType>();
+    if ((int)k_vatom.extent(0) < maxvatom) {
+      memoryKK->destroy_kokkos(k_vatom,vatom);
+      memoryKK->create_kokkos(k_vatom,vatom,maxvatom,"dihedral:vatom");
+      d_vatom = k_vatom.template view<DeviceType>();
+    } else Kokkos::deep_copy(d_vatom,0.0);
   }
 
   k_k1.template sync<DeviceType>();
