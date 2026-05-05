@@ -24,7 +24,7 @@ static constexpr double BIG = 1.0e20;
 
 /* ---------------------------------------------------------------------- */
 
-RegUnion::RegUnion(LAMMPS *lmp, int narg, char **arg) : Region(lmp, narg, arg), idsub(nullptr)
+RegUnion::RegUnion(LAMMPS *lmp, int narg, char **arg) : Region(lmp, narg, arg), contact_indx(nullptr), idsub(nullptr)
 {
   nregion = 0;
 
@@ -85,6 +85,7 @@ RegUnion::RegUnion(LAMMPS *lmp, int narg, char **arg) : Region(lmp, narg, arg), 
   cmax = 0;
   for (int ilist = 0; ilist < nregion; ilist++) cmax += reglist[ilist]->cmax;
   contact = new Contact[cmax];
+  contact_indx = new ContactIndx[cmax];
 
   tmax = 0;
   for (int ilist = 0; ilist < nregion; ilist++) {
@@ -103,6 +104,7 @@ RegUnion::~RegUnion()
   delete[] idsub;
   delete[] reglist;
   delete[] contact;
+  delete[] contact_indx;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -171,6 +173,8 @@ int RegUnion::surface_interior(double *x, double cutoff)
         contact[n].delz = region->contact[m].delz;
         contact[n].iwall = region->contact[m].iwall + walloffset;
         contact[n].varflag = region->contact[m].varflag;
+        contact_indx[n].ilist = ilist;
+        contact_indx[n].ic = m;
         n++;
       }
     }
@@ -218,6 +222,8 @@ int RegUnion::surface_exterior(double *x, double cutoff)
         contact[n].delz = region->contact[m].delz;
         contact[n].iwall = ilist;
         contact[n].varflag = region->contact[m].varflag;
+        contact_indx[n].ilist = ilist;
+        contact_indx[n].ic = m;
         n++;
       }
     }
@@ -253,6 +259,16 @@ void RegUnion::pretransform()
 void RegUnion::set_velocity()
 {
   for (int ilist = 0; ilist < nregion; ilist++) reglist[ilist]->set_velocity();
+}
+
+/* ----------------------------------------------------------------------
+   call subregion method to compute velocity of wall for given contact
+------------------------------------------------------------------------- */
+
+void RegUnion::velocity_contact(double *vwall, double *x, int ic)
+{
+  auto *region = reglist[contact_indx[ic].ilist];
+  region->velocity_contact(vwall, x, contact_indx[ic].ic);
 }
 
 /* ----------------------------------------------------------------------
