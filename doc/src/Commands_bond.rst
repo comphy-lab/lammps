@@ -36,7 +36,7 @@ OPT.
    * :doc:`harmonic/shift/cut (ko) <bond_harmonic_shift_cut>`
    * :doc:`lepton (o) <bond_lepton>`
    * :doc:`mesocnt <bond_mesocnt>`
-   * :doc:`mm3 (k) <bond_mm3>`
+   * :doc:`mm3 (ko) <bond_mm3>`
    * :doc:`morse (ko) <bond_morse>`
    * :doc:`nonlinear (ko) <bond_nonlinear>`
    * :doc:`oxdna/fene <bond_oxdna>`
@@ -73,7 +73,7 @@ OPT.
    * :doc:`amoeba <angle_amoeba>`
    * :doc:`charmm (iko) <angle_charmm>`
    * :doc:`class2 (ko) <angle_class2>`
-   * :doc:`class2/p6 (k) <angle_class2>`
+   * :doc:`class2/p6 (ko) <angle_class2>`
    * :doc:`class2xe (ko) <angle_class2>`
    * :doc:`cosine (ko) <angle_cosine>`
    * :doc:`cosine/buck6d <angle_cosine_buck6d>`
@@ -83,7 +83,7 @@ OPT.
    * :doc:`cosine/shift/exp (ko) <angle_cosine_shift_exp>`
    * :doc:`cosine/squared (ko) <angle_cosine_squared>`
    * :doc:`cosine/squared/restricted (ko) <angle_cosine_squared_restricted>`
-   * :doc:`cross (k) <angle_cross>`
+   * :doc:`cross (ko) <angle_cross>`
    * :doc:`dipole (ko) <angle_dipole>`
    * :doc:`fourier (ko) <angle_fourier>`
    * :doc:`fourier/simple (ko) <angle_fourier_simple>`
@@ -91,7 +91,7 @@ OPT.
    * :doc:`harmonic (iko) <angle_harmonic>`
    * :doc:`lepton (o) <angle_lepton>`
    * :doc:`mesocnt <angle_mesocnt>`
-   * :doc:`mm3 (k) <angle_mm3>`
+   * :doc:`mm3 (ko) <angle_mm3>`
    * :doc:`mwlc (ko) <angle_mwlc>`
    * :doc:`quartic (ko) <angle_quartic>`
    * :doc:`spica (ko) <angle_spica>`
@@ -166,10 +166,10 @@ OPT.
    * :doc:`cossq (ko) <improper_cossq>`
    * :doc:`cvff (iko) <improper_cvff>`
    * :doc:`distance (ko) <improper_distance>`
-   * :doc:`distharm (k) <improper_distharm>`
+   * :doc:`distharm (ko) <improper_distharm>`
    * :doc:`fourier (ko) <improper_fourier>`
    * :doc:`harmonic (iko) <improper_harmonic>`
-   * :doc:`inversion/harmonic (k) <improper_inversion_harmonic>`
+   * :doc:`inversion/harmonic (ko) <improper_inversion_harmonic>`
    * :doc:`ring (ko) <improper_ring>`
-   * :doc:`sqdistharm (k) <improper_sqdistharm>`
+   * :doc:`sqdistharm (ko) <improper_sqdistharm>`
    * :doc:`umbrella (ko) <improper_umbrella>`
