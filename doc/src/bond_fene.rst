@@ -1,8 +1,9 @@
 .. index:: bond_style fene
-.. index:: bond_style fene/nm
 .. index:: bond_style fene/intel
 .. index:: bond_style fene/kk
 .. index:: bond_style fene/omp
+.. index:: bond_style fene/nm
+.. index:: bond_style fene/nm/kk
 
 bond_style fene command
 =======================
@@ -11,6 +12,8 @@ Accelerator Variants: *fene/intel*, *fene/kk*, *fene/omp*
 
 bond_style fene/nm command
 ==========================
+
+Accelerator Variants: *fene/nm/kk*
 
 Syntax
 """"""

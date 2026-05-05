@@ -1,7 +1,10 @@
 .. index:: bond_style gaussian
+.. index:: bond_style gaussian/kk
 
 bond_style gaussian command
 ===========================
+
+Accelerator Variants: *gaussian/kk*
 
 Syntax
 """"""
