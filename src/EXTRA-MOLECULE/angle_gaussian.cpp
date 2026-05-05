@@ -43,7 +43,9 @@ AngleGaussian::AngleGaussian(LAMMPS *lmp) :
 
 AngleGaussian::~AngleGaussian()
 {
-  if (allocated && !copymode) {
+  if (copymode) return;
+
+  if (allocated) {
     memory->destroy(setflag);
     memory->destroy(nterms);
     memory->destroy(angle_temperature);
