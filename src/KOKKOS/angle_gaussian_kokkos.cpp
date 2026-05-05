@@ -43,7 +43,7 @@ AngleGaussianKokkos<DeviceType>::AngleGaussianKokkos(LAMMPS *lmp) : AngleGaussia
   datamask_modify = F_MASK | ENERGY_MASK | VIRIAL_MASK;
 
   centroidstressflag = CENTROID_NOTAVAIL;
-  max_nterms = 0;
+  allocated_kokkos = 0;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -60,39 +60,28 @@ AngleGaussianKokkos<DeviceType>::~AngleGaussianKokkos()
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
-void AngleGaussianKokkos<DeviceType>::sync_kokkos()
+void AngleGaussianKokkos<DeviceType>::allocate_kokkos()
 {
-  // recompute max_nterms and reallocate 2D views if necessary
   int n = atom->nangletypes;
-  int new_max = 0;
-  for (int i = 1; i <= n; i++)
-    if (nterms[i] > new_max) new_max = nterms[i];
 
-  if (new_max > max_nterms) {
-    max_nterms = new_max;
-    k_alpha  = DAT::tdual_kkfloat_2d("AngleGaussian::alpha",n+1,max_nterms);
-    k_width  = DAT::tdual_kkfloat_2d("AngleGaussian::width",n+1,max_nterms);
-    k_theta0 = DAT::tdual_kkfloat_2d("AngleGaussian::theta0",n+1,max_nterms);
-    d_alpha  = k_alpha.template view<DeviceType>();
-    d_width  = k_width.template view<DeviceType>();
-    d_theta0 = k_theta0.template view<DeviceType>();
+  if (!allocated_kokkos) {
+    k_nterms = DAT::tdual_int_1d("AngleGaussian::nterms",n+1);
+    k_alpha  = DAT::tdual_kkfloat_2d("AngleGaussian::alpha",n+1,nterms_max);
+    k_width  = DAT::tdual_kkfloat_2d("AngleGaussian::width",n+1,nterms_max);
+    k_theta0 = DAT::tdual_kkfloat_2d("AngleGaussian::theta0",n+1,nterms_max);
+  } else {
+    k_nterms.resize(n+1);
+    k_alpha.resize(n+1,nterms_max);
+    k_width.resize(n+1,nterms_max);
+    k_theta0.resize(n+1,nterms_max);
   }
 
-  for (int i = 1; i <= n; i++) {
-    k_nterms.view_host()[i]             = nterms[i];
-    k_angle_temperature.view_host()[i]  = static_cast<KK_FLOAT>(angle_temperature[i]);
-    for (int j = 0; j < nterms[i]; j++) {
-      k_alpha.view_host()(i,j)  = static_cast<KK_FLOAT>(alpha[i][j]);
-      k_width.view_host()(i,j)  = static_cast<KK_FLOAT>(width[i][j]);
-      k_theta0.view_host()(i,j) = static_cast<KK_FLOAT>(theta0[i][j]);
-    }
-  }
+  d_nterms = k_nterms.template view<DeviceType>();
+  d_alpha  = k_alpha.template view<DeviceType>();
+  d_width  = k_width.template view<DeviceType>();
+  d_theta0 = k_theta0.template view<DeviceType>();
 
-  k_nterms.modify_host();
-  k_angle_temperature.modify_host();
-  k_alpha.modify_host();
-  k_width.modify_host();
-  k_theta0.modify_host();
+  allocated_kokkos = 1;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -295,7 +284,7 @@ void AngleGaussianKokkos<DeviceType>::allocate()
 
   d_nterms            = k_nterms.template view<DeviceType>();
   d_angle_temperature = k_angle_temperature.template view<DeviceType>();
-  // 2D views are created lazily in sync_kokkos() once max_nterms is known
+  // 2D views are created lazily in allocate_kokkos() once max_nterms is known
 }
 
 /* ----------------------------------------------------------------------
@@ -306,7 +295,26 @@ template<class DeviceType>
 void AngleGaussianKokkos<DeviceType>::coeff(int narg, char **arg)
 {
   AngleGaussian::coeff(narg, arg);
-  sync_kokkos();
+  allocate_kokkos();
+
+  int ilo,ihi;
+  utils::bounds(FLERR,arg[0],1,atom->ndihedraltypes,ilo,ihi,error);
+
+  for (int i = ilo; i <= ihi; i++) {
+    k_nterms.view_host()[i]             = nterms[i];
+    k_angle_temperature.view_host()[i]  = angle_temperature[i];
+    for (int j = 0; j < nterms[i]; j++) {
+      k_alpha.view_host()(i,j)  = alpha[i][j];
+      k_width.view_host()(i,j)  = width[i][j];
+      k_theta0.view_host()(i,j) = theta0[i][j];
+    }
+  }
+
+  k_nterms.modify_host();
+  k_angle_temperature.modify_host();
+  k_alpha.modify_host();
+  k_width.modify_host();
+  k_theta0.modify_host();
 }
 
 /* ----------------------------------------------------------------------
@@ -317,7 +325,24 @@ template<class DeviceType>
 void AngleGaussianKokkos<DeviceType>::read_restart(FILE *fp)
 {
   AngleGaussian::read_restart(fp);
-  sync_kokkos();
+  allocate_kokkos();
+
+  int n = atom->nangletypes;
+  for (int i = 1; i <= n; i++) {
+    k_nterms.view_host()[i]             = nterms[i];
+    k_angle_temperature.view_host()[i]  = angle_temperature[i];
+    for (int j = 0; j < nterms[i]; j++) {
+      k_alpha.view_host()(i,j)  = alpha[i][j];
+      k_width.view_host()(i,j)  = width[i][j];
+      k_theta0.view_host()(i,j) = theta0[i][j];
+    }
+  }
+
+  k_nterms.modify_host();
+  k_angle_temperature.modify_host();
+  k_alpha.modify_host();
+  k_width.modify_host();
+  k_theta0.modify_host();
 }
 
 /* ----------------------------------------------------------------------

@@ -78,7 +78,6 @@ class AngleGaussianKokkos : public AngleGaussian {
   int nlocal,newton_bond;
   int eflag,vflag;
   KK_FLOAT boltz;
-  int max_nterms;
 
   DAT::tdual_int_1d k_nterms;
   DAT::tdual_kkfloat_1d k_angle_temperature;
@@ -93,10 +92,9 @@ class AngleGaussianKokkos : public AngleGaussian {
   typename AT::t_kkfloat_2d d_theta0;
 
   void allocate() override;
-  void sync_kokkos();
+  void allocate_kokkos();
+  int allocated_kokkos;
 };
-
 }
-
 #endif
 #endif
