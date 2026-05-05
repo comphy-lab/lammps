@@ -29,7 +29,7 @@ OPT.
    * :doc:`fene/expand (ko) <bond_fene_expand>`
    * :doc:`fene/nm (k) <bond_fene>`
    * :doc:`gaussian (k) <bond_gaussian>`
-   * :doc:`gromos (o) <bond_gromos>`
+   * :doc:`gromos (ko) <bond_gromos>`
    * :doc:`harmonic (iko) <bond_harmonic>`
    * :doc:`harmonic/restrain (ko) <bond_harmonic_restrain>`
    * :doc:`harmonic/shift (ko) <bond_harmonic_shift>`
@@ -167,9 +167,9 @@ OPT.
    * :doc:`cvff (iko) <improper_cvff>`
    * :doc:`distance (ko) <improper_distance>`
    * :doc:`distharm (k) <improper_distharm>`
-   * :doc:`fourier (o) <improper_fourier>`
+   * :doc:`fourier (ko) <improper_fourier>`
    * :doc:`harmonic (iko) <improper_harmonic>`
    * :doc:`inversion/harmonic (k) <improper_inversion_harmonic>`
    * :doc:`ring (ko) <improper_ring>`
    * :doc:`sqdistharm (k) <improper_sqdistharm>`
-   * :doc:`umbrella (o) <improper_umbrella>`
+   * :doc:`umbrella (ko) <improper_umbrella>`
