@@ -50,11 +50,62 @@ RegUnion::RegUnion(LAMMPS *lmp, int narg, char **arg) : Region(lmp, narg, arg), 
 
   // this region is variable shape or dynamic if any of sub-regions are
 
+  int moveflag0 = moveflag;
+  int rotateflag0 = rotateflag;
   for (int ilist = 0; ilist < nregion; ilist++) {
     if (reglist[ilist]->varshape) varshape = 1;
     if (reglist[ilist]->dynamic) dynamic = 1;
     if (reglist[ilist]->moveflag) moveflag = 1;
     if (reglist[ilist]->rotateflag) rotateflag = 1;
+  }
+
+  // make sure all subregions have the same motion
+  //   needed such that pretransform gives the same result (performed by union)
+
+  if (moveflag) {
+    // copy 1st value if union motion not defined
+    if (moveflag0 == 0) {
+      strcpy(xstr, reglist[0]->xstr);
+      strcpy(ystr, reglist[0]->ystr);
+      strcpy(zstr, reglist[0]->zstr);
+    }
+    for (int ilist = 0; ilist < nregion; ilist++) {
+      if (strcmp(xstr, reglist[ilist]->xstr) == 0)
+        error->all(FLERR, "All regions in union must have the same move x variable");
+      if (strcmp(ystr, reglist[ilist]->ystr) == 0)
+        error->all(FLERR, "All regions in union must have the same move y variable");
+      if (strcmp(zstr, reglist[ilist]->zstr) == 0)
+        error->all(FLERR, "All regions in union must have the same move z variable");
+    }
+  }
+
+  if (rotateflag) {
+    // copy 1st value if union rotation not defined
+    if (moveflag0 == 0) {
+      point[0] = reglist[0]->point[0];
+      point[1] = reglist[0]->point[1];
+      point[2] = reglist[0]->point[2];
+      axis[0] = reglist[0]->axis[0];
+      axis[1] = reglist[0]->axis[1];
+      axis[2] = reglist[0]->axis[2];
+    }
+    for (int ilist = 0; ilist < nregion; ilist++) {
+      auto region = reglist[ilist];
+      if (point[0] != region->point[0] ||
+          point[1] != region->point[1] ||
+          point[2] != region->point[2])
+        error->all(FLERR, "All regions in union must have the same rotaton origin");
+      if (axis[0] != region->axis[0] ||
+          axis[1] != region->axis[1] ||
+          axis[2] != region->axis[2])
+        error->all(FLERR, "All regions in union must have the same rotaton axis");
+    }
+
+    double len = sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
+    if (len == 0.0) error->all(FLERR, Error::NOPOINTER, "Region cannot have 0 length rotation vector");
+    runit[0] = axis[0] / len;
+    runit[1] = axis[1] / len;
+    runit[2] = axis[2] / len;
   }
 
   // extent of union of regions
