@@ -312,8 +312,14 @@ action pair_buck_coul_cut_kokkos.cpp
 action pair_buck_coul_cut_kokkos.h
 action pair_buck_coul_long_kokkos.cpp pair_buck_coul_long.cpp
 action pair_buck_coul_long_kokkos.h pair_buck_coul_long.h
+action pair_beck_kokkos.cpp pair_beck.cpp
+action pair_beck_kokkos.h pair_beck.h
+action pair_born_kokkos.cpp
+action pair_born_kokkos.h
 action pair_buck_kokkos.cpp
 action pair_buck_kokkos.h
+action pair_colloid_kokkos.cpp pair_colloid.cpp
+action pair_colloid_kokkos.h pair_colloid.h
 action pair_coul_cut_kokkos.cpp
 action pair_coul_cut_kokkos.h
 action pair_coul_debye_kokkos.cpp
@@ -342,6 +348,8 @@ action pair_eam_kokkos.cpp pair_eam.cpp
 action pair_eam_kokkos.h pair_eam.h
 action pair_exp6_rx_kokkos.cpp pair_exp6_rx.cpp
 action pair_exp6_rx_kokkos.h pair_exp6_rx.h
+action pair_gauss_kokkos.cpp pair_gauss.cpp
+action pair_gauss_kokkos.h pair_gauss.h
 action pair_gran_hooke_history_kokkos.cpp pair_gran_hooke_history.cpp
 action pair_gran_hooke_history_kokkos.h pair_gran_hooke_history.h
 action pair_hybrid_kokkos.cpp
