@@ -750,7 +750,7 @@ remap_plan_3d *remap_3d_create_plan(
 
     if (memory == 1) {
       if (nrecv > 0) {
-        plan->scratch = (FFT_SCALAR*) malloc(nqty*out.isize*out.jsize*out.ksize*sizeof(FFT_SCALAR));
+        plan->scratch = (FFT_SCALAR*) malloc(sizeof(FFT_SCALAR)*nqty*out.isize*out.jsize*out.ksize);
         if (plan->scratch == nullptr) {
           delete plan;
           return nullptr;
