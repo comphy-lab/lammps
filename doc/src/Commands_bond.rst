@@ -28,7 +28,7 @@ OPT.
    * :doc:`fene (iko) <bond_fene>`
    * :doc:`fene/expand (ko) <bond_fene_expand>`
    * :doc:`fene/nm (k) <bond_fene>`
-   * :doc:`gaussian (k) <bond_gaussian>`
+   * :doc:`gaussian (ko) <bond_gaussian>`
    * :doc:`gromos (ko) <bond_gromos>`
    * :doc:`harmonic (iko) <bond_harmonic>`
    * :doc:`harmonic/restrain (ko) <bond_harmonic_restrain>`
