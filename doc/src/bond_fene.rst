@@ -2,6 +2,7 @@
 .. index:: bond_style fene/nm
 .. index:: bond_style fene/intel
 .. index:: bond_style fene/kk
+.. index:: bond_style fene/nm/omp
 .. index:: bond_style fene/omp
 
 bond_style fene command
@@ -11,6 +12,8 @@ Accelerator Variants: *fene/intel*, *fene/kk*, *fene/omp*
 
 bond_style fene/nm command
 ==========================
+
+Accelerator Variants: *fene/nm/omp*
 
 Syntax
 """"""
@@ -89,6 +92,10 @@ The *fene* bond style can only be used if LAMMPS was built with the MOLECULE
 package; the *fene/nm* bond style can only be used if LAMMPS was built
 with the EXTRA-MOLECULE package. See the :doc:`Build package <Build_package>`
 page for more info.
+
+.. versionadded:: TBD
+
+   The *fene/nm/omp* style
 
 You typically should specify :doc:`special_bonds fene <special_bonds>`
 or :doc:`special_bonds lj/coul 0 1 1 <special_bonds>` to use this bond
