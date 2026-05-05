@@ -1,6 +1,7 @@
 .. index:: pair_style born
-.. index:: pair_style born/omp
 .. index:: pair_style born/gpu
+.. index:: pair_style born/kk
+.. index:: pair_style born/omp
 .. index:: pair_style born/coul/long
 .. index:: pair_style born/coul/long/gpu
 .. index:: pair_style born/coul/long/omp
@@ -14,7 +15,7 @@
 pair_style born command
 =======================
 
-Accelerator Variants: *born/omp*, *born/gpu*
+Accelerator Variants: *born/gpu*, *born/kk*, *born/omp*
 
 pair_style born/coul/long command
 =================================

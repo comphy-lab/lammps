@@ -28,12 +28,12 @@ OPT.
    * :doc:`airebo/morse (io) <pair_airebo>`
    * :doc:`amoeba (g) <pair_amoeba>`
    * :doc:`atm (o) <pair_atm>`
-   * :doc:`beck (go) <pair_beck>`
+   * :doc:`beck (gko) <pair_beck>`
    * :doc:`body/nparticle (o) <pair_body_nparticle>`
    * :doc:`body/rounded/polygon (o) <pair_body_rounded_polygon>`
-   * :doc:`body/rounded/polyhedron (o) <pair_body_rounded_polyhedron>`
+   * :doc:`body/rounded/polyhedro (o)n <pair_body_rounded_polyhedron>`
    * :doc:`bop <pair_bop>`
-   * :doc:`born (go) <pair_born>`
+   * :doc:`born (gko) <pair_born>`
    * :doc:`born/coul/dsf <pair_born>`
    * :doc:`born/coul/dsf/cs <pair_cs>`
    * :doc:`born/coul/long (go) <pair_born>`
@@ -54,7 +54,7 @@ OPT.
    * :doc:`buck/mdf (o) <pair_mdf>`
    * :doc:`buck6d/coul/gauss/dsf (o) <pair_buck6d_coul_gauss>`
    * :doc:`buck6d/coul/gauss/long (o) <pair_buck6d_coul_gauss>`
-   * :doc:`colloid (go) <pair_colloid>`
+   * :doc:`colloid (gko) <pair_colloid>`
    * :doc:`comb (o) <pair_comb>`
    * :doc:`comb3 <pair_comb>`
    * :doc:`cosine/squared (o) <pair_cosine_squared>`
@@ -106,7 +106,7 @@ OPT.
    * :doc:`eim (o) <pair_eim>`
    * :doc:`exp6/rx (k) <pair_exp6_rx>`
    * :doc:`extep (o) <pair_extep>`
-   * :doc:`gauss (go) <pair_gauss>`
+   * :doc:`gauss (gko) <pair_gauss>`
    * :doc:`gauss/cut (o) <pair_gauss>`
    * :doc:`gayberne (gio) <pair_gayberne>`
    * :doc:`gran/hertz/history (o) <pair_gran>`
