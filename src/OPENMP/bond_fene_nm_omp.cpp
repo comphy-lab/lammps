@@ -116,7 +116,7 @@ void BondFENENMOMP::eval(int nfrom, int nto, ThrData * const thr)
     // Don't print out warnings, only errors
 
     if (rlogarg < 0.02) {
-      error->warning(FLERR, "fene/nm/split bond too long: {} {} {} {}", update->ntimestep,
+      error->warning(FLERR, "fene/nm bond too long: {} {} {} {}", update->ntimestep,
                      atom->tag[i1], atom->tag[i2], sqrt(rsq));
       if (check_error_thr((rlogarg <= -0.21),tid,FLERR,"Bad FENE bond"))
         return;
