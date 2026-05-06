@@ -36,7 +36,7 @@ OPT.
    * :doc:`born (gko) <pair_born>`
    * :doc:`born/coul/dsf <pair_born>`
    * :doc:`born/coul/dsf/cs <pair_cs>`
-   * :doc:`born/coul/long (go) <pair_born>`
+   * :doc:`born/coul/long (gko) <pair_born>`
    * :doc:`born/coul/long/cs (g) <pair_cs>`
    * :doc:`born/coul/msm (o) <pair_born>`
    * :doc:`born/coul/wolf (go) <pair_born>`
@@ -73,7 +73,7 @@ OPT.
    * :doc:`coul/long/soft (o) <pair_fep_soft>`
    * :doc:`coul/msm (o) <pair_coul>`
    * :doc:`coul/slater/cut <pair_coul_slater>`
-   * :doc:`coul/slater/long (g) <pair_coul_slater>`
+   * :doc:`coul/slater/long (gk) <pair_coul_slater>`
    * :doc:`coul/shield <pair_coul_shield>`
    * :doc:`coul/streitz <pair_coul>`
    * :doc:`coul/tt <pair_coul_tt>`
@@ -190,8 +190,8 @@ OPT.
    * :doc:`lj/spica/coul/long (gko) <pair_spica>`
    * :doc:`lj/spica/coul/msm (o) <pair_spica>`
    * :doc:`lj/sf/dipole/sf (go) <pair_dipole>`
-   * :doc:`lj/smooth (go) <pair_lj_smooth>`
-   * :doc:`lj/smooth/linear (o) <pair_lj_smooth_linear>`
+   * :doc:`lj/smooth (gko) <pair_lj_smooth>`
+   * :doc:`lj/smooth/linear (ko) <pair_lj_smooth_linear>`
    * :doc:`lj/switch3/coulgauss/long <pair_lj_switch3_coulgauss_long>`
    * :doc:`lj96/cut (gko) <pair_lj96>`
    * :doc:`local/density <pair_local_density>`
@@ -306,7 +306,7 @@ OPT.
    * :doc:`tip4p/long (o) <pair_coul>`
    * :doc:`tip4p/long/soft (o) <pair_fep_soft>`
    * :doc:`tri/lj <pair_tri_lj>`
-   * :doc:`ufm (got) <pair_ufm>`
+   * :doc:`ufm (gkot) <pair_ufm>`
    * :doc:`uf3 (k) <pair_uf3>`
    * :doc:`vashishta (gko) <pair_vashishta>`
    * :doc:`vashishta/table (o) <pair_vashishta>`

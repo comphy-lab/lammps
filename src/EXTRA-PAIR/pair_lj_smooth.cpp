@@ -40,6 +40,8 @@ PairLJSmooth::PairLJSmooth(LAMMPS *lmp) : Pair(lmp)
 
 PairLJSmooth::~PairLJSmooth()
 {
+  if (copymode) return;
+
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);
