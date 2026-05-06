@@ -1,17 +1,17 @@
-# Porting Pair Styles from OPENMP to KOKKOS
+# Porting Pair Styles to KOKKOS
 
-This document provides a structured plan and reference for porting pair styles
-that have been implemented in the OPENMP package to the KOKKOS package.  It
-covers the required code changes, documentation updates, and groups the work
-into Copilot-session-sized batches ordered from simplest to most complex.
+This document provides a structured plan and reference for porting some
+pair styles to the KOKKOS package.  It covers the required code changes,
+documentation updates, and groups the work into Copilot-session-sized
+batches ordered from simplest to most complex.
 
 ---
 
 ## Background and Motivation
 
 The KOKKOS package provides GPU-accelerated (CUDA/HIP) and many-core CPU
-(OpenMP/threads) variants of LAMMPS styles using Kokkos abstractions.  Porting
-a pair style from OPENMP means:
+(OpenMP/threads) variants of LAMMPS styles using Kokkos abstractions.
+Porting a pair style to KOKKOS means:
 
 1. Creating `src/KOKKOS/pair_<name>_kokkos.h` and
    `src/KOKKOS/pair_<name>_kokkos.cpp`.
@@ -305,7 +305,7 @@ template class Pair<Name>Kokkos<LMPHostType>;
 
 ## Candidate Pair Styles to Port
 
-97 pair styles are in the OPENMP package but not yet in KOKKOS.  They are
+52 pair styles are possible candidates for porting to KOKKOS.  They are
 grouped below by porting complexity, from easiest to hardest.
 
 ---
@@ -325,10 +325,7 @@ Pattern to follow: `pair_born_kokkos` or `pair_beck_kokkos`.
 | `gauss/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_gauss_cut.h` |
 | `harmonic/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_harmonic_cut.h` |
 | `cosine/squared` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_cosine_squared.h` |
-| `lj/smooth` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lj_smooth.h` |
-| `lj/smooth/linear` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lj_smooth_linear.h` |
 | `morse/smooth/linear` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_morse_smooth_linear.h` |
-| `ufm` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_ufm.h` |
 | `wf/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_wf_cut.h` |
 | `born/gauss` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_born_gauss.h` |
 | `lj/mdf` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lj_mdf.h` |
@@ -385,63 +382,21 @@ Verify before creating a separate file.
 
 ---
 
-## Group 4 — Pairwise with Long-Range Coulomb (Ewald/PPPM; ~10 styles)
+## Group 4 — Pairwise with Long-Range Coulomb (Ewald/PPPM; ~5 styles)
 
 **Complexity:** Moderate.  `COUL_FLAG=1`, use `init_tables()` for Coulomb.
 Pattern to follow: `pair_born_kokkos` extended with `pair_lj_cut_coul_long_kokkos`.
 
 | Pair style | Package | Notes |
 |---|---|---|
-| `born/coul/long` | KSPACE | see existing `pair_born_kokkos` as partial model |
-| `born/coul/msm` | KSPACE | MSM Coulomb (use `coul/msm` flag) |
-| `lj/cut/coul/msm` | KSPACE | MSM Coulomb |
 | `nm/cut/coul/long` | EXTRA-PAIR | NM with long-range Ewald |
-| `lj/charmm/coul/msm` | KSPACE | CHARMM + MSM |
-| `lj/spica/coul/msm` | CG-SPICA | SPICA + MSM |
 | `lj/switch3/coulgauss/long` | YAFF | YAFF + Gaussian charge Ewald |
 | `mm3/switch3/coulgauss/long` | YAFF | YAFF MM3 variant |
 | `buck6d/coul/gauss/long` | MOFFF | MOFFF Buckingham + Ewald |
-| `coul/msm` | KSPACE | MSM pure Coulomb |
 
 ---
 
-## Group 5 — FEP Soft-Core Pairs (~8 styles)
-
-**Complexity:** Moderate.  These use soft-core (lambda-dependent) interactions
-for free energy perturbation.  The main complication is that they need a
-soft-core parameter `lambda` accessible on the device, and the `compute_fpair`
-function is more complex (additional branch on lambda).
-Pattern to follow: existing `pair_lj_cut_coul_long_soft_omp` + `pair_lj_cut_coul_long_kokkos`.
-
-| Pair style | Package | Notes |
-|---|---|---|
-| `coul/cut/soft` | FEP | pure Coulomb soft-core |
-| `coul/long/soft` | FEP | long-range Coulomb soft-core |
-| `lj/cut/soft` | FEP | VdW soft-core, no Coulomb |
-| `lj/cut/coul/cut/soft` | FEP | VdW + cut Coulomb soft-core |
-| `lj/cut/coul/long/soft` | FEP | VdW + long Coulomb soft-core |
-| `lj/charmm/coul/long/soft` | FEP | CHARMM + long Coulomb soft-core |
-| `lj/cut/tip4p/long/soft` | FEP | TIP4P + long Coulomb soft-core |
-| `tip4p/long/soft` | FEP | TIP4P long soft-core |
-
----
-
-## Group 6 — Dielectric / Drude / Thole (~5 styles)
-
-**Complexity:** Moderate-High.  These require per-atom dielectric constants or
-Drude/Thole parameters, which must be exposed as Kokkos views.
-
-| Pair style | Package | Notes |
-|---|---|---|
-| `lj/cut/coul/cut/dielectric` | DIELECTRIC | requires per-atom epsilon_r |
-| `lj/cut/coul/debye/dielectric` | DIELECTRIC | Debye screening + dielectric |
-| `lj/cut/coul/long/dielectric` | DIELECTRIC | long Coulomb + dielectric |
-| `lj/cut/thole/long` | DRUDE | Thole damping requires extra per-atom arrays |
-| `lj/cut/coul/wolf` | EXTRA-PAIR | (could be in Group 3; include here for Wolf+LJ grouping) |
-
----
-
-## Group 7 — TIP4P Water Models (~4 styles)
+## Group 5 — TIP4P Water Models (~4 styles)
 
 **Complexity:** High.  The TIP4P geometry correction (virtual oxygen site M)
 requires special handling in the neighbor loop.  Study the existing
@@ -456,7 +411,7 @@ requires special handling in the neighbor loop.  Study the existing
 
 ---
 
-## Group 8 — Granular, Colloidal, Lubrication (~5 styles)
+## Group 6 — Granular, Colloidal, Lubrication (~2 styles)
 
 **Complexity:** High.  These involve contact mechanics (overlap detection,
 friction history) or hydrodynamic lubrication requiring per-atom state.
@@ -465,13 +420,10 @@ friction history) or hydrodynamic lubrication requiring per-atom state.
 |---|---|---|
 | `gran/hooke` | GRANULAR | frictionless Hertz; no history arrays needed |
 | `gran/hertz/history` | GRANULAR | requires shear history Kokkos view |
-| `brownian/poly` | COLLOID | polydisperse Brownian with per-atom radius |
-| `lubricate` | COLLOID | squeeze/shear lubrication with Stokesian dynamics |
-| `lubricate/poly` | COLLOID | polydisperse variant |
 
 ---
 
-## Group 9 — MANYBODY Three-body (SW-like, Tersoff tables; ~6 styles)
+## Group 7 — MANYBODY Three-body (SW-like, Tersoff tables; ~3 styles)
 
 **Complexity:** High.  These use a short neighbor list in addition to the
 regular neighbor list.  Follow `pair_sw_kokkos` and `pair_tersoff_kokkos`
@@ -484,13 +436,10 @@ three-body).
 | `sw/mod` | MANYBODY | SW variant; inherits from PairSW; follow `pair_sw_kokkos` |
 | `nb3b/harmonic` | MANYBODY | three-body harmonic, independent from SW hierarchy |
 | `tersoff/mod/c` | MANYBODY | Tersoff mod + carbon correction |
-| `tersoff/table` | MANYBODY | table-interpolated Tersoff |
-| `vashishta/table` | MANYBODY | table-interpolated Vashishta |
-| `threebody/table` | MANYBODY | generic three-body table |
 
 ---
 
-## Group 10 — Moderate Many-Body / Geometry-Dependent (~7 styles)
+## Group 8 — Moderate Many-Body / Geometry-Dependent (~6 styles)
 
 **Complexity:** High.  These require non-trivial per-atom or angle-dependent
 loops that do not map onto the `pair_kokkos.h` template.
@@ -498,7 +447,6 @@ loops that do not map onto the `pair_kokkos.h` template.
 | Pair style | Package | Notes |
 |---|---|---|
 | `atm` | MANYBODY | three-body Axilrod-Teller-Muto; triple loop |
-| `agni` | MISC | AGNI neural potential; vector fingerprints per atom |
 | `local/density` | MANYBODY | local density embedding; two-pass loop |
 | `gayberne` | ASPHERE | ellipsoid-ellipsoid; per-atom quaternions on device |
 | `resquared` | ASPHERE | re-squared ellipsoid; similar to gayberne |
@@ -507,7 +455,7 @@ loops that do not map onto the `pair_kokkos.h` template.
 
 ---
 
-## Group 11 — H-Bond, Dipole, Peridynamics (~8 styles)
+## Group 9 — H-Bond, Dipole, Peridynamics (~6 styles)
 
 **Complexity:** High.  Angle-dependent (H-bond) or orientation-dependent
 (dipole) or continuum mechanics (peri) interactions.
@@ -520,56 +468,6 @@ loops that do not map onto the `pair_kokkos.h` template.
 | `hbond/dreiding/morse/angleoffset` | EXTRA-MOLECULE | angle-offset extension |
 | `lj/sf/dipole/sf` | DIPOLE | shifted-force dipole + LJ |
 | `lj/expand/sphere` | EXTRA-PAIR | per-atom sphere radii required |
-| `peri/lps` | PERI | peridynamics LPS; volume-weighted kernel |
-| `peri/pmb` | PERI | peridynamics PMB |
-
----
-
-## Group 12 — Lepton Expression-Based (~3 styles)
-
-**Complexity:** High.  Lepton parses mathematical expressions at run time.
-For GPU execution the expression must be reduced to a finite set of KOKKOS
-functors or the Lepton C code generator must be invoked.  Consult with the
-LAMMPS developers before attempting; these may require a different approach
-(e.g., expression-specific code generation or restriction to CPU-only KK).
-
-| Pair style | Package | Notes |
-|---|---|---|
-| `lepton` | LEPTON | general Lepton expression |
-| `lepton/coul` | LEPTON | Lepton + Coulomb |
-| `lepton/sphere` | LEPTON | Lepton sphere variant |
-
----
-
-## Group 13 — Very Complex Many-Body (experts only; ~14 styles)
-
-**Complexity:** Very High.  These either require complete custom Kokkos kernels,
-substantial restructuring, or depend on external libraries that need GPU
-support.  Each style should be its own dedicated development effort.
-
-| Pair style | Package | Why it is hard |
-|---|---|---|
-| `edip` | MANYBODY | EDIP carbon; precomputed coordination arrays |
-| `eim` | MANYBODY | EIM embedding; two-pass with per-atom rho |
-| `extep` | MANYBODY | ExTeP; complex three-body overlap integrals |
-| `gw` / `gw/zbl` | MANYBODY | Gong-Wang; complex many-body |
-| `comb` | MANYBODY | COMB; charge equilibration, self-consistent loop |
-| `coul/streitz` | KSPACE | Streitz-Mintmire; dynamic charge, Ewald + QEq |
-| `lcbop` | MANYBODY | Long-range carbon bond order; very large kernel |
-| `meam/spline` | MANYBODY | MEAM spline; two-pass EAM-like |
-| `rebo` | MANYBODY | REBO; inherits from `PairAIREBO`; port AIREBO first |
-| `airebo` | MANYBODY | 2800+ line compute; complex torsion, REBO backbone |
-| `airebo/morse` | MANYBODY | Morse variant of AIREBO |
-| `rebomos` | MANYBODY | REBO MoS₂ variant |
-| `buck/long/coul/long` | KSPACE | dispersion PPPM; special kspace long-range |
-| `lj/long/coul/long` | KSPACE | dispersion PPPM; long-range vdW |
-| `lj/long/tip4p/long` | KSPACE | dispersion PPPM + TIP4P geometry |
-| `drip` | INTERLAYER | DRIP; complex three-body registry-dependent |
-| `e3b` | EXTRA-PAIR | E3B water three-body; complex O-H-H loops |
-| `body/nparticle` | BODY | rigid body N-particle; per-body data |
-| `body/rounded/polygon` | BODY | 2D rounded polygon; contact detection |
-| `body/rounded/polyhedron` | BODY | 3D rounded polyhedron; very complex |
-| `lj/relres` | EXTRA-PAIR | dual-resolution; two neighbor lists |
 
 ---
 
@@ -640,4 +538,3 @@ cd build && ctest -V -R pair
    (e.g., EXTRA-PAIR), pass both filenames; when base is in `src/`, omit
    second filename.
 8. **Not rebuilding with `make purge` after switching build systems.**
-9. **Not adding `.. versionadded:: TBD`** — required for all new styles in docs.
