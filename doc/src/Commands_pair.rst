@@ -57,7 +57,7 @@ OPT.
    * :doc:`colloid (go) <pair_colloid>`
    * :doc:`comb (o) <pair_comb>`
    * :doc:`comb3 <pair_comb>`
-   * :doc:`cosine/squared (o) <pair_cosine_squared>`
+   * :doc:`cosine/squared (ko) <pair_cosine_squared>`
    * :doc:`coul/ctip <pair_coul>`
    * :doc:`coul/cut (gko) <pair_coul>`
    * :doc:`coul/cut/dielectric <pair_dielectric>`
@@ -107,7 +107,7 @@ OPT.
    * :doc:`exp6/rx (k) <pair_exp6_rx>`
    * :doc:`extep (o) <pair_extep>`
    * :doc:`gauss (go) <pair_gauss>`
-   * :doc:`gauss/cut (o) <pair_gauss>`
+   * :doc:`gauss/cut (ko) <pair_gauss>`
    * :doc:`gayberne (gio) <pair_gayberne>`
    * :doc:`gran/hertz/history (o) <pair_gran>`
    * :doc:`gran/hooke (o) <pair_gran>`
@@ -116,7 +116,7 @@ OPT.
    * :doc:`granular/superellipsoid <pair_granular_superellipsoid>`
    * :doc:`gw (o) <pair_gw>`
    * :doc:`gw/zbl (o) <pair_gw>`
-   * :doc:`harmonic/cut (o) <pair_harmonic_cut>`
+   * :doc:`harmonic/cut (ko) <pair_harmonic_cut>`
    * :doc:`hbond/dreiding/lj (o) <pair_hbond_dreiding>`
    * :doc:`hbond/dreiding/lj/angleoffset (o) <pair_hbond_dreiding>`
    * :doc:`hbond/dreiding/morse (o) <pair_hbond_dreiding>`
@@ -210,7 +210,7 @@ OPT.
    * :doc:`mesocnt <pair_mesocnt>`
    * :doc:`mesocnt/viscous <pair_mesocnt>`
    * :doc:`mgpt <pair_mgpt>`
-   * :doc:`mie/cut (go) <pair_mie>`
+   * :doc:`mie/cut (gko) <pair_mie>`
    * :doc:`mliap (k) <pair_mliap>`
    * :doc:`mm3/switch3/coulgauss/long <pair_lj_switch3_coulgauss_long>`
    * :doc:`momb (o) <pair_momb>`
@@ -221,7 +221,7 @@ OPT.
    * :doc:`multi/lucy/rx (k) <pair_multi_lucy_rx>`
    * :doc:`nb3b/harmonic (o) <pair_nb3b>`
    * :doc:`nb3b/screened <pair_nb3b>`
-   * :doc:`nm/cut (o) <pair_nm>`
+   * :doc:`nm/cut (ko) <pair_nm>`
    * :doc:`nm/cut/coul/cut (o) <pair_nm>`
    * :doc:`nm/cut/coul/long (o) <pair_nm>`
    * :doc:`nm/cut/split <pair_nm>`
