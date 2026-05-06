@@ -458,6 +458,7 @@ void PairRuNNer::compute(int eflag, int vflag)
         // Broadcast and unpack electrostatic results back to each local process.
         unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, q_global.data(),
                                        atomic_charge);
+        for (ii = 0; ii < nmax; ii++) committee_atomic_charge[nmax * i + ii] = atomic_charge[ii];
 
         memset(de_dq, 0, nall * (sizeof *de_dq));
         unpack_local_atomic_properties(rank, size, natoms, inum, ilist, tag, 1, de_dq_global.data(),
