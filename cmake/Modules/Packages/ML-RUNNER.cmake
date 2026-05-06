@@ -39,59 +39,60 @@ if(NOT DEFINED FFT)
       message(STATUS "No MKL or FFTW3 found. Defaulting to KISS FFT.")
     endif()
   endif()
-endif()
 
-# Create the user-configurable cache variable with the determined default.
-# This makes the option visible in tools like ccmake/cmake-gui and allows changes.
-set(FFT_VALUES KISS FFTW3 MKL NVPL)
-set(FFT ${FFT} CACHE STRING "FFT library for RUNNER package")
-set_property(CACHE FFT PROPERTY STRINGS ${FFT_VALUES})
 
-string(TOUPPER ${FFT} FFT_UPPER)
-message(STATUS "Using ${FFT_UPPER} for FFT calculations.")
+  # Create the user-configurable cache variable with the determined default.
+  # This makes the option visible in tools like ccmake/cmake-gui and allows changes.
+  set(FFT_VALUES KISS FFTW3 MKL NVPL)
+  set(FFT ${FFT} CACHE STRING "FFT library for RUNNER package")
+  set_property(CACHE FFT PROPERTY STRINGS ${FFT_VALUES})
 
-# Configure Project Based on Selected FFT Library
+  string(TOUPPER ${FFT} FFT_UPPER)
+  message(STATUS "Using ${FFT_UPPER} for FFT calculations.")
 
-if(FFT_UPPER STREQUAL "MKL")
-  find_package(MKL REQUIRED)
-  target_compile_definitions(lammps PRIVATE -DFFT_MKL)
-  option(FFT_MKL_THREADS "Use threaded MKL FFT" ON)
-  if(FFT_MKL_THREADS)
-    target_compile_definitions(lammps PRIVATE -DFFT_MKL_THREADS)
-  endif()
-  target_link_libraries(lammps PRIVATE MKL::MKL)
+  # Configure Project Based on Selected FFT Library
 
-elseif(FFT_UPPER STREQUAL "FFTW3")
-  find_package(FFTW3 REQUIRED)
-  target_compile_definitions(lammps PRIVATE -DFFT_FFTW3)
-  target_link_libraries(lammps PRIVATE FFTW3::FFTW3)
-
-  # Check for OpenMP support in the found FFTW3 library
-  if(FFTW3_OMP_LIBRARIES OR FFTW3F_OMP_LIBRARIES)
-    option(FFT_FFTW_THREADS "Use threaded FFTW library" ON)
-  else()
-    option(FFT_FFTW_THREADS "Use threaded FFTW library" OFF)
-  endif()
-
-  if(FFT_FFTW_THREADS)
-    if(FFTW3_OMP_LIBRARIES OR FFTW3F_OMP_LIBRARIES)
-      target_compile_definitions(lammps PRIVATE -DFFT_FFTW_THREADS)
-      target_link_libraries(lammps PRIVATE FFTW3::FFTW3_OMP)
-    else()
-      message(FATAL_ERROR "FFT_FFTW_THREADS is ON, but an OpenMP-enabled FFTW3 library was not found.")
+  if(FFT_UPPER STREQUAL "MKL")
+    find_package(MKL REQUIRED)
+    target_compile_definitions(lammps PRIVATE -DFFT_MKL)
+    option(FFT_MKL_THREADS "Use threaded MKL FFT" ON)
+    if(FFT_MKL_THREADS)
+      target_compile_definitions(lammps PRIVATE -DFFT_MKL_THREADS)
     endif()
-  endif()
+    target_link_libraries(lammps PRIVATE MKL::MKL)
 
-elseif(FFT_UPPER STREQUAL "NVPL")
-  find_package(nvpl_fft REQUIRED)
-  target_compile_definitions(lammps PRIVATE -DFFT_NVPL)
-  target_link_libraries(lammps PRIVATE nvpl::fftw)
+  elseif(FFT_UPPER STREQUAL "FFTW3")
+    find_package(FFTW3 REQUIRED)
+    target_compile_definitions(lammps PRIVATE -DFFT_FFTW3)
+    target_link_libraries(lammps PRIVATE FFTW3::FFTW3)
 
-else() # Fallback to KISSFFT
-  if(NOT FFT_UPPER STREQUAL "KISS")
-     message(WARNING "FFT option '${FFT}' not recognized. Falling back to KISSFFT.")
+    # Check for OpenMP support in the found FFTW3 library
+    if(FFTW3_OMP_LIBRARIES OR FFTW3F_OMP_LIBRARIES)
+      option(FFT_FFTW_THREADS "Use threaded FFTW library" ON)
+    else()
+      option(FFT_FFTW_THREADS "Use threaded FFTW library" OFF)
+    endif()
+
+    if(FFT_FFTW_THREADS)
+      if(FFTW3_OMP_LIBRARIES OR FFTW3F_OMP_LIBRARIES)
+        target_compile_definitions(lammps PRIVATE -DFFT_FFTW_THREADS)
+        target_link_libraries(lammps PRIVATE FFTW3::FFTW3_OMP)
+      else()
+        message(FATAL_ERROR "FFT_FFTW_THREADS is ON, but an OpenMP-enabled FFTW3 library was not found.")
+      endif()
+    endif()
+
+  elseif(FFT_UPPER STREQUAL "NVPL")
+    find_package(nvpl_fft REQUIRED)
+    target_compile_definitions(lammps PRIVATE -DFFT_NVPL)
+    target_link_libraries(lammps PRIVATE nvpl::fftw)
+
+  else() # Fallback to KISSFFT
+    if(NOT FFT_UPPER STREQUAL "KISS")
+      message(WARNING "FFT option '${FFT}' not recognized. Falling back to KISSFFT.")
+    endif()
+    target_compile_definitions(lammps PRIVATE -DFFT_KISS)
   endif()
-  target_compile_definitions(lammps PRIVATE -DFFT_KISS)
 endif()
 
 if(BUILD_MPI)
