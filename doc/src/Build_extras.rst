@@ -1635,13 +1635,14 @@ pre-compiled version already present on your system.
 
       **FFT Library Selection:**
 
-      The build system searches in the following priority: 1. MKL, 2. FFTW3, 3. NVPL, 4. KISSFFT (fallback).
+      The build system uses the FFT selection from the KSPACE package.
+      Only MKL and FFTW3 are currently supported
 
       .. code-block:: bash
 
-         -D FFT=value                # KISS, FFTW3, MKL, or NVPL.
-         -D FFT_MKL_THREADS=yes      # yes (default) or no. Use threaded MKL FFT.
-         -D FFT_FFTW_THREADS=yes     # yes (default) or no. Use threaded FFTW.
+         -D FFT=value                # FFTW3 or MKL
+         -D FFT_MKL_THREADS=yes      # required with MKL (default)
+         -D FFT_FFTW_THREADS=yes     # required with FFTW3 (default)
 
    .. tab:: Traditional make
 
@@ -1670,14 +1671,14 @@ pre-compiled version already present on your system.
      - Link against a shared RuNNer library
      - ``yes``
    * - ``FFT``
-     - FFT library to use (KISS, FFTW3, MKL, NVPL)
+     - FFT library to use (FFTW3 or MKL)
      - ``auto-detected``
    * - ``FFT_MKL_THREADS``
      - Use multi-threaded MKL FFT
      - ``yes``
    * - ``FFT_FFTW_THREADS``
      - Use multi-threaded FFTW
-     - ``yes`` (if found)
+     - ``yes``
 
 ----------
 

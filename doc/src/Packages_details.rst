@@ -1859,9 +1859,8 @@ This package has :ref:`specific installation instructions <ml-runner>` on the
 **Supporting info:**
 
 * ``src/ML-RUNNER``: filenames -> commands
-* ``src/ML-RUNNER/README.md``
 * :doc:`pair_style runner <pair_runner>`
-* ``examples/RuNNer`` (see README)
+* ``examples/PACKAGES/ml-runner`` (see README.txt)
 
 ----------
 
