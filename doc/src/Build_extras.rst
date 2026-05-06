@@ -1593,13 +1593,16 @@ The ML-RUNNER package provides an interface to the
 (Ruhr University Neural Network Energy Representation) library for
 high-dimensional neural network potentials (HDNNP).
 
-
-
 **Prerequisites**
 
 * **Fortran Compiler:** Since the RuNNer library is written in Fortran, a working Fortran compiler must be available on your system and detectable by CMake.
 * **BLAS/LAPACK:** RuNNer requires BLAS and LAPACK libraries for linear algebra operations.
-* **FFT Library:** RuNNer uses an FFT library for electrostatic calculations (3G/4G). The build system will attempt to auto-detect one, but you can specify a preference.
+* **FFT Library:** RuNNer uses an FFT library for electrostatic calculations (3G/4G).
+  It can use either MKL or FFTW3 and the choice is imported from the KSPACE package configuration.
+  When using FFTW3 also FFTW3 threading (-DFFT_FFTW_THREADING=ON) needs to be enabled
+  which is usually auto-detected.  These restrictions are needed so that LAMMPS and RuNNer
+  use the same FFT library settings and link to the same library.  In both cases the
+  Fortran 03 wrapper file ``fftw3.f03`` must be in the Fortran compiler include path.
 
 **Building RuNNer**
 
