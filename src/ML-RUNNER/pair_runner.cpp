@@ -731,7 +731,7 @@ void PairRuNNer::compute(int eflag, int vflag)
       virial[0] -= committee_d_energy_d_strain[0 + 9 * i] / cfenergy / num_committee_members;
       virial[1] -= committee_d_energy_d_strain[4 + 9 * i] / cfenergy / num_committee_members;
       virial[2] -= committee_d_energy_d_strain[8 + 9 * i] / cfenergy / num_committee_members;
-      virial[3] -= committee_d_energy_d_strain[0 + 9 * i] / cfenergy / num_committee_members;
+      virial[3] -= committee_d_energy_d_strain[1 + 9 * i] / cfenergy / num_committee_members;
       virial[4] -= committee_d_energy_d_strain[6 + 9 * i] / cfenergy / num_committee_members;
       virial[5] -= committee_d_energy_d_strain[7 + 9 * i] / cfenergy / num_committee_members;
     }
