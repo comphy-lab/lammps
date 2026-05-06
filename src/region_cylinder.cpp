@@ -482,11 +482,11 @@ int RegCylinder::surface_exterior(double *x, double cutoff)
     // do not add contact point if r >= cutoff
 
     d2prev = BIG;
-    if (r > radius) crad = 2.0 * radius;
     if (!openflag) {
       if (r > radius) {
         yp = c1 + del1 * radius / r;
         zp = c2 + del2 * radius / r;
+        crad = 2.0 * radius;
         varflag = 1;
       } else {
         yp = x[1];
@@ -519,6 +519,7 @@ int RegCylinder::surface_exterior(double *x, double cutoff)
           xp = x[0];
         }
         d2 = d2prev = dr2 + dx * dx;
+        if (r > radius) crad = 2.0 * radius;
       }
 
       // closest point on bottom cap
@@ -581,11 +582,11 @@ int RegCylinder::surface_exterior(double *x, double cutoff)
     // do not add contact point if r >= cutoff
 
     d2prev = BIG;
-    if (r > radius) crad = 2.0 * radius;
     if (!openflag) {
       if (r > radius) {
         xp = c1 + del1 * radius / r;
         zp = c2 + del2 * radius / r;
+        crad = 2.0 * radius;
         varflag = 1;
       } else {
         xp = x[0];
@@ -618,6 +619,7 @@ int RegCylinder::surface_exterior(double *x, double cutoff)
           yp = x[1];
         }
         d2 = d2prev = dr2 + dx * dx;
+        if (r > radius) crad = 2.0 * radius;
       }
 
       // closest point on bottom cap
@@ -680,11 +682,11 @@ int RegCylinder::surface_exterior(double *x, double cutoff)
     // do not add contact point if r >= cutoff
 
     d2prev = BIG;
-    if (r > radius) crad = 2.0 * radius;
     if (!openflag) {
       if (r > radius) {
         xp = c1 + del1 * radius / r;
         yp = c2 + del2 * radius / r;
+        crad = 2.0 * radius;
         varflag = 1;
       } else {
         xp = x[0];
@@ -717,6 +719,7 @@ int RegCylinder::surface_exterior(double *x, double cutoff)
           zp = x[2];
         }
         d2prev = dr2 + dx * dx;
+        if (r > radius) crad = 2.0 * radius;
       }
 
       // closest point on bottom cap
