@@ -1,4 +1,5 @@
 .. index:: pair_style nm/cut
+.. index:: pair_style nm/cut/kk
 .. index:: pair_style nm/cut/split
 .. index:: pair_style nm/cut/coul/cut
 .. index:: pair_style nm/cut/coul/long
@@ -9,7 +10,7 @@
 pair_style nm/cut command
 =========================
 
-Accelerator Variants: *nm/cut/omp*
+Accelerator Variants: *nm/cut/kk*, *nm/cut/omp*
 
 pair_style nm/cut/split command
 ===============================

@@ -330,6 +330,8 @@ action pair_coul_long_kokkos.cpp pair_coul_long.cpp
 action pair_coul_long_kokkos.h pair_coul_long.h
 action pair_coul_wolf_kokkos.cpp
 action pair_coul_wolf_kokkos.h
+action pair_cosine_squared_kokkos.cpp pair_cosine_squared.cpp
+action pair_cosine_squared_kokkos.h pair_cosine_squared.h
 action pair_dpd_ext_kokkos.cpp pair_dpd_ext.cpp
 action pair_dpd_ext_kokkos.h pair_dpd_ext.h
 action pair_dpd_ext_tstat_kokkos.cpp pair_dpd_ext_tstat.cpp
@@ -352,12 +354,16 @@ action pair_gauss_kokkos.cpp pair_gauss.cpp
 action pair_gauss_kokkos.h pair_gauss.h
 action pair_gran_hooke_history_kokkos.cpp pair_gran_hooke_history.cpp
 action pair_gran_hooke_history_kokkos.h pair_gran_hooke_history.h
+action pair_gauss_cut_kokkos.cpp pair_gauss_cut.cpp
+action pair_gauss_cut_kokkos.h pair_gauss_cut.h
 action pair_hybrid_kokkos.cpp
 action pair_hybrid_kokkos.h
 action pair_hybrid_overlay_kokkos.cpp
 action pair_hybrid_overlay_kokkos.h
 action pair_hybrid_scaled_kokkos.cpp
 action pair_hybrid_scaled_kokkos.h
+action pair_harmonic_cut_kokkos.cpp pair_harmonic_cut.cpp
+action pair_harmonic_cut_kokkos.h pair_harmonic_cut.h
 action pair_kokkos.h
 action pair_lj_charmm_coul_charmm_implicit_kokkos.cpp pair_lj_charmm_coul_charmm_implicit.cpp
 action pair_lj_charmm_coul_charmm_implicit_kokkos.h pair_lj_charmm_coul_charmm_implicit.h
@@ -401,12 +407,16 @@ action pair_meam_kokkos.cpp pair_meam.cpp
 action pair_meam_kokkos.h pair_meam.h
 action pair_meam_ms_kokkos.cpp pair_meam_ms.cpp
 action pair_meam_ms_kokkos.h pair_meam_ms.h
+action pair_mie_cut_kokkos.cpp pair_mie_cut.cpp
+action pair_mie_cut_kokkos.h pair_mie_cut.h
 action pair_mliap_kokkos.cpp pair_mliap.cpp
 action pair_mliap_kokkos.h pair_mliap.h
 action pair_morse_kokkos.cpp
 action pair_morse_kokkos.h
 action pair_multi_lucy_rx_kokkos.cpp pair_multi_lucy_rx.cpp
 action pair_multi_lucy_rx_kokkos.h pair_multi_lucy_rx.h
+action pair_nm_cut_kokkos.cpp pair_nm_cut.cpp
+action pair_nm_cut_kokkos.h pair_nm_cut.h
 action pair_pace_extrapolation_kokkos.cpp pair_pace_extrapolation.cpp
 action pair_pace_extrapolation_kokkos.h pair_pace_extrapolation.h
 action pair_pod_kokkos.cpp pair_pod.cpp

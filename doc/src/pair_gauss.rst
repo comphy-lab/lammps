@@ -3,6 +3,7 @@
 .. index:: pair_style gauss/kk
 .. index:: pair_style gauss/omp
 .. index:: pair_style gauss/cut
+.. index:: pair_style gauss/cut/kk
 .. index:: pair_style gauss/cut/omp
 
 pair_style gauss command
@@ -13,7 +14,7 @@ Accelerator Variants: *gauss/gpu*, *gauss/kk*, *gauss/omp*
 pair_style gauss/cut command
 ============================
 
-Accelerator Variants: *gauss/cut/omp*
+Accelerator Variants: *gauss/cut/kk*, *gauss/cut/omp*
 
 Syntax
 """"""
