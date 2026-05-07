@@ -490,10 +490,12 @@ For each pair style ported, update the following:
 5. **Base class `.cpp` in `src/<PKG>/pair_<name>.cpp`**:
    - Add `if (copymode) return;` as first line of destructor
 6. **`doc/src/pair_<name>.rst`**:
-   - Add `.. index:: pair_style <name>/kk` near the top
+   - Add `.. index:: pair_style <name>/kk` near the top and so that they are ordered in groups by the base pair style and then for the same base style alphabetically according to the accelerator suffix. So `/kk` follows `/gpu` but comes before `/omp`.
    - Add `*<name>/kk*` to `Accelerator Variants:`
+   - Order the list of accelerator variants alphabetically
 7. **`doc/src/Commands_pair.rst`**:
    - Add letter `k` to the entry for this style
+   - When adding to existing letter use (ko) and *not* (o,k), that is order alphabetically and do not use a comma.
 
 ---
 
