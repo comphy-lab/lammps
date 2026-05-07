@@ -107,11 +107,6 @@ void PairLJCutSphereKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   special_lj[1] = force->special_lj[1];
   special_lj[2] = force->special_lj[2];
   special_lj[3] = force->special_lj[3];
-  special_coul[0] = force->special_coul[0];
-  special_coul[1] = force->special_coul[1];
-  special_coul[2] = force->special_coul[2];
-  special_coul[3] = force->special_coul[3];
-  qqrd2e = force->qqrd2e;
   newton_pair = force->newton_pair;
 
   EV_FLOAT ev;
@@ -294,7 +289,6 @@ double PairLJCutSphereKokkos<DeviceType>::init_one(int i, int j)
     m_params[i][j] = m_params[j][i] = k_params.view_host()(i,j);
     m_cutsq[j][i]    = m_cutsq[i][j]    = cutsqm;
     m_cut_ljsq[j][i] = m_cut_ljsq[i][j] = cutsqm;
-    m_cut_coulsq[j][i] = m_cut_coulsq[i][j] = static_cast<KK_FLOAT>(0.0);
   }
 
   k_cutsq.view_host()(i,j) = k_cutsq.view_host()(j,i) = cutsqm;

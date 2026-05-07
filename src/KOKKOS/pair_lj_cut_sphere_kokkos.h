@@ -89,12 +89,10 @@ class PairLJCutSphereKokkos : public PairLJCutSphere {
 
   KK_FLOAT m_cutsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
   KK_FLOAT m_cut_ljsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
-  KK_FLOAT m_cut_coulsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
   typename AT::t_kkfloat_1d_3_lr_randomread x;
   typename AT::t_kkfloat_1d_3_lr c_x;
   typename AT::t_kkacc_1d_3 f;
   typename AT::t_int_1d_randomread type;
-  typename AT::t_kkfloat_1d_randomread q;
   typename AT::t_kkfloat_1d_randomread radius;
 
   DAT::ttransform_kkacc_1d k_eatom;
@@ -112,9 +110,7 @@ class PairLJCutSphereKokkos : public PairLJCutSphere {
   int neighflag;
   int nlocal,nall,eflag,vflag;
 
-  KK_FLOAT special_coul[4];
   KK_FLOAT special_lj[4];
-  KK_FLOAT qqrd2e;
 
   // mixing rule and offset flag (copied from base class before kernel launch)
   int m_mix_flag;
