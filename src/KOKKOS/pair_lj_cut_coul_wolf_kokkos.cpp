@@ -17,7 +17,6 @@
 #include "atom_kokkos.h"
 #include "atom_masks.h"
 #include "error.h"
-#include "ewald_const.h"
 #include "force.h"
 #include "kokkos.h"
 #include "math_const.h"
@@ -31,7 +30,6 @@
 #include <cmath>
 
 using namespace LAMMPS_NS;
-using namespace EwaldConst;
 using MathConst::MY_PIS;
 
 /* ---------------------------------------------------------------------- */
@@ -119,9 +117,8 @@ void PairLJCutCoulWolfKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   newton_pair = force->newton_pair;
 
   // Wolf self-energy per atom
-  int inum = list->inum;
-  for (int ii = 0; ii < inum; ii++) {
-    double qisq = atom->q[ii]*atom->q[ii];
+  for (int i = 0; i < nlocal; i++) {
+    double qisq = atom->q[i]*atom->q[i];
     eng_coul += -(e_shift/2.0 + m_alf/MY_PIS) * qisq * qqrd2e;
   }
 
@@ -148,6 +145,11 @@ void PairLJCutCoulWolfKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   if (eflag_atom) {
     k_eatom.template modify<DeviceType>();
     k_eatom.sync_host();
+    // Add Wolf self-energy to per-atom energy after device sync
+    for (int i = 0; i < nlocal; i++) {
+      double qisq = atom->q[i]*atom->q[i];
+      eatom[i] += -(e_shift/2.0 + m_alf/MY_PIS) * qisq * qqrd2e;
+    }
   }
 
   if (vflag_atom) {
@@ -195,11 +197,13 @@ compute_fcoul(const KK_FLOAT& rsq, const int& /*i*/, const int& j,
 {
   const KK_FLOAT r2inv = 1.0/rsq;
   const KK_FLOAT r = Kokkos::sqrt(rsq);
-  const KK_FLOAT prefactor = factor_coul * qqrd2e * qtmp * q(j);
+  const KK_FLOAT prefactor = qqrd2e * qtmp * q(j) / r;
+  const KK_FLOAT erfcc = erfc(m_alf*r);
   const KK_FLOAT erfcd = Kokkos::exp(-m_alf*m_alf*rsq);
-  const KK_FLOAT t = 1.0 / (1.0 + EWALD_P*m_alf*r);
-  const KK_FLOAT erfcc = t * (A1+t*(A2+t*(A3+t*(A4+t*A5)))) * erfcd;
-  return prefactor * (erfcc/r + 2.0*m_alf/MY_PIS * erfcd + r*f_shift) * r2inv;
+  const KK_FLOAT dvdrr = (erfcc*r2inv + 2.0*m_alf/MY_PIS * erfcd/r) + f_shift;
+  KK_FLOAT forcecoul = dvdrr * rsq * prefactor;
+  if (factor_coul < static_cast<KK_FLOAT>(1.0)) forcecoul -= (static_cast<KK_FLOAT>(1.0)-factor_coul)*prefactor;
+  return forcecoul * r2inv;
 }
 
 /* ----------------------------------------------------------------------
@@ -236,12 +240,11 @@ compute_ecoul(const KK_FLOAT& rsq, const int& /*i*/, const int& j,
                const KK_FLOAT& factor_coul, const KK_FLOAT& qtmp) const
 {
   const KK_FLOAT r = Kokkos::sqrt(rsq);
-  const KK_FLOAT prefactor = factor_coul * qqrd2e * qtmp * q(j);
-  const KK_FLOAT erfcd = Kokkos::exp(-m_alf*m_alf*rsq);
-  const KK_FLOAT t = 1.0 / (1.0 + EWALD_P*m_alf*r);
-  const KK_FLOAT erfcc = t * (A1+t*(A2+t*(A3+t*(A4+t*A5)))) * erfcd;
-  // Wolf energy: only e_shift correction (no f_shift in energy)
-  return prefactor * (erfcc - r*e_shift) / r;
+  const KK_FLOAT prefactor = qqrd2e * qtmp * q(j) / r;
+  const KK_FLOAT erfcc = erfc(m_alf*r);
+  KK_FLOAT ecoul = (erfcc - e_shift*r) * prefactor;
+  if (factor_coul < static_cast<KK_FLOAT>(1.0)) ecoul -= (static_cast<KK_FLOAT>(1.0)-factor_coul)*prefactor;
+  return ecoul;
 }
 
 /* ----------------------------------------------------------------------
