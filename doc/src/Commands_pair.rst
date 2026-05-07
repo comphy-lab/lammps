@@ -41,7 +41,7 @@ OPT.
    * :doc:`born/coul/msm (o) <pair_born>`
    * :doc:`born/coul/wolf (go) <pair_born>`
    * :doc:`born/coul/wolf/cs (g) <pair_cs>`
-   * :doc:`born/gauss (o,k) <pair_born_gauss>`
+   * :doc:`born/gauss (ko) <pair_born_gauss>`
    * :doc:`bpm/spring <pair_bpm_spring>`
    * :doc:`brownian (ko) <pair_brownian>`
    * :doc:`brownian/poly (o) <pair_brownian>`
@@ -132,7 +132,7 @@ OPT.
    * :doc:`lambda/zone/apip <pair_lambda_zone_apip>`
    * :doc:`lcbop (o) <pair_lcbop>`
    * :doc:`lebedeva/z <pair_lebedeva_z>`
-   * :doc:`lennard/mdf (o,k) <pair_mdf>`
+   * :doc:`lennard/mdf (ko) <pair_mdf>`
    * :doc:`lepton (o) <pair_lepton>`
    * :doc:`lepton/coul (o) <pair_lepton>`
    * :doc:`lepton/sphere (o) <pair_lepton>`
@@ -184,7 +184,7 @@ OPT.
    * :doc:`lj/long/coul/long/dielectric <pair_dielectric>`
    * :doc:`lj/long/dipole/long <pair_dipole>`
    * :doc:`lj/long/tip4p/long (o) <pair_lj_long>`
-   * :doc:`lj/mdf (o,k) <pair_mdf>`
+   * :doc:`lj/mdf (ko) <pair_mdf>`
    * :doc:`lj/pirani (o) <pair_lj_pirani>`
    * :doc:`lj/relres (o) <pair_lj_relres>`
    * :doc:`lj/spica (gko) <pair_spica>`
@@ -215,7 +215,7 @@ OPT.
    * :doc:`mm3/switch3/coulgauss/long (o) <pair_lj_switch3_coulgauss_long>`
    * :doc:`momb (o) <pair_momb>`
    * :doc:`morse (gkot) <pair_morse>`
-   * :doc:`morse/smooth/linear (o,k) <pair_morse>`
+   * :doc:`morse/smooth/linear (ko) <pair_morse>`
    * :doc:`morse/soft <pair_fep_soft>`
    * :doc:`multi/lucy <pair_multi_lucy>`
    * :doc:`multi/lucy/rx (k) <pair_multi_lucy_rx>`
@@ -311,7 +311,7 @@ OPT.
    * :doc:`uf3 (k) <pair_uf3>`
    * :doc:`vashishta (gko) <pair_vashishta>`
    * :doc:`vashishta/table (o) <pair_vashishta>`
-   * :doc:`wf/cut (o,k) <pair_wf_cut>`
+   * :doc:`wf/cut (ko) <pair_wf_cut>`
    * :doc:`ylz (o) <pair_ylz>`
    * :doc:`yukawa (gko) <pair_yukawa>`
    * :doc:`yukawa/colloid (gko) <pair_yukawa_colloid>`
