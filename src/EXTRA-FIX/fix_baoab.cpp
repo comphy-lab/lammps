@@ -32,24 +32,20 @@ using namespace FixConst;
 
 /* ---------------------------------------------------------------------- */
 
-FixBAOAB::FixBAOAB(LAMMPS *lmp, int narg, char **arg) :
-    Fix(lmp, narg, arg), random(nullptr)
+FixBAOAB::FixBAOAB(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg), random(nullptr)
 {
   if (narg < 7) utils::missing_cmd_args(FLERR, "fix baoab", error);
 
   // --- Required arguments ---
 
   t_start = utils::numeric(FLERR, arg[3], false, lmp);
-  t_stop  = utils::numeric(FLERR, arg[4], false, lmp);
-  damp    = utils::numeric(FLERR, arg[5], false, lmp);
-  seed    = utils::inumeric(FLERR, arg[6], false, lmp);
+  t_stop = utils::numeric(FLERR, arg[4], false, lmp);
+  damp = utils::numeric(FLERR, arg[5], false, lmp);
+  seed = utils::inumeric(FLERR, arg[6], false, lmp);
 
-  if (t_start < 0.0 || t_stop < 0.0)
-    error->all(FLERR, 3, "Fix baoab temperatures must be >= 0");
-  if (damp <= 0.0)
-    error->all(FLERR, 5, "Fix baoab damp must be > 0");
-  if (seed <= 0)
-    error->all(FLERR, 6, "Fix baoab seed must be positive integer");
+  if (t_start < 0.0 || t_stop < 0.0) error->all(FLERR, 3, "Fix baoab temperatures must be >= 0");
+  if (damp <= 0.0) error->all(FLERR, 5, "Fix baoab damp must be > 0");
+  if (seed <= 0) error->all(FLERR, 6, "Fix baoab seed must be positive integer");
 
   // gamma = 1/damp (damp is the relaxation time, like fix langevin)
   gamma = 1.0 / damp;
@@ -71,13 +67,13 @@ FixBAOAB::FixBAOAB(LAMMPS *lmp, int narg, char **arg) :
 
   // --- Fix properties ---
 
-  time_integrate = 1;            // this fix does time integration
-  dynamic_group_allow = 1;       // works with dynamic groups
-  scalar_flag = 1;               // produces a global scalar (energy)
-  global_freq = 1;               // scalar computed every step
-  extscalar = 1;                 // scalar is extensive
-  ecouple_flag = 1;              // outputs cumulative reservoir energy via compute_scalar()
-  restart_global = 1;            // save/restore cumulative energy on restart
+  time_integrate = 1;         // this fix does time integration
+  dynamic_group_allow = 1;    // works with dynamic groups
+  scalar_flag = 1;            // produces a global scalar (energy)
+  global_freq = 1;            // scalar computed every step
+  extscalar = 1;              // scalar is extensive
+  ecouple_flag = 1;           // outputs cumulative reservoir energy via compute_scalar()
+  restart_global = 1;         // save/restore cumulative energy on restart
 
   // Initialize energy accounting
   energy = 0.0;
@@ -115,18 +111,10 @@ void FixBAOAB::init()
   for (auto &ifix : modify->get_fix_list())
     if ((utils::strmatch(ifix->style, "^shake") || utils::strmatch(ifix->style, "^rattle")) &&
         (ifix->groupbit & groupbit))
-      error->all(FLERR, Error::NOLASTLINE,
-          "Fix baoab is not compatible with fix {} on group {}",
-          ifix->style, group->names[igroup]);
+      error->all(FLERR, Error::NOLASTLINE, "Fix baoab is not compatible with fix {} on group {}",
+                 ifix->style, group->names[igroup]);
 
   recompute_dt_coeffs();
-}
-
-/* ---------------------------------------------------------------------- */
-
-void FixBAOAB::setup(int /*vflag*/)
-{
-  // Nothing needed -- forces are already computed before the first step
 }
 
 /* ---------------------------------------------------------------------- */
@@ -135,9 +123,9 @@ void FixBAOAB::recompute_dt_coeffs()
 {
   double dt = update->dt;
 
-  dtf   = 0.5 * dt * force->ftm2v;     // half-kick: F/m -> dv
-  dtby2 = 0.5 * dt;                     // half-drift: v -> dx
-  c1    = exp(-gamma * dt);             // O-step decay (full dt)
+  dtf = 0.5 * dt * force->ftm2v;    // half-kick: F/m -> dv
+  dtby2 = 0.5 * dt;                 // half-drift: v -> dx
+  c1 = exp(-gamma * dt);            // O-step decay (full dt)
 }
 
 /* ---------------------------------------------------------------------- */
@@ -167,8 +155,8 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
   double **x = atom->x;
   double **v = atom->v;
   double **f = atom->f;
-  double *mass  = atom->mass;
-  double *rmass = atom->rmass;     // per-atom mass (may be nullptr)
+  double *mass = atom->mass;
+  double *rmass = atom->rmass;    // per-atom mass (may be nullptr)
   int *type = atom->type;
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
@@ -226,8 +214,8 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
 
     double c2 = sqrt(kT * invmass * one_minus_c1sq);
 
-    double ke_before = 0.5 * force->mvv2e * mi *
-        (v[i][0]*v[i][0] + v[i][1]*v[i][1] + v[i][2]*v[i][2]);
+    double ke_before =
+        0.5 * force->mvv2e * mi * (v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
 
     double r0 = random->gaussian();
     double r1 = random->gaussian();
@@ -245,8 +233,8 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
       mass_total += mi;
     }
 
-    double ke_after = 0.5 * force->mvv2e * mi *
-        (v[i][0]*v[i][0] + v[i][1]*v[i][1] + v[i][2]*v[i][2]);
+    double ke_after =
+        0.5 * force->mvv2e * mi * (v[i][0] * v[i][0] + v[i][1] * v[i][1] + v[i][2] * v[i][2]);
     energy_onestep += ke_before - ke_after;
 
     // ---- A step: second half position drift ----
@@ -284,8 +272,7 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
   }
 
   double energy_allranks;
-  MPI_Allreduce(&energy_onestep, &energy_allranks, 1,
-                MPI_DOUBLE, MPI_SUM, world);
+  MPI_Allreduce(&energy_onestep, &energy_allranks, 1, MPI_DOUBLE, MPI_SUM, world);
   energy += energy_allranks;
 }
 
@@ -298,7 +285,7 @@ void FixBAOAB::final_integrate()
 {
   double **v = atom->v;
   double **f = atom->f;
-  double *mass  = atom->mass;
+  double *mass = atom->mass;
   double *rmass = atom->rmass;
   int *type = atom->type;
   int *mask = atom->mask;
