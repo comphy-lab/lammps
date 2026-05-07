@@ -3,8 +3,6 @@
 fix baoab command
 =================
 
-.. versionadded:: TBD
-
 Syntax
 """"""
 
@@ -18,16 +16,13 @@ Syntax
 * damp = damping parameter (time units)
 * seed = random number seed (positive integer)
 * zero or more keyword/value pairs may be appended
-* keyword = *zero* or *tally*
+* keyword = *zero*
 
   .. parsed-literal::
 
        *zero* value = *no* or *yes*
          *no* = do not zero the net random momentum each step (default)
          *yes* = zero the net random momentum each step
-       *tally* value = *no* or *yes*
-         *no* = do not tally the thermostat energy exchange (default)
-         *yes* = tally the thermostat energy exchange
 
 Examples
 """"""""
@@ -36,8 +31,9 @@ Examples
 
    fix 1 all baoab 300.0 300.0 100.0 12345
    fix 1 all baoab 1.0 1.0 10.0 48279 zero yes
-   fix 1 all baoab 0.0 1.0 50.0 98234 tally yes
    fix 2 all baoab 300.0 400.0 200.0 77777
+
+.. versionadded:: 7May2026
 
 Description
 """""""""""
@@ -111,13 +107,12 @@ the fix group does not drift.  This is useful for bulk systems without
 periodic boundary conditions or when the group does not span the full
 system.
 
-If the *tally* keyword is set to *yes* (or equivalently via
-``fix_modify ID energy yes``), the cumulative energy exchanged between
-the atoms and the Langevin reservoir is tracked and available as a scalar
-via :doc:`compute ecouple <compute_ecouple>` or the ``ecouple`` thermo
-keyword.  The sign convention is that a positive value means energy has
-flowed from the system into the reservoir (cooling), and negative means
-the reservoir has heated the system.
+The cumulative energy exchanged between the atoms and the Langevin
+reservoir is always tracked and available via the ``ecouple`` thermo
+keyword or :doc:`compute ecouple <compute_ecouple>`.  The sign convention
+is that a positive value means energy has flowed from the system into the
+reservoir (cooling), and negative means the reservoir has heated the system.
+The ``econserve`` thermo keyword reports the sum of ``etotal`` and ``ecouple``.
 
 This fix supports both per-type masses (``mass`` command) and per-atom
 masses (atom styles such as ``sphere``).
@@ -128,14 +123,11 @@ Restart, fix_modify, output, run start/stop, minimize info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 The cumulative thermostat energy is written to and read from
-:doc:`binary restart files <restart>` when *tally* is active, so that
-energy accounting is continuous across restarts.
+:doc:`binary restart files <restart>` so that energy accounting is
+continuous across restarts.
 
-The :doc:`fix_modify <fix_modify>` *energy yes* option is equivalent to
-setting the *tally* keyword to *yes* after the fix is defined.
-
-The scalar value produced by this fix (when *tally* is active) is
-extensive and is accessible to :doc:`thermo_style custom <thermo_style>`
+This fix produces a global scalar (the cumulative thermostat energy) that
+is extensive and accessible to :doc:`thermo_style custom <thermo_style>`
 via the ``f_ID`` keyword.
 
 This fix can ramp its target temperature over multiple runs using the
@@ -168,7 +160,7 @@ Related commands
 Default
 """""""
 
-The option defaults are zero = no, tally = no.
+The option defaults are zero = no.
 
 ----------
 

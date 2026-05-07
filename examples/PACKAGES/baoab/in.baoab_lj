@@ -36,8 +36,5 @@ run             1000
 
 reset_timestep  0
 
-# production run with energy tally
-fix_modify      1 energy yes
-thermo_style    custom step temp pe ke f_1 etotal press
 thermo          100
 run             2000

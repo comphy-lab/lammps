@@ -10,31 +10,6 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-/* ----------------------------------------------------------------------
-   BAOAB Langevin integrator (Leimkuhler & Matthews, 2013)
-
-   Implements the BAOAB splitting of the Langevin equation:
-     B: half-step velocity kick from conservative forces
-     A: half-step position drift
-     O: full-step exact Ornstein-Uhlenbeck thermostat
-     A: half-step position drift
-     B: half-step velocity kick from conservative forces
-
-   This fix performs COMPLETE time integration -- do NOT pair with fix nve.
-
-   Usage:
-     fix ID group-ID baoab Tstart Tstop damp seed [keyword value ...]
-
-   Optional keywords:
-     zero  yes/no  -- zero total random momentum each step (default: no)
-     tally yes/no  -- track cumulative thermostat energy   (default: no)
-
-   Reference:
-     B. Leimkuhler and C. Matthews, "Rational Construction of Stochastic
-     Numerical Methods for Molecular Sampling", Appl. Math. Res. Express,
-     2013(1), 34-56 (2013). https://doi.org/10.1093/amrx/abs010
-------------------------------------------------------------------------- */
-
 #ifdef FIX_CLASS
 // clang-format off
 FixStyle(baoab, FixBAOAB)
@@ -62,7 +37,6 @@ class FixBAOAB : public Fix {
   void write_restart(FILE *) override;
   void restart(char *) override;
   double compute_scalar() override;
-  int modify_param(int, char **) override;
 
  private:
   double t_start, t_stop;      // temperature ramp endpoints
@@ -77,7 +51,6 @@ class FixBAOAB : public Fix {
   double c1;                   // exp(-gamma*dt) for O step
 
   // Energy accounting
-  int tallyflag;               // whether to tally thermostat energy
   double energy;               // cumulative thermostat energy
   double energy_onestep;       // thermostat energy this step
 

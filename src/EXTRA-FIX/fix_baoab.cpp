@@ -10,31 +10,6 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-/* ----------------------------------------------------------------------
-   BAOAB Langevin integrator for LAMMPS
-
-   Implements the BAOAB splitting of Leimkuhler & Matthews (2013):
-     B: half-step velocity kick from conservative forces
-     A: half-step position drift
-     O: full-step exact Ornstein-Uhlenbeck thermostat
-     A: half-step position drift
-     B: half-step velocity kick from conservative forces
-
-   This fix performs COMPLETE time integration -- do NOT pair with fix nve.
-
-   Usage:
-     fix ID group-ID baoab Tstart Tstop damp seed [keyword value ...]
-
-   Optional keywords:
-     zero  yes/no  -- zero total random momentum each step (default: no)
-     tally yes/no -- track cumulative thermostat energy  (default: no)
-
-   Reference:
-     B. Leimkuhler and C. Matthews, "Rational Construction of Stochastic
-     Numerical Methods for Molecular Sampling", Appl. Math. Res. Express,
-     2013(1), 34-56 (2013). https://doi.org/10.1093/amrx/abs010
-------------------------------------------------------------------------- */
-
 #include "fix_baoab.h"
 
 #include "atom.h"
@@ -70,11 +45,11 @@ FixBAOAB::FixBAOAB(LAMMPS *lmp, int narg, char **arg) :
   seed    = utils::inumeric(FLERR, arg[6], false, lmp);
 
   if (t_start < 0.0 || t_stop < 0.0)
-    error->all(FLERR, "Fix baoab temperatures must be >= 0");
+    error->all(FLERR, 3, "Fix baoab temperatures must be >= 0");
   if (damp <= 0.0)
-    error->all(FLERR, "Fix baoab damp must be > 0");
+    error->all(FLERR, 5, "Fix baoab damp must be > 0");
   if (seed <= 0)
-    error->all(FLERR, "Fix baoab seed must be positive integer");
+    error->all(FLERR, 6, "Fix baoab seed must be positive integer");
 
   // gamma = 1/damp (damp is the relaxation time, like fix langevin)
   gamma = 1.0 / damp;
@@ -82,17 +57,12 @@ FixBAOAB::FixBAOAB(LAMMPS *lmp, int narg, char **arg) :
   // --- Optional keyword arguments ---
 
   zeroflag = 0;
-  tallyflag = 0;
 
   int iarg = 7;
   while (iarg < narg) {
     if (strcmp(arg[iarg], "zero") == 0) {
       if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix baoab zero", error);
       zeroflag = utils::logical(FLERR, arg[iarg + 1], false, lmp);
-      iarg += 2;
-    } else if (strcmp(arg[iarg], "tally") == 0) {
-      if (iarg + 2 > narg) utils::missing_cmd_args(FLERR, "fix baoab tally", error);
-      tallyflag = utils::logical(FLERR, arg[iarg + 1], false, lmp);
       iarg += 2;
     } else {
       error->all(FLERR, iarg, "Unknown fix baoab keyword {}", arg[iarg]);
@@ -106,7 +76,6 @@ FixBAOAB::FixBAOAB(LAMMPS *lmp, int narg, char **arg) :
   scalar_flag = 1;               // produces a global scalar (energy)
   global_freq = 1;               // scalar computed every step
   extscalar = 1;                 // scalar is extensive
-  energy_global_flag = 1;        // contributes to system energy
   ecouple_flag = 1;              // outputs cumulative reservoir energy via compute_scalar()
   restart_global = 1;            // save/restore cumulative energy on restart
 
@@ -142,22 +111,11 @@ int FixBAOAB::setmask()
 
 void FixBAOAB::init()
 {
-  // Check that no other time-integration fix is active on this group
-  int count = 0;
-  for (auto &ifix : modify->get_fix_list())
-    if (ifix->time_integrate && (ifix->groupbit & groupbit)) count++;
-
-  if (count > 1)
-    error->all(FLERR,
-        "Fix baoab is a complete time integrator; "
-        "more than one time-integration fix is active on group {}",
-        group->names[igroup]);
-
   // fix baoab and fix shake/rattle cannot be used together
   for (auto &ifix : modify->get_fix_list())
     if ((utils::strmatch(ifix->style, "^shake") || utils::strmatch(ifix->style, "^rattle")) &&
         (ifix->groupbit & groupbit))
-      error->all(FLERR,
+      error->all(FLERR, Error::NOLASTLINE,
           "Fix baoab is not compatible with fix {} on group {}",
           ifix->style, group->names[igroup]);
 
@@ -268,12 +226,8 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
 
     double c2 = sqrt(kT * invmass * one_minus_c1sq);
 
-    // Save pre-O-step KE for energy tally
-    double ke_before = 0.0;
-    if (tallyflag) {
-      ke_before = 0.5 * force->mvv2e * mi *
-          (v[i][0]*v[i][0] + v[i][1]*v[i][1] + v[i][2]*v[i][2]);
-    }
+    double ke_before = 0.5 * force->mvv2e * mi *
+        (v[i][0]*v[i][0] + v[i][1]*v[i][1] + v[i][2]*v[i][2]);
 
     double r0 = random->gaussian();
     double r1 = random->gaussian();
@@ -291,13 +245,9 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
       mass_total += mi;
     }
 
-    // Tally thermostat energy: KE_after - KE_before
-    // (energy removed by thermostat = negative of KE change)
-    if (tallyflag) {
-      double ke_after = 0.5 * force->mvv2e * mi *
-          (v[i][0]*v[i][0] + v[i][1]*v[i][1] + v[i][2]*v[i][2]);
-      energy_onestep += ke_before - ke_after;
-    }
+    double ke_after = 0.5 * force->mvv2e * mi *
+        (v[i][0]*v[i][0] + v[i][1]*v[i][1] + v[i][2]*v[i][2]);
+    energy_onestep += ke_before - ke_after;
 
     // ---- A step: second half position drift ----
     x[i][0] += dtby2 * v[i][0];
@@ -333,13 +283,10 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
     }
   }
 
-  // Accumulate per-step energy into running total
-  if (tallyflag) {
-    double energy_allranks;
-    MPI_Allreduce(&energy_onestep, &energy_allranks, 1,
-                  MPI_DOUBLE, MPI_SUM, world);
-    energy += energy_allranks;
-  }
+  double energy_allranks;
+  MPI_Allreduce(&energy_onestep, &energy_allranks, 1,
+                MPI_DOUBLE, MPI_SUM, world);
+  energy += energy_allranks;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -400,31 +347,7 @@ void FixBAOAB::restart(char *buf)
 
 /* ---------------------------------------------------------------------- */
 
-// Return cumulative thermostat energy (for fix_modify energy yes)
 double FixBAOAB::compute_scalar()
 {
-  if (!tallyflag) return 0.0;
   return energy;
-}
-
-/* ---------------------------------------------------------------------- */
-
-// Support fix_modify commands:
-//   fix_modify ID energy yes/no   --add thermostat energy to PE
-//   fix_modify ID temp computeID  --(future: use external temp compute)
-
-int FixBAOAB::modify_param(int narg, char **arg)
-{
-  if (strcmp(arg[0], "energy") == 0) {
-    if (narg < 2) error->all(FLERR, "Illegal fix_modify command");
-    if (strcmp(arg[1], "yes") == 0) {
-      tallyflag = 1;
-    } else if (strcmp(arg[1], "no") == 0) {
-      tallyflag = 0;
-    } else {
-      error->all(FLERR, "Illegal fix_modify command");
-    }
-    return 2;
-  }
-  return 0;
 }
