@@ -60,28 +60,28 @@ RegIntersect::RegIntersect(LAMMPS *lmp, int narg, char **arg) :
   }
 
   // make sure all subregions have the same motion
-  //   needed such that pretransform gives the same result (performed by union)
+  //   needed such that pretransform gives the same result (performed by intersect)
 
   if (moveflag) {
-    // copy 1st value if union motion not defined
+    // copy 1st value if intersect motion not defined
     if (moveflag0 == 0) {
-      strcpy(xstr, reglist[0]->xstr);
-      strcpy(ystr, reglist[0]->ystr);
-      strcpy(zstr, reglist[0]->zstr);
+      if (reglist[0]->xstr) xstr = utils::strdup(std::string (reglist[0]->xstr));
+      if (reglist[0]->ystr) ystr = utils::strdup(std::string (reglist[0]->ystr));
+      if (reglist[0]->zstr) zstr = utils::strdup(std::string (reglist[0]->zstr));
     }
     for (int ilist = 0; ilist < nregion; ilist++) {
-      if (strcmp(xstr, reglist[ilist]->xstr) == 0)
-        error->all(FLERR, "All regions in union must have the same move x variable");
-      if (strcmp(ystr, reglist[ilist]->ystr) == 0)
-        error->all(FLERR, "All regions in union must have the same move y variable");
-      if (strcmp(zstr, reglist[ilist]->zstr) == 0)
-        error->all(FLERR, "All regions in union must have the same move z variable");
+      if (xstr && reglist[ilist]->xstr && strcmp(xstr, reglist[ilist]->xstr) != 0)
+        error->all(FLERR, "All regions in intersect must have the same move x variable");
+      if (ystr && reglist[ilist]->ystr && strcmp(ystr, reglist[ilist]->ystr) != 0)
+        error->all(FLERR, "All regions in intersect must have the same move y variable");
+      if (zstr && reglist[ilist]->zstr && strcmp(zstr, reglist[ilist]->zstr) != 0)
+        error->all(FLERR, "All regions in intersect must have the same move z variable");
     }
   }
 
   if (rotateflag) {
-    // copy 1st value if union rotation not defined
-    if (moveflag0 == 0) {
+    // copy 1st value if intersect rotation not defined
+    if (rotateflag0 == 0) {
       point[0] = reglist[0]->point[0];
       point[1] = reglist[0]->point[1];
       point[2] = reglist[0]->point[2];
@@ -94,11 +94,11 @@ RegIntersect::RegIntersect(LAMMPS *lmp, int narg, char **arg) :
       if (point[0] != region->point[0] ||
           point[1] != region->point[1] ||
           point[2] != region->point[2])
-        error->all(FLERR, "All regions in union must have the same rotaton origin");
+        error->all(FLERR, "All regions in intersect must have the same rotaton origin");
       if (axis[0] != region->axis[0] ||
           axis[1] != region->axis[1] ||
           axis[2] != region->axis[2])
-        error->all(FLERR, "All regions in union must have the same rotaton axis");
+        error->all(FLERR, "All regions in intersect must have the same rotaton axis");
     }
 
     double len = sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);

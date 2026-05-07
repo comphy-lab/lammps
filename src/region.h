@@ -87,7 +87,7 @@ class Region : protected Pointers {
   void prematch();
   int surface(double, double, double, double);
 
-  virtual int match(double, double, double);
+  int match(double, double, double);
   virtual void set_velocity();
   virtual void velocity_contact(double *, double *, int);
   virtual void write_restart(FILE *);

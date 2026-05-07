@@ -65,23 +65,23 @@ RegUnion::RegUnion(LAMMPS *lmp, int narg, char **arg) : Region(lmp, narg, arg), 
   if (moveflag) {
     // copy 1st value if union motion not defined
     if (moveflag0 == 0) {
-      strcpy(xstr, reglist[0]->xstr);
-      strcpy(ystr, reglist[0]->ystr);
-      strcpy(zstr, reglist[0]->zstr);
+      if (reglist[0]->xstr) xstr = utils::strdup(std::string (reglist[0]->xstr));
+      if (reglist[0]->ystr) ystr = utils::strdup(std::string (reglist[0]->ystr));
+      if (reglist[0]->zstr) zstr = utils::strdup(std::string (reglist[0]->zstr));
     }
     for (int ilist = 0; ilist < nregion; ilist++) {
-      if (strcmp(xstr, reglist[ilist]->xstr) == 0)
+      if (xstr && reglist[ilist]->xstr && strcmp(xstr, reglist[ilist]->xstr) != 0)
         error->all(FLERR, "All regions in union must have the same move x variable");
-      if (strcmp(ystr, reglist[ilist]->ystr) == 0)
+      if (ystr && reglist[ilist]->ystr && strcmp(ystr, reglist[ilist]->ystr) != 0)
         error->all(FLERR, "All regions in union must have the same move y variable");
-      if (strcmp(zstr, reglist[ilist]->zstr) == 0)
+      if (zstr && reglist[ilist]->zstr && strcmp(zstr, reglist[ilist]->zstr) != 0)
         error->all(FLERR, "All regions in union must have the same move z variable");
     }
   }
 
   if (rotateflag) {
     // copy 1st value if union rotation not defined
-    if (moveflag0 == 0) {
+    if (rotateflag0 == 0) {
       point[0] = reglist[0]->point[0];
       point[1] = reglist[0]->point[1];
       point[2] = reglist[0]->point[2];
