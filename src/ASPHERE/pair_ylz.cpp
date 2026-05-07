@@ -66,6 +66,8 @@ PairYLZ::PairYLZ(LAMMPS *lmp) :
 
 PairYLZ::~PairYLZ()
 {
+  if (copymode) return;
+
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);
