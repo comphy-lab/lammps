@@ -366,26 +366,34 @@ with fixed charge; it should use `COUL_FLAG=0`.
 
 ## Group 3 — Pairwise with Short-Range Coulomb (Wolf/DSF/cut; ~8 styles)
 
+**Status: COMPLETED**
+
 **Complexity:** Moderate.  Use the `pair_kokkos.h` template with `COUL_FLAG=1`.
 Add `compute_fcoul` and `compute_ecoul`.  The Coulomb part uses no long-range
 tables (Wolf damping, DSF cutoff, or plain cut).
 Pattern to follow: `pair_lj_cut_coul_dsf_kokkos`.
 
-| Pair style | Package | Coulomb type |
-|---|---|---|
-| `born/coul/wolf` | EXTRA-PAIR | Wolf damped |
-| `lj/cut/coul/wolf` | EXTRA-PAIR | Wolf damped |
-| `nm/cut/coul/cut` | EXTRA-PAIR | cut |
-| `coul/diel` | EXTRA-PAIR | dielectric screening |
-| `coul/shield` | INTERLAYER | exponential screening |
-| `buck6d/coul/gauss/dsf` | MOFFF | Gaussian-damped DSF |
-| `coul/cut/global` | EXTRA-PAIR | tiny wrapper of `coul/cut`; may not need its own KK file |
-| `lj/cut/sphere` | EXTRA-PAIR | radius from per-atom property; no Coulomb (COUL_FLAG=0) |
+| Pair style | Package | Coulomb type | Status |
+|---|---|---|---|
+| `born/coul/wolf` | EXTRA-PAIR | Wolf damped | **done** |
+| `lj/cut/coul/wolf` | EXTRA-PAIR | Wolf damped | **done** |
+| `nm/cut/coul/cut` | EXTRA-PAIR | cut | **done** |
+| `coul/diel` | EXTRA-PAIR | dielectric screening | **done** |
+| `coul/shield` | INTERLAYER | exponential screening | **done** |
+| `buck6d/coul/gauss/dsf` | MOFFF | Gaussian-damped DSF | **done** |
+| `coul/cut/global` | EXTRA-PAIR | tiny wrapper of `coul/cut` | **done** |
+| `lj/cut/sphere` | EXTRA-PAIR | radius from per-atom property; no Coulomb (COUL_FLAG=0) | **done** |
 
-**Note on `coul/cut/global`:** This is a trivial subclass of `PairCoulCut`
-that only overrides `coeff()`.  It may be sufficient to simply register it
-with the existing `pair_coul_cut_kokkos` if no compute differences exist.
-Verify before creating a separate file.
+**Notes:**
+- `coul/diel`: stores scalar dielectric parameters (`a_eps`, `b_eps`, `eps_s`) as `KK_FLOAT`
+  members and copies them before each kernel launch.
+- `coul/shield`: includes per-atom `molecule` view to skip same-layer pairs; the taper
+  function (Tap, dTap) is inlined using Horner's method with hardcoded coefficients.
+- `coul/cut/global`: inherits `PairCoulCutKokkos<DeviceType>` directly; only overrides
+  `coeff()` (enforces 2 args) and `extract()`.
+- `lj/cut/sphere`: COUL_FLAG=0; the per-atom `radius` view is synced; cutsq stores the
+  maximum possible cutoff per type pair; the actual per-atom cutoff and sigma are computed
+  inside `compute_fpair`/`compute_evdwl`.
 
 ---
 
