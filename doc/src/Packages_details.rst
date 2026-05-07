@@ -30,7 +30,6 @@ gives those details.
    * :ref:`AMOEBA <PKG-AMOEBA>`
    * :ref:`APIP <PKG-APIP>`
    * :ref:`ASPHERE <PKG-ASPHERE>`
-   * :ref:`BAOAB <PKG-BAOAB>`
    * :ref:`BOCS <PKG-BOCS>`
    * :ref:`BODY <PKG-BODY>`
    * :ref:`BPM <PKG-BPM>`
@@ -273,25 +272,6 @@ including ellipsoids, granular superellipsoids, 2d lines, and 3d triangles.
 * ``examples/ellipse``
 * https://www.lammps.org/movies.html#line
 * https://www.lammps.org/movies.html#tri
-
-----------
-
-.. _PKG-BAOAB:
-
-BAOAB package
--------------
-
-**Contents:**
-
-This package provides :doc:`fix baoab <fix_baoab>`, which implements the
-BAOAB splitting integrator for the Langevin equation as described by
-Leimkuhler and Matthews.  BAOAB is a complete time integrator (no
-separate :doc:`fix nve <fix_nve>` needed) that gives second-order accurate
-configurational sampling for molecular systems in the NVT ensemble.
-
-**Authors:** Aram Davtyan (Deep Origin)
-
-Example inputs are in the ``examples/PACKAGES/baoab`` folder.
 
 ----------
 
