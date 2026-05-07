@@ -20,13 +20,14 @@
      A: half-step position drift
      B: half-step velocity kick from conservative forces
 
-   This fix performs COMPLETE time integration — do NOT pair with fix nve.
+   This fix performs COMPLETE time integration -- do NOT pair with fix nve.
 
    Usage:
      fix ID group-ID baoab Tstart Tstop damp seed [keyword value ...]
 
    Optional keywords:
-     zero yes/no  — zero total random momentum (default: no)
+     zero  yes/no  -- zero total random momentum each step (default: no)
+     tally yes/no  -- track cumulative thermostat energy   (default: no)
 
    Reference:
      B. Leimkuhler and C. Matthews, "Rational Construction of Stochastic

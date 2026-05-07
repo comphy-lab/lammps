@@ -3,6 +3,8 @@
 fix baoab command
 =================
 
+.. versionadded:: TBD
+
 Syntax
 """"""
 
@@ -42,7 +44,7 @@ Description
 
 Apply the BAOAB Langevin integrator of :ref:`(Leimkuhler) <Leimkuhler1>` to
 the atoms in the fix group.  This fix performs **complete** time integration
-of Newton's equations of motion coupled to a Langevin heat bath — do
+of Newton's equations of motion coupled to a Langevin heat bath -- do
 **not** combine it with :doc:`fix nve <fix_nve>`.
 
 The Langevin equation of motion integrated by this fix is
@@ -59,11 +61,11 @@ damping time (*damp*), :math:`T` is the target temperature, and
 
 The BAOAB splitting applies the following substeps each timestep:
 
-* **B** — half-step velocity kick from conservative forces
-* **A** — half-step position drift
-* **O** — full-step exact Ornstein-Uhlenbeck (OU) update (thermostat)
-* **A** — half-step position drift
-* **B** — half-step velocity kick from conservative forces (using new forces)
+* **B** -- half-step velocity kick from conservative forces
+* **A** -- half-step position drift
+* **O** -- full-step exact Ornstein-Uhlenbeck (OU) update (thermostat)
+* **A** -- half-step position drift
+* **B** -- half-step velocity kick from conservative forces (using new forces)
 
 The O step applies the exact solution of the OU process,
 

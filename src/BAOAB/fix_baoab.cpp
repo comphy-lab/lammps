@@ -26,7 +26,7 @@
      fix ID group-ID baoab Tstart Tstop damp seed [keyword value ...]
 
    Optional keywords:
-     zero yes/no  -- zero total random momentum each step (default: no)
+     zero  yes/no  -- zero total random momentum each step (default: no)
      tally yes/no -- track cumulative thermostat energy  (default: no)
 
    Reference:
@@ -148,8 +148,9 @@ void FixBAOAB::init()
     if (ifix->time_integrate && (ifix->groupbit & groupbit)) count++;
 
   if (count > 1)
-    error->warning(FLERR,
-        "More than one time-integration fix active on group {}",
+    error->all(FLERR,
+        "Fix baoab is a complete time integrator; "
+        "more than one time-integration fix is active on group {}",
         group->names[igroup]);
 
   // fix baoab and fix shake/rattle cannot be used together
@@ -167,7 +168,7 @@ void FixBAOAB::init()
 
 void FixBAOAB::setup(int /*vflag*/)
 {
-  // Nothing needed — forces are already computed before the first step
+  // Nothing needed -- forces are already computed before the first step
 }
 
 /* ---------------------------------------------------------------------- */
@@ -222,8 +223,8 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
 
   // kT in velocity-squared * mass units
   //   force->boltz is kB in energy units of the chosen unit system
-  //   force->mvv2e converts ½mv² to energy: E = mvv2e * m * v²
-  //   so v² ~ kT / (mvv2e * m), hence noise scale = sqrt(kT / (mvv2e * m))
+  //   force->mvv2e converts (1/2)mv^2 to energy: E = mvv2e * m * v^2
+  //   so v^2 ~ kT / (mvv2e * m), hence noise scale = sqrt(kT / (mvv2e * m))
   double kT = force->boltz * t_target / force->mvv2e;
 
   // O-step coefficients that are mass-independent
@@ -409,8 +410,8 @@ double FixBAOAB::compute_scalar()
 /* ---------------------------------------------------------------------- */
 
 // Support fix_modify commands:
-//   fix_modify ID energy yes/no   — add thermostat energy to PE
-//   fix_modify ID temp computeID  — (future: use external temp compute)
+//   fix_modify ID energy yes/no   --add thermostat energy to PE
+//   fix_modify ID temp computeID  --(future: use external temp compute)
 
 int FixBAOAB::modify_param(int narg, char **arg)
 {
