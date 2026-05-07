@@ -310,6 +310,8 @@ action pair_brownian_kokkos.cpp pair_brownian.cpp
 action pair_brownian_kokkos.h pair_brownian.h
 action pair_born_gauss_kokkos.cpp pair_born_gauss.cpp
 action pair_born_gauss_kokkos.h pair_born_gauss.h
+action pair_born_coul_wolf_kokkos.cpp pair_born_coul_wolf.cpp
+action pair_born_coul_wolf_kokkos.h pair_born_coul_wolf.h
 action pair_buck_coul_cut_kokkos.cpp
 action pair_buck_coul_cut_kokkos.h
 action pair_buck_coul_long_kokkos.cpp pair_buck_coul_long.cpp
@@ -324,6 +326,8 @@ action pair_colloid_kokkos.cpp pair_colloid.cpp
 action pair_colloid_kokkos.h pair_colloid.h
 action pair_buck_mdf_kokkos.cpp pair_buck_mdf.cpp
 action pair_buck_mdf_kokkos.h pair_buck_mdf.h
+action pair_buck6d_coul_gauss_dsf_kokkos.cpp pair_buck6d_coul_gauss_dsf.cpp
+action pair_buck6d_coul_gauss_dsf_kokkos.h pair_buck6d_coul_gauss_dsf.h
 action pair_coul_cut_kokkos.cpp
 action pair_coul_cut_kokkos.h
 action pair_coul_debye_kokkos.cpp
@@ -389,6 +393,8 @@ action pair_lj_cut_coul_debye_kokkos.cpp pair_lj_cut_coul_debye.cpp
 action pair_lj_cut_coul_debye_kokkos.h pair_lj_cut_coul_debye.h
 action pair_lj_cut_coul_dsf_kokkos.cpp pair_lj_cut_coul_dsf.cpp
 action pair_lj_cut_coul_dsf_kokkos.h pair_lj_cut_coul_dsf.h
+action pair_lj_cut_coul_wolf_kokkos.cpp pair_lj_cut_coul_wolf.cpp
+action pair_lj_cut_coul_wolf_kokkos.h pair_lj_cut_coul_wolf.h
 action pair_lj_cut_coul_long_kokkos.cpp pair_lj_cut_coul_long.cpp
 action pair_lj_cut_coul_long_kokkos.h pair_lj_cut_coul_long.h
 action pair_lj_cut_dipole_cut_kokkos.cpp pair_lj_cut_dipole_cut.cpp
@@ -431,6 +437,8 @@ action pair_multi_lucy_rx_kokkos.cpp pair_multi_lucy_rx.cpp
 action pair_multi_lucy_rx_kokkos.h pair_multi_lucy_rx.h
 action pair_nm_cut_kokkos.cpp pair_nm_cut.cpp
 action pair_nm_cut_kokkos.h pair_nm_cut.h
+action pair_nm_cut_coul_cut_kokkos.cpp pair_nm_cut_coul_cut.cpp
+action pair_nm_cut_coul_cut_kokkos.h pair_nm_cut_coul_cut.h
 action pair_pace_extrapolation_kokkos.cpp pair_pace_extrapolation.cpp
 action pair_pace_extrapolation_kokkos.h pair_pace_extrapolation.h
 action pair_pedone_kokkos.cpp pair_pedone.cpp
