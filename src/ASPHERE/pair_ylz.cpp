@@ -56,7 +56,7 @@ PairYLZ::PairYLZ(LAMMPS *lmp) :
 {
   if (lmp->citeme) lmp->citeme->add(cite_pair_ylz);
 
-  single_enable = 0;
+  single_enable = 1;
   writedata = 1;
 }
 
@@ -412,6 +412,47 @@ void PairYLZ::write_data_all(FILE *fp)
     for (int j = i; j <= atom->ntypes; j++)
       fprintf(fp, "%d %d %g %g %g %g %g %g\n", i, j, epsilon[i][j], sigma[i][j], cut[i][j],
               zeta[i][j], mu[i][j], beta[i][j]);
+}
+
+/* ----------------------------------------------------------------------
+   compute energy and force between two atoms for use in pair_write, GCMC, etc.
+   returns energy, sets fforce = radial force component (dot of force with r12hat / r)
+   torques are not returned; fforce captures only the radial force contribution
+   ylz requires both atoms to be ellipsoids
+------------------------------------------------------------------------- */
+
+double PairYLZ::single(int i, int j, int itype, int jtype, double rsq,
+                       double /*factor_coul*/, double factor_lj, double &fforce)
+{
+  double fvec[3], ttor[3], rtor[3], r12[3];
+  double a1[3][3], a2[3][3];
+
+  AtomVecEllipsoid::Bonus *bonus = avec->bonus;
+  int *ellipsoid = atom->ellipsoid;
+  double **x = atom->x;
+
+  if (ellipsoid[i] < 0 || ellipsoid[j] < 0)
+    error->one(FLERR, "Pair style ylz requires both atoms in a pair to be ellipsoids");
+
+  r12[0] = x[j][0] - x[i][0];
+  r12[1] = x[j][1] - x[i][1];
+  r12[2] = x[j][2] - x[i][2];
+
+  MathExtra::quat_to_mat_trans(bonus[ellipsoid[i]].quat, a1);
+  MathExtra::quat_to_mat_trans(bonus[ellipsoid[j]].quat, a2);
+
+  // suppress unused variable warning for itype/jtype:
+  // types are accessed internally via atom->type[i] and atom->type[j]
+  (void) itype;
+  (void) jtype;
+
+  double one_eng = ylz_analytic(i, j, a1, a2, r12, rsq, fvec, ttor, rtor);
+
+  // project 3D force vector onto the center-center axis (r12 = x[j]-x[i])
+  // fforce is the scalar such that the radial force on i = fforce * (x[i]-x[j])
+
+  fforce = factor_lj * (-MathExtra::dot3(fvec, r12) / rsq);
+  return factor_lj * one_eng;
 }
 
 /* ----------------------------------------------------------------------

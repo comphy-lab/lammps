@@ -36,7 +36,7 @@ using namespace LAMMPS_NS;
 PairRESquared::PairRESquared(LAMMPS *lmp) :
     Pair(lmp), cr60(pow(60.0, 1.0 / 3.0)), b_alpha(45.0 / 56.0)
 {
-  single_enable = 0;
+  single_enable = 1;
 
   cr60 = pow(60.0, 1.0 / 3.0);
   b_alpha = 45.0 / 56.0;
@@ -484,6 +484,62 @@ void PairRESquared::read_restart_settings(FILE *fp)
   }
   MPI_Bcast(&cut_global, 1, MPI_DOUBLE, 0, world);
   MPI_Bcast(&mix_flag, 1, MPI_INT, 0, world);
+}
+
+/* ----------------------------------------------------------------------
+   compute energy and force between two atoms for use in pair_write, GCMC, etc.
+   returns energy, sets fforce = radial force component (dot of force with r12hat / r)
+   torques are not returned; fforce captures only the radial force contribution
+------------------------------------------------------------------------- */
+
+double PairRESquared::single(int i, int j, int itype, int jtype, double rsq,
+                             double /*factor_coul*/, double factor_lj, double &fforce)
+{
+  double one_eng;
+  double fvec[3], ttor[3], rtor[3], r12[3];
+  RE2Vars wi, wj;
+
+  double **x = atom->x;
+
+  r12[0] = x[j][0] - x[i][0];
+  r12[1] = x[j][1] - x[i][1];
+  r12[2] = x[j][2] - x[i][2];
+
+  fvec[0] = fvec[1] = fvec[2] = 0.0;
+
+  switch (form[itype][jtype]) {
+
+    case SPHERE_SPHERE: {
+      double r2inv = 1.0 / rsq;
+      double r6inv = r2inv * r2inv * r2inv;
+      double forcelj = r6inv * (lj1[itype][jtype] * r6inv - lj2[itype][jtype]);
+      fforce = factor_lj * forcelj * r2inv;
+      one_eng = r6inv * (r6inv * lj3[itype][jtype] - lj4[itype][jtype]) - offset[itype][jtype];
+      return factor_lj * one_eng;
+    }
+
+    case SPHERE_ELLIPSE:
+      precompute_i(j, wj);
+      one_eng = resquared_lj(j, i, wj, r12, rsq, fvec, rtor, false);
+      break;
+
+    case ELLIPSE_SPHERE:
+      precompute_i(i, wi);
+      one_eng = resquared_lj(i, j, wi, r12, rsq, fvec, ttor, false);
+      break;
+
+    default:    // ELLIPSE_ELLIPSE
+      precompute_i(i, wi);
+      precompute_i(j, wj);
+      one_eng = resquared_analytic(i, j, wi, wj, r12, rsq, fvec, ttor, rtor);
+      break;
+  }
+
+  // project 3D force vector onto the center-center axis (r12 = x[j]-x[i])
+  // fforce is the scalar such that the radial force on i = fforce * (x[i]-x[j])
+
+  fforce = factor_lj * (-MathExtra::dot3(fvec, r12) / rsq);
+  return factor_lj * one_eng;
 }
 
 /* ----------------------------------------------------------------------
