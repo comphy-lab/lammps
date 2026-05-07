@@ -1,4 +1,5 @@
 .. index:: pair_style buck6d/coul/gauss/dsf
+.. index:: pair_style buck6d/coul/gauss/dsf/kk
 .. index:: pair_style buck6d/coul/gauss/dsf/omp
 .. index:: pair_style buck6d/coul/gauss/long
 .. index:: pair_style buck6d/coul/gauss/long/omp
@@ -6,7 +7,7 @@
 pair_style buck6d/coul/gauss/dsf command
 ========================================
 
-Accelerator Variants: *buck6d/coul/gauss/dsf/omp*
+Accelerator Variants: *buck6d/coul/gauss/dsf/kk*, *buck6d/coul/gauss/dsf/omp*
 
 pair_style buck6d/coul/gauss/long command
 =========================================

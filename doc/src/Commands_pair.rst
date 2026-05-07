@@ -39,7 +39,7 @@ OPT.
    * :doc:`born/coul/long (go) <pair_born>`
    * :doc:`born/coul/long/cs (g) <pair_cs>`
    * :doc:`born/coul/msm (o) <pair_born>`
-   * :doc:`born/coul/wolf (go) <pair_born>`
+   * :doc:`born/coul/wolf (gko) <pair_born>`
    * :doc:`born/coul/wolf/cs (g) <pair_cs>`
    * :doc:`born/gauss (ko) <pair_born_gauss>`
    * :doc:`bpm/spring <pair_bpm_spring>`
@@ -52,7 +52,7 @@ OPT.
    * :doc:`buck/coul/msm (o) <pair_buck>`
    * :doc:`buck/long/coul/long (o) <pair_buck_long>`
    * :doc:`buck/mdf (ko) <pair_mdf>`
-   * :doc:`buck6d/coul/gauss/dsf (o) <pair_buck6d_coul_gauss>`
+   * :doc:`buck6d/coul/gauss/dsf (ko) <pair_buck6d_coul_gauss>`
    * :doc:`buck6d/coul/gauss/long (o) <pair_buck6d_coul_gauss>`
    * :doc:`colloid (gko) <pair_colloid>`
    * :doc:`comb (o) <pair_comb>`
@@ -165,7 +165,7 @@ OPT.
    * :doc:`lj/cut/coul/long/soft (go) <pair_fep_soft>`
    * :doc:`lj/cut/coul/msm (go) <pair_lj_cut_coul>`
    * :doc:`lj/cut/coul/msm/dielectric <pair_dielectric>`
-   * :doc:`lj/cut/coul/wolf (o) <pair_lj_cut_coul>`
+   * :doc:`lj/cut/coul/wolf (ko) <pair_lj_cut_coul>`
    * :doc:`lj/cut/dipole/cut (gko) <pair_dipole>`
    * :doc:`lj/cut/dipole/long (g) <pair_dipole>`
    * :doc:`lj/cut/dipole/sf (go) <pair_dipole>`
@@ -222,7 +222,7 @@ OPT.
    * :doc:`nb3b/harmonic (o) <pair_nb3b>`
    * :doc:`nb3b/screened <pair_nb3b>`
    * :doc:`nm/cut (ko) <pair_nm>`
-   * :doc:`nm/cut/coul/cut (o) <pair_nm>`
+   * :doc:`nm/cut/coul/cut (ko) <pair_nm>`
    * :doc:`nm/cut/coul/long (o) <pair_nm>`
    * :doc:`nm/cut/split <pair_nm>`
    * :doc:`oxdna/coaxstk <pair_oxdna>`
