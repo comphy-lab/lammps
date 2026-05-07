@@ -322,6 +322,8 @@ action pair_buck_kokkos.cpp
 action pair_buck_kokkos.h
 action pair_colloid_kokkos.cpp pair_colloid.cpp
 action pair_colloid_kokkos.h pair_colloid.h
+action pair_buck_mdf_kokkos.cpp pair_buck_mdf.cpp
+action pair_buck_mdf_kokkos.h pair_buck_mdf.h
 action pair_coul_cut_kokkos.cpp
 action pair_coul_cut_kokkos.h
 action pair_coul_debye_kokkos.cpp
@@ -395,6 +397,8 @@ action pair_lj_cut_kokkos.cpp
 action pair_lj_cut_kokkos.h
 action pair_lj_mdf_kokkos.cpp pair_lj_mdf.cpp
 action pair_lj_mdf_kokkos.h pair_lj_mdf.h
+action pair_lj_pirani_kokkos.cpp pair_lj_pirani.cpp
+action pair_lj_pirani_kokkos.h pair_lj_pirani.h
 action pair_lj_expand_coul_long_kokkos.cpp pair_lj_expand_coul_long.cpp
 action pair_lj_expand_coul_long_kokkos.h pair_lj_expand_coul_long.h
 action pair_lj_expand_kokkos.cpp
@@ -417,6 +421,8 @@ action pair_mie_cut_kokkos.cpp pair_mie_cut.cpp
 action pair_mie_cut_kokkos.h pair_mie_cut.h
 action pair_mliap_kokkos.cpp pair_mliap.cpp
 action pair_mliap_kokkos.h pair_mliap.h
+action pair_momb_kokkos.cpp pair_momb.cpp
+action pair_momb_kokkos.h pair_momb.h
 action pair_morse_kokkos.cpp
 action pair_morse_kokkos.h
 action pair_morse_smooth_linear_kokkos.cpp pair_morse_smooth_linear.cpp
@@ -427,6 +433,8 @@ action pair_nm_cut_kokkos.cpp pair_nm_cut.cpp
 action pair_nm_cut_kokkos.h pair_nm_cut.h
 action pair_pace_extrapolation_kokkos.cpp pair_pace_extrapolation.cpp
 action pair_pace_extrapolation_kokkos.h pair_pace_extrapolation.h
+action pair_pedone_kokkos.cpp pair_pedone.cpp
+action pair_pedone_kokkos.h pair_pedone.h
 action pair_pod_kokkos.cpp pair_pod.cpp
 action pair_pod_kokkos.h pair_pod.h
 action pair_pace_kokkos.cpp pair_pace.cpp
@@ -460,6 +468,8 @@ action pair_yukawa_kokkos.cpp
 action pair_yukawa_kokkos.h
 action pair_yukawa_colloid_kokkos.cpp pair_yukawa_colloid.cpp
 action pair_yukawa_colloid_kokkos.h pair_yukawa_colloid.h
+action pair_ylz_kokkos.cpp pair_ylz.cpp
+action pair_ylz_kokkos.h pair_ylz.h
 action pair_zbl_kokkos.cpp
 action pair_zbl_kokkos.h
 action pppm_kokkos.cpp pppm.cpp

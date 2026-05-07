@@ -312,24 +312,29 @@ grouped below by porting complexity, from easiest to hardest.
 
 ## Group 1 — Simple Pairwise, No Coulomb (EXTRA-PAIR; ~13 styles)
 
+**Status: COMPLETED**
+
 **Complexity:** Low.  Use the `pair_kokkos.h` template with `COUL_FLAG=0`.
 Implement `compute_fpair` and `compute_evdwl`; `compute_ecoul` returns 0.
 Pattern to follow: `pair_born_kokkos` or `pair_beck_kokkos`.
 
 **Session size recommendation:** 4–6 styles per session.
 
-| Pair style | Package | Base header |
-|---|---|---|
-| `mie/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_mie_cut.h` |
-| `nm/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_nm_cut.h` |
-| `gauss/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_gauss_cut.h` |
-| `harmonic/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_harmonic_cut.h` |
-| `cosine/squared` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_cosine_squared.h` |
-| `morse/smooth/linear` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_morse_smooth_linear.h` |
-| `wf/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_wf_cut.h` |
-| `born/gauss` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_born_gauss.h` |
-| `lj/mdf` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lj_mdf.h` |
-| `lennard/mdf` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lennard_mdf.h` |
+| Pair style | Package | Base header | Status |
+|---|---|---|---|
+| `mie/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_mie_cut.h` | **done** |
+| `nm/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_nm_cut.h` | **done** |
+| `gauss/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_gauss_cut.h` | **done** |
+| `harmonic/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_harmonic_cut.h` | **done** |
+| `cosine/squared` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_cosine_squared.h` | **done** |
+| `lj/smooth` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lj_smooth.h` | **done** |
+| `lj/smooth/linear` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lj_smooth_linear.h` | **done** |
+| `morse/smooth/linear` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_morse_smooth_linear.h` | **done** |
+| `ufm` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_ufm.h` | **done** |
+| `wf/cut` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_wf_cut.h` | **done** |
+| `born/gauss` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_born_gauss.h` | **done** |
+| `lj/mdf` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lj_mdf.h` | **done** |
+| `lennard/mdf` | EXTRA-PAIR | `src/EXTRA-PAIR/pair_lennard_mdf.h` | **done** |
 
 **Required base-class changes:**
 - Add `virtual void allocate();` in each header (if not already `virtual`).
@@ -342,15 +347,17 @@ to `Accelerator Variants`.  Add `k` to each entry in `Commands_pair.rst`.
 
 ## Group 2 — Simple Pairwise, No Coulomb (continued; ~5 styles)
 
+**Status: COMPLETED**
+
 **Complexity:** Low.  Same as Group 1 but with more parameters per pair-type.
 
-| Pair style | Package | Notes |
-|---|---|---|
-| `momb` | EXTRA-PAIR | London + Buckingham, extra exponent params |
-| `buck/mdf` | EXTRA-PAIR | Buckingham with switching, see `pair_buck_kokkos` |
-| `pedone` | EXTRA-PAIR | Morse-like with r^-6 correction, no Coulomb |
-| `lj/pirani` | EXTRA-PAIR | Generalized LJ with Pirani potential, per-type m,n |
-| `ylz` | ASPHERE | Spherical non-bonded (no charges), uses atom radius |
+| Pair style | Package | Notes | Status |
+|---|---|---|---|
+| `momb` | EXTRA-PAIR | London + Buckingham, extra exponent params | **done** |
+| `buck/mdf` | EXTRA-PAIR | Buckingham with switching, see `pair_buck_kokkos` | **done** |
+| `pedone` | EXTRA-PAIR | Morse-like with r^-6 correction, no Coulomb | **done** |
+| `lj/pirani` | EXTRA-PAIR | Generalized LJ with Pirani potential, per-type m,n | **done** |
+| `ylz` | ASPHERE | Orientation-dependent potential, requires custom kernel | **done** |
 
 **Note:** `ylz` is in the ASPHERE package but computes only short-range VdW
 with fixed charge; it should use `COUL_FLAG=0`.
@@ -382,7 +389,7 @@ Verify before creating a separate file.
 
 ---
 
-## Group 4 — Pairwise with Long-Range Coulomb (Ewald/PPPM; ~5 styles)
+## Group 4 — Pairwise with Long-Range Coulomb (Ewald/PPPM; ~10 styles)
 
 **Complexity:** Moderate.  `COUL_FLAG=1`, use `init_tables()` for Coulomb.
 Pattern to follow: `pair_born_kokkos` extended with `pair_lj_cut_coul_long_kokkos`.
@@ -538,3 +545,74 @@ cd build && ctest -V -R pair
    (e.g., EXTRA-PAIR), pass both filenames; when base is in `src/`, omit
    second filename.
 8. **Not rebuilding with `make purge` after switching build systems.**
+
+---
+
+## Lessons Learned (updated after Group 2)
+
+### Global scalar parameters in pair styles
+
+Some pair styles (e.g., `momb`) have global scalar parameters set by
+`settings()` rather than per-pair parameters set by `pair_coeff`.  These
+scalars are stored as plain `double` members of the base class (e.g.,
+`sscale`, `dscale`).  For the KOKKOS version, copy them to `KK_FLOAT`
+members (e.g., `m_sscale`, `m_dscale`) in `compute()` before the kernel
+launch.  They can then be captured by the `KOKKOS_INLINE_FUNCTION` methods
+through `this` (which is captured by the Kokkos functor).
+
+### MDF (Mei-Davenport-Fernando) tapering
+
+The `buck/mdf` style has a smooth taper applied when the inter-atomic
+distance is in the range `[cut_inner, cut_outer]`.  In the standard
+`pair_kokkos.h` template, the `compute_fpair` function receives `rsq` and
+must compute `r = sqrt(rsq)` itself.  The tapering logic (computing `d`,
+`tt`, `dt`) can be inlined directly in `compute_fpair` and `compute_evdwl`
+using a conditional `if (rsq > cut_inner_sq)`.  Store `cut_inner`,
+`cut_inner_sq`, and the outer `cutsq` in the per-pair `params_*` struct so
+the kernel can branch correctly.
+
+### Orientation-dependent pair styles (ylz, gayberne, etc.)
+
+The `ylz` style computes orientation-dependent forces and torques based on
+per-atom quaternion data.  It does not fit the `pair_kokkos.h` template
+because:
+1. It needs to read quaternion data from `AtomVecEllipsoidKokkos`.
+2. It accumulates torques as well as forces.
+3. The inner loop is not a simple `compute_fpair` scalar.
+
+For such styles a **custom kernel** is required, following the pattern of
+`pair_lj_cut_dipole_cut_kokkos`:
+
+- Use `TagPairXXXKernel<NEIGHFLAG,NEWTON_PAIR,EVFLAG,STACKPARAMS>` tags.
+- Override `compute()` to launch the appropriate template instantiation with
+  `Kokkos::parallel_for` or `Kokkos::parallel_reduce`.
+- Accumulate torques with atomic operations via a view with
+  `Kokkos::MemoryTraits<AtomicF<NEIGHFLAG>::value>`.
+- Access the ellipsoid bonus data (quaternions) via
+  `avecKK->k_bonus.view<DeviceType>()` where `avecKK` is a pointer to
+  `AtomVecEllipsoidKokkos` cast from `atom->style_match("ellipsoid")`.
+- Use `MathExtraKokkos::quat_to_mat()` to convert quaternion to rotation
+  matrix on-device.
+- Set `datamask_read` to include `TORQUE_MASK | ELLIPSOID_MASK`.
+- Set `datamask_modify` to include `TORQUE_MASK`.
+- Store the neighbor-list arrays explicitly (`d_neighbors`, `d_numneigh`,
+  `d_ilist`) rather than relying on the `pair_compute` helper.
+
+### lj/pirani: Kokkos::pow in device code
+
+The ILJ/Pirani potential uses `pow(rx, n(rx))` where `n(rx)` is itself a
+function of the inter-atomic distance.  `Kokkos::pow(base, exp)` is the
+device-portable equivalent of `std::pow`.  Using `std::pow` inside a
+`KOKKOS_INLINE_FUNCTION` causes a compiler error on GPU targets.  Always
+prefer `Kokkos::` math functions in device kernels:
+`Kokkos::sqrt`, `Kokkos::exp`, `Kokkos::pow`, `Kokkos::log`,
+`Kokkos::sin`, `Kokkos::cos`, etc.
+
+### Force sign convention
+
+Be careful with force sign conventions.  In the base CPU code, forces are
+often accumulated as `f[i][0] += delx * fpair` where `fpair = F/r` and
+`delx = xj - xi`.  The KOKKOS kernel must use the same convention.  For the
+`ylz` style the force on atom `i` due to atom `j` is `-dU/dr * rhat` where
+`rhat` points from `i` to `j` (i.e., `r12 = xj - xi`); the force on `j`
+is the Newton-3 partner `-force_on_i`.

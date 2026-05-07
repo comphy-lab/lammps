@@ -51,7 +51,7 @@ OPT.
    * :doc:`buck/coul/long/cs <pair_cs>`
    * :doc:`buck/coul/msm (o) <pair_buck>`
    * :doc:`buck/long/coul/long (o) <pair_buck_long>`
-   * :doc:`buck/mdf (o) <pair_mdf>`
+   * :doc:`buck/mdf (ko) <pair_mdf>`
    * :doc:`buck6d/coul/gauss/dsf (o) <pair_buck6d_coul_gauss>`
    * :doc:`buck6d/coul/gauss/long (o) <pair_buck6d_coul_gauss>`
    * :doc:`colloid (gko) <pair_colloid>`
@@ -185,7 +185,7 @@ OPT.
    * :doc:`lj/long/dipole/long <pair_dipole>`
    * :doc:`lj/long/tip4p/long (o) <pair_lj_long>`
    * :doc:`lj/mdf (ko) <pair_mdf>`
-   * :doc:`lj/pirani (o) <pair_lj_pirani>`
+   * :doc:`lj/pirani (ko) <pair_lj_pirani>`
    * :doc:`lj/relres (o) <pair_lj_relres>`
    * :doc:`lj/spica (gko) <pair_spica>`
    * :doc:`lj/spica/coul/long (gko) <pair_spica>`
@@ -213,7 +213,7 @@ OPT.
    * :doc:`mie/cut (gko) <pair_mie>`
    * :doc:`mliap (k) <pair_mliap>`
    * :doc:`mm3/switch3/coulgauss/long (o) <pair_lj_switch3_coulgauss_long>`
-   * :doc:`momb (o) <pair_momb>`
+   * :doc:`momb (ko) <pair_momb>`
    * :doc:`morse (gkot) <pair_morse>`
    * :doc:`morse/smooth/linear (ko) <pair_morse>`
    * :doc:`morse/soft <pair_fep_soft>`
@@ -247,7 +247,7 @@ OPT.
    * :doc:`pace/apip <pair_pace_apip>`
    * :doc:`pace/fast/apip <pair_pace_apip>`
    * :doc:`pace/precise/apip <pair_pace_apip>`
-   * :doc:`pedone (o) <pair_pedone>`
+   * :doc:`pedone (ko) <pair_pedone>`
    * :doc:`pod (k) <pair_pod>`
    * :doc:`peri/eps <pair_peri>`
    * :doc:`peri/lps (o) <pair_peri>`
@@ -312,7 +312,7 @@ OPT.
    * :doc:`vashishta (gko) <pair_vashishta>`
    * :doc:`vashishta/table (o) <pair_vashishta>`
    * :doc:`wf/cut (ko) <pair_wf_cut>`
-   * :doc:`ylz (o) <pair_ylz>`
+   * :doc:`ylz (ko) <pair_ylz>`
    * :doc:`yukawa (gko) <pair_yukawa>`
    * :doc:`yukawa/colloid (gko) <pair_yukawa_colloid>`
    * :doc:`zbl (gko) <pair_zbl>`

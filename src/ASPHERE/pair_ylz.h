@@ -47,7 +47,7 @@ class PairYLZ : public Pair {
 
   class AtomVecEllipsoid *avec;
 
-  void allocate();
+  virtual void allocate();
   double ylz_analytic(const int i, const int j, double a1[3][3], double a2[3][3], double *r12,
                       const double rsq, double *fforce, double *ttor, double *rtor);
 };
