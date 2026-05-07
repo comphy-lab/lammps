@@ -83,6 +83,11 @@ whether an extra library is needed to build and use the package:
      - :doc:`Howto spherical <Howto_spherical>`
      - ellipse
      - no
+   * - :ref:`BAOAB <PKG-BAOAB>`
+     - BAOAB Langevin integrator
+     - :doc:`fix baoab <fix_baoab>`
+     - ``PACKAGES/baoab``
+     - no
    * - :ref:`BOCS <PKG-BOCS>`
      - BOCS bottom up coarse graining
      - :doc:`fix bocs <fix_bocs>`
