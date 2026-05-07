@@ -131,18 +131,26 @@ LAMMPS *init_lammps(LAMMPS::argv &args, const TestConfig &cfg, const bool newton
     return lmp;
 }
 
-void run_lammps(LAMMPS *lmp)
+void run_lammps(LAMMPS *lmp, const TestConfig &cfg)
 {
     // utility lambda to improve readability
     auto command = [&](const std::string &line) {
         lmp->input->one(line);
     };
 
-    command("fix 1 all nve");
     command("compute pe all pe/atom pair");
     command("compute sum all reduce sum c_pe");
     command("thermo_style custom step temp pe press c_sum");
     command("thermo 2");
+
+    // need to use a different integrator for different atom styles
+    if (std::find(cfg.tags.begin(), cfg.tags.end(), "ellipsoid") != cfg.tags.end()) {
+        command("fix 1 all nve/asphere");
+        command("compute etemp all temp/asphere");
+        command("thermo_modify temp etemp");
+    } else {
+        command("fix 1 all nve");
+    }
     command("run 4 post no");
 }
 
@@ -285,7 +293,7 @@ void generate_yaml_file(const char *outfile, const TestConfig &config)
     writer.emit_block("init_forces", block);
 
     // do a few steps of MD
-    run_lammps(lmp);
+    run_lammps(lmp, config);
 
     // run_vdwl
     writer.emit("run_vdwl", lmp->force->pair->eng_vdwl);
@@ -365,7 +373,7 @@ TEST(PairStyle, plain)
     if (print_stats) std::cerr << "init_energy stats, newton on: " << stats << std::endl;
 
     if (!verbose) ::testing::internal::CaptureStdout();
-    run_lammps(lmp);
+    run_lammps(lmp, test_config);
     if (!verbose) ::testing::internal::GetCapturedStdout();
 
     EXPECT_FORCES("run_forces (newton on)", lmp->atom, test_config.run_forces, 5 * epsilon);
@@ -407,7 +415,7 @@ TEST(PairStyle, plain)
         if (print_stats) std::cerr << "init_energy stats, newton off:" << stats << std::endl;
 
         if (!verbose) ::testing::internal::CaptureStdout();
-        run_lammps(lmp);
+        run_lammps(lmp, test_config);
         if (!verbose) ::testing::internal::GetCapturedStdout();
 
         EXPECT_FORCES("run_forces (newton off)", lmp->atom, test_config.run_forces, 5 * epsilon);
@@ -474,7 +482,7 @@ TEST(PairStyle, plain)
         try {
             lmp = init_lammps(args, test_config, false);
             lmp->input->one("run_style respa 2 1 inner 1 4.8 5.5 outer 2");
-            run_lammps(lmp);
+            run_lammps(lmp, test_config);
         } catch (std::exception &e) {
             if (!verbose) ::testing::internal::GetCapturedStdout();
             FAIL() << e.what();
@@ -561,7 +569,7 @@ TEST(PairStyle, omp)
     if (print_stats) std::cerr << "init_energy stats, newton on: " << stats << std::endl;
 
     if (!verbose) ::testing::internal::CaptureStdout();
-    run_lammps(lmp);
+    run_lammps(lmp, test_config);
     if (!verbose) ::testing::internal::GetCapturedStdout();
 
     EXPECT_FORCES("run_forces (newton on)", lmp->atom, test_config.run_forces, 5 * epsilon);
@@ -600,7 +608,7 @@ TEST(PairStyle, omp)
         if (print_stats) std::cerr << "init_energy stats, newton off:" << stats << std::endl;
 
         if (!verbose) ::testing::internal::CaptureStdout();
-        run_lammps(lmp);
+        run_lammps(lmp, test_config);
         if (!verbose) ::testing::internal::GetCapturedStdout();
 
         EXPECT_FORCES("run_forces (newton off)", lmp->atom, test_config.run_forces, 5 * epsilon);
@@ -715,7 +723,7 @@ TEST(PairStyle, kokkos_omp)
     if (print_stats) std::cerr << "init_energy stats, newton on: " << stats << std::endl;
 
     if (!verbose) ::testing::internal::CaptureStdout();
-    run_lammps(lmp);
+    run_lammps(lmp, test_config);
     if (!verbose) ::testing::internal::GetCapturedStdout();
 
     EXPECT_FORCES("run_forces (newton on)", lmp->atom, test_config.run_forces, 5 * epsilon);
@@ -753,7 +761,7 @@ TEST(PairStyle, kokkos_omp)
         if (print_stats) std::cerr << "init_energy stats, newton off:" << stats << std::endl;
 
         if (!verbose) ::testing::internal::CaptureStdout();
-        run_lammps(lmp);
+        run_lammps(lmp, test_config);
         if (!verbose) ::testing::internal::GetCapturedStdout();
 
         EXPECT_FORCES("run_forces (newton off)", lmp->atom, test_config.run_forces, 5 * epsilon);
@@ -867,7 +875,7 @@ TEST(PairStyle, gpu)
     if (print_stats) std::cerr << "init_energy stats, newton off:" << stats << std::endl;
 
     if (!verbose) ::testing::internal::CaptureStdout();
-    run_lammps(lmp);
+    run_lammps(lmp, test_config);
     if (!verbose) ::testing::internal::GetCapturedStdout();
 
     EXPECT_FORCES("run_forces (newton off)", lmp->atom, test_config.run_forces, 5 * epsilon);
@@ -954,7 +962,7 @@ TEST(PairStyle, intel)
     if (print_stats) std::cerr << "init_energy stats:" << stats << std::endl;
 
     if (!verbose) ::testing::internal::CaptureStdout();
-    run_lammps(lmp);
+    run_lammps(lmp, test_config);
     if (!verbose) ::testing::internal::GetCapturedStdout();
 
     EXPECT_FORCES("run_forces", lmp->atom, test_config.run_forces, 5 * epsilon);
@@ -1031,7 +1039,7 @@ TEST(PairStyle, opt)
     if (print_stats) std::cerr << "init_energy stats:" << stats << std::endl;
 
     if (!verbose) ::testing::internal::CaptureStdout();
-    run_lammps(lmp);
+    run_lammps(lmp, test_config);
     if (!verbose) ::testing::internal::GetCapturedStdout();
 
     EXPECT_FORCES("run_forces", lmp->atom, test_config.run_forces, 5 * epsilon);
