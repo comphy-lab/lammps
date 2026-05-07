@@ -421,7 +421,7 @@ void PairYLZ::write_data_all(FILE *fp)
    ylz requires both atoms to be ellipsoids
 ------------------------------------------------------------------------- */
 
-double PairYLZ::single(int i, int j, int itype, int jtype, double rsq,
+double PairYLZ::single(int i, int j, int /*itype*/, int /*jtype*/, double rsq,
                        double /*factor_coul*/, double factor_lj, double &fforce)
 {
   double fvec[3], ttor[3], rtor[3], r12[3];
@@ -440,11 +440,6 @@ double PairYLZ::single(int i, int j, int itype, int jtype, double rsq,
 
   MathExtra::quat_to_mat_trans(bonus[ellipsoid[i]].quat, a1);
   MathExtra::quat_to_mat_trans(bonus[ellipsoid[j]].quat, a2);
-
-  // suppress unused variable warning for itype/jtype:
-  // types are accessed internally via atom->type[i] and atom->type[j]
-  (void) itype;
-  (void) jtype;
 
   double one_eng = ylz_analytic(i, j, a1, a2, r12, rsq, fvec, ttor, rtor);
 

@@ -505,8 +505,6 @@ double PairRESquared::single(int i, int j, int itype, int jtype, double rsq,
   r12[1] = x[j][1] - x[i][1];
   r12[2] = x[j][2] - x[i][2];
 
-  fvec[0] = fvec[1] = fvec[2] = 0.0;
-
   switch (form[itype][jtype]) {
 
     case SPHERE_SPHERE: {
