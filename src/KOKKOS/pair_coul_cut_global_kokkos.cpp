@@ -33,7 +33,7 @@ template<class DeviceType>
 void PairCoulCutGlobalKokkos<DeviceType>::coeff(int narg, char **arg)
 {
   if (narg != 2)
-    error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
+    this->error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
 
   PairCoulCut::coeff(narg,arg);
 }
@@ -44,9 +44,9 @@ template<class DeviceType>
 void *PairCoulCutGlobalKokkos<DeviceType>::extract(const char *str, int &dim)
 {
   dim = 0;
-  if (strcmp(str,"cut_coul") == 0) return (void *) &cut_global;
+  if (strcmp(str,"cut_coul") == 0) return (void *) &this->cut_global;
   dim = 2;
-  if (strcmp(str,"scale") == 0) return (void *) scale;
+  if (strcmp(str,"scale") == 0) return (void *) this->scale;
   return nullptr;
 }
 
