@@ -5,7 +5,7 @@
 pair_style born/gauss command
 =============================
 
-Accelerator Variant: *born/gauss/kk*, *born/gauss/omp*
+Accelerator Variants: *born/gauss/kk*, *born/gauss/omp*
 
 Syntax
 """"""
