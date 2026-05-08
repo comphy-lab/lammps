@@ -33,6 +33,7 @@
 
 #include <cmath>
 
+#include <algorithm>
 #include <exception>
 #include <iostream>
 #include <set>
@@ -1160,7 +1161,13 @@ TEST(PairStyle, single)
         GTEST_SKIP();
     }
 
-    command("atom_style full");
+    if (std::find(test_config.tags.begin(), test_config.tags.end(), "ellipsoid") !=
+        test_config.tags.end()) {
+        command("atom_style ellipsoid");
+    } else {
+        command("atom_style full");
+    }
+
     command("units ${units}");
     command("boundary p p p");
     command("newton ${newton_pair} ${newton_bond}");
@@ -1191,14 +1198,24 @@ TEST(PairStyle, single)
 
     // create (only) two atoms
 
-    command("mass * 1.0");
     command("create_atoms 1 single 0.0 -0.75  0.4 units box");
     command("create_atoms 2 single 1.5  0.25 -0.1 units box");
-    command("set atom 1 charge -0.5");
-    command("set atom 2 charge  0.5");
-    command("set atom 1 mol 1");
-    command("set atom 2 mol 2");
     command("special_bonds lj/coul 1.0 1.0 1.0");
+
+    // need to use a different integrator for different atom styles
+    if (std::find(test_config.tags.begin(), test_config.tags.end(), "ellipsoid") !=
+        test_config.tags.end()) {
+        command("set atom 1 shape 1 2 2");
+        command("set atom 2 shape 3 1 1");
+        command("set group all quat/random 12238");
+        command("set group all mass 1.0");
+    } else {
+        command("mass * 1.0");
+        command("set atom 1 charge -0.5");
+        command("set atom 2 charge  0.5");
+        command("set atom 1 mol 1");
+        command("set atom 2 mol 2");
+    }
 
     if (molecular == Atom::MOLECULAR) {
         command("create_bonds single/bond 1 1 2");

@@ -1,4 +1,5 @@
 variable  newton_pair  index  on
+variable  newton_bond  index  on
 variable  units        index  lj
 variable  input_dir    index  .
 variable  data_file    index  ${input_dir}/data.ellipsoid
