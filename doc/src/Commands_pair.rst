@@ -61,11 +61,11 @@ OPT.
    * :doc:`coul/ctip <pair_coul>`
    * :doc:`coul/cut (gko) <pair_coul>`
    * :doc:`coul/cut/dielectric <pair_dielectric>`
-   * :doc:`coul/cut/global (o) <pair_coul>`
+   * :doc:`coul/cut/global (ko) <pair_coul>`
    * :doc:`coul/cut/soft (o) <pair_fep_soft>`
    * :doc:`coul/cut/soft/gapsys <pair_fep_soft>`
    * :doc:`coul/debye (gko) <pair_coul>`
-   * :doc:`coul/diel (o) <pair_coul_diel>`
+   * :doc:`coul/diel (ko) <pair_coul_diel>`
    * :doc:`coul/dsf (gko) <pair_coul>`
    * :doc:`coul/exclude <pair_coul>`
    * :doc:`coul/long (gko) <pair_coul>`
@@ -75,7 +75,7 @@ OPT.
    * :doc:`coul/msm (o) <pair_coul>`
    * :doc:`coul/slater/cut <pair_coul_slater>`
    * :doc:`coul/slater/long (g) <pair_coul_slater>`
-   * :doc:`coul/shield (o) <pair_coul_shield>`
+   * :doc:`coul/shield (ko) <pair_coul_shield>`
    * :doc:`coul/streitz (o) <pair_coul>`
    * :doc:`coul/tt <pair_coul_tt>`
    * :doc:`coul/wolf (ko) <pair_coul>`
@@ -170,7 +170,7 @@ OPT.
    * :doc:`lj/cut/dipole/long (g) <pair_dipole>`
    * :doc:`lj/cut/dipole/sf (go) <pair_dipole>`
    * :doc:`lj/cut/soft (o) <pair_fep_soft>`
-   * :doc:`lj/cut/sphere (o) <pair_lj_cut_sphere>`
+   * :doc:`lj/cut/sphere (ko) <pair_lj_cut_sphere>`
    * :doc:`lj/cut/thole/long (o) <pair_thole>`
    * :doc:`lj/cut/tip4p/cut (o) <pair_lj_cut_tip4p>`
    * :doc:`lj/cut/tip4p/long (got) <pair_lj_cut_tip4p>`
