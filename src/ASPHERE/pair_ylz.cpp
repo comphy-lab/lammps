@@ -56,7 +56,6 @@ PairYLZ::PairYLZ(LAMMPS *lmp) :
 {
   if (lmp->citeme) lmp->citeme->add(cite_pair_ylz);
 
-  single_enable = 0;
   writedata = 1;
 }
 

@@ -51,7 +51,6 @@ PairGayBerne::PairGayBerne(LAMMPS *lmp) : Pair(lmp)
 {
   if (lmp->citeme) lmp->citeme->add(cite_pair_gayberne);
 
-  single_enable = 0;
   writedata = 1;
 }
 
