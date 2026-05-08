@@ -169,6 +169,9 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
   int *alist,*blist,*numneigh,**firstneigh;
   double *special_lj = force->special_lj;
 
+  tagint *id3p = atom->id3p;
+  tagint *id5p = atom->id5p;
+
   int a,b,ia,ib,anum,bnum,atype,btype;
 
   double f2,f4t1,f4t4,f4t5,f4t6,f5c3;
@@ -190,6 +193,10 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
   for (ia = 0; ia < anum; ia++) {
 
     a = alist[ia];
+
+    // a has to be terminal nucleotide
+    if(id3p[a]!=-1 && id5p[a]!=-1) continue;
+
     atype = type[a];
 
     ax[0] = nxyz_xtrct[a][0];
@@ -210,6 +217,9 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
       b = blist[ib];
       factor_lj = special_lj[sbmask(b)]; // = 0 for nearest neighbors
       b &= NEIGHMASK;
+
+      // b has to be terminal nucleotide
+      if(id3p[b]!=-1 && id5p[b]!=-1) continue;
 
       btype = type[b];
 
