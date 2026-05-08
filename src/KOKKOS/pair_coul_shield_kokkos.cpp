@@ -188,11 +188,11 @@ compute_fcoul(const KK_FLOAT& rsq, const int& i, const int& j,
                + static_cast<KK_FLOAT>(84.0))*rv
                - static_cast<KK_FLOAT>(35.0))*rv)*rv)*rv)*rv
             + static_cast<KK_FLOAT>(1.0);
-      // dT/dr = (140*r^6 - 420*r^5 + 420*r^4 - 140*r^3) / cut_ij
-      dTap = (((((static_cast<KK_FLOAT>(140.0)*r
-                - static_cast<KK_FLOAT>(420.0))*r
-                + static_cast<KK_FLOAT>(420.0))*r
-                - static_cast<KK_FLOAT>(140.0))*r)*r)*r / cut_ij;
+      // dT/dr = (140*rv^6 - 420*rv^5 + 420*rv^4 - 140*rv^3) / cut_ij  where rv = r/cut_ij
+      dTap = (((((static_cast<KK_FLOAT>(140.0)*rv
+                - static_cast<KK_FLOAT>(420.0))*rv
+                + static_cast<KK_FLOAT>(420.0))*rv
+                - static_cast<KK_FLOAT>(140.0))*rv)*rv)*rv / cut_ij;
     }
   } else {
     Tap  = static_cast<KK_FLOAT>(1.0);
