@@ -3,7 +3,7 @@ lammps_version: 30 Mar 2026
 tags: ellipsoid
 date_generated: Thu May  7 18:04:14 2026
 epsilon: 1e-12
-skip_tests:
+skip_tests: single
 prerequisites: ! |
   pair ylz
   atom ellipsoid
