@@ -418,7 +418,7 @@ void PairYLZKokkos<DeviceType>::ev_tally_xyz(EV_FLOAT &ev, int i, int j, const K
 
   if (eflag_atom) {
     const KK_FLOAT epairhalf = half*epair;
-    Kokkos::atomic_add(&d_eatom[i], efactor*epair);
+    Kokkos::atomic_add(&d_eatom[i], epairhalf);
     if ((NEIGHFLAG==HALF || NEIGHFLAG==HALFTHREAD) && (NEWTON_PAIR || j < nlocal))
       Kokkos::atomic_add(&d_eatom[j], epairhalf);
   }
@@ -442,12 +442,12 @@ void PairYLZKokkos<DeviceType>::ev_tally_xyz(EV_FLOAT &ev, int i, int j, const K
     }
 
     if (vflag_atom) {
-      Kokkos::atomic_add(&d_vatom(i,0), efactor*v0);
-      Kokkos::atomic_add(&d_vatom(i,1), efactor*v1);
-      Kokkos::atomic_add(&d_vatom(i,2), efactor*v2);
-      Kokkos::atomic_add(&d_vatom(i,3), efactor*v3);
-      Kokkos::atomic_add(&d_vatom(i,4), efactor*v4);
-      Kokkos::atomic_add(&d_vatom(i,5), efactor*v5);
+      Kokkos::atomic_add(&d_vatom(i,0), half*v0);
+      Kokkos::atomic_add(&d_vatom(i,1), half*v1);
+      Kokkos::atomic_add(&d_vatom(i,2), half*v2);
+      Kokkos::atomic_add(&d_vatom(i,3), half*v3);
+      Kokkos::atomic_add(&d_vatom(i,4), half*v4);
+      Kokkos::atomic_add(&d_vatom(i,5), half*v5);
       if ((NEIGHFLAG==HALF || NEIGHFLAG==HALFTHREAD) && (NEWTON_PAIR || j < nlocal)) {
         Kokkos::atomic_add(&d_vatom(j,0), half*v0);
         Kokkos::atomic_add(&d_vatom(j,1), half*v1);
