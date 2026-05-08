@@ -1,6 +1,13 @@
 Build LAMMPS with make
 ======================
 
+.. warning::
+
+   The LAMMPS developers plan to retire the legacy build system.  Please
+   switch to :doc:`using CMake <Build_cmake>` instead.  Contact the the
+   LAMMPS developers at developers@lammps.org if you have any concerns
+   or questions about this.
+
 Building LAMMPS with traditional makefiles requires that you have a
 ``Makefile.<machine>`` file appropriate for your system in either the
 ``src/MAKE``, ``src/MAKE/MACHINES``, ``src/MAKE/OPTIONS``, or
