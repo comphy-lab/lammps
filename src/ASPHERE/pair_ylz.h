@@ -40,6 +40,7 @@ class PairYLZ : public Pair {
   void read_restart_settings(FILE *) override;
   void write_data(FILE *) override;
   void write_data_all(FILE *) override;
+  double single(int, int, int, int, double, double, double, double &) override;
 
  protected:
   double cut_global;
