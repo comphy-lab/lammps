@@ -216,6 +216,7 @@ int NBin::coord2bin_multi(double *x, int ic)
 
 /* ----------------------------------------------------------------------
    convert atom coords into local bin # for a particular collection
+     returns a big int for use with hash binning
 ------------------------------------------------------------------------- */
 
 bigint NBin::coord2bin_multi_big(double *x, int ic)

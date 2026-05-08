@@ -350,7 +350,7 @@ void NPairMulti<HALF, NEWTON, TRI, SIZE, ATOMONLY>::build_hash(NeighList *list)
         auto it = (*binatoms_hash_multi)[jcollection].find(jbin + s[k]);
 
         if (it == (*binatoms_hash_multi)[jcollection].end())
-          continue; //error->one(FLERR, "Missing bin in bin map");
+          continue;
 
         for (auto jtmp : (it->second)) {
           j = jtmp;
