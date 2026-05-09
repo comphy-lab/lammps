@@ -17,17 +17,22 @@ set(RUNNER_LIB_NAME "libRuNNer_mpi" CACHE STRING "Name of the RuNNer library \
   considered if DOWNLOAD_RUNNER is OFF."
 )
 
+# Initialize RuNNer CMake arguments
+set(USE_MKL OFF)
+set(RUNNER_USE_FFTW_THREADED OFF)
+set(RUNNER_DISABLE_FFTW OFF)
+
 if (FFT STREQUAL "MKL")
-  set(USE_MKL TRUE)
+  set(USE_MKL ON)
 elseif(FFT STREQUAL "FFTW3")
-  if (NOT FFT_FFTW_THREADS)
-    message(FATAL_ERROR "The ML-RUNNER package requires using FFTW3 with -DFFT_FFTW_THREADS=ON")
+  if (FFT_FFTW_THREADS)
+    set(RUNNER_USE_FFTW_THREADED ON)
+  else()
+    set(RUNNER_USE_FFTW_THREADED OFF)
   endif()
 else()
-  set(USE_MKL FALSE)
-endif()
-if (NOT ((FFT STREQUAL "MKL") OR (FFT STREQUAL "FFTW3")))
-  message(FATAL_ERROR "The ML-RUNNER package requires either -DFFT=FFTW3 or -DFFT=MKL")
+  set(RUNNER_DISABLE_FFTW ON)
+  message(WARNING "No compatible FFT library found. The ML-RUNNER package only supports -DFFT=FFTW3 or -DFFT=MKL. RuNNer will fall back to being compiled WITHOUT FFT support, and certain features will not be available.")
 endif()
 
 if(BUILD_MPI)
@@ -73,12 +78,13 @@ if(DOWNLOAD_RUNNER)
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
       -DCMAKE_POSITION_INDEPENDENT_CODE=yes
       -DBUILD_SHARED_LIBS=OFF
       -DENABLE_TESTS=no
       -DUSE_MKL=${USE_MKL}
+      -DUSE_FFTW_THREADED=${RUNNER_USE_FFTW_THREADED}
+      -DCMAKE_DISABLE_FIND_PACKAGE_FFTW=${RUNNER_DISABLE_FFTW}
       -DUSE_MPI=${BUILD_MPI}
       -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/runner_install
       -DBUILD_SHARED_LIB=${RUNNER_SHARED_LIB}
