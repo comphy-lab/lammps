@@ -18,6 +18,7 @@ set(RUNNER_LIB_NAME "libRuNNer_mpi" CACHE STRING "Name of the RuNNer library \
 )
 
 # Initialize RuNNer CMake arguments
+set(USE_MKL OFF)
 set(RUNNER_USE_FFTW_THREADED OFF)
 set(RUNNER_DISABLE_FFTW OFF)
 
@@ -31,7 +32,7 @@ elseif(FFT STREQUAL "FFTW3")
   endif()
 else()
   set(RUNNER_DISABLE_FFTW ON)
-  message(WARNING "No compatible FFT library found. The ML-RUNNER package only supporrts -DFFT=FFTW3 or -DFFT=MKL. RuNNer will fall back to being compiled WITHOUT FFT support, and certain features will not be available.")
+  message(WARNING "No compatible FFT library found. The ML-RUNNER package only supports -DFFT=FFTW3 or -DFFT=MKL. RuNNer will fall back to being compiled WITHOUT FFT support, and certain features will not be available.")
 endif()
 
 if(BUILD_MPI)
