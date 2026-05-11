@@ -226,11 +226,7 @@ compute_fcoul(const KK_FLOAT& rsq, const int& /*i*/, const int& j,
   if (rsq < cut_ljsq_val && lj2_val > static_cast<KK_FLOAT>(0.0)) {
     const KK_FLOAT rrij = lj2_val * r;
     const KK_FLOAT expn2 = Kokkos::exp(-rrij*rrij);
-    const KK_FLOAT t2 = static_cast<KK_FLOAT>(1.0) /
-      (static_cast<KK_FLOAT>(1.0) + static_cast<KK_FLOAT>(EWALD_P)*rrij);
-    const KK_FLOAT erfc2 = t2 * (static_cast<KK_FLOAT>(A1)+t2*(static_cast<KK_FLOAT>(A2)+
-                            t2 * (static_cast<KK_FLOAT>(A3)+t2*(static_cast<KK_FLOAT>(A4)+
-                            t2 * static_cast<KK_FLOAT>(A5))))) * expn2;
+    const KK_FLOAT erfc2 = Kokkos::erfc(rrij);
     const KK_FLOAT prefactor2 = -qqrd2e * qtmp * q(j) * rinv;
     forcecoul += factor_coul * prefactor2 * (erfc2 + static_cast<KK_FLOAT>(EWALD_F)*rrij*expn2);
   }
@@ -304,12 +300,7 @@ compute_ecoul(const KK_FLOAT& rsq, const int& /*i*/, const int& j,
   const KK_FLOAT lj2_val = STACKPARAMS ? m_params[itype][jtype].lj2 : params(itype,jtype).lj2;
   if (rsq < cut_ljsq_val && lj2_val > static_cast<KK_FLOAT>(0.0)) {
     const KK_FLOAT rrij = lj2_val * r;
-    const KK_FLOAT expn2 = Kokkos::exp(-rrij*rrij);
-    const KK_FLOAT t2 = static_cast<KK_FLOAT>(1.0) /
-      (static_cast<KK_FLOAT>(1.0) + static_cast<KK_FLOAT>(EWALD_P)*rrij);
-    const KK_FLOAT erfc2 = t2 * (static_cast<KK_FLOAT>(A1)+t2*(static_cast<KK_FLOAT>(A2)+
-                            t2 * (static_cast<KK_FLOAT>(A3)+t2*(static_cast<KK_FLOAT>(A4)+
-                            t2 * static_cast<KK_FLOAT>(A5))))) * expn2;
+    const KK_FLOAT erfc2 = Kokkos::erfc(rrij);
     const KK_FLOAT prefactor2 = -qqrd2e * qtmp * q(j) * rinv;
     ecoul += factor_coul * prefactor2 * erfc2;
   }
