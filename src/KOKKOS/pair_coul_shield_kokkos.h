@@ -95,7 +95,7 @@ class PairCoulShieldKokkos : public PairCoulShield {
   typename AT::t_kkacc_1d_3 f;
   typename AT::t_int_1d_randomread type;
   typename AT::t_kkfloat_1d_randomread q;
-  DAT::t_tagint_1d_randomread molecule;
+  typename AT::t_tagint_1d_randomread molecule;
 
   DAT::ttransform_kkacc_1d k_eatom;
   DAT::ttransform_kkacc_1d_6 k_vatom;
