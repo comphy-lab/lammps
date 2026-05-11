@@ -64,7 +64,42 @@ Check with:
 grep -n "allocate" src/<PKG>/pair_<name>.h
 ```
 
-### 3.  `src/KOKKOS/Install.sh` entries
+### 3.  Per-atom view members: `typename AT::` not `DAT::`
+
+Every member that stores a per-atom view obtained from
+`atomKK->k_<field>.view<DeviceType>()` **must** be declared with the
+template-parameterized alias `typename AT::t_<type>`, **never** with the
+hardcoded alias `DAT::t_<type>`.
+
+```cpp
+// WRONG — kk/host instantiation fails with Kokkos ViewMapping assertion:
+DAT::t_tagint_1d_randomread molecule;
+
+// CORRECT — adapts to DeviceType (LMPDeviceType or LMPHostType):
+typename AT::t_tagint_1d_randomread molecule;
+```
+
+`AT` is `ArrayTypes<DeviceType>`.  `DAT` is `ArrayTypes<LMPDeviceType>`.
+In GPU builds, the pair style is instantiated for *both* `LMPDeviceType` and
+`LMPHostType`.  Views with `DAT::` types live in GPU memory; assigning a
+host-side `atomKK` view to them triggers a static assertion in Kokkos.
+
+**Safe to use `DAT::`:** dual views that the pair style allocates itself and
+never assigns from an `atomKK` view:
+`k_eatom`, `k_vatom`, `k_cutsq`, `k_cut_ljsq`, `k_cut_coulsq`.
+
+**Must use `typename AT::`:** all per-atom views set via
+`atomKK->k_<field>.view<DeviceType>()`:
+`x`, `c_x`, `f`, `type`, `q`, `molecule`, `radius`, etc.
+
+Quick audit command:
+```bash
+grep "DAT::t_" src/KOKKOS/pair_<name>_kokkos.h
+```
+Every hit should be a dual-view (type contains `tdual` or `ttransform`), not
+a plain per-atom view (type contains `t_`).
+
+### 4.  `src/KOKKOS/Install.sh` entries
 
 Add two lines per new file:
 
@@ -80,7 +115,7 @@ action pair_<name>_kokkos.cpp
 action pair_<name>_kokkos.h
 ```
 
-### 4.  Documentation changes
+### 5.  Documentation changes
 
 **In `doc/src/pair_<name>.rst`:**
 
@@ -389,11 +424,15 @@ Pattern to follow: `pair_lj_cut_coul_dsf_kokkos`.
   members and copies them before each kernel launch.
 - `coul/shield`: includes per-atom `molecule` view to skip same-layer pairs; the taper
   function (Tap, dTap) is inlined using Horner's method with hardcoded coefficients.
+  **Important:** the `molecule` member must be declared `typename AT::t_tagint_1d_randomread`
+  (not `DAT::t_tagint_1d_randomread`), otherwise the `kk/host` instantiation fails to
+  compile in GPU builds.  See *Lessons Learned* for the general rule.
 - `coul/cut/global`: inherits `PairCoulCutKokkos<DeviceType>` directly; only overrides
   `coeff()` (enforces 2 args) and `extract()`.
-- `lj/cut/sphere`: COUL_FLAG=0; the per-atom `radius` view is synced; cutsq stores the
-  maximum possible cutoff per type pair; the actual per-atom cutoff and sigma are computed
-  inside `compute_fpair`/`compute_evdwl`.
+- `lj/cut/sphere`: COUL_FLAG=0; the per-atom `radius` view (declared `typename AT::
+  t_kkfloat_1d_randomread`) is synced; cutsq stores the maximum possible cutoff per
+  type pair; the actual per-atom cutoff and sigma are computed inside
+  `compute_fpair`/`compute_evdwl`.
 
 ---
 
@@ -555,6 +594,17 @@ cd build && ctest -V -R pair
    (e.g., EXTRA-PAIR), pass both filenames; when base is in `src/`, omit
    second filename.
 8. **Not rebuilding with `make purge` after switching build systems.**
+9. **Using `DAT::t_<type>` for per-atom views assigned from `atomKK`** —
+   every per-atom view assigned via `atomKK->k_<field>.view<DeviceType>()`
+   must be declared `typename AT::t_<type>` (not `DAT::t_<type>`).  `AT` is
+   `ArrayTypes<DeviceType>`, so the view type adapts to the template parameter.
+   `DAT` is hardcoded to `ArrayTypes<LMPDeviceType>`, which compiles fine for
+   the `kk/device` instantiation but triggers a Kokkos `ViewMapping` static
+   assertion when the class is instantiated for `LMPHostType` (the `kk/host`
+   variant required in GPU builds).  Standard views that hold their own data
+   (e.g., `DAT::ttransform_kkacc_1d k_eatom`, `DAT::ttransform_kkfloat_2d
+   k_cutsq`) are correctly declared with `DAT::` because they are allocated
+   locally and are not assigned from an `atomKK->k_*.view<DeviceType>()` call.
 
 ---
 
@@ -626,3 +676,114 @@ often accumulated as `f[i][0] += delx * fpair` where `fpair = F/r` and
 `ylz` style the force on atom `i` due to atom `j` is `-dU/dr * rhat` where
 `rhat` points from `i` to `j` (i.e., `r12 = xj - xi`); the force on `j`
 is the Newton-3 partner `-force_on_i`.
+
+---
+
+## Lessons Learned (updated after Group 3, session May 2026)
+
+### Per-atom views: always use `typename AT::` not `DAT::`
+
+The most dangerous portability mistake for COUL_FLAG=1 styles (and any style
+accessing extra per-atom arrays) is declaring a per-atom view with the
+hardcoded `DAT::` type alias instead of the template-parameterized `AT::`:
+
+```cpp
+// WRONG — compiles for kk/device but fails at kk/host instantiation:
+DAT::t_tagint_1d_randomread molecule;
+
+// CORRECT — adapts to DeviceType, works for both kk/device and kk/host:
+typename AT::t_tagint_1d_randomread molecule;
+```
+
+The rule is simple: any member that is assigned from
+`atomKK->k_<field>.view<DeviceType>()` must be declared with `typename AT::`.
+Views that manage their own data (dual views allocated in `allocate()`, e.g.,
+`k_eatom`, `k_vatom`, `k_cutsq`) are correctly declared with `DAT::` because
+they do not hold per-atom data obtained from `atomKK`.
+
+This bug manifests as a Kokkos `ViewMapping` static assertion at compile time
+when targeting GPU architectures (because GPU builds instantiate both
+`Pair<X>Kokkos<LMPDeviceType>` and `Pair<X>Kokkos<LMPHostType>`).  On CPU-only
+builds both `LMPDeviceType` and `LMPHostType` share the same memory space, so
+the bug is silent.
+
+The `pair_coul_shield_kokkos` style contains a `molecule` array (to skip
+same-layer pairs) that was originally declared as `DAT::t_tagint_1d_randomread`
+and was fixed to `typename AT::t_tagint_1d_randomread` in this session.
+
+**Checklist:** when writing any new KK pair style, audit every per-atom
+array member with `grep "DAT::" pair_<name>_kokkos.h`.  Only these are safe
+as `DAT::`:
+
+- `DAT::ttransform_kkacc_1d k_eatom`
+- `DAT::ttransform_kkacc_1d_6 k_vatom`
+- `DAT::ttransform_kkfloat_2d k_cutsq`
+- `DAT::tdual_kkfloat_2d k_cut_ljsq` / `k_cut_coulsq`
+
+Everything else that is set to `atomKK->k_<field>.view<DeviceType>()` must
+use `typename AT::`.
+
+### `coul/shield`: per-molecule filtering via the `molecule` view
+
+`pair_coul_shield` skips interactions between atoms in the same layer (same
+molecule id).  In the KOKKOS kernel this is implemented with a per-atom
+`molecule` view:
+
+```cpp
+// in compute_fcoul / compute_ecoul:
+if (molecule(i) == molecule(j)) return static_cast<KK_FLOAT>(0.0);
+```
+
+The view is synced in `compute()` before the kernel launch:
+
+```cpp
+molecule = atomKK->k_molecule.view<DeviceType>();
+```
+
+Because the `molecule` view's type must match `DeviceType`'s memory space,
+it must be declared `typename AT::t_tagint_1d_randomread`, not
+`DAT::t_tagint_1d_randomread`.  This is the concrete example that motivated
+the general rule described above.
+
+### `coul/shield`: inline taper function
+
+The `coul/shield` potential uses a polynomial taper function to smooth the
+force to zero at the cutoff.  In the KOKKOS kernel, all math must be
+device-portable.  The taper and its derivative are computed via Horner's
+method with hardcoded coefficients (exactly the same coefficients as the CPU
+base class), called directly inside `compute_fcoul` and `compute_ecoul`.
+No LAMMPS utility function is needed; the 8 polynomial coefficients are
+embedded as literal constants in the kernel.
+
+### `coul/cut/global`: thin wrapper inheriting from `PairCoulCutKokkos`
+
+`pair_coul_cut_global_kokkos` does not need its own full implementation.
+It is sufficient to:
+1. Create a subclass `PairCoulCutGlobalKokkos<DeviceType>` that inherits
+   from `PairCoulCutKokkos<DeviceType>`.
+2. Override `coeff()` to enforce exactly two arguments (as in the base CPU
+   class).
+3. Override `extract()` to return the `epsilon` pointer.
+4. Redirect the `PairStyle` macro entries to the new class.
+
+No new `compute_fpair`/`compute_fcoul` is needed; the parent handles all
+kernel logic.
+
+### `lj/cut/sphere`: per-atom radius with a global `cutsq` ceiling
+
+`pair_lj_cut_sphere_kokkos` reads per-atom radii and computes per-pair
+cutoffs on-the-fly inside `compute_fpair`/`compute_evdwl`.  `cutsq` stores
+the **maximum possible** squared cutoff per atom-type pair (set in
+`init_one()`), so the neighbor list is built conservatively.  Inside the
+kernel, the actual cutoff for atoms `i`–`j` is
+`(sigma_ij + radius[i] + radius[j])^2`, and pairs beyond that distance
+return zero force regardless of the neighbor list entry.
+
+The `radius` per-atom view is declared `typename AT::t_kkfloat_1d_randomread
+radius` (using `typename AT::`, not `DAT::`) and is synced in `compute()`:
+
+```cpp
+radius = atomKK->k_radius.view<DeviceType>();
+```
+
+The same `typename AT::` rule applies here as to `molecule`.
