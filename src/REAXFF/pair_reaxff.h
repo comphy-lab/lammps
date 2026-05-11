@@ -72,7 +72,7 @@ class PairReaxFF : public Pair {
   int firstwarn;
   int list_blocking_flag;
 
-  void allocate();
+  virtual void allocate();
   void create_compute();
   void create_fix();
   void write_reax_atoms();
@@ -84,6 +84,8 @@ class PairReaxFF : public Pair {
 
   int nmax;
   virtual void FindBond();
+  // for KOKKOS
+  virtual void FindBond(int &, int) {};
 };
 
 }    // namespace LAMMPS_NS
