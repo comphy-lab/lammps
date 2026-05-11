@@ -345,7 +345,7 @@ grouped below by porting complexity, from easiest to hardest.
 
 ---
 
-## Group 1 — Simple Pairwise, No Coulomb (EXTRA-PAIR; ~13 styles)
+## Group 1 — Simple Pairwise, No Coulomb (EXTRA-PAIR; 13 styles)
 
 **Status: COMPLETED**
 
@@ -380,7 +380,7 @@ to `Accelerator Variants`.  Add `k` to each entry in `Commands_pair.rst`.
 
 ---
 
-## Group 2 — Simple Pairwise, No Coulomb (continued; ~5 styles)
+## Group 2 — Simple Pairwise, No Coulomb (continued; 5 styles)
 
 **Status: COMPLETED**
 
@@ -399,7 +399,7 @@ with fixed charge; it should use `COUL_FLAG=0`.
 
 ---
 
-## Group 3 — Pairwise with Short-Range Coulomb (Wolf/DSF/cut; ~8 styles)
+## Group 3 — Pairwise with Short-Range Coulomb (Wolf/DSF/cut; 8 styles)
 
 **Status: COMPLETED**
 
@@ -436,21 +436,23 @@ Pattern to follow: `pair_lj_cut_coul_dsf_kokkos`.
 
 ---
 
-## Group 4 — Pairwise with Long-Range Coulomb (Ewald/PPPM; ~10 styles)
+## Group 4 — Pairwise with Long-Range Coulomb (Ewald/PPPM; 4 styles)
+
+**Status: COMPLETED**
 
 **Complexity:** Moderate.  `COUL_FLAG=1`, use `init_tables()` for Coulomb.
 Pattern to follow: `pair_born_kokkos` extended with `pair_lj_cut_coul_long_kokkos`.
 
-| Pair style | Package | Notes |
-|---|---|---|
-| `nm/cut/coul/long` | EXTRA-PAIR | NM with long-range Ewald |
-| `lj/switch3/coulgauss/long` | YAFF | YAFF + Gaussian charge Ewald |
-| `mm3/switch3/coulgauss/long` | YAFF | YAFF MM3 variant |
-| `buck6d/coul/gauss/long` | MOFFF | MOFFF Buckingham + Ewald |
+| Pair style | Package | Notes | Status |
+|---|---|---|---|
+| `nm/cut/coul/long` | EXTRA-PAIR | NM with long-range Ewald | **done** |
+| `lj/switch3/coulgauss/long` | YAFF | YAFF + Gaussian charge Ewald | **done** |
+| `mm3/switch3/coulgauss/long` | YAFF | YAFF MM3 variant | **done** |
+| `buck6d/coul/gauss/long` | MOFFF | MOFFF Buckingham + Ewald | **done** |
 
 ---
 
-## Group 5 — TIP4P Water Models (~4 styles)
+## Group 5 — TIP4P Water Models (4 styles)
 
 **Complexity:** High.  The TIP4P geometry correction (virtual oxygen site M)
 requires special handling in the neighbor loop.  Study the existing
@@ -465,7 +467,7 @@ requires special handling in the neighbor loop.  Study the existing
 
 ---
 
-## Group 6 — Granular, Colloidal, Lubrication (~2 styles)
+## Group 6 — Granular, Colloidal, Lubrication (2 styles)
 
 **Complexity:** High.  These involve contact mechanics (overlap detection,
 friction history) or hydrodynamic lubrication requiring per-atom state.
@@ -477,7 +479,7 @@ friction history) or hydrodynamic lubrication requiring per-atom state.
 
 ---
 
-## Group 7 — MANYBODY Three-body (SW-like, Tersoff tables; ~3 styles)
+## Group 7 — MANYBODY Three-body (SW-like, Tersoff tables; 3 styles)
 
 **Complexity:** High.  These use a short neighbor list in addition to the
 regular neighbor list.  Follow `pair_sw_kokkos` and `pair_tersoff_kokkos`
@@ -493,7 +495,7 @@ three-body).
 
 ---
 
-## Group 8 — Moderate Many-Body / Geometry-Dependent (~6 styles)
+## Group 8 — Moderate Many-Body / Geometry-Dependent (6 styles)
 
 **Complexity:** High.  These require non-trivial per-atom or angle-dependent
 loops that do not map onto the `pair_kokkos.h` template.
@@ -509,7 +511,7 @@ loops that do not map onto the `pair_kokkos.h` template.
 
 ---
 
-## Group 9 — H-Bond, Dipole, Peridynamics (~6 styles)
+## Group 9 — H-Bond, Dipole, Peridynamics (6 styles)
 
 **Complexity:** High.  Angle-dependent (H-bond) or orientation-dependent
 (dipole) or continuum mechanics (peri) interactions.
