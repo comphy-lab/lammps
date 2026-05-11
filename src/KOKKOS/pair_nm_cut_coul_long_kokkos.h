@@ -13,53 +13,52 @@
 
 #ifdef PAIR_CLASS
 // clang-format off
-PairStyle(coul/shield/kk,PairCoulShieldKokkos<LMPDeviceType>);
-PairStyle(coul/shield/kk/device,PairCoulShieldKokkos<LMPDeviceType>);
-PairStyle(coul/shield/kk/host,PairCoulShieldKokkos<LMPHostType>);
+PairStyle(nm/cut/coul/long/kk,PairNMCutCoulLongKokkos<LMPDeviceType>);
+PairStyle(nm/cut/coul/long/kk/device,PairNMCutCoulLongKokkos<LMPDeviceType>);
+PairStyle(nm/cut/coul/long/kk/host,PairNMCutCoulLongKokkos<LMPHostType>);
 // clang-format on
 #else
 
 // clang-format off
-#ifndef LMP_PAIR_COUL_SHIELD_KOKKOS_H
-#define LMP_PAIR_COUL_SHIELD_KOKKOS_H
+#ifndef LMP_PAIR_NM_CUT_COUL_LONG_KOKKOS_H
+#define LMP_PAIR_NM_CUT_COUL_LONG_KOKKOS_H
 
 #include "pair_kokkos.h"
-#include "pair_coul_shield.h"
+#include "pair_nm_cut_coul_long.h"
 #include "neigh_list_kokkos.h"
 
 namespace LAMMPS_NS {
 
 template<class DeviceType>
-class PairCoulShieldKokkos : public PairCoulShield {
+class PairNMCutCoulLongKokkos : public PairNMCutCoulLong {
  public:
   enum {EnabledNeighFlags=FULL|HALFTHREAD|HALF};
   enum {COUL_FLAG=1};
   typedef DeviceType device_type;
   typedef ArrayTypes<DeviceType> AT;
-  PairCoulShieldKokkos(class LAMMPS *);
-  ~PairCoulShieldKokkos() override;
+  PairNMCutCoulLongKokkos(class LAMMPS *);
+  ~PairNMCutCoulLongKokkos() override;
 
   void compute(int, int) override;
   void init_style() override;
   double init_one(int, int) override;
 
-  struct params_coul_shield {
+  struct params_nm_coul {
 // NOLINTNEXTLINE
     KOKKOS_INLINE_FUNCTION
-    params_coul_shield() {cutsq=0;sigmae=0;offset=0;cut=0;};
+    params_nm_coul() {cutsq=0;e0nm=0;r0n=0;r0m=0;nn=0;mm=0;nm=0;offset=0;cut_ljsq=0;cut_coulsq=0;};
 // NOLINTNEXTLINE
     KOKKOS_INLINE_FUNCTION
-    params_coul_shield(int /*i*/) {cutsq=0;sigmae=0;offset=0;cut=0;};
-    KK_FLOAT cutsq,sigmae,offset,cut;
+    params_nm_coul(int /*i*/) {cutsq=0;e0nm=0;r0n=0;r0m=0;nn=0;mm=0;nm=0;offset=0;cut_ljsq=0;cut_coulsq=0;};
+    KK_FLOAT cutsq,e0nm,r0n,r0m,nn,mm,nm,offset,cut_ljsq,cut_coulsq;
   };
 
  protected:
   template<bool STACKPARAMS, class Specialisation>
 // NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
-  KK_FLOAT compute_fpair(const KK_FLOAT& /*rsq*/, const int& /*i*/, const int& /*j*/,
-                         const int& /*itype*/, const int& /*jtype*/) const
-  { return 0.0; }
+  KK_FLOAT compute_fpair(const KK_FLOAT& rsq, const int& i, const int& j,
+                         const int& itype, const int& jtype) const;
 
   template<bool STACKPARAMS, class Specialisation>
 // NOLINTNEXTLINE
@@ -71,9 +70,8 @@ class PairCoulShieldKokkos : public PairCoulShield {
   template<bool STACKPARAMS, class Specialisation>
 // NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION
-  KK_FLOAT compute_evdwl(const KK_FLOAT& /*rsq*/, const int& /*i*/, const int& /*j*/,
-                          const int& /*itype*/, const int& /*jtype*/) const
-  { return 0.0; }
+  KK_FLOAT compute_evdwl(const KK_FLOAT& rsq, const int& i, const int& j,
+                          const int& itype, const int& jtype) const;
 
   template<bool STACKPARAMS, class Specialisation>
 // NOLINTNEXTLINE
@@ -82,10 +80,10 @@ class PairCoulShieldKokkos : public PairCoulShield {
                           const int& itype, const int& jtype,
                           const KK_FLOAT& factor_coul, const KK_FLOAT& qtmp) const;
 
-  Kokkos::DualView<params_coul_shield**,Kokkos::LayoutRight,DeviceType> k_params;
-  typename Kokkos::DualView<params_coul_shield**,
+  Kokkos::DualView<params_nm_coul**,Kokkos::LayoutRight,DeviceType> k_params;
+  typename Kokkos::DualView<params_nm_coul**,
     Kokkos::LayoutRight,DeviceType>::t_dev_const_um params;
-  params_coul_shield m_params[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
+  params_nm_coul m_params[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
 
   KK_FLOAT m_cutsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
   KK_FLOAT m_cut_ljsq[MAX_TYPES_STACKPARAMS+1][MAX_TYPES_STACKPARAMS+1];
@@ -95,7 +93,6 @@ class PairCoulShieldKokkos : public PairCoulShield {
   typename AT::t_kkacc_1d_3 f;
   typename AT::t_int_1d_randomread type;
   typename AT::t_kkfloat_1d_randomread q;
-  typename AT::t_tagint_1d_randomread molecule;
 
   DAT::ttransform_kkacc_1d k_eatom;
   DAT::ttransform_kkacc_1d_6 k_vatom;
@@ -106,9 +103,8 @@ class PairCoulShieldKokkos : public PairCoulShield {
 
   DAT::ttransform_kkfloat_2d k_cutsq;
   typename AT::t_kkfloat_2d d_cutsq;
-  DAT::tdual_kkfloat_2d k_cut_ljsq;
+  DAT::ttransform_kkfloat_2d k_cut_ljsq;
   typename AT::t_kkfloat_2d d_cut_ljsq;
-  DAT::tdual_kkfloat_2d k_cut_coulsq;
   typename AT::t_kkfloat_2d d_cut_coulsq;
 
   int neighflag;
@@ -117,24 +113,24 @@ class PairCoulShieldKokkos : public PairCoulShield {
   KK_FLOAT special_coul[4];
   KK_FLOAT special_lj[4];
   KK_FLOAT qqrd2e;
-  int m_tap_flag;
+  KK_FLOAT g_ewald_kk;
 
   void allocate() override;
-  friend struct PairComputeFunctor<PairCoulShieldKokkos,FULL,true,0>;
-  friend struct PairComputeFunctor<PairCoulShieldKokkos,FULL,true,1>;
-  friend struct PairComputeFunctor<PairCoulShieldKokkos,HALF,true>;
-  friend struct PairComputeFunctor<PairCoulShieldKokkos,HALFTHREAD,true>;
-  friend struct PairComputeFunctor<PairCoulShieldKokkos,FULL,false,0>;
-  friend struct PairComputeFunctor<PairCoulShieldKokkos,FULL,false,1>;
-  friend struct PairComputeFunctor<PairCoulShieldKokkos,HALF,false>;
-  friend struct PairComputeFunctor<PairCoulShieldKokkos,HALFTHREAD,false>;
-  friend EV_FLOAT pair_compute_neighlist<PairCoulShieldKokkos,FULL,0>(PairCoulShieldKokkos*,NeighListKokkos<DeviceType>*);
-  friend EV_FLOAT pair_compute_neighlist<PairCoulShieldKokkos,FULL,1>(PairCoulShieldKokkos*,NeighListKokkos<DeviceType>*);
-  friend EV_FLOAT pair_compute_neighlist<PairCoulShieldKokkos,HALF>(PairCoulShieldKokkos*,NeighListKokkos<DeviceType>*);
-  friend EV_FLOAT pair_compute_neighlist<PairCoulShieldKokkos,HALFTHREAD>(PairCoulShieldKokkos*,NeighListKokkos<DeviceType>*);
-  friend EV_FLOAT pair_compute<PairCoulShieldKokkos,void>(PairCoulShieldKokkos*,
-                                                          NeighListKokkos<DeviceType>*);
-  friend void pair_virial_fdotr_compute<PairCoulShieldKokkos>(PairCoulShieldKokkos*);
+  friend struct PairComputeFunctor<PairNMCutCoulLongKokkos,FULL,true,0>;
+  friend struct PairComputeFunctor<PairNMCutCoulLongKokkos,FULL,true,1>;
+  friend struct PairComputeFunctor<PairNMCutCoulLongKokkos,HALF,true>;
+  friend struct PairComputeFunctor<PairNMCutCoulLongKokkos,HALFTHREAD,true>;
+  friend struct PairComputeFunctor<PairNMCutCoulLongKokkos,FULL,false,0>;
+  friend struct PairComputeFunctor<PairNMCutCoulLongKokkos,FULL,false,1>;
+  friend struct PairComputeFunctor<PairNMCutCoulLongKokkos,HALF,false>;
+  friend struct PairComputeFunctor<PairNMCutCoulLongKokkos,HALFTHREAD,false>;
+  friend EV_FLOAT pair_compute_neighlist<PairNMCutCoulLongKokkos,FULL,0>(PairNMCutCoulLongKokkos*,NeighListKokkos<DeviceType>*);
+  friend EV_FLOAT pair_compute_neighlist<PairNMCutCoulLongKokkos,FULL,1>(PairNMCutCoulLongKokkos*,NeighListKokkos<DeviceType>*);
+  friend EV_FLOAT pair_compute_neighlist<PairNMCutCoulLongKokkos,HALF>(PairNMCutCoulLongKokkos*,NeighListKokkos<DeviceType>*);
+  friend EV_FLOAT pair_compute_neighlist<PairNMCutCoulLongKokkos,HALFTHREAD>(PairNMCutCoulLongKokkos*,NeighListKokkos<DeviceType>*);
+  friend EV_FLOAT pair_compute<PairNMCutCoulLongKokkos,void>(PairNMCutCoulLongKokkos*,
+                                                              NeighListKokkos<DeviceType>*);
+  friend void pair_virial_fdotr_compute<PairNMCutCoulLongKokkos>(PairNMCutCoulLongKokkos*);
 };
 
 }

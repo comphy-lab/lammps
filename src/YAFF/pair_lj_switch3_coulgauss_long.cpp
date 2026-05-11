@@ -50,6 +50,8 @@ PairLJSwitch3CoulGaussLong::PairLJSwitch3CoulGaussLong(LAMMPS *lmp) : Pair(lmp)
 
 PairLJSwitch3CoulGaussLong::~PairLJSwitch3CoulGaussLong()
 {
+  if (copymode) return;
+
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);

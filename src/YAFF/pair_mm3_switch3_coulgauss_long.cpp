@@ -50,6 +50,8 @@ PairMM3Switch3CoulGaussLong::PairMM3Switch3CoulGaussLong(LAMMPS *lmp) : Pair(lmp
 
 PairMM3Switch3CoulGaussLong::~PairMM3Switch3CoulGaussLong()
 {
+  if (copymode) return;
+
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);

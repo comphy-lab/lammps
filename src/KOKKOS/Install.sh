@@ -328,6 +328,8 @@ action pair_buck_mdf_kokkos.cpp pair_buck_mdf.cpp
 action pair_buck_mdf_kokkos.h pair_buck_mdf.h
 action pair_buck6d_coul_gauss_dsf_kokkos.cpp pair_buck6d_coul_gauss_dsf.cpp
 action pair_buck6d_coul_gauss_dsf_kokkos.h pair_buck6d_coul_gauss_dsf.h
+action pair_buck6d_coul_gauss_long_kokkos.cpp pair_buck6d_coul_gauss_long.cpp
+action pair_buck6d_coul_gauss_long_kokkos.h pair_buck6d_coul_gauss_long.h
 action pair_coul_cut_global_kokkos.cpp pair_coul_cut_global.cpp
 action pair_coul_cut_global_kokkos.h pair_coul_cut_global.h
 action pair_coul_cut_kokkos.cpp
@@ -403,6 +405,8 @@ action pair_lj_cut_coul_wolf_kokkos.cpp pair_lj_cut_coul_wolf.cpp
 action pair_lj_cut_coul_wolf_kokkos.h pair_lj_cut_coul_wolf.h
 action pair_lj_cut_coul_long_kokkos.cpp pair_lj_cut_coul_long.cpp
 action pair_lj_cut_coul_long_kokkos.h pair_lj_cut_coul_long.h
+action pair_lj_switch3_coulgauss_long_kokkos.cpp pair_lj_switch3_coulgauss_long.cpp
+action pair_lj_switch3_coulgauss_long_kokkos.h pair_lj_switch3_coulgauss_long.h
 action pair_lj_cut_dipole_cut_kokkos.cpp pair_lj_cut_dipole_cut.cpp
 action pair_lj_cut_dipole_cut_kokkos.h pair_lj_cut_dipole_cut.h
 action pair_lj_cut_kokkos.cpp
@@ -433,6 +437,8 @@ action pair_meam_ms_kokkos.cpp pair_meam_ms.cpp
 action pair_meam_ms_kokkos.h pair_meam_ms.h
 action pair_mie_cut_kokkos.cpp pair_mie_cut.cpp
 action pair_mie_cut_kokkos.h pair_mie_cut.h
+action pair_mm3_switch3_coulgauss_long_kokkos.cpp pair_mm3_switch3_coulgauss_long.cpp
+action pair_mm3_switch3_coulgauss_long_kokkos.h pair_mm3_switch3_coulgauss_long.h
 action pair_mliap_kokkos.cpp pair_mliap.cpp
 action pair_mliap_kokkos.h pair_mliap.h
 action pair_momb_kokkos.cpp pair_momb.cpp
@@ -447,6 +453,8 @@ action pair_nm_cut_kokkos.cpp pair_nm_cut.cpp
 action pair_nm_cut_kokkos.h pair_nm_cut.h
 action pair_nm_cut_coul_cut_kokkos.cpp pair_nm_cut_coul_cut.cpp
 action pair_nm_cut_coul_cut_kokkos.h pair_nm_cut_coul_cut.h
+action pair_nm_cut_coul_long_kokkos.cpp pair_nm_cut_coul_long.cpp
+action pair_nm_cut_coul_long_kokkos.h pair_nm_cut_coul_long.h
 action pair_pace_extrapolation_kokkos.cpp pair_pace_extrapolation.cpp
 action pair_pace_extrapolation_kokkos.h pair_pace_extrapolation.h
 action pair_pedone_kokkos.cpp pair_pedone.cpp
