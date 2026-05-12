@@ -133,14 +133,14 @@ OPT.
    * :doc:`nph/asphere (o) <fix_nph_asphere>`
    * :doc:`nph/body <fix_nph_body>`
    * :doc:`nph/eff <fix_nh_eff>`
-   * :doc:`nph/sphere (o) <fix_nph_sphere>`
+   * :doc:`nph/sphere (ko) <fix_nph_sphere>`
    * :doc:`nphug <fix_nphug>`
    * :doc:`npt (giko) <fix_nh>`
    * :doc:`npt/asphere (o) <fix_npt_asphere>`
    * :doc:`npt/body <fix_npt_body>`
    * :doc:`npt/cauchy <fix_npt_cauchy>`
    * :doc:`npt/eff <fix_nh_eff>`
-   * :doc:`npt/sphere (o) <fix_npt_sphere>`
+   * :doc:`npt/sphere (ko) <fix_npt_sphere>`
    * :doc:`npt/uef <fix_nh_uef>`
    * :doc:`numdiff <fix_numdiff>`
    * :doc:`numdiff/virial <fix_numdiff_virial>`
@@ -167,7 +167,7 @@ OPT.
    * :doc:`nvt/manifold/rattle <fix_nvt_manifold_rattle>`
    * :doc:`nvt/sllod (iko) <fix_nvt_sllod>`
    * :doc:`nvt/sllod/eff <fix_nvt_sllod_eff>`
-   * :doc:`nvt/sphere (o) <fix_nvt_sphere>`
+   * :doc:`nvt/sphere (ko) <fix_nvt_sphere>`
    * :doc:`nvt/uef <fix_nh_uef>`
    * :doc:`oneway (k) <fix_oneway>`
    * :doc:`orient/bcc <fix_orient>`

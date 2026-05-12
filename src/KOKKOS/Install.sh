@@ -180,10 +180,16 @@ action fix_neigh_history_kokkos.cpp
 action fix_neigh_history_kokkos.h
 action fix_nh_kokkos.cpp
 action fix_nh_kokkos.h
+action fix_nh_sphere_kokkos.cpp
+action fix_nh_sphere_kokkos.h
 action fix_nph_kokkos.cpp
 action fix_nph_kokkos.h
+action fix_nph_sphere_kokkos.cpp
+action fix_nph_sphere_kokkos.h
 action fix_npt_kokkos.cpp
 action fix_npt_kokkos.h
+action fix_npt_sphere_kokkos.cpp
+action fix_npt_sphere_kokkos.h
 action fix_nve_kokkos.cpp
 action fix_nve_kokkos.h
 action fix_nve_limit_kokkos.cpp
@@ -196,6 +202,8 @@ action fix_nve_noforce_kokkos.cpp
 action fix_nve_noforce_kokkos.h
 action fix_nvt_kokkos.cpp
 action fix_nvt_kokkos.h
+action fix_nvt_sphere_kokkos.cpp
+action fix_nvt_sphere_kokkos.h
 action fix_nvt_sllod_kokkos.cpp
 action fix_nvt_sllod_kokkos.h
 action fix_oneway_kokkos.cpp fix_oneway.cpp
