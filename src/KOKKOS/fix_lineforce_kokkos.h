@@ -13,46 +13,44 @@
 
 #ifdef FIX_CLASS
 // clang-format off
-FixStyle(spring,FixSpring);
+FixStyle(lineforce/kk,FixLineForceKokkos<LMPDeviceType>);
+FixStyle(lineforce/kk/device,FixLineForceKokkos<LMPDeviceType>);
+FixStyle(lineforce/kk/host,FixLineForceKokkos<LMPHostType>);
 // clang-format on
 #else
 
-#ifndef LMP_FIX_SPRING_H
-#define LMP_FIX_SPRING_H
+// clang-format off
+#ifndef LMP_FIX_LINEFORCE_KOKKOS_H
+#define LMP_FIX_LINEFORCE_KOKKOS_H
 
-#include "fix.h"
+#include "fix_lineforce.h"
+#include "kokkos_type.h"
 
 namespace LAMMPS_NS {
 
-class FixSpring : public Fix {
+struct TagFixLineForce{};
+
+template<class DeviceType>
+class FixLineForceKokkos : public FixLineForce {
  public:
-  FixSpring(class LAMMPS *, int, char **);
-  ~FixSpring() override;
-  int setmask() override;
+  typedef DeviceType device_type;
+  typedef ArrayTypes<DeviceType> AT;
+
+  FixLineForceKokkos(class LAMMPS *, int, char **);
+  ~FixLineForceKokkos() override {}
   void init() override;
-  void setup(int) override;
-  void min_setup(int) override;
   void post_force(int) override;
-  void post_force_respa(int, int, int) override;
-  void min_post_force(int) override;
-  double compute_scalar() override;
-  double compute_vector(int) override;
+
+// NOLINTNEXTLINE
+  KOKKOS_INLINE_FUNCTION
+  void operator()(TagFixLineForce, const int &) const;
 
  private:
-  char *group2;
+  class AtomKokkos *atomKK;
+  ExecutionSpace execution_space;
 
-  void spring_tether();
-  void spring_couple();
-
- protected:
-  double xc, yc, zc, r0;
-  double k_spring;
-  int xflag, yflag, zflag;
-  int styleflag;
-  int igroup2, group2bit;
-  double masstotal, masstotal2;
-  int ilevel_respa;
-  double espring, ftotal[4];
+  typename AT::t_kkacc_1d_3 f;
+  typename AT::t_int_1d_randomread mask;
 };
 
 }    // namespace LAMMPS_NS

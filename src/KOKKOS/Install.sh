@@ -166,6 +166,8 @@ action fix_gravity_kokkos.cpp
 action fix_gravity_kokkos.h
 action fix_langevin_kokkos.cpp
 action fix_langevin_kokkos.h
+action fix_lineforce_kokkos.cpp
+action fix_lineforce_kokkos.h
 action fix_minimize_kokkos.cpp
 action fix_minimize_kokkos.h
 action fix_momentum_kokkos.cpp
@@ -190,6 +192,8 @@ action fix_nvt_kokkos.cpp
 action fix_nvt_kokkos.h
 action fix_nvt_sllod_kokkos.cpp
 action fix_nvt_sllod_kokkos.h
+action fix_planeforce_kokkos.cpp
+action fix_planeforce_kokkos.h
 action fix_property_atom_kokkos.cpp
 action fix_property_atom_kokkos.h
 action fix_qeq_reaxff_kokkos.cpp fix_qeq_reaxff.cpp
@@ -210,6 +214,8 @@ action fix_shake_kokkos.cpp fix_shake.cpp
 action fix_shake_kokkos.h fix_shake.h
 action fix_shardlow_kokkos.cpp fix_shardlow.cpp
 action fix_shardlow_kokkos.h fix_shardlow.h
+action fix_spring_kokkos.cpp
+action fix_spring_kokkos.h
 action fix_spring_self_kokkos.cpp
 action fix_spring_self_kokkos.h
 action fix_temp_berendsen_kokkos.cpp

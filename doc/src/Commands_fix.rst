@@ -112,7 +112,7 @@ OPT.
    * :doc:`lb/fluid <fix_lb_fluid>`
    * :doc:`lb/momentum <fix_lb_momentum>`
    * :doc:`lb/viscous <fix_lb_viscous>`
-   * :doc:`lineforce <fix_lineforce>`
+   * :doc:`lineforce (k) <fix_lineforce>`
    * :doc:`manifoldforce <fix_manifoldforce>`
    * :doc:`mdi/qm <fix_mdi_qm>`
    * :doc:`mdi/qmmm <fix_mdi_qmmm>`
@@ -180,7 +180,7 @@ OPT.
    * :doc:`pimd/nvt <fix_pimd>`
    * :doc:`pimd/langevin/bosonic <fix_pimd>`
    * :doc:`pimd/nvt/bosonic <fix_pimd>`
-   * :doc:`planeforce <fix_planeforce>`
+   * :doc:`planeforce (k) <fix_planeforce>`
    * :doc:`plumed <fix_plumed>`
    * :doc:`polarize/bem/gmres <fix_polarize>`
    * :doc:`polarize/bem/icc <fix_polarize>`
@@ -247,7 +247,7 @@ OPT.
    * :doc:`smd/wall_surface <fix_smd_wall_surface>`
    * :doc:`sph <fix_sph>`
    * :doc:`sph/stationary <fix_sph_stationary>`
-   * :doc:`spring <fix_spring>`
+   * :doc:`spring (k) <fix_spring>`
    * :doc:`spring/chunk <fix_spring_chunk>`
    * :doc:`spring/rg <fix_spring_rg>`
    * :doc:`spring/self (k) <fix_spring_self>`
