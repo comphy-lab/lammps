@@ -885,7 +885,7 @@ random-number generator cannot be called from device code without extra work (se
 
 ---
 
-## Group C — Sphere-body NVE/NVT/NPT integrators extending FixNH
+## Group C — Sphere-body NVE/NVT/NPT integrators extending FixNH ✓ DONE
 
 **Complexity:** Low-to-moderate.  `FixNHSphere` extends `FixNH` (already
 ported as `fix_nh_kokkos`) by overriding `nve_v()`, `nve_x()`, and `nh_v_temp()`
@@ -900,6 +900,19 @@ angular loop pattern (or `fix_nve_asphere_kokkos` for the rigid-body variant).
 | `nph/sphere` | `src/` | `FixNPHSphere` → `FixNHSphere` | Thin wrapper; most work in `nh/sphere/kk` |
 | `npt/sphere` | `src/` | `FixNPTSphere` → `FixNHSphere` | Same as above |
 | `nvt/sphere` | `src/` | `FixNVTSphere` → `FixNHSphere` | Same as above |
+
+## compute temp/sphere ✓ DONE
+
+**Complexity:** Low.  Mirrors `compute_temp_kokkos` but adds angular velocity
+terms.  Sphere particles always use `rmass` (no per-type mass path), so there
+is no `RMASS` template parameter — only a `MODE` parameter (ALL vs ROTATE-only).
+The `dof_compute()` and `init()` methods are kept CPU-side (called infrequently
+and already optimised).  Thin-wrapper constructors for the sphere NH fixes are
+updated to create `temp/sphere/kk` instead of `temp/sphere`.
+
+| Compute style | Package | Notes |
+|---|---|---|
+| `temp/sphere/kk` | `src/KOKKOS/` | `compute_temp_sphere_kokkos.{h,cpp}` |
 
 ---
 
@@ -1153,6 +1166,81 @@ and is flushed to `virial[0..5]` after `parallel_reduce` returns.
 The sphere variants only add angular velocity updates.  The Kokkos port of
 `FixNHSphereKokkos` should add a second functor that updates `omega` alongside
 `v`, dispatched from the same `initial_integrate` / `final_integrate` call.
+
+### Sphere NH integrators: inherit from FixNHKokkos, not FixNHSphere
+
+The instinct is to inherit `FixNHSphereKokkos` from `FixNHSphere` (like
+`FixWallLJ93Kokkos` inherits from `FixWallLJ93`).  But for NH sphere, this is
+wrong: `FixNHSphere::nve_v()` calls `FixNH::nve_v()` internally — the CPU
+version — losing the Kokkos parallelism.
+
+**Correct approach:** inherit `FixNHSphereKokkos<DeviceType>` from
+`FixNHKokkos<DeviceType>`.  This brings in the Kokkos implementations of
+`nve_v`, `nve_x`, `nh_v_temp`, and `nh_v_press`.  Override just the three
+sphere-specific methods:
+
+```
+nve_v()      → call FixNHKokkos::nve_v(),      then launch omega update kernel
+nve_x()      → call FixNHKokkos::nve_x(),      then launch dipole update kernel (if needed)
+nh_v_temp()  → call FixNHKokkos::nh_v_temp(),  then launch omega scaling kernel
+```
+
+The constructor logic from `FixNHSphere` (omega/radius flag checks, `inertia`,
+`disc` keyword) is duplicated directly in `FixNHSphereKokkos`.
+
+### NH sphere: FixNH::omega[6] vs per-atom omega view
+
+`FixNH` (inherited via `FixNHKokkos`) has a `protected: double omega[6]`
+member for the barostat degrees of freedom.  Adding a per-atom Kokkos view
+also named `omega` in `FixNHSphereKokkos` would shadow this.  Use a distinct
+name — `omega_kk` — for the per-atom Kokkos view to avoid confusion.
+
+### NH sphere: base class views remain valid after virtual-call chain
+
+When `FixNHSphereKokkos::nve_v()` calls `FixNHKokkos<DeviceType>::nve_v()`
+first, the base sets `this->mask` and `this->rmass` to the current device
+views before its `parallel_for`.  After it returns, these views are still
+valid (they are reference-counted handles).  The sphere omega kernel can
+therefore reuse `this->mask` and `this->rmass` directly without resyncing,
+and only needs to additionally sync `OMEGA_MASK`, `TORQUE_MASK`, and
+`RADIUS_MASK`.
+
+### NH sphere: thin-wrapper constructors use temp/sphere/kk, not temp/sphere
+
+The non-KK thin wrappers (`nph/sphere`, `npt/sphere`, `nvt/sphere`) create
+`temp/sphere` computes.  The KK thin wrappers (`nph/sphere/kk` etc.) should
+instead create `temp/sphere/kk` computes (once `compute_temp_sphere_kokkos`
+exists) so that the temperature calculation also runs on the device.
+Using `temp/sphere` would still give the correct temperature but would require
+a host synchronisation on every thermostat step, defeating the purpose of the
+KOKKOS port.  Using `temp/kk` would give the *wrong* temperature (ignores
+angular velocity).
+
+### NH sphere: DLM dipole integrator not supported in KK mode
+
+The DLM (Dullweber-Leimkuhler-Maclachlan) dipole integrator in
+`FixNHSphere::nve_x()` requires multiple matrix-vector products
+(`BuildRxMatrix`, `matvec`, `transpose_times3`, etc.).  These are feasible on
+device in principle but complex and rarely used.  The KK port supports only
+the simple dipole integrator (`dlm_flag == 0`); requesting `update dipole dlm`
+raises an error.
+
+
+### compute temp/sphere: sphere particles always use rmass, so no RMASS template
+
+`compute temp` has an `RMASS` template parameter to handle both
+per-atom mass (`rmass`) and per-type mass (`mass[type[i]]`).
+`compute temp/sphere` does NOT need this because `atom_style sphere` always
+provides `rmass` — the per-type mass path is never taken.  The KK variant
+therefore uses a simpler `MODE` template parameter (0 = ROTATE-only,
+1 = ALL, i.e. translational + rotational), with `rmass` always used.
+
+### compute temp/sphere: view name collision with FixNH::omega
+
+`FixNH` has a `protected: double omega[6]` member for barostat DOF.
+`ComputeTempSphereKokkos` is a `Compute`, not a fix, so there is no
+collision here — but for consistency and clarity, the per-atom Kokkos
+omega view is named `omega_kk` in the compute too.
 
 ### Per-atom storage: dual-view pattern from fix_spring_self_kokkos
 
