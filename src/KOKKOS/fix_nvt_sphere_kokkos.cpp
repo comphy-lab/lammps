@@ -37,7 +37,7 @@ FixNVTSphereKokkos<DeviceType>::FixNVTSphereKokkos(LAMMPS *lmp, int narg, char *
 
   this->id_temp = utils::strdup(std::string(this->id) + "_temp");
   this->modify->add_compute(
-      fmt::format("{} {} temp/sphere", this->id_temp,
+      fmt::format("{} {} temp/sphere/kk", this->id_temp,
                   this->group->names[this->igroup]));
   this->tcomputeflag = 1;
 }

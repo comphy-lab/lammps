@@ -1073,6 +1073,7 @@ compute_sna_grid_local_kokkos_impl.h
 compute_temp_com_kokkos.h
 compute_temp_deform_kokkos.h
 compute_temp_kokkos.h
+compute_temp_sphere_kokkos.h
 dihedral_charmmfsw_kokkos.h
 dihedral_charmm_kokkos.h
 dihedral_class2_kokkos.h
@@ -1306,6 +1307,7 @@ compute_sna_grid_local_kokkos.cpp
 compute_temp_com_kokkos.cpp
 compute_temp_deform_kokkos.cpp
 compute_temp_kokkos.cpp
+compute_temp_sphere_kokkos.cpp
 dihedral_charmmfsw_kokkos.cpp
 dihedral_charmm_kokkos.cpp
 dihedral_class2_kokkos.cpp

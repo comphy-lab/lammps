@@ -36,7 +36,7 @@ FixNPHSphereKokkos<DeviceType>::FixNPHSphereKokkos(LAMMPS *lmp, int narg, char *
   // compute group = all since pressure is always global
 
   this->id_temp = utils::strdup(std::string(this->id) + "_temp");
-  this->modify->add_compute(fmt::format("{} all temp/sphere", this->id_temp));
+  this->modify->add_compute(fmt::format("{} all temp/sphere/kk", this->id_temp));
   this->tcomputeflag = 1;
 
   // create a new compute pressure style
