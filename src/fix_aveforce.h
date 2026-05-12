@@ -26,6 +26,8 @@ namespace LAMMPS_NS {
 
 class FixAveForce : public Fix {
  public:
+  enum { NONE, CONSTANT, EQUAL };
+
   FixAveForce(class LAMMPS *, int, char **);
   ~FixAveForce() override;
   int setmask() override;
