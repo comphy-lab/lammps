@@ -233,8 +233,8 @@ void AngleClass2xeKokkos<DeviceType>::operator()(TagAngleClass2xeCompute<NEWTON_
   const KK_FLOAT dr2_bb = r2 - d_bb_r2[type];
   const KK_FLOAT bb_ralpha1 = exp(-d_bb_alpha[type]*dr1_bb);
   const KK_FLOAT bb_ralpha2 = exp(-d_bb_alpha[type]*dr2_bb);
-  const KK_FLOAT tk1 = d_bb_d0[type]*d_bb_alpha[type]*bb_ralpha1*(static_cast<KK_FLOAT>(1.0) - bb_ralpha2);
-  const KK_FLOAT tk2 = d_bb_d0[type]*d_bb_alpha[type]*bb_ralpha2*(static_cast<KK_FLOAT>(1.0) - bb_ralpha1);
+  const KK_FLOAT tk1 = d_bb_d0[type]*d_bb_alpha[type]*bb_ralpha2*(static_cast<KK_FLOAT>(1.0) - bb_ralpha1);
+  const KK_FLOAT tk2 = d_bb_d0[type]*d_bb_alpha[type]*bb_ralpha1*(static_cast<KK_FLOAT>(1.0) - bb_ralpha2);
 
   f1[0] -= delx1*tk2/r1;
   f1[1] -= dely1*tk2/r1;
