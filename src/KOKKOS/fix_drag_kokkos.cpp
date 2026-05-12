@@ -47,6 +47,17 @@ FixDragKokkos<DeviceType>::~FixDragKokkos()
 /* ---------------------------------------------------------------------- */
 
 template<class DeviceType>
+void FixDragKokkos<DeviceType>::init()
+{
+  FixDrag::init();
+
+  if (utils::strmatch(update->integrate_style, "^respa"))
+    error->all(FLERR, "Cannot (yet) use respa with fix drag/kk");
+}
+
+/* ---------------------------------------------------------------------- */
+
+template<class DeviceType>
 void FixDragKokkos<DeviceType>::post_force(int /*vflag*/)
 {
   atomKK->sync(execution_space, X_MASK | F_MASK | MASK_MASK);

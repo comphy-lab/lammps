@@ -40,6 +40,7 @@ class FixDragKokkos : public FixDrag {
 
   FixDragKokkos(class LAMMPS *, int, char **);
   ~FixDragKokkos() override;
+  void init() override;
   void post_force(int) override;
 
 // NOLINTNEXTLINE
