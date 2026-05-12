@@ -593,8 +593,8 @@ void DihedralClass2xeKokkos<DeviceType>::operator()(TagDihedralClass2xeCompute<N
     const KK_FLOAT bb13_dr2 = r3 - d_bb13t_r30[type];
     const KK_FLOAT bb13_ralpha1 = exp(-d_bb13t_alpha[type]*bb13_dr1);
     const KK_FLOAT bb13_ralpha2 = exp(-d_bb13t_alpha[type]*bb13_dr2);
-    const KK_FLOAT tk1 = -d_bb13t_d0[type]*d_bb13t_alpha[type]*bb13_ralpha1*(1.0 - bb13_ralpha2)/r3;
-    const KK_FLOAT tk2 = -d_bb13t_d0[type]*d_bb13t_alpha[type]*bb13_ralpha2*(1.0 - bb13_ralpha1)/r1;
+    const KK_FLOAT tk1 = -d_bb13t_d0[type]*d_bb13t_alpha[type]*bb13_ralpha2*(1.0 - bb13_ralpha1)/r1;
+    const KK_FLOAT tk2 = -d_bb13t_d0[type]*d_bb13t_alpha[type]*bb13_ralpha1*(1.0 - bb13_ralpha2)/r3;
 
     if (EVFLAG && eflag) edihedral += d_bb13t_d0[type]*(1.0 - bb13_ralpha1)*(1.0 - bb13_ralpha2);
 
