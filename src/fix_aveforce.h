@@ -37,7 +37,7 @@ class FixAveForce : public Fix {
   void min_post_force(int) override;
   double compute_vector(int) override;
 
- private:
+ protected:
   double xvalue, yvalue, zvalue;
   int varflag;
   char *xstr, *ystr, *zstr;

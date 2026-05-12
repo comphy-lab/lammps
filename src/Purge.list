@@ -1087,9 +1087,11 @@ fft3d_kokkos.h
 fftdata_kokkos.h
 fix_acks2_reaxff_kokkos.h
 fix_addforce_kokkos.h
+fix_aveforce_kokkos.h
 fix_cmap_kokkos.h
 fix_colvars_kokkos.h
 fix_deform_kokkos.h
+fix_drag_kokkos.h
 fix_dpd_energy_kokkos.h
 fix_dt_reset_kokkos.h
 fix_efield_kokkos.h
@@ -1109,9 +1111,11 @@ fix_nph_kokkos.h
 fix_npt_kokkos.h
 fix_nve_kokkos.h
 fix_nve_limit_kokkos.h
+fix_nve_noforce_kokkos.h
 fix_nve_sphere_kokkos.h
 fix_nvt_kokkos.h
 fix_nvt_sllod_kokkos.h
+fix_oneway_kokkos.h
 fix_planeforce_kokkos.h
 fix_property_atom_kokkos.h
 fix_qeq_reaxff_kokkos.h
@@ -1127,6 +1131,7 @@ fix_spring_self_kokkos.h
 fix_temp_berendsen_kokkos.h
 fix_temp_rescale_kokkos.h
 fix_viscous_kokkos.h
+fix_viscous_sphere_kokkos.h
 fix_wall_flow_kokkos.h
 fix_wall_gran_kokkos.h
 fix_wall_gran_old.h
@@ -1306,9 +1311,11 @@ dynamical_matrix_kokkos.cpp
 fft3d_kokkos.cpp
 fix_acks2_reaxff_kokkos.cpp
 fix_addforce_kokkos.cpp
+fix_aveforce_kokkos.cpp
 fix_cmap_kokkos.cpp
 fix_colvars_kokkos.cpp
 fix_deform_kokkos.cpp
+fix_drag_kokkos.cpp
 fix_dpd_energy_kokkos.cpp
 fix_dt_reset_kokkos.cpp
 fix_efield_kokkos.cpp
@@ -1328,9 +1335,11 @@ fix_nph_kokkos.cpp
 fix_npt_kokkos.cpp
 fix_nve_kokkos.cpp
 fix_nve_limit_kokkos.cpp
+fix_nve_noforce_kokkos.cpp
 fix_nve_sphere_kokkos.cpp
 fix_nvt_kokkos.cpp
 fix_nvt_sllod_kokkos.cpp
+fix_oneway_kokkos.cpp
 fix_planeforce_kokkos.cpp
 fix_property_atom_kokkos.cpp
 fix_qeq_reaxff_kokkos.cpp
@@ -1346,6 +1355,7 @@ fix_spring_self_kokkos.cpp
 fix_temp_berendsen_kokkos.cpp
 fix_temp_rescale_kokkos.cpp
 fix_viscous_kokkos.cpp
+fix_viscous_sphere_kokkos.cpp
 fix_wall_flow_kokkos.cpp
 fix_wall_gran_kokkos.cpp
 fix_wall_gran_old.cpp

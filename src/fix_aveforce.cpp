@@ -96,6 +96,7 @@ FixAveForce::FixAveForce(LAMMPS *lmp, int narg, char **arg) :
 
 FixAveForce::~FixAveForce()
 {
+  if (copymode) return;
   delete[] xstr;
   delete[] ystr;
   delete[] zstr;

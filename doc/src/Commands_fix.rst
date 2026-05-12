@@ -33,7 +33,7 @@ OPT.
    * :doc:`ave/histo/weight <fix_ave_histo>`
    * :doc:`ave/moments <fix_ave_moments>`
    * :doc:`ave/time <fix_ave_time>`
-   * :doc:`aveforce <fix_aveforce>`
+   * :doc:`aveforce (k) <fix_aveforce>`
    * :doc:`balance <fix_balance>`
    * :doc:`bocs <fix_bocs>`
    * :doc:`bond/break <fix_bond_break>`
@@ -54,7 +54,7 @@ OPT.
    * :doc:`deform/pressure <fix_deform_pressure>`
    * :doc:`deposit <fix_deposit>`
    * :doc:`dpd/energy (k) <fix_dpd_energy>`
-   * :doc:`drag <fix_drag>`
+   * :doc:`drag (k) <fix_drag>`
    * :doc:`drude <fix_drude>`
    * :doc:`drude/transform/direct <fix_drude_transform>`
    * :doc:`drude/transform/inverse <fix_drude_transform>`
@@ -154,7 +154,7 @@ OPT.
    * :doc:`nve/limit (k) <fix_nve_limit>`
    * :doc:`nve/line <fix_nve_line>`
    * :doc:`nve/manifold/rattle <fix_nve_manifold_rattle>`
-   * :doc:`nve/noforce <fix_nve_noforce>`
+   * :doc:`nve/noforce (k) <fix_nve_noforce>`
    * :doc:`nve/sphere (ko) <fix_nve_sphere>`
    * :doc:`nve/bpm/sphere <fix_nve_bpm_sphere>`
    * :doc:`nve/spin <fix_nve_spin>`
@@ -169,7 +169,7 @@ OPT.
    * :doc:`nvt/sllod/eff <fix_nvt_sllod_eff>`
    * :doc:`nvt/sphere (o) <fix_nvt_sphere>`
    * :doc:`nvt/uef <fix_nh_uef>`
-   * :doc:`oneway <fix_oneway>`
+   * :doc:`oneway (k) <fix_oneway>`
    * :doc:`orient/bcc <fix_orient>`
    * :doc:`orient/fcc <fix_orient>`
    * :doc:`orient/eco <fix_orient_eco>`
@@ -274,7 +274,7 @@ OPT.
    * :doc:`vector <fix_vector>`
    * :doc:`viscosity <fix_viscosity>`
    * :doc:`viscous (k) <fix_viscous>`
-   * :doc:`viscous/sphere <fix_viscous_sphere>`
+   * :doc:`viscous/sphere (k) <fix_viscous_sphere>`
    * :doc:`wall/body/polygon <fix_wall_body_polygon>`
    * :doc:`wall/body/polyhedron <fix_wall_body_polyhedron>`
    * :doc:`wall/colloid <fix_wall>`
