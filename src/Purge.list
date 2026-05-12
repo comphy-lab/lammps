@@ -1135,7 +1135,11 @@ fix_viscous_sphere_kokkos.h
 fix_wall_flow_kokkos.h
 fix_wall_gran_kokkos.h
 fix_wall_gran_old.h
+fix_wall_harmonic_kokkos.h
+fix_wall_lj126_kokkos.h
+fix_wall_lj1043_kokkos.h
 fix_wall_lj93_kokkos.h
+fix_wall_morse_kokkos.h
 fix_wall_reflect_kokkos.h
 fix_wall_region_kokkos.h
 grid3d_kokkos.h
@@ -1359,7 +1363,11 @@ fix_viscous_sphere_kokkos.cpp
 fix_wall_flow_kokkos.cpp
 fix_wall_gran_kokkos.cpp
 fix_wall_gran_old.cpp
+fix_wall_harmonic_kokkos.cpp
+fix_wall_lj126_kokkos.cpp
+fix_wall_lj1043_kokkos.cpp
 fix_wall_lj93_kokkos.cpp
+fix_wall_morse_kokkos.cpp
 fix_wall_reflect_kokkos.cpp
 fix_wall_region_kokkos.cpp
 grid3d_kokkos.cpp

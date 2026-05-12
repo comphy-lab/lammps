@@ -282,13 +282,13 @@ OPT.
    * :doc:`wall/flow (k) <fix_wall_flow>`
    * :doc:`wall/gran (k) <fix_wall_gran>`
    * :doc:`wall/gran/region <fix_wall_gran_region>`
-   * :doc:`wall/harmonic <fix_wall>`
+   * :doc:`wall/harmonic (k) <fix_wall>`
    * :doc:`wall/harmonic/outside <fix_wall>`
-   * :doc:`wall/lj1043 <fix_wall>`
-   * :doc:`wall/lj126 <fix_wall>`
+   * :doc:`wall/lj1043 (k) <fix_wall>`
+   * :doc:`wall/lj126 (k) <fix_wall>`
    * :doc:`wall/lj93 (k) <fix_wall>`
    * :doc:`wall/lepton <fix_wall>`
-   * :doc:`wall/morse <fix_wall>`
+   * :doc:`wall/morse (k) <fix_wall>`
    * :doc:`wall/piston <fix_wall_piston>`
    * :doc:`wall/reflect (k) <fix_wall_reflect>`
    * :doc:`wall/reflect/stochastic <fix_wall_reflect_stochastic>`

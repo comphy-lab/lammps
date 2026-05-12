@@ -847,7 +847,7 @@ and ordered from simplest to most complex (or least to most GPU-unfriendly).
 
 ---
 
-## Group A — Trivial per-atom force/velocity loops (src/ and EXTRA-FIX)
+## Group A — Trivial per-atom force/velocity loops (src/ and EXTRA-FIX) ✓ DONE
 
 **Complexity:** Very low.  A single `Kokkos::parallel_for` over `[0, nlocal)`
 reading `f[]` (or `v[]`) and writing back.  No per-atom stored state, no global
@@ -865,7 +865,7 @@ Follow `fix_viscous_kokkos` as the primary template.
 
 ---
 
-## Group B — Wall styles extending FixWall (src/ and EXTRA-FIX)
+## Group B — Wall styles extending FixWall (src/ and EXTRA-FIX) ✓ DONE
 
 **Complexity:** Low.  All are subclasses of `FixWall` and need only
 `precompute(int)` (precompute per-wall coefficients) and `wall_particle(int,int,double)`
@@ -1094,6 +1094,58 @@ void FixWall<Name>Kokkos<DeviceType>::wall_particle(int m, int which, double coo
   // compute fwall and ewall for atom at position coord from wall m
 }
 ```
+
+### Wall styles: `private:` must become `protected:` for coeff arrays
+
+The base-class coeff arrays (`coeff1[]`, `coeff2[]`, ..., `offset[]`) are often
+declared `private:`.  Because the KK subclass inherits from the base and reads
+those arrays in `precompute()`, they must be changed to `protected:`.  Always
+check with:
+
+```bash
+grep -n "private:\|coeff\|offset" src/fix_wall_<name>.h
+```
+
+### Wall styles: `fix_wall_harmonic` has no per-wall DualViews
+
+`wall/harmonic` does not precompute coefficients (it computes `dr = cutoff - delta`
+inline).  The `precompute()` override is empty in the KK class.  The base-class
+`epsilon[]` and `cutoff[]` (protected in `FixWall`) are accessed directly as scalar
+casts in the functor since they are small fixed arrays (6 elements) that remain on
+the host.  For consistency with other wall KK styles the DualView pattern is still
+used for `k_vatom` but no coefficient DualViews are needed.
+
+### Wall styles: `fix_wall_lj1043` — avoid `powint` in device kernels
+
+`powint(x, -N)` is a **host-only** function from `math_special.h`.  In the base-class
+`wall_particle`, integer powers like `powint(delta + coeff4[m], -3)` must be replaced
+in the device functor with explicit repeated multiplication:
+
+```cpp
+KK_FLOAT dc4inv = 1.0 / (delta + d_coeff4(m));
+KK_FLOAT dc4inv3 = dc4inv * dc4inv * dc4inv;      // replaces powint(..., -3)
+KK_FLOAT dc4inv4 = dc4inv3 * dc4inv;              // replaces powint(..., -4)
+```
+
+Store `coeff4[]` in its own DualView so the device kernel can read it.
+
+### Wall styles: `fix_wall_morse` — `exp` is available on device
+
+Morse potential uses `exp()`, which is available in CUDA/HIP device code as
+`Kokkos::exp()`.  Simply replace `exp(...)` with `Kokkos::exp(...)` in the
+device functor.  The parameters `alpha[]`, `sigma[]`, and `epsilon[]` are defined
+in the `FixWall` base (`protected:`), so copy them to DualViews in `precompute`.
+
+### Wall styles: `post_force` wraps base and handles virial
+
+The KK `post_force` override only:
+1. Reallocates `k_vatom` if `vflag_atom` is set.
+2. Calls `FixWall<Name>::post_force(vflag)` — which calls the overridden
+   `wall_particle` (the KK version).
+3. Syncs `k_vatom` back to host if needed.
+
+The virial accumulation inside `wall_particle` uses the `result[7..12]` array
+and is flushed to `virial[0..5]` after `parallel_reduce` returns.
 
 ### Sphere integrators: extending FixNHKokkos
 
