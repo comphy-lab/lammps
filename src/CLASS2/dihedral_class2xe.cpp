@@ -1012,4 +1012,4 @@ void DihedralClass2xe::write_data(FILE *fp)
    if (strcmp(str, "phi3") == 0) return (void *) phi3;
    return nullptr;
  }
- 
+
