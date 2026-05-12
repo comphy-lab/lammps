@@ -948,7 +948,6 @@ Pattern: `fix_temp_rescale_kokkos`, `fix_temp_berendsen_kokkos`.
 |---|---|---|---|
 | `press/berendsen` | `src/` | Isotropic/anisotropic box rescaling | Temperature + pressure compute → box + velocity rescale |
 | `press/langevin` | `EXTRA-FIX` | Stochastic pressure coupling | Similar to `press/berendsen` with random term |
-| `nvk` | `EXTRA-FIX` | Isokinetic NVK ensemble | `initial_integrate` + `final_integrate`; kinetic energy constraint |
 | `temp/csvr` | `EXTRA-FIX` | Canonical sampling; velocity rescaling | Stochastic factor; needs host-side random then device rescale |
 | `temp/csld` | `EXTRA-FIX` | Canonical sampling; Lowe-Denbigh-Andersen | Per-pair velocity reassignment; moderate complexity |
 | `gjf` | `EXTRA-FIX` | Grønbech-Jensen/Farago Langevin integrator | Has per-atom `vhalf[nmax][3]`; inherits Langevin structure (`fix_langevin_kokkos` pattern) |
@@ -967,8 +966,6 @@ device kernels.
 | `move` | `src/` | Prescribe atom trajectories (linear/wiggle/rotate/variable) | Four motion modes; complex per-atom state; `initial_integrate` |
 | `heat` | `src/` | Add kinetic energy to two groups | Needs two-group velocity scale; similar to `temp/rescale` |
 | `restrain` | `src/` | Harmonic restraints on bonds/angles/dihedrals | Needs per-restraint neighbor lookup; moderate loop |
-| `spring/chunk` | `src/` | Spring to per-chunk COM | Requires chunk-local reduce; not available as Kokkos primitive |
-| `momentum/chunk` | `EXTRA-FIX` | Remove per-chunk momentum | Needs per-chunk reduce; similar challenge to `spring/chunk` |
 | `deform/pressure` | `EXTRA-FIX` | Deformation with pressure control | Extends `fix_deform_kokkos` (ported); adds pressure coupling |
 
 ---
