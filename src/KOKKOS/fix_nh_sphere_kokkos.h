@@ -29,18 +29,6 @@ class FixNHSphereKokkos : public FixNHKokkos<DeviceType> {
  public:
   typedef DeviceType device_type;
   typedef ArrayTypes<DeviceType> AT;
-  // bring inherited members into scope
-  using FixNHKokkos<DeviceType>::mask;
-  using FixNHKokkos<DeviceType>::rmass;
-  using FixNHKokkos<DeviceType>::atomKK;
-  using FixNHKokkos<DeviceType>::execution_space;
-  using FixNH::groupbit;
-  using FixNH::igroup;
-  using FixNH::dtf;
-  using FixNH::dtv;
-  using FixNH::factor_eta;
-  using FixNH::dipole_flag;
-  using FixNH::dlm_flag;
 
   FixNHSphereKokkos(class LAMMPS *, int, char **);
 
