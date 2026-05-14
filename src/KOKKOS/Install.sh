@@ -399,8 +399,6 @@ action pair_lj_gromacs_kokkos.cpp pair_lj_gromacs.cpp
 action pair_lj_gromacs_kokkos.h pair_lj_gromacs.h
 action pair_lj_smooth_kokkos.cpp pair_lj_smooth.cpp
 action pair_lj_smooth_kokkos.h pair_lj_smooth.h
-action pair_lj_smooth_linear_kokkos.cpp pair_lj_smooth_linear.cpp
-action pair_lj_smooth_linear_kokkos.h pair_lj_smooth_linear.h
 action pair_lj_spica_coul_long_kokkos.cpp pair_lj_spica_coul_long.cpp
 action pair_lj_spica_coul_long_kokkos.h pair_lj_spica_coul_long.h
 action pair_lj_spica_kokkos.cpp pair_lj_spica.cpp

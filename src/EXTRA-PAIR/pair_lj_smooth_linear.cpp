@@ -38,8 +38,6 @@ PairLJSmoothLinear::PairLJSmoothLinear(LAMMPS *lmp) : Pair(lmp) {
 
 PairLJSmoothLinear::~PairLJSmoothLinear()
 {
-  if (copymode) return;
-
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);
