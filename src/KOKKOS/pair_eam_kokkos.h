@@ -60,7 +60,6 @@ class PairEAMKokkos : public PairEAM, public KokkosBase {
   void compute(int, int) override;
   void init_style() override;
 
-  class TuneKokkos* tuner;
 
 // NOLINTNEXTLINE
   KOKKOS_INLINE_FUNCTION

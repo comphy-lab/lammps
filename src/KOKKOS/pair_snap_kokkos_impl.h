@@ -148,7 +148,10 @@ void PairSNAPKokkos<DeviceType, real_type, accum_type, vector_length>::compute(i
   if (newton_pair == false)
     error->all(FLERR,"PairSNAPKokkos requires 'newton on'");
 
-  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
+  if (lmp->kokkos->autotuning && tuner) {
+    tuner->tuning_kernel_params();
+    chunksize = tuner->get_current_team_size();
+  }
 
   atomKK->sync(execution_space,X_MASK|F_MASK|TYPE_MASK);
   x = atomKK->k_x.view<DeviceType>();

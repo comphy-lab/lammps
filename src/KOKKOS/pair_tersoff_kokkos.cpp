@@ -240,6 +240,9 @@ void PairTersoffKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   if (lmp->kokkos->threads_per_atom_set)
     chunk_size = lmp->kokkos->threads_per_atom;
 
+  int tsize = lmp->kokkos->pair_team_size_set ? lmp->kokkos->pair_team_size
+                                               : block_size_compute_tersoff_force;
+
   // build short neighbor list
 
   int max_neighs = d_neighbors.extent(1);
@@ -274,12 +277,13 @@ void PairTersoffKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
         Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairTersoffCompute<HALFTHREAD,0> >(0,inum),*this);
       } else {
 #ifdef LMP_KOKKOS_TERSOFF_MDRANGEPOLICY_WORKAROUND
+        int mdtile = MIN(tsize, block_size_compute_tersoff_force);
         Kokkos::parallel_for(Kokkos::MDRangePolicy<DeviceType, Kokkos::Rank<2>, Kokkos::LaunchBounds<block_size_compute_tersoff_force>,
-          TagPairTersoffCompute<HALFTHREAD,0> >({0,0},{inum,1},{block_size_compute_tersoff_force,1}),*this);
+          TagPairTersoffCompute<HALFTHREAD,0> >({0,0},{inum,1},{mdtile,1}),*this);
 #else
-        int team_count = (inum + block_size_compute_tersoff_force - 1) / block_size_compute_tersoff_force;
+        int team_count = (inum + tsize - 1) / tsize;
         Kokkos::TeamPolicy<DeviceType, Kokkos::LaunchBounds<block_size_compute_tersoff_force>,
-          TagPairTersoffCompute<HALFTHREAD,0>> team_policy(team_count, block_size_compute_tersoff_force);
+          TagPairTersoffCompute<HALFTHREAD,0>> team_policy(team_count, tsize);
         Kokkos::parallel_for(team_policy, *this);
 #endif
       }
@@ -582,7 +586,7 @@ template<int NEIGHFLAG, int EVFLAG>
 KOKKOS_INLINE_FUNCTION
 void PairTersoffKokkos<DeviceType>::operator()(TagPairTersoffCompute<NEIGHFLAG,EVFLAG>, const typename Kokkos::TeamPolicy<DeviceType, TagPairTersoffCompute<NEIGHFLAG,EVFLAG> >::member_type &team) const {
 
-  const int ii = team.league_rank() * block_size_compute_tersoff_force + team.team_rank();
+  const int ii = team.league_rank() * team.team_size() + team.team_rank();
 
   if (ii < inum) {
     EV_FLOAT ev;

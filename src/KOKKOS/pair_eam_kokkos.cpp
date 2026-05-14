@@ -29,7 +29,6 @@
 #include "neigh_request.h"
 #include "neighbor.h"
 #include "pair_kokkos.h"
-#include "tune_kokkos.h"
 
 #include <cmath>
 using namespace LAMMPS_NS;
@@ -44,7 +43,6 @@ PairEAMKokkos<DeviceType>::PairEAMKokkos(LAMMPS *lmp) : PairEAM(lmp)
 {
   respa_enable = 0;
   single_enable = 0;
-  tuner = nullptr;
 
   kokkosable = 1;
   atomKK = (AtomKokkos *) atom;
@@ -62,8 +60,6 @@ PairEAMKokkos<DeviceType>::~PairEAMKokkos()
 
   memoryKK->destroy_kokkos(k_eatom,eatom);
   memoryKK->destroy_kokkos(k_vatom,vatom);
-
-  if (tuner) delete tuner;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -140,25 +136,12 @@ void PairEAMKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
   rhomax_kk = static_cast<KK_FLOAT>(rhomax);
   copymode = 1;
 
-  if (lmp->kokkos->autotuning && tuner) tuner->tuning_kernel_params();
-
-  int chunk_size = 0;
-  if (tuner)
-    chunk_size = tuner->get_current_team_size();
-
   // zero out density
 
-  if (newton_pair) {
-    if (chunk_size)
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMInitialize>(0,nall,Kokkos::ChunkSize(chunk_size)),*this);
-    else
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMInitialize>(0,nall),*this);
-  } else {
-    if (chunk_size)
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMInitialize>(0,nlocal,Kokkos::ChunkSize(chunk_size)),*this);
-    else
-      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMInitialize>(0,nlocal),*this);
-  }
+  if (newton_pair)
+    Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMInitialize>(0,nall),*this);
+  else
+    Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMInitialize>(0,nlocal),*this);
 
   // loop over neighbors of my atoms
 
@@ -170,27 +153,15 @@ void PairEAMKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
     if (neighflag == HALF) {
       if (newton_pair) {
-        if (chunk_size)
-          Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALF,1>>(0,inum,Kokkos::ChunkSize(chunk_size)),*this);
-        else
-          Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALF,1>>(0,inum),*this);
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALF,1>>(0,inum),*this);
       } else {
-        if (chunk_size)
-          Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALF,0>>(0,inum,Kokkos::ChunkSize(chunk_size)),*this);
-        else
-          Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALF,0>>(0,inum),*this);
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALF,0>>(0,inum),*this);
       }
     } else if (neighflag == HALFTHREAD) {
       if (newton_pair) {
-        if (chunk_size)
-          Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALFTHREAD,1>>(0,inum,Kokkos::ChunkSize(chunk_size)),*this);
-        else
-          Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALFTHREAD,1>>(0,inum),*this);
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALFTHREAD,1>>(0,inum),*this);
       } else {
-        if (chunk_size)
-          Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALFTHREAD,0>>(0,inum,Kokkos::ChunkSize(chunk_size)),*this);
-        else
-          Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALFTHREAD,0>>(0,inum),*this);
+        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelA<HALFTHREAD,0>>(0,inum),*this);
       }
     }
 
@@ -209,31 +180,21 @@ void PairEAMKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
 
     if (eflag)
       Kokkos::parallel_reduce(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelB<1>>(0,inum),*this,ev);
-    else {
-      if (chunk_size)
-        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelB<0>>(0,inum,Kokkos::ChunkSize(chunk_size)),*this);
-      else
-        Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelB<0>>(0,inum),*this);
-    }
-
+    else
+      Kokkos::parallel_for(Kokkos::RangePolicy<DeviceType, TagPairEAMKernelB<0>>(0,inum),*this);
 
   } else if (neighflag == FULL) {
 
     // compute kernel AB
 
-    if (eflag) {
+    if (eflag)
       Kokkos::parallel_reduce(
              Kokkos::RangePolicy<DeviceType,TagPairEAMKernelAB<1>>(0,inum),
              *this,ev);
-    } else {
-      if (chunk_size)
-        Kokkos::parallel_for(
-            policyInstance<TagPairEAMKernelAB<0>>::get(inum,chunk_size), *this);
-      else
-        Kokkos::parallel_for(
-            policyInstance<TagPairEAMKernelAB<0>>::get(inum), *this);
-    }
-
+    else
+      Kokkos::parallel_for(
+            policyInstance<TagPairEAMKernelAB<0>>::get(inum),
+            *this);
   }
 
   if (eflag) {
@@ -294,41 +255,21 @@ void PairEAMKokkos<DeviceType>::compute(int eflag_in, int vflag_in)
       }
     } else if (neighflag == HALFTHREAD) {
       if (newton_pair) {
-        if (chunk_size)
-          Kokkos::parallel_for(
-              policyInstance<TagPairEAMKernelC<HALFTHREAD,1,0>>::get(inum,chunk_size),
-              *this);
-        else
-          Kokkos::parallel_for(
+        Kokkos::parallel_for(
               policyInstance<TagPairEAMKernelC<HALFTHREAD,1,0>>::get(inum),
               *this);
       } else {
-        if (chunk_size)
-          Kokkos::parallel_for(
-              policyInstance<TagPairEAMKernelC<HALFTHREAD,0,0>>::get(inum,chunk_size),
-              *this);
-        else
-          Kokkos::parallel_for(
+        Kokkos::parallel_for(
               policyInstance<TagPairEAMKernelC<HALFTHREAD,0,0>>::get(inum),
               *this);
       }
     } else if (neighflag == FULL) {
       if (newton_pair) {
-        if (chunk_size)
-          Kokkos::parallel_for(
-              policyInstance<TagPairEAMKernelC<FULL,1,0>>::get(inum,chunk_size),
-              *this);
-        else
-          Kokkos::parallel_for(
+        Kokkos::parallel_for(
               policyInstance<TagPairEAMKernelC<FULL,1,0>>::get(inum),
               *this);
       } else {
-        if (chunk_size)
-          Kokkos::parallel_for(
-              policyInstance<TagPairEAMKernelC<FULL,0,0>>::get(inum,chunk_size),
-              *this);
-        else
-          Kokkos::parallel_for(
+        Kokkos::parallel_for(
               policyInstance<TagPairEAMKernelC<FULL,0,0>>::get(inum),
               *this);
       }
@@ -394,11 +335,6 @@ void PairEAMKokkos<DeviceType>::init_style()
                            !std::is_same_v<DeviceType,LMPDeviceType>);
   request->set_kokkos_device(std::is_same_v<DeviceType,LMPDeviceType>);
   if (neighflag == FULL) request->enable_full();
-
-  if (lmp->kokkos->autotuning > 0 && !tuner) {
-    tuner = new TuneKokkos(lmp, TuneKokkos::GENERIC, lmp->kokkos->autotuning,
-      1, "pair-eam");
-  }
 }
 
 /* ----------------------------------------------------------------------
@@ -1227,14 +1163,9 @@ template<typename DeviceType>
 template<class TAG>
 struct PairEAMKokkos<DeviceType>::policyInstance {
 
-  static auto get(int inum, int chunksize=0) {
-    if (chunksize > 0) {
-      auto policy = Kokkos::RangePolicy<DeviceType, TAG>(0,inum,Kokkos::ChunkSize(chunksize));
-      return policy;
-    } else {
-      auto policy = Kokkos::RangePolicy<DeviceType, TAG>(0,inum);
-      return policy;
-    }
+  static auto get(int inum) {
+    auto policy = Kokkos::RangePolicy<DeviceType, TAG>(0,inum);
+    return policy;
   }
 };
 
@@ -1243,7 +1174,7 @@ template<>
 template<class TAG>
 struct PairEAMKokkos<Kokkos::Experimental::HIP>::policyInstance {
 
-  static auto get(int inum, int chunksize=0) {
+  static auto get(int inum) {
     static_assert(t_kkfloat_2d_n7::static_extent(2) == 7,
                   "Breaking assumption of spline dim for KernelAB and KernelC scratch caching");
 
