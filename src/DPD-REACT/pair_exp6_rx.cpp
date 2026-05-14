@@ -70,11 +70,11 @@ struct PairExp6ParamDataType
 /* ---------------------------------------------------------------------- */
 
 PairExp6rx::PairExp6rx(LAMMPS *lmp) : Pair(lmp),
-				      mol2param(nullptr),
-				      nparams(0),
-				      params(nullptr),
-				      nspecies(0),
-				      fractionalWeighting(true)
+                                      mol2param(nullptr),
+                                      nparams(0),
+                                      params(nullptr),
+                                      nspecies(0),
+                                      fractionalWeighting(true)
 {
   writedata = 1;
   genParamMpiDatatype();
@@ -642,9 +642,9 @@ void PairExp6rx::coeff(int narg, char **arg)
     for (int iparam = 0; iparam < nparams; ++iparam) {
       switch (params[iparam].potentialType) {
       case PotentialType::exp6:
-	break;
+        break;
       default:
-	error->all(FLERR,"params[].potential type unknown");
+        error->all(FLERR,"params[].potential type unknown");
       }
     }
   }
@@ -713,7 +713,7 @@ void PairExp6rx::genParamMpiDatatype() {
   const int param_blocklengths[] = {1,1,1,1,1};
   MPI_Aint param_displacements[NUM_PARAMS];
   const MPI_Datatype param_types[] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
-				      MPI_INT, MPI_INT};
+                                      MPI_INT, MPI_INT};
 
   Param dummyParam;
   MPI_Aint param_base_address;
@@ -726,20 +726,20 @@ void PairExp6rx::genParamMpiDatatype() {
 
   for (int i = 0; i < NUM_PARAMS; i++) {
     param_displacements[i] = MPI_Aint_diff(param_displacements[i],
-					   param_base_address);
+                                           param_base_address);
   }
 
   MPI_Datatype tmpParamMpiDatatype;
   MPI_Type_create_struct(NUM_PARAMS,
-			 param_blocklengths,
-			 param_displacements,
-			 param_types,
-			 &tmpParamMpiDatatype);
+                         param_blocklengths,
+                         param_displacements,
+                         param_types,
+                         &tmpParamMpiDatatype);
 
   MPI_Type_commit(&tmpParamMpiDatatype);
 
   MPI_Type_create_resized(tmpParamMpiDatatype, 0, sizeof(Param),
-			  &paramMpiDatatype);
+                          &paramMpiDatatype);
   MPI_Type_commit(&paramMpiDatatype);
 
   MPI_Type_free(&tmpParamMpiDatatype);
@@ -754,8 +754,8 @@ void PairExp6rx::initialize_exp6_params_array() {
 
 void PairExp6rx::grow_exp6_params_array(int old_size, int new_size) {
   params = (Param *) memory->srealloc(params,
-				      new_size*sizeof(Param),
-				      "pair:params");
+                                      new_size*sizeof(Param),
+                                      "pair:params");
 
   memset(params + old_size, 0, (new_size - old_size)*sizeof(Param));
 }
@@ -778,53 +778,53 @@ void PairExp6rx::read_file(char *file) {
 
     while (line = reader.next_line(params_per_line)) {
       try {
-	ValueTokenizer values(line);
+        ValueTokenizer values(line);
 
-	auto species = values.next_string();
+        auto species = values.next_string();
 
-	int ispecies;
-	for (ispecies = 0; ispecies < nspecies; ispecies++)
-	  if (species == atom->dvname[ispecies]) break;
-	if (ispecies == nspecies) continue;
+        int ispecies;
+        for (ispecies = 0; ispecies < nspecies; ispecies++)
+          if (species == atom->dvname[ispecies]) break;
+        if (ispecies == nspecies) continue;
 
-	if (nparams == maxparam) {
-	  maxparam += DELTA;
-	  grow_exp6_params_array(nparams, maxparam);
-	}
+        if (nparams == maxparam) {
+          maxparam += DELTA;
+          grow_exp6_params_array(nparams, maxparam);
+        }
 
-	params[nparams].ispecies = ispecies;
+        params[nparams].ispecies = ispecies;
 
-	auto potential = values.next_string();
+        auto potential = values.next_string();
 
-	if (potential == "exp6") {
-	  params[nparams].alpha = values.next_double();
-	  params[nparams].epsilon = values.next_double();
-	  params[nparams].rm = values.next_double();
-	  if (params[nparams].epsilon <= 0.0 || params[nparams].rm <= 0.0 ||
-	      params[nparams].alpha < 0.0) {
-	    error->one(FLERR,
-		       "Illegal exp6/rx parameters in file {}. "
-		       "Rm and Epsilon must be greater than zero. "
-		       "Alpha cannot be negative.", file);
-	  }
-	  params[nparams].potentialType = PotentialType::exp6;
+        if (potential == "exp6") {
+          params[nparams].alpha = values.next_double();
+          params[nparams].epsilon = values.next_double();
+          params[nparams].rm = values.next_double();
+          if (params[nparams].epsilon <= 0.0 || params[nparams].rm <= 0.0 ||
+              params[nparams].alpha < 0.0) {
+            error->one(FLERR,
+                       "Illegal exp6/rx parameters in file {}. "
+                       "Rm and Epsilon must be greater than zero. "
+                       "Alpha cannot be negative.", file);
+          }
+          params[nparams].potentialType = PotentialType::exp6;
 
-	  if (values.has_next()) {
-	    error->one(FLERR,
-		       "Misplaced characters at end of line in "
-		       "file {}. Full line: {}", file, line);
-	  }
+          if (values.has_next()) {
+            error->one(FLERR,
+                       "Misplaced characters at end of line in "
+                       "file {}. Full line: {}", file, line);
+          }
 
-	} else {
-	  error->one(FLERR,
-		     "Illegal exp6/rx parameters in file {}. "
-		     "Interaction potential does not exist.", file);
-	}
+        } else {
+          error->one(FLERR,
+                     "Illegal exp6/rx parameters in file {}. "
+                     "Interaction potential does not exist.", file);
+        }
 
-	nparams++;
+        nparams++;
       } catch (TokenizerException & e) {
-	error->all(FLERR, "{}. File: {} Full line: {}",
-		   e.what(), file, line);
+        error->all(FLERR, "{}. File: {} Full line: {}",
+                   e.what(), file, line);
       }
     }
   }
@@ -849,32 +849,32 @@ void PairExp6rx::read_file2(char *file)
 
     while (line = reader.next_line(coeffs_per_line+1)) {
       try {
-	ValueTokenizer values(line);
+        ValueTokenizer values(line);
 
-	auto coeff_type = values.next_string();
+        auto coeff_type = values.next_string();
 
-	if (coeff_type == "alpha") {
-	  for (int ii=0; ii<coeffs_per_line; ii++)
-	    coeffAlpha[ii] = values.next_double();
-	}
-	if (coeff_type == "epsilon") {
-	  for (int ii=0; ii<coeffs_per_line; ii++)
-	    coeffEps[ii] = values.next_double();
-	}
-	if (coeff_type == "rm") {
-	  for (int ii=0; ii<coeffs_per_line; ii++)
-	    coeffRm[ii] = values.next_double();
-	}
+        if (coeff_type == "alpha") {
+          for (int ii=0; ii<coeffs_per_line; ii++)
+            coeffAlpha[ii] = values.next_double();
+        }
+        if (coeff_type == "epsilon") {
+          for (int ii=0; ii<coeffs_per_line; ii++)
+            coeffEps[ii] = values.next_double();
+        }
+        if (coeff_type == "rm") {
+          for (int ii=0; ii<coeffs_per_line; ii++)
+            coeffRm[ii] = values.next_double();
+        }
 
-	if (values.has_next()) {
-	  error->one(FLERR,
-		     "Misplaced characters at end of line in "
-		     "file {}. Full line: {}", file, line);
-	}
+        if (values.has_next()) {
+          error->one(FLERR,
+                     "Misplaced characters at end of line in "
+                     "file {}. Full line: {}", file, line);
+        }
 
       } catch (TokenizerException & e) {
-	error->all(FLERR, "{}. File: {} Full line: {}",
-		   e.what(), file, line);
+        error->all(FLERR, "{}. File: {} Full line: {}",
+                   e.what(), file, line);
       }
 
     }

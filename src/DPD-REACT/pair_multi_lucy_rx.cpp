@@ -492,21 +492,21 @@ void PairMultiLucyRX::read_table(Table *tb, char *file, char *keyword)
   reader.read_in_table_data([&](RxTableFileReader::TableIndex_t i,
                                 ValueTokenizer & values) {
 
-			      values.next_int(); // ignore index
-			      double rtmp = values.next_double();
-			      tb->efile[i] = values.next_double();
-			      tb->ffile[i] = values.next_double();
+                              values.next_int(); // ignore index
+                              double rtmp = values.next_double();
+                              tb->efile[i] = values.next_double();
+                              tb->ffile[i] = values.next_double();
 
-			      if (tb->rflag == RLINEAR)
-				rtmp = tb->rlo + (tb->rhi - tb->rlo)*i/(tb->ninput-1);
-			      else if (tb->rflag == RSQ) {
-				rtmp = tb->rlo*tb->rlo +
-				  (tb->rhi*tb->rhi - tb->rlo*tb->rlo)*i/(tb->ninput-1);
-				rtmp = sqrt(rtmp);
-			      }
+                              if (tb->rflag == RLINEAR)
+                                rtmp = tb->rlo + (tb->rhi - tb->rlo)*i/(tb->ninput-1);
+                              else if (tb->rflag == RSQ) {
+                                rtmp = tb->rlo*tb->rlo +
+                                  (tb->rhi*tb->rhi - tb->rlo*tb->rlo)*i/(tb->ninput-1);
+                                rtmp = sqrt(rtmp);
+                              }
 
-			      tb->rfile[i] = rtmp;
-			    });
+                              tb->rfile[i] = rtmp;
+                            });
 
 }
 
@@ -586,13 +586,13 @@ void PairMultiLucyRX::param_extract(RxTableFileReader & reader, Table *tb)
 
     if (param_name[0] == 'R') {
       if (param_name == "R") {
-	tb->rflag = RLINEAR;
+        tb->rflag = RLINEAR;
       } else if (param_name == "RSQ") {
-	tb->rflag = RSQ;
+        tb->rflag = RSQ;
       } else {
-	error->one(FLERR,
-		   "Invalid keyword in pair table parameters: {}",
-		   param_name);
+        error->one(FLERR,
+                   "Invalid keyword in pair table parameters: {}",
+                   param_name);
       }
 
       tb->rlo = reader.next_param_token_as_double();
@@ -603,8 +603,8 @@ void PairMultiLucyRX::param_extract(RxTableFileReader & reader, Table *tb)
       tb->fphi = reader.next_param_token_as_double();
     } else {
       error->one(FLERR,
-		 "Invalid keyword in pair table parameters: {}",
-		 param_name);
+                 "Invalid keyword in pair table parameters: {}",
+                 param_name);
     }
   }
 }

@@ -39,11 +39,11 @@ class PairExp6rx : public Pair {
   void read_restart_settings(FILE *) override;
 
   enum class PotentialType: int { UNKNOWN, exp6 }; // If the storage
-						   // type for this
-						   // changes, the
-						   // method
-						   // genParamMpiDatatype()
-						   // MUST change!
+                                                   // type for this
+                                                   // changes, the
+                                                   // method
+                                                   // genParamMpiDatatype()
+                                                   // MUST change!
 
   // If the Param struct changes, the method genParamMpiDatatype()
   // MUST change!

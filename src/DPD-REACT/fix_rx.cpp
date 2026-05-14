@@ -248,62 +248,62 @@ void FixRX::post_constructor()
 
     while (line = kineticsFileReader.next_line()) {
       try {
-	ValueTokenizer values(line);
-	int num_equal_signs_found = 0;
+        ValueTokenizer values(line);
+        int num_equal_signs_found = 0;
 
-	std::string shouldBeOperator; // This is the last token that
-				      // is read in the following
-				      // loop.
+        std::string shouldBeOperator; // This is the last token that
+                                      // is read in the following
+                                      // loop.
 
-	while (values.has_next()) {
+        while (values.has_next()) {
 
-	  const auto shouldBeCoeff = values.next_double();
+          const auto shouldBeCoeff = values.next_double();
 
-	  if (shouldBeCoeff < 0.0) {
-	    error->one(FLERR,
-		       "Negative coefficient "
-		       "({}) found. Bad line is {}", shouldBeCoeff, line);
-	  }
+          if (shouldBeCoeff < 0.0) {
+            error->one(FLERR,
+                       "Negative coefficient "
+                       "({}) found. Bad line is {}", shouldBeCoeff, line);
+          }
 
-	  const auto shouldBeSpecies = values.next_string();
+          const auto shouldBeSpecies = values.next_string();
 
-	  tmpspecies.emplace(shouldBeSpecies);
+          tmpspecies.emplace(shouldBeSpecies);
 
-	  shouldBeOperator = values.next_string();
+          shouldBeOperator = values.next_string();
 
-	  if (shouldBeOperator == "=") {
-	    num_equal_signs_found++;
-	  }
+          if (shouldBeOperator == "=") {
+            num_equal_signs_found++;
+          }
 
-	  if (num_equal_signs_found > 1) {
-	    error->one(FLERR,
-		       "Only one equals sign allowed "
-		       "per reaction. Bad line is {}", line);
-	  }
+          if (num_equal_signs_found > 1) {
+            error->one(FLERR,
+                       "Only one equals sign allowed "
+                       "per reaction. Bad line is {}", line);
+          }
 
-	  if ((shouldBeOperator != "+") && (shouldBeOperator != "=")) {
-	    // Note: shouldBeOperator might also be a number, but that
-	    // will be checked in read_file(), where it will need to
-	    // be converted to a number anyway.
+          if ((shouldBeOperator != "+") && (shouldBeOperator != "=")) {
+            // Note: shouldBeOperator might also be a number, but that
+            // will be checked in read_file(), where it will need to
+            // be converted to a number anyway.
 
-	    if (num_equal_signs_found != 1) {
-	      error->one(FLERR, "Equals sign missing from "
-			 "reaction line. Full line: {}", line);
-	    }
+            if (num_equal_signs_found != 1) {
+              error->one(FLERR, "Equals sign missing from "
+                         "reaction line. Full line: {}", line);
+            }
 
-	    nreactions++;
-	    break;
-	  }
-	}
+            nreactions++;
+            break;
+          }
+        }
 
-	if ((shouldBeOperator == "+") || (shouldBeOperator == "=")) {
-	  error->one(FLERR, "Dangling operator {}. Full line: {}",
-		     shouldBeOperator, line);
-	}
+        if ((shouldBeOperator == "+") || (shouldBeOperator == "=")) {
+          error->one(FLERR, "Dangling operator {}. Full line: {}",
+                     shouldBeOperator, line);
+        }
 
       } catch (TokenizerException & e) {
-	error->one(FLERR, "{}. File: {} Full line: {}",
-		   e.what(), kineticsFile, line);
+        error->one(FLERR, "{}. File: {} Full line: {}",
+                   e.what(), kineticsFile, line);
       }
     }
 
@@ -824,49 +824,49 @@ void FixRX::read_file(const std::string & file)
       char * line = kineticsFileReader.next_line();
 
       try {
-	ValueTokenizer values(line);
-	double sign = -1.0;
+        ValueTokenizer values(line);
+        double sign = -1.0;
 
-	while (values.has_next()) {
-	  auto tmpStoich = values.next_double();
-	  auto tmpSpecies = values.next_string();
+        while (values.has_next()) {
+          auto tmpStoich = values.next_double();
+          auto tmpSpecies = values.next_string();
 
-	  auto species_to_index_itr = species_to_index_map.find(tmpSpecies);
+          auto species_to_index_itr = species_to_index_map.find(tmpSpecies);
 
-	  if (species_to_index_itr == species_to_index_map.end()) {
-	    // Desired species has NOT been found.
-	    error->one(FLERR,
-		       "{} mol fraction is not found in data file\n"
-		       "Illegal fix rx command", tmpSpecies);
-	  } else {
-	    auto species_index = species_to_index_itr->second;
+          if (species_to_index_itr == species_to_index_map.end()) {
+            // Desired species has NOT been found.
+            error->one(FLERR,
+                       "{} mol fraction is not found in data file\n"
+                       "Illegal fix rx command", tmpSpecies);
+          } else {
+            auto species_index = species_to_index_itr->second;
 
-	    stoich[ireaction][species_index] += sign*tmpStoich;
-	    if (sign<0.0)
-	      stoichReactants[ireaction][species_index] += tmpStoich;
-	    else stoichProducts[ireaction][species_index] += tmpStoich;
-	  }
+            stoich[ireaction][species_index] += sign*tmpStoich;
+            if (sign<0.0)
+              stoichReactants[ireaction][species_index] += tmpStoich;
+            else stoichProducts[ireaction][species_index] += tmpStoich;
+          }
 
-	  auto possOperatorOrNumber = values.next_string();
-	  if (possOperatorOrNumber == "=") sign = 1.0;
+          auto possOperatorOrNumber = values.next_string();
+          if (possOperatorOrNumber == "=") sign = 1.0;
 
-	  if ((possOperatorOrNumber != "+") && (possOperatorOrNumber != "=")) {
-	    Arr[ireaction] = utils::numeric(FLERR, possOperatorOrNumber, true, lmp);
-	    nArr[ireaction] = values.next_double();
-	    Ea[ireaction] = values.next_double();
+          if ((possOperatorOrNumber != "+") && (possOperatorOrNumber != "=")) {
+            Arr[ireaction] = utils::numeric(FLERR, possOperatorOrNumber, true, lmp);
+            nArr[ireaction] = values.next_double();
+            Ea[ireaction] = values.next_double();
 
-	    if (values.has_next()) {
-	      error->one(FLERR,
-			 "Misplaced characters at end of line in "
-			 "file {}. Full line: {}", file, line);
-	    }
+            if (values.has_next()) {
+              error->one(FLERR,
+                         "Misplaced characters at end of line in "
+                         "file {}. Full line: {}", file, line);
+            }
 
-	    break;
-	  }
-	}
+            break;
+          }
+        }
       } catch (TokenizerException & e) {
         error->one(FLERR, "{}. File: {} Full line: {}",
-		   e.what(), file, line);
+                   e.what(), file, line);
       }
     }
   }

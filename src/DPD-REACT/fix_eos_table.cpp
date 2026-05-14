@@ -204,11 +204,11 @@ void FixEOStable::read_table(Table *tb, Table *tb2, char *file, char *keyword)
   memory->create(tb2->efile,tb2->ninput,"eos:efile2");
 
   reader.read_in_table_data([&](RxTableFileReader::TableIndex_t i,
-				ValueTokenizer & values) {
-			      values.next_int(); // throw away the initial index
-			      tb->rfile[i] = tb2->efile[i] = values.next_double();
-			      tb->efile[i] = tb2->rfile[i] = values.next_double();
-			    });
+                                ValueTokenizer & values) {
+                              values.next_int(); // throw away the initial index
+                              tb->rfile[i] = tb2->efile[i] = values.next_double();
+                              tb->efile[i] = tb2->rfile[i] = values.next_double();
+                            });
 }
 
 /* ----------------------------------------------------------------------
