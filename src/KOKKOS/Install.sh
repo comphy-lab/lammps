@@ -318,6 +318,8 @@ action pair_buck_coul_long_kokkos.cpp pair_buck_coul_long.cpp
 action pair_buck_coul_long_kokkos.h pair_buck_coul_long.h
 action pair_beck_kokkos.cpp pair_beck.cpp
 action pair_beck_kokkos.h pair_beck.h
+action pair_born_coul_long_kokkos.cpp pair_born_coul_long.cpp
+action pair_born_coul_long_kokkos.h pair_born_coul_long.h
 action pair_born_kokkos.cpp
 action pair_born_kokkos.h
 action pair_buck_kokkos.cpp
@@ -342,6 +344,8 @@ action pair_coul_dsf_kokkos.cpp
 action pair_coul_dsf_kokkos.h
 action pair_coul_long_kokkos.cpp pair_coul_long.cpp
 action pair_coul_long_kokkos.h pair_coul_long.h
+action pair_coul_slater_long_kokkos.cpp pair_coul_slater_long.cpp
+action pair_coul_slater_long_kokkos.h pair_coul_slater_long.h
 action pair_coul_wolf_kokkos.cpp
 action pair_coul_wolf_kokkos.h
 action pair_coul_shield_kokkos.cpp pair_coul_shield.cpp
@@ -425,6 +429,8 @@ action pair_lj_gromacs_coul_gromacs_kokkos.cpp pair_lj_gromacs_coul_gromacs.cpp
 action pair_lj_gromacs_coul_gromacs_kokkos.h pair_lj_gromacs_coul_gromacs.h
 action pair_lj_gromacs_kokkos.cpp pair_lj_gromacs.cpp
 action pair_lj_gromacs_kokkos.h pair_lj_gromacs.h
+action pair_lj_smooth_kokkos.cpp pair_lj_smooth.cpp
+action pair_lj_smooth_kokkos.h pair_lj_smooth.h
 action pair_lj_spica_coul_long_kokkos.cpp pair_lj_spica_coul_long.cpp
 action pair_lj_spica_coul_long_kokkos.h pair_lj_spica_coul_long.h
 action pair_lj_spica_kokkos.cpp pair_lj_spica.cpp
@@ -478,6 +484,8 @@ action pair_table_rx_kokkos.cpp pair_table_rx.cpp
 action pair_table_rx_kokkos.h pair_table_rx.h
 action pair_tersoff_kokkos.cpp pair_tersoff.cpp
 action pair_tersoff_kokkos.h pair_tersoff.h
+action pair_ufm_kokkos.cpp pair_ufm.cpp
+action pair_ufm_kokkos.h pair_ufm.h
 action pair_tersoff_mod_kokkos.cpp pair_tersoff_mod.cpp
 action pair_tersoff_mod_kokkos.h pair_tersoff_mod.h
 action pair_tersoff_zbl_kokkos.cpp pair_tersoff_zbl.cpp

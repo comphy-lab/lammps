@@ -1212,6 +1212,7 @@ npair_trim_kokkos.h
 pack_kokkos.h
 pair_adp_kokkos.h
 pair_beck_kokkos.h
+pair_born_coul_long_kokkos.h
 pair_born_kokkos.h
 pair_brownian_kokkos.h
 pair_born_gauss_kokkos.h
@@ -1225,6 +1226,7 @@ pair_coul_cut_kokkos.h
 pair_coul_debye_kokkos.h
 pair_coul_dsf_kokkos.h
 pair_coul_long_kokkos.h
+pair_coul_slater_long_kokkos.h
 pair_coul_wolf_kokkos.h
 pair_dpd_ext_kokkos.h
 pair_dpd_ext_tstat_kokkos.h
@@ -1263,6 +1265,7 @@ pair_lj_expand_kokkos.h
 pair_lj_gromacs_coul_gromacs_kokkos.h
 pair_lj_gromacs_kokkos.h
 pair_lj_mdf_kokkos.h
+pair_lj_smooth_kokkos.h
 pair_lj_spica_coul_long_kokkos.h
 pair_lj_spica_kokkos.h
 pair_lj_switch3_coulgauss_long_kokkos.h
@@ -1291,6 +1294,7 @@ pair_tersoff_kokkos.h
 pair_tersoff_mod_kokkos.h
 pair_tersoff_zbl_kokkos.h
 pair_uf3_kokkos.h
+pair_ufm_kokkos.h
 pair_vashishta_kokkos.h
 pair_wf_cut_kokkos.h
 pair_yukawa_colloid_kokkos.h
@@ -1465,6 +1469,7 @@ npair_ssa_kokkos.cpp
 npair_trim_kokkos.cpp
 pair_adp_kokkos.cpp
 pair_beck_kokkos.cpp
+pair_born_coul_long_kokkos.cpp
 pair_born_kokkos.cpp
 pair_brownian_kokkos.cpp
 pair_born_gauss_kokkos.cpp
@@ -1478,6 +1483,7 @@ pair_coul_cut_kokkos.cpp
 pair_coul_debye_kokkos.cpp
 pair_coul_dsf_kokkos.cpp
 pair_coul_long_kokkos.cpp
+pair_coul_slater_long_kokkos.cpp
 pair_coul_wolf_kokkos.cpp
 pair_dpd_ext_kokkos.cpp
 pair_dpd_ext_tstat_kokkos.cpp
@@ -1514,6 +1520,7 @@ pair_lj_expand_coul_long_kokkos.cpp
 pair_lj_expand_kokkos.cpp
 pair_lj_gromacs_coul_gromacs_kokkos.cpp
 pair_lj_gromacs_kokkos.cpp
+pair_lj_smooth_kokkos.cpp
 pair_lj_spica_coul_long_kokkos.cpp
 pair_lj_spica_kokkos.cpp
 pair_lj_switch3_coulgauss_long_kokkos.cpp
@@ -1542,6 +1549,7 @@ pair_tersoff_kokkos.cpp
 pair_tersoff_mod_kokkos.cpp
 pair_tersoff_zbl_kokkos.cpp
 pair_uf3_kokkos.cpp
+pair_ufm_kokkos.cpp
 pair_vashishta_kokkos.cpp
 pair_wf_cut_kokkos.cpp
 pair_yukawa_colloid_kokkos.cpp
