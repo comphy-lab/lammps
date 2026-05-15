@@ -283,10 +283,7 @@ void FixBAOAB::initial_integrate(int /*vflag*/)
     }
   }
 
-  double energy_allranks;
-  MPI_Allreduce(&energy_onestep, &energy_allranks, 1,
-                MPI_DOUBLE, MPI_SUM, world);
-  energy += energy_allranks;
+  energy += energy_onestep;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -331,10 +328,12 @@ void FixBAOAB::reset_dt()
 
 void FixBAOAB::write_restart(FILE *fp)
 {
+  double energy_all;
+  MPI_Allreduce(&energy, &energy_all, 1, MPI_DOUBLE, MPI_SUM, world);
   if (comm->me == 0) {
     int size = sizeof(double);
     fwrite(&size, sizeof(int), 1, fp);
-    fwrite(&energy, sizeof(double), 1, fp);
+    fwrite(&energy_all, sizeof(double), 1, fp);
   }
 }
 
@@ -342,12 +341,16 @@ void FixBAOAB::write_restart(FILE *fp)
 
 void FixBAOAB::restart(char *buf)
 {
-  energy = *((double *) buf);
+  // Rank 0 holds the global accumulated energy from before the restart;
+  // other ranks start from 0. The Allreduce in compute_scalar sums them.
+  energy = (comm->me == 0) ? *((double *) buf) : 0.0;
 }
 
 /* ---------------------------------------------------------------------- */
 
 double FixBAOAB::compute_scalar()
 {
-  return energy;
+  double energy_all;
+  MPI_Allreduce(&energy, &energy_all, 1, MPI_DOUBLE, MPI_SUM, world);
+  return energy_all;
 }
