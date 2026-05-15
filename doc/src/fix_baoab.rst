@@ -33,7 +33,7 @@ Examples
    fix 1 all baoab 1.0 1.0 10.0 48279 zero yes
    fix 2 all baoab 300.0 400.0 200.0 77777
 
-.. versionadded:: 7May2026
+.. versionadded:: TBD
 
 Description
 """""""""""
@@ -55,7 +55,7 @@ where :math:`\mathbf{F}_c` is the conservative force, :math:`\tau` is the
 damping time (*damp*), :math:`T` is the target temperature, and
 :math:`d\mathbf{W}_t` is a Wiener increment.
 
-The BAOAB splitting applies the following substeps each timestep:
+The BAOAB splitting implements the following sub-steps for each MD timestep:
 
 * **B** -- half-step velocity kick from conservative forces
 * **A** -- half-step position drift
@@ -72,34 +72,26 @@ The O step applies the exact solution of the OU process,
    \qquad \gamma = 1/\mathrm{damp},
 
 where :math:`\mathbf{R}` is a vector of independent standard Gaussian
-random numbers.  This is exact for any timestep, unlike first-order Euler
-discretizations of the friction and noise.
+random numbers.  This is exact for any timestep, unlike a first-order
+Euler discretization of the friction and noise.
 
-BAOAB achieves second-order accuracy in configuration space: the stationary
-distribution of positions converges to the Boltzmann distribution with
-error :math:`O(dt^2)`, making it significantly more accurate than
-first-order Langevin integrators (such as the Euler-Maruyama scheme) at
-the same timestep.  This is particularly important for computing
-configurational averages, free energies, and structural properties.
+BAOAB achieves second-order accuracy in configuration space: the
+stationary distribution of positions converges to the Boltzmann
+distribution with error :math:`O(dt^2)`, making it significantly more
+accurate than first-order Langevin integrators (such as the
+Euler-Maruyama scheme) at the same timestep.  This is particularly
+important for computing configurational averages, free energies, and
+structural properties.
 
 The target temperature can be ramped linearly from *Tstart* to *Tstop*
 over the course of a :doc:`run <run>` by using the *start* and *stop*
 keywords of the :doc:`run <run>` command.
 
-The *damp* parameter has units of time and sets the relaxation time of the
-Langevin thermostat.  Smaller values couple the system more strongly to
-the bath (faster thermalization, more friction); larger values give weaker
-coupling (less friction, closer to NVE dynamics).  A typical starting
-value is 100 times the MD timestep.
-
-.. note::
-
-   The velocity Verlet integrator with :doc:`fix langevin <fix_langevin>`
-   and the BAOAB integrator both sample from the canonical ensemble, but
-   their velocity distributions differ.  BAOAB gives the exact canonical
-   distribution of positions to :math:`O(dt^2)`, while fix langevin gives
-   only :math:`O(dt)` accuracy.  If configurational sampling accuracy
-   matters, BAOAB is the preferred choice.
+The *damp* parameter has units of time and sets the relaxation time of
+the Langevin thermostat.  Smaller values couple the system more strongly
+to the bath (faster thermalization, more friction); larger values give
+weaker coupling (less friction, closer to NVE dynamics).  A typical
+starting value is 100 times the MD timestep.
 
 If the *zero* keyword is set to *yes*, the net random momentum injected
 by the O step is subtracted each timestep so that the total momentum of
@@ -108,11 +100,13 @@ periodic boundary conditions or when the group does not span the full
 system.
 
 The cumulative energy exchanged between the atoms and the Langevin
-reservoir is always tracked and available via the ``ecouple`` thermo
-keyword or :doc:`compute ecouple <compute_ecouple>`.  The sign convention
-is that a positive value means energy has flowed from the system into the
-reservoir (cooling), and negative means the reservoir has heated the system.
-The ``econserve`` thermo keyword reports the sum of ``etotal`` and ``ecouple``.
+reservoir is always tracked and available via the :doc:`ecouple thermo
+<thermo_style>` keyword.  The sign convention is that a positive value
+means energy has flowed from the system into the reservoir (cooling),
+and negative means the reservoir has heated the system.  Correspondingly
+the ``econserve`` thermo keyword reports the sum of ``etotal`` and
+``ecouple`` and thus the conserved quantity of a constant temperature
+simulation.
 
 This fix supports both per-type masses (``mass`` command) and per-atom
 masses (atom styles such as ``sphere``).
@@ -138,15 +132,16 @@ This fix is not invoked during :doc:`energy minimization <minimize>`.
 Restrictions
 """"""""""""
 
-This fix is part of the EXTRA-FIX package.  It is only enabled if LAMMPS was
-built with that package.  See the :doc:`Build package <Build_package>` page
-for more info.
+This fix is part of the EXTRA-FIX package.  It is only enabled if LAMMPS
+was built with that package.  See the :doc:`Build package
+<Build_package>` page for more info.
 
 This fix cannot be combined with :doc:`fix shake <fix_shake>` or
-:doc:`fix rattle <fix_rattle>`.
+:doc:`fix rattle <fix_shake>`.
 
 Do not combine this fix with :doc:`fix nve <fix_nve>` or any other
-time-integration fix on the same group of atoms.
+time-integration fix on the same group of atoms.  LAMMPS will print
+a warning in this case.
 
 Related commands
 """"""""""""""""
