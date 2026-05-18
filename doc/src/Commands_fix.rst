@@ -35,6 +35,7 @@ OPT.
    * :doc:`ave/time <fix_ave_time>`
    * :doc:`aveforce (k) <fix_aveforce>`
    * :doc:`balance <fix_balance>`
+   * :doc:`baoab <fix_baoab>`
    * :doc:`bocs <fix_bocs>`
    * :doc:`bond/break <fix_bond_break>`
    * :doc:`bond/create <fix_bond_create>`
