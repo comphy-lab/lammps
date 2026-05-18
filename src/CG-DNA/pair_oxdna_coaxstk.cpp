@@ -175,7 +175,7 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
   int a,b,ia,ib,anum,bnum,atype,btype;
 
   double f2,f4t1,f4t4,f4t5,f4t6,f5c3;
-  double df2,df4t1,df4t4,df4t5,df4t6,df5c3,rsint;
+  double df2,df4t1,df4t4,df4t5,df4t6,df5c3;
 
   evdwl = 0.0;
   ev_init(eflag,vflag);
@@ -347,37 +347,33 @@ void PairOxdnaCoaxstk::compute(int eflag, int vflag)
                 cut_cxst_hc[atype][btype], cut_cxst_lo[atype][btype], cut_cxst_hi[atype][btype],
                 b_cxst_lo[atype][btype], b_cxst_hi[atype][btype]);
 
-      rsint = 1.0/sin(theta1);
       df4t1 = (DF4(theta1, a_cxst1[atype][btype], theta_cxst1_0[atype][btype],
                    dtheta_cxst1_ast[atype][btype], b_cxst1[atype][btype],
                    dtheta_cxst1_c[atype][btype]) -
                DF4(theta1p, a_cxst1[atype][btype], theta_cxst1_0[atype][btype],
                    dtheta_cxst1_ast[atype][btype], b_cxst1[atype][btype],
-                   dtheta_cxst1_c[atype][btype]))*rsint;
+                   dtheta_cxst1_c[atype][btype]))/sin(theta1);
 
-      rsint = 1.0/sin(theta4);
       df4t4 = (DF4(theta4, a_cxst4[atype][btype], theta_cxst4_0[atype][btype],
                    dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
                    dtheta_cxst4_c[atype][btype]) +
                DF4(theta4, a_cxst4[atype][btype], MY_PI - theta_cxst4_0[atype][btype],
                    dtheta_cxst4_ast[atype][btype], b_cxst4[atype][btype],
-                   dtheta_cxst4_c[atype][btype]))*rsint;
+                   dtheta_cxst4_c[atype][btype]))/sin(theta4);
 
-      rsint = 1.0/sin(theta5);
       df4t5 = (DF4(theta5, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
                    dtheta_cxst5_ast[atype][btype], b_cxst5[atype][btype],
                    dtheta_cxst5_c[atype][btype]) -
                DF4(theta5p, a_cxst5[atype][btype], theta_cxst5_0[atype][btype],
                    dtheta_cxst5_ast[atype][btype], b_cxst5[atype][btype],
-                   dtheta_cxst5_c[atype][btype]))*rsint;
+                   dtheta_cxst5_c[atype][btype]))/sin(theta5);
 
-      rsint = 1.0/sin(theta6);
       df4t6 = (DF4(theta6, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
                    dtheta_cxst6_ast[atype][btype], b_cxst6[atype][btype],
                    dtheta_cxst6_c[atype][btype]) -
                DF4(theta6p, a_cxst6[atype][btype], theta_cxst6_0[atype][btype],
                    dtheta_cxst6_ast[atype][btype], b_cxst6[atype][btype],
-                   dtheta_cxst6_c[atype][btype]))*rsint;
+                   dtheta_cxst6_c[atype][btype]))/sin(theta6);
 
       df5c3 = DF5(cosphi3, a_cxst3p[atype][btype], cosphi_cxst3p_ast[atype][btype], b_cxst3p[atype][btype],
                   cosphi_cxst3p_c[atype][btype]);

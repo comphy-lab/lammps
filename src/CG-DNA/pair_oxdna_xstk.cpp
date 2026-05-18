@@ -158,7 +158,7 @@ void PairOxdnaXstk::compute(int eflag, int vflag)
   int a,b,ia,ib,anum,bnum,atype,btype;
 
   double f2,f4t1,f4t4,f4t2,f4t3,f4t7,f4t8;
-  double df2,df4t1,df4t4,df4t2,df4t3,df4t7,df4t8,rsint;
+  double df2,df4t1,df4t4,df4t2,df4t3,df4t7,df4t8;
 
   evdwl = 0.0;
   ev_init(eflag,vflag);
@@ -322,23 +322,20 @@ void PairOxdnaXstk::compute(int eflag, int vflag)
       df4t3 = DF4(theta3, a_xst3[atype][btype], theta_xst3_0[atype][btype], dtheta_xst3_ast[atype][btype],
                   b_xst3[atype][btype], dtheta_xst3_c[atype][btype])/sin(theta3);
 
-      rsint = 1.0/sin(theta4);
       df4t4 = (DF4(theta4, a_xst4[atype][btype], theta_xst4_0[atype][btype], dtheta_xst4_ast[atype][btype],
                    b_xst4[atype][btype], dtheta_xst4_c[atype][btype]) -
                DF4(theta4p, a_xst4[atype][btype], theta_xst4_0[atype][btype], dtheta_xst4_ast[atype][btype],
-                   b_xst4[atype][btype], dtheta_xst4_c[atype][btype]))*rsint;
+                   b_xst4[atype][btype], dtheta_xst4_c[atype][btype]))/sin(theta4);
 
-      rsint = 1.0/sin(theta7);
       df4t7 = (DF4(theta7, a_xst7[atype][btype], theta_xst7_0[atype][btype], dtheta_xst7_ast[atype][btype],
                    b_xst7[atype][btype], dtheta_xst7_c[atype][btype]) -
                DF4(theta7p, a_xst7[atype][btype], theta_xst7_0[atype][btype], dtheta_xst7_ast[atype][btype],
-                   b_xst7[atype][btype], dtheta_xst7_c[atype][btype]))*rsint;
+                   b_xst7[atype][btype], dtheta_xst7_c[atype][btype]))/sin(theta7);
 
-      rsint = 1.0/sin(theta8);
       df4t8 = (DF4(theta8, a_xst8[atype][btype], theta_xst8_0[atype][btype], dtheta_xst8_ast[atype][btype],
                    b_xst8[atype][btype], dtheta_xst8_c[atype][btype]) -
                DF4(theta8p, a_xst8[atype][btype], theta_xst8_0[atype][btype], dtheta_xst8_ast[atype][btype],
-                   b_xst8[atype][btype], dtheta_xst8_c[atype][btype]))*rsint;
+                   b_xst8[atype][btype], dtheta_xst8_c[atype][btype]))/sin(theta8);
 
       // force, torque and virial contribution for forces between h-bonding sites
 
