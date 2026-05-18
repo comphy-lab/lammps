@@ -1453,6 +1453,10 @@ elif [ $# -eq 1 ] && [ $1 = clean ]; then
   rm -rf $EXDIR/oxRNA2/duplex2/test
   rm -rf $EXDIR/oxRNA2/potential_file/test
   rm -rf $EXDIR/test.log
+
+  echo '# Deleting build directory'
+  rm -rf $LMPDIR/build
+
   echo '# Done'
   
 else 
