@@ -487,8 +487,7 @@ each atom. The latter option currently only supports the
 :doc:`multi <neighbor>` neighbor style and is intended for systems where
 there is a low particle density and a small cutoff. Namely, systems with
 very large ratios of minimum to maximum particle sizes/cutoffs. This may
-require additionally adjusting how atoms are sorted using the
-:doc:`atom_modify <atom_modify>` command.
+require adjustment of :doc:`atom sort settings <atom_modify>`.
 
 .. _err0010:
 

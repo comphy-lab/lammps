@@ -182,27 +182,27 @@ void NPairMulti<HALF, NEWTON, TRI, SIZE, ATOMONLY>::build(NeighList *list)
             }
           } else {
             // Half neighbor list, newton on, orthonormal, uses a mix of stencils
-              // If different sizes -> full stencil (accept all, one-way search)
-              // If same size -> half stencil (first includes a self bin search)
+            // If different sizes -> full stencil (accept all, one-way search)
+            // If same size -> half stencil (first includes a self bin search)
             if (k == 0 && flag_same_multi[icollection][jcollection]) {
-                // if same collection,
-                //   if j is owned atom, store it, since j is beyond i in linked list
-                //   if j is ghost, only store if j coords are "above and to the right" of i
+              // if same collection,
+              //   if j is owned atom, store it, since j is beyond i in linked list
+              //   if j is ghost, only store if j coords are "above and to the right" of i
 
-                // if different collections,
-                //   if j is owned atom, store it if j > i
-                //   if j is ghost, only store if j coords are "above and to the right" of i
+              // if different collections,
+              //   if j is owned atom, store it if j > i
+              //   if j is ghost, only store if j coords are "above and to the right" of i
 
-                if ((icollection != jcollection) && (j < i)) continue;
+              if ((icollection != jcollection) && (j < i)) continue;
 
-                if (j >= nlocal) {
-                  if (x[j][2] < ztmp) continue;
-                  if (x[j][2] == ztmp) {
-                    if (x[j][1] < ytmp) continue;
-                    if (x[j][1] == ytmp && x[j][0] < xtmp) continue;
-                  }
+              if (j >= nlocal) {
+                if (x[j][2] < ztmp) continue;
+                if (x[j][2] == ztmp) {
+                  if (x[j][1] < ytmp) continue;
+                  if (x[j][1] == ytmp && x[j][0] < xtmp) continue;
                 }
               }
+            }
           }
 
           jtype = type[j];

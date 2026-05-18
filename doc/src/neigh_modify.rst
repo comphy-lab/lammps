@@ -261,7 +261,9 @@ This command is particularly useful for granular pair styles where the
 interaction distance of particles depends on their radius and may not
 depend on their atom type.
 
-The *bin/hash* option toggle whether the atoms in a bin are stored in
+.. versionadded: TBD
+
+The *bin/hash* option toggles whether the atoms in a bin are stored in
 a linked list (default) or a hash table where each bin is a key that
 maps to a set of all atoms contained in that bin. This reduces memory
 usage in scenarios where there are lots of bins that do not contain
