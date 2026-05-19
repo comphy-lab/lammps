@@ -113,6 +113,8 @@ action compute_temp_deform_kokkos.cpp
 action compute_temp_deform_kokkos.h
 action compute_temp_kokkos.cpp
 action compute_temp_kokkos.h
+action compute_temp_sphere_kokkos.cpp
+action compute_temp_sphere_kokkos.h
 action dihedral_charmm_kokkos.cpp dihedral_charmm.cpp
 action dihedral_charmm_kokkos.h dihedral_charmm.h
 action dihedral_charmmfsw_kokkos.cpp dihedral_charmmfsw.cpp
@@ -140,12 +142,16 @@ action fix_acks2_reaxff_kokkos.cpp fix_acks2_reaxff.cpp
 action fix_acks2_reaxff_kokkos.h fix_acks2_reaxff.h
 action fix_addforce_kokkos.cpp
 action fix_addforce_kokkos.h
+action fix_aveforce_kokkos.cpp
+action fix_aveforce_kokkos.h
 action fix_cmap_kokkos.cpp fix_cmap.cpp
 action fix_cmap_kokkos.h fix_cmap.h
 action fix_colvars_kokkos.cpp fix_colvars.cpp
 action fix_colvars_kokkos.h fix_colvars.h
 action fix_deform_kokkos.cpp
 action fix_deform_kokkos.h
+action fix_drag_kokkos.cpp fix_drag.cpp
+action fix_drag_kokkos.h fix_drag.h
 action fix_dpd_energy_kokkos.cpp fix_dpd_energy.cpp
 action fix_dpd_energy_kokkos.h fix_dpd_energy.h
 action fix_dt_reset_kokkos.cpp
@@ -166,6 +172,8 @@ action fix_gravity_kokkos.cpp
 action fix_gravity_kokkos.h
 action fix_langevin_kokkos.cpp
 action fix_langevin_kokkos.h
+action fix_lineforce_kokkos.cpp
+action fix_lineforce_kokkos.h
 action fix_minimize_kokkos.cpp
 action fix_minimize_kokkos.h
 action fix_momentum_kokkos.cpp
@@ -174,10 +182,16 @@ action fix_neigh_history_kokkos.cpp
 action fix_neigh_history_kokkos.h
 action fix_nh_kokkos.cpp
 action fix_nh_kokkos.h
+action fix_nh_sphere_kokkos.cpp
+action fix_nh_sphere_kokkos.h
 action fix_nph_kokkos.cpp
 action fix_nph_kokkos.h
+action fix_nph_sphere_kokkos.cpp
+action fix_nph_sphere_kokkos.h
 action fix_npt_kokkos.cpp
 action fix_npt_kokkos.h
+action fix_npt_sphere_kokkos.cpp
+action fix_npt_sphere_kokkos.h
 action fix_nve_kokkos.cpp
 action fix_nve_kokkos.h
 action fix_nve_limit_kokkos.cpp
@@ -186,10 +200,18 @@ action fix_nve_sphere_kokkos.cpp
 action fix_nve_sphere_kokkos.h
 action fix_nve_asphere_kokkos.cpp fix_nve_asphere.cpp
 action fix_nve_asphere_kokkos.h fix_nve_asphere.h
+action fix_nve_noforce_kokkos.cpp
+action fix_nve_noforce_kokkos.h
 action fix_nvt_kokkos.cpp
 action fix_nvt_kokkos.h
+action fix_nvt_sphere_kokkos.cpp
+action fix_nvt_sphere_kokkos.h
 action fix_nvt_sllod_kokkos.cpp
 action fix_nvt_sllod_kokkos.h
+action fix_oneway_kokkos.cpp fix_oneway.cpp
+action fix_oneway_kokkos.h fix_oneway.h
+action fix_planeforce_kokkos.cpp
+action fix_planeforce_kokkos.h
 action fix_property_atom_kokkos.cpp
 action fix_property_atom_kokkos.h
 action fix_qeq_reaxff_kokkos.cpp fix_qeq_reaxff.cpp
@@ -210,6 +232,8 @@ action fix_shake_kokkos.cpp fix_shake.cpp
 action fix_shake_kokkos.h fix_shake.h
 action fix_shardlow_kokkos.cpp fix_shardlow.cpp
 action fix_shardlow_kokkos.h fix_shardlow.h
+action fix_spring_kokkos.cpp
+action fix_spring_kokkos.h
 action fix_spring_self_kokkos.cpp
 action fix_spring_self_kokkos.h
 action fix_temp_berendsen_kokkos.cpp
@@ -218,14 +242,24 @@ action fix_temp_rescale_kokkos.cpp
 action fix_temp_rescale_kokkos.h
 action fix_viscous_kokkos.cpp
 action fix_viscous_kokkos.h
+action fix_viscous_sphere_kokkos.cpp fix_viscous_sphere.cpp
+action fix_viscous_sphere_kokkos.h fix_viscous_sphere.h
 action fix_wall_flow_kokkos.cpp fix_wall_flow.cpp
 action fix_wall_flow_kokkos.h fix_wall_flow.h
 action fix_wall_gran_kokkos.cpp fix_wall_gran.cpp
 action fix_wall_gran_kokkos.h fix_wall_gran.h
 action fix_wall_gran_old.cpp fix_wall_gran.cpp
 action fix_wall_gran_old.h fix_wall_gran.h
+action fix_wall_harmonic_kokkos.cpp
+action fix_wall_harmonic_kokkos.h
+action fix_wall_lj126_kokkos.cpp
+action fix_wall_lj126_kokkos.h
+action fix_wall_lj1043_kokkos.cpp
+action fix_wall_lj1043_kokkos.h
 action fix_wall_lj93_kokkos.cpp
 action fix_wall_lj93_kokkos.h
+action fix_wall_morse_kokkos.cpp
+action fix_wall_morse_kokkos.h
 action fix_wall_reflect_kokkos.cpp
 action fix_wall_reflect_kokkos.h
 action fix_wall_region_kokkos.cpp
