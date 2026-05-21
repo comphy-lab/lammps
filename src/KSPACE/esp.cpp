@@ -120,18 +120,21 @@ ESP::ESP(LAMMPS *lmp) : KSpace(lmp),
 
 void ESP::settings(int narg, char **arg)
 {
-  if (narg < 1) error->all(FLERR,"Illegal kspace_style {} command", force->kspace_style);
+  if (narg < 1 || narg > 2)
+    error->all(FLERR,"Illegal kspace_style {} command", force->kspace_style);
 
-  accuracy_relative = fabs(utils::numeric(FLERR, arg[0], false, lmp)); // will be used for splitting accuracy
+  accuracy_relative = fabs(utils::numeric(FLERR, arg[0], false, lmp)); // splitting accuracy
 
-  if (narg == 1){
-    spreading_accuracy = 0.5 * accuracy_relative;
-  }
-  else{
+  if (narg == 1) {
+    // Use the single kspace_style tolerance as an overall force-accuracy target.
+    // A tighter default spread budget keeps the table-based stencil order accurate.
+    spreading_accuracy = 0.25 * accuracy_relative;
+  } else {
     spreading_accuracy = fabs(utils::numeric(FLERR, arg[1], false, lmp));
   }
 
-  if (accuracy_relative > 1.0 || spreading_accuracy > 1.0)
+  if (accuracy_relative <= 0.0 || spreading_accuracy <= 0.0 ||
+      accuracy_relative > 1.0 || spreading_accuracy > 1.0)
     error->all(FLERR, "Invalid relative accuracy {:g} or spreading accuracy {:g} for kspace_style {}",
                accuracy_relative, spreading_accuracy, force->kspace_style);
 
@@ -1029,9 +1032,9 @@ void ESP::set_grid_global()
 
       h = h_x = h_y = h_z = MY_PI * cutoff / select_c; // set initial h
 
-      nx_pppm = static_cast<int> (xprd/h_x);
-      ny_pppm = static_cast<int> (yprd/h_y);
-      nz_pppm = static_cast<int> (zprd_slab/h_z);
+      nx_pppm = static_cast<int> (ceil(xprd/h_x));
+      ny_pppm = static_cast<int> (ceil(yprd/h_y));
+      nz_pppm = static_cast<int> (ceil(zprd_slab/h_z));
 
       if (nx_pppm <= 1) nx_pppm = 2;
       if (ny_pppm <= 1) ny_pppm = 2;
@@ -3550,4 +3553,3 @@ void ESP::slabcorr_groups(int groupbit_A, int groupbit_B, int AA_flag)
   const double ffact = qscale * (-4.0*MY_PI/volume);
   f2group[2] += ffact * (qsum_A*dipole_B - qsum_B*dipole_A);
 }
-

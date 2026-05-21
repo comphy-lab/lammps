@@ -211,12 +211,12 @@ The *esp* style implements the Ewald Summation with Prolates (ESP) method
 the cost of long-range electrostatics compared to PPPM and PME. Without
 any loss of accuracy, ESP alters the fast Ewald pipeline in two places.
 First, for kernel splitting it uses prolate spheroidal wave functions (PSWFs)
-instead of Gaussians, which—thanks to the optimal concentration of PSWFs
-among band-limited functions—significantly reduces the required Fourier grid.
+instead of Gaussians, which, thanks to the optimal concentration of PSWFs
+among band-limited functions, significantly reduces the required Fourier grid.
 With everything else equal, the FFT length drops by about a factor of two
 per dimension at high accuracy (:math:`\approx 8\times` in 3D). The residual
 kernel also vanishes at the real-space cutoff, eliminating any need for an
-“energy shift.” Second, for particle–mesh operations ESP employs PSWFs in
+"energy shift." Second, for particle-mesh operations ESP employs PSWFs in
 place of the B-splines used by PPPM. For comparable accuracy without k-space
 upsampling, PSWFs require fewer neighboring grid points (e.g., :math:`\approx 8` vs :math:`\approx 12`
 for five-digit accuracy). In contrast, PPPM solvers typically sets the spreading/interpolation
@@ -429,6 +429,13 @@ smaller than the reference force.
 The accuracy setting is used in conjunction with the pairwise cutoff
 to determine the number of K-space vectors for style *ewald* or the
 grid size for style *esp*, *pppm* or *msm*\ .
+
+For style *esp*, one accuracy value requests the overall relative
+force accuracy and is used as the PSWF kernel-splitting target.
+LAMMPS applies a tighter internal default to the PSWF
+spreading/interpolation target so that the automatically selected FFT
+grid and stencil order meet the requested accuracy.  A second value can
+be specified to set the spreading/interpolation target explicitly.
 
 Note that styles *esp* and *pppm* only computes the grid size at the beginning of
 a simulation, so if the length or triclinic tilt of the simulation
