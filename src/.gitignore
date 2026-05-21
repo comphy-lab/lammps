@@ -650,6 +650,8 @@
 /bond_oxrna2_fene.h
 /bond_quartic.cpp
 /bond_quartic.h
+/bond_quarticexp.cpp
+/bond_quarticexp.h
 /bond_special.cpp
 /bond_special.h
 /bond_table.cpp

@@ -180,11 +180,11 @@ void BondQuarticExpKokkos<DeviceType>::operator()(
 
   // Exponential force and (optional) energy
 
-  if (!(d_A[type] == 0.0 && d_B[type] == 0.0)) {
+  if (d_A[type] != 0.0) {
     const KK_FLOAT a = d_A[type];
     const KK_FLOAT b = d_B[type];
 
-    const KK_FLOAT ebond_exp = a * exp(-r/b);
+    const KK_FLOAT ebond_exp = a * Kokkos::exp(-r/b);
 
     if (eflag) ebond += ebond_exp;
 

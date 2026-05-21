@@ -2,7 +2,7 @@
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
-   Steve Plimpton, sjplimp@sandia.gov
+   LAMMPS development team: developers@lammps.org
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
@@ -14,21 +14,22 @@
 
 #include "bond_quarticexp.h"
 
-#include <cmath>
-#include <cstring>
 #include "atom.h"
-#include "neighbor.h"
 #include "comm.h"
+#include "error.h"
 #include "force.h"
 #include "memory.h"
-#include "error.h"
+#include "neighbor.h"
 
+#include <cmath>
+#include <cstring>
 
 using namespace LAMMPS_NS;
 
 /* ---------------------------------------------------------------------- */
 
-BondQuarticExp::BondQuarticExp(LAMMPS *lmp) : Bond(lmp)
+BondQuarticExp::BondQuarticExp(LAMMPS *lmp) : Bond(lmp),
+  r0(nullptr), k2(nullptr), k3(nullptr), k4(nullptr), A(nullptr), B(nullptr)
 {
   reinitflag = 1;
 }
@@ -92,12 +93,12 @@ void BondQuarticExp::compute(int eflag, int vflag)
 
     // exp force and energy
 
-    if (!(A[type] == 0.0 && B[type] == 0.0)) {
+    if (A[type] != 0.0) {
       double a = A[type];
       double b = B[type];
       double ebond_exp = a*exp(-r/b);
-      ebond += ebond_exp;
-      fbond += ebond_exp/b/r;
+      if (eflag) ebond += ebond_exp;
+      if (r > 0.0) fbond += ebond_exp/b/r;
     }
 
     // apply force to each of 2 atoms
@@ -142,7 +143,7 @@ void BondQuarticExp::allocate()
 
 void BondQuarticExp::coeff(int narg, char **arg)
 {
-  if (narg != 7) error->all(FLERR,"Incorrect args for bond coefficients");
+  if (narg != 7) error->all(FLERR,"Incorrect args for bond coefficients" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo,ihi;
@@ -154,6 +155,9 @@ void BondQuarticExp::coeff(int narg, char **arg)
   double k4_one = utils::numeric(FLERR,arg[4],false,lmp);
   double A_one = utils::numeric(FLERR,arg[5],false,lmp);
   double B_one = utils::numeric(FLERR,arg[6],false,lmp);
+
+  if (A_one != 0.0 && B_one == 0.0)
+    error->all(FLERR,"Bond quartic/exp requires B != 0 when A != 0");
 
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
@@ -167,7 +171,7 @@ void BondQuarticExp::coeff(int narg, char **arg)
     count++;
   }
 
-  if (count == 0) error->all(FLERR,"Incorrect args for bond coefficients");
+  if (count == 0) error->all(FLERR,"Incorrect args for bond coefficients" + utils::errorurl(21));
 }
 
 /* ----------------------------------------------------------------------
@@ -202,12 +206,12 @@ void BondQuarticExp::read_restart(FILE *fp)
   allocate();
 
   if (comm->me == 0) {
-    fread(&r0[1],sizeof(double),atom->nbondtypes,fp);
-    fread(&k2[1],sizeof(double),atom->nbondtypes,fp);
-    fread(&k3[1],sizeof(double),atom->nbondtypes,fp);
-    fread(&k4[1],sizeof(double),atom->nbondtypes,fp);
-    fread(&A[1],sizeof(double),atom->nbondtypes,fp);
-    fread(&B[1],sizeof(double),atom->nbondtypes,fp);
+    utils::sfread(FLERR,&r0[1],sizeof(double),atom->nbondtypes,fp,nullptr,error);
+    utils::sfread(FLERR,&k2[1],sizeof(double),atom->nbondtypes,fp,nullptr,error);
+    utils::sfread(FLERR,&k3[1],sizeof(double),atom->nbondtypes,fp,nullptr,error);
+    utils::sfread(FLERR,&k4[1],sizeof(double),atom->nbondtypes,fp,nullptr,error);
+    utils::sfread(FLERR,&A[1],sizeof(double),atom->nbondtypes,fp,nullptr,error);
+    utils::sfread(FLERR,&B[1],sizeof(double),atom->nbondtypes,fp,nullptr,error);
   }
   MPI_Bcast(&r0[1],atom->nbondtypes,MPI_DOUBLE,0,world);
   MPI_Bcast(&k2[1],atom->nbondtypes,MPI_DOUBLE,0,world);
@@ -242,13 +246,21 @@ double BondQuarticExp::single(int type, double rsq, int /*i*/, int /*j*/,
   double de_bond = 2.0*k2[type]*dr + 3.0*k3[type]*dr2 + 4.0*k4[type]*dr3;
   if (r > 0.0) fforce = -de_bond/r;
   else fforce = 0.0;
-  return (k2[type]*dr2 + k3[type]*dr3 + k4[type]*dr4);
+  double eng = k2[type]*dr2 + k3[type]*dr3 + k4[type]*dr4;
 
+  if (A[type] != 0.0) {
+    double ebond_exp = A[type]*exp(-r/B[type]);
+    eng += ebond_exp;
+    if (r > 0.0) fforce += ebond_exp/B[type]/r;
+  }
+
+  return eng;
 }
 
 /* ----------------------------------------------------------------------
-    Return ptr to internal members upon request.
+   return ptr to internal members upon request
 ------------------------------------------------------------------------ */
+
 void *BondQuarticExp::extract(const char *str, int &dim)
 {
   dim = 1;
@@ -258,7 +270,5 @@ void *BondQuarticExp::extract(const char *str, int &dim)
   if (strcmp(str,"k4")==0) return (void*) k4;
   if (strcmp(str,"A")==0) return (void*) A;
   if (strcmp(str,"B")==0) return (void*) B;
-  return NULL;
+  return nullptr;
 }
-
-
