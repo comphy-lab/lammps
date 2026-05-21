@@ -647,12 +647,10 @@ void PairBondValVecKokkos<DeviceType>::operator()(TagPairBondValVecKernelAB<EFLA
 
     if (rsq < (d_cutsq(itype,jtype))) {
       KK_FLOAT recip = 1.0/sqrt(rsq);
-
-      s0xtmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delx);
-
-      s0ytmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(dely);
-
-      s0ztmp += pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip*(delz);
+      const KK_FLOAT Aij = pow((params(itype,jtype).r0)*recip,(params(itype,jtype).alpha))*recip;
+      s0xtmp += Aij * (delx);
+      s0ytmp += Aij * (dely);
+      s0ztmp += Aij * (delz);
     }
   }
   d_s0(i,0) += s0xtmp;

@@ -541,7 +541,6 @@ void PairBondValKokkos<DeviceType>::operator()(TagPairBondValKernelA<NEIGHFLAG,N
     if((params(itype,jtype).alpha)!=0.0){
         if (rsq < (d_cutsq(itype,jtype))) {
           KK_FLOAT r = sqrt(rsq);
-          KK_FLOAT recip = 1.0/r;
           s0tmp += pow((params(itype,jtype).r0)/r,(params(itype,jtype).alpha));
           if (NEWTON_PAIR || j < nlocal) {
             a_s0[j] += pow((params(jtype,itype).r0)/r,(params(jtype,itype).alpha));
@@ -618,7 +617,6 @@ void PairBondValKokkos<DeviceType>::operator()(TagPairBondValKernelAB<EFLAG>, co
     if((params(itype,jtype).alpha)!=0.0){
         if (rsq < (d_cutsq(itype,jtype))) {
           KK_FLOAT r = sqrt(rsq);
-          KK_FLOAT recip = 1.0/r;
           s0tmp += pow((params(itype,jtype).r0)/r,(params(itype,jtype).alpha));
           }
     }
