@@ -155,6 +155,7 @@ accelerated styles exist.
 * :doc:`coul/cut/dielectric <pair_dielectric>` -
 * :doc:`coul/cut/global <pair_coul>` - cutoff Coulomb potential
 * :doc:`coul/cut/soft <pair_fep_soft>` - Coulomb potential with a soft core
+* :doc:`coul/cut/soft/gapsys <pair_fep_soft>` - Coulomb potential with a soft core with continuous force and first derivative of force
 * :doc:`coul/debye <pair_coul>` - cutoff Coulomb potential with Debye screening
 * :doc:`coul/diel <pair_coul_diel>` - Coulomb potential with dielectric permittivity
 * :doc:`coul/dsf <pair_coul>` - Coulomb with damped-shifted-force model
@@ -201,9 +202,10 @@ accelerated styles exist.
 * :doc:`gauss/cut <pair_gauss>` - generalized Gaussian potential
 * :doc:`gayberne <pair_gayberne>` - Gay-Berne ellipsoidal potential
 * :doc:`granular <pair_granular>` - Generalized granular potential
+* :doc:`granular/superellipsoid <pair_granular_superellipsoid>` - Generalized granular potential for superellipsoids
 * :doc:`gran/hertz/history <pair_gran>` - granular potential with Hertzian interactions
-* :doc:`gran/hooke <pair_gran>` - granular potential with history effects
-* :doc:`gran/hooke/history <pair_gran>` - granular potential without history effects
+* :doc:`gran/hooke <pair_gran>` - granular potential without history effects
+* :doc:`gran/hooke/history <pair_gran>` - granular potential with history effects
 * :doc:`gw <pair_gw>` - Gao-Weber potential
 * :doc:`gw/zbl <pair_gw>` - Gao-Weber potential with a repulsive ZBL core
 * :doc:`harmonic/cut <pair_harmonic_cut>` - repulsive-only harmonic potential
@@ -251,6 +253,7 @@ accelerated styles exist.
 * :doc:`lj/cut/coul/debye <pair_lj_cut_coul>` - LJ with Debye screening added to Coulomb
 * :doc:`lj/cut/coul/debye/dielectric <pair_dielectric>` -
 * :doc:`lj/cut/coul/dsf <pair_lj_cut_coul>` - LJ with Coulomb via damped shifted forces
+* :doc:`lj/cut/coul/esp <pair_lj_cut_coul>` - LJ with long-range Coulomb
 * :doc:`lj/cut/coul/long <pair_lj_cut_coul>` - LJ with long-range Coulomb
 * :doc:`lj/cut/coul/long/cs <pair_cs>` - LJ with long-range Coulomb with core/shell adjustments
 * :doc:`lj/cut/coul/long/dielectric <pair_dielectric>` -
@@ -327,6 +330,12 @@ accelerated styles exist.
 * :doc:`oxdna2/hbond <pair_oxdna2>` -
 * :doc:`oxdna2/stk <pair_oxdna2>` -
 * :doc:`oxdna2/xstk <pair_oxdna2>` -
+* :doc:`oxdna3/coaxstk <pair_oxdna3>` -
+* :doc:`oxdna3/dh <pair_oxdna3>` -
+* :doc:`oxdna3/excv <pair_oxdna3>` -
+* :doc:`oxdna3/hbond <pair_oxdna3>` -
+* :doc:`oxdna3/stk <pair_oxdna3>` -
+* :doc:`oxdna3/xstk <pair_oxdna3>` -
 * :doc:`oxrna2/coaxstk <pair_oxrna2>` -
 * :doc:`oxrna2/dh <pair_oxrna2>` -
 * :doc:`oxrna2/excv <pair_oxrna2>` -
