@@ -32,6 +32,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cstring>
+#include <optional>
 
 using namespace LAMMPS_NS;
 using namespace MathSpecial;
@@ -77,7 +78,6 @@ PairExp6rx::PairExp6rx(LAMMPS *lmp) : Pair(lmp),
                                       fractionalWeighting(true)
 {
   writedata = 1;
-  genParamMpiDatatype();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -703,50 +703,6 @@ double PairExp6rx::init_one(int i, int j)
 
 /* ---------------------------------------------------------------------- */
 
-
-/* ---------------------------------------------------------------------- */
-
-void PairExp6rx::genParamMpiDatatype() {
-
-  const int NUM_PARAMS = 5;
-
-  const int param_blocklengths[] = {1,1,1,1,1};
-  MPI_Aint param_displacements[NUM_PARAMS];
-  const MPI_Datatype param_types[] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
-                                      MPI_INT, MPI_INT};
-
-  Param dummyParam;
-  MPI_Aint param_base_address;
-  MPI_Get_address(&dummyParam, &param_base_address);
-  MPI_Get_address(&dummyParam.epsilon, &param_displacements[0]);
-  MPI_Get_address(&dummyParam.rm, &param_displacements[1]);
-  MPI_Get_address(&dummyParam.alpha, &param_displacements[2]);
-  MPI_Get_address(&dummyParam.ispecies, &param_displacements[3]);
-  MPI_Get_address(&dummyParam.potentialType, &param_displacements[4]);
-
-  for (int i = 0; i < NUM_PARAMS; i++) {
-    param_displacements[i] = MPI_Aint_diff(param_displacements[i],
-                                           param_base_address);
-  }
-
-  MPI_Datatype tmpParamMpiDatatype;
-  MPI_Type_create_struct(NUM_PARAMS,
-                         param_blocklengths,
-                         param_displacements,
-                         param_types,
-                         &tmpParamMpiDatatype);
-
-  MPI_Type_commit(&tmpParamMpiDatatype);
-
-  MPI_Type_create_resized(tmpParamMpiDatatype, 0, sizeof(Param),
-                          &paramMpiDatatype);
-  MPI_Type_commit(&paramMpiDatatype);
-
-  MPI_Type_free(&tmpParamMpiDatatype);
-}
-
-/* ---------------------------------------------------------------------- */
-
 void PairExp6rx::initialize_exp6_params_array() {
   memory->sfree(params);
   params = nullptr;
@@ -766,75 +722,99 @@ void PairExp6rx::read_file(char *file) {
 
   initialize_exp6_params_array();
 
+  std::optional<PotentialFileReader> reader;
+  std::string line;
+  int line_len;
+  int eof;
+  int maxparam = 0;
+
+  const int DELTA = 4;
+
   if (comm->me == 0) {
-    const int DELTA = 4;
-    const int params_per_line = 5;
+    reader.emplace(lmp, file, "exp6/rx");
+  }
 
-    PotentialFileReader reader(lmp, file, "exp6/rx");
-    char *line;
+  nparams = 0;
 
-    nparams = 0;
-    int maxparam = 0;
+  // While it would be ideal to read the parameters file on proc 0 and
+  // broadcast the resulting array of parameters, that would involve
+  // MPI_Type_create_struct(), which, at the time that this comment
+  // has been written, is not supported by the LAMMPS. Having a while
+  // loop on all procs with a reading of a line from the parameters
+  // file on proc 0 and then broadcasting the line to all procs is a
+  // workaround for this problem.
 
-    while (line = reader.next_line(params_per_line)) {
-      try {
-        ValueTokenizer values(line);
-
-        auto species = values.next_string();
-
-        int ispecies;
-        for (ispecies = 0; ispecies < nspecies; ispecies++)
-          if (species == atom->dvname[ispecies]) break;
-        if (ispecies == nspecies) continue;
-
-        if (nparams == maxparam) {
-          maxparam += DELTA;
-          grow_exp6_params_array(nparams, maxparam);
-        }
-
-        params[nparams].ispecies = ispecies;
-
-        auto potential = values.next_string();
-
-        if (potential == "exp6") {
-          params[nparams].alpha = values.next_double();
-          params[nparams].epsilon = values.next_double();
-          params[nparams].rm = values.next_double();
-          if (params[nparams].epsilon <= 0.0 || params[nparams].rm <= 0.0 ||
-              params[nparams].alpha < 0.0) {
-            error->one(FLERR,
-                       "Illegal exp6/rx parameters in file {}. "
-                       "Rm and Epsilon must be greater than zero. "
-                       "Alpha cannot be negative.", file);
-          }
-          params[nparams].potentialType = PotentialType::exp6;
-
-          if (values.has_next()) {
-            error->one(FLERR,
-                       "Misplaced characters at end of line in "
-                       "file {}. Full line: {}", file, line);
-          }
-
-        } else {
-          error->one(FLERR,
-                     "Illegal exp6/rx parameters in file {}. "
-                     "Interaction potential does not exist.", file);
-        }
-
-        nparams++;
-      } catch (TokenizerException & e) {
-        error->all(FLERR, "{}. File: {} Full line: {}",
-                   e.what(), file, line);
+  while (true) {
+    if (comm->me == 0) {
+      const int params_per_line = 5;
+      char *ptr = reader.value().next_line(params_per_line);
+      if (ptr) {
+        eof = 0;
+        line = ptr;
+        line_len = line.size();
+      }
+      else {
+        eof = 1;
       }
     }
-  }
 
-  MPI_Bcast(&nparams, 1, MPI_INT, 0, world);
-  if (comm->me != 0) {
-    grow_exp6_params_array(0, nparams);
-  }
-  MPI_Bcast(params, nparams, paramMpiDatatype, 0, world);
+    MPI_Bcast(&eof, 1, MPI_INT, 0, world);
+    if (eof) break;
 
+    MPI_Bcast(&line_len, 1, MPI_INT, 0, world);
+    line.resize(line_len);
+    MPI_Bcast(line.data(), line_len, MPI_CHAR, 0, world);
+
+    try {
+      ValueTokenizer values(line);
+
+      auto species = values.next_string();
+
+      int ispecies;
+      for (ispecies = 0; ispecies < nspecies; ispecies++)
+        if (species == atom->dvname[ispecies]) break;
+      if (ispecies == nspecies) continue;
+
+      if (nparams == maxparam) {
+        maxparam += DELTA;
+        grow_exp6_params_array(nparams, maxparam);
+      }
+
+      params[nparams].ispecies = ispecies;
+
+      auto potential = values.next_string();
+
+      if (potential == "exp6") {
+        params[nparams].alpha = values.next_double();
+        params[nparams].epsilon = values.next_double();
+        params[nparams].rm = values.next_double();
+        if (params[nparams].epsilon <= 0.0 || params[nparams].rm <= 0.0 ||
+            params[nparams].alpha < 0.0) {
+          error->all(FLERR,
+                     "Illegal exp6/rx parameters in file {}. "
+                     "Rm and Epsilon must be greater than zero. "
+                     "Alpha cannot be negative.", file);
+        }
+        params[nparams].potentialType = PotentialType::exp6;
+
+        if (values.has_next()) {
+          error->all(FLERR,
+                     "Misplaced characters at end of line in "
+                     "file {}. Full line: {}", file, line);
+        }
+
+      } else {
+        error->all(FLERR,
+                   "Illegal exp6/rx parameters in file {}. "
+                   "Interaction potential does not exist.", file);
+      }
+
+      nparams++;
+    } catch (TokenizerException & e) {
+      error->all(FLERR, "{}. File: {} Full line: {}",
+                 e.what(), file, line);
+    }
+  }
 }
 
 /* ---------------------------------------------------------------------- */

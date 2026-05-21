@@ -45,17 +45,13 @@ class PairExp6rx : public Pair {
                                                    // genParamMpiDatatype()
                                                    // MUST change!
 
-  // If the Param struct changes, the method genParamMpiDatatype()
-  // MUST change!
   struct Param {
     double epsilon, rm, alpha;
     int ispecies;
     PotentialType potentialType;
   };
 
-  MPI_Datatype paramMpiDatatype;
  protected:
-  void genParamMpiDatatype();
 
   enum { LINEAR };
   enum { NONE, EXPONENT, POLYNOMIAL };
