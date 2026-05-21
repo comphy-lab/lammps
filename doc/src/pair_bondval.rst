@@ -74,6 +74,8 @@ Example for a three-element perovskite BaTiO3 system:
 Description
 -----------
 
+.. versionadded:: TBD
+
 The Bond-Valence potential is an empirical potential based on the conservation
 principles of the bond-valence (bondval) and bond-valence vector (bondval/vec)
 that is fitted to DFT calculations for a given bulk semiconductor.
