@@ -507,7 +507,7 @@ void KSpace::modify_params(int narg, char **arg)
         slabflag = 3;
         slab_auto = 0;
       } else if (strcmp(arg[iarg+1],"auto") == 0) {
-        if (!(ewaldflag || pppmflag) || dispersionflag || dipoleflag || spinflag)
+        if (!(ewaldflag || pppmflag) || espflag || dispersionflag || dipoleflag || spinflag)
           error->all(FLERR, iarg + 1,
                      "kspace_modify slab auto is not supported by kspace style {}",
                      force->kspace_style);
