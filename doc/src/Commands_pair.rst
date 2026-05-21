@@ -1,10 +1,11 @@
+.. include:: Commands_html.rst
+
 Pair styles
 ===========
 
 All LAMMPS :doc:`pair_style <pair_style>` commands.  Some styles have
 accelerated versions.  This is indicated by additional letters in
-parenthesis: g = GPU, i = INTEL, k = KOKKOS, o = OPENMP, t =
-OPT.
+parenthesis: g = GPU, i = INTEL, k = KOKKOS, o = OPENMP, t = OPT.
 
 .. table_from_list::
    :columns: 3
