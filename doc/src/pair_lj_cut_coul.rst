@@ -21,6 +21,7 @@
 .. index:: pair_style lj/cut/coul/msm/gpu
 .. index:: pair_style lj/cut/coul/msm/omp
 .. index:: pair_style lj/cut/coul/wolf
+.. index:: pair_style lj/cut/coul/wolf/kk
 .. index:: pair_style lj/cut/coul/wolf/omp
 
 pair_style lj/cut/coul/cut command
@@ -51,7 +52,7 @@ Accelerator Variants: *lj/cut/coul/msm/gpu*, *lj/cut/coul/msm/omp*
 pair_style lj/cut/coul/wolf command
 ===================================
 
-Accelerator Variants: *lj/cut/coul/wolf/omp*
+Accelerator Variants: *lj/cut/coul/wolf/kk*, *lj/cut/coul/wolf/omp*
 
 Syntax
 """"""
