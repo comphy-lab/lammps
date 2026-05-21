@@ -325,8 +325,7 @@ necessary for ``hipcc`` and the linker to work correctly.
 
 When compiling for HIP ROCm, GPU sorting with ``-D
 HIP_USE_DEVICE_SORT=on`` requires installing the ``hipcub`` library
-(https://github.com/ROCmSoftwarePlatform/hipCUB).  The HIP CUDA-backend
-additionally requires CUB (https://nvidia.github.io/cccl/cub/).  Setting
+(https://github.com/ROCmSoftwarePlatform/hipCUB).  Setting
 ``-DDOWNLOAD_CUB=yes`` will download and compile CUB.
 
 The GPU library has some multi-thread support using OpenMP.  If LAMMPS
@@ -691,9 +690,15 @@ They must be specified in uppercase.
    *  - BLACKWELL100
       - GPU
       - NVIDIA Blackwell generation CC 10.0
+   *  - BLACKWELL103
+      - GPU
+      - NVIDIA Blackwell generation CC 10.3
    *  - BLACKWELL120
       - GPU
       - NVIDIA Blackwell generation CC 12.0
+   *  - BLACKWELL121
+      - GPU
+      - NVIDIA Blackwell generation CC 12.1
    *  - AMD_GFX906
       - GPU
       - AMD GPU MI50/60
@@ -712,6 +717,9 @@ They must be specified in uppercase.
    *  - AMD_GFX942_APU
       - GPU
       - AMD APU MI300A
+   *  - AMD_GFX950
+      - GPU
+      - AMD GPU MI350
    *  - AMD_GFX1030
       - GPU
       - AMD GPU V620/W6800
@@ -746,7 +754,7 @@ They must be specified in uppercase.
       - GPU
       - Intel GPU DG2
 
-This list was last updated for version 4.7.1 of the Kokkos library.
+This list was last updated for version 5.1.0 of the Kokkos library.
 
 .. tabs::
 
@@ -875,12 +883,21 @@ use RAM on the host to supplement the memory used on the GPU (with some
 performance penalty) and thus enables running larger problems that would
 otherwise not fit into the RAM on the GPU.
 
+.. versionadded:: 10Sep2025
+
 The CMake option ``-D KOKKOS_PREC=value`` sets the floating point
 precision of the calculations, where ``value`` can be one of: ``double``
 (FP64, default) or ``mixed`` (FP64 for accumulation of forces, energy,
 and virial, FP32 otherwise) or ``single`` (FP32).  When using reduced
-precision (single or mixed), the simulation should be carefully checked
-to ensure it is stable and that energy is acceptably conserved.
+precision (single or mixed), the simulation and its results should be
+carefully checked to ensure it is stable and that, for example, energy
+is sufficiently well conserved.  Using a lower floating point precision
+works best when simulating homogeneous bulk systems because those have
+the best error cancellation.  Using ``mixed`` precision provides most of
+the performance advantages of using single precision while performing
+the steps most relevant for accuracy in double precision.
+
+.. versionadded:: 10Sep2025
 
 The CMake option ``-D KOKKOS_LAYOUT=value`` sets the array layout of
 Kokkos views (e.g. forces, velocities, etc.) on GPUs, where ``value``
@@ -1258,7 +1275,7 @@ then load this plugin at runtime with the :doc:`plugin command
 
    .. tab:: CMake build
 
-      .. versionchanged:: TBD
+      .. versionchanged:: 30Mar2026
 
          Replaced MD5 checksums with SHA-256
 
@@ -1300,7 +1317,7 @@ folder and then load this plugin at runtime with the :doc:`plugin command <plugi
 
    .. tab:: CMake build
 
-      .. versionchanged:: TBD
+      .. versionchanged:: 30Mar2026
 
          Replaced MD5 checksums with SHA-256
 

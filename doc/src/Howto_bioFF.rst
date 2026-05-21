@@ -188,7 +188,7 @@ documentation for the formula it computes.
 ClassII-xe
 ----------
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 The computationally efficient simulation of condensed-phase materials
 such as metals, polymers, and composites can be achieved with fixed-bond

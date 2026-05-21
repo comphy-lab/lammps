@@ -373,7 +373,7 @@ large volume of communication needed to acquire ghost atoms around a
 processor's irregular-shaped subdomain.  For extreme values of tilt,
 LAMMPS may also lose atoms and generate an error.
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 The *isochoric* keyword allows to maintain constant volume when
 barostatting up to two dimensions with this fix.  The values following

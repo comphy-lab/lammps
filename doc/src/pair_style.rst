@@ -155,6 +155,7 @@ accelerated styles exist.
 * :doc:`coul/cut/dielectric <pair_dielectric>` -
 * :doc:`coul/cut/global <pair_coul>` - cutoff Coulomb potential
 * :doc:`coul/cut/soft <pair_fep_soft>` - Coulomb potential with a soft core
+* :doc:`coul/cut/soft/gapsys <pair_fep_soft>` - Coulomb potential with a soft core with continuous force and first derivative of force
 * :doc:`coul/debye <pair_coul>` - cutoff Coulomb potential with Debye screening
 * :doc:`coul/diel <pair_coul_diel>` - Coulomb potential with dielectric permittivity
 * :doc:`coul/dsf <pair_coul>` - Coulomb with damped-shifted-force model
@@ -252,6 +253,7 @@ accelerated styles exist.
 * :doc:`lj/cut/coul/debye <pair_lj_cut_coul>` - LJ with Debye screening added to Coulomb
 * :doc:`lj/cut/coul/debye/dielectric <pair_dielectric>` -
 * :doc:`lj/cut/coul/dsf <pair_lj_cut_coul>` - LJ with Coulomb via damped shifted forces
+* :doc:`lj/cut/coul/esp <pair_lj_cut_coul>` - LJ with long-range Coulomb
 * :doc:`lj/cut/coul/long <pair_lj_cut_coul>` - LJ with long-range Coulomb
 * :doc:`lj/cut/coul/long/cs <pair_cs>` - LJ with long-range Coulomb with core/shell adjustments
 * :doc:`lj/cut/coul/long/dielectric <pair_dielectric>` -

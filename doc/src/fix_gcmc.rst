@@ -25,7 +25,7 @@ Syntax
 
   .. parsed-literal::
 
-     keyword = *mol*, *region*, *maxangle*, *pressure*, *fugacity_coeff*, *full_energy*, *charge*, *group*, *grouptype*, *intra_energy*, *tfac_insert*, or *overlap_cutoff*
+     keyword = *mol* or *mcmoves* or *rigid* or *shake* or *region* or *maxangle* or *pressure* or *fugacity_coeff* or *full_energy* or *charge* or *group* or *grouptype* or *intra_energy* or *tfac_insert* or *overlap_cutoff* or *max* or *min*
        *mol* value = template-ID
          template-ID = ID of molecule template specified in a separate :doc:`molecule <molecule>` command
        *mcmoves* values = Patomtrans Pmoltrans Pmolrotate

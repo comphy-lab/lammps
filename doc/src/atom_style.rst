@@ -279,7 +279,7 @@ with both flavors of mass.
 Additional information about specific atom styles
 """""""""""""""""""""""""""""""""""""""""""""""""
 
-.. versionchanged:: TBD
+.. versionchanged:: 30Mar2026
 
 For the *apip* style, one can choose between the style for
 conservative potentials and the style for the
@@ -355,7 +355,7 @@ quaternion 4-vector with its orientation.  Each particle stores a flag
 in the ellipsoid vector which indicates whether it is an ellipsoid (1)
 or a point particle (0).
 
-.. versionadded:: TBD
+.. versionadded:: 30Mar2026
 
 By adding the flag *superellipsoid* to the *ellipsoid* atom_style
 command, the particles can be superellipsoids, which are a
