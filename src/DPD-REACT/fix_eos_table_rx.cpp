@@ -514,8 +514,8 @@ void FixEOStableRX::param_extract(RxTableFileReader & reader, Table *tb)
         }
       if (ispecies == nspecies) {
         error->one(FLERR, "name={} not found in species list\n"
-		   "Invalid keyword in fix eos/table/rx parameters",
-		   word);
+                   "Invalid keyword in fix eos/table/rx parameters",
+                   word);
       }
     }
 
@@ -524,10 +524,10 @@ void FixEOStableRX::param_extract(RxTableFileReader & reader, Table *tb)
         error->one(FLERR,"EOS data is missing from fix eos/table/rx table");
     if (ncolumn != nspecies) {
       error->one(FLERR,
-		 "ncolumns={} nspecies={}\n"
-		 "The number of columns in fix eos/table/rx "
-		 "does not match the number of species",
-		 ncolumn,nspecies);
+                 "ncolumns={} nspecies={}\n"
+                 "The number of columns in fix eos/table/rx "
+                 "does not match the number of species",
+                 ncolumn,nspecies);
     }
   } else {
     eosSpecies[0] = 0;
