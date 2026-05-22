@@ -80,6 +80,7 @@ gives those details.
    * :ref:`MGPT <PKG-MGPT>`
    * :ref:`MISC <PKG-MISC>`
    * :ref:`ML-HDNNP <PKG-ML-HDNNP>`
+   * :ref:`ML-RUNNER <PKG-ML-RUNNER>`
    * :ref:`ML-IAP <PKG-ML-IAP>`
    * :ref:`ML-PACE <PKG-ML-PACE>`
    * :ref:`ML-POD <PKG-ML-POD>`
@@ -1830,6 +1831,38 @@ This package has :ref:`specific installation instructions <ml-hdnnp>` on the
 * ``lib/hdnnp/README``
 * :doc:`pair_style hdnnp <pair_hdnnp>`
 * ``examples/PACKAGES/hdnnp``
+
+----------
+
+.. _PKG-ML-RUNNER:
+
+ML-RUNNER package
+------------------
+**Contents:**
+A :doc:`pair_style runner <pair_runner>` command for the efficient evaluation of
+second-, third-, and fourth-generation high-dimensional neural network
+potentials (HDNNPs).
+
+.. _runner: https://www.theochem2.ruhr-uni-bochum.de/tc/software/runner.html.en
+
+To use this package you must have the `RuNNer <runner_>`_ library compiled on
+your system.
+
+**Authors:** K. Nikolas Lausch, Alexander L. M. Knoll, Moritz R. Schaefer,
+             Gunnar Schmitz, Joerg Behler (Ruhr-University Bochum)
+
+**Install:**
+
+This package has :ref:`specific installation instructions <ml-runner>` on the
+:doc:`Build extras <Build_extras>` page.
+
+.. versionadded:: TBD
+
+**Supporting info:**
+
+* ``src/ML-RUNNER``: filenames -> commands
+* :doc:`pair_style runner <pair_runner>`
+* ``examples/PACKAGES/ml-runner`` (see README.txt)
 
 ----------
 
