@@ -8,7 +8,7 @@ namespace LAMMPS_NS::MathPSWF {
 
 // prolate functions
 void prolc180(double eps, double &c);
-void prolc180_der3(double eps, double &der3);
+
 // prolate0 functor
 struct Prolate0Fun;
 
