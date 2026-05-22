@@ -44,7 +44,7 @@ class ESP : public KSpace {
   int timing_1d(int, double &) override;
   int timing_3d(int, double &) override;
   double memory_usage() override;
-  void build_table(double, double);
+  void build_table(double);
   int estimate_order(double);
   void compute_group_group(int, int, int) override;
 

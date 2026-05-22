@@ -997,7 +997,7 @@ double prolate0_int_eval(double c, double r)
 // end of prolate functions
 
 // start of approximation functions
-void force_poly(double /*tol*/, double tol_coeff, const double &c, std::vector<double> &coeffs)
+void force_poly(double tol_coeff, const double &c, std::vector<double> &coeffs)
 {
   double c0 = prolate0_int_eval(c, 1.0);
 
@@ -1050,7 +1050,7 @@ void force_poly(double /*tol*/, double tol_coeff, const double &c, std::vector<d
   for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
 }
 
-void energy_poly(double /*tol*/, double tol_coeff, const double &c, std::vector<double> &coeffs)
+void energy_poly(double tol_coeff, const double &c, std::vector<double> &coeffs)
 {
   double c0 = prolate0_int_eval(c, 1.0);
 
@@ -1101,7 +1101,7 @@ void energy_poly(double /*tol*/, double tol_coeff, const double &c, std::vector<
   for (int i = 0; i < max_order; i++) coeffs[i] = coeffs_tmp[i];
 }
 
-void fourier_poly(double /*tol*/, double tol_coeff, const double &c, double &lambda,
+void fourier_poly(double tol_coeff, const double &c, double &lambda,
                   std::vector<double> &coeffs)
 {
   double c0 = prolate0_int_eval(c, 1.0);
@@ -1155,16 +1155,14 @@ void fourier_poly(double /*tol*/, double tol_coeff, const double &c, double &lam
   int nnodes = (int) max_order;    // * 1.75;
   cheb_nodes_1d(nnodes, nodes, -1.0, 1.0);
   fn_v.resize(dof * nnodes);
-  for (int i = 0; i < nnodes; i++) { fn_v[i] = f(lambda, c0, c, nodes[i]); }
+  for (int i = 0; i < nnodes; i++) fn_v[i] = f(lambda, c0, c, nodes[i]);
 
-  //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
   monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -1.0, 1.0);
 
-  //for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
-  for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
+  for (int i = 0; i < max_order; i++) coeffs[i] = coeffs_tmp[i];
 }
 
-void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
+void spread_fourier_poly(double tol_coeff, const double &c, double &lambda,
                          std::vector<double> &coeffs)
 {
   double c0 = prolate0_int_eval(c, 1.0);
@@ -1227,7 +1225,7 @@ void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &
   for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
 }
 
-void spread_real_poly(int P, double /*tol*/, double tol_coeff, const double &c,
+void spread_real_poly(int P, double tol_coeff, const double &c,
                       std::vector<double> &coeffs)
 {
   int order = MAX_CHEB_ORDER;

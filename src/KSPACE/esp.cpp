@@ -312,7 +312,7 @@ void ESP::init()
 
   // pre-compute tables for splitting/spreading function
 
-  build_table(accuracy_relative, spreading_accuracy);
+  build_table(spreading_accuracy);
   if (differentiation_flag == 1) compute_sf_precoeff();
 
   // print stats
@@ -571,7 +571,7 @@ void ESP::reset_grid()
   allocate();
 
   ////
-  build_table(accuracy_relative, spreading_accuracy);
+  build_table(spreading_accuracy);
 
   if (!overlap_allowed && !gc->ghost_adjacent())
     error->all(FLERR,"ESP grid stencil extends beyond nearest neighbor processor");
@@ -2787,11 +2787,11 @@ int ESP::estimate_order(double accuracy)
    build table for ESP method
 ------------------------------------------------------------------------- */
 
-void ESP::build_table(double /*algorithm_accuracy*/, double spreading_accuracy)
+void ESP::build_table(double spreading_accuracy)
 {
   // force kernel
   std::vector<double> poly_coeff;
-  MathPSWF::force_poly(accuracy_relative, 0.1*accuracy_relative, select_c, poly_coeff);
+  MathPSWF::force_poly(0.1*accuracy_relative, select_c, poly_coeff);
   num_of_force_poly = poly_coeff.size();
   memory->create(force_poly_coeff, num_of_force_poly, "ESP:force_poly_coeff");
   for (int i = 0; i < num_of_force_poly; i++) force_poly_coeff[i] = poly_coeff[i];
@@ -2799,7 +2799,7 @@ void ESP::build_table(double /*algorithm_accuracy*/, double spreading_accuracy)
 
   // energy kernel
   poly_coeff.clear();
-  MathPSWF::energy_poly(accuracy_relative, 0.01*accuracy_relative, select_c, poly_coeff);
+  MathPSWF::energy_poly(0.01*accuracy_relative, select_c, poly_coeff);
   num_of_energy_poly = poly_coeff.size();
   memory->create(energy_poly_coeff, num_of_energy_poly, "ESP:energy_poly_coeff");
   for (int i = 0; i < num_of_energy_poly; i++) energy_poly_coeff[i] = poly_coeff[i];
@@ -2807,7 +2807,7 @@ void ESP::build_table(double /*algorithm_accuracy*/, double spreading_accuracy)
 
   // Fourier space kernel
   poly_coeff.clear();
-  MathPSWF::fourier_poly(accuracy_relative, 0.1*accuracy_relative, select_c, Lambda_0, poly_coeff);
+  MathPSWF::fourier_poly(0.1*accuracy_relative, select_c, Lambda_0, poly_coeff);
   num_of_Fourier_poly = poly_coeff.size();
   memory->create(fourier_split_poly_coeff, num_of_Fourier_poly, "ESP:fourier_split_poly_coeff");
   for (int i = 0; i < num_of_Fourier_poly; i++) fourier_split_poly_coeff[i] = poly_coeff[i];
@@ -2815,7 +2815,7 @@ void ESP::build_table(double /*algorithm_accuracy*/, double spreading_accuracy)
 
   // spreading kernel in real space - need to be consistent with the spreading accuracy
   poly_coeff.clear();
-  MathPSWF::spread_real_poly(order, spreading_accuracy, 0.1*spreading_accuracy, spreading_select_c, poly_coeff);
+  MathPSWF::spread_real_poly(order, 0.1*spreading_accuracy, spreading_select_c, poly_coeff);
   poly_order = poly_coeff.size() / order;
 
   memory->create2d_offset(rho_coeff,poly_order,(1-order)/2,order/2,"esp:rho_coeff");
@@ -2835,7 +2835,7 @@ void ESP::build_table(double /*algorithm_accuracy*/, double spreading_accuracy)
 
   // spreading kernel in Fourier space
   poly_coeff.clear();
-  MathPSWF::spread_fourier_poly(spreading_accuracy, 0.1*spreading_accuracy, spreading_select_c, spreading_Lambda_0, poly_coeff);
+  MathPSWF::spread_fourier_poly(0.1*spreading_accuracy, spreading_select_c, spreading_Lambda_0, poly_coeff);
   fourier_spreading_order = poly_coeff.size();
   memory->create(fourier_spread_poly_coeff, fourier_spreading_order, "ESP:fourier_spread_poly_coeff");
   for (int i = 0; i < fourier_spreading_order; i++) fourier_spread_poly_coeff[i] = poly_coeff[i];
