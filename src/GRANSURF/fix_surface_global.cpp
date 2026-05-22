@@ -67,7 +67,6 @@ enum{SAME_SIDE,OPPOSITE_SIDE};
 enum{NSQ, BIN};
 
 static constexpr double FLATTHRESH = 0.00015230484360876085; // = 1.0-cos(MY_PI/180.0); = 1 degree
-static constexpr int DELTA = 128;
 static constexpr int DELTAMODEL = 4;
 static constexpr int DELTAMOTION = 4;
 static constexpr int MAXSURFTYPE = 1024;  // extreme, so can reduce it later
