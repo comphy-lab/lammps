@@ -273,7 +273,8 @@ size of the smallest particle. However, almost all bins that lie within
 the span of the largest particle will be empty. The hash option is only
 available for the *multi* neighbor mode. One may need to also adjust how
 atoms are sorted using the :doc:`atom_modify <atom_modify>` command to
-avoid creating too many bins in these scenarios.
+avoid creating too many bins in these scenarios. If so, it is
+recommended to use the smallest bin size possible to improve performance.
 
 Restrictions
 """"""""""""
