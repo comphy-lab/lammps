@@ -15,58 +15,18 @@ pair_style bondval/vec command
 Accelerator Variants: *bondval/vec/kk*
 
 Syntax
-------
+""""""
 
 .. code-block:: LAMMPS
 
-   pair_style style args
+   pair_style bondval power cutoff
+   pair_style bondval/vec power cutoff
 
-* style = *bondval* or *bondval/vec*
-* args = list of arguments for a particular style
-
-.. parsed-literal::
-
-   *bondval* args = cutoff1 cutoff2
-     cutoff1 =
-     cutoff2 =
-   *bondval/vec* args = cutoff1 cutoff2
-     cutoff1 =
-     cutoff2 =
-
-.. FIXME
-.. The section above and below needs to be adjusted to conform to
-.. what is generally done in LAMMPS. Compare to the docs for pair style morse
-.. or pair style ilp/graphene/hbn
-
-
-.. code-block:: LAMMPS
-
-   hybrid/overlay lj/cut/coul/long cutoff1 cutoff2 bondval cutoff1 cutoff2 bondval/vec cutoff1 cutoff2
-
-Pair coefficients are specified per atom-type pair:
-
-.. code-block:: LAMMPS
-
-   pair_coeff i j lj/cut/coul/long cutoff1 Bij
-   pair_coeff i j bondval r0,ij Cij Si V0,ij rcut
-   pair_coeff i j bondval/vec r0,ij Cij Di W0,i rcut
-
-where:
-
-* ``i,j`` = atom type indices
-* ``cutoff1`` = global cutoff for LJ(distance units)
-* ``Bij`` = short range cutoff parameter (distance units)
-* ``r0,ij`` = first of Brown's empirical parameters for bond valence (distance units)
-* ``Cij`` = second of Brown's empirical parameters for bond valence
-* ``Si`` = penalty for deviating from ideal bond valence (energy units)
-* ``V0,ij`` = ideal bond valence for given atom type
-* ``rcut`` = global cutoff for coulombic term of LJ (distance units)
-* ``Di`` = penalty for deviating from ideal bond valence vector (energy units)
-* ``W0,i`` = ideal bond valence vector for given atom type
-
+* *power* = exponent for the bond-valence force (typically 2.0)
+* *cutoff* = global cutoff for bond-valence interactions (distance units)
 
 Examples
---------
+""""""""
 
 Example for a three-element perovskite BaTiO3 system:
 
@@ -76,7 +36,7 @@ Example for a three-element perovskite BaTiO3 system:
 
    read_data btolammps.data
 
-   # lj/cut/coul/long parameters: cutoff1 Bij
+   # lj/cut/coul/long parameters: epsilon sigma
    pair_coeff 1 1 lj/cut/coul/long 2.0 2.44805
    pair_coeff 1 2 lj/cut/coul/long 2.0 2.32592
    pair_coeff 1 3 lj/cut/coul/long 2.0 1.98792
@@ -84,92 +44,148 @@ Example for a three-element perovskite BaTiO3 system:
    pair_coeff 2 3 lj/cut/coul/long 2.0 1.37741
    pair_coeff 3 3 lj/cut/coul/long 2.0 1.99269
 
-   # bondval parameters: r0,ij Cij Si V0,ij rcut
-   pair_coeff 1 1 bondval 0.0000000 5.0000000 0.5973900 2.0000000 8.0000000
-   pair_coeff 1 2 bondval 0.0000000 5.0000000 0.0000000 0.0000000 8.0000000
-   pair_coeff 1 3 bondval 2.2900000 8.9400000 0.0000000 0.0000000 8.0000000
-   pair_coeff 2 2 bondval 0.0000000 5.0000000 0.1653300 4.0000000 8.0000000
-   pair_coeff 2 3 bondval 1.7980000 5.2000000 0.0000000 0.0000000 8.0000000
-   pair_coeff 3 3 bondval 0.0000000 5.0000000 0.9306300 2.0000000 8.0000000
+   # bondval parameters: r0 alpha S V0
+   pair_coeff 1 1 bondval 0.0000000 5.0000000 0.5973900 2.0000000
+   pair_coeff 1 2 bondval 0.0000000 5.0000000 0.0000000 0.0000000
+   pair_coeff 1 3 bondval 2.2900000 8.9400000 0.0000000 0.0000000
+   pair_coeff 2 2 bondval 0.0000000 5.0000000 0.1653300 4.0000000
+   pair_coeff 2 3 bondval 1.7980000 5.2000000 0.0000000 0.0000000
+   pair_coeff 3 3 bondval 0.0000000 5.0000000 0.9306300 2.0000000
 
-   # bondval/vec parameters: r0,ij Cij Di W0,i rcut
-   pair_coeff 1 1 bondval/vec 0.0000000 5.0000000 0.0842900 0.1156100 8.0000000
-   pair_coeff 1 2 bondval/vec 0.0000000 5.0000000 0.0000000 0.0000000 8.0000000
-   pair_coeff 1 3 bondval/vec 2.1430000 8.9400000 0.0000000 0.0000000 8.0000000
-   pair_coeff 2 2 bondval/vec 0.0000000 5.0000000 0.8248400 0.3943700 8.0000000
-   pair_coeff 2 3 bondval/vec 1.7980000 5.2000000 0.0000000 0.0000000 8.0000000
-   pair_coeff 3 3 bondval/vec 0.0000000 5.0000000 0.2800600 0.3165100 8.0000000
+   # bondval/vec parameters: r0 alpha D W0
+   pair_coeff 1 1 bondval/vec 0.0000000 5.0000000 0.0842900 0.1156100
+   pair_coeff 1 2 bondval/vec 0.0000000 5.0000000 0.0000000 0.0000000
+   pair_coeff 1 3 bondval/vec 2.1430000 8.9400000 0.0000000 0.0000000
+   pair_coeff 2 2 bondval/vec 0.0000000 5.0000000 0.8248400 0.3943700
+   pair_coeff 2 3 bondval/vec 1.7980000 5.2000000 0.0000000 0.0000000
+   pair_coeff 3 3 bondval/vec 0.0000000 5.0000000 0.2800600 0.3165100
 
 Description
------------
+"""""""""""
 
 .. versionadded:: TBD
 
-The Bond-Valence potential is an empirical potential based on the
-conservation principles of the bond-valence (bondval) and bond-valence
-vector (bondval/vec) that is fitted to DFT calculations for a given bulk
-semiconductor.  The bond-valence potential is typically used with
-:doc:`pair style hybrid/overlay <pair_hybrid>` in order to combine
-Coulomb, Lennard-Jones repulsion, bond-valence, and bond-valence vector
-contributions.
+The bond-valence potential is an empirical potential based on the
+conservation of the bond-valence (bondval) and bond-valence vector
+(bondval/vec), fitted to DFT calculations for a given bulk semiconductor.
+It is typically used with :doc:`pair_style hybrid/overlay <pair_hybrid>`
+to combine Coulombic, Lennard-Jones repulsion, bond-valence, and
+bond-valence vector contributions.
 
-The bond-valence for a given pair of atoms (:math:`V_{ij}`) is a measure of the bonding
-strength and can be calculated from the lengths of its bonds (:math:`r_{ij}`) by:
-
-.. math::
-   V_{ij} = \left( \frac{r_{0,ij}}{r_{ij}} \right)^{c_{ij}}
-
-where :math:`r_{0,ij}` and :math:`c_{ij}` are Brown's empirical
-parameters for bond-valence. The bond-valence vector is defined as a
-vector lying along the bond :math:`\vec{V}_{ij} = V_{ij} \hat{R}_{ij}`,
-where :math:`\hat{R}_{ij}` is the unit vector pointing from atom i to
-atom j. The total energy (:math:`E`) consists of the Coulombic energy
-(:math:`E_c`), the short-range repulsive energy (:math:`E_r`), the
-bond-valence energy (:math:`E_{BV}`), the bond-valence vector energy
-(:math:`E_{BVV}`), and the angle potential (:math:`E_a`):
+The bond-valence for a given atom pair (:math:`V_{ij}`) is a measure
+of the bonding strength calculated from the interatomic distance
+(:math:`r_{ij}`) by:
 
 .. math::
+
+   V_{ij} = \left( \frac{r_{0,ij}}{r_{ij}} \right)^{\alpha_{ij}}
+
+where :math:`r_{0,ij}` and :math:`\alpha_{ij}` are Brown's empirical
+parameters for bond-valence.  The bond-valence vector contribution from
+neighbor j to atom i is defined as
+:math:`\vec{V}_{ij} = V_{ij} \hat{R}_{ji}`, where
+:math:`\hat{R}_{ji} = (\mathbf{r}_i - \mathbf{r}_j)/r_{ij}` is the
+unit vector pointing from atom j toward atom i.
+
+The total potential energy of the system consists of a Coulombic energy
+(:math:`E_c`), a short-range repulsive energy (:math:`E_r`), a
+bond-valence energy (:math:`E_{BV}`), a bond-valence vector energy
+(:math:`E_{BVV}`), and an optional angle potential (:math:`E_a`):
+
+.. math::
+
    E = E_c + E_r + E_{BV} + E_{BVV} + E_a
 
 .. math::
+
    E_c = \sum_{i<j} \frac{q_i q_j}{r_{ij}}
 
 .. math::
+
    E_r = \sum_{i<j} \left(\frac{B_{ij}}{r_{ij}}\right)^{12}
 
 .. math::
+
    E_{BV} = \sum_i S_i \left(V_i - V_{0,i}\right)^2
 
 .. math::
-   E_{BVV} =\sum_i D_i \left(W_i^2-W_{0,i}^2\right)^2
+
+   E_{BVV} = \sum_i D_i \left(|\vec{W}_i|^2 - W_{0,i}^2\right)^2
 
 .. math::
+
    E_a = k \sum_i^{N_{\mathrm{oxygen}}} \left(\theta_i - 180^{\circ}\right)^2
 
-Where :math:`V_i = \sum_{j \neq i} V_{ij}` is the bond-valence sum(BVS),
-:math:`W_i = \sum_{j \neq i} V_{ij}` is the bond-valence vector sum(BVVS),
-:math:`q_i` is the ionic charge, :math:`B_{ij}` is the short-range repulsion
-parameter, :math:`S_i` and :math:`D_i` are scaling parameters with the unit of
-energy, k is the spring constant, and :math:`\theta_i` is the O-O-O angle along
-the common axis of two adjacent oxygen octahedra.
+where :math:`V_i = \sum_{j \neq i} V_{ij}` is the bond-valence sum
+(BVS), and :math:`\vec{W}_i = \sum_{j \neq i} V_{ij} \hat{R}_{ji}` is
+the bond-valence vector sum (BVVS) with :math:`\hat{R}_{ji}` the unit
+vector pointing from atom j toward atom i.  :math:`q_i` is the ionic
+charge, :math:`B_{ij}` is the short-range repulsion parameter,
+:math:`S_i` and :math:`D_i` are spring constants (energy units),
+:math:`k` is the angle spring constant, and :math:`\theta_i` is the
+O-O-O angle along the common axis of two adjacent oxygen octahedra.
 
-The values (:math:`r_{ij},V_i,W_i,\theta_i`) are calculated at each timestep from
-the positions of the atoms in the simulation; all other terms need to be defined
-by the user, shown in the Syntax part.
+The pair style *bondval* computes :math:`E_{BV}`, the bond-valence
+energy term.  The pair style *bondval/vec* computes :math:`E_{BVV}`,
+the bond-valence vector energy term.  The remaining energy contributions
+(:math:`E_c` and :math:`E_r`) are typically provided by
+:doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>`, and
+:math:`E_a` by an :doc:`angle_style <angle_style>`.  The *power*
+argument to the pair_style command is the exponent used in computing
+the forces and should be set to 2.0 to be consistent with the
+quadratic energy expressions above.
 
-The values come from training the potential against DFT energies for a given system
-type. There exist multiple examples of trained and tested parameters for bulk perovskite
-oxide materials published and publicly available by the group of Andrew M. Rappe, but
-the potential can theoretically be trained and applied to any bulk crystalline semiconductor
-system. For reported values of the trained parameters, the LAMMPS metal units are used.
-The atom charges and angle potential are also fitted parameters that are required to be
-defined by the user. Charges can be set via read_data or set. If no angle potential is
-defined, it is assumed to be zero. Otherwise, it can be set with the following command:
+The quantities :math:`r_{ij}`, :math:`V_i`, and :math:`\vec{W}_i`
+are computed at each timestep from the current atom positions.  All
+other parameters must be provided by the user.
 
-.. code-block:: LAMMPS
+The potential parameters are obtained by training against DFT energies
+for a given system.  Trained and tested parameters for several bulk
+perovskite oxide materials are published by the group of Andrew M. Rappe
+(see references below).  The published parameters use LAMMPS *metal*
+units.  Atom charges are also fitted parameters; they can be set via
+:doc:`read_data <read_data>` or :doc:`set <set>`.  The angle potential,
+if used, can be set with :doc:`angle_style harmonic <angle_harmonic>`
+together with :doc:`angle_coeff <angle_coeff>`.
 
-   Angle Coeffs
-   1 15.0 180   # type of angle potential, k(eV/rad^2), degree
+The following coefficients must be defined for each pair of atom types
+via the :doc:`pair_coeff <pair_coeff>` command as in the examples
+above, or in the data file or restart files read by the
+:doc:`read_data <read_data>` or :doc:`read_restart <read_restart>`
+commands.  When used within :doc:`pair_style hybrid/overlay <pair_hybrid>`,
+the pair style name must be included as shown in the examples.
+
+For *bondval*:
+
+* :math:`r_{0,ij}` = Brown's empirical bond-valence parameter (distance units)
+* :math:`\alpha_{ij}` = Brown's empirical bond-valence exponent (dimensionless)
+* :math:`S_i` = bond-valence spring constant (energy units)
+* :math:`V_{0,i}` = ideal bond-valence sum (dimensionless)
+* cutoff (distance units) -- optional
+
+The first two parameters (:math:`r_{0,ij}` and :math:`\alpha_{ij}`) are
+pair-dependent and contribute to the bond-valence calculation for all
+atom type pairs.  The spring constant :math:`S_i` and ideal value
+:math:`V_{0,i}` are atom-type dependent and only the same-species values
+(I = J) are used when computing the energy; for cross-species pairs
+(I :math:`\neq` J) they should be set to zero.
+
+For *bondval/vec*:
+
+* :math:`r_{0,ij}` = Brown's empirical bond-valence parameter (distance units)
+* :math:`\alpha_{ij}` = Brown's empirical bond-valence exponent (dimensionless)
+* :math:`D_i` = bond-valence vector spring constant (energy units)
+* :math:`W_{0,i}` = ideal bond-valence vector magnitude (dimensionless)
+* cutoff (distance units) -- optional
+
+The same distinction applies: :math:`r_{0,ij}` and :math:`\alpha_{ij}`
+are pair-dependent and used for all pairs, while :math:`D_i` and
+:math:`W_{0,i}` are atom-type dependent and only the same-species values
+(I = J) contribute to the energy.  For cross-species pairs (I
+:math:`\neq` J) they should be set to zero.
+
+The final cutoff coefficient is optional for both styles.  If not
+specified, the global cutoff given in the pair_style command is used.
 
 ---------
 
@@ -177,42 +193,71 @@ defined, it is assumed to be zero. Otherwise, it can be set with the following c
 
 ---------
 
-Restrictions
-------------
+Mixing, shift, table, tail correction, restart, rRESPA info
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-The ``lj_cut_coul_long`` is a part of the KSPACE package. Since we only fitted the
-repulsion part of the LJ potential to DFT, users need to manually set lj2 and lj4 to be
-zero in ``lj_cut_coul_long``. For the code to work with the right physics, ``bondval`` ,
-``bondval/vec``, ``lj_cut_coul_long`` must be all used together with ``hybrid/overlay``.
-They cannot be used as standalone styles.
+These pair styles do not support parameter mixing.  Coefficients must
+be specified explicitly for all atom type pairs.
+
+These pair styles do not support the :doc:`pair_modify <pair_modify>`
+shift, table, or tail options.
+
+These pair styles write their information to :doc:`binary restart
+files <restart>`, so pair_style and pair_coeff commands do not need to
+be specified in an input script that reads a restart file.
+
+These pair styles can only be used via the *pair* keyword of the
+:doc:`run_style respa <run_style>` command.  They do not support the
+*inner*, *middle*, *outer* keywords.
+
+Restrictions
+""""""""""""
+
+These pair styles are part of the EXTRA-PAIR package.  They are only
+enabled if LAMMPS was built with that package.  See the
+:doc:`Build package <Build_package>` page for more info.
+
+These pair styles must be used with
+:doc:`pair_style hybrid/overlay <pair_hybrid>`.  They cannot be used
+as standalone pair styles.
+
+For a physically correct simulation, *bondval*, *bondval/vec*, and a
+:doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>` contribution
+for :math:`E_c` and :math:`E_r` must all be combined via
+``hybrid/overlay``.  The published parameters for this potential are
+fitted to reproduce only the :math:`r^{-12}` repulsion term
+(:math:`E_r`); the attractive :math:`r^{-6}` contribution of the
+Lennard-Jones potential should be suppressed by appropriate choice of
+the :math:`\epsilon` and :math:`\sigma` coefficients.
 
 Related commands
-----------------
+""""""""""""""""
 
 * :doc:`pair_style hybrid/overlay <pair_hybrid>`
-* :doc:`angle_style <angle_style>`
+* :doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>`
+* :doc:`angle_style harmonic <angle_harmonic>`
 * :doc:`kspace_style <kspace_style>`
 
 Default
--------
+"""""""
 
-None
+none
 
 
 ----------
 
 **(Grinberg)** I. Grinberg, V. R. Cooper, and A. M. Rappe, *Nature*, **419**, 909 (2002).
 
-**(Shin)** Y.-H. Shin, J.-Y. Son, B.-J. Lee, I. Grinberg, and A. M. Rappe, *J. Phys.: Condens. Matter*, **20**, 015224 (2008).
+**(Shin1)** Y.-H. Shin, J.-Y. Son, B.-J. Lee, I. Grinberg, and A. M. Rappe, *J. Phys.: Condens. Matter*, **20**, 015224 (2008).
 
-**(Shin)** Y.-H. Shin, V. R. Cooper, I. Grinberg, and A. M. Rappe, *Phys. Rev. B*, **71**, 054104 (2005).
+**(Shin2)** Y.-H. Shin, V. R. Cooper, I. Grinberg, and A. M. Rappe, *Phys. Rev. B*, **71**, 054104 (2005).
 
-**(Liu)** S. Liu, I. Grinberg, and A. M. Rappe, *J. Phys.: Condens. Matter*, **25**, 102202 (2013).
+**(Liu1)** S. Liu, I. Grinberg, and A. M. Rappe, *J. Phys.: Condens. Matter*, **25**, 102202 (2013).
 
-**(Liu)** S. Liu, I. Grinberg, H. Takenaka, and A. M. Rappe, *Phys. Rev. B*, **88**, 104102 (2013).
+**(Liu2)** S. Liu, I. Grinberg, H. Takenaka, and A. M. Rappe, *Phys. Rev. B*, **88**, 104102 (2013).
 
-**(Brown)** I. D. Brown, *Chem. Rev.*, **109**, 6858 (2009).
+**(Brown1)** I. D. Brown, *Chem. Rev.*, **109**, 6858 (2009).
 
-**(Brown)** I. Brown and R. Shannon, *Acta Crystallogr. A*, **29**, 266 (1973).
+**(Brown2)** I. Brown and R. Shannon, *Acta Crystallogr. A*, **29**, 266 (1973).
 
-**(Brown)** I. Brown and K. K. Wu, *Acta Crystallogr. B*, **32**, 1957 (1976).
+**(Brown3)** I. Brown and K. K. Wu, *Acta Crystallogr. B*, **32**, 1957 (1976).
