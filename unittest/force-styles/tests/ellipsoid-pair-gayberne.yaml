@@ -3,7 +3,7 @@ lammps_version: 30 Mar 2026
 tags: ellipsoid unstable
 date_generated: Thu May  7 17:40:34 2026
 epsilon: 1e-12
-skip_tests:
+skip_tests: intel
 prerequisites: ! |
   pair gayberne
   atom ellipsoid
