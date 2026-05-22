@@ -1,11 +1,10 @@
-#ifndef MATH_PSWF_H
-#define MATH_PSWF_H
+#ifndef LMP_MATH_PSWF_H
+#define LMP_MATH_PSWF_H
 
 #include <unordered_map>
 #include <vector>
 
-static constexpr int MAX_CHEB_ORDER = 40;
-static constexpr int MAX_MONO_ORDER = 40;
+namespace LAMMPS_NS::MathPSWF {
 
 // prolate functions
 void prolc180(double eps, double &c);
@@ -33,5 +32,5 @@ void spread_fourier_poly(double tol, double r_tol, const double &c, double &lamb
                          std::vector<double> &coeffs);
 void spread_real_poly(int P, double tol, double r_tol, const double &c,
                       std::vector<double> &coeffs);
-
-#endif    // MATH_PSWF_H
+}    // namespace LAMMPS_NS::MathPSWF
+#endif    // LMP_MATH_PSWF_H

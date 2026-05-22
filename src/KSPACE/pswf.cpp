@@ -1,8 +1,9 @@
 #include "pswf.h"
 
+#include "math_const.h"
+
 #include <algorithm>
 #include <array>
-#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -10,6 +11,11 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+using LAMMPS_NS::MathConst::MY_PI;
+
+static constexpr int MAX_CHEB_ORDER = 40;
+static constexpr int MAX_MONO_ORDER = 40;
 
 // start of legendre functions
 static inline void legepol(double x, int n, double &pol, double &der)
@@ -190,10 +196,6 @@ static inline void legeexps(int itype, int n, double *x, std::vector<std::vector
 
   // Call legerts to construct the nodes and weights of the n-point Gaussian quadrature
   legerts(itype_rts, n, x, whts);
-  // gaussian_quadrature(n, x, whts);
-
-  // legerts() is buggy now, type 2(code below) is not tested yet.
-  // legerts_(&itype_rts, &n, x, whts);
 
   // If itype is not 2, return early
   if (itype != 2) return;
@@ -289,12 +291,10 @@ static inline void legendre(int n, double x, double &pn, double &pn_prime)
 // Function to compute the nodes and weights of the n-point Gaussian quadrature
 static inline void gaussian_quadrature(int n, double *nodes, double *weights)
 {
-  constexpr double my_pi = 3.1415926535897932384626433832795028841L;
   static std::vector<std::vector<double>> precomp_nodes(1000);
   static std::vector<std::vector<double>> precomp_weights(1000);
 
   {    // Precompute
-    assert(n < precomp_nodes.size() && n < precomp_weights.size());
     if (precomp_nodes[n].size() == 0 && precomp_weights[n].size() == 0) {
 #pragma omp critical(GAUSS_QUAD)
       if (precomp_nodes[n].size() == 0 && precomp_weights[n].size() == 0) {
@@ -307,7 +307,7 @@ static inline void gaussian_quadrature(int n, double *nodes, double *weights)
           const double tolerance = 1e-16;
           const int max_iterations = 100;
           for (int i = 0; i < (n + 1) / 2; ++i) {
-            double x = std::cos(my_pi * (i + 0.75) / (n + 0.5));
+            double x = std::cos(MY_PI * (i + 0.75) / (n + 0.5));
             double pn, pn_prime;
 
             for (int iter = 0; iter < max_iterations; ++iter) {
@@ -337,30 +337,12 @@ static inline void gaussian_quadrature(int n, double *nodes, double *weights)
 // end of legendre functions
 
 // start of monomial utils
-static inline void monomial_nodes_1d(int nnodes, std::vector<double> &nodes, double a = 0,
-                                     double b = 1)
-{
-  if (nodes.size() != nnodes) nodes.resize(nnodes);
-  for (int i = 0; i < nnodes; i++) { nodes[i] = (double) i / (double) (nnodes - 1) * (b - a) + a; }
-}
-
-static inline void monomial_basis_1d(int order, const std::vector<double> &x,
-                                     std::vector<double> &y, double a = 0, double b = 1)
-{
-  int n = x.size();
-  if (y.size() != order * n) y.resize(order * n);
-
-  for (size_t i = 0; i < n; i++) {
-    for (int j = 0; j < order; j++) { y[j * n + i] = pow((x[i] - a) / (b - a), order - j - 1); }
-  }
-}
 
 static inline void cheb_nodes_1d(int order, std::vector<double> &nodes, double a, double b)
 {
-  constexpr double my_pi = 3.1415926535897932384626433832795028841L;
-  if (nodes.size() != order) nodes.resize(order);
+  if ((int)nodes.size() != order) nodes.resize(order);
   for (int i = 0; i < order; i++) {
-    nodes[i] = -cos((i + (double) 0.5) * my_pi / order) * (double) 0.5 + (double) 0.5;
+    nodes[i] = -cos((i + (double) 0.5) * MY_PI / order) * (double) 0.5 + (double) 0.5;
     nodes[i] = nodes[i] * (b - a) + a;
   }
 }
@@ -380,7 +362,7 @@ static inline void monomial_interp_1d(int nnodes, std::vector<double> &fn_v,
     return r;
   };
 
-  size_t dof = fn_v.size() / nnodes;
+  int dof = fn_v.size() / nnodes;
 
   std::vector<double> newton_coeffs = fn_v;
 
@@ -411,26 +393,25 @@ static inline void cheb_basis_1d(int order, const std::vector<double> &x, std::v
                                  double a = 0, double b = 1)
 {
   int n = x.size();
-  if (y.size() != order * n) y.resize(order * n);
+  if ((int)y.size() != order * n) y.resize(order * n);
 
   if (order > 0) {
-    for (size_t i = 0; i < n; i++) { y[i] = 1.0; }
+    for (int i = 0; i < n; i++) y[i] = 1.0;
   }
   if (order > 1) {
-    for (size_t i = 0; i < n; i++) { y[i + n] = x[i] * 2 / (b - a) - 2 * a / (b - a) - 1; }
+    for (int i = 0; i < n; i++) y[i + n] = x[i] * 2 / (b - a) - 2 * a / (b - a) - 1;
   }
   for (int i = 2; i < order; i++) {
-    for (size_t j = 0; j < n; j++) {
+    for (int j = 0; j < n; j++) {
       y[i * n + j] = 2 * y[n + j] * y[i * n - 1 * n + j] - y[i * n - 2 * n + j];
     }
   }
 }
 
-void cheb_interp_1d(int order, std::vector<double> &fn_v, std::vector<double> &coeff)
+static void cheb_interp_1d(int order, std::vector<double> &fn_v, std::vector<double> &coeff)
 {
   static std::vector<std::vector<double>> precomp(1000);
   {    // Precompute
-    assert(order < precomp.size());
     if (precomp[order].size() == 0) {
 #pragma omp critical(CHEB_BASIS_APPROX)
       if (precomp[order].size() == 0) {
@@ -443,216 +424,22 @@ void cheb_interp_1d(int order, std::vector<double> &fn_v, std::vector<double> &c
   }
   std::vector<double> &p = precomp[order];
 
-  size_t dof = fn_v.size() / order;
-  assert(fn_v.size() == dof * order);
-  if (coeff.size() != dof * order) coeff.resize(dof * order);
+  int dof = fn_v.size() / order;
+  if ((int)coeff.size() != dof * order) coeff.resize(dof * order);
 
   const double inv_order = 1.0 / static_cast<double>(order);
   const double two_inv_order = 2.0 * inv_order;
-  for (std::size_t id = 0; id < dof; ++id) {
-    const std::size_t base = id * order;
-    for (std::size_t k = 0; k < order; ++k) {
+  for (int id = 0; id < dof; ++id) {
+    const int base = id * order;
+    for (int k = 0; k < order; ++k) {
       double sum = 0.0;
       const double *pk = &p[k * order];
-      for (std::size_t j = 0; j < order; ++j) { sum += fn_v[base + j] * pk[j]; }
+      for (int j = 0; j < order; ++j) sum += fn_v[base + j] * pk[j];
       coeff[base + k] = (k == 0) ? (sum * inv_order) : (sum * two_inv_order);
     }
   }
 }
 // end of monomial utils
-
-// start of prolate functions
-void prolc180_der3(double eps, double &der3)
-{
-
-  static const std::array<double, 180> der3s = {
-      0.0,
-      3.703231117106314e-02,
-      2.662796075011415e-01,
-      5.941926542747007e-01,
-      9.578230754832373e-01,
-      1.363569812949696e+00,
-      1.807582627232425e+00,
-      2.287040787443315e+00,
-      2.800489841625932e+00,
-      3.346520825211228e+00,
-      3.925129833524817e+00,
-      4.535419879018613e+00,
-      5.177538088593701e+00,
-      5.851057619952580e+00,
-      6.555804054828174e+00,
-      7.292020430656394e+00,
-      8.059158990368712e+00,
-      8.857123665436557e+00,
-      9.686327541088655e+00,
-      1.054640955930842e+01,
-      1.143707141760266e+01,
-      1.235843748588681e+01,
-      1.331074380051023e+01,
-      1.429316645410095e+01,
-      1.530644212280254e+01,
-      1.634980229052360e+01,
-      1.742371527350574e+01,
-      1.852786959134436e+01,
-      1.966241028647265e+01,
-      2.082706565691709e+01,
-      2.202156399063638e+01,
-      2.324513764895337e+01,
-      2.450154874132168e+01,
-      2.578557879197864e+01,
-      2.710219152702352e+01,
-      2.844590643457592e+01,
-      2.982194872189250e+01,
-      3.122457703819981e+01,
-      3.265927724478793e+01,
-      3.412004831578323e+01,
-      3.561263588011575e+01,
-      3.713704155571862e+01,
-      3.869326681306944e+01,
-      4.027479309954505e+01,
-      4.188123512956217e+01,
-      4.352576155609020e+01,
-      4.519494867085516e+01,
-      4.689544558088133e+01,
-      4.862725312364265e+01,
-      5.038308226775531e+01,
-      5.216996738943379e+01,
-      5.398790913473069e+01,
-      5.583690809846664e+01,
-      5.771696483563476e+01,
-      5.962015154378219e+01,
-      6.155414190868980e+01,
-      6.351893636867634e+01,
-      6.551453532837742e+01,
-      6.753250221415664e+01,
-      6.958958399152446e+01,
-      7.166878031319368e+01,
-      7.377852843589304e+01,
-      7.591882864408177e+01,
-      7.808968120601168e+01,
-      8.028188878922057e+01,
-      8.251372002218120e+01,
-      8.476665370485364e+01,
-      8.704988763041084e+01,
-      8.936342198942501e+01,
-      9.170725696750367e+01,
-      9.408139273542218e+01,
-      9.647574810864796e+01,
-      9.891035968318585e+01,
-      1.013649391732796e+02,
-      1.038495680706917e+02,
-      1.063748312950304e+02,
-      1.089196851143706e+02,
-      1.114945887021435e+02,
-      1.140885801820887e+02,
-      1.167234579055465e+02,
-      1.193883857149036e+02,
-      1.220720250413416e+02,
-      1.247969275635160e+02,
-      1.275402908406401e+02,
-      1.303251684172720e+02,
-      1.331282559724378e+02,
-      1.359611431651965e+02,
-      1.388238300708471e+02,
-      1.417163167603507e+02,
-      1.446386032954563e+02,
-      1.475782236729200e+02,
-      1.505599848644160e+02,
-      1.535715460806204e+02,
-      1.566000662021011e+02,
-      1.596711024010027e+02,
-      1.627588477107742e+02,
-      1.658893590967149e+02,
-      1.690363297860595e+02,
-      1.722128508870634e+02,
-      1.754189224418921e+02,
-      1.786545444888072e+02,
-      1.819197170667437e+02,
-      1.852144402114015e+02,
-      1.885387139581953e+02,
-      1.918925383387225e+02,
-      1.952759133924808e+02,
-      1.986743765316800e+02,
-      2.021167283277167e+02,
-      2.055886308747634e+02,
-      2.090752480704547e+02,
-      2.126061275354775e+02,
-      2.161514728445827e+02,
-      2.197413293189910e+02,
-      2.233454028450144e+02,
-      2.269787784335390e+02,
-      2.306414561065548e+02,
-      2.343491422119853e+02,
-      2.380705482795840e+02,
-      2.418212564954385e+02,
-      2.456012668766033e+02,
-      2.494105794440804e+02,
-      2.532491942146669e+02,
-      2.571171112093926e+02,
-      2.610143304358681e+02,
-      2.649241522962268e+02,
-      2.688798518867251e+02,
-      2.728648537691562e+02,
-      2.768791579444873e+02,
-      2.809055686954829e+02,
-      2.849783533576689e+02,
-      2.890804403554123e+02,
-      2.931942620075851e+02,
-      2.973548295757224e+02,
-      3.015268840118008e+02,
-      3.057279930461074e+02,
-      3.099762194632530e+02,
-      3.142355613580597e+02,
-      3.185422684529161e+02,
-      3.228598432462443e+02,
-      3.272064726902580e+02,
-      3.315821567930542e+02,
-      3.360057012097200e+02,
-      3.404396183022963e+02,
-      3.449025900686188e+02,
-      3.493946165380561e+02,
-      3.539156977033438e+02,
-      3.584658335865259e+02,
-      3.630450242038053e+02,
-      3.676532695407853e+02,
-      3.722905695962574e+02,
-      3.769569244097179e+02,
-      3.816523339874616e+02,
-      3.863767983079612e+02,
-      3.911100281057601e+02,
-      3.958924783306446e+02,
-      4.007039833307977e+02,
-      4.055445431251419e+02,
-      4.103933743959938e+02,
-      4.152919201395830e+02,
-      4.202195206860208e+02,
-      4.251550223528558e+02,
-      4.301406088745175e+02,
-      4.351552502298094e+02,
-      4.401774223148202e+02,
-      4.452500497108158e+02,
-      4.503299610661473e+02,
-      4.554605744971888e+02,
-      4.605982251667677e+02,
-      4.657646839606519e+02,
-      4.709822146642819e+02,
-      4.762064127721131e+02,
-      4.814819295722471e+02,
-      4.867638670342317e+02,
-      4.920746126195583e+02,
-      4.974370467592532e+02,
-      5.028055317088541e+02,
-      5.082028248088587e+02,
-      5.136289260479356e+02,
-      5.191072088380275e+02,
-      5.245910494770286e+02,
-  };
-
-  if (eps < 1.0e-18) eps = 1e-18;
-  double d = -log10(eps);
-  int i = static_cast<int>(d * 10 + 0.1);
-  der3 = der3s[i - 1];
-}
 
 void prolc180(double eps, double &c)
 {
@@ -973,7 +760,6 @@ static inline void prolps0i(int &ier, double c, double *w, int lenw, int &nterms
     return;
   }
 
-  // Call to prolfun0 (to be implemented)
   prolfun0(ier, n, c, w + ias - 1, w + ibs - 1, w + ics - 1, w + ixk - 1, w + iu - 1, w + iv - 1,
            w + iw - 1, eps, nterms, rkhi);
 
@@ -1127,35 +913,32 @@ struct Prolate0Fun {
   }
 
   // evaluate prolate0 function val and derivative
-  inline std::pair<double, double> eval_val_derivative(double x) const
+  [[nodiscard]] inline std::pair<double, double> eval_val_derivative(double x) const
   {
     double psi0, derpsi0;
     prol0eva(x, workarray.data(), psi0, derpsi0);
-    // prol0eva_(&x, workarray.data(), &psi0, &derpsi0);
-    // std::pair<double, double> psi0_derpsi0{psi0, derpsi0};
     return {psi0, derpsi0};
   }
 
   // evaluate prolate0 function value
-  inline double eval_val(double x) const
+  [[nodiscard]] inline double eval_val(double x) const
   {
     auto [val, dum] = eval_val_derivative(x);
     return val;
   }
 
   // evaluate prolate0 function derivative
-  inline double eval_derivative(double x) const
+  [[nodiscard]] inline double eval_derivative(double x) const
   {
     auto [dum, der] = eval_val_derivative(x);
     return der;
   }
 
   // int_0^r prolate0(x) dx
-  inline double int_eval(double r) const
+  [[nodiscard]] inline double int_eval(double r) const
   {
     double val;
     prol0int0r(workarray.data(), r, val);
-    // prol0int0r_(workarray.data(), &r, &val);
     return val;
   }
 
@@ -1212,10 +995,8 @@ double prolate0_int_eval(double c, double r)
 // end of prolate functions
 
 // start of approximation functions
-void force_poly(double tol, double tol_coeff, const double &c, std::vector<double> &coeffs)
+void force_poly(double /*tol*/, double tol_coeff, const double &c, std::vector<double> &coeffs)
 {
-  //prolc180(tol, c);
-
   double c0 = prolate0_int_eval(c, 1.0);
 
   int order = MAX_CHEB_ORDER;
@@ -1261,18 +1042,14 @@ void force_poly(double tol, double tol_coeff, const double &c, std::vector<doubl
 
   for (int i = 0; i < nnodes; i++) { fn_v[i] = f(c0, c, nodes[i]); }
 
-  //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
   monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -1.0, 1.0);
   coeffs.resize(max_order, 0.0);
 
-  //for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
   for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
 }
 
-void energy_poly(double tol, double tol_coeff, const double &c, std::vector<double> &coeffs)
+void energy_poly(double /*tol*/, double tol_coeff, const double &c, std::vector<double> &coeffs)
 {
-  //prolc180(tol, c);
-
   double c0 = prolate0_int_eval(c, 1.0);
 
   int order = MAX_CHEB_ORDER;
@@ -1315,20 +1092,16 @@ void energy_poly(double tol, double tol_coeff, const double &c, std::vector<doub
   int nnodes = (int) max_order;    // * 1.75;
   cheb_nodes_1d(nnodes, nodes, -1.0, 1.0);
   fn_v.resize(dof * nnodes);
-  for (int i = 0; i < nnodes; i++) { fn_v[i] = f(c0, c, nodes[i]); }
+  for (int i = 0; i < nnodes; i++) fn_v[i] = f(c0, c, nodes[i]);
 
-  //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
   monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -1.0, 1.0);
 
-  //for (int i = 0; i < max_order; i++) { coeffs[max_order - i - 1] = coeffs_tmp[i]; }
-  for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
+  for (int i = 0; i < max_order; i++) coeffs[i] = coeffs_tmp[i];
 }
 
-void fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
+void fourier_poly(double /*tol*/, double tol_coeff, const double &c, double &lambda,
                   std::vector<double> &coeffs)
 {
-  //prolc180(tol, c);
-
   double c0 = prolate0_int_eval(c, 1.0);
 
   int quad_npts = 200;
@@ -1392,8 +1165,6 @@ void fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
 void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &lambda,
                          std::vector<double> &coeffs)
 {
-  //prolc180(tol, c);
-
   double c0 = prolate0_int_eval(c, 1.0);
 
   int quad_npts = 200;
@@ -1409,7 +1180,7 @@ void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &
   std::vector<double> nodes;
   cheb_nodes_1d(order, nodes, -1.0, 1.0);
 
-  auto f = [](double lambda, double c0, double c, double x) {
+  auto f = [](double lambda, double c, double x) {
     x = (x + 1.0) / 2.0;
     double val = lambda * prolate0_eval(c, x);
     return val;
@@ -1418,7 +1189,7 @@ void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &
   int dof = 1;
   std::vector<double> fn_v(dof * order);
   for (int idof = 0; idof < dof; idof++) {
-    for (int i = 0; i < order; i++) { fn_v[idof * order + i] = f(lambda, c0, c, nodes[i]); }
+    for (int i = 0; i < order; i++) { fn_v[idof * order + i] = f(lambda, c, nodes[i]); }
   }
 
   std::vector<double> cheb_coeff;
@@ -1445,7 +1216,7 @@ void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &
   //monomial_nodes_1d(nnodes, nodes, 0, 1);
   cheb_nodes_1d(nnodes, nodes, -1.0, 1.0);
   fn_v.resize(dof * nnodes);
-  for (int i = 0; i < nnodes; i++) { fn_v[i] = f(lambda, c0, c, nodes[i]); }
+  for (int i = 0; i < nnodes; i++) { fn_v[i] = f(lambda, c, nodes[i]); }
 
   //monomial_interp_1d(max_order, nnodes, fn_v, coeffs_tmp);
   monomial_interp_1d(nnodes, fn_v, coeffs_tmp, -1.0, 1.0);
@@ -1454,11 +1225,9 @@ void spread_fourier_poly(double tol, double tol_coeff, const double &c, double &
   for (int i = 0; i < max_order; i++) { coeffs[i] = coeffs_tmp[i]; }
 }
 
-void spread_real_poly(int P, double tol, double tol_coeff, const double &c,
+void spread_real_poly(int P, double /*tol*/, double tol_coeff, const double &c,
                       std::vector<double> &coeffs)
 {
-  //prolc180(tol, c);
-
   int order = MAX_CHEB_ORDER;
   std::vector<double> nodes;
   cheb_nodes_1d(order, nodes, -0.5, 0.5);
