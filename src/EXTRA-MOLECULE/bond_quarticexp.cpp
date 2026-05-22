@@ -93,7 +93,7 @@ void BondQuarticExp::compute(int eflag, int vflag)
 
     // exp force and energy
 
-    if (A[type] != 0.0) {
+    if (A[type] != 0.0 && B[type] != 0.0) {
       double a = A[type];
       double b = B[type];
       double ebond_exp = a*exp(-r/b);
@@ -155,9 +155,6 @@ void BondQuarticExp::coeff(int narg, char **arg)
   double k4_one = utils::numeric(FLERR,arg[4],false,lmp);
   double A_one = utils::numeric(FLERR,arg[5],false,lmp);
   double B_one = utils::numeric(FLERR,arg[6],false,lmp);
-
-  if (A_one != 0.0 && B_one == 0.0)
-    error->all(FLERR,"Bond quartic/exp requires B != 0 when A != 0");
 
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
@@ -248,10 +245,12 @@ double BondQuarticExp::single(int type, double rsq, int /*i*/, int /*j*/,
   else fforce = 0.0;
   double eng = k2[type]*dr2 + k3[type]*dr3 + k4[type]*dr4;
 
-  if (A[type] != 0.0) {
-    double ebond_exp = A[type]*exp(-r/B[type]);
+  if (A[type] != 0.0 && B[type] != 0.0) {
+    double a = A[type];
+    double b = B[type];
+    double ebond_exp = a*exp(-r/b);
     eng += ebond_exp;
-    if (r > 0.0) fforce += ebond_exp/B[type]/r;
+    if (r > 0.0) fforce += ebond_exp/b/r;
   }
 
   return eng;
