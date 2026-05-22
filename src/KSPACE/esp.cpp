@@ -202,7 +202,7 @@ void ESP::init()
   pair_check();
 
   int itmp = 0;
-  auto p_cutoff = (double *) force->pair->extract("cut_coul",itmp);
+  auto *p_cutoff = (double *) force->pair->extract("cut_coul",itmp);
   if (p_cutoff == nullptr)
     error->all(FLERR, "KSpace style is incompatible with Pair style");
   cutoff = *p_cutoff;
@@ -212,11 +212,11 @@ void ESP::init()
   if (tip4pflag) {
     if (me == 0) utils::logmesg(lmp,"  extracting TIP4P info from pair style\n");
 
-    auto p_qdist = (double *) force->pair->extract("qdist",itmp);
-    int *p_typeO = (int *) force->pair->extract("typeO",itmp);
-    int *p_typeH = (int *) force->pair->extract("typeH",itmp);
-    int *p_typeA = (int *) force->pair->extract("typeA",itmp);
-    int *p_typeB = (int *) force->pair->extract("typeB",itmp);
+    auto *p_qdist = (double *) force->pair->extract("qdist",itmp);
+    auto *p_typeO = (int *) force->pair->extract("typeO",itmp);
+    auto *p_typeH = (int *) force->pair->extract("typeH",itmp);
+    auto *p_typeA = (int *) force->pair->extract("typeA",itmp);
+    auto *p_typeB = (int *) force->pair->extract("typeB",itmp);
     if (!p_qdist || !p_typeO || !p_typeH || !p_typeA || !p_typeB)
       error->all(FLERR,"Pair style is incompatible with TIP4P KSpace style");
     qdist = *p_qdist;

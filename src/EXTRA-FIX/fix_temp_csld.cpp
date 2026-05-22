@@ -296,7 +296,7 @@ double FixTempCSLD::compute_scalar()
 void FixTempCSLD::write_restart(FILE *fp)
 {
   int nsize = PRNGSIZE*comm->nprocs + 2; // pRNG state per proc + nprocs + energy
-  double *list = new double[nsize];
+  auto *list = new double[nsize];
 
   if (comm->me == 0) {
     list[0] = energy;
