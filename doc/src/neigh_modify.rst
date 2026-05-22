@@ -265,16 +265,22 @@ depend on their atom type.
 
 The *bin/hash* option toggles whether the atoms in a bin are stored in
 a linked list (default) or a hash table where each bin is a key that
-maps to a set of all atoms contained in that bin. This reduces memory
-usage in scenarios where there are lots of bins that do not contain
-atoms. For instance, in a binary system with a large disparity in
-atom sizes/cutoffs, the total number of bins will be determined by the
-size of the smallest particle. However, almost all bins that lie within
-the span of the largest particle will be empty. The hash option is only
-available for the *multi* neighbor mode. One may need to also adjust how
-atoms are sorted using the :doc:`atom_modify <atom_modify>` command to
-avoid creating too many bins in these scenarios. If so, it is
-recommended to use the smallest bin size possible to improve performance.
+maps to a set of all atoms contained in that bin. This may be required
+when the simulation box is too large relative to the size of a neighbor
+bin (which will cause LAMMPS to error), but will also reduce memory usage
+and can improve performance in systems with lots of bins that do not
+contain atoms. For instance, in a binary system with a large disparity
+in atom sizes/cutoffs. Here, the total number of bins will be determined
+by the size of the smallest particle. However, almost all bins that lie
+within the span of the largest particle will be empty. The hash option
+is only available for the *multi* neighbor mode.
+
+If this option is used to avoid errors regarding the number of bins used
+to construct neighbor lists, one may need to additionally increase the
+size of the bin used to sort atoms using the :doc:`atom_modify
+<atom_modify>` command. If adjusted, it is recommended to keep the increase
+conservative such that bins are still reasonably small to preserve
+performance.
 
 Restrictions
 """"""""""""
