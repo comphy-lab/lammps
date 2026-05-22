@@ -1,4 +1,4 @@
-/* -*- c++ -*- ----------------------------------------------------------
+5f/* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
    LAMMPS development team: developers@lammps.org
@@ -10,6 +10,10 @@
 
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------
+   Contributing authors: Joel Clemmer (SNL)
+----------------------------------------------------------------------- */
 
 #include "fix_surface_local.h"
 
@@ -27,7 +31,6 @@
 #include "molecule.h"
 #include "neighbor.h"
 #include "stl_reader.h"
-
 #include "update.h"
 
 #include <cstring>
@@ -37,42 +40,13 @@ using namespace LAMMPS_NS;
 using namespace FixConst;
 using namespace MathConst;
 
-// NOTE: test input keyword options for multiple mol/STL files +/- data, like FSG
-
-// NOTE: how to set and limit MAXTRIPOINT for allocators, no overallocation now
-// NOTE: need more tallying in memory_usage()
-// NOTE: total bin count for Rvous seems too large when small # of surfs - check nbins ?
-
-// NOTE: make DELTA values bigger when done testing
-// NOTE: num in point_match() is just for debugging, can remove it
-// NOTE: call to domain->remap() in assign2d/3d() will wrap new mol/STL line/tri particles by PBC
-//       is that what we want ?   not the case for fix surf/global lines/tris
-// NOTE: maybe this fix and FSG should be invoked during minimization ?
-//       do granular particle/particle pair styles work with minimization ?
-// NOTE: how are restarts done for the FSG and FSL fixes - should they store info
-//       in the restart file?  FSL sort of naturally does via the particles
-// NOTE: in FSG neigh-list-retrigger is based on surf point movement
-//         due to any motion applied in initial_integrate()
-//       is anything similar done for FSL and FixMove ?
-//       nothing for tri points is done in Neighbor::check_distance()
-// NOTE: motion consistency check for connected lines/tris
-//       can be done in init() for FSG, since FSG stores motion for each surf
-//       idea for how to do it in FSL init(), since FLS knows nothing about motion
-//         detect instances of fix move which apply to lines/tris
-//           store which group used for each instance
-//         loop over pairs of connected lines/tris
-//           if each belongs to different group assigned to FixMove instance,
-//             flag error - assume different FixMove = different motion
-//       could put motion error check methods (line/tri,2d/3d) in fix surface
-
 static constexpr double EPSILON = 0.001;
 static constexpr int NBIN = 100;
 static constexpr double BIG = 1.0e20;
 static constexpr int MAXTRIPOINT = 24;
-
 static constexpr int DELTA = 128;
-static constexpr int DELTA_CONNECT = 4;     // make it larger when done testing
-static constexpr int DELTA_RVOUS = 8;       // must be >= 8, make it bigger when done testing
+static constexpr int DELTA_CONNECT = 1024;
+static constexpr int DELTA_RVOUS = 1024;       // must be >= 8
 
 enum{NONFLAT,FLAT};
 enum{CONCAVE,CONVEX};
@@ -80,7 +54,6 @@ enum{INTERNAL = 0,EXTERNAL,UNCONNECTED};
 enum{SAME_SIDE,OPPOSITE_SIDE};
 
 static constexpr double FLATTHRESH = 0.00015230484360876085; // = 1.0-cos(MY_PI/180.0); = 1 degree
-
 static constexpr int RVOUS = 1;   // 0 for irregular, 1 for all2all
 
 enum{MOLTEMPLATE,STLFILE};
