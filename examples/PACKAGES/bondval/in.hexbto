@@ -6,7 +6,7 @@ atom_style full
 boundary p p p
 pair_style hybrid/overlay  lj/cut/coul/long 8.0 8.0 bondval 2.0 8.0 bondval/vec 2.0 8.0
 read_data  cubic15final.data
-kspace_style pppm 1.0e-4
+kspace_style pppm 1.0e-5
 
 #read_restart BTO.restart
 pair_coeff 1 1 lj/cut/coul/long 2.0  2.44805
@@ -35,7 +35,6 @@ pair_coeff 2 3 bondval/vec 1.7980000 5.2000000 0.0000000 0.0000000 8.0000000
 pair_coeff 3 3 bondval/vec 0.0000000 5.0000000 0.2800600 0.3165100 8.0000000
 
 neighbor    2.0 bin
-neigh_modify    delay 0 every 1000000 check no
 
 # time unit fs
 timestep     0.001
@@ -59,7 +58,7 @@ thermo_modify line one format float %12.5f
 
 #to equilibrate the system at a constant temperature using the NVT ensemble
 fix 1 all nvt temp 300.0 300.0 1.0
-run 500
+run 50
 #unfix 1
 #to equilibrate the system at constant temperature and pressure using the NPT ensemble
 #fix 2 all nvt temp 300.0 300.0 1.0
