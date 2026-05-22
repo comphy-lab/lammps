@@ -1,18 +1,47 @@
-.. _pair_bondval:
+.. index:: pair_style bondval
+.. index:: pair_style bondval/kk
+.. index:: pair_style bondval/vec
+.. index:: pair_style bondval/vec/kk
 
-pair_style bondval, bondval/vec (Bond-Valence Potential)
-=========================================================
+
+pair_style bondval command
+==========================
+
+Accelerator Variants: *bondval/kk*
+
+pair_style bondval/vec command
+==============================
+
+Accelerator Variants: *bondval/vec/kk*
 
 Syntax
 ------
 
-The bond-valence potential is typically used with ``hybrid/overlay`` in order
-to combine Coulomb, Lennard-Jones repulsion, bond-valence, and bond-valence
-vector contributions.
+.. code-block:: LAMMPS
+
+   pair_style style args
+
+* style = *bondval* or *bondval/vec*
+* args = list of arguments for a particular style
+
+.. parsed-literal::
+
+   *bondval* args = cutoff1 cutoff2
+     cutoff1 =
+     cutoff2 =
+   *bondval/vec* args = cutoff1 cutoff2
+     cutoff1 =
+     cutoff2 =
+
+.. FIXME
+.. The section above and below needs to be adjusted to conform to
+.. what is generally done in LAMMPS. Compare to the docs for pair style morse
+.. or pair style ilp/graphene/hbn
+
 
 .. code-block:: LAMMPS
 
-   pair_style hybrid/overlay lj/cut/coul/long cutoff1 cutoff2 bondval cutoff1 cutoff2 bondval/vec cutoff1 cutoff2
+   hybrid/overlay lj/cut/coul/long cutoff1 cutoff2 bondval cutoff1 cutoff2 bondval/vec cutoff1 cutoff2
 
 Pair coefficients are specified per atom-type pair:
 
@@ -76,9 +105,13 @@ Description
 
 .. versionadded:: TBD
 
-The Bond-Valence potential is an empirical potential based on the conservation
-principles of the bond-valence (bondval) and bond-valence vector (bondval/vec)
-that is fitted to DFT calculations for a given bulk semiconductor.
+The Bond-Valence potential is an empirical potential based on the
+conservation principles of the bond-valence (bondval) and bond-valence
+vector (bondval/vec) that is fitted to DFT calculations for a given bulk
+semiconductor.  The bond-valence potential is typically used with
+:doc:`pair style hybrid/overlay <pair_hybrid>` in order to combine
+Coulomb, Lennard-Jones repulsion, bond-valence, and bond-valence vector
+contributions.
 
 The bond-valence for a given pair of atoms (:math:`V_{ij}`) is a measure of the bonding
 strength and can be calculated from the lengths of its bonds (:math:`r_{ij}`) by:
@@ -86,14 +119,14 @@ strength and can be calculated from the lengths of its bonds (:math:`r_{ij}`) by
 .. math::
    V_{ij} = \left( \frac{r_{0,ij}}{r_{ij}} \right)^{c_{ij}}
 
-where :math:`r_{0,ij}` and :math:`c_{ij}` are Brown’s empirical parameters for bond-valence. The
-bond-valence vector is defined as a vector lying along the
-bond :math:`\vec{V}_{ij} = V_{ij} \hat{R}_{ij}`,
-where :math:`\hat{R}_{ij}` is the unit vector
-pointing from atom i to atom j. The total energy (:math:`E`) consists of the Coulombic
-energy (:math:`E_c`), the short-range repulsive energy (:math:`E_r`),
-the bond-valence energy (:math:`E_{BV}`), the bond-valence vector energy (:math:`E_{BVV}`),
-and the angle potential (:math:`E_a`):
+where :math:`r_{0,ij}` and :math:`c_{ij}` are Brown's empirical
+parameters for bond-valence. The bond-valence vector is defined as a
+vector lying along the bond :math:`\vec{V}_{ij} = V_{ij} \hat{R}_{ij}`,
+where :math:`\hat{R}_{ij}` is the unit vector pointing from atom i to
+atom j. The total energy (:math:`E`) consists of the Coulombic energy
+(:math:`E_c`), the short-range repulsive energy (:math:`E_r`), the
+bond-valence energy (:math:`E_{BV}`), the bond-valence vector energy
+(:math:`E_{BVV}`), and the angle potential (:math:`E_a`):
 
 .. math::
    E = E_c + E_r + E_{BV} + E_{BVV} + E_a
@@ -138,6 +171,11 @@ defined, it is assumed to be zero. Otherwise, it can be set with the following c
    Angle Coeffs
    1 15.0 180   # type of angle potential, k(eV/rad^2), degree
 
+---------
+
+.. include:: accel_styles.rst
+
+---------
 
 Restrictions
 ------------
