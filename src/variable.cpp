@@ -236,7 +236,6 @@ void Variable::set(int narg, char **arg)
     error->all(FLERR, Error::ARGZERO,
                "Variable name '{}' must have only letters, numbers, or underscores", arg[0]);
 
-  int replaceflag = 0;
   int ivar = find(arg[0]);
   std::string varstyle = arg[1];
 
@@ -255,7 +254,6 @@ void Variable::set(int narg, char **arg)
   if (ivar < 0) ivar = recycle();
   auto &newvar = variables[ivar];
   newvar.name = arg[0];
-  newvar.eval_in_progress = 0;
 
   // NOTE: it is important to assign the variable style last,
   // so an entry remains flagged as unassigned in case of errors
@@ -363,7 +361,7 @@ void Variable::set(int narg, char **arg)
       if (narg == 4 && strcmp(arg[3], "pad") != 0)
         error->all(FLERR, 3, "Invalid variable uloop argument: {}", arg[3]);
 
-            // universe style variables are only assigned if new
+      // uloop style variables are only assigned if new
       if (newvar.style != UNASSIGNED) return;
 
       mystyle = ULOOP;
@@ -377,8 +375,8 @@ void Variable::set(int narg, char **arg)
     }
 
     if (newvar.num < universe->nworlds)
-      error->all(FLERR, 2, "Universe/uloop variable count {} < # of partitions {}", newvar.num,
-        universe->nworlds);
+      error->all(FLERR, 2, "{} style variable count {} < # of partitions {}",
+                 varstyle, newvar.num, universe->nworlds);
     newvar.which = universe->iworld;
 
     if (universe->me == 0) {
@@ -410,12 +408,8 @@ void Variable::set(int narg, char **arg)
     newvar.num = 1;
     newvar.which = 0;
     newvar.pad = 0;
-    if (newvar.data) {
-      delete newvar.reader;
-    } else {
-      newvar.data = new char *[newvar.num];
-      newvar.data[0] = new char[MAXLINE];
-    }
+    newvar.data = new char *[newvar.num];
+    newvar.data[0] = new char[MAXLINE];
     newvar.reader = new VarReader(lmp, arg[0], arg[2], SCALARFILE);
     int flag = newvar.reader->read_scalar(newvar.data[0]);
     if (flag) error->all(FLERR, "File variable {} could not read value from {}", arg[0], arg[2]);
@@ -436,12 +430,7 @@ void Variable::set(int narg, char **arg)
     newvar.num = 1;
     newvar.which = 0;
     newvar.pad = 0;
-    if (newvar.data) {
-      delete newvar.reader;
-      delete[] newvar.data[0];
-    } else {
-      newvar.data = new char *[newvar.num];
-    }
+    newvar.data = new char *[newvar.num];
     newvar.data[0] = nullptr;
     newvar.reader = new VarReader(lmp, arg[0], arg[2], ATOMFILE);
     int flag = newvar.reader->read_peratom();
@@ -456,6 +445,9 @@ void Variable::set(int narg, char **arg)
     if (varstyle != varstyles[newvar.style])
       error->all(FLERR, 1, "Cannot redefine {} style variable {} as {} style variable",
                  varstyles[newvar.style], arg[0], varstyle);
+    // wipe out all data from existing variable and set name again.
+    newvar.clear();
+    newvar.name = arg[0];
   }
 
   // STRING
@@ -479,7 +471,6 @@ void Variable::set(int narg, char **arg)
     newvar.num = 1;
     newvar.which = 0;
     newvar.pad = 0;
-    if (newvar.data) delete[] newvar.data[0];
     newvar.data = new char *[newvar.num];
     copy(1, &scopy, newvar.data);
     memory->sfree(scopy);
@@ -499,13 +490,7 @@ void Variable::set(int narg, char **arg)
     newvar.num = 2;
     newvar.which = 0;
     newvar.pad = 0;
-
-    if (newvar.data) {
-      delete[] newvar.data[0];
-      delete[] newvar.data[1];
-    } else {
-      newvar.data = new char *[newvar.num];
-    }
+    newvar.data = new char *[newvar.num];
     newvar.data[0] = utils::strdup(arg[2]);
     newvar.data[1] = utils::strdup("(undefined)");
     newvar.style = GETENV;
@@ -532,14 +517,7 @@ void Variable::set(int narg, char **arg)
     newvar.num = 3;
     newvar.which = 0;
     newvar.pad = 0;
-    if (newvar.data) {
-      delete[] newvar.data[0];
-      delete[] newvar.data[1];
-      delete[] newvar.data[2];
-    } else {
-      newvar.data = new char *[newvar.num];
-    }
-
+    newvar.data = new char *[newvar.num];
     newvar.data[0] = utils::strdup(arg[2]);
     newvar.data[1] = utils::strdup(arg[3]);
     newvar.data[2] = new char[VALUELENGTH];
@@ -565,12 +543,7 @@ void Variable::set(int narg, char **arg)
     newvar.num = 2;
     newvar.which = 0;
     newvar.pad = 0;
-    if (newvar.data) {
-      delete[] newvar.data[0];
-      delete[] newvar.data[1];
-    } else {
-      newvar.data = new char *[newvar.num];
-    }
+    newvar.data = new char *[newvar.num];
     newvar.data[0] = utils::strdup(combined);
     newvar.data[1] = new char[VALUELENGTH];
     strcpy(newvar.data[1], "(undefined)");
@@ -595,11 +568,7 @@ void Variable::set(int narg, char **arg)
     newvar.num = 1;
     newvar.which = 0;
     newvar.pad = 0;
-    if (newvar.data) {
-      delete[] newvar.data[0];
-    } else {
-      newvar.data = new char *[newvar.num];
-    }
+    newvar.data = new char *[newvar.num];
     newvar.data[0] = utils::strdup(combined);
     newvar.style = ATOM;
     return;
@@ -624,13 +593,7 @@ void Variable::set(int narg, char **arg)
     newvar.num = 2;
     newvar.which = 0;
     newvar.pad = 0;
-    if (newvar.data) {
-      delete[] newvar.data[0];
-      delete[] newvar.data[1];
-    } else {
-      newvar.data = new char *[newvar.num];
-    }
-
+    newvar.data = new char *[newvar.num];
     newvar.data[0] = utils::strdup(combined);
     if (newvar.data[0][0] != '[') {
       newvar.vec.dynamic = 1;
@@ -659,13 +622,7 @@ void Variable::set(int narg, char **arg)
     newvar.which = 1;
     newvar.pad = 0;
     newvar.pyindex = -1;
-    if (newvar.data) {
-      delete[] newvar.data[0];
-      delete[] newvar.data[1];
-    } else {
-      newvar.data = new char *[newvar.num];
-    }
-
+    newvar.data = new char *[newvar.num];
     newvar.data[0] = utils::strdup(arg[2]);
     newvar.data[1] = new char[VALUELENGTH];
     strcpy(newvar.data[1], "(undefined)");
@@ -686,10 +643,8 @@ void Variable::set(int narg, char **arg)
     newvar.num = 1;
     newvar.which = 0;
     newvar.pad = 0;
-    if (!newvar.data) {
-      newvar.data = new char *[newvar.num];
-      newvar.data[0] = new char[VALUELENGTH];
-    }
+    newvar.data = new char *[newvar.num];
+    newvar.data[0] = new char[VALUELENGTH];
     newvar.dvalue = platform::walltime();
     newvar.style = TIMER;
     return;
@@ -707,10 +662,8 @@ void Variable::set(int narg, char **arg)
     newvar.num = 1;
     newvar.which = 0;
     newvar.pad = 0;
-    if (!newvar.data) {
-      newvar.data = new char *[newvar.num];
-      newvar.data[0] = new char[VALUELENGTH];
-    }
+    newvar.data = new char *[newvar.num];
+    newvar.data[0] = new char[VALUELENGTH];
     newvar.dvalue = utils::numeric(FLERR, arg[2], false, lmp);
     newvar.style = INTERNAL;
     return;
