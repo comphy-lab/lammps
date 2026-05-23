@@ -730,27 +730,30 @@ int Variable::set_string(const char *name, const char *str)
 
 int Variable::next(int narg, char **arg)
 {
-  int ivar;
-
   if (narg == 0) utils::missing_cmd_args(FLERR, "next", error);
 
   // check that variables exist and are all the same style
   // exception: UNIVERSE and ULOOP variables can be mixed in same next command
 
-  for (int iarg = 0; iarg < narg; iarg++) {
+  int ivar = find(arg[0]);
+  if (ivar < 0)
+    error->all(FLERR, Error::ARGZERO, "Invalid variable '{}' in next command",arg[0]);
+  const auto &varzero = variables[ivar];
+
+  for (int iarg = 1; iarg < narg; iarg++) {
     ivar = find(arg[iarg]);
     if (ivar < 0)
-      error->all(FLERR, iarg, "Invalid variable '{}' in next command",arg[iarg]);
-    if (variables[ivar].style == ULOOP && variables[find(arg[0])].style == UNIVERSE) continue;
-    else if (variables[ivar].style == UNIVERSE && variables[find(arg[0])].style == ULOOP) continue;
-    else if (variables[ivar].style != variables[find(arg[0])].style)
+      error->all(FLERR, iarg, "Invalid variable '{}' in next command", arg[iarg]);
+    if (variables[ivar].style == ULOOP && varzero.style == UNIVERSE) continue;
+    else if (variables[ivar].style == UNIVERSE && varzero.style == ULOOP) continue;
+    else if (variables[ivar].style != varzero.style)
       error->all(FLERR,"All variables in next command must have same style");
   }
 
   // invalid styles: STRING, EQUAL, WORLD, GETENV, ATOM, VECTOR,
   //                 FORMAT, PYTHON, TIMER, INTERNAL
 
-  int istyle = variables[find(arg[0])].style;
+  int istyle = varzero.style;
   if (istyle == STRING || istyle == EQUAL ||
       istyle == WORLD || istyle == GETENV || istyle == ATOM ||
       istyle == VECTOR || istyle == FORMAT || istyle == PYTHON ||
@@ -825,7 +828,7 @@ int Variable::next(int narg, char **arg)
 
     int nextindex = -1;
     if (me == 0) {
-      int seed = 12345 + universe->me + variables[find(arg[0])].which;
+      int seed = 12345 + universe->me + varzero.which;
       if (!random) random = new RanMars(lmp,seed);
       int delay = (int) (1000000*random->uniform());
       platform::usleep(delay);
@@ -923,14 +926,13 @@ void Variable::set_arrays(int /*i*/)
 
 /* ----------------------------------------------------------------------
    delete all atomfile style variables.
-   must scan list in reverse since remove() will compact list.
    called from LAMMPS::destroy()
 ------------------------------------------------------------------------- */
 
 void Variable::purge_atomfile()
 {
-  for (int i = get_nvar()-1; i >= 0; --i)
-    if (variables[i].style == ATOMFILE) remove(i);
+  for (auto &ivar : variables)
+    if (ivar.style == ATOMFILE) ivar.clear();
 }
 
 /* ----------------------------------------------------------------------
@@ -964,10 +966,11 @@ void Variable::python_command(int narg, char **arg)
 
 int Variable::equalstyle(int ivar)
 {
-  if (variables[ivar].style == EQUAL || variables[ivar].style == TIMER || variables[ivar].style == INTERNAL) return 1;
-  if (variables[ivar].style == PYTHON) {
-    variables[ivar].pyindex = python->function_match(variables[ivar].data[0], variables[ivar].name.c_str(), 1, error);
-    if (variables[ivar].pyindex >= 0) return 1;
+  auto &var = variables[ivar];
+  if ((var.style == EQUAL) || (var.style == TIMER) || (var.style == INTERNAL)) return 1;
+  if (var.style == PYTHON) {
+    var.pyindex = python->function_match(var.data[0], var.name.c_str(), 1, error);
+    if (var.pyindex >= 0) return 1;
   }
 
   return 0;
@@ -980,7 +983,7 @@ int Variable::equalstyle(int ivar)
 
 int Variable::atomstyle(int ivar)
 {
-  if (variables[ivar].style == ATOM || variables[ivar].style == ATOMFILE) return 1;
+  if ((variables[ivar].style == ATOM) || (variables[ivar].style == ATOMFILE)) return 1;
   return 0;
 }
 
@@ -1042,56 +1045,57 @@ char *Variable::retrieve(const char *name)
 {
   int ivar = find(name);
   if (ivar < 0) return nullptr;
-  if (variables[ivar].which >= variables[ivar].num) return nullptr;
+  auto &var = variables[ivar];
 
-  if (variables[ivar].eval_in_progress)
+  if (var.which >= var.num) return nullptr;
+
+  if (var.eval_in_progress)
     print_var_error(FLERR,"has a circular dependency",ivar);
 
-  variables[ivar].eval_in_progress = 1;
+  var.eval_in_progress = 1;
 
   char *str = nullptr;
-  if (variables[ivar].style == INDEX || variables[ivar].style == WORLD ||
-      variables[ivar].style == UNIVERSE || variables[ivar].style == STRING ||
-      variables[ivar].style == SCALARFILE) {
-    str = variables[ivar].data[variables[ivar].which];
+  if ((var.style == INDEX) || (var.style == WORLD) || (var.style == UNIVERSE) ||
+      (var.style == STRING) || (var.style == SCALARFILE)) {
+    str = var.data[var.which];
 
-  } else if (variables[ivar].style == LOOP || variables[ivar].style == ULOOP) {
+  } else if ((var.style == LOOP) || (var.style == ULOOP)) {
 
     std::string result;
-    if (variables[ivar].pad == 0) result = std::to_string(variables[ivar].which+1);
-    else result = fmt::format("{:0>{}d}",variables[ivar].which+1, variables[ivar].pad);
-    delete[] variables[ivar].data[0];
-    str = variables[ivar].data[0] = utils::strdup(result);
+    if (var.pad == 0) result = std::to_string(var.which+1);
+    else result = fmt::format("{:0>{}d}",var.which+1, var.pad);
+    delete[] var.data[0];
+    str = var.data[0] = utils::strdup(result);
 
-  } else if (variables[ivar].style == EQUAL) {
-    double answer = evaluate(variables[ivar].data[0],nullptr,ivar);
+  } else if (var.style == EQUAL) {
+    double answer = evaluate(var.data[0],nullptr,ivar);
     // round to zero on underflow
     if (fabs(answer) < std::numeric_limits<double>::min()) answer = 0.0;
-    delete[] variables[ivar].data[1];
-    variables[ivar].data[1] = utils::strdup(fmt::format("{:.15g}",answer));
-    str = variables[ivar].data[1];
+    delete[] var.data[1];
+    var.data[1] = utils::strdup(fmt::format("{:.15g}",answer));
+    str = var.data[1];
 
-  } else if (variables[ivar].style == FORMAT) {
-    int jvar = find(variables[ivar].data[0]);
+  } else if (var.style == FORMAT) {
+    int jvar = find(var.data[0]);
     if (jvar < 0)
-      error->all(FLERR, "Variable {}: format variable {} does not exist", variables[ivar].name.c_str(),variables[ivar].data[0]);
+      error->all(FLERR, "Variable {}: format variable {} does not exist", var.name, var.data[0]);
     if (!equalstyle(jvar))
       error->all(FLERR, "Variable {}: format variable {} has incompatible style",
-                 variables[ivar].name.c_str(),variables[ivar].data[0]);
+                 var.name, var.data[0]);
     double answer = compute_equal(jvar);
-    snprintf(variables[ivar].data[2],VALUELENGTH,variables[ivar].data[1],answer);
-    str = variables[ivar].data[2];
+    snprintf(var.data[2],VALUELENGTH,var.data[1],answer);
+    str = var.data[2];
 
-  } else if (variables[ivar].style == GETENV) {
-    const char *result = getenv(variables[ivar].data[0]);
+  } else if (var.style == GETENV) {
+    const char *result = getenv(var.data[0]);
     if (result == nullptr) result = (const char *) "";
-    delete[] variables[ivar].data[1];
-    str = variables[ivar].data[1] = utils::strdup(result);
+    delete[] var.data[1];
+    str = var.data[1] = utils::strdup(result);
 
-  } else if (variables[ivar].style == PYTHON) {
-    int ifunc = python->function_match(variables[ivar].data[0],name,0,error);
-    python->invoke_function(ifunc,variables[ivar].data[1],nullptr);
-    str = variables[ivar].data[1];
+  } else if (var.style == PYTHON) {
+    int ifunc = python->function_match(var.data[0],name,0,error);
+    python->invoke_function(ifunc,var.data[1],nullptr);
+    str = var.data[1];
 
     // if Python func returns a string longer than VALUELENGTH
     // then the Python class stores the result, query it via long_string()
@@ -1099,34 +1103,34 @@ char *Variable::retrieve(const char *name)
     char *strlong = python->long_string(ifunc);
     if (strlong) str = strlong;
 
-  } else if (variables[ivar].style == TIMER || variables[ivar].style == INTERNAL) {
-    delete[] variables[ivar].data[0];
-    variables[ivar].data[0] = utils::strdup(fmt::format("{:.15g}",variables[ivar].dvalue));
-    str = variables[ivar].data[0];
+  } else if ((var.style == TIMER) || (var.style == INTERNAL)) {
+    delete[] var.data[0];
+    var.data[0] = utils::strdup(fmt::format("{:.15g}",var.dvalue));
+    str = var.data[0];
 
-  } else if (variables[ivar].style == VECTOR) {
+  } else if (var.style == VECTOR) {
 
     // check if vector variable needs to be re-computed
-    // if no, just return previously formatted string in variables[ivar].data[1]
+    // if no, just return previously formatted string in var.data[1]
     // if yes, invoke compute_vector() and convert vector to formatted string
     //   must also turn off eval_in_progress b/c compute_vector() checks it
 
-    if (variables[ivar].vec.dynamic || variables[ivar].vec.currentstep != update->ntimestep) {
-      variables[ivar].eval_in_progress = 0;
+    if (var.vec.dynamic || var.vec.currentstep != update->ntimestep) {
+      var.eval_in_progress = 0;
       double *result;
       compute_vector(ivar,&result);
-      delete[] variables[ivar].data[1];
-      std::vector <double> vectmp(variables[ivar].vec.values,variables[ivar].vec.values + variables[ivar].vec.n);
+      delete[] var.data[1];
+      std::vector <double> vectmp(var.vec.values,var.vec.values + var.vec.n);
       std::string str = fmt::format("[{}]", utils::join(vectmp,","));
-      variables[ivar].data[1] = utils::strdup(str);
+      var.data[1] = utils::strdup(str);
     }
 
-    str = variables[ivar].data[1];
+    str = var.data[1];
 
-  } else if (variables[ivar].style == ATOM || variables[ivar].style == ATOMFILE)
+  } else if (var.style == ATOM || var.style == ATOMFILE)
     return nullptr;
 
-  variables[ivar].eval_in_progress = 0;
+  var.eval_in_progress = 0;
 
   return str;
 }
@@ -1349,15 +1353,16 @@ int Variable::internal_create(char *name, double value)
                "Creation of internal-style variable {} which already exists", name);
 
   ivar = recycle();
-  variables[ivar].style = INTERNAL;
-  variables[ivar].num = 1;
-  variables[ivar].which = 0;
-  variables[ivar].pad = 0;
-  variables[ivar].data = new char *[variables[ivar].num];
-  variables[ivar].data[0] = new char[VALUELENGTH];
-  variables[ivar].dvalue = value;
+  auto &newvar = variables[ivar];
 
-  variables[ivar].name = name;
+  newvar.num = 1;
+  newvar.which = 0;
+  newvar.pad = 0;
+  newvar.data = new char *[newvar.num];
+  newvar.data[0] = new char[VALUELENGTH];
+  newvar.dvalue = value;
+  newvar.name = name;
+  newvar.style = INTERNAL;
   return ivar;
 }
 
@@ -5310,15 +5315,14 @@ void Variable::parse_vector(int ivar, char *str)
     error->all(FLERR,"Vector variable formula lacks opening or closing brace: {}", str);
   std::vector<std::string> args = Tokenizer(std::string(str+1, str+nstr), ",").as_vector();
 
-  int nvec = args.size();
-  variables[ivar].vec.n = nvec;
-  variables[ivar].vec.nmax = nvec;
-  variables[ivar].vec.currentstep = -1;
-  delete[] variables[ivar].vec.values;
-  variables[ivar].vec.values = new double[variables[ivar].vec.nmax];
+  auto &var = variables[ivar];
+  var.vec.n = var.vec.nmax = args.size();
+  var.vec.currentstep = -1;
+  delete[] var.vec.values;
+  var.vec.values = new double[var.vec.nmax];
 
-  for (int i = 0; i < nvec; i++)
-    variables[ivar].vec.values[i] = utils::numeric(FLERR, utils::trim(args[i]), false, lmp);
+  for (int i = 0; i < var.vec.nmax; i++)
+    var.vec.values[i] = utils::numeric(FLERR, utils::trim(args[i]), false, lmp);
 }
 
 /* ----------------------------------------------------------------------
@@ -5371,7 +5375,7 @@ void Variable::print_var_error(const std::string &srcfile, const int lineno,
                                const std::string &errmsg, int ivar, int global)
 {
   if ((ivar >= 0) && (ivar < get_nvar())) {
-    std::string msg = fmt::format("Variable {}: ",variables[ivar].name.c_str()) + errmsg;
+    std::string msg = fmt::format("Variable {}: ", variables[ivar].name) + errmsg;
     if (global)
       error->all(srcfile, lineno, Error::NOLASTLINE, msg);
     else
