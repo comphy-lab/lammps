@@ -47,65 +47,13 @@ RegIntersect::RegIntersect(LAMMPS *lmp, int narg, char **arg) :
     nregion++;
   }
 
-
   // this region is variable shape or dynamic if any of sub-regions are
 
-  int moveflag0 = moveflag;
-  int rotateflag0 = rotateflag;
   for (int ilist = 0; ilist < nregion; ilist++) {
     if (reglist[ilist]->varshape) varshape = 1;
     if (reglist[ilist]->dynamic) dynamic = 1;
     if (reglist[ilist]->moveflag) moveflag = 1;
     if (reglist[ilist]->rotateflag) rotateflag = 1;
-  }
-
-  // make sure all subregions have the same motion
-  //   needed such that pretransform gives the same result (performed by intersect)
-
-  if (moveflag) {
-    // copy 1st value if intersect motion not defined
-    if (moveflag0 == 0) {
-      if (reglist[0]->xstr) xstr = utils::strdup(std::string (reglist[0]->xstr));
-      if (reglist[0]->ystr) ystr = utils::strdup(std::string (reglist[0]->ystr));
-      if (reglist[0]->zstr) zstr = utils::strdup(std::string (reglist[0]->zstr));
-    }
-    for (int ilist = 0; ilist < nregion; ilist++) {
-      if (xstr && reglist[ilist]->xstr && strcmp(xstr, reglist[ilist]->xstr) != 0)
-        error->all(FLERR, "All regions in intersect must have the same move x variable");
-      if (ystr && reglist[ilist]->ystr && strcmp(ystr, reglist[ilist]->ystr) != 0)
-        error->all(FLERR, "All regions in intersect must have the same move y variable");
-      if (zstr && reglist[ilist]->zstr && strcmp(zstr, reglist[ilist]->zstr) != 0)
-        error->all(FLERR, "All regions in intersect must have the same move z variable");
-    }
-  }
-
-  if (rotateflag) {
-    // copy 1st value if intersect rotation not defined
-    if (rotateflag0 == 0) {
-      point[0] = reglist[0]->point[0];
-      point[1] = reglist[0]->point[1];
-      point[2] = reglist[0]->point[2];
-      axis[0] = reglist[0]->axis[0];
-      axis[1] = reglist[0]->axis[1];
-      axis[2] = reglist[0]->axis[2];
-    }
-    for (int ilist = 0; ilist < nregion; ilist++) {
-      auto region = reglist[ilist];
-      if (point[0] != region->point[0] ||
-          point[1] != region->point[1] ||
-          point[2] != region->point[2])
-        error->all(FLERR, "All regions in intersect must have the same rotaton origin");
-      if (axis[0] != region->axis[0] ||
-          axis[1] != region->axis[1] ||
-          axis[2] != region->axis[2])
-        error->all(FLERR, "All regions in intersect must have the same rotaton axis");
-    }
-
-    double len = sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
-    if (len == 0.0) error->all(FLERR, Error::NOPOINTER, "Region cannot have 0 length rotation vector");
-    runit[0] = axis[0] / len;
-    runit[1] = axis[1] / len;
-    runit[2] = axis[2] / len;
   }
 
   // extent of intersection of regions
@@ -188,6 +136,27 @@ void RegIntersect::init()
 }
 
 /* ----------------------------------------------------------------------
+   overwrite parent to call for subregions
+------------------------------------------------------------------------- */
+
+void RegIntersect::prematch()
+{
+  int ilist;
+  for (ilist = 0; ilist < nregion; ilist++)
+    reglist[ilist]->prematch();
+}
+
+/* ----------------------------------------------------------------------
+   overwrite parent to skip dynamic methods (may not be defined for union)
+     will be performed by subregion match calls from inside()
+------------------------------------------------------------------------- */
+
+int RegIntersect::match(double x, double y, double z)
+{
+  return !(inside(x, y, z) ^ interior);
+}
+
+/* ----------------------------------------------------------------------
    inside = 1 if x,y,z is match() with all sub-regions
    else inside = 0
 ------------------------------------------------------------------------- */
@@ -203,25 +172,57 @@ int RegIntersect::inside(double x, double y, double z)
 }
 
 /* ----------------------------------------------------------------------
+   overwrite parent to skip dynamic methods (may not be defined for union)
+     will be performed by surface interior/exterior calls separately
+     for each subregion
+------------------------------------------------------------------------- */
+
+int RegIntersect::surface(double x, double y, double z, double cutoff)
+{
+  int ncontact;
+  double xorig[3] = {x, y, z};
+
+  if (!openflag) {
+    if (interior)
+      ncontact = surface_interior(xorig, cutoff);
+    else
+      ncontact = surface_exterior(xorig, cutoff);
+  } else {
+    // one of surface_int/ext() will return 0
+    // so no need to worry about offset of contact indices
+    ncontact = surface_exterior(xorig, cutoff) + surface_interior(xorig, cutoff);
+  }
+
+  return ncontact;
+}
+
+/* ----------------------------------------------------------------------
    compute contacts with interior of intersection of sub-regions
    (1) compute contacts in each sub-region
    (2) only keep a contact if surface point is match() to all other regions
 ------------------------------------------------------------------------- */
 
-int RegIntersect::surface_interior(double *x, double cutoff)
+int RegIntersect::surface_interior(double *xorig, double cutoff)
 {
   int m, ilist, jlist, ncontacts;
   double xs, ys, zs;
+  double xnear[3];
 
   int n = 0;
   int walloffset = 0;
   for (ilist = 0; ilist < nregion; ilist++) {
     auto *region = reglist[ilist];
-    ncontacts = region->surface(x[0], x[1], x[2], cutoff);
+
+    // copy coordinates b/c values will change
+    xnear[0] = xorig[0];
+    xnear[1] = xorig[1];
+    xnear[2] = xorig[2];
+
+    ncontacts = region->surface(xnear[0], xnear[1], xnear[2], cutoff);
     for (m = 0; m < ncontacts; m++) {
-      xs = x[0] - region->contact[m].delx;
-      ys = x[1] - region->contact[m].dely;
-      zs = x[2] - region->contact[m].delz;
+      xs = xnear[0] - region->contact[m].delx;
+      ys = xnear[1] - region->contact[m].dely;
+      zs = xnear[2] - region->contact[m].delz;
       for (jlist = 0; jlist < nregion; jlist++) {
         if (jlist == ilist) continue;
         if (!reglist[jlist]->match(xs, ys, zs)) break;
@@ -239,6 +240,19 @@ int RegIntersect::surface_interior(double *x, double cutoff)
         n++;
       }
     }
+
+    if (region->rotateflag && ncontacts) {
+      for (int i = 0; i < ncontacts; i++) {
+        xs = xnear[0] - contact[i].delx;
+        ys = xnear[1] - contact[i].dely;
+        zs = xnear[2] - contact[i].delz;
+        region->forward_transform(xs, ys, zs);
+        contact[i].delx = xorig[0] - xs;
+        contact[i].dely = xorig[1] - ys;
+        contact[i].delz = xorig[2] - zs;
+      }
+    }
+
     // increment by cmax instead of tmax to ensure
     // possible wall IDs for sub-regions are non overlapping
     walloffset += region->cmax;
@@ -256,21 +270,28 @@ int RegIntersect::surface_interior(double *x, double cutoff)
    this is effectively same algorithm as surface_interior() for RegUnion
 ------------------------------------------------------------------------- */
 
-int RegIntersect::surface_exterior(double *x, double cutoff)
+int RegIntersect::surface_exterior(double *xorig, double cutoff)
 {
   int m, ilist, jlist, ncontacts;
   double xs, ys, zs;
+  double xnear[3];
 
   int n = 0;
   for (ilist = 0; ilist < nregion; ilist++) reglist[ilist]->interior ^= 1;
 
   for (ilist = 0; ilist < nregion; ilist++) {
     auto *region = reglist[ilist];
-    ncontacts = region->surface(x[0], x[1], x[2], cutoff);
+
+    // copy coordinates b/c values will change
+    xnear[0] = xorig[0];
+    xnear[1] = xorig[1];
+    xnear[2] = xorig[2];
+
+    ncontacts = region->surface(xnear[0], xnear[1], xnear[2], cutoff);
     for (m = 0; m < ncontacts; m++) {
-      xs = x[0] - region->contact[m].delx;
-      ys = x[1] - region->contact[m].dely;
-      zs = x[2] - region->contact[m].delz;
+      xs = xnear[0] - region->contact[m].delx;
+      ys = xnear[1] - region->contact[m].dely;
+      zs = xnear[2] - region->contact[m].delz;
       for (jlist = 0; jlist < nregion; jlist++) {
         if (jlist == ilist) continue;
         if (reglist[jlist]->match(xs, ys, zs)) break;
@@ -286,6 +307,18 @@ int RegIntersect::surface_exterior(double *x, double cutoff)
         contact_indx[n].ilist = ilist;
         contact_indx[n].ic = m;
         n++;
+      }
+    }
+
+    if (region->rotateflag && ncontacts) {
+      for (int i = 0; i < ncontacts; i++) {
+        xs = xnear[0] - contact[i].delx;
+        ys = xnear[1] - contact[i].dely;
+        zs = xnear[2] - contact[i].delz;
+        region->forward_transform(xs, ys, zs);
+        contact[i].delx = xorig[0] - xs;
+        contact[i].dely = xorig[1] - ys;
+        contact[i].delz = xorig[2] - zs;
       }
     }
   }

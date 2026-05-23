@@ -30,10 +30,13 @@ class RegIntersect : public Region {
   ~RegIntersect() override;
   void init() override;
   int inside(double, double, double) override;
+  void prematch() override;
   int surface_interior(double *, double) override;
   int surface_exterior(double *, double) override;
   void shape_update() override;
   void pretransform() override;
+  int surface(double, double, double, double) override;
+  int match(double, double, double) override;
   void set_velocity() override;
   void velocity_contact(double *, double *, int) override;
   void length_restart_string(int &) override;
