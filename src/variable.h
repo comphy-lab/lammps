@@ -17,6 +17,8 @@
 #include "pointers.h"
 #include "safe_pointers.h"
 
+#include <unordered_map>
+
 namespace LAMMPS_NS {
 class Region;
 
@@ -56,10 +58,8 @@ class Variable : protected Pointers {
   double evaluate_boolean(char *);
 
  public:
-  int nvar;        // # of defined variables
-  char **names;    // name of each variable
+  [[nodiscard]] int get_nvar() const { return variables.size(); }
 
-  // must match "varstyles" array in variables.cpp, UNKNOWN must be last.
   enum {
     INDEX,
     LOOP,
@@ -81,19 +81,7 @@ class Variable : protected Pointers {
     UNKNOWN
   };
   static constexpr int VALUELENGTH = 64;
-  static const std::vector<std::string> varstyles;
-
- private:
-  int me;
-  int maxvar;                  // max # of variables following lists can hold
-  int *style;                  // style of each variable
-  int *num;                    // # of values for each variable
-  int *which;                  // next available value for each variable
-  int *pad;                    // 1 = pad loop/uloop variables with 0s, 0 = no pad
-  int *pyindex;                // indices to Python funcs for python-style vars
-  class VarReader **reader;    // variable that reads from file
-  char ***data;                // str value of each variable's values
-  double *dvalue;              // single numeric value for internal variables
+  static std::unordered_map<int, std::string> varstyles;
 
   struct VecVar {
     int n, nmax;
@@ -101,10 +89,38 @@ class Variable : protected Pointers {
     bigint currentstep;
     double *values;
   };
-  VecVar *vecs;
 
-  int *eval_in_progress;    // flag if evaluation of variable is in progress
-  int treetype;             // ATOM or VECTOR flag for formula evaluation
+  struct VarInfo {
+    std::string name;
+    int style;
+    int num;
+    int which;
+    int pad;
+    int pyindex;
+    int eval_in_progress;
+    class VarReader *reader;
+    char **data;
+    double dvalue;
+    VecVar vec;
+    VarInfo();
+    ~VarInfo();
+    VarInfo(VarInfo &&) noexcept;
+    VarInfo &operator=(VarInfo &&) noexcept;
+    void clear();
+  };
+  std::vector<VarInfo> variables;
+
+  const char *get_name(int i) const
+  {
+    if (i < 0 || i >= (int) variables.size()) return nullptr;
+    if (variables[i].style == UNASSIGNED) return nullptr;
+    return variables[i].name.c_str();
+  }
+
+ private:
+  int me;
+
+  int treetype;    // ATOM or VECTOR flag for formula evaluation
 
   class RanMars *randomequal;    // random number generator for equal-style vars
   class RanMars *randomatom;     // random number generator for atom-style vars
@@ -127,9 +143,9 @@ class Variable : protected Pointers {
     Tree *first, *second;    // ptrs further down tree for first 2 args
     Tree **extra;            // ptrs further down tree for nextra args
 
-    int pyvar;               // index of Python variable invoked as py_name()
-    int argcount;            // # of args to associated Python function
-    int *argvars;            // indices of internal variables for each arg
+    int pyvar;       // index of Python variable invoked as py_name()
+    int argcount;    // # of args to associated Python function
+    int *argvars;    // indices of internal variables for each arg
 
     Tree() :
         array(nullptr), iarray(nullptr), barray(nullptr), selfalloc(0), ivalue(0), nextra(0),
@@ -142,7 +158,6 @@ class Variable : protected Pointers {
   void remove(int);
   int recycle();
 
-  void grow();
   void copy(int, char **, char **);
   double evaluate(char *, Tree **, int);
   double collapse_tree(Tree *);
