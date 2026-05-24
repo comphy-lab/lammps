@@ -161,6 +161,7 @@ argv
 Armv
 armv
 arrhenius
+Artrith
 Arun
 arXiv
 asin
@@ -1267,6 +1268,7 @@ filesystems
 Fily
 Fincham
 Finkelstein
+Finkler
 Fint
 fingerprintconstants
 fingerprintsperelement
@@ -1452,6 +1454,7 @@ gname
 gneb
 GNEB
 Godehard
+Goedecker
 Goerigk
 Goga
 Goldfarb
@@ -1502,12 +1505,14 @@ Grueneisen
 gsmooth
 gstyle
 GTL
+Gubler
 Gubbins
 Guenole
 Guericke
 gui
 Guillope
 Gumbsch
+Gunnar
 Gunsteren
 Gunzenmuller
 Guo
@@ -1551,6 +1556,8 @@ hbond
 hcp
 hdnnp
 HDNNP
+runner
+RUNNER
 Hearn
 Heaviside
 heatconduction
@@ -1862,6 +1869,7 @@ jN
 Joanes
 Joannopoulos
 Jochim
+Joerg
 Johansson
 Jonsson
 Jorgensen
@@ -1960,6 +1968,7 @@ kmu
 Knizhnik
 knl
 kofke
+Ko
 Kofke
 Kohlmeyer
 Kohn
@@ -2054,6 +2063,7 @@ latourr
 lattce
 Laupretre
 Lauriat
+Lausch
 lavenderblush
 lawngreen
 layersize
@@ -2488,6 +2498,7 @@ Morawietz
 Morefoo
 Morfill
 Mori
+Moritz
 Moriya
 morris
 Morriss
@@ -2713,6 +2724,7 @@ NiAlH
 Nicklas
 Nieto
 Niklasson
+Nikolas
 Nikolskiy
 nimproperlist
 nimpropers
@@ -3590,7 +3602,9 @@ scalexy
 scalexz
 scaleyz
 Scalfi
+Schaefer
 Schaik
+Scheffler
 Scheid
 Schilfgarde
 Schimansky
@@ -3598,6 +3612,7 @@ Schiotz
 Schlitter
 Schmerler
 Schmid
+Schmitz
 Schnieders
 Schoen
 Schotte
@@ -4024,6 +4039,7 @@ Tirrell
 Titer
 Tji
 Tk
+Tkatchenko
 Tkin
 tleap
 tloop
