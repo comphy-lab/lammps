@@ -12,7 +12,7 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Adapted from the pair style lj/cut 
+   Adapted from the pair style lj/cut
 ------------------------------------------------------------------------- */
 
 #include "pair_lj_cut_soft_gapsys.h"
@@ -458,7 +458,7 @@ double PairLJCutSoftGapsys::single(int /*i*/, int /*j*/, int itype, int jtype, d
     double a1 = 12.0 * epsln * (26.0 * s_ri12 - 7.0 * s_ri6) / (cut_inner * cut_inner);
     double a2 = -96.0 * epsln * (7.0 * s_ri12 - 2.0 * s_ri6) / cut_inner;
     double a3 = 28.0 * epsln * (13.0 * s_ri12 - 4.0 * s_ri6);
-    
+
     return factor_lj * (a1 * rsq + a2 * sqrt(rsq) + a3 - offset[itype][jtype]);
 
   }
