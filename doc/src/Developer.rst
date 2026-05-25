@@ -30,15 +30,26 @@ conference proceedings.
    manual adjustments and thus careful checking of the resulting code is
    recommended.  Similarly, porting styles to the KOKKOS or OPENMP
    package can be delegated in many cases, provided suitable template
-   examples exist and the coding agent is asked to look at those.
-   Asking a coding agent to create new functionality for which there
-   is no similar code in either the LAMMPS sources or some other
-   repository has a much lower chance of success.
+   examples exist and the coding agent is asked to look at those. Github
+   Copilot can also run LAMMPS unit tests and even add unit tests for new
+   styles if a suitable template already exists. Asking a coding agent to
+   create new functionality for which there is no similar code in either
+   the LAMMPS sources or some other repository has a much lower chance of
+   success.
+
+   In general, it is best to be explicit and verbose when assigning
+   tasks to coding agents. It can also helpful to ask the agent to break
+   up complex tasks and create a master plan. Avoid asking Github Copilot
+   to do too much at once. For example, we have found that porting 5 or
+   so styles to the KOKKOS or OPENMP package is reasonably efficient,
+   without running into session timeouts.  When a session is finished,
+   asking the agent to summarize what it learned and including that
+   context in the next session can also improve efficiency.
 
    Another task that can often be passed successfully to a coding agent
    is the creation of suitable documentation.  However, the results have
    a tendency to be overly verbose and sometimes redundant, so some
-   manual editing to tighten it is recommended.
+   manual editing to tighten it up is recommended.
 
    Finally, coding agents are quite good at reviewing existing code.
    The LAMMPS developers use GitHub Copilot regularly to review
