@@ -79,7 +79,7 @@ inline double MYROUND(double a)
 
 enum {
   INDEX, LOOP, WORLD, UNIVERSE, ULOOP, STRING, GETENV, SCALARFILE, ATOMFILE,
-  FORMAT,EQUAL, ATOM, VECTOR, PYTHON, TIMER, INTERNAL, UNASSIGNED, UNKNOWN
+  FORMAT, EQUAL, ATOM, VECTOR, PYTHON, TIMER, INTERNAL, UNASSIGNED, UNKNOWN
 };
 
 // NOLINTBEGIN
@@ -141,14 +141,24 @@ Variable::VarInfo::~VarInfo()
 
 void Variable::VarInfo::clear()
 {
-  name.clear();
-  if ((style == LOOP) || (style == ULOOP))
-    delete[] data[0];
-  else
-    for (int i = 0; i < num; ++i) delete[] data[i];
+  if (data && (style != UNASSIGNED)) {
+    if ((style == LOOP) || (style == ULOOP))
+      delete[] data[0];
+    else
+      for (int i = 0; i < num; ++i) delete[] data[i];
+  }
   delete reader;
   delete[] data;
   delete[] vec.values;
+
+  name.clear();
+  data = nullptr;
+  reader = nullptr;
+  vec.values = nullptr;
+  num = 0;
+  pad = 0;
+  eval_in_progress = 0;
+  dvalue = 0.0;
   style = UNASSIGNED;
 }
 
@@ -170,6 +180,10 @@ Variable::VarInfo::VarInfo(VarInfo &&other) noexcept
   other.reader = nullptr;
   other.data = nullptr;
   other.vec.values = nullptr;
+  other.num = 0;
+  other.pad = 0;
+  other.eval_in_progress = 0;
+  other.dvalue = 0.0;
 }
 
 Variable::VarInfo &Variable::VarInfo::operator=(VarInfo &&other) noexcept
@@ -196,6 +210,7 @@ Variable::VarInfo &Variable::VarInfo::operator=(VarInfo &&other) noexcept
     other.num = 0;
     other.pad = 0;
     other.which = 0;
+    other.dvalue = 0.0;
   }
   return *this;
 }
@@ -205,8 +220,6 @@ Variable::VarInfo &Variable::VarInfo::operator=(VarInfo &&other) noexcept
 
 Variable::Variable(LAMMPS *lmp) : Pointers(lmp)
 {
-  variables.clear();
-
   randomequal = nullptr;
   randomatom = nullptr;
 
@@ -231,8 +244,6 @@ Variable::Variable(LAMMPS *lmp) : Pointers(lmp)
 
 Variable::~Variable()
 {
-  variables.clear();
-
   delete randomequal;
   delete randomatom;
 }
@@ -1140,7 +1151,7 @@ char *Variable::retrieve(const char *name)
     str = var.data[0] = utils::strdup(result);
 
   } else if (var.style == EQUAL) {
-    double answer = evaluate(var.data[0],nullptr,ivar);
+    double answer = evaluate(var.data[0], nullptr, ivar);
     // round to zero on underflow
     if (fabs(answer) < std::numeric_limits<double>::min()) answer = 0.0;
     delete[] var.data[1];
