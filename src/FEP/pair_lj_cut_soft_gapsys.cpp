@@ -235,7 +235,7 @@ void PairLJCutSoftGapsys::coeff(int narg, char **arg)
   if (sigma_one <= 0.0) error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
 
   double cut_one = cut_global;
-  if (narg == 6) cut_one = utils::numeric(FLERR, arg[4], false, lmp);
+  if (narg == 6) cut_one = utils::numeric(FLERR, arg[5], false, lmp);
 
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
