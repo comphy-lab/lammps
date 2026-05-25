@@ -93,8 +93,6 @@ class Variable : protected Pointers {
   std::vector<VarInfo> variables;
 
  private:
-  int me;
-
   int treetype;    // ATOM or VECTOR flag for formula evaluation
 
   class RanMars *randomequal;    // random number generator for equal-style vars

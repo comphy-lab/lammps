@@ -1,4 +1,3 @@
-// clang-format off
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
@@ -57,48 +56,6 @@ constexpr int MAXLEVEL = 4;
 constexpr int MAXLINE = 256;
 constexpr int CHUNK = 1024;
 constexpr int MAXFUNCARG = 6;
-
-enum {
-  INDEX, LOOP, WORLD, UNIVERSE, ULOOP, STRING, GETENV, SCALARFILE, ATOMFILE,
-  FORMAT,EQUAL, ATOM, VECTOR, PYTHON, TIMER, INTERNAL, UNASSIGNED, UNKNOWN
-};
-
-// NOLINTBEGIN
-std::unordered_map<int, std::string> varstyles = {
-    {INDEX, "index"},           {LOOP, "loop"},        {WORLD, "world"},   {UNIVERSE, "universe"},
-    {ULOOP, "uloop"},           {STRING, "string"},    {GETENV, "getenv"}, {SCALARFILE, "file"},
-    {ATOMFILE, "atomfile"},     {FORMAT, "format"},    {EQUAL, "equal"},   {ATOM, "atom"},
-    {VECTOR, "vector"},         {PYTHON, "python"},    {TIMER, "timer"},   {INTERNAL, "internal"},
-    {UNASSIGNED, "unassigned"}, {UNKNOWN, "(unknown)"}};
-// NOLINTEND
-
-/* ---------------------------------------------------------------------- */
-
-inline double MYROUND(double a)
-{
-  return ((a - floor(a)) >= 0.5) ? ceil(a) : floor(a);
-}
-
-enum { ARG, OP };
-
-// customize by adding a function
-// if add before XOR:
-// also set precedence level in constructor and precedence length in *.h
-
-enum{DONE,ADD,SUBTRACT,MULTIPLY,DIVIDE,CARAT,MODULO,UNARY,
-     NOT,EQ,NE,LT,LE,GT,GE,AND,OR,XOR,
-     SQRT,EXP,LN,LOG,ABS,SIN,COS,TAN,ASIN,ACOS,ATAN,ATAN2,
-     RANDOM,NORMAL,CEIL,FLOOR,ROUND,TERNARY,
-     RAMP,STAGGER,LOGFREQ,LOGFREQ2,LOGFREQ3,STRIDE,STRIDE2,
-     VDISPLACE,SWIGGLE,CWIGGLE,SIGN,GMASK,RMASK,
-     GRMASK,IS_ACTIVE,IS_DEFINED,IS_AVAILABLE,IS_FILE,EXTRACT_SETTING,
-     PYWRAPPER,
-     VALUE,ATOMARRAY,TYPEARRAY,INTARRAY,BIGINTARRAY,VECTORARRAY};
-
-// customize by adding a special function
-
-enum { SUM, XMIN, XMAX, AVE, TRAP, SLOPE, SORT, RSORT, NOVECTOR };
-
 constexpr double BIG = 1.0e20;
 
 // INT64_MAX cannot be represented with a double. reduce to avoid overflow when casting back
@@ -109,12 +66,59 @@ constexpr double MAXBIGINT_DOUBLE = (double) (MAXBIGINT - 512);
 constexpr double MAXBIGINT_DOUBLE = (double) MAXBIGINT;
 #endif
 
+/* ---------------------------------------------------------------------- */
+
+inline double MYROUND(double a)
+{
+  return ((a - floor(a)) >= 0.5) ? ceil(a) : floor(a);
+}
+
+/* ---------------------------------------------------------------------- */
+
+// clang-format off
+
+enum {
+  INDEX, LOOP, WORLD, UNIVERSE, ULOOP, STRING, GETENV, SCALARFILE, ATOMFILE,
+  FORMAT,EQUAL, ATOM, VECTOR, PYTHON, TIMER, INTERNAL, UNASSIGNED, UNKNOWN
+};
+
 // NOLINTBEGIN
+
+  std::unordered_map<int, std::string> varstyles = {
+    {INDEX, "index"},           {LOOP, "loop"},        {WORLD, "world"},   {UNIVERSE, "universe"},
+    {ULOOP, "uloop"},           {STRING, "string"},    {GETENV, "getenv"}, {SCALARFILE, "file"},
+    {ATOMFILE, "atomfile"},     {FORMAT, "format"},    {EQUAL, "equal"},   {ATOM, "atom"},
+    {VECTOR, "vector"},         {PYTHON, "python"},    {TIMER, "timer"},   {INTERNAL, "internal"},
+    {UNASSIGNED, "unassigned"}, {UNKNOWN, "(unknown)"}};
+
 // constants for variable expressions. customize by adding new items.
 // if needed (cf. 'version') initialize in Variable class constructor.
 
 std::unordered_map<std::string, double> constants = {
   {"PI", MY_PI}, {"version", -1}, {"yes", 1}, {"no", 0}, {"on", 1}, {"off", 0}, {"true", 1}, {"false", 0}};
+
+// NOLINTEND
+
+enum { ARG, OP };
+
+// customize by adding a function
+// if add before XOR:
+// also set precedence level in constructor and precedence length in *.h
+
+enum{DONE, ADD, SUBTRACT, MULTIPLY, DIVIDE, CARAT, MODULO, UNARY,
+     NOT, EQ, NE, LT, LE, GT, GE, AND, OR, XOR,
+     SQRT, EXP, LN, LOG, ABS, SIN, COS, TAN, ASIN, ACOS, ATAN, ATAN2,
+     RANDOM, NORMAL, CEIL, FLOOR, ROUND, TERNARY,
+     RAMP, STAGGER, LOGFREQ, LOGFREQ2, LOGFREQ3, STRIDE, STRIDE2,
+     VDISPLACE, SWIGGLE, CWIGGLE, SIGN, GMASK, RMASK,
+     GRMASK, IS_ACTIVE, IS_DEFINED, IS_AVAILABLE, IS_FILE, EXTRACT_SETTING,
+     PYWRAPPER,
+     VALUE, ATOMARRAY, TYPEARRAY, INTARRAY, BIGINTARRAY, VECTORARRAY};
+
+// customize by adding a special function
+
+enum { SUM, XMIN, XMAX, AVE, TRAP, SLOPE, SORT, RSORT, NOVECTOR };
+
 }    // namespace
 // NOLINTEND
 
@@ -201,8 +205,6 @@ Variable::VarInfo &Variable::VarInfo::operator=(VarInfo &&other) noexcept
 
 Variable::Variable(LAMMPS *lmp) : Pointers(lmp)
 {
-  MPI_Comm_rank(world, &me);
-
   variables.clear();
 
   randomequal = nullptr;
@@ -838,7 +840,7 @@ int Variable::next(int narg, char **arg)
     // when successful, read next available index and Bcast it within my world
 
     int nextindex = -1;
-    if (me == 0) {
+    if (comm->me == 0) {
       int seed = 12345 + universe->me + varzero.which;
       if (!random) random = new RanMars(lmp,seed);
       int delay = (int) (1000000*random->uniform());
@@ -1016,12 +1018,12 @@ std::string Variable::get_info(int i) const
     text += fmt::format("{:.8}\n", var.dvalue);
     return text;
   }
-  
+
   if ((var.style != LOOP) && (var.style != ULOOP))
     ndata = var.num;
   else
     input->variable->retrieve(var.name.c_str());
-  
+
   for (int j=0; j < ndata; ++j)
     if (var.data[j]) text += fmt::format(" {}",var.data[j]);
   text += "\n";
@@ -2987,7 +2989,7 @@ double Variable::collapse_tree(Tree *tree)
       int seed = static_cast<int> (collapse_tree(tree->extra[0]));
       if (seed <= 0)
         error->one(FLERR,"Invalid math function in variable formula");
-      randomatom = new RanMars(lmp,seed+me);
+      randomatom = new RanMars(lmp, seed + comm->me);
     }
     return 0.0;
   }
@@ -3001,7 +3003,7 @@ double Variable::collapse_tree(Tree *tree)
       int seed = static_cast<int> (collapse_tree(tree->extra[0]));
       if (seed <= 0)
         error->one(FLERR,"Invalid math function in variable formula");
-      randomatom = new RanMars(lmp,seed+me);
+      randomatom = new RanMars(lmp, seed + comm->me);
     }
     return 0.0;
   }
@@ -3431,7 +3433,7 @@ double Variable::eval_tree(Tree *tree, int i)
       int seed = static_cast<int> (eval_tree(tree->extra[0],i));
       if (seed <= 0)
         error->one(FLERR,"Invalid math function in variable formula");
-      randomatom = new RanMars(lmp,seed+me);
+      randomatom = new RanMars(lmp, seed + comm->me);
     }
     return randomatom->uniform()*(upper-lower)+lower;
   }
@@ -3444,7 +3446,7 @@ double Variable::eval_tree(Tree *tree, int i)
       int seed = static_cast<int> (eval_tree(tree->extra[0],i));
       if (seed <= 0)
         error->one(FLERR,"Invalid math function in variable formula");
-      randomatom = new RanMars(lmp,seed+me);
+      randomatom = new RanMars(lmp, seed + comm->me);
     }
     return mu + sigma*randomatom->gaussian();
   }
@@ -5757,7 +5759,7 @@ VarReader::VarReader(LAMMPS *lmp, char *name, char *file, int flag) :
   me = comm->me;
   style = flag;
 
-  if (me == 0) {
+  if (comm->me == 0) {
     fp = fopen(file,"r");
     if (fp == nullptr)
       error->one(FLERR,"Cannot open {} variable {} file {}: {}", (style == ATOMFILE)
@@ -5810,7 +5812,7 @@ int VarReader::read_scalar(char *str)
 
   // read one string from file
 
-  if (me == 0) {
+  if (comm->me == 0) {
     while (true) {
       ptr = fgets(str,MAXLINE,fp);
       if (!ptr) { n=0; break; }             // end of file
@@ -5852,7 +5854,7 @@ int VarReader::read_peratom()
 
   char str[MAXLINE];
   bigint nlines = 0;
-  if (me == 0) {
+  if (comm->me == 0) {
     while (true) {
       ptr = fgets(str,MAXLINE,fp);
       if (!ptr) { nlines = 0; break; }             // end of file
