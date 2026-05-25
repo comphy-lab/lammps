@@ -52,6 +52,7 @@ PairLJCutSoftGapsys::~PairLJCutSoftGapsys()
     memory->destroy(cut);
     memory->destroy(epsilon);
     memory->destroy(sigma);
+    memory->destroy(lambda);
     memory->destroy(lj1);
     memory->destroy(lj2);
     memory->destroy(lj3);
@@ -188,6 +189,7 @@ void PairLJCutSoftGapsys::allocate()
   memory->create(cut, n, n, "pair:cut");
   memory->create(epsilon, n, n, "pair:epsilon");
   memory->create(sigma, n, n, "pair:sigma");
+  memory->create(lambda, n, n, "pair:lambda");
   memory->create(lj1, n, n, "pair:lj1");
   memory->create(lj2, n, n, "pair:lj2");
   memory->create(lj3, n, n, "pair:lj3");
@@ -203,7 +205,9 @@ void PairLJCutSoftGapsys::settings(int narg, char **arg)
 {
   if (narg != 2) error->all(FLERR, "Illegal pair_style command");
 
-  alphalj = utils::numeric(FLERR,arg[0], false, lmp);
+  alphalj = utils::numeric(FLERR, arg[0], false, lmp);
+  if (alphalj < 0.0)
+    error->all(FLERR, "Pair style lj/cut/soft/gapsys requires alphalj > 0");
   cut_global = utils::numeric(FLERR, arg[1], false, lmp);
 
   // reset cutoffs that have been explicitly set
@@ -232,7 +236,10 @@ void PairLJCutSoftGapsys::coeff(int narg, char **arg)
   double epsilon_one = utils::numeric(FLERR, arg[2], false, lmp);
   double sigma_one = utils::numeric(FLERR, arg[3], false, lmp);
   double lambda_one = utils::numeric(FLERR,arg[4],false,lmp);
-  if (sigma_one <= 0.0) error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
+  if (sigma_one <= 0.0 || epsilon_one <= 0.0)
+    error->all(FLERR,"Incorrect args for pair coefficients" + utils::errorurl(21));
+  if (lambda_one < 0.0 || lambda_one > 1.0)
+    error->all(FLERR, "Pair style lj/cut/soft/gapsys requires 0 < lambda < 1");
 
   double cut_one = cut_global;
   if (narg == 6) cut_one = utils::numeric(FLERR, arg[5], false, lmp);
