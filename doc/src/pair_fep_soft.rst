@@ -448,7 +448,7 @@ The distance :math:`r_{inner}` is given by
 
    r_{inner} = \alpha_lj \left( 26 \lambda / 7 \right)^{1 / 6} \sigma
 
-where :math:`\sigma` is the standard Lenanrd-Jones parameter. For
+where :math:`\sigma` is the standard Lennard-Jones parameter. For
 :math:`\lambda = 0`, :math:`r_{inner} = 0`, which implies that the
 standard Lennard-Jones potential is employed for all distances.
 
