@@ -285,6 +285,10 @@ double PairLJCutSoftGapsys::init_one(int i, int j)
   } else
     offset[i][j] = 0.0;
 
+  epsilon[j][i] = epsilon[i][j];
+  sigma[j][i] = sigma[i][j];
+  lambda[j][i] = lambda[i][j];
+  cut[j][i] = cut[i][j];
   lj1[j][i] = lj1[i][j];
   lj2[j][i] = lj2[i][j];
   lj3[j][i] = lj3[i][j];
