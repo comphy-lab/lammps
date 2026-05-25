@@ -1410,8 +1410,10 @@ void Info::get_memory_info(double *meminfo)
 std::vector<std::string> Info::get_variable_names(int &num) {
   num = input->variable->get_nvar();
   std::vector<std::string> names;
-  for (int i=0; i < num; ++i)
-    names.push_back(input->variable->get_name(i));
+  for (int i=0; i < num; ++i) {
+    const auto *n =input->variable->get_name(i);
+    names.push_back(n ? n : "(unknown)");
+  }
   return names;
 }
 
