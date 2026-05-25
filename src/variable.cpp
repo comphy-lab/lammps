@@ -47,6 +47,7 @@
 #include <exception>
 #include <functional>
 #include <limits>
+#include <unordered_map>
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
@@ -56,6 +57,22 @@ constexpr int MAXLEVEL = 4;
 constexpr int MAXLINE = 256;
 constexpr int CHUNK = 1024;
 constexpr int MAXFUNCARG = 6;
+
+enum {
+  INDEX, LOOP, WORLD, UNIVERSE, ULOOP, STRING, GETENV, SCALARFILE, ATOMFILE,
+  FORMAT,EQUAL, ATOM, VECTOR, PYTHON, TIMER, INTERNAL, UNASSIGNED, UNKNOWN
+};
+
+// NOLINTBEGIN
+std::unordered_map<int, std::string> varstyles = {
+    {INDEX, "index"},           {LOOP, "loop"},        {WORLD, "world"},   {UNIVERSE, "universe"},
+    {ULOOP, "uloop"},           {STRING, "string"},    {GETENV, "getenv"}, {SCALARFILE, "file"},
+    {ATOMFILE, "atomfile"},     {FORMAT, "format"},    {EQUAL, "equal"},   {ATOM, "atom"},
+    {VECTOR, "vector"},         {PYTHON, "python"},    {TIMER, "timer"},   {INTERNAL, "internal"},
+    {UNASSIGNED, "unassigned"}, {UNKNOWN, "(unknown)"}};
+// NOLINTEND
+
+/* ---------------------------------------------------------------------- */
 
 inline double MYROUND(double a)
 {
@@ -99,18 +116,9 @@ constexpr double MAXBIGINT_DOUBLE = (double) MAXBIGINT;
 std::unordered_map<std::string, double> constants = {
   {"PI", MY_PI}, {"version", -1}, {"yes", 1}, {"no", 0}, {"on", 1}, {"off", 0}, {"true", 1}, {"false", 0}};
 }    // namespace
+// NOLINTEND
 
 // clang-format on
-
-// must match enumerator in variable.h
-std::unordered_map<int, std::string> Variable::varstyles = {
-    {INDEX, "index"},           {LOOP, "loop"},        {WORLD, "world"},   {UNIVERSE, "universe"},
-    {ULOOP, "uloop"},           {STRING, "string"},    {GETENV, "getenv"}, {SCALARFILE, "file"},
-    {ATOMFILE, "atomfile"},     {FORMAT, "format"},    {EQUAL, "equal"},   {ATOM, "atom"},
-    {VECTOR, "vector"},         {PYTHON, "python"},    {TIMER, "timer"},   {INTERNAL, "internal"},
-    {UNASSIGNED, "unassigned"}, {UNKNOWN, "(unknown)"}};
-// NOLINTEND
-/* ---------------------------------------------------------------------- */
 
 Variable::VarInfo::VarInfo() :
     style(UNASSIGNED), num(0), which(0), pad(0), pyindex(0), eval_in_progress(0), reader(nullptr),
@@ -124,21 +132,20 @@ Variable::VarInfo::VarInfo() :
 
 Variable::VarInfo::~VarInfo()
 {
-  if (style == UNASSIGNED) return;
-  delete reader;
-  if ((style == LOOP) || (style == ULOOP))
-    delete[] data[0];
-  else
-    for (int i = 0; i < num; ++i) delete[] data[i];
-  delete[] data;
-  if (style == VECTOR) delete[] vec.values;
+  VarInfo::clear();
 }
 
 void Variable::VarInfo::clear()
 {
-  this->~VarInfo();
   name.clear();
-  new (this) VarInfo();
+  if ((style == LOOP) || (style == ULOOP))
+    delete[] data[0];
+  else
+    for (int i = 0; i < num; ++i) delete[] data[i];
+  delete reader;
+  delete[] data;
+  delete[] vec.values;
+  style = UNASSIGNED;
 }
 
 Variable::VarInfo::VarInfo(VarInfo &&other) noexcept
@@ -164,7 +171,7 @@ Variable::VarInfo::VarInfo(VarInfo &&other) noexcept
 Variable::VarInfo &Variable::VarInfo::operator=(VarInfo &&other) noexcept
 {
   if (this != &other) {
-    this->~VarInfo();
+    VarInfo::clear();
     name = std::move(other.name);
     style = other.style;
     num = other.num;
@@ -181,6 +188,10 @@ Variable::VarInfo &Variable::VarInfo::operator=(VarInfo &&other) noexcept
     other.reader = nullptr;
     other.data = nullptr;
     other.vec.values = nullptr;
+    other.eval_in_progress = 0;
+    other.num = 0;
+    other.pad = 0;
+    other.which = 0;
   }
   return *this;
 }
@@ -956,6 +967,65 @@ void Variable::python_command(int narg, char **arg)
   if (!python->is_enabled())
     error->all(FLERR,"LAMMPS is not built with Python embedded");
   python->command(narg,arg);
+}
+
+/* ----------------------------------------------------------------------
+   return name of variable for given index or nullptr if out-of-range or unassigned
+------------------------------------------------------------------------- */
+
+const char *Variable::get_name(int i) const
+{
+  if (i < 0 || i >= (int) variables.size()) return nullptr;
+  if (variables[i].style == UNASSIGNED) return nullptr;
+  return variables[i].name.c_str();
+}
+
+/* ----------------------------------------------------------------------
+   return style of variable for given index or nullptr if out-of-range or unassigned
+------------------------------------------------------------------------- */
+
+const char *Variable::get_style(int i) const
+{
+  if (i < 0 || i >= (int) variables.size()) return nullptr;
+  if (variables[i].style == UNASSIGNED) return nullptr;
+  return varstyles[variables[i].style].c_str();
+}
+
+/* ----------------------------------------------------------------------
+   return descriptive info string for variable by its index
+------------------------------------------------------------------------- */
+
+std::string Variable::get_info(int i) const
+{
+  if ((i < 0) || (i >= get_nvar()))
+    return fmt::format("Variable[{:3d}]: (unknown)\n",i);
+
+  const auto &var = variables[i];
+  std::string vstyle = varstyles[var.style];
+  std::string vname = var.name;
+  std::string text;
+  int ndata = 1;
+  if (var.style == UNASSIGNED) {
+    text = fmt::format("Variable[{:3d}]: (deleted),        style = {:16}  def =",
+                       i, "(unknown),");
+  } else {
+    text = fmt::format("Variable[{:3d}]: {:16}  style = {:16}  def =",
+                       i, vname + ',', vstyle + ',');
+  }
+  if (var.style == INTERNAL) {
+    text += fmt::format("{:.8}\n", var.dvalue);
+    return text;
+  }
+  
+  if ((var.style != LOOP) && (var.style != ULOOP))
+    ndata = var.num;
+  else
+    input->variable->retrieve(var.name.c_str());
+  
+  for (int j=0; j < ndata; ++j)
+    if (var.data[j]) text += fmt::format(" {}",var.data[j]);
+  text += "\n";
+  return text;
 }
 
 /* ----------------------------------------------------------------------
@@ -5690,7 +5760,7 @@ VarReader::VarReader(LAMMPS *lmp, char *name, char *file, int flag) :
   if (me == 0) {
     fp = fopen(file,"r");
     if (fp == nullptr)
-      error->one(FLERR,"Cannot open {} variable {} file {}: {}", (style == Variable::ATOMFILE)
+      error->one(FLERR,"Cannot open {} variable {} file {}: {}", (style == ATOMFILE)
                  ? "atomfile" : "file", name, file, utils::getsyserror());
   }
 
@@ -5702,7 +5772,7 @@ VarReader::VarReader(LAMMPS *lmp, char *name, char *file, int flag) :
   id_fix = nullptr;
   buffer = nullptr;
 
-  if (style == Variable::ATOMFILE) {
+  if (style == ATOMFILE) {
     if (atom->map_style == Atom::MAP_NONE)
       error->all(FLERR,"Cannot use atomfile-style variable unless an atom map exists");
 

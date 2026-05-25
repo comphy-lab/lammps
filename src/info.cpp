@@ -1420,31 +1420,7 @@ std::vector<std::string> Info::get_variable_names(int &num) {
 /* ---------------------------------------------------------------------- */
 
 std::string Info::get_variable_info(int num) {
-  auto &var = input->variable->variables[num];
-  std::string text;
-  std::string varstyle = Variable::varstyles[var.style];
-  int ndata = 1;
-  if (var.style == Variable::UNASSIGNED) {
-    text = fmt::format("Variable[{:3d}]: (deleted),        style = {:16}  def =",
-                       num, varstyle + ',');
-  } else {
-    text = fmt::format("Variable[{:3d}]: {:16}  style = {:16}  def =",
-                       num, var.name + ',', varstyle + ',');
-  }
-  if (var.style == Variable::INTERNAL) {
-    text += fmt::format("{:.8}\n",var.dvalue);
-    return text;
-  }
-
-  if ((var.style != Variable::LOOP) && (var.style != Variable::ULOOP))
-    ndata = var.num;
-  else
-    input->variable->retrieve(var.name.c_str());
-
-  for (int j=0; j < ndata; ++j)
-    if (var.data[j]) text += fmt::format(" {}",var.data[j]);
-  text += "\n";
-  return text;
+  return input->variable->get_info(num);
 }
 
 /* ---------------------------------------------------------------------- */

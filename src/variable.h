@@ -17,13 +17,10 @@
 #include "pointers.h"
 #include "safe_pointers.h"
 
-#include <unordered_map>
-
 namespace LAMMPS_NS {
 class Region;
 
 class Variable : protected Pointers {
-  friend class Info;
 
  public:
   Variable(class LAMMPS *);
@@ -39,6 +36,11 @@ class Variable : protected Pointers {
   void python_command(int, char **);
   void purge_atomfile();
   void clear_in_progress();
+
+  [[nodiscard]] int get_nvar() const { return variables.size(); }
+  [[nodiscard]] const char *get_name(int i) const;
+  [[nodiscard]] const char *get_style(int i) const;
+  [[nodiscard]] std::string get_info(int i) const;
 
   int equalstyle(int);
   int atomstyle(int);
@@ -57,32 +59,9 @@ class Variable : protected Pointers {
   tagint int_between_brackets(char *&, int);
   double evaluate_boolean(char *);
 
- public:
-  [[nodiscard]] int get_nvar() const { return variables.size(); }
-
-  enum {
-    INDEX,
-    LOOP,
-    WORLD,
-    UNIVERSE,
-    ULOOP,
-    STRING,
-    GETENV,
-    SCALARFILE,
-    ATOMFILE,
-    FORMAT,
-    EQUAL,
-    ATOM,
-    VECTOR,
-    PYTHON,
-    TIMER,
-    INTERNAL,
-    UNASSIGNED,
-    UNKNOWN
-  };
   static constexpr int VALUELENGTH = 64;
-  static std::unordered_map<int, std::string> varstyles;
 
+ protected:
   struct VecVar {
     int n, nmax;
     int dynamic;
@@ -102,20 +81,16 @@ class Variable : protected Pointers {
     char **data;
     double dvalue;
     VecVar vec;
+
     VarInfo();
+    VarInfo(const VarInfo &) = delete;
     ~VarInfo();
+
     VarInfo(VarInfo &&) noexcept;
     VarInfo &operator=(VarInfo &&) noexcept;
     void clear();
   };
   std::vector<VarInfo> variables;
-
-  const char *get_name(int i) const
-  {
-    if (i < 0 || i >= (int) variables.size()) return nullptr;
-    if (variables[i].style == UNASSIGNED) return nullptr;
-    return variables[i].name.c_str();
-  }
 
  private:
   int me;
