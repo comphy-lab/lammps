@@ -434,11 +434,6 @@ void PairLJCutSoftGapsys::write_data_all(FILE *fp)
 double PairLJCutSoftGapsys::single(int /*i*/, int /*j*/, int itype, int jtype, double rsq,
                          double /*factor_coul*/, double factor_lj, double &fforce)
 {
-  if (rsq > cutsq[itype][jtype]) {
-    fforce = 0.0;
-    return 0.0;
-  }
-
   double cut_inner;
   cut_inner = alphalj * pow(26.0 * lambda[itype][jtype] / 7.0, 1.0 / 6.0) * sigma[itype][jtype];
 
@@ -464,7 +459,7 @@ double PairLJCutSoftGapsys::single(int /*i*/, int /*j*/, int itype, int jtype, d
     double b1 = -24.0 * epsln * (26.0 * s_ri12 - 7.0 * s_ri6) / (cut_inner * cut_inner);
     double b2 = 96.0 * epsln * (7.0 * s_ri12 - 2.0 * s_ri6) / cut_inner;
 
-    fforce = factor_lj * (b1 * sqrt(rsq) + b2);
+    fforce = factor_lj * (b1 + b2 / sqrt(rsq));
 
     double a1 = 12.0 * epsln * (26.0 * s_ri12 - 7.0 * s_ri6) / (cut_inner * cut_inner);
     double a2 = -96.0 * epsln * (7.0 * s_ri12 - 2.0 * s_ri6) / cut_inner;
