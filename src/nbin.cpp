@@ -64,7 +64,7 @@ NBin::~NBin()
   memory->destroy(bins);
   memory->destroy(atom2bin);
 
-  if (!binhead_multi) return;
+  if (maxcollections == 0) return;
 
   memory->destroy(nbinx_multi);
   memory->destroy(nbiny_multi);
@@ -84,10 +84,11 @@ NBin::~NBin()
   memory->destroy(bininvy_multi);
   memory->destroy(bininvz_multi);
 
-  for (int n = 0; n < maxcollections; n++) {
-    memory->destroy(binhead_multi[n]);
+  if (binhead_multi) {
+    for (int n = 0; n < maxcollections; n++)
+      memory->destroy(binhead_multi[n]);
+    delete [] binhead_multi;
   }
-  delete [] binhead_multi;
 
   memory->destroy(maxbins_multi);
 }
@@ -222,7 +223,7 @@ int NBin::coord2bin_multi(double *x, int ic)
 bigint NBin::coord2bin_multi_big(double *x, int ic)
 {
   int ix,iy,iz;
-  int ibin;
+  bigint ibin;
 
   if (!std::isfinite(x[0]) || !std::isfinite(x[1]) || !std::isfinite(x[2]))
     error->one(FLERR,"Non-numeric positions - simulation unstable" + utils::errorurl(6));

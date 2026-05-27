@@ -321,7 +321,7 @@ int NPair::coord2bin(double *x, int ic)
 bigint NPair::coord2bin_big(double *x, int ic)
 {
   int ix,iy,iz;
-  int ibin;
+  bigint ibin;
 
   if (!std::isfinite(x[0]) || !std::isfinite(x[1]) || !std::isfinite(x[2]))
     error->one(FLERR,"Non-numeric positions - simulation unstable" + utils::errorurl(6));

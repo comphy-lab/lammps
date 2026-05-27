@@ -297,13 +297,28 @@ void NBinMulti::setup_bins(int /*style*/)
     } else mbinzlo_multi[n] = mbinzhi = 0;
     mbinz_multi[n] = mbinzhi - mbinzlo_multi[n] + 1;
 
-    bigint bbin = ((bigint) mbinx_multi[n])
+    if (!bin_hash) {
+      bigint bbin = ((bigint) mbinx_multi[n])
       * ((bigint) mbiny_multi[n]) * ((bigint) mbinz_multi[n]) + 1;
-    if (!bin_hash)
-      if (bbin > MAXSMALLINT) error->one(FLERR,"Too many neighbor bins" + utils::errorurl(9));
-    else
-      if (bbin > MAXBIGINT) error->one(FLERR,"Too many neighbor bins" + utils::errorurl(9));
-    mbins_multi[n] = bbin;
+      if (bbin > MAXSMALLINT) {
+        error->one(FLERR, "Too many neighbor bins" + utils::errorurl(9));
+      } else {
+        mbins_multi[n] = bbin;
+      }
+    } else {
+      int overflow_error = 0;
+      bigint bbin = ((bigint) mbinx_multi[n]);
+      if (bbin > (MAXBIGINT / (bigint) mbiny_multi[n]))
+        overflow_error = 1;
+      bbin *= (bigint) mbiny_multi[n];
+      if (bbin > (MAXBIGINT / (bigint) mbinz_multi[n]))
+        overflow_error =1 ;
+      bbin *= (bigint) mbinz_multi[n];
+      if (bbin > (MAXBIGINT - 1))
+        overflow_error = 1;
+      if (overflow_error)
+        error->one(FLERR, "Too many neighbor bins" + utils::errorurl(9));
+    }
   }
 }
 
@@ -314,7 +329,7 @@ void NBinMulti::setup_bins(int /*style*/)
 void NBinMulti::bin_atoms()
 {
   int i,ibin,n;
-  bigint ibinbig,
+  bigint ibinbig;
 
   last_bin = update->ntimestep;
   if (!bin_hash) {
@@ -376,7 +391,7 @@ void NBinMulti::bin_atoms()
       }
       for (i = atom->nfirst-1; i >= 0; i--) {
         n = collection[i];
-        ibinbig = coord2bin_multi(x[i], n);
+        ibinbig = coord2bin_multi_big(x[i], n);
         binatoms_hash_multi[n][ibinbig].push_back(i);
       }
     } else {
