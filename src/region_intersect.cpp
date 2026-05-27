@@ -242,7 +242,7 @@ int RegIntersect::surface_interior(double *xorig, double cutoff)
     }
 
     if (region->rotateflag && ncontacts) {
-      for (int i = 0; i < ncontacts; i++) {
+      for (int i = n - ncontacts; i < n; i++) {
         xs = xnear[0] - contact[i].delx;
         ys = xnear[1] - contact[i].dely;
         zs = xnear[2] - contact[i].delz;
@@ -311,7 +311,7 @@ int RegIntersect::surface_exterior(double *xorig, double cutoff)
     }
 
     if (region->rotateflag && ncontacts) {
-      for (int i = 0; i < ncontacts; i++) {
+      for (int i = n - ncontacts; i < n; i++) {
         xs = xnear[0] - contact[i].delx;
         ys = xnear[1] - contact[i].dely;
         zs = xnear[2] - contact[i].delz;
