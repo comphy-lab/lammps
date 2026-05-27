@@ -1345,10 +1345,10 @@ void PairDispersionD3::set_funcpar(std::string &functional_name)
           s8 = 0.7862;
           a2 = 7.5923;
           break;
-	case 54:
-	  a1 = 0.4948;
-	  s8 = 0.7898;
-	  a2 = 5.7308;
+        case 54:
+          a1 = 0.4948;
+          s8 = 0.7898;
+          a2 = 5.7308;
           break;
         default:
           error->all(FLERR, Error::NOLASTLINE,
