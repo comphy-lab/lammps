@@ -69,8 +69,8 @@ enum{NSQ, BIN};
 static constexpr double FLATTHRESH = 0.00015230484360876085; // = 1.0-cos(MY_PI/180.0); = 1 degree
 static constexpr int DELTAMODEL = 4;
 static constexpr int DELTAMOTION = 4;
-static constexpr int MAXSURFTYPE = 1024;  // extreme, so can reduce it later
-static constexpr int MAXSURFMOL = 1024;   // extreme, so can reduce it later
+static constexpr int MAXSURFTYPE = 1024;  // limit for # of surf types
+static constexpr int MAXSURFMOL = 1024;   // limit for # of surf mol IDs
 static constexpr double BIG = 1.0e20;
 static constexpr double EPSILON = 1e-12;
 
