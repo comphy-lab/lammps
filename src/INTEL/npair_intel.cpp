@@ -76,6 +76,12 @@ void NPairIntel::copy_cutsq_info(IntelBuffers<flt_t,acc_t> *buffers) {
 
 /* ---------------------------------------------------------------------- */
 
+// NOTE: the "offload_noghost" template parameter no longer has any effect
+// (it is a leftover from the removed Xeon Phi offload support and is always
+// instantiated as 0).  It is kept as a placeholder so the many explicit
+// template instantiations below do not need to be renumbered; it could be
+// renamed and repurposed for a future feature.
+
 template <class flt_t, class acc_t, int offload_noghost, int need_ic,
           int FULL, int TRI, int THREE>
 void NPairIntel::bin_newton(NeighList *list,

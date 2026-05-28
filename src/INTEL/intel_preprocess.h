@@ -715,11 +715,8 @@ enum {TIME_PACK, TIME_HOST_NEIGHBOR, TIME_HOST_PAIR, TIME_IMBALANCE};
 
 #endif
 
-#define IP_PRE_get_transfern(ago, newton, eflag, vflag,                 \
-                             buffers, fix, separate_flag,               \
-                             x_size, q_size, ev_size, f_stride)         \
+#define IP_PRE_get_transfern(newton, buffers, f_stride)                 \
 {                                                                       \
-  separate_flag = 0;                                                    \
   int f_length;                                                         \
   if (newton)                                                           \
     f_length = nall;                                                    \

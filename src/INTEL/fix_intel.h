@@ -117,7 +117,6 @@ class FixIntel : public Fix {
 
  public:
   inline int *get_overflow_flag() { return _overflow_flag; }
-  inline int *get_off_overflow_flag() { return _off_overflow_flag; }
   inline void add_result_array(IntelBuffers<double, double>::vec3_acc_t *f_in, double *ev_in,
                                const int eatom = 0, const int vatom = 0,
                                const int rflag = 0);
@@ -136,7 +135,6 @@ class FixIntel : public Fix {
 
  protected:
   int _overflow_flag[5];
-  _alignvar(int _off_overflow_flag[5], 64);
   int _lrt, _p3m_table;
 
   IntelBuffers<float, float>::vec3_acc_t *_force_array_s;

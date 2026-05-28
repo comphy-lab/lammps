@@ -355,10 +355,8 @@ void PairAIREBOIntel::eval(
   const int ntypes = atom->ntypes + 1;
   const int eatom = this->eflag_atom;
 
-  int x_size, q_size, f_stride, ev_size, separate_flag;
-  IP_PRE_get_transfern(ago, 1 /*NEWTON_PAIR*/, EFLAG, vflag,
-                       buffers, fix, separate_flag,
-                       x_size, q_size, ev_size, f_stride);
+  int f_stride;
+  IP_PRE_get_transfern(1 /*NEWTON_PAIR*/, buffers, f_stride);
 
   int tc;
   FORCE_T * _noalias f_start;

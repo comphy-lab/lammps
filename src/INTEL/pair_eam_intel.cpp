@@ -178,8 +178,6 @@ void PairEAMIntel::eval(const int vflag,
   int nlocal, nall, minlocal;
   fix->get_buffern(nlocal, nall, minlocal);
 
-  const int ago = neighbor->ago;
-
   ATOM_T * _noalias const x = buffers->get_x();
 
   const int * _noalias const ilist = list->ilist;
@@ -204,17 +202,14 @@ void PairEAMIntel::eval(const int vflag,
   const int ccache_stride = _ccache_stride;
 
   // Determine how much data to transfer
-  int x_size, q_size, f_stride, ev_size, separate_flag;
-  IP_PRE_get_transfern(ago, NEWTON_PAIR, EFLAG, vflag,
-                       buffers, fix, separate_flag,
-                       x_size, q_size, ev_size, f_stride);
+  int f_stride;
+  IP_PRE_get_transfern(NEWTON_PAIR, buffers, f_stride);
 
   int tc;
   FORCE_T * _noalias f_start;
   acc_t * _noalias ev_global;
   IP_PRE_get_buffers(buffers, fix, tc, f_start, ev_global);
   const int nthreads = tc;
-  int *overflow = fix->get_off_overflow_flag();
 
   const flt_t frdr = rdr;
   const flt_t frdrho = rdrho;

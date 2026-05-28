@@ -158,10 +158,8 @@ void PairLJCharmmCoulCharmmIntel::eval(const int vflag,
   const int ccache_stride = _ccache_stride;
 
   // Determine how much data to transfer
-  int x_size, q_size, f_stride, ev_size, separate_flag;
-  IP_PRE_get_transfern(ago, NEWTON_PAIR, EFLAG, vflag,
-                       buffers, fix, separate_flag,
-                       x_size, q_size, ev_size, f_stride);
+  int f_stride;
+  IP_PRE_get_transfern(NEWTON_PAIR, buffers, f_stride);
 
   int tc;
   FORCE_T * _noalias f_start;

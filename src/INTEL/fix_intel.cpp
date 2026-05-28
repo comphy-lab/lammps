@@ -57,7 +57,6 @@ FixIntel::FixIntel(LAMMPS *lmp, int narg, char **arg) :  Fix(lmp, narg, arg)
 
   _precision_mode = PREC_MODE_MIXED;
   _overflow_flag[LMP_OVERFLOW] = 0;
-  _off_overflow_flag[LMP_OVERFLOW] = 0;
 
   _force_array_s = nullptr;
   _force_array_m = nullptr;

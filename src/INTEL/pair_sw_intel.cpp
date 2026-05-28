@@ -156,8 +156,6 @@ void PairSWIntel::eval(const int vflag,
   int nlocal, nall, minlocal;
   fix->get_buffern(nlocal, nall, minlocal);
 
-  const int ago = neighbor->ago;
-
   ATOM_T * _noalias const x = buffers->get_x();
   const int * _noalias const ilist = list->ilist;
   const int * _noalias const numneigh = list->numneigh;
@@ -188,10 +186,8 @@ void PairSWIntel::eval(const int vflag,
   const int onetype3 = _onetype3;
 
   // Determine how much data to transfer
-  int x_size, q_size, f_stride, ev_size, separate_flag;
-  IP_PRE_get_transfern(ago, /* NEWTON_PAIR*/ 1, EFLAG, vflag,
-                       buffers, fix, separate_flag,
-                       x_size, q_size, ev_size, f_stride);
+  int f_stride;
+  IP_PRE_get_transfern(/* NEWTON_PAIR*/ 1, buffers, f_stride);
 
   int tc;
   FORCE_T * _noalias f_start;
@@ -542,8 +538,6 @@ void PairSWIntel::eval(const int vflag,
   int nlocal, nall, minlocal;
   fix->get_buffern(nlocal, nall, minlocal);
 
-  const int ago = neighbor->ago;
-
   ATOM_T * _noalias const x = buffers->get_x();
   const int * _noalias const ilist = list->ilist;
   const int * _noalias const numneigh = list->numneigh;
@@ -574,10 +568,8 @@ void PairSWIntel::eval(const int vflag,
   const int eatom = this->eflag_atom;
 
   // Determine how much data to transfer
-  int x_size, q_size, f_stride, ev_size, separate_flag;
-  IP_PRE_get_transfern(ago, /* NEWTON_PAIR*/ 1, EFLAG, vflag,
-                       buffers, fix, separate_flag,
-                       x_size, q_size, ev_size, f_stride);
+  int f_stride;
+  IP_PRE_get_transfern(/* NEWTON_PAIR*/ 1, buffers, f_stride);
 
   int tc;
   FORCE_T * _noalias f_start;
