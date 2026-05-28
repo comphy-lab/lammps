@@ -456,7 +456,7 @@ in lieu of the volfactor.  This turns off all kspace forces in the z
 direction.  The *nozforce* option is not supported by MSM. For MSM,
 any combination of periodic, non-periodic, or shrink-wrapped
 boundaries can be set using :doc:`boundary <boundary>` (the slab
-approximation in not needed).  The *slab* keyword with a *volfactor*
+approximation is not needed).  The *slab* keyword with a *volfactor*
 value (the Yeh-Berkowitz EW3DC correction) supports triclinic
 (non-orthogonal) simulation cells for :doc:`kspace_style <kspace_style>`
 *ewald*, *ewald/disp*, *pppm*, and *pppm/cg* (and the OpenMP variants
