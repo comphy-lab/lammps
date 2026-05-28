@@ -77,10 +77,9 @@ class IntelBuffers {
 
   inline void set_torque_flag(const int in) { _torque_flag = in; }
 
-  inline void grow(const int nall, const int nlocal, const int nthreads,
-                   const int offload_end) {
+  inline void grow(const int nall, const int nlocal, const int nthreads) {
     if (nall >= _buf_size || nlocal >= _buf_local_size)
-      _grow(nall, nlocal, nthreads, offload_end);
+      _grow(nall, nlocal, nthreads);
   }
 
   inline void free_all_nbor_buffers() {
@@ -91,18 +90,16 @@ class IntelBuffers {
   }
 
   inline void grow_list(NeighList *list, const int nlocal, const int nthreads,
-                        const int three_body, const int offload_end,
-                        const int pack_width=1) {
-    grow_list_local(list, three_body, offload_end);
-    grow_nbor_list(list, nlocal, nthreads, offload_end, pack_width);
+                        const int three_body, const int pack_width=1) {
+    grow_list_local(list, three_body);
+    grow_nbor_list(list, nlocal, nthreads, pack_width);
   }
 
   void free_list_local();
-  inline void grow_list_local(NeighList *list, const int three_body,
-                              const int offload_end) {
+  inline void grow_list_local(NeighList *list, const int three_body) {
     _neigh_list_ptrs[0].list_ptr = (void *)list;
     if (list->get_maxlocal() > _off_map_listlocal)
-      _grow_list_local(list, three_body, offload_end);
+      _grow_list_local(list, three_body);
   }
 
   void free_ccache();
@@ -139,10 +136,9 @@ class IntelBuffers {
   void free_nbor_list();
 
   inline void grow_nbor_list(NeighList *list, const int nlocal,
-                             const int nthreads, const int offload_end,
-                             const int pack_width) {
+                             const int nthreads, const int pack_width) {
     if (nlocal > _list_alloc_atoms)
-      _grow_nbor_list(list, nlocal, nthreads, offload_end, pack_width);
+      _grow_nbor_list(list, nlocal, nthreads, pack_width);
   }
 
   void set_ntypes(const int ntypes, const int use_ghost_cut = 1);
@@ -162,13 +158,13 @@ class IntelBuffers {
   void grow_data3(NeighList *list, int *&numneighhalf, int *&cnumneigh);
   void free_list_ptrs();
 
-  inline atom_t * get_x(const int /*offload*/ = 1) {
+  inline atom_t * get_x() {
     return _x;
   }
-  inline flt_t * get_q(const int /*offload*/ = 1) {
+  inline flt_t * get_q() {
     return _q;
   }
-  inline quat_t * get_quat(const int /*offload*/ = 1) {
+  inline quat_t * get_quat() {
     return _quat;
   }
   inline vec3_acc_t * get_f() { return _f; }
@@ -273,12 +269,10 @@ class IntelBuffers {
   _alignvar(acc_t _ev_global[8],64);
   _alignvar(acc_t _ev_global_host[8],64);
 
-  void _grow(const int nall, const int nlocal, const int nthreads,
-             const int offload_end);
-  void _grow_list_local(NeighList *list, const int three_body,
-                        const int offload_end);
+  void _grow(const int nall, const int nlocal, const int nthreads);
+  void _grow_list_local(NeighList *list, const int three_body);
   void _grow_nbor_list(NeighList *list, const int nlocal, const int nthreads,
-                       const int offload_end, const int pack_width);
+                       const int pack_width);
 };
 
 }

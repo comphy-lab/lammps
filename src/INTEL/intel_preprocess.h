@@ -478,7 +478,7 @@ enum {TIME_PACK, TIME_HOST_NEIGHBOR, TIME_HOST_PAIR, TIME_IMBALANCE};
 }
 
 #define IP_PRE_fdotr_acc_force(nall, minlocal, nthreads, f_start,       \
-                               f_stride, pos, offload, vflag, ov0, ov1, \
+                               f_stride, pos, vflag, ov0, ov1,          \
                                ov2, ov3, ov4, ov5)                      \
 {                                                                       \
   int o_range = (nall - minlocal) * 4;                                  \
@@ -669,7 +669,7 @@ enum {TIME_PACK, TIME_HOST_NEIGHBOR, TIME_HOST_PAIR, TIME_IMBALANCE};
 }
 
 #define IP_PRE_fdotr_acc_force(nall, minlocal, nthreads, f_start,       \
-                               f_stride, pos, offload, vflag, ov0, ov1, \
+                               f_stride, pos, vflag, ov0, ov1,          \
                                ov2, ov3, ov4, ov5)                      \
 {                                                                       \
   int o_range = (nall - minlocal) * 4;                                  \
@@ -700,7 +700,7 @@ enum {TIME_PACK, TIME_HOST_NEIGHBOR, TIME_HOST_PAIR, TIME_IMBALANCE};
 
 #if INTEL_NBOR_PAD > 1
 
-#define IP_PRE_neighbor_pad(jnum, offload)                              \
+#define IP_PRE_neighbor_pad(jnum)                              \
 {                                                                       \
   const int pad_mask = ~static_cast<int>(INTEL_NBOR_PAD *               \
                                          sizeof(float) /                \
@@ -711,15 +711,12 @@ enum {TIME_PACK, TIME_HOST_NEIGHBOR, TIME_HOST_PAIR, TIME_IMBALANCE};
 
 #else
 
-#define IP_PRE_neighbor_pad(jnum, offload)
+#define IP_PRE_neighbor_pad(jnum)
 
 #endif
 
-#define IP_PRE_pack_separate_buffers(fix, buffers, ago, offload,        \
-                                     nlocal, nall)
-
 #define IP_PRE_get_transfern(ago, newton, eflag, vflag,                 \
-                             buffers, offload, fix, separate_flag,      \
+                             buffers, fix, separate_flag,               \
                              x_size, q_size, ev_size, f_stride)         \
 {                                                                       \
   separate_flag = 0;                                                    \
@@ -731,7 +728,7 @@ enum {TIME_PACK, TIME_HOST_NEIGHBOR, TIME_HOST_PAIR, TIME_IMBALANCE};
   f_stride = buffers->get_stride(f_length);                             \
 }
 
-#define IP_PRE_get_buffers(offload, buffers, fix, tc, f_start,          \
+#define IP_PRE_get_buffers(buffers, fix, tc, f_start,                   \
                            ev_global)                                   \
 {                                                                       \
   tc = comm->nthreads;                                                  \
@@ -740,11 +737,8 @@ enum {TIME_PACK, TIME_HOST_NEIGHBOR, TIME_HOST_PAIR, TIME_IMBALANCE};
   ev_global = buffers->get_ev_global_host();                            \
 }
 
-#define IP_PRE_repack_for_offload(newton, separate_flag, nlocal, nall,  \
-                                  f_stride, x, q)
-
 #define IP_PRE_fdotr_reduce_omp(newton, nall, minlocal, nthreads,       \
-                                f_start, f_stride, x, offload, vflag,   \
+                                f_start, f_stride, x, vflag,            \
                                 ov0, ov1, ov2, ov3, ov4, ov5)           \
 {                                                                       \
   if (newton) {                                                         \

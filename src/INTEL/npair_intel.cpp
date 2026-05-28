@@ -78,10 +78,9 @@ void NPairIntel::copy_cutsq_info(IntelBuffers<flt_t,acc_t> *buffers) {
 
 template <class flt_t, class acc_t, int offload_noghost, int need_ic,
           int FULL, int TRI, int THREE>
-void NPairIntel::bin_newton(const int offload, NeighList *list,
+void NPairIntel::bin_newton(NeighList *list,
                             IntelBuffers<flt_t,acc_t> *buffers,
-                            const int astart, const int aend,
-                            const int offload_end) {
+                            const int astart, const int aend) {
 
   if (aend-astart == 0) return;
 
@@ -342,7 +341,7 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
             const flt_t rsq = delx * delx + dely * dely + delz * delz;
             if (rsq > cutneighsq[ioffset + jtype]) addme = 0;
 
-            // i bin (half) check and offload ghost check
+            // i bin (half) check and ghost check
             if (j < nlocal) {
               const int ijmod = (i + j) & 1;
               if (i > j) {
@@ -431,7 +430,7 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
             }
           }
 
-          // offload ghost check
+          // ghost check
 
           if (need_ic) {
             int no_special;
@@ -613,7 +612,7 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
           #else
           // Pad anyways just in case we have hybrid with 2-body and newton off
           int pad_end = ns;
-          IP_PRE_neighbor_pad(pad_end, offload);
+          IP_PRE_neighbor_pad(pad_end);
           #if defined(LMP_SIMD_COMPILER)
           #pragma vector aligned
           #pragma loop_count min=1, max=INTEL_COMPILE_WIDTH-1, \
@@ -625,7 +624,7 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
         } else {
           numneigh[i] = n;
           int pad_end = n;
-          IP_PRE_neighbor_pad(pad_end, offload);
+          IP_PRE_neighbor_pad(pad_end);
           #if defined(LMP_SIMD_COMPILER)
           #pragma vector aligned
           #pragma loop_count min=1, max=INTEL_COMPILE_WIDTH-1, \
@@ -674,7 +673,7 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
           numneigh[i] = 0;
 
     } // end omp
-  } // end offload
+  }
 
 }
 
@@ -686,96 +685,72 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
 // ---- Half, no IC
 
 template void NPairIntel::bin_newton<float, float, 0, 0, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,float> *, const int, const int);
 template void NPairIntel::bin_newton<float, double, 0, 0, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,double> *, const int, const int);
 template void NPairIntel::bin_newton<double, double, 0, 0, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<double,double> *, const int, const int);
 
 // ---- Half, IC
 
 template void NPairIntel::bin_newton<float, float, 0, 1, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,float> *, const int, const int);
 template void NPairIntel::bin_newton<float, double, 0, 1, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,double> *, const int, const int);
 template void NPairIntel::bin_newton<double, double, 0, 1, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<double,double> *, const int, const int);
 
 // ---- Tri, no IC
 
 template void NPairIntel::bin_newton<float, float, 0, 0, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,float> *, const int, const int);
 template void NPairIntel::bin_newton<float, double, 0, 0, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,double> *, const int, const int);
 template void NPairIntel::bin_newton<double, double, 0, 0, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<double,double> *, const int, const int);
 
 // ---- Tri, IC
 
 template void NPairIntel::bin_newton<float, float, 0, 1, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,float> *, const int, const int);
 template void NPairIntel::bin_newton<float, double, 0, 1, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,double> *, const int, const int);
 template void NPairIntel::bin_newton<double, double, 0, 1, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<double,double> *, const int, const int);
 
 // ---- Full, no IC
 
 template void NPairIntel::bin_newton<float, float, 0, 0, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,float> *, const int, const int);
 template void NPairIntel::bin_newton<float, double, 0, 0, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,double> *, const int, const int);
 template void NPairIntel::bin_newton<double, double, 0, 0, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<double,double> *, const int, const int);
 
 // ---- Full, IC
 
 template void NPairIntel::bin_newton<float, float, 0, 1, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,float> *, const int, const int);
 template void NPairIntel::bin_newton<float, double, 0, 1, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,double> *, const int, const int);
 template void NPairIntel::bin_newton<double, double, 0, 1, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<double,double> *, const int, const int);
 
 // ---- 3-body, no IC
 
 template void NPairIntel::bin_newton<float, float, 0, 0, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,float> *, const int, const int);
 template void NPairIntel::bin_newton<float, double, 0, 0, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,double> *, const int, const int);
 template void NPairIntel::bin_newton<double, double, 0, 0, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<double,double> *, const int, const int);
 
 // ---- 3-body, IC
 
 template void NPairIntel::bin_newton<float, float, 0, 1, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,float> *, const int, const int);
 template void NPairIntel::bin_newton<float, double, 0, 1, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<float,double> *, const int, const int);
 template void NPairIntel::bin_newton<double, double, 0, 1, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
+  (NeighList *, IntelBuffers<double,double> *, const int, const int);
 

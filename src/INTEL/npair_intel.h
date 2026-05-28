@@ -80,8 +80,8 @@ class NPairIntel : public NPair {
   void copy_cutsq_info(IntelBuffers<flt_t,acc_t> *);
 
   template <class flt_t, class acc_t, int, int, int, int, int>
-  void bin_newton(const int, NeighList *, IntelBuffers<flt_t,acc_t> *,
-                  const int, const int, const int offload_end = 0);
+  void bin_newton(NeighList *, IntelBuffers<flt_t,acc_t> *,
+                  const int, const int);
 
 };
 

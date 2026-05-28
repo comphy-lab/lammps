@@ -76,8 +76,7 @@ void IntelBuffers<flt_t, acc_t>::free_buffers()
 
 template <class flt_t, class acc_t>
 void IntelBuffers<flt_t, acc_t>::_grow(const int nall, const int nlocal,
-                                       const int nthreads,
-                                       const int /*offload_end*/)
+                                       const int nthreads)
 {
   free_buffers();
   _buf_size = static_cast<double>(nall) * 1.1 + 1;
@@ -165,8 +164,7 @@ void IntelBuffers<flt_t, acc_t>::grow_data3(NeighList *list, int *&numneighhalf,
 /* ---------------------------------------------------------------------- */
 
 template <class flt_t, class acc_t>
-void IntelBuffers<flt_t, acc_t>::_grow_list_local(NeighList *list, const int three_body,
-                                                  const int /*offload_end*/)
+void IntelBuffers<flt_t, acc_t>::_grow_list_local(NeighList *list, const int three_body)
 {
   free_list_local();
   int size = list->get_maxlocal();
@@ -192,7 +190,6 @@ template <class flt_t, class acc_t>
 void IntelBuffers<flt_t, acc_t>::_grow_nbor_list(NeighList * /*list*/,
                                                  const int nlocal,
                                                  const int nthreads,
-                                                 const int /*offload_end*/,
                                                  const int pack_width)
 {
   free_nbor_list();
@@ -338,7 +335,7 @@ void IntelBuffers<flt_t, acc_t>::fdotr_reduce(const int nall,
     acc_t &ov2, acc_t &ov3, acc_t &ov4, acc_t &ov5)
 {
   int iifrom, iito, tid;
-  IP_PRE_fdotr_acc_force(nall, 0, nthreads, _f, f_stride, _x, 0, 2,
+  IP_PRE_fdotr_acc_force(nall, 0, nthreads, _f, f_stride, _x, 2,
                          ov0, ov1, ov2, ov3, ov4, ov5);
 }
 

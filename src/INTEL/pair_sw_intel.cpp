@@ -87,8 +87,6 @@ void PairSWIntel::compute(int eflag, int vflag,
 
   const int inum = list->inum;
   const int nthreads = comm->nthreads;
-  const int host_start = fix->host_start_pair();
-  const int offload_end = fix->offload_end_pair();
   const int ago = neighbor->ago;
 
   if (ago != 0 && fix->separate_buffers() == 0) {
@@ -116,37 +114,29 @@ void PairSWIntel::compute(int eflag, int vflag,
   if (_onetype) {
     if (_spq) {
       if (eflag) {
-        eval<1,1,1>(1, ovflag, buffers, fc, 0, offload_end);
-        eval<1,1,1>(0, ovflag, buffers, fc, host_start, inum);
+        eval<1,1,1>(ovflag, buffers, fc, 0, inum);
       } else {
-        eval<1,1,0>(1, ovflag, buffers, fc, 0, offload_end);
-        eval<1,1,0>(0, ovflag, buffers, fc, host_start, inum);
+        eval<1,1,0>(ovflag, buffers, fc, 0, inum);
       }
     } else {
       if (eflag) {
-        eval<0,1,1>(1, ovflag, buffers, fc, 0, offload_end);
-        eval<0,1,1>(0, ovflag, buffers, fc, host_start, inum);
+        eval<0,1,1>(ovflag, buffers, fc, 0, inum);
       } else {
-        eval<0,1,0>(1, ovflag, buffers, fc, 0, offload_end);
-        eval<0,1,0>(0, ovflag, buffers, fc, host_start, inum);
+        eval<0,1,0>(ovflag, buffers, fc, 0, inum);
       }
     }
   } else {
     if (_spq) {
       if (eflag) {
-        eval<1,0,1>(1, ovflag, buffers, fc, 0, offload_end);
-        eval<1,0,1>(0, ovflag, buffers, fc, host_start, inum);
+        eval<1,0,1>(ovflag, buffers, fc, 0, inum);
       } else {
-        eval<1,0,0>(1, ovflag, buffers, fc, 0, offload_end);
-        eval<1,0,0>(0, ovflag, buffers, fc, host_start, inum);
+        eval<1,0,0>(ovflag, buffers, fc, 0, inum);
       }
     } else {
       if (eflag) {
-        eval<0,0,1>(1, ovflag, buffers, fc, 0, offload_end);
-        eval<0,0,1>(0, ovflag, buffers, fc, host_start, inum);
+        eval<0,0,1>(ovflag, buffers, fc, 0, inum);
       } else {
-        eval<0,0,0>(1, ovflag, buffers, fc, 0, offload_end);
-        eval<0,0,0>(0, ovflag, buffers, fc, host_start, inum);
+        eval<0,0,0>(ovflag, buffers, fc, 0, inum);
       }
     }
   }
@@ -156,7 +146,7 @@ void PairSWIntel::compute(int eflag, int vflag,
 #ifndef LMP_USE_AVXCD
 
 template <int SPQ,int ONETYPE,int EFLAG,class flt_t,class acc_t>
-void PairSWIntel::eval(const int offload, const int vflag,
+void PairSWIntel::eval(const int vflag,
                        IntelBuffers<flt_t,acc_t> *buffers,
                        const ForceConst<flt_t> &fc, const int astart,
                        const int aend)
@@ -164,12 +154,11 @@ void PairSWIntel::eval(const int offload, const int vflag,
   const int inum = aend - astart;
   if (inum == 0) return;
   int nlocal, nall, minlocal;
-  fix->get_buffern(offload, nlocal, nall, minlocal);
+  fix->get_buffern(nlocal, nall, minlocal);
 
   const int ago = neighbor->ago;
-  IP_PRE_pack_separate_buffers(fix, buffers, ago, offload, nlocal, nall);
 
-  ATOM_T * _noalias const x = buffers->get_x(offload);
+  ATOM_T * _noalias const x = buffers->get_x();
   const int * _noalias const ilist = list->ilist;
   const int * _noalias const numneigh = list->numneigh;
   const int * _noalias const firstneigh = list->firstneigh[ilist[0]];
@@ -201,19 +190,17 @@ void PairSWIntel::eval(const int offload, const int vflag,
   // Determine how much data to transfer
   int x_size, q_size, f_stride, ev_size, separate_flag;
   IP_PRE_get_transfern(ago, /* NEWTON_PAIR*/ 1, EFLAG, vflag,
-                       buffers, offload, fix, separate_flag,
+                       buffers, fix, separate_flag,
                        x_size, q_size, ev_size, f_stride);
 
   int tc;
   FORCE_T * _noalias f_start;
   acc_t * _noalias ev_global;
-  IP_PRE_get_buffers(offload, buffers, fix, tc, f_start, ev_global);
+  IP_PRE_get_buffers(buffers, fix, tc, f_start, ev_global);
   const int nthreads = tc;
 
   {
 
-    IP_PRE_repack_for_offload(1, separate_flag, nlocal, nall,
-                              f_stride, x, 0);
 
     acc_t oevdwl, ov0, ov1, ov2, ov3, ov4, ov5;
     if (EFLAG || vflag)
@@ -314,7 +301,7 @@ void PairSWIntel::eval(const int offload, const int vflag,
         }
 
         int ejnum_pad = ejnum;
-        IP_PRE_neighbor_pad(ejnum_pad, offload);
+        IP_PRE_neighbor_pad(ejnum_pad);
         #if defined(LMP_SIMD_COMPILER)
         #pragma vector aligned
         #pragma loop_count min=1, max=INTEL_COMPILE_WIDTH-1, \
@@ -502,7 +489,7 @@ void PairSWIntel::eval(const int offload, const int vflag,
       } // for ii
 
       IP_PRE_fdotr_reduce_omp(1, nall, minlocal, nthreads, f_start, f_stride,
-                              x, offload, vflag, ov0, ov1, ov2, ov3, ov4, ov5);
+                              x, vflag, ov0, ov1, ov2, ov3, ov4, ov5);
     } // end omp
 
     IP_PRE_fdotr_reduce(1, nall, nthreads, f_stride, vflag,
@@ -518,13 +505,13 @@ void PairSWIntel::eval(const int offload, const int vflag,
       ev_global[6] = ov4;
       ev_global[7] = ov5;
     }
-  } // end offload
+  }
   fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
-    fix->add_result_array(f_start, ev_global, offload, eatom, 0, vflag);
+    fix->add_result_array(f_start, ev_global, eatom, 0, vflag);
   else
-    fix->add_result_array(f_start, nullptr, offload);
+    fix->add_result_array(f_start, nullptr);
 }
 
 #else
@@ -541,7 +528,7 @@ authors for more details.
 ------------------------------------------------------------------------- */
 
 template <int SPQ,int ONETYPE,int EFLAG,class flt_t,class acc_t>
-void PairSWIntel::eval(const int offload, const int vflag,
+void PairSWIntel::eval(const int vflag,
                        IntelBuffers<flt_t,acc_t> *buffers,
                        const ForceConst<flt_t> &fc, const int astart,
                        const int aend)
@@ -553,12 +540,11 @@ void PairSWIntel::eval(const int offload, const int vflag,
   const int inum = aend - astart;
   if (inum == 0) return;
   int nlocal, nall, minlocal;
-  fix->get_buffern(offload, nlocal, nall, minlocal);
+  fix->get_buffern(nlocal, nall, minlocal);
 
   const int ago = neighbor->ago;
-  IP_PRE_pack_separate_buffers(fix, buffers, ago, offload, nlocal, nall);
 
-  ATOM_T * _noalias const x = buffers->get_x(offload);
+  ATOM_T * _noalias const x = buffers->get_x();
   const int * _noalias const ilist = list->ilist;
   const int * _noalias const numneigh = list->numneigh;
   const int * _noalias const firstneigh = list->firstneigh[ilist[0]];
@@ -590,19 +576,17 @@ void PairSWIntel::eval(const int offload, const int vflag,
   // Determine how much data to transfer
   int x_size, q_size, f_stride, ev_size, separate_flag;
   IP_PRE_get_transfern(ago, /* NEWTON_PAIR*/ 1, EFLAG, vflag,
-                       buffers, offload, fix, separate_flag,
+                       buffers, fix, separate_flag,
                        x_size, q_size, ev_size, f_stride);
 
   int tc;
   FORCE_T * _noalias f_start;
   acc_t * _noalias ev_global;
-  IP_PRE_get_buffers(offload, buffers, fix, tc, f_start, ev_global);
+  IP_PRE_get_buffers(buffers, fix, tc, f_start, ev_global);
   const int nthreads = tc;
 
   {
 
-    IP_PRE_repack_for_offload(1, separate_flag, nlocal, nall,
-                              f_stride, x, 0);
 
     acc_t oevdwl, ov0, ov1, ov2, ov3, ov4, ov5;
     if (EFLAG || vflag)
@@ -985,7 +969,7 @@ void PairSWIntel::eval(const int offload, const int vflag,
       } // for ii
 
       IP_PRE_fdotr_reduce_omp(1, nall, minlocal, nthreads, f_start, f_stride,
-                              x, offload, vflag, ov0, ov1, ov2, ov3, ov4, ov5);
+                              x, vflag, ov0, ov1, ov2, ov3, ov4, ov5);
     } // end omp
 
     IP_PRE_fdotr_reduce(1, nall, nthreads, f_stride, vflag,
@@ -1001,13 +985,13 @@ void PairSWIntel::eval(const int offload, const int vflag,
       ev_global[6] = ov4;
       ev_global[7] = ov5;
     }
-  } // end offload
+  }
   fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
-    fix->add_result_array(f_start, ev_global, offload, eatom, 0, vflag);
+    fix->add_result_array(f_start, ev_global, eatom, 0, vflag);
   else
-    fix->add_result_array(f_start, 0, offload);
+    fix->add_result_array(f_start, 0);
 }
 
 #endif
@@ -1083,7 +1067,7 @@ void PairSWIntel::pack_force_const(ForceConst<flt_t> &fc,
   #endif
 
   int tp1 = atom->ntypes + 1;
-  fc.set_ntypes(tp1,memory,_cop);
+  fc.set_ntypes(tp1,memory);
 
   // Repeat cutsq calculation because done after call to init_style
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -1168,8 +1152,7 @@ void PairSWIntel::pack_force_const(ForceConst<flt_t> &fc,
 
 template <class flt_t>
 void PairSWIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
-                                                Memory *memory,
-                                                const int cop) {
+                                                Memory *memory) {
   if (memory != nullptr) _memory = memory;
   if (ntypes != _ntypes) {
     if (_ntypes > 0) {
@@ -1182,7 +1165,6 @@ void PairSWIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
       _memory->destroy(p3);
     }
     if (ntypes > 0) {
-      _cop = cop;
       _memory->create(p2,ntypes,ntypes,"fc.p2");
       _memory->create(p2f,ntypes,ntypes,"fc.p2f");
       _memory->create(p2f2,ntypes,ntypes,"fc.p2f2");

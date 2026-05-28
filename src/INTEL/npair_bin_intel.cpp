@@ -60,11 +60,9 @@ hbni(NeighList *list, IntelBuffers<flt_t,acc_t> *buffers) {
   const int nlocal = (includegroup) ? atom->nfirst : atom->nlocal;
   list->inum = nlocal;
 
-  int host_start = _fix->host_start_neighbor();
-  const int off_end = _fix->offload_end_neighbor();
 
 
-  buffers->grow_list(list, atom->nlocal, comm->nthreads, 0, off_end);
+  buffers->grow_list(list, atom->nlocal, comm->nthreads, 0);
 
   int need_ic = 0;
   if (atom->molecular != Atom::ATOMIC)
@@ -72,9 +70,9 @@ hbni(NeighList *list, IntelBuffers<flt_t,acc_t> *buffers) {
                          neighbor->cutneighmax);
 
   if (need_ic)
-    bin_newton<flt_t,acc_t,0,1,0,0,0>(0, list, buffers, host_start, nlocal);
+    bin_newton<flt_t,acc_t,0,1,0,0,0>(list, buffers, 0, nlocal);
   else
-    bin_newton<flt_t,acc_t,0,0,0,0,0>(0, list, buffers, host_start, nlocal);
+    bin_newton<flt_t,acc_t,0,0,0,0,0>(list, buffers, 0, nlocal);
 }
 
 
@@ -111,11 +109,9 @@ hbnti(NeighList *list, IntelBuffers<flt_t,acc_t> *buffers) {
   const int nlocal = (includegroup) ? atom->nfirst : atom->nlocal;
   list->inum = nlocal;
 
-  int host_start = _fix->host_start_neighbor();
-  const int off_end = _fix->offload_end_neighbor();
 
 
-  buffers->grow_list(list, atom->nlocal, comm->nthreads, 0, off_end);
+  buffers->grow_list(list, atom->nlocal, comm->nthreads, 0);
 
   int need_ic = 0;
   if (atom->molecular != Atom::ATOMIC)
@@ -123,9 +119,9 @@ hbnti(NeighList *list, IntelBuffers<flt_t,acc_t> *buffers) {
                          neighbor->cutneighmax);
 
   if (need_ic)
-    bin_newton<flt_t,acc_t,0,1,0,1,0>(0, list, buffers, host_start, nlocal);
+    bin_newton<flt_t,acc_t,0,1,0,1,0>(list, buffers, 0, nlocal);
   else
-    bin_newton<flt_t,acc_t,0,0,0,1,0>(0, list, buffers, host_start, nlocal);
+    bin_newton<flt_t,acc_t,0,0,0,1,0>(list, buffers, 0, nlocal);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -160,12 +156,10 @@ fbi(NeighList *list, IntelBuffers<flt_t,acc_t> *buffers) {
   list->inum = nlocal;
   list->gnum = 0;
 
-  int host_start = _fix->host_start_neighbor();;
-  const int off_end = _fix->offload_end_neighbor();
 
 
   buffers->grow_list(list, atom->nlocal, comm->nthreads,
-                     _fix->three_body_neighbor(), off_end,
+                     _fix->three_body_neighbor(),
                      _fix->nbor_pack_width());
 
   int need_ic = 0;
@@ -175,13 +169,13 @@ fbi(NeighList *list, IntelBuffers<flt_t,acc_t> *buffers) {
 
   if (_fix->three_body_neighbor()) {
     if (need_ic)
-      bin_newton<flt_t,acc_t,0,1,1,0,1>(0, list, buffers, host_start, nlocal);
+      bin_newton<flt_t,acc_t,0,1,1,0,1>(list, buffers, 0, nlocal);
     else
-      bin_newton<flt_t,acc_t,0,0,1,0,1>(0, list, buffers, host_start, nlocal);
+      bin_newton<flt_t,acc_t,0,0,1,0,1>(list, buffers, 0, nlocal);
   } else {
     if (need_ic)
-      bin_newton<flt_t,acc_t,0,1,1,0,0>(0, list, buffers, host_start, nlocal);
+      bin_newton<flt_t,acc_t,0,1,1,0,0>(list, buffers, 0, nlocal);
     else
-      bin_newton<flt_t,acc_t,0,0,1,0,0>(0, list, buffers, host_start, nlocal);
+      bin_newton<flt_t,acc_t,0,0,1,0,0>(list, buffers, 0, nlocal);
   }
 }

@@ -103,8 +103,6 @@ template <class flt_t, class acc_t>
 void NBinIntel::bin_atoms(IntelBuffers<flt_t,acc_t> * buffers) {
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
-  const int aend = _fix->offload_end_neighbor();
-
 
   // ---------- Sanity check for padding --------------
   {
@@ -117,7 +115,7 @@ void NBinIntel::bin_atoms(IntelBuffers<flt_t,acc_t> * buffers) {
 
   // ---------- Grow and cast/pack buffers -------------
   _fix->start_watch(TIME_PACK);
-  buffers->grow(nall, atom->nlocal, comm->nthreads, aend);
+  buffers->grow(nall, atom->nlocal, comm->nthreads);
 
   ATOM_T biga;
   biga.x = INTEL_BIGP;

@@ -80,8 +80,6 @@ void PairGayBerneIntel::compute(int eflag, int vflag,
   const int inum = list->inum;
   const int nall = atom->nlocal + atom->nghost;
   const int nthreads = comm->nthreads;
-  const int host_start = fix->host_start_pair();
-  const int offload_end = fix->offload_end_pair();
   const int ago = neighbor->ago;
 
   if (fix->separate_buffers() == 0) {
@@ -124,25 +122,21 @@ void PairGayBerneIntel::compute(int eflag, int vflag,
   else if (vflag) ovflag = 1;
   if (eflag) {
     if (force->newton_pair) {
-      eval<1,1>(1, ovflag, buffers, fc, 0, offload_end);
-      eval<1,1>(0, ovflag, buffers, fc, host_start, inum);
+      eval<1,1>(ovflag, buffers, fc, 0, inum);
     } else {
-      eval<1,0>(1, ovflag, buffers, fc, 0, offload_end);
-      eval<1,0>(0, ovflag, buffers, fc, host_start, inum);
+      eval<1,0>(ovflag, buffers, fc, 0, inum);
     }
   } else {
     if (force->newton_pair) {
-      eval<0,1>(1, ovflag, buffers, fc, 0, offload_end);
-      eval<0,1>(0, ovflag, buffers, fc, host_start, inum);
+      eval<0,1>(ovflag, buffers, fc, 0, inum);
     } else {
-      eval<0,0>(1, ovflag, buffers, fc, 0, offload_end);
-      eval<0,0>(0, ovflag, buffers, fc, host_start, inum);
+      eval<0,0>(ovflag, buffers, fc, 0, inum);
     }
   }
 }
 
 template <int EFLAG, int NEWTON_PAIR, class flt_t, class acc_t>
-void PairGayBerneIntel::eval(const int offload, const int vflag,
+void PairGayBerneIntel::eval(const int vflag,
                              IntelBuffers<flt_t,acc_t> *buffers,
                              const ForceConst<flt_t> &fc,
                              const int astart, const int aend)
@@ -150,11 +144,11 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
   const int inum = aend - astart;
   if (inum == 0) return;
   int nlocal, nall, minlocal;
-  fix->get_buffern(offload, nlocal, nall, minlocal);
+  fix->get_buffern(nlocal, nall, minlocal);
 
   const int ago = neighbor->ago;
-  ATOM_T * _noalias const x = buffers->get_x(offload);
-  QUAT_T * _noalias const quat = buffers->get_quat(offload);
+  ATOM_T * _noalias const x = buffers->get_x();
+  QUAT_T * _noalias const quat = buffers->get_quat();
   const AtomVecEllipsoid::Bonus *bonus = avec->bonus;
   const int *ellipsoid = atom->ellipsoid;
 
@@ -184,13 +178,13 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
   // Determine how much data to transfer
   int x_size, q_size, f_stride, ev_size, separate_flag;
   IP_PRE_get_transfern(ago, NEWTON_PAIR, EFLAG, vflag,
-                       buffers, offload, fix, separate_flag,
+                       buffers, fix, separate_flag,
                        x_size, q_size, ev_size, f_stride);
 
   int tc;
   FORCE_T * _noalias f_start;
   acc_t * _noalias ev_global;
-  IP_PRE_get_buffers(offload, buffers, fix, tc, f_start, ev_global);
+  IP_PRE_get_buffers(buffers, fix, tc, f_start, ev_global);
   const int max_nbors = _max_nbors;
   const int nthreads = tc;
 
@@ -242,7 +236,7 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
 
         const int * _noalias const jlist = firstneigh[i];
         int jnum = numneigh[i];
-        IP_PRE_neighbor_pad(jnum, offload);
+        IP_PRE_neighbor_pad(jnum);
 
         const flt_t xtmp = x[i].x;
         const flt_t ytmp = x[i].y;
@@ -299,7 +293,7 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
             multiple_forms = true;
         }
         int packed_end = packed_j;
-        IP_PRE_neighbor_pad(packed_end, offload);
+        IP_PRE_neighbor_pad(packed_end);
         #if defined(LMP_SIMD_COMPILER)
         #pragma loop_count min=1, max=15, avg=8
         #endif
@@ -663,7 +657,7 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
       int o_range;
       if (NEWTON_PAIR) {
         o_range = nall;
-        if (offload == 0) o_range -= minlocal;
+        o_range -= minlocal;
         IP_PRE_omp_range_align(iifrom, iito, tid, o_range, nthreads,
                                sizeof(FORCE_T));
         const int sto = iito * 8;
@@ -728,14 +722,14 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
       ev_global[7] = ov5;
     }
 
-  } // offload
+  }
 
   fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
-    fix->add_result_array(f_start, ev_global, offload, eatom, 0, 2);
+    fix->add_result_array(f_start, ev_global, eatom, 0, 2);
   else
-    fix->add_result_array(f_start, nullptr, offload, 0, 0, 2);
+    fix->add_result_array(f_start, nullptr, 0, 0, 2);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -768,7 +762,7 @@ void PairGayBerneIntel::pack_force_const(ForceConst<flt_t> &fc,
   int tp1 = atom->ntypes + 1;
   _max_nbors = buffers->get_max_nbors();
   int mthreads = comm->nthreads;
-  fc.set_ntypes(tp1, _max_nbors, mthreads, memory, _cop);
+  fc.set_ntypes(tp1, _max_nbors, mthreads, memory);
 
   // Repeat cutsq calculation because done after call to init_style
   for (int i = 1; i <= atom->ntypes; i++) {
@@ -817,8 +811,7 @@ template <class flt_t>
 void PairGayBerneIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
                                                       const int one_length,
                                                       const int nthreads,
-                                                      Memory *memory,
-                                                      const int cop) {
+                                                      Memory *memory) {
   if (memory != nullptr) _memory = memory;
   if (ntypes != _ntypes) {
     if (_ntypes > 0) {
@@ -837,7 +830,6 @@ void PairGayBerneIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
     }
 
     if (ntypes > 0) {
-      _cop = cop;
       _memory->create(ijc, ntypes, ntypes, "fc.ijc");
       _memory->create(lj34, ntypes, ntypes, "fc.lj34");
       _memory->create(ic, ntypes, "fc.ic");

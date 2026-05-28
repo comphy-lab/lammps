@@ -67,13 +67,7 @@ void NPairFullBinGhostIntel::fbi(NeighList * list,
   list->inum = atom->nlocal;
   list->gnum = atom->nghost;
 
-  int host_start = _fix->host_start_neighbor();
-  const int off_end = _fix->offload_end_neighbor();
-
-
-  // only uses offload_end_neighbor to check whether we are doing offloading
-  // at all, no need to correct this later
-  buffers->grow_list(list, nall, comm->nthreads, 0, off_end,
+  buffers->grow_list(list, nall, comm->nthreads, 0,
                      _fix->nbor_pack_width());
 
   int need_ic = 0;
@@ -82,18 +76,16 @@ void NPairFullBinGhostIntel::fbi(NeighList * list,
                          neighbor->cutneighmax);
 
   if (need_ic) {
-    fbi<flt_t,acc_t,1>(1, list, buffers, 0, off_end);
-    fbi<flt_t,acc_t,1>(0, list, buffers, host_start, nlocal);
+    fbi<flt_t,acc_t,1>(list, buffers, 0, nlocal);
   } else {
-    fbi<flt_t,acc_t,0>(1, list, buffers, 0, off_end);
-    fbi<flt_t,acc_t,0>(0, list, buffers, host_start, nlocal);
+    fbi<flt_t,acc_t,0>(list, buffers, 0, nlocal);
   }
 }
 
 /* ---------------------------------------------------------------------- */
 
 template<class flt_t, class acc_t, int need_ic>
-void NPairFullBinGhostIntel::fbi(const int offload, NeighList * list,
+void NPairFullBinGhostIntel::fbi(NeighList * list,
                                  IntelBuffers<flt_t,acc_t> * buffers,
                                  const int pstart, const int pend) {
   if (pend-pstart == 0) return;
@@ -502,6 +494,6 @@ void NPairFullBinGhostIntel::fbi(const int offload, NeighList * list,
           numneigh[i] = 0;
 
     } // end omp
-  } // end offload
+  }
 
 }

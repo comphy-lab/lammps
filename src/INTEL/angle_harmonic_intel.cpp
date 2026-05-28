@@ -105,7 +105,7 @@ void AngleHarmonicIntel::eval(const int vflag,
   const int inum = neighbor->nanglelist;
   if (inum == 0) return;
 
-  ATOM_T * _noalias const x = buffers->get_x(0);
+  ATOM_T * _noalias const x = buffers->get_x();
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
 
@@ -116,7 +116,7 @@ void AngleHarmonicIntel::eval(const int vflag,
   int tc;
   FORCE_T * _noalias f_start;
   acc_t * _noalias ev_global;
-  IP_PRE_get_buffers(0, buffers, fix, tc, f_start, ev_global);
+  IP_PRE_get_buffers(buffers, fix, tc, f_start, ev_global);
   const int nthreads = tc;
 
   acc_t oeangle, ov0, ov1, ov2, ov3, ov4, ov5;

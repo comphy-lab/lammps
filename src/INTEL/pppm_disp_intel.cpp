@@ -3190,6 +3190,6 @@ void PPPMDispIntel::precompute_rho()
 }
 
 /* ----------------------------------------------------------------------
-   Returns 0 if Intel optimizations for PPPM ignored due to offload
+   Returns 0 if Intel optimizations for PPPM are not in use
 ------------------------------------------------------------------------- */
 
