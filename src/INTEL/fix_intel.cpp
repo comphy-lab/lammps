@@ -402,7 +402,7 @@ void FixIntel::_sync_main_arrays(const int prereverse)
       reduce_results(&_force_array_m[0].x);
       _need_reduce = 0;
     }
-    add_results(_force_array_m, _ev_array_d, _results_eatom, _results_vatom);
+    add_results(_force_array_m, _ev_array_d, _results_eatom);
     if (done_this_step) _force_array_m = nullptr;
     else _ev_array_d = nullptr;
   } else if (_force_array_d != nullptr) {
@@ -410,7 +410,7 @@ void FixIntel::_sync_main_arrays(const int prereverse)
       reduce_results(&_force_array_d[0].x);
       _need_reduce = 0;
     }
-    add_results(_force_array_d, _ev_array_d, _results_eatom, _results_vatom);
+    add_results(_force_array_d, _ev_array_d, _results_eatom);
     if (done_this_step) _force_array_d = nullptr;
     else _ev_array_d = nullptr;
   } else if (_force_array_s != nullptr) {
@@ -418,7 +418,7 @@ void FixIntel::_sync_main_arrays(const int prereverse)
       reduce_results(&_force_array_s[0].x);
       _need_reduce = 0;
     }
-    add_results(_force_array_s, _ev_array_s, _results_eatom, _results_vatom);
+    add_results(_force_array_s, _ev_array_s, _results_eatom);
     if (done_this_step) _force_array_s = nullptr;
     else _ev_array_s = nullptr;
   }
@@ -518,14 +518,14 @@ void FixIntel::reduce_results(acc_t * _noalias const f_scalar)
 template <class ft, class acc_t>
 void FixIntel::add_results(const ft * _noalias const f_in,
                            const acc_t * _noalias const ev_global,
-                           const int eatom, const int vatom) {
+                           const int eatom) {
   start_watch(TIME_PACK);
   int f_length;
   if (force->newton_pair)
     f_length = atom->nlocal + atom->nghost;
   else
     f_length = atom->nlocal;
-  add_oresults(f_in, ev_global, eatom, vatom, 0, f_length);
+  add_oresults(f_in, ev_global, eatom, 0, f_length);
   stop_watch(TIME_PACK);
 }
 
@@ -534,7 +534,7 @@ void FixIntel::add_results(const ft * _noalias const f_in,
 template <class ft, class acc_t>
 void FixIntel::add_oresults(const ft * _noalias const f_in,
                             const acc_t * _noalias const ev_global,
-                            const int eatom, const int /*vatom*/,
+                            const int eatom,
                             const int out_offset, const int nall) {
   lmp_ft * _noalias const f = (lmp_ft *) lmp->atom->f[0] + out_offset;
   if (_torque_flag) {

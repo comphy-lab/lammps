@@ -118,14 +118,11 @@ class FixIntel : public Fix {
  public:
   inline int *get_overflow_flag() { return _overflow_flag; }
   inline void add_result_array(IntelBuffers<double, double>::vec3_acc_t *f_in, double *ev_in,
-                               const int eatom = 0, const int vatom = 0,
-                               const int rflag = 0);
+                               const int eatom = 0, const int rflag = 0);
   inline void add_result_array(IntelBuffers<float, double>::vec3_acc_t *f_in, double *ev_in,
-                               const int eatom = 0, const int vatom = 0,
-                               const int rflag = 0);
+                               const int eatom = 0, const int rflag = 0);
   inline void add_result_array(IntelBuffers<float, float>::vec3_acc_t *f_in, float *ev_in,
-                               const int eatom = 0, const int vatom = 0,
-                               const int rflag = 0);
+                               const int eatom = 0, const int rflag = 0);
   inline void get_buffern(int &nlocal, int &nall, int &minlocal);
 
   inline void start_watch(const int /*which*/) {}
@@ -142,7 +139,7 @@ class FixIntel : public Fix {
   IntelBuffers<double, double>::vec3_acc_t *_force_array_d;
   float *_ev_array_s;
   double *_ev_array_d;
-  int _results_eatom, _results_vatom;
+  int _results_eatom;
   int _need_reduce;
 
   void _sync_main_arrays(const int prereverse);
@@ -151,11 +148,11 @@ class FixIntel : public Fix {
 
   template <class ft, class acc_t>
   inline void add_results(const ft *_noalias const f_in, const acc_t *_noalias const ev_global,
-                          const int eatom, const int vatom);
+                          const int eatom);
 
   template <class ft, class acc_t>
   inline void add_oresults(const ft *_noalias const f_in, const acc_t *_noalias const ev_global,
-                           const int eatom, const int vatom, const int out_offset, const int nall);
+                           const int eatom, const int out_offset, const int nall);
 };
 
 /* ---------------------------------------------------------------------- */
@@ -170,13 +167,11 @@ void FixIntel::get_buffern(int &nlocal, int &nall, int &minlocal)
 /* ---------------------------------------------------------------------- */
 
 void FixIntel::add_result_array(IntelBuffers<double, double>::vec3_acc_t *f_in, double *ev_in,
-                                const int eatom, const int vatom,
-                                const int rflag)
+                                const int eatom, const int rflag)
 {
   _force_array_d = f_in;
   _ev_array_d = ev_in;
   _results_eatom = eatom;
-  _results_vatom = vatom;
   if (rflag != 2 && _nthreads > 1 && force->newton) _need_reduce = 1;
 
   if (_overflow_flag[LMP_OVERFLOW])
@@ -189,13 +184,11 @@ void FixIntel::add_result_array(IntelBuffers<double, double>::vec3_acc_t *f_in, 
 /* ---------------------------------------------------------------------- */
 
 void FixIntel::add_result_array(IntelBuffers<float, double>::vec3_acc_t *f_in, double *ev_in,
-                                const int eatom, const int vatom,
-                                const int rflag)
+                                const int eatom, const int rflag)
 {
   _force_array_m = f_in;
   _ev_array_d = ev_in;
   _results_eatom = eatom;
-  _results_vatom = vatom;
   if (rflag != 2 && _nthreads > 1 && force->newton) _need_reduce = 1;
 
   if (_overflow_flag[LMP_OVERFLOW])
@@ -208,13 +201,11 @@ void FixIntel::add_result_array(IntelBuffers<float, double>::vec3_acc_t *f_in, d
 /* ---------------------------------------------------------------------- */
 
 void FixIntel::add_result_array(IntelBuffers<float, float>::vec3_acc_t *f_in, float *ev_in,
-                                const int eatom, const int vatom,
-                                const int rflag)
+                                const int eatom, const int rflag)
 {
   _force_array_s = f_in;
   _ev_array_s = ev_in;
   _results_eatom = eatom;
-  _results_vatom = vatom;
   if (rflag != 2 && _nthreads > 1 && force->newton) _need_reduce = 1;
 
   if (_overflow_flag[LMP_OVERFLOW])

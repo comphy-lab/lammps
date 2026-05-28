@@ -723,9 +723,9 @@ void PairGayBerneIntel::eval(const int vflag,
   fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
-    fix->add_result_array(f_start, ev_global, eatom, 0, 2);
+    fix->add_result_array(f_start, ev_global, eatom, 2);
   else
-    fix->add_result_array(f_start, nullptr, 0, 0, 2);
+    fix->add_result_array(f_start, nullptr, 0, 2);
 }
 
 /* ---------------------------------------------------------------------- */

@@ -98,7 +98,7 @@ class IntelBuffers {
   void free_list_local();
   inline void grow_list_local(NeighList *list, const int three_body) {
     _neigh_list_ptrs[0].list_ptr = (void *)list;
-    if (list->get_maxlocal() > _off_map_listlocal)
+    if (list->get_maxlocal() > _list_local_size)
       _grow_list_local(list, three_body);
   }
 
@@ -238,7 +238,7 @@ class IntelBuffers {
   flt_t *_q;
   quat_t *_quat;
   vec3_acc_t * _f;
-  int _torque_flag, _off_map_listlocal;
+  int _torque_flag, _list_local_size;
 
   int _list_alloc_atoms;
   int *_list_alloc, *_cnumneigh, *_atombin, *_binpacked;

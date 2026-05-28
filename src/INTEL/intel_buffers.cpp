@@ -33,7 +33,7 @@ IntelBuffers<flt_t, acc_t>::IntelBuffers(class LAMMPS *lmp_in) :
   _neigh_list_ptrs[0].cnumneigh = nullptr;
   _list_alloc_atoms = 0;
   _ntypes = 0;
-  _off_map_listlocal = 0;
+  _list_local_size = 0;
   _ccachex = nullptr;
   _ncache_alloc = 0;
   _ncachetag = nullptr;
@@ -101,13 +101,13 @@ void IntelBuffers<flt_t, acc_t>::_grow(const int nall, const int nlocal,
 template <class flt_t, class acc_t>
 void IntelBuffers<flt_t, acc_t>::free_list_local()
 {
-  if (_off_map_listlocal > 0) {
+  if (_list_local_size > 0) {
     if (_neigh_list_ptrs[0].cnumneigh) {
       int * cnumneigh = _neigh_list_ptrs[0].cnumneigh;
       _neigh_list_ptrs[0].cnumneigh = nullptr;
       lmp->memory->destroy(cnumneigh);
     }
-    _off_map_listlocal = 0;
+    _list_local_size = 0;
   }
 }
 
@@ -168,7 +168,7 @@ void IntelBuffers<flt_t, acc_t>::_grow_list_local(NeighList *list, const int thr
 {
   free_list_local();
   int size = list->get_maxlocal();
-  _off_map_listlocal = size;
+  _list_local_size = size;
   if (three_body)
     lmp->memory->create(_neigh_list_ptrs[0].cnumneigh, size, "_cnumneigh");
 }

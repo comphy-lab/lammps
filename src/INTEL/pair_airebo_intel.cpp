@@ -454,7 +454,7 @@ void PairAIREBOIntel::eval(
   fix->stop_watch(TIME_HOST_PAIR);
 
   if (EVFLAG)
-    fix->add_result_array(f_start, ev_global, eatom, 0, vflag);
+    fix->add_result_array(f_start, ev_global, eatom, vflag);
   else
     fix->add_result_array(f_start, nullptr);
 }
