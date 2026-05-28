@@ -1,23 +1,34 @@
 INTEL package
 =============
 
-The INTEL package is maintained by Mike Brown at Intel
-Corporation.  It accelerates simulations on Intel CPUs by running in
-single, mixed, or double precision with vectorization.
+The INTEL package currently has no official maintainer.  It accelerates
+simulations on Intel CPUs by running in single, mixed, or double
+precision with vectorization and multi-threading.
 
 Currently Available INTEL Styles
 """"""""""""""""""""""""""""""""
 
-* Angle Styles: charmm, harmonic
-* Bond Styles: fene, harmonic
-* Dihedral Styles: charmm, fourier, harmonic, opls
-* Fixes: nve, npt, nvt, nvt/sllod, nve/asphere, electrode/conp, electrode/conq, electrode/thermo
-* Improper Styles: cvff, harmonic
-* Pair Styles: airebo, airebo/morse, buck/coul/cut, buck/coul/long,
-  buck, dpd, eam, eam/alloy, eam/fs, gayberne, lj/charmm/coul/charmm,
-  lj/charmm/coul/long, lj/cut, lj/cut/coul/long, lj/long/coul/long,
-  rebo, snap, sw, tersoff
-* K-Space Styles: pppm, pppm/disp, pppm/electrode
+* Angle Styles: :doc:`charmm <angle_charmm>`, :doc:`harmonic <angle_harmonic>`
+* Bond Styles: :doc:`fene <bond_fene>`, :doc:`harmonic <bond_harmonic>`
+* Dihedral Styles: :doc:`charmm <dihedral_charmm>`, :doc:`fourier
+  <dihedral_fourier>`, :doc:`harmonic <dihedral_harmonic>`, :doc:`opls
+  <dihedral_opls>`
+* Fixes: :doc:`nve <fix_nve>`, :doc:`npt <fix_nh>`, :doc:`nvt <fix_nh>`,
+  :doc:`nvt/sllod <fix_nvt_sllod>`, :doc:`nve/asphere <fix_nve_asphere>`,
+  :doc:`electrode/conp <fix_electrode>`, :doc:`electrode/conq
+  <fix_electrode>`, :doc:`electrode/thermo <fix_electrode>`
+* Improper Styles: :doc:`cvff <improper_cvff>`, :doc:`harmonic <improper_harmonic>`
+* Pair Styles: :doc:`airebo <pair_airebo>`, :doc:`airebo/morse
+  <pair_airebo>`, :doc:`buck/coul/cut <pair_buck>`, :doc:`buck/coul/long
+  <pair_buck>`,:doc:`buck <pair_buck>`, :doc:`dpd <pair_dpd>`, :doc:`eam
+  <pair_eam>`, :doc:`eam/alloy <pair_eam>`, :doc:`eam/fs <pair_eam>`,
+  :doc:`gayberne <pair_gayberne>`, :doc:`lj/charmm/coul/charmm
+  <pair_charmm>`, :doc:`lj/charmm/coul/long <pair_charmm>`, :doc:`lj/cut
+  <pair_lj>`, :doc:`lj/cut/coul/long <pair_lj_cut_coul>`,
+  :doc:`lj/long/coul/long <pair_lj_cut_coul>`, :doc:`rebo <pair_airebo>`,
+  :doc:`snap <pair_snap>`, :doc:`sw <pair_sw>`, :doc:`tersoff <pair_tersoff>`
+* K-Space Styles: :doc:`pppm <kspace_style>`, :doc:`pppm/disp
+  <kspace_style>`:doc:`pppm/electrode <kspace_style>`
 
 .. warning::
 

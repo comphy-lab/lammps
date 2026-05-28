@@ -18,7 +18,7 @@ These are the accelerator packages currently in LAMMPS:
 +-----------------------------------------+-------------------------------------------------------+
 | :doc:`INTEL Package <Speed_intel>`      | for Intel CPUs                                        |
 +-----------------------------------------+-------------------------------------------------------+
-| :doc:`KOKKOS Package <Speed_kokkos>`    | for NVIDIA GPUs and OpenMP threading                  |
+| :doc:`KOKKOS Package <Speed_kokkos>`    | for GPUs and threading via the Kokkos library         |
 +-----------------------------------------+-------------------------------------------------------+
 | :doc:`OPENMP Package <Speed_omp>`       | for OpenMP threading and generic CPU optimizations    |
 +-----------------------------------------+-------------------------------------------------------+

@@ -372,13 +372,13 @@ INTEL package settings
 The *intel* style invokes settings associated with the use of the INTEL
 package.
 
-.. versionchanged:: TBD
+.. deprecated:: TBD
 
-   Support for offloading to Intel(R) Xeon Phi(TM) coprocessors was
-   removed.  The leading numeric argument (formerly the number of
-   co-processors per node) and the offload-related keywords *balance*,
-   *ghost*, *tpc*, *tptask*, and *no_affinity* are still accepted for
-   backward compatibility but are ignored (LAMMPS prints a warning).
+Support for offloading to Intel(R) Xeon Phi(TM) coprocessors was
+removed.  The leading numeric argument (formerly the number of
+co-processors per node) and the offload-related keywords *balance*,
+*ghost*, *tpc*, *tptask*, and *no_affinity* are still accepted for
+backward compatibility but are ignored (LAMMPS prints a warning).
 
 Optional keyword/value pairs can also be specified.  Each has a
 default value as listed below.
