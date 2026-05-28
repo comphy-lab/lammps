@@ -376,9 +376,7 @@ package.
 
 Support for offloading to Intel(R) Xeon Phi(TM) coprocessors was
 removed.  The leading numeric argument (formerly the number of
-co-processors per node) and the offload-related keywords *balance*,
-*ghost*, *tpc*, *tptask*, and *no_affinity* are still accepted for
-backward compatibility but are ignored (LAMMPS prints a warning).
+co-processors per node) is ignored.
 
 Optional keyword/value pairs can also be specified.  Each has a
 default value as listed below.

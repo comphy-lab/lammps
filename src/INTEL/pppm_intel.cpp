@@ -1113,11 +1113,6 @@ FFT_SCALAR *** PPPMIntel::create3d_offset(FFT_SCALAR ***&array, int n1lo,
 }
 
 /* ----------------------------------------------------------------------
-   Returns 0 if Intel optimizations for PPPM are not in use
-------------------------------------------------------------------------- */
-
-
-/* ----------------------------------------------------------------------
    allows usage in derived classes (pppm/electrode/intel)
 ------------------------------------------------------------------------- */
 template void PPPMIntel::particle_map<float,double>(IntelBuffers<float,double> *buffers);

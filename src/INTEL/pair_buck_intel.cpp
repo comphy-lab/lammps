@@ -124,7 +124,6 @@ void PairBuckIntel::eval(const int vflag,
   if (inum == 0) return;
   int nlocal, nall, minlocal;
   fix->get_buffern(nlocal, nall, minlocal);
-  const int ago = neighbor->ago;
 
   ATOM_T * _noalias const x = buffers->get_x();
 
