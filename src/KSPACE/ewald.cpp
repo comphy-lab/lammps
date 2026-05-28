@@ -114,6 +114,9 @@ void Ewald::init()
     if (domain->triclinic && slabflag != 1)
       error->all(FLERR,"Triclinic boxes only support the 'kspace_modify slab "
                  "<volfactor>' correction, not 'slab nozforce' or 'slab ew2d'");
+    if (domain->triclinic && slabflag == 1 && (domain->yz != 0.0 || domain->xz != 0.0))
+      error->all(FLERR,"Triclinic slab (EW3DC) correction requires xz = yz = 0 "
+                 "(the slab normal must be the z axis); xy tilt is allowed");
   }
 
   // compute two charge force

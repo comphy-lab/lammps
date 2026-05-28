@@ -385,9 +385,12 @@ void KSpace::x2lamdaT(double *v, double *lamda)
   lamda_tmp[2] = h_inv[4]*v[0] + h_inv[3]*v[1] + h_inv[2]*v[2];
 
   // EW3DC slab correction: the reciprocal-space sum is evaluated on a cell
-  // whose z dimension is extended by slab_volfactor (vacuum insertion).  As
-  // z is non-periodic for slab geometries (xz == yz == 0), the z component of
-  // the transformed reciprocal vector simply scales by 1/slab_volfactor.
+  // whose z dimension is extended by slab_volfactor (vacuum insertion).  The
+  // slab normal must be the Cartesian z axis, which requires xz == yz == 0
+  // (enforced by the kspace styles' init() guards; xy tilt is allowed).  With
+  // xz == yz == 0, extending the box z (h[2] -> h[2]*slab_volfactor) scales
+  // only the third column of h_inv by 1/slab_volfactor, i.e. the z component
+  // of the transposed-transformed reciprocal vector scales by 1/slab_volfactor.
   // This is a no-op (slab_volfactor == 1.0) for all non-slab calculations.
 
   if (slabflag == 1) lamda_tmp[2] /= slab_volfactor;

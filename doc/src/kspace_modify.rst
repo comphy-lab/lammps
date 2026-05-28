@@ -460,9 +460,10 @@ approximation is not needed).  The *slab* keyword with a *volfactor*
 value (the Yeh-Berkowitz EW3DC correction) supports triclinic
 (non-orthogonal) simulation cells for :doc:`kspace_style <kspace_style>`
 *ewald*, *ewald/disp*, *pppm*, and *pppm/cg* (and the OpenMP variants
-that reuse the same slab-correction setup).  Because the z dimension
-must remain non-periodic, only an *xy* tilt is meaningful, and the z box
-length must be held fixed for the duration of the run.  Triclinic cells
+that reuse the same slab-correction setup).  Because the slab normal must
+be the Cartesian z axis, only an *xy* tilt is allowed: a triclinic slab
+box with a non-zero *xz* or *yz* tilt is rejected with an error.  The z
+box length must be held fixed for the duration of the run.  Triclinic cells
 are not yet supported with the *slab* keyword for the *pppm/tip4p*,
 *pppm/stagger*, *esp*, *pppm/gpu*, *pppm/intel*, or *pppm/kk* styles, nor
 for the *slab nozforce* and *slab ew2d* options.  The slab correction
