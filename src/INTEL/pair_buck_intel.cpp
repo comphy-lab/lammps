@@ -158,31 +158,7 @@ void PairBuckIntel::eval(const int offload, const int vflag,
   IP_PRE_get_buffers(offload, buffers, fix, tc, f_start, ev_global);
 
   const int nthreads = tc;
-  #ifdef _LMP_INTEL_OFFLOAD
-  int *overflow = fix->get_off_overflow_flag();
-  double *timer_compute = fix->off_watch_pair();
-  // Redeclare as local variables for offload
-
-  if (offload) fix->start_watch(TIME_OFFLOAD_LATENCY);
-  #pragma offload target(mic:_cop) if (offload)                 \
-    in(special_lj:length(0) alloc_if(0) free_if(0)) \
-    in(c_force, c_energy:length(0) alloc_if(0) free_if(0))      \
-    in(firstneigh:length(0) alloc_if(0) free_if(0)) \
-    in(numneigh:length(0) alloc_if(0) free_if(0)) \
-    in(x:length(x_size) alloc_if(0) free_if(0)) \
-    in(ilist:length(0) alloc_if(0) free_if(0)) \
-    in(overflow:length(0) alloc_if(0) free_if(0)) \
-    in(astart,nthreads,inum,nall,ntypes,vflag,eatom) \
-    in(f_stride,nlocal,minlocal,separate_flag,offload) \
-    out(f_start:length(f_stride) alloc_if(0) free_if(0)) \
-    out(ev_global:length(ev_size) alloc_if(0) free_if(0)) \
-    out(timer_compute:length(1) alloc_if(0) free_if(0)) \
-    signal(f_start)
-  #endif
   {
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime();
-    #endif
 
     IP_PRE_repack_for_offload(NEWTON_PAIR, separate_flag, nlocal, nall,
                               f_stride, x, 0);
@@ -351,15 +327,9 @@ void PairBuckIntel::eval(const int offload, const int vflag,
       ev_global[6] = ov4;
       ev_global[7] = ov5;
     }
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime() - *timer_compute;
-    #endif
   } // end of offload region
 
-  if (offload)
-    fix->stop_watch(TIME_OFFLOAD_LATENCY);
-  else
-    fix->stop_watch(TIME_HOST_PAIR);
+  fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
     fix->add_result_array(f_start, ev_global, offload, eatom, 0, vflag);
@@ -379,9 +349,6 @@ void PairBuckIntel::init_style()
   if (!fix) error->all(FLERR, "The 'package intel' command is required for /intel styles");
 
   fix->pair_init_check();
-  #ifdef _LMP_INTEL_OFFLOAD
-  _cop = fix->coprocessor_number();
-  #endif
 
   if (fix->precision() == FixIntel::PREC_MODE_MIXED)
     pack_force_const(force_const_single, fix->get_mixed_buffers());
@@ -428,16 +395,6 @@ void PairBuckIntel::pack_force_const(ForceConst<flt_t> &fc,
     }
   }
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_cop < 0) return;
-  flt_t * special_lj = fc.special_lj;
-  C_FORCE_T * c_force = fc.c_force[0];
-  C_ENERGY_T * c_energy = fc.c_energy[0];
-  int tp1sq = tp1 * tp1;
-  #pragma offload_transfer target(mic:_cop) \
-    in(special_lj: length(4) alloc_if(0) free_if(0)) \
-    in(c_force, c_energy: length(tp1sq) alloc_if(0) free_if(0))
-  #endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -449,19 +406,6 @@ void PairBuckIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
   if (memory != nullptr) _memory = memory;
   if ((ntypes != _ntypes )) {
     if (_ntypes > 0) {
-      #ifdef _LMP_INTEL_OFFLOAD
-      flt_t * ospecial_lj = special_lj;
-      c_force_t * oc_force = c_force[0];
-      c_energy_t * oc_energy = c_energy[0];
-
-      if (ospecial_lj != nullptr && oc_force != nullptr &&
-          oc_energy != nullptr  &&
-          _cop >= 0) {
-        #pragma offload_transfer target(mic:cop) \
-          nocopy(ospecial_lj: alloc_if(0) free_if(1)) \
-          nocopy(oc_force, oc_energy: alloc_if(0) free_if(1))
-      }
-      #endif
 
       _memory->destroy(c_force);
       _memory->destroy(c_energy);
@@ -472,21 +416,6 @@ void PairBuckIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
       _memory->create(c_force,ntypes,ntypes,"fc.c_force");
       _memory->create(c_energy,ntypes,ntypes,"fc.c_energy");
 
-      #ifdef _LMP_INTEL_OFFLOAD
-      flt_t * ospecial_lj = special_lj;
-      c_force_t * oc_force = c_force[0];
-      c_energy_t * oc_energy = c_energy[0];
-      int tp1sq = ntypes*ntypes;
-      if (ospecial_lj != nullptr && oc_force != nullptr &&
-          oc_energy != nullptr &&
-          cop >= 0) {
-        #pragma offload_transfer target(mic:cop) \
-          nocopy(ospecial_lj: length(4) alloc_if(1) free_if(0)) \
-          nocopy(oc_force: length(tp1sq) alloc_if(1) free_if(0)) \
-          nocopy(oc_energy: length(tp1sq) alloc_if(1) free_if(0))
-
-      }
-      #endif
     }
   }
   _ntypes=ntypes;

@@ -30,13 +30,7 @@
 
 #include <cstring>
 
-#ifdef _LMP_INTEL_OFFLOAD
-#pragma offload_attribute(push,target(mic))
-#endif
 #include <cmath>
-#ifdef _LMP_INTEL_OFFLOAD
-#pragma offload_attribute(pop)
-#endif
 
 
 #ifdef LMP_USE_AVXCD
@@ -216,33 +210,7 @@ void PairSWIntel::eval(const int offload, const int vflag,
   IP_PRE_get_buffers(offload, buffers, fix, tc, f_start, ev_global);
   const int nthreads = tc;
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  double *timer_compute = fix->off_watch_pair();
-  int *overflow = fix->get_off_overflow_flag();
-
-  if (offload) fix->start_watch(TIME_OFFLOAD_LATENCY);
-  #pragma offload target(mic:_cop) if (offload) \
-    in(p2,p2f,p2f2,p2e,p3:length(0) alloc_if(0) free_if(0)) \
-    in(firstneigh:length(0) alloc_if(0) free_if(0)) \
-    in(cnumneigh:length(0) alloc_if(0) free_if(0)) \
-    in(numneigh:length(0) alloc_if(0) free_if(0)) \
-    in(x:length(x_size) alloc_if(0) free_if(0)) \
-    in(ilist:length(0) alloc_if(0) free_if(0)) \
-    in(numneighhalf:length(0) alloc_if(0) free_if(0)) \
-    in(overflow:length(0) alloc_if(0) free_if(0)) \
-    in(ccachex,ccachey,ccachez,ccachew:length(0) alloc_if(0) free_if(0)) \
-    in(ccachei,ccachej:length(0) alloc_if(0) free_if(0)) \
-    in(ccache_stride,nthreads,inum,nall,ntypes,vflag,eatom,offload,onetype3) \
-    in(astart,nlocal,f_stride,minlocal,separate_flag,onetype) \
-    out(f_start:length(f_stride) alloc_if(0) free_if(0)) \
-    out(ev_global:length(ev_size) alloc_if(0) free_if(0)) \
-    out(timer_compute:length(1) alloc_if(0) free_if(0)) \
-    signal(f_start)
-  #endif
   {
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime();
-    #endif
 
     IP_PRE_repack_for_offload(1, separate_flag, nlocal, nall,
                               f_stride, x, 0);
@@ -550,14 +518,8 @@ void PairSWIntel::eval(const int offload, const int vflag,
       ev_global[6] = ov4;
       ev_global[7] = ov5;
     }
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime() - *timer_compute;
-    #endif
   } // end offload
-  if (offload)
-    fix->stop_watch(TIME_OFFLOAD_LATENCY);
-  else
-    fix->stop_watch(TIME_HOST_PAIR);
+  fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
     fix->add_result_array(f_start, ev_global, offload, eatom, 0, vflag);
@@ -637,34 +599,7 @@ void PairSWIntel::eval(const int offload, const int vflag,
   IP_PRE_get_buffers(offload, buffers, fix, tc, f_start, ev_global);
   const int nthreads = tc;
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  double *timer_compute = fix->off_watch_pair();
-  int *overflow = fix->get_off_overflow_flag();
-
-  if (offload) fix->start_watch(TIME_OFFLOAD_LATENCY);
-  #pragma offload target(mic:_cop) if (offload) \
-    in(p2,p2f,p2f2,p2e,p3:length(0) alloc_if(0) free_if(0)) \
-    in(firstneigh:length(0) alloc_if(0) free_if(0)) \
-    in(cnumneigh:length(0) alloc_if(0) free_if(0)) \
-    in(numneigh:length(0) alloc_if(0) free_if(0)) \
-    in(x:length(x_size) alloc_if(0) free_if(0)) \
-    in(ilist:length(0) alloc_if(0) free_if(0)) \
-    in(numneighhalf:length(0) alloc_if(0) free_if(0)) \
-    in(overflow:length(0) alloc_if(0) free_if(0)) \
-    in(ccachex,ccachey,ccachez,ccachew:length(0) alloc_if(0) free_if(0)) \
-    in(ccachei,ccachej,ccachef:length(0) alloc_if(0) free_if(0)) \
-    in(ccache_stride,nthreads,inum,nall,ntypes,vflag,eatom,offload) \
-    in(astart,nlocal,f_stride,minlocal,separate_flag) \
-    in(ccache_stride3)                                          \
-    out(f_start:length(f_stride) alloc_if(0) free_if(0)) \
-    out(ev_global:length(ev_size) alloc_if(0) free_if(0)) \
-    out(timer_compute:length(1) alloc_if(0) free_if(0)) \
-    signal(f_start)
-  #endif
   {
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime();
-    #endif
 
     IP_PRE_repack_for_offload(1, separate_flag, nlocal, nall,
                               f_stride, x, 0);
@@ -1066,14 +1001,8 @@ void PairSWIntel::eval(const int offload, const int vflag,
       ev_global[6] = ov4;
       ev_global[7] = ov5;
     }
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime() - *timer_compute;
-    #endif
   } // end offload
-  if (offload)
-    fix->stop_watch(TIME_OFFLOAD_LATENCY);
-  else
-    fix->stop_watch(TIME_HOST_PAIR);
+  fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
     fix->add_result_array(f_start, ev_global, offload, eatom, 0, vflag);
@@ -1109,9 +1038,6 @@ void PairSWIntel::init_style()
 
   fix->pair_init_check(true);
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  _cop = fix->coprocessor_number();
-  #endif
 
   if (fix->precision() == FixIntel::PREC_MODE_MIXED) {
     pack_force_const(force_const_single, fix->get_mixed_buffers());
@@ -1124,10 +1050,6 @@ void PairSWIntel::init_style()
     fix->get_single_buffers()->need_tag(1);
   }
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (fix->offload_noghost())
-    error->all(FLERR,"The 'ghost no' option cannot be used with sw/intel.");
-  #endif
 
   #if defined(__INTEL_COMPILER)
   if (__INTEL_COMPILER_BUILD_DATE < 20141023)
@@ -1147,9 +1069,6 @@ void PairSWIntel::pack_force_const(ForceConst<flt_t> &fc,
   fix->three_body_neighbor(1);
 
   int off_ccache = 0;
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_cop >= 0) off_ccache = 1;
-  #endif
 
   #ifdef LMP_USE_AVXCD
   const int swidth = SIMD_type<flt_t>::width();
@@ -1243,19 +1162,6 @@ void PairSWIntel::pack_force_const(ForceConst<flt_t> &fc,
   }
   if (mytypes > 1) _onetype = 0;
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_cop < 0) return;
-  FC_PACKED0_T *op2 = fc.p2[0];
-  FC_PACKED1_T *op2f = fc.p2f[0];
-  FC_PACKED1p2_T *op2f2 = fc.p2f2[0];
-  FC_PACKED2_T *op2e = fc.p2e[0];
-  FC_PACKED3_T *op3 = fc.p3[0][0];
-  int tp1sq = tp1 * tp1;
-  int tp1cu = tp1sq * tp1;
-  #pragma offload_transfer target(mic:_cop) \
-    in(op2,op2f,op2f2,op2e: length(tp1sq) alloc_if(0) free_if(0))     \
-    in(op3: length(tp1cu) alloc_if(0) free_if(0))
-  #endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1268,18 +1174,6 @@ void PairSWIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
   if (ntypes != _ntypes) {
     if (_ntypes > 0) {
 
-      #ifdef _LMP_INTEL_OFFLOAD
-      fc_packed0 *op2 = p2[0];
-      fc_packed1 *op2f = p2f[0];
-      fc_packed1p2 *op2f2 = p2f2[0];
-      fc_packed2 *op2e = p2e[0];
-      fc_packed3 *op3 = p3[0][0];
-      if (op2 != nullptr && op2f != nullptr && op2f2 != nullptr && op2e != nullptr &&
-          op3 != nullptr && _cop >= 0) {
-        #pragma offload_transfer target(mic:_cop) \
-          nocopy(op2, op2f, op2f2, op2e, op3: alloc_if(0) free_if(1))
-      }
-      #endif
 
       _memory->destroy(p2);
       _memory->destroy(p2f);
@@ -1295,21 +1189,6 @@ void PairSWIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
       _memory->create(p2e,ntypes,ntypes,"fc.p2e");
       _memory->create(p3,ntypes,ntypes,ntypes,"fc.p3");
 
-      #ifdef _LMP_INTEL_OFFLOAD
-      fc_packed0 *op2 = p2[0];
-      fc_packed1 *op2f = p2f[0];
-      fc_packed1p2 *op2f2 = p2f2[0];
-      fc_packed2 *op2e = p2e[0];
-      fc_packed3 *op3 = p3[0][0];
-      int tp1sq = ntypes * ntypes;
-      int tp1cu = tp1sq * ntypes;
-      if (op2 != nullptr && op2f != nullptr && op2f2 != nullptr && op2e != nullptr &&
-          op3 != nullptr && cop >= 0) {
-        #pragma offload_transfer target(mic:cop) \
-          nocopy(op2,op2f,op2f2,op2e: length(tp1sq) alloc_if(1) free_if(0)) \
-          nocopy(op3: length(tp1cu) alloc_if(1) free_if(0))
-      }
-      #endif
     }
   }
   _ntypes = ntypes;

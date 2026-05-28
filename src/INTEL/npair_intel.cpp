@@ -31,23 +31,10 @@ using namespace LAMMPS_NS;
 NPairIntel::NPairIntel(LAMMPS *lmp) : NPair(lmp) {
   _fix = static_cast<FixIntel *>(modify->get_fix_by_id("package_intel"));
   if (!_fix) error->all(FLERR, "The 'package intel' command is required for /intel styles");
-  #ifdef _LMP_INTEL_OFFLOAD
-  _cop = _fix->coprocessor_number();
-  _off_map_stencil = 0;
-  #endif
 }
 
 /* ---------------------------------------------------------------------- */
 
-#ifdef _LMP_INTEL_OFFLOAD
-NPairIntel::~NPairIntel() {
-  if (_off_map_stencil) {
-    const int * stencil = this->stencil;
-    #pragma offload_transfer target(mic:_cop)   \
-      nocopy(stencil:alloc_if(0) free_if(1))
-  }
-}
-#endif
 
 /* ---------------------------------------------------------------------- */
 
@@ -85,17 +72,6 @@ void NPairIntel::copy_cutsq_info(IntelBuffers<flt_t,acc_t> *buffers) {
         cutneighghostsqb[i][j] = cutneighghostsq[i][j];
   }
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_cop < 0) return;
-  int tp1sq = tp1 * tp1;
-  flt_t * ocutneighsq = cutneighsqb[0];
-  #pragma offload_transfer target(mic:_cop) in(ocutneighsq: length(tp1sq))
-  if (use_ghost_cut) {
-    flt_t * ocutneighghostsq = cutneighghostsqb[0];
-    #pragma offload_transfer target(mic:_cop) \
-      in(ocutneighghostsq: length(tp1sq))
-  }
-  #endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -112,9 +88,6 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
   const int nall = atom->nlocal + atom->nghost;
   int nall_t = nall;
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (offload_noghost && offload) nall_t = atom->nlocal;
-  #endif
 
   const int pack_width = _fix->nbor_pack_width();
 
@@ -152,23 +125,11 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
   const int ntypes = atom->ntypes + 1;
   const int nlocal = atom->nlocal;
 
-  #ifndef _LMP_INTEL_OFFLOAD
   int * _noalias const mask = atom->mask;
   tagint * _noalias const molecule = atom->molecule;
-  #endif
 
   int tnum;
   int * _noalias overflow;
-  #ifdef _LMP_INTEL_OFFLOAD
-  double *timer_compute;
-  if (offload) {
-    timer_compute = _fix->off_watch_neighbor();
-    tnum = buffers->get_off_threads();
-    overflow = _fix->get_off_overflow_flag();
-    _fix->stop_watch(TIME_HOST_NEIGHBOR);
-    _fix->start_watch(TIME_OFFLOAD_LATENCY);
-  } else
-  #endif
   {
     tnum = comm->nthreads;
     overflow = _fix->get_overflow_flag();
@@ -206,47 +167,8 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
 
   const double delta = 0.01 * force->angstrom;
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  const int * _noalias const binhead = this->binhead;
-  const int * _noalias const bins = this->bins;
-  const int cop = _fix->coprocessor_number();
-  const int separate_buffers = _fix->separate_buffers();
-  #pragma offload target(mic:cop) if (offload) \
-    in(x:length(e_nall+1) alloc_if(0) free_if(0)) \
-    in(tag:length(tag_size) alloc_if(0) free_if(0)) \
-    in(special:length(special_size*maxspecial) alloc_if(0) free_if(0)) \
-    in(nspecial:length(special_size*3) alloc_if(0) free_if(0)) \
-    in(bins,binpacked:length(nall) alloc_if(0) free_if(0)) \
-    in(binhead:length(mbins+1) alloc_if(0) free_if(0)) \
-    in(cutneighsq:length(0) alloc_if(0) free_if(0)) \
-    in(firstneigh:length(0) alloc_if(0) free_if(0)) \
-    in(intel_list:length(0) alloc_if(0) free_if(0)) \
-    in(cnumneigh:length(0) alloc_if(0) free_if(0)) \
-    out(numneigh:length(0) alloc_if(0) free_if(0)) \
-    in(ilist:length(0) alloc_if(0) free_if(0)) \
-    in(atombin:length(aend) alloc_if(0) free_if(0)) \
-    in(stencil:length(nstencil) alloc_if(0) free_if(0)) \
-    in(ncachex,ncachey,ncachez,ncachej:length(0) alloc_if(0) free_if(0)) \
-    in(ncachejtype,ncachetag:length(0) alloc_if(0) free_if(0)) \
-    in(ncache_stride,maxnbors,nthreads,maxspecial,nstencil,e_nall,offload) \
-    in(offload_end,separate_buffers,astart,aend,nlocal,molecular) \
-    in(ntypes,xperiodic,yperiodic,zperiodic,xprd_half,yprd_half,zprd_half) \
-    in(pack_width,special_bound,delta)                                  \
-    out(overflow:length(5) alloc_if(0) free_if(0)) \
-    out(timer_compute:length(1) alloc_if(0) free_if(0)) \
-    signal(tag)
-  #endif
   {
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime();
-    #endif
 
-    #ifdef _LMP_INTEL_OFFLOAD
-    overflow[LMP_LOCAL_MIN] = astart;
-    overflow[LMP_LOCAL_MAX] = aend - 1;
-    overflow[LMP_GHOST_MIN] = e_nall;
-    overflow[LMP_GHOST_MAX] = -1;
-    #endif
 
     int nstencilp = 0;
     int binstart[INTEL_MAX_STENCIL], binend[INTEL_MAX_STENCIL];
@@ -268,9 +190,6 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
       shared(overflow, nstencilp, binstart, binend)
     #endif
     {
-      #ifdef _LMP_INTEL_OFFLOAD
-      int lmin = e_nall, lmax = -1, gmin = e_nall, gmax = -1;
-      #endif
 
       const int num = aend - astart;
       int tid, ifrom, ito;
@@ -432,13 +351,7 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
                 if (ijmod == 1) addme = 0;
               } else
                 addme = 0;
-              #ifdef _LMP_INTEL_OFFLOAD
-              if (offload_noghost && i < offload_end) addme = 0;
-              #endif
             } else {
-              #ifdef _LMP_INTEL_OFFLOAD
-              if (offload_noghost && offload) addme = 0;
-              #endif
               if (itz[u] < ztmp) addme = 0;
               if (itz[u] == ztmp) {
                 if (ity[u] < ytmp) addme = 0;
@@ -519,13 +432,6 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
           }
 
           // offload ghost check
-          #ifdef _LMP_INTEL_OFFLOAD
-          if (offload_noghost) {
-            if (j < nlocal) {
-              if (i < offload_end) addme = 0;
-            } else if (offload) addme = 0;
-          }
-          #endif
 
           if (need_ic) {
             int no_special;
@@ -635,7 +541,6 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
           }
         }
 
-        #ifndef _LMP_INTEL_OFFLOAD
         if (exclude) {
           neighptr2 = neighptr;
           int alln = n;
@@ -670,7 +575,6 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
             }
           }
         }
-        #endif
 
         int ns;
         if (THREE) {
@@ -769,131 +673,13 @@ void NPairIntel::bin_newton(const int offload, NeighList *list,
         for (int i = ifrom; i < ito; i++)
           numneigh[i] = 0;
 
-      #ifdef _LMP_INTEL_OFFLOAD
-      int vlmin = lmin, vlmax = lmax, vgmin = gmin, vgmax = gmax;
-      int ghost_offset = 0, nall_offset = e_nall;
-      if (separate_buffers) {
-        for (int i = ifrom; i < ito; ++i) {
-          int * _noalias jlist = firstneigh[i];
-          int jnum = numneigh[i];
-          if (!THREE) IP_PRE_neighbor_pad(jnum, offload);
-          #if (__INTEL_COMPILER+0 > 1499) || __INTEL_LLVM_COMPILER
-          #if defined(USE_OMP_SIMD)
-          #pragma omp simd reduction(max:vlmax,vgmax) \
-            reduction(min:vlmin, vgmin)
-          #else
-          #pragma simd reduction(max:vlmax,vgmax) \
-            reduction(min:vlmin, vgmin)
-          #endif
-          #pragma vector aligned
-          #endif
-          for (int jj = 0; jj < jnum; jj++) {
-            const int j = jlist[jj] & NEIGHMASK;
-            if (j < nlocal) {
-              if (j < vlmin) vlmin = j;
-              if (j > vlmax) vlmax = j;
-            } else {
-              if (j < vgmin) vgmin = j;
-              if (j > vgmax) vgmax = j;
-            }
-          }
-        }
-        lmin = MIN(lmin,vlmin);
-        gmin = MIN(gmin,vgmin);
-        lmax = MAX(lmax,vlmax);
-        gmax = MAX(gmax,vgmax);
-
-        #if defined(_OPENMP)
-        #pragma omp critical
-        #endif
-        {
-          if (lmin < overflow[LMP_LOCAL_MIN]) overflow[LMP_LOCAL_MIN] = lmin;
-          if (lmax > overflow[LMP_LOCAL_MAX]) overflow[LMP_LOCAL_MAX] = lmax;
-          if (gmin < overflow[LMP_GHOST_MIN]) overflow[LMP_GHOST_MIN] = gmin;
-          if (gmax > overflow[LMP_GHOST_MAX]) overflow[LMP_GHOST_MAX] = gmax;
-        }
-        #pragma omp barrier
-
-        int nghost = overflow[LMP_GHOST_MAX] + 1 - overflow[LMP_GHOST_MIN];
-        if (nghost < 0) nghost = 0;
-        if (offload) {
-          ghost_offset = overflow[LMP_GHOST_MIN] - overflow[LMP_LOCAL_MAX] - 1;
-          nall_offset = overflow[LMP_LOCAL_MAX] + 1 + nghost;
-        } else {
-          ghost_offset = overflow[LMP_GHOST_MIN] - nlocal;
-          nall_offset = nlocal + nghost;
-        }
-
-        for (int i = ifrom; i < ito; ++i) {
-          int * _noalias jlist = firstneigh[i];
-          int jnum = numneigh[i];
-          if (!THREE) IP_PRE_neighbor_pad(jnum, offload);
-          int jj = 0;
-#if defined(USE_OMP_SIMD)
-          #pragma omp simd
-#else
-          #pragma simd
-#endif
-          #pragma vector aligned
-          for (jj = 0; jj < jnum; jj++) {
-            const int which = jlist[jj] >> SBBITS & 3;
-            const int j = jlist[jj] & NEIGHMASK;
-            if (j >= nlocal) {
-              if (j == e_nall) jlist[jj] = nall_offset;
-              else jlist[jj] = (j - ghost_offset) ^ (which << SBBITS);
-            }
-          }
-        }
-      }
-      #endif
     } // end omp
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime() - *timer_compute;
-    #endif
   } // end offload
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (offload) {
-    _fix->stop_watch(TIME_OFFLOAD_LATENCY);
-    _fix->start_watch(TIME_HOST_NEIGHBOR);
-    firstneigh[0] = intel_list;
-    for (int n = 0; n < aend; n++) {
-      ilist[n] = n;
-      numneigh[n] = 0;
-    }
-  } else {
-    if (separate_buffers) {
-      _fix->start_watch(TIME_PACK);
-      _fix->set_neighbor_host_sizes();
-      buffers->pack_sep_from_single(_fix->host_min_local(),
-                                    _fix->host_used_local(),
-                                    _fix->host_min_ghost(),
-                                    _fix->host_used_ghost());
-      _fix->stop_watch(TIME_PACK);
-    }
-  }
-  #endif
 }
 
 /* ---------------------------------------------------------------------- */
 
-#ifdef _LMP_INTEL_OFFLOAD
-void NPairIntel::grow_stencil()
-{
-  if (_off_map_stencil != stencil) {
-    if (_off_map_stencil) {
-      const int * stencil = _off_map_stencil;
-      #pragma offload_transfer target(mic:_cop) \
-        nocopy(stencil:alloc_if(0) free_if(1))
-    }
-    _off_map_stencil = stencil;
-    const int * stencil = _off_map_stencil;
-    const int maxstencil = ns->get_maxstencil();
-    #pragma offload_transfer target(mic:_cop)   \
-      in(stencil:length(maxstencil) alloc_if(1) free_if(0))
-  }
-}
-#endif
 
 /* ---------------------------------------------------------------------- */
 
@@ -993,102 +779,3 @@ template void NPairIntel::bin_newton<double, double, 0, 1, 1, 0, 1>
   (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
    const int);
 
-#ifdef _LMP_INTEL_OFFLOAD
-
-// ---- Half, no IC, no ghost
-
-template void NPairIntel::bin_newton<float, float, 1, 0, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<float, double, 1, 0, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<double, double, 1, 0, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
-
-// ---- Half, IC, no ghost
-
-template void NPairIntel::bin_newton<float, float, 1, 1, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<float, double, 1, 1, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<double, double, 1, 1, 0, 0, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
-
-// ---- Tri, no IC, no ghost
-
-template void NPairIntel::bin_newton<float, float, 1, 0, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<float, double, 1, 0, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<double, double, 1, 0, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
-
-// ---- Tri, IC, no ghost
-
-template void NPairIntel::bin_newton<float, float, 1, 1, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<float, double, 1, 1, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<double, double, 1, 1, 0, 1, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
-
-// ---- Full, no IC, no ghost
-
-template void NPairIntel::bin_newton<float, float, 1, 0, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<float, double, 1, 0, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<double, double, 1, 0, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
-
-// ---- Full, IC, no ghost
-
-template void NPairIntel::bin_newton<float, float, 1, 1, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<float, double, 1, 1, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<double, double, 1, 1, 1, 0, 0>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
-
-// ---- 3-body, no IC, no ghost
-
-template void NPairIntel::bin_newton<float, float, 1, 0, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<float, double, 1, 0, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<double, double, 1, 0, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
-
-// ---- 3-body, IC, no ghost
-
-template void NPairIntel::bin_newton<float, float, 1, 1, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<float,float> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<float, double, 1, 1, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<float,double> *, const int, const int,
-   const int);
-template void NPairIntel::bin_newton<double, double, 1, 1, 1, 0, 1>
-  (const int, NeighList *, IntelBuffers<double,double> *, const int, const int,
-   const int);
-
-#endif

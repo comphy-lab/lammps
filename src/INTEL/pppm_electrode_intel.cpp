@@ -162,14 +162,6 @@ void PPPMElectrodeIntel::setup()
 
 void PPPMElectrodeIntel::compute(int eflag, int vflag)
 {
-#ifdef _LMP_INTEL_OFFLOAD
-  if (_use_base) {
-    error->all(FLERR, "Cannot use pppm/electrode/intel with offload");
-    // PPPM::compute(eflag, vflag);
-    // would work if the above line referred to PPPMElectrode
-    // but the required multiple inheritances would be insane
-  }
-#endif
 
   ev_init(eflag, vflag);
 

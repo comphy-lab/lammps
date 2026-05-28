@@ -83,13 +83,6 @@ void PPPMIntel::init()
   fix = static_cast<FixIntel *>(modify->get_fix_by_id("package_intel"));
   if (!fix) error->all(FLERR, "The 'package intel' command is required for /intel styles");
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  _use_base = 0;
-  if (fix->offload_balance() != 0.0) {
-    _use_base = 1;
-    return;
-  }
-  #endif
 
   fix->kspace_init_check();
 
@@ -129,12 +122,6 @@ void PPPMIntel::init()
 
 void PPPMIntel::compute(int eflag, int vflag)
 {
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_use_base) {
-    PPPM::compute(eflag, vflag);
-    return;
-  }
-  #endif
   compute_first(eflag,vflag);
   compute_second(eflag,vflag);
 }
@@ -1129,11 +1116,6 @@ FFT_SCALAR *** PPPMIntel::create3d_offset(FFT_SCALAR ***&array, int n1lo,
    Returns 0 if Intel optimizations for PPPM ignored due to offload
 ------------------------------------------------------------------------- */
 
-#ifdef _LMP_INTEL_OFFLOAD
-int PPPMIntel::use_base() {
-  return _use_base;
-}
-#endif
 
 /* ----------------------------------------------------------------------
    allows usage in derived classes (pppm/electrode/intel)

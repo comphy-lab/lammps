@@ -187,45 +187,7 @@ void PairLJCharmmCoulLongIntel::eval(const int offload, const int vflag,
   IP_PRE_get_buffers(offload, buffers, fix, tc, f_start, ev_global);
 
   const int nthreads = tc;
-  #ifdef _LMP_INTEL_OFFLOAD
-  int *overflow = fix->get_off_overflow_flag();
-  double *timer_compute = fix->off_watch_pair();
-  // Redeclare as local variables for offload
-  const int ncoultablebits = this->ncoultablebits;
-  const int ncoulmask = this->ncoulmask;
-  const int ncoulshiftbits = this->ncoulshiftbits;
-  #ifdef INTEL_ALLOW_TABLE
-  #define ITABLE_IN in(table,etable,detable:length(0) alloc_if(0) free_if(0)) \
-                    in(ctable,dctable:length(0) alloc_if(0) free_if(0)) \
-                    in(ncoultablebits,tabinnersq,ncoulmask,ncoulshiftbits)
-  #else
-  #define ITABLE_IN
-  #endif
-
-  if (offload) fix->start_watch(TIME_OFFLOAD_LATENCY);
-  #pragma offload target(mic:_cop) if (offload) \
-    in(special_lj,special_coul:length(0) alloc_if(0) free_if(0)) \
-    in(cutsq,lj:length(0) alloc_if(0) free_if(0)) \
-    in(firstneigh:length(0) alloc_if(0) free_if(0)) \
-    in(numneigh:length(0) alloc_if(0) free_if(0)) \
-    in(x:length(x_size) alloc_if(0) free_if(0)) \
-    in(q:length(q_size) alloc_if(0) free_if(0)) \
-    in(ilist:length(0) alloc_if(0) free_if(0)) \
-    in(overflow:length(0) alloc_if(0) free_if(0)) \
-    in(ccachex,ccachey,ccachez,ccachew:length(0) alloc_if(0) free_if(0)) \
-    in(ccachei,ccachej:length(0) alloc_if(0) free_if(0)) \
-    in(ccache_stride,nthreads,qqrd2e,g_ewald,inum,nall,ntypes,cut_coulsq) \
-    in(vflag,eatom,f_stride,separate_flag,offload) \
-    in(astart,cut_ljsq,cut_lj_innersq,nlocal,inv_denom_lj,minlocal) \
-    out(f_start:length(f_stride) alloc_if(0) free_if(0)) \
-    out(ev_global:length(ev_size) alloc_if(0) free_if(0)) \
-    out(timer_compute:length(1) alloc_if(0) free_if(0)) \
-    ITABLE_IN signal(f_start)
-  #endif
   {
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime();
-    #endif
 
     IP_PRE_repack_for_offload(NEWTON_PAIR, separate_flag, nlocal, nall,
                               f_stride, x, q);
@@ -494,15 +456,9 @@ void PairLJCharmmCoulLongIntel::eval(const int offload, const int vflag,
       ev_global[6] = ov4;
       ev_global[7] = ov5;
     }
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime() - *timer_compute;
-    #endif
   } // end of offload region
 
-  if (offload)
-    fix->stop_watch(TIME_OFFLOAD_LATENCY);
-  else
-    fix->stop_watch(TIME_HOST_PAIR);
+  fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
     fix->add_result_array(f_start, ev_global, offload, eatom, 0, vflag);
@@ -522,9 +478,6 @@ void PairLJCharmmCoulLongIntel::init_style()
   if (!fix) error->all(FLERR, "The 'package intel' command is required for /intel styles");
 
   fix->pair_init_check();
-  #ifdef _LMP_INTEL_OFFLOAD
-  _cop = fix->coprocessor_number();
-  #endif
 
   if (fix->precision() == FixIntel::PREC_MODE_MIXED)
     pack_force_const(force_const_single, fix->get_mixed_buffers());
@@ -541,9 +494,6 @@ void PairLJCharmmCoulLongIntel::pack_force_const(ForceConst<flt_t> &fc,
                                           IntelBuffers<flt_t,acc_t> *buffers)
 {
   int off_ccache = 0;
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_cop >= 0) off_ccache = 1;
-  #endif
   buffers->grow_ccache(off_ccache, comm->nthreads, 1);
   _ccache_stride = buffers->ccache_stride();
 
@@ -613,24 +563,6 @@ void PairLJCharmmCoulLongIntel::pack_force_const(ForceConst<flt_t> &fc,
     }
   }
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_cop < 0) return;
-  flt_t * special_lj = fc.special_lj;
-  flt_t * special_coul = fc.special_coul;
-  flt_t * cutsq = fc.cutsq[0];
-  LJ_T * lj = fc.lj[0];
-  TABLE_T * table = fc.table;
-  flt_t * etable = fc.etable;
-  flt_t * detable = fc.detable;
-  flt_t * ctable = fc.ctable;
-  flt_t * dctable = fc.dctable;
-  int tp1sq = tp1 * tp1;
-  #pragma offload_transfer target(mic:_cop) \
-    in(special_lj, special_coul: length(4) alloc_if(0) free_if(0)) \
-    in(cutsq,lj: length(tp1sq) alloc_if(0) free_if(0)) \
-    in(table: length(ntable) alloc_if(0) free_if(0)) \
-    in(etable,detable,ctable,dctable: length(ntable) alloc_if(0) free_if(0))
-  #endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -643,27 +575,6 @@ void PairLJCharmmCoulLongIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
   if (memory != nullptr) _memory = memory;
   if ((ntypes != _ntypes) || (ntable != _ntable)) {
     if (_ntypes > 0) {
-      #ifdef _LMP_INTEL_OFFLOAD
-      flt_t * ospecial_lj = special_lj;
-      flt_t * ospecial_coul = special_coul;
-      flt_t * ocutsq = cutsq[0];
-      typename IntelBuffers<flt_t,flt_t>::vec2_t * olj = lj[0];
-      table_t * otable = table;
-      flt_t * oetable = etable;
-      flt_t * odetable = detable;
-      flt_t * octable = ctable;
-      flt_t * odctable = dctable;
-      if (ospecial_lj != nullptr && ocutsq != nullptr && olj != nullptr &&
-          otable != nullptr && oetable != nullptr && odetable != nullptr &&
-          octable != nullptr && odctable != nullptr && ospecial_coul != nullptr &&
-          cop >= 0) {
-        #pragma offload_transfer target(mic:cop) \
-          nocopy(ospecial_lj, ospecial_coul: alloc_if(0) free_if(1)) \
-          nocopy(ocutsq, olj: alloc_if(0) free_if(1)) \
-          nocopy(otable: alloc_if(0) free_if(1)) \
-          nocopy(oetable, odetable, octable, odctable: alloc_if(0) free_if(1))
-      }
-      #endif
 
       _memory->destroy(cutsq);
       _memory->destroy(lj);
@@ -683,30 +594,6 @@ void PairLJCharmmCoulLongIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
       _memory->create(ctable,ntable,"pair:fc.ctable");
       _memory->create(dctable,ntable,"pair:fc.dctable");
 
-      #ifdef _LMP_INTEL_OFFLOAD
-      flt_t * ospecial_lj = special_lj;
-      flt_t * ospecial_coul = special_coul;
-      flt_t * ocutsq = cutsq[0];
-      typename IntelBuffers<flt_t,flt_t>::vec2_t * olj = lj[0];
-      table_t * otable = table;
-      flt_t * oetable = etable;
-      flt_t * odetable = detable;
-      flt_t * octable = ctable;
-      flt_t * odctable = dctable;
-      int tp1sq = ntypes*ntypes;
-      if (ospecial_lj != nullptr && ocutsq != nullptr && olj != nullptr &&
-          otable !=nullptr && oetable != nullptr && odetable != nullptr &&
-          octable != nullptr && odctable != nullptr && ospecial_coul != nullptr &&
-          cop >= 0) {
-        #pragma offload_transfer target(mic:cop) \
-          nocopy(ospecial_lj: length(4) alloc_if(1) free_if(0)) \
-          nocopy(ospecial_coul: length(4) alloc_if(1) free_if(0)) \
-          nocopy(ocutsq,olj: length(tp1sq) alloc_if(1) free_if(0)) \
-          nocopy(otable: length(ntable) alloc_if(1) free_if(0)) \
-          nocopy(oetable,odetable: length(ntable) alloc_if(1) free_if(0)) \
-          nocopy(octable,odctable: length(ntable) alloc_if(1) free_if(0))
-      }
-      #endif
     }
   }
   _ntypes=ntypes;

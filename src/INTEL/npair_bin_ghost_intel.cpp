@@ -41,19 +41,10 @@ NPairFullBinGhostIntel::NPairFullBinGhostIntel(LAMMPS *lmp) : NPairIntel(lmp) {}
 
 void NPairFullBinGhostIntel::build(NeighList *list)
 {
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_fix->offload_noghost())
-    error->all(FLERR,
-      "The 'ghost no' option cannot be used with this INTEL pair style.");
-  #endif
 
   if (nstencil > INTEL_MAX_STENCIL_CHECK)
     error->all(FLERR, "Too many neighbor bins for INTEL package" + utils::errorurl(9));
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (exclude)
-    error->all(FLERR, "Exclusion lists not yet supported for Intel offload");
-  #endif
 
   if (_fix->precision() == FixIntel::PREC_MODE_MIXED)
     fbi(list, _fix->get_mixed_buffers());
@@ -79,11 +70,6 @@ void NPairFullBinGhostIntel::fbi(NeighList * list,
   int host_start = _fix->host_start_neighbor();
   const int off_end = _fix->offload_end_neighbor();
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (off_end) grow_stencil();
-  if (_fix->full_host_list()) host_start = 0;
-  int offload_noghost = _fix->offload_noghost();
-  #endif
 
   // only uses offload_end_neighbor to check whether we are doing offloading
   // at all, no need to correct this later
@@ -150,10 +136,8 @@ void NPairFullBinGhostIntel::fbi(const int offload, NeighList * list,
   const int ntypes = atom->ntypes + 1;
   const int nlocal = atom->nlocal;
 
-  #ifndef _LMP_INTEL_OFFLOAD
   int * _noalias const mask = atom->mask;
   tagint * _noalias const molecule = atom->molecule;
-  #endif
 
   int moltemplate;
   if (molecular == Atom::TEMPLATE) moltemplate = 1;
@@ -164,16 +148,6 @@ void NPairFullBinGhostIntel::fbi(const int offload, NeighList * list,
 
   int tnum;
   int * _noalias overflow;
-  #ifdef _LMP_INTEL_OFFLOAD
-  double *timer_compute;
-  if (offload) {
-    timer_compute = _fix->off_watch_neighbor();
-    tnum = buffers->get_off_threads();
-    overflow = _fix->get_off_overflow_flag();
-    _fix->stop_watch(TIME_HOST_NEIGHBOR);
-    _fix->start_watch(TIME_OFFLOAD_LATENCY);
-  } else
-  #endif
   {
     tnum = comm->nthreads;
     overflow = _fix->get_overflow_flag();
@@ -214,47 +188,8 @@ void NPairFullBinGhostIntel::fbi(const int offload, NeighList * list,
   }
   const int special_bound = sb;
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  const int * _noalias const binhead = this->binhead;
-  const int * _noalias const bins = this->bins;
-  const int cop = _fix->coprocessor_number();
-  const int separate_buffers = _fix->separate_buffers();
-  #pragma offload target(mic:cop) if (offload) \
-    in(x:length(e_nall+1) alloc_if(0) free_if(0)) \
-    in(tag:length(tag_size) alloc_if(0) free_if(0)) \
-    in(special:length(special_size*maxspecial) alloc_if(0) free_if(0)) \
-    in(nspecial:length(special_size*3) alloc_if(0) free_if(0)) \
-    in(bins,binpacked:length(nall) alloc_if(0) free_if(0)) \
-    in(binhead:length(mbins+1) alloc_if(0) free_if(0)) \
-    in(cutneighsq:length(0) alloc_if(0) free_if(0)) \
-    in(cutneighghostsq:length(0) alloc_if(0) free_if(0)) \
-    in(firstneigh:length(0) alloc_if(0) free_if(0)) \
-    in(intel_list:length(0) alloc_if(0) free_if(0)) \
-    in(numneigh:length(0) alloc_if(0) free_if(0)) \
-    in(ilist:length(0) alloc_if(0) free_if(0)) \
-    in(atombin:length(aend) alloc_if(0) free_if(0)) \
-    in(stencil:length(nstencil) alloc_if(0) free_if(0)) \
-    in(ncachex,ncachey,ncachez,ncachej:length(0) alloc_if(0) free_if(0)) \
-    in(ncachejtype,ncachetag:length(0) alloc_if(0) free_if(0)) \
-    in(ncache_stride,maxnbors,nthreads,maxspecial,nstencil,e_nall,offload) \
-    in(separate_buffers,aend,nlocal,molecular,ntypes,mbinx,mbiny,special_bound)\
-    in(mbinz,xperiodic,yperiodic,zperiodic,xprd_half,yprd_half,zprd_half) \
-    in(stencilxyz:length(3*nstencil)) \
-    out(overflow:length(5) alloc_if(0) free_if(0)) \
-    out(timer_compute:length(1) alloc_if(0) free_if(0)) \
-    signal(tag)
-  #endif
   {
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime();
-    #endif
 
-    #ifdef _LMP_INTEL_OFFLOAD
-    overflow[LMP_LOCAL_MIN] = 0;
-    overflow[LMP_LOCAL_MAX] = aend - 1;
-    overflow[LMP_GHOST_MIN] = e_nall;
-    overflow[LMP_GHOST_MAX] = -1;
-    #endif
 
     int nstencilp = 0;
     int binstart[INTEL_MAX_STENCIL], binend[INTEL_MAX_STENCIL];
@@ -505,7 +440,6 @@ void NPairFullBinGhostIntel::fbi(const int offload, NeighList * list,
           }
         }
 
-        #ifndef _LMP_INTEL_OFFLOAD
         if (exclude) {
           int alln = n;
           n = maxnbors;
@@ -536,7 +470,6 @@ void NPairFullBinGhostIntel::fbi(const int offload, NeighList * list,
             if (addme) neighptr2[n2++] = js;
           }
         }
-        #endif
 
         int ns = n - maxnbors;
         int alln = n;
@@ -568,39 +501,7 @@ void NPairFullBinGhostIntel::fbi(const int offload, NeighList * list,
         for (int i = ifrom; i < ito; i++)
           numneigh[i] = 0;
 
-      #ifdef _LMP_INTEL_OFFLOAD
-      if (separate_buffers) {
-        overflow[LMP_LOCAL_MIN] = 0;
-        overflow[LMP_LOCAL_MAX] = nlocal - 1;
-        overflow[LMP_GHOST_MIN] = nlocal;
-        overflow[LMP_GHOST_MAX] = e_nall - 1;
-      }
-      #endif
     } // end omp
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime() - *timer_compute;
-    #endif
   } // end offload
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (offload) {
-    _fix->stop_watch(TIME_OFFLOAD_LATENCY);
-    _fix->start_watch(TIME_HOST_NEIGHBOR);
-    firstneigh[0] = intel_list;
-    for (int n = 0; n < aend; n++) {
-      ilist[n] = n;
-      numneigh[n] = 0;
-    }
-  } else {
-    if (separate_buffers) {
-      _fix->start_watch(TIME_PACK);
-      _fix->set_neighbor_host_sizes();
-      buffers->pack_sep_from_single(_fix->host_min_local(),
-                                    _fix->host_used_local(),
-                                    _fix->host_min_ghost(),
-                                    _fix->host_used_ghost());
-      _fix->stop_watch(TIME_PACK);
-    }
-  }
-  #endif
 }

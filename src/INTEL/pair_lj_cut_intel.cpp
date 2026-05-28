@@ -178,9 +178,6 @@ void PairLJCutIntel::eval(const int offload, const int vflag,
   const int nthreads = tc;
   int *overflow = fix->get_off_overflow_flag();
   {
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime();
-    #endif
 
     IP_PRE_repack_for_offload(NEWTON_PAIR, separate_flag, nlocal, nall,
                               f_stride, x, 0);
@@ -371,15 +368,9 @@ void PairLJCutIntel::eval(const int offload, const int vflag,
       ev_global[6] = ov4;
       ev_global[7] = ov5;
     }
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime() - *timer_compute;
-    #endif
   } // end offload
 
-  if (offload)
-    fix->stop_watch(TIME_OFFLOAD_LATENCY);
-  else
-    fix->stop_watch(TIME_HOST_PAIR);
+  fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
     fix->add_result_array(f_start, ev_global, offload, eatom, 0, vflag);
@@ -399,11 +390,6 @@ void PairLJCutIntel::init_style()
   if (!fix) error->all(FLERR, "The 'package intel' command is required for /intel styles");
 
   fix->pair_init_check();
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (fix->offload_balance() != 0.0)
-    error->all(FLERR,
-          "Offload for lj/cut/intel is not yet available. Set balance to 0.");
-  #endif
 
   if (fix->precision() == FixIntel::PREC_MODE_MIXED)
     pack_force_const(force_const_single, fix->get_mixed_buffers());

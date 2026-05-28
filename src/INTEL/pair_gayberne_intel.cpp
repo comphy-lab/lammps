@@ -16,13 +16,7 @@
 #include "pair_gayberne_intel.h"
 #include "math_extra_intel.h"
 
-#ifdef _LMP_INTEL_OFFLOAD
-#pragma offload_attribute(push,target(mic))
-#endif
 #include <cmath>
-#ifdef _LMP_INTEL_OFFLOAD
-#pragma offload_attribute(pop)
-#endif
 
 #include "atom.h"
 #include "atom_vec_ellipsoid.h"
@@ -164,74 +158,6 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
   const AtomVecEllipsoid::Bonus *bonus = avec->bonus;
   const int *ellipsoid = atom->ellipsoid;
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (fix->separate_buffers()) {
-    fix->start_watch(TIME_PACK);
-    if (offload) {
-      #pragma omp parallel
-      {
-        int ifrom, ito, tid;
-        int nthreads = comm->nthreads;
-        IP_PRE_omp_range_id_align(ifrom, ito, tid, nlocal,
-                                  nthreads, sizeof(ATOM_T));
-        if (ago != 0) buffers->thr_pack_cop(ifrom, ito, 0);
-        for (int i = ifrom; i < ito; i++) {
-          int qi = ellipsoid[i];
-          if (qi > -1) {
-            quat[i].w = bonus[qi].quat[0];
-            quat[i].i = bonus[qi].quat[1];
-            quat[i].j = bonus[qi].quat[2];
-            quat[i].k = bonus[qi].quat[3];
-          }
-        }
-        int nghost = nall - nlocal;
-        if (nghost) {
-          IP_PRE_omp_range_align(ifrom, ito, tid, nall - nlocal,
-                                 nthreads, sizeof(ATOM_T));
-          int offset = 0;
-          ifrom += nlocal;
-          ito += nlocal;
-          if (ago != 0) {
-            offset = fix->offload_min_ghost() - nlocal;
-            buffers->thr_pack_cop(ifrom, ito, offset, ago == 1);
-          }
-          for (int i = ifrom; i < ito; i++) {
-            int qi = ellipsoid[i + offset];
-            if (qi > -1) {
-              quat[i].w = bonus[qi].quat[0];
-              quat[i].i = bonus[qi].quat[1];
-              quat[i].j = bonus[qi].quat[2];
-              quat[i].k = bonus[qi].quat[3];
-            }
-          }
-        }
-      }
-    } else {
-      if (ago != 0) buffers->thr_pack_host(fix->host_min_local(), nlocal, 0);
-      for (int i = fix->host_min_local(); i < nlocal; i++) {
-        int qi = ellipsoid[i];
-        if (qi > -1) {
-          quat[i].w = bonus[qi].quat[0];
-          quat[i].i = bonus[qi].quat[1];
-          quat[i].j = bonus[qi].quat[2];
-          quat[i].k = bonus[qi].quat[3];
-        }
-      }
-      int offset = fix->host_min_ghost() - nlocal;
-      if (ago != 0) buffers->thr_pack_host(nlocal, nall, offset);
-      for (int i = nlocal; i < nall; i++) {
-        int qi = ellipsoid[i + offset];
-        if (qi > -1) {
-          quat[i].w = bonus[qi].quat[0];
-          quat[i].i = bonus[qi].quat[1];
-          quat[i].j = bonus[qi].quat[2];
-          quat[i].k = bonus[qi].quat[3];
-        }
-      }
-    }
-    fix->stop_watch(TIME_PACK);
-  }
-  #endif
 
   const int * _noalias const ilist = list->ilist;
   const int * _noalias const numneigh = list->numneigh;
@@ -269,77 +195,12 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
   const int nthreads = tc;
 
   int pad = 1;
-  if (offload) {
-    if (INTEL_MIC_NBOR_PAD > 1)
-      pad = INTEL_MIC_NBOR_PAD * sizeof(float) / sizeof(flt_t);
-  } else {
-    if (INTEL_NBOR_PAD > 1)
-      pad = INTEL_NBOR_PAD * sizeof(float) / sizeof(flt_t);
-  }
+  if (INTEL_NBOR_PAD > 1)
+    pad = INTEL_NBOR_PAD * sizeof(float) / sizeof(flt_t);
   const int pad_width = pad;
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  int *overflow = fix->get_off_overflow_flag();
-  double *timer_compute = fix->off_watch_pair();
-
-  if (offload) fix->start_watch(TIME_OFFLOAD_LATENCY);
-  #pragma offload target(mic:_cop) if (offload) \
-    in(special_lj:length(0) alloc_if(0) free_if(0)) \
-    in(ijc,lj34,ic:length(0) alloc_if(0) free_if(0)) \
-    in(rsq_formi, delx_formi, dely_formi: length(0) alloc_if(0) free_if(0)) \
-    in(delz_formi, jtype_formi, jlist_formi: length(0) alloc_if(0) free_if(0))\
-    in(firstneigh:length(0) alloc_if(0) free_if(0)) \
-    in(numneigh:length(0) alloc_if(0) free_if(0)) \
-    in(x:length(x_size) alloc_if(0) free_if(0)) \
-    in(quat:length(nall+1) alloc_if(0) free_if(0)) \
-    in(ilist:length(0) alloc_if(0) free_if(0)) \
-    in(overflow:length(0) alloc_if(0) free_if(0)) \
-    in(nthreads,inum,nall,ntypes,vflag,eatom,minlocal,separate_flag) \
-    in(astart,nlocal,f_stride,max_nbors,mu,gamma,upsilon,offload,pad_width) \
-    out(f_start:length(f_stride) alloc_if(0) free_if(0)) \
-    out(ev_global:length(ev_size) alloc_if(0) free_if(0)) \
-    out(timer_compute:length(1) alloc_if(0) free_if(0)) \
-    signal(f_start)
-  #endif
   {
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute=MIC_Wtime();
-    #endif
 
-    #ifdef _LMP_INTEL_OFFLOAD
-    if (separate_flag) {
-      if (separate_flag < 3) {
-        int all_local = nlocal;
-        int ghost_min = overflow[LMP_GHOST_MIN];
-        nlocal = overflow[LMP_LOCAL_MAX] + 1;
-        int nghost = overflow[LMP_GHOST_MAX] + 1 - ghost_min;
-        if (nghost < 0) nghost = 0;
-        nall = nlocal + nghost;
-        separate_flag--;
-        int flength;
-        if (NEWTON_PAIR) flength = nall;
-        else flength = nlocal;
-        IP_PRE_get_stride(f_stride, flength, sizeof(FORCE_T),
-                             separate_flag);
-        if (nghost) {
-          if (nlocal < all_local || ghost_min > all_local) {
-            memmove(x + nlocal, x + ghost_min,
-                    (nall - nlocal) * sizeof(ATOM_T));
-            memmove(quat + nlocal, quat + ghost_min,
-                    (nall - nlocal) * sizeof(QUAT_T));
-          }
-        }
-      }
-      x[nall].x = (flt_t)INTEL_BIGP;
-      x[nall].y = (flt_t)INTEL_BIGP;
-      x[nall].z = (flt_t)INTEL_BIGP;
-      x[nall].w = 1;
-      quat[nall].w = (flt_t)1.0;
-      quat[nall].i = (flt_t)0.0;
-      quat[nall].j = (flt_t)0.0;
-      quat[nall].k = (flt_t)0.0;
-    }
-    #endif
 
     acc_t oevdwl, ov0, ov1, ov2, ov3, ov4, ov5;
     if (EFLAG || vflag)
@@ -450,7 +311,6 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
         #ifdef INTEL_V512
         __assume(packed_j % INTEL_VECTOR_WIDTH == 0);
         __assume(packed_j % 8 == 0);
-        __assume(packed_j % INTEL_MIC_VECTOR_WIDTH == 0);
         #endif
         #if defined(LMP_SIMD_COMPILER)
 #if defined(USE_OMP_SIMD)
@@ -868,15 +728,9 @@ void PairGayBerneIntel::eval(const int offload, const int vflag,
       ev_global[7] = ov5;
     }
 
-    #if defined(__MIC__) && defined(_LMP_INTEL_OFFLOAD)
-    *timer_compute = MIC_Wtime() - *timer_compute;
-    #endif
   } // offload
 
-  if (offload)
-    fix->stop_watch(TIME_OFFLOAD_LATENCY);
-  else
-    fix->stop_watch(TIME_HOST_PAIR);
+  fix->stop_watch(TIME_HOST_PAIR);
 
   if (EFLAG || vflag)
     fix->add_result_array(f_start, ev_global, offload, eatom, 0, 2);
@@ -896,10 +750,6 @@ void PairGayBerneIntel::init_style()
   if (!fix) error->all(FLERR, "The 'package intel' command is required for /intel styles");
 
   fix->pair_init_check();
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (force->newton_pair) fix->set_offload_noghost(1);
-  _cop = fix->coprocessor_number();
-  #endif
 
   if (fix->precision() == FixIntel::PREC_MODE_MIXED)
     pack_force_const(force_const_single, fix->get_mixed_buffers());
@@ -918,8 +768,6 @@ void PairGayBerneIntel::pack_force_const(ForceConst<flt_t> &fc,
   int tp1 = atom->ntypes + 1;
   _max_nbors = buffers->get_max_nbors();
   int mthreads = comm->nthreads;
-  if (mthreads < buffers->get_off_threads())
-    mthreads = buffers->get_off_threads();
   fc.set_ntypes(tp1, _max_nbors, mthreads, memory, _cop);
 
   // Repeat cutsq calculation because done after call to init_style
@@ -961,20 +809,6 @@ void PairGayBerneIntel::pack_force_const(ForceConst<flt_t> &fc,
     }
   }
 
-  #ifdef _LMP_INTEL_OFFLOAD
-  if (_cop < 0) return;
-  flt_t * special_lj = fc.special_lj;
-  FC_PACKED1_T *oijc = fc.ijc[0];
-  FC_PACKED2_T *olj34 = fc.lj34[0];
-  FC_PACKED3_T *oic = fc.ic;
-  int tp1sq = tp1 * tp1;
-  if (oijc != nullptr && oic != nullptr) {
-    #pragma offload_transfer target(mic:_cop) \
-      in(special_lj: length(4) alloc_if(0) free_if(0)) \
-      in(oijc,olj34: length(tp1sq) alloc_if(0) free_if(0)) \
-      in(oic: length(tp1) alloc_if(0) free_if(0))
-  }
-  #endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -990,27 +824,6 @@ void PairGayBerneIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
     if (_ntypes > 0) {
       fc_packed3 *oic = ic;
 
-      #ifdef _LMP_INTEL_OFFLOAD
-      flt_t * ospecial_lj = special_lj;
-      fc_packed1 *oijc = ijc[0];
-      fc_packed2 *olj34 = lj34[0];
-      flt_t * orsq_form = rsq_form[0];
-      flt_t * odelx_form = delx_form[0];
-      flt_t * odely_form = dely_form[0];
-      flt_t * odelz_form = delz_form[0];
-      int * ojtype_form = jtype_form[0];
-      int * ojlist_form = jlist_form[0];
-
-      if (ospecial_lj != nullptr && oijc != nullptr && olj34 != nullptr &&
-          orsq_form != nullptr && odelx_form != nullptr && odely_form != nullptr &&
-          odelz_form != nullptr && ojtype_form != nullptr && ojlist_form != nullptr &&
-          _cop >= 0) {
-        #pragma offload_transfer target(mic:_cop) \
-          nocopy(ospecial_lj, oijc, olj34, oic: alloc_if(0) free_if(1)) \
-          nocopy(orsq_form, odelx_form, odely_form: alloc_if(0) free_if(1)) \
-          nocopy(odelz_form, ojtype_form, ojlist_form: alloc_if(0) free_if(1))
-      }
-      #endif
 
       _memory->destroy(oic);
       _memory->destroy(ijc);
@@ -1045,36 +858,6 @@ void PairGayBerneIntel::ForceConst<flt_t>::set_ntypes(const int ntypes,
           jlist_form[zn][zo] = 0;
         }
 
-      #ifdef _LMP_INTEL_OFFLOAD
-      flt_t * ospecial_lj = special_lj;
-      fc_packed1 *oijc = ijc[0];
-      fc_packed2 *olj34 = lj34[0];
-      fc_packed3 *oic = ic;
-      flt_t * orsq_form = rsq_form[0];
-      flt_t * odelx_form = delx_form[0];
-      flt_t * odely_form = dely_form[0];
-      flt_t * odelz_form = delz_form[0];
-      int * ojtype_form = jtype_form[0];
-      int * ojlist_form = jlist_form[0];
-      int off_onel = one_length * nthreads;
-
-      int tp1sq = ntypes*ntypes;
-      if (ospecial_lj != nullptr && oijc != nullptr && olj34 != nullptr &&
-          oic != nullptr && orsq_form != nullptr && odelx_form != nullptr &&
-          odely_form != nullptr && odelz_form != nullptr && ojtype_form !=nullptr &&
-          ojlist_form !=nullptr && cop >= 0) {
-        #pragma offload_transfer target(mic:cop) \
-          nocopy(ospecial_lj: length(4) alloc_if(1) free_if(0)) \
-          nocopy(oijc,olj34: length(tp1sq) alloc_if(1) free_if(0)) \
-          nocopy(oic: length(ntypes) alloc_if(1) free_if(0)) \
-          in(orsq_form: length(off_onel) alloc_if(1) free_if(0)) \
-          in(odelx_form: length(off_onel) alloc_if(1) free_if(0)) \
-          in(odely_form: length(off_onel) alloc_if(1) free_if(0)) \
-          in(odelz_form: length(off_onel) alloc_if(1) free_if(0)) \
-          in(ojtype_form: length(off_onel) alloc_if(1) free_if(0)) \
-          in(ojlist_form: length(off_onel) alloc_if(1) free_if(0))
-      }
-      #endif
     }
   }
   _ntypes = ntypes;
