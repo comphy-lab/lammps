@@ -109,16 +109,17 @@ where *gamma_t* = 1/2 *gamma_n*.
 
 .. versionchanged:: TBD
 
-   The tangential elastic force of the *hooke/history* wall model now uses a
-   constant tangential stiffness *Kt*, consistent with the
-   :doc:`pair_style gran/hooke/history <pair_gran>` pair style.  Previously the
-   *hooke/history* wall scaled the tangential stiffness by the
-   overlap-dependent contact radius, which made the tangential spring
-   non-conservative and could inject kinetic energy during grazing oblique
-   impacts with friction.  This change only affects *hooke/history* walls with
-   non-zero friction; the *hertz/history* and *granular* wall force styles and
-   the frictionless case are unaffected.  The KOKKOS version (*wall/gran/kk*)
-   was already using the constant-stiffness form.
+The tangential elastic force of the *hooke/history* wall model now uses a
+constant tangential stiffness *Kt*, consistent with the
+:doc:`pair_style gran/hooke/history <pair_gran>` pair style.  Previously the
+*hooke/history* wall scaled the tangential stiffness by the
+overlap-dependent contact radius, which made the tangential spring
+non-conservative and could inject kinetic energy during grazing oblique
+impacts with friction.  This change only affects *hooke/history* walls with
+non-zero friction; the *hertz/history* and *granular* wall force styles and
+the frictionless case are unaffected.  The KOKKOS version (*wall/gran/kk*)
+is based on a legacy implementation of fix wall/gran and not the current,
+more flexible version and was already using the constant-stiffness form.
 
 All the model choices for cohesion, tangential friction, rolling
 friction and twisting friction supported by the :doc:`pair_style granular <pair_granular>` through its *pair_coeff* command are also
@@ -126,6 +127,7 @@ supported for walls. These are discussed in greater detail on the doc
 page for :doc:`pair_style granular <pair_granular>`.
 
 .. note::
+
    When *fstyle* *granular* is specified, the associated *fstyle_params* are taken as
    those for a wall/particle interaction. For example, for the *hertz/material* normal
    contact model with :math:`E = 960` and :math:`\nu = 0.2`, the effective Young's
