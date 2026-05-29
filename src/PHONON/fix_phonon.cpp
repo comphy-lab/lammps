@@ -221,7 +221,6 @@ FixPhonon::FixPhonon(LAMMPS *lmp,  int narg, char **arg) : Fix(lmp, narg, arg)
   id_temp = utils::strdup("thermo_temp");
   temperature = modify->get_compute_by_id(id_temp);
   inv_nTemp = 1.0/group->count(temperature->igroup);
-
 } // end of constructor
 
 /* ---------------------------------------------------------------------- */

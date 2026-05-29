@@ -105,10 +105,10 @@ void Hyper::command(int narg, char **arg)
 
   // assign FixEventHyper to event-detection compute
   // necessary so it will know atom coords at last event
-
   auto *icompute = modify->get_compute_by_id(id_compute);
-  if (!icompute) error->all(FLERR,"Could not find compute ID for hyper");
   compute_event = dynamic_cast<ComputeEventDisplace *>(icompute);
+  if (!compute_event)
+    error->all(FLERR,"Could not find compute event/displace ID {} for hyper", id_compute);
   compute_event->reset_extra_compute_fix("hyper_event");
 
   // reset reneighboring criteria since will perform minimizations

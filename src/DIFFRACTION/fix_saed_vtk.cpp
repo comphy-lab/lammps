@@ -63,13 +63,10 @@ FixSAEDVTK::FixSAEDVTK(LAMMPS *lmp, int narg, char **arg) :
 
   ids = argi.copy_name();
   auto *icompute = modify->get_compute_by_id(ids);
-  if (!icompute)
-    error->all(FLERR,"Compute ID for fix saed/vtk does not exist");
-
-  // Check that specified compute is for SAED
   compute_saed = dynamic_cast<ComputeSAED *>(icompute);
-  if (strcmp(compute_saed->style,"saed") != 0)
-    error->all(FLERR,"Fix saed/vtk has invalid compute assigned");
+  if (!compute_saed)
+    error->all(FLERR, 6, "Compute ID {} for fix saed/vtk does not exist or is of "
+               "incorrect style", ids);
 
   // Gather variables from specified compute_saed
   double *saed_var = compute_saed->saed_var;

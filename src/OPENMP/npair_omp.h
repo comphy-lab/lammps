@@ -19,6 +19,7 @@
 #endif
 
 #include "comm.h"
+#include "error.h"
 #include "fix_omp.h"
 #include "modify.h"
 #include "thr_data.h"
