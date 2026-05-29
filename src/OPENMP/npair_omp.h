@@ -33,7 +33,7 @@ namespace LAMMPS_NS {
 #define NPAIR_OMP_INIT                 \
   const int nthreads = comm->nthreads; \
   omp_set_num_threads(nthreads); \
-  const int ifix = modify->find_fix("package_omp")
+  Fix *fix_package_omp = modify->get_fix_by_id("package_omp")
 
 // get thread id and then assign each thread a fixed chunk of atoms
 #define NPAIR_OMP_SETUP(num)                                           \
@@ -42,7 +42,7 @@ namespace LAMMPS_NS {
     const int idelta = 1 + num / nthreads;                             \
     const int ifrom = tid * idelta;                                    \
     const int ito = ((ifrom + idelta) > num) ? num : (ifrom + idelta); \
-    FixOMP *fix = static_cast<FixOMP *>(modify->fix[ifix]);            \
+    FixOMP *fix = static_cast<FixOMP *>(fix_package_omp);             \
     ThrData *thr = fix->get_thr(tid);                                  \
     thr->timer(Timer::START);
 
