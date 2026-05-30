@@ -23,12 +23,12 @@ OPT.
    * :doc:`bond <compute_bond>`
    * :doc:`bond/local <compute_bond_local>`
    * :doc:`born/matrix <compute_born_matrix>`
-   * :doc:`centro/atom <compute_centro_atom>`
+   * :doc:`centro/atom (o) <compute_centro_atom>`
    * :doc:`centroid/stress/atom <compute_stress_atom>`
    * :doc:`chunk/atom <compute_chunk_atom>`
    * :doc:`chunk/spread/atom <compute_chunk_spread_atom>`
    * :doc:`cluster/atom <compute_cluster_atom>`
-   * :doc:`cna/atom <compute_cna_atom>`
+   * :doc:`cna/atom (o) <compute_cna_atom>`
    * :doc:`cnp/atom <compute_cnp_atom>`
    * :doc:`com <compute_com>`
    * :doc:`com/chunk <compute_com_chunk>`
@@ -72,7 +72,7 @@ OPT.
    * :doc:`heat/flux <compute_heat_flux>`
    * :doc:`heat/flux/tally <compute_tally>`
    * :doc:`heat/flux/virial/tally <compute_tally>`
-   * :doc:`hexorder/atom <compute_hexorder_atom>`
+   * :doc:`hexorder/atom (o) <compute_hexorder_atom>`
    * :doc:`hma <compute_hma>`
    * :doc:`improper <compute_improper>`
    * :doc:`improper/local <compute_improper_local>`

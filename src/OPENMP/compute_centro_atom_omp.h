@@ -13,38 +13,21 @@
 
 #ifdef COMPUTE_CLASS
 // clang-format off
-ComputeStyle(hexorder/atom,ComputeHexOrderAtom);
+ComputeStyle(centro/atom/omp,ComputeCentroAtomOMP);
 // clang-format on
 #else
 
-#ifndef LMP_COMPUTE_HEXORDER_ATOM_H
-#define LMP_COMPUTE_HEXORDER_ATOM_H
+#ifndef LMP_COMPUTE_CENTRO_ATOM_OMP_H
+#define LMP_COMPUTE_CENTRO_ATOM_OMP_H
 
-#include "compute.h"
+#include "compute_centro_atom.h"
 
 namespace LAMMPS_NS {
 
-class ComputeHexOrderAtom : public Compute {
+class ComputeCentroAtomOMP : public ComputeCentroAtom {
  public:
-  ComputeHexOrderAtom(class LAMMPS *, int, char **);
-  ~ComputeHexOrderAtom() override;
-  void init() override;
-  void init_list(int, class NeighList *) override;
+  ComputeCentroAtomOMP(class LAMMPS *, int, char **);
   void compute_peratom() override;
-  double memory_usage() override;
-
- protected:
-  int nmax, maxneigh, ncol, nnn, ndegree;
-  double cutsq;
-  class NeighList *list;
-  double *distsq;
-  int *nearest;
-
-  double **qnarray;
-
-  void calc_qn_complex(double, double, double &, double &);
-  void calc_qn_trig(double, double, double &, double &);
-  void select2(int, int, double *, int *);
 };
 
 }    // namespace LAMMPS_NS

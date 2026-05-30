@@ -1,7 +1,10 @@
 .. index:: compute hexorder/atom
+.. index:: compute hexorder/atom/omp
 
 compute hexorder/atom command
 =============================
+
+Accelerator Variants: *hexorder/atom/omp*
 
 Syntax
 """"""
