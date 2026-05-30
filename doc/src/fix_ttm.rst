@@ -363,11 +363,11 @@ where :math:`\lambda` is the electron mean free path (see :ref:`(Norman)
   to model a bulk system with full periodicity and no vacuum (i.e. to
   reproduce the behavior of fix *ttm*), you must set *lsurface* = 0 and
   *rsurface* = *Nx* so that the coupling acts on the entire simulation
-  box.  Note that some of the example *init_file* files in the
-  ``examples/ttm`` folder use *rsurface* = 1, which couples only the
-  first slab of grid cells; copying those values into a bulk simulation
-  will make energy transfer between the two subsystems appear much too
-  slow.
+  box.  Setting *rsurface* to a smaller value couples only a sub-slab of
+  the grid cells and will make energy transfer between the two
+  subsystems appear much too slow.  Fix *ttm/mod* prints a warning when
+  this coupling region does not span the whole box (with
+  *surface_movement* disabled).
 
 The fix *ttm/mod* parameter file *init_file* has the following syntax.
 Every line with an odd number is considered as a comment and
