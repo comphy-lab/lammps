@@ -1,7 +1,10 @@
 .. index:: compute ackland/atom
+.. index:: compute ackland/atom/omp
 
 compute ackland/atom command
 ============================
+
+Accelerator Variants: *ackland/atom/omp*
 
 Syntax
 """"""

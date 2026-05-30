@@ -1,7 +1,10 @@
 .. index:: compute entropy/atom
+.. index:: compute entropy/atom/omp
 
 compute entropy/atom command
 ============================
+
+Accelerator Variants: *entropy/atom/omp*
 
 Syntax
 """"""

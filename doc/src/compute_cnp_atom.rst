@@ -1,7 +1,10 @@
 .. index:: compute cnp/atom
+.. index:: compute cnp/atom/omp
 
 compute cnp/atom command
 ========================
+
+Accelerator Variants: *cnp/atom/omp*
 
 Syntax
 """"""

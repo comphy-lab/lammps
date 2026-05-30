@@ -13,35 +13,21 @@
 
 #ifdef COMPUTE_CLASS
 // clang-format off
-ComputeStyle(ackland/atom,ComputeAcklandAtom);
+ComputeStyle(ave/sphere/atom/omp,ComputeAveSphereAtomOMP);
 // clang-format on
 #else
 
-#ifndef LMP_COMPUTE_ACKLAND_ATOM_H
-#define LMP_COMPUTE_ACKLAND_ATOM_H
+#ifndef LMP_COMPUTE_AVE_SPHERE_ATOM_OMP_H
+#define LMP_COMPUTE_AVE_SPHERE_ATOM_OMP_H
 
-#include "compute.h"
+#include "compute_ave_sphere_atom.h"
 
 namespace LAMMPS_NS {
 
-class ComputeAcklandAtom : public Compute {
+class ComputeAveSphereAtomOMP : public ComputeAveSphereAtom {
  public:
-  ComputeAcklandAtom(class LAMMPS *, int, char **);
-  ~ComputeAcklandAtom() override;
-  void init() override;
-  void init_list(int, class NeighList *) override;
+  ComputeAveSphereAtomOMP(class LAMMPS *, int, char **);
   void compute_peratom() override;
-  double memory_usage() override;
-
- protected:
-  int nmax, maxneigh, legacy;
-  double *distsq;
-  int *nearest, *nearest_n0, *nearest_n1;
-  double *structure;
-  class NeighList *list;
-
-  void select(int, int, double *);
-  void select2(int, int, double *, int *);
 };
 
 }    // namespace LAMMPS_NS

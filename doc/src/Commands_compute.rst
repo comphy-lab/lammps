@@ -11,13 +11,13 @@ OPT.
 .. table_from_list::
    :columns: 4
 
-   * :doc:`ackland/atom <compute_ackland_atom>`
+   * :doc:`ackland/atom (o) <compute_ackland_atom>`
    * :doc:`adf <compute_adf>`
    * :doc:`aggregate/atom <compute_cluster_atom>`
    * :doc:`angle <compute_angle>`
    * :doc:`angle/local <compute_angle_local>`
    * :doc:`angmom/chunk <compute_angmom_chunk>`
-   * :doc:`ave/sphere/atom (k) <compute_ave_sphere_atom>`
+   * :doc:`ave/sphere/atom (ko) <compute_ave_sphere_atom>`
    * :doc:`basal/atom <compute_basal_atom>`
    * :doc:`body/local <compute_body_local>`
    * :doc:`bond <compute_bond>`
@@ -29,7 +29,7 @@ OPT.
    * :doc:`chunk/spread/atom <compute_chunk_spread_atom>`
    * :doc:`cluster/atom <compute_cluster_atom>`
    * :doc:`cna/atom (o) <compute_cna_atom>`
-   * :doc:`cnp/atom <compute_cnp_atom>`
+   * :doc:`cnp/atom (o) <compute_cnp_atom>`
    * :doc:`com <compute_com>`
    * :doc:`com/chunk <compute_com_chunk>`
    * :doc:`composition/atom (k) <compute_composition_atom>`
@@ -50,7 +50,7 @@ OPT.
    * :doc:`edpd/temp/atom <compute_edpd_temp_atom>`
    * :doc:`efield/atom <compute_efield_atom>`
    * :doc:`efield/wolf/atom <compute_efield_wolf_atom>`
-   * :doc:`entropy/atom <compute_entropy_atom>`
+   * :doc:`entropy/atom (o) <compute_entropy_atom>`
    * :doc:`erotate/asphere (k) <compute_erotate_asphere>`
    * :doc:`erotate/rigid <compute_erotate_rigid>`
    * :doc:`erotate/sphere (k) <compute_erotate_sphere>`
