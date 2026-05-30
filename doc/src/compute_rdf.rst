@@ -1,7 +1,10 @@
 .. index:: compute rdf
+.. index:: compute rdf/omp
 
 compute rdf command
 ===================
+
+Accelerator Variants: *rdf/omp*
 
 Syntax
 """"""

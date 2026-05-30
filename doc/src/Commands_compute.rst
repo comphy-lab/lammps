@@ -111,7 +111,7 @@ OPT.
    * :doc:`property/local <compute_property_local>`
    * :doc:`ptm/atom <compute_ptm_atom>`
    * :doc:`rattlers/atom <compute_rattlers_atom>`
-   * :doc:`rdf <compute_rdf>`
+   * :doc:`rdf (o) <compute_rdf>`
    * :doc:`reaxff/atom (k) <compute_reaxff_atom>`
    * :doc:`reduce <compute_reduce>`
    * :doc:`reduce/chunk <compute_reduce_chunk>`
