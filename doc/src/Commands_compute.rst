@@ -34,7 +34,7 @@ OPT.
    * :doc:`com/chunk <compute_com_chunk>`
    * :doc:`composition/atom (k) <compute_composition_atom>`
    * :doc:`contact/atom <compute_contact_atom>`
-   * :doc:`coord/atom (k) <compute_coord_atom>`
+   * :doc:`coord/atom (ko) <compute_coord_atom>`
    * :doc:`count/type <compute_count_type>`
    * :doc:`damage/atom <compute_damage_atom>`
    * :doc:`dihedral <compute_dihedral>`
@@ -89,7 +89,7 @@ OPT.
    * :doc:`msd/nongauss <compute_msd_nongauss>`
    * :doc:`nbond/atom <compute_nbond_atom>`
    * :doc:`omega/chunk <compute_omega_chunk>`
-   * :doc:`orientorder/atom (k) <compute_orientorder_atom>`
+   * :doc:`orientorder/atom (ko) <compute_orientorder_atom>`
    * :doc:`pace <compute_pace>`
    * :doc:`pair <compute_pair>`
    * :doc:`pair/local <compute_pair_local>`
