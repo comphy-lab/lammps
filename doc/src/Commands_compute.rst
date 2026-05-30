@@ -54,7 +54,7 @@ OPT.
    * :doc:`erotate/asphere (k) <compute_erotate_asphere>`
    * :doc:`erotate/rigid <compute_erotate_rigid>`
    * :doc:`erotate/sphere (k) <compute_erotate_sphere>`
-   * :doc:`erotate/sphere/atom <compute_erotate_sphere_atom>`
+   * :doc:`erotate/sphere/atom (o) <compute_erotate_sphere_atom>`
    * :doc:`event/displace <compute_event_displace>`
    * :doc:`fabric <compute_fabric>`
    * :doc:`fep <compute_fep>`
@@ -78,7 +78,7 @@ OPT.
    * :doc:`improper/local <compute_improper_local>`
    * :doc:`inertia/chunk <compute_inertia_chunk>`
    * :doc:`ke <compute_ke>`
-   * :doc:`ke/atom <compute_ke_atom>`
+   * :doc:`ke/atom (o) <compute_ke_atom>`
    * :doc:`ke/atom/eff <compute_ke_atom_eff>`
    * :doc:`ke/eff <compute_ke_eff>`
    * :doc:`ke/rigid <compute_ke_rigid>`

@@ -1,7 +1,10 @@
 .. index:: compute erotate/sphere/atom
+.. index:: compute erotate/sphere/atom/omp
 
 compute erotate/sphere/atom command
 ===================================
+
+Accelerator Variants: *erotate/sphere/atom/omp*
 
 Syntax
 """"""

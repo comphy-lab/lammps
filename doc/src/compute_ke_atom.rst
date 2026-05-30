@@ -1,7 +1,10 @@
 .. index:: compute ke/atom
+.. index:: compute ke/atom/omp
 
 compute ke/atom command
 =======================
+
+Accelerator Variants: *ke/atom/omp*
 
 Syntax
 """"""

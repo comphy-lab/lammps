@@ -13,28 +13,21 @@
 
 #ifdef COMPUTE_CLASS
 // clang-format off
-ComputeStyle(ke/atom,ComputeKEAtom);
+ComputeStyle(ke/atom/omp,ComputeKEAtomOMP);
 // clang-format on
 #else
 
-#ifndef LMP_COMPUTE_KE_ATOM_H
-#define LMP_COMPUTE_KE_ATOM_H
+#ifndef LMP_COMPUTE_KE_ATOM_OMP_H
+#define LMP_COMPUTE_KE_ATOM_OMP_H
 
-#include "compute.h"
+#include "compute_ke_atom.h"
 
 namespace LAMMPS_NS {
 
-class ComputeKEAtom : public Compute {
+class ComputeKEAtomOMP : public ComputeKEAtom {
  public:
-  ComputeKEAtom(class LAMMPS *, int, char **);
-  ~ComputeKEAtom() override;
-  void init() override;
+  ComputeKEAtomOMP(class LAMMPS *, int, char **);
   void compute_peratom() override;
-  double memory_usage() override;
-
- protected:
-  int nmax;
-  double *ke;
 };
 
 }    // namespace LAMMPS_NS
