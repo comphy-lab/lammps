@@ -306,10 +306,6 @@ Thexe fixes are invoked during :doc:`energy minimization <minimize>`.
 
 .. include:: accel_styles.rst
 
-.. versionadded:: TBD
-
-   OpenMP accelerator variants (*/omp*) of all six qeq fixes.
-
 ----------
 
 Restrictions
