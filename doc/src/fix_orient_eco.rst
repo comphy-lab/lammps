@@ -126,10 +126,6 @@ the run command. This fix is not invoked during energy minimization.
 
 .. include:: accel_styles.rst
 
-.. versionadded:: TBD
-
-   OpenMP accelerator variant (*orient/eco/omp*).
-
 ----------
 
 Restrictions

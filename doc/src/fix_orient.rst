@@ -184,10 +184,6 @@ This fix is not invoked during :doc:`energy minimization <minimize>`.
 
 .. include:: accel_styles.rst
 
-.. versionadded:: TBD
-
-   OpenMP accelerator variants (*orient/fcc/omp*, *orient/bcc/omp*).
-
 ----------
 
 Restrictions
