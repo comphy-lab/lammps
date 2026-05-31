@@ -1,7 +1,10 @@
 .. index:: angle_style cosine/buck6d
+.. index:: angle_style cosine/buck6d/omp
 
 angle_style cosine/buck6d command
 =================================
+
+Accelerator Variants: *cosine/buck6d/omp*
 
 Syntax
 """"""
