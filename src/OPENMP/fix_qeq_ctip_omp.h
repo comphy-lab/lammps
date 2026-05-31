@@ -3,41 +3,40 @@
    https://www.lammps.org/, Sandia National Laboratories
    LAMMPS development team: developers@lammps.org
 
-   Copyright (2003) Sandia Corporation.  Under the terms of Contract
-   DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
-   certain rights in this software.  This software is distributed under
-   the GNU General Public License.
+   This software is distributed under the GNU General Public License.
 
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
 #ifdef FIX_CLASS
 // clang-format off
-FixStyle(qeq/shielded,FixQEqShielded);
+FixStyle(qeq/ctip/omp,FixQEqCTIPOMP);
 // clang-format on
 #else
 
-#ifndef LMP_FIX_QEQ_SHIELDED_H
-#define LMP_FIX_QEQ_SHIELDED_H
+#ifndef LMP_FIX_QEQ_CTIP_OMP_H
+#define LMP_FIX_QEQ_CTIP_OMP_H
 
-#include "fix_qeq.h"
+#include "fix_qeq_ctip.h"
 
 namespace LAMMPS_NS {
 
-class FixQEqShielded : public FixQEq {
+class FixQEqCTIPOMP : public FixQEqCTIP {
  public:
-  FixQEqShielded(class LAMMPS *, int, char **);
-
-  void init() override;
+  FixQEqCTIPOMP(class LAMMPS *, int, char **);
+  ~FixQEqCTIPOMP() override;
   void pre_force(int) override;
 
  protected:
-  void extract_reax();
-  void init_shielding();
   void init_matvec();
   void compute_H();
-  double calculate_H(double, double);
+  void sparse_matvec(sparse_matrix *, double *, double *) override;
+
+  double **b_temp;
+  int nmax_btmp;
 };
+
 }    // namespace LAMMPS_NS
+
 #endif
 #endif

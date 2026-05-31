@@ -1056,10 +1056,16 @@
 /fix_oneway.h
 /fix_orient_bcc.cpp
 /fix_orient_bcc.h
+/fix_orient_bcc_omp.cpp
+/fix_orient_bcc_omp.h
 /fix_orient_eco.cpp
 /fix_orient_eco.h
+/fix_orient_eco_omp.cpp
+/fix_orient_eco_omp.h
 /fix_orient_fcc.cpp
 /fix_orient_fcc.h
+/fix_orient_fcc_omp.cpp
+/fix_orient_fcc_omp.h
 /fix_oxdna_lrf.cpp
 /fix_oxdna_lrf.h
 /fix_peri_neigh.cpp
