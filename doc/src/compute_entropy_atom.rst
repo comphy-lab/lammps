@@ -125,6 +125,12 @@ The pair entropy values have units of the Boltzmann constant. They are
 always negative, and lower values (lower entropy) correspond to more
 ordered environments.
 
+----------
+
+.. include:: accel_styles.rst
+
+----------
+
 Restrictions
 """"""""""""
 

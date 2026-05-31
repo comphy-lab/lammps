@@ -178,6 +178,12 @@ The first column of array values will be in distance
 numbers :math:`\ge 0.0`.  The coordination number columns of array values are
 also numbers :math:`\ge 0.0`.
 
+----------
+
+.. include:: accel_styles.rst
+
+----------
+
 Restrictions
 """"""""""""
 

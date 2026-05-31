@@ -55,6 +55,12 @@ the :doc:`special_bonds <special_bonds>` 1-3 interactions to be weighted
 
 ----------
 
+----------
+
+.. include:: accel_styles.rst
+
+----------
+
 Restrictions
 """"""""""""
 

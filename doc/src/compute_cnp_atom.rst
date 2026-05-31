@@ -112,6 +112,12 @@ values:
    FCC (100) surface = 26.5
    FCC dislocation core = 11
 
+----------
+
+.. include:: accel_styles.rst
+
+----------
+
 Restrictions
 """"""""""""
 

@@ -69,6 +69,12 @@ any command that uses per-atom values from a compute as input.  See
 the :doc:`Howto output <Howto_output>` page for an overview of
 LAMMPS output options.
 
+----------
+
+.. include:: accel_styles.rst
+
+----------
+
 Restrictions
 """"""""""""
 
