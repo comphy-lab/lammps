@@ -11,7 +11,7 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 /* ------------------------------------------------------
-    This file is part of the LDD package for LAMMPS.
+    This file is part of the BOCS package for LAMMPS.
     Contributed by Michael R. DeLyser, mrd5285@psu.edu
     and Maria C. Lesniewski, mjl6766@psu.edu
     The Pennsylvania State University
@@ -22,8 +22,8 @@ LddIndicatorStyle(smooth,LddIndicatorSmooth);
 // clang-format on
 #else
 
-#ifndef LDD_INDICATOR_SMOOTH_H
-#define LDD_INDICATOR_SMOOTH_H
+#ifndef LMP_LDD_INDICATOR_SMOOTH_H
+#define LMP_LDD_INDICATOR_SMOOTH_H
 
 #include "ldd_indicator.h"
 

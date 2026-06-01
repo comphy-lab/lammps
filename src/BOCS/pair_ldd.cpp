@@ -34,15 +34,14 @@
 
 #include "ldd_indicator.h"
 #include "ldd_potential.h"
-#include "the_ldd_indicator_types.h"
-#include "the_ldd_potential_types.h"
+#include "ldd_indicator_styles.h"
+#include "ldd_potential_styles.h"
 
 #include <cmath>
 #include <cstring>
 
 using namespace LAMMPS_NS;
 
-#define DOT_PRODUCT(a, b) (a[0] * b[0] + a[1] * b[1] + a[2] * b[2])
 #define DOT_PROD_GRAD(a, ta, b, tb) \
   (a[3 * ta] * b[3 * tb] + a[3 * ta + 1] * b[3 * tb + 1] + a[3 * ta + 2] * b[3 * tb + 2])
 #define GRADTYPE(a) (3 * a)
@@ -85,13 +84,9 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   if (lmp->citeme) lmp->citeme->add(cite_pair_ldd1_c);
   if (lmp->citeme) lmp->citeme->add(cite_pair_ldd2_c);
 
-  writedata = 1;
-
   restartinfo = 0;
-
-  // MCL 07.30.25, while we have a single routine to compute the pair contribution
-  // given info about the LD, we have no way to set up the LD info without compute at present.
-  // So I disabled this.
+  // the force depends on per-atom local densities that are only available
+  // after compute(), so there is no meaningful single() pair contribution
   single_enable = 0;
   one_coeff = 1;
   manybody_flag = 1;
@@ -133,7 +128,7 @@ void PairLdd::LDD_factory()
 #define LDD_INDICATOR_CLASS
 #define LddIndicatorStyle(key, Class) (*indicator_map)[#key] = &indicator_creator<Class>;
 
-#include "the_ldd_indicator_types.h"
+#include "ldd_indicator_styles.h"
 
 #undef LddIndicatorStyle
 #undef LDD_INDICATOR_CLASS
@@ -143,7 +138,7 @@ void PairLdd::LDD_factory()
 #define LDD_POTENTIAL_CLASS
 #define LddPotentialStyle(key, Class) (*potential_map)[#key] = &potential_creator<Class>;
 
-#include "the_ldd_potential_types.h"
+#include "ldd_potential_styles.h"
 
 #undef LddPotentialStyle
 #undef LDD_POTENTIAL_CLASS
@@ -289,7 +284,7 @@ void PairLdd::compute(int eflag, int vflag)
   int newton_pair = force->newton_pair;
 
   // ldd stuff
-  double r_pair, norm_fact;
+  double r_pair;
   double **const local_dens = local_density;
   double *const LD_ttl_nrg = total_energy;
 
@@ -367,45 +362,35 @@ void PairLdd::compute(int eflag, int vflag)
               if (bGradient[itype][jtype]) {
                 gf1 += GradPotls[itype][jtype]->f(local_dens[i][jtype]) *
                         DOT_PROD_GRAD(grad_dens[i], jtype, grad_dens[i], jtype) *
-                        //DOT_PRODUCT(grad_dens[i][jtype],grad_dens[i][jtype]) *
                         Inds[itype][jtype]->wp(r_pair) -
                     2.0 * GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
                         (Inds[itype][jtype]->wp2(r_pair) -
                          Inds[itype][jtype]->wp(r_pair) / r_pair) *
-                        //DOT_PRODUCT(eij, grad_dens[i][jtype]);
                         DOT_PROD_GRAD(eij, 0, grad_dens[i], jtype);
 
                 gf2[0] -= 2.0 * GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
                     Inds[itype][jtype]->wp(r_pair) / r_pair * grad_dens[i][GRADTYPE(jtype)];
-                //                       grad_dens[i][jtype][0];i
                 gf2[1] -= 2.0 * GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
                     Inds[itype][jtype]->wp(r_pair) / r_pair * grad_dens[i][GRADTYPE(jtype) + 1];
-                //                       grad_dens[i][jtype][1];
 
                 gf2[2] -= 2.0 * GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
                     Inds[itype][jtype]->wp(r_pair) / r_pair * grad_dens[i][GRADTYPE(jtype) + 2];
-                //                       grad_dens[i][jtype][2];
               }
               if (bGradient[jtype][itype]) {
                 gf1 += GradPotls[jtype][itype]->f(local_dens[j][itype]) *
                         DOT_PROD_GRAD(grad_dens[j], itype, grad_dens[j], itype) *
-                        //DOT_PRODUCT(grad_dens[j][itype],grad_dens[j][itype]) *
                         Inds[jtype][itype]->wp(r_pair) +
                     2.0 * GradPotls[jtype][itype]->u(local_dens[j][itype]) *
                         (Inds[jtype][itype]->wp2(r_pair) -
                          Inds[jtype][itype]->wp(r_pair) / r_pair) *
                         DOT_PROD_GRAD(eij, 0, grad_dens[j], itype);
 
-                //DOT_PRODUCT(eij, grad_dens[j][itype]);
                 gf2[0] += 2.0 * GradPotls[jtype][itype]->u(local_dens[j][itype]) *
                     Inds[jtype][itype]->wp(r_pair) / r_pair * grad_dens[j][GRADTYPE(itype)];
-                //grad_dens[j][itype][0];
                 gf2[1] += 2.0 * GradPotls[jtype][itype]->u(local_dens[j][itype]) *
                     Inds[jtype][itype]->wp(r_pair) / r_pair * grad_dens[j][GRADTYPE(itype) + 1];
-                //grad_dens[j][itype][1];
                 gf2[2] += 2.0 * GradPotls[jtype][itype]->u(local_dens[j][itype]) *
                     Inds[jtype][itype]->wp(r_pair) / r_pair * grad_dens[j][GRADTYPE(itype) + 2];
-                //grad_dens[j][itype][2];
               }
               // total gradient force broken down into components
               fxtmp = gf1 * eij[0] + gf2[0];
@@ -498,19 +483,12 @@ template <typename T> LddPotential *PairLdd::potential_creator(LAMMPS *lmp)
 
 void PairLdd::ErrorDoubleKeyword(const char *keyword)
 {
-  //  char *errmsg = (char *) calloc(100,sizeof(char));
-  //  sprintf(errmsg,"Found keyword %s twice!\n"
-  //                 "Error: double keyword\n",keyword);
-  std::string errmsg = fmt::format("Found keyword {} twice!\nError: double keyword\n", keyword);
-  error->all(FLERR, errmsg);
+  error->all(FLERR, "Found ldd pair_coeff keyword {} twice", keyword);
 }
 
 void PairLdd::ErrorNumKeywordArgs(const char *keyword, const char *arglist)
 {
-  std::string errmsg = fmt::format(
-      "Expected {} to be followed by: {}\n Error: Invalid or missing arguments to keyword {}\n",
-      keyword, arglist, keyword);
-  error->all(FLERR, errmsg);
+  error->all(FLERR, "ldd pair_coeff keyword {} must be followed by: {}", keyword, arglist);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -664,7 +642,7 @@ void PairLdd::LDD_calculate_LDs()    //
   const double *const *const x = atom->x;
   const int *const type = atom->type;
   const int nlocal = atom->nlocal;
-  double r_pair, wprime;    //MINE
+  double r_pair, wprime;
   const int inum = list->inum;
   const int *const ilist = list->ilist;
   const int *const numneigh = list->numneigh;
@@ -778,7 +756,6 @@ void PairLdd::LDD_calculate_energies()
         if (!ignore_pair[itype][tidx]) {
           ld_nrg[i][tidx] = Potls[itype][tidx]->u(local_dens[i][tidx]);
           if (bGradient[itype][tidx]) {
-            //Ai2 = DOT_PRODUCT(grad_dens[i][tidx],grad_dens[i][tidx]);
             Ai2 = DOT_PROD_GRAD(grad_dens[i], tidx, grad_dens[i], tidx);
             ld_grad_nrg[i][tidx] = Ai2 * GradPotls[itype][tidx]->u(local_dens[i][tidx]);
           } else {

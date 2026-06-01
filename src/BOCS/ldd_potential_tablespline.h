@@ -11,7 +11,7 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 /* ------------------------------------------------------
-    This file is part of the LDD package for LAMMPS.
+    This file is part of the BOCS package for LAMMPS.
     Contributed by Michael R. DeLyser, mrd5285@psu.edu
     The Pennsylvania State University
    ------------------------------------------------------ */
