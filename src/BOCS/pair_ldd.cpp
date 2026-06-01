@@ -94,9 +94,8 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   // So I disabled this.
   single_enable = 0;
   one_coeff = 1;
-  // We pass the local densities & 3 components of the gradients for each type
-  comm_forward = 4 * atom->ntypes;
-  comm_reverse = 4 * atom->ntypes;
+  manybody_flag = 1;
+  // comm sizes (4 * nspecies) are set in coeff() once the species count is known
 
   // Initialize these to NULL
   Inds = nullptr;
@@ -157,14 +156,26 @@ PairLdd::~PairLdd()
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);
-    memory->destroy(cut);
+    // delete the per-species-pair indicator/potential objects and their grids
+    if (Inds) {
+      for (int i = 0; i < nelements; i++) {
+        for (int j = 0; j < nelements; j++) {
+          delete Inds[i][j];
+          delete Potls[i][j];
+          delete GradPotls[i][j];
+        }
+        delete[] Inds[i];
+        delete[] Potls[i];
+        delete[] GradPotls[i];
+      }
+      delete[] Inds;
+      delete[] Potls;
+      delete[] GradPotls;
+    }
     memory->destroy(ignore_pair);
     memory->destroy(ignore_me);
     memory->destroy(bGradient);
     memory->destroy(self_interaction);
-    memory->destroy(Inds);
-    memory->destroy(Potls);
-    memory->destroy(GradPotls);
     allocated = 0;
   }
 
@@ -173,6 +184,11 @@ PairLdd::~PairLdd()
   memory->destroy(ld_energy);
   memory->destroy(ld_grad_energy);
   memory->destroy(total_energy);
+
+  delete[] indicator_style;
+  delete[] potential_style;
+  delete indicator_map;
+  delete potential_map;
 }
 
 /* ----------------------------------------------------------------------
@@ -183,16 +199,15 @@ void PairLdd::grow_peratom()
 {
   if (atom->nmax <= nmax) return;
   nmax = atom->nmax;
-  const int ntypes = atom->ntypes;
   memory->destroy(local_density);
   memory->destroy(grad_density);
   memory->destroy(ld_energy);
   memory->destroy(ld_grad_energy);
   memory->destroy(total_energy);
-  memory->create(local_density, nmax, ntypes + 1, "ldd:local_density");
-  memory->create(grad_density, nmax, 3 * (ntypes + 1), "ldd:grad_density");
-  memory->create(ld_energy, nmax, ntypes + 1, "ldd:ld_energy");
-  memory->create(ld_grad_energy, nmax, ntypes + 1, "ldd:ld_grad_energy");
+  memory->create(local_density, nmax, nelements, "ldd:local_density");
+  memory->create(grad_density, nmax, 3 * nelements, "ldd:grad_density");
+  memory->create(ld_energy, nmax, nelements, "ldd:ld_energy");
+  memory->create(ld_grad_energy, nmax, nelements, "ldd:ld_grad_energy");
   memory->create(total_energy, nmax, "ldd:total_energy");
 }
 
@@ -206,20 +221,43 @@ void PairLdd::allocate()
   for (int i = 1; i <= n; i++) {
     for (int j = i; j <= n; j++) setflag[i][j] = 0;
   }
-
   memory->create(cutsq, n + 1, n + 1, "LDD:cutsq");
-  memory->create(cut, n + 1, n + 1, "LDD:cut");
-  memory->create(ignore_me, n + 1, "LDD:ignore_me");
-  memory->create(ignore_pair, n + 1, n + 1, "LDD:ignore_pair");
-  memory->create(bGradient, n + 1, n + 1, "LDD:bGradient");
-  memory->create(self_interaction, n + 1, n + 1, "LDD:self_interaction");
-  memory->create(Inds, n + 1, n + 1, 1, "LDD:indicators");
-  memory->create(Potls, n + 1, n + 1, 1, "LDD:potentials");
-  memory->create(GradPotls, n + 1, n + 1, 1, "LDD:gradpotls");
+}
 
-  // MCL ignore solution fix - we want to ignore a type if it has no specified ldds
-  // 10.04.24                - so I set the default to ignore and change it only if spec/
-  for (int i = 0; i <= n; i++) ignore_me[i] = true;
+/* ----------------------------------------------------------------------
+   allocate the per-species-pair interaction data, sized by nelements
+   (called from coeff() once the species count is known from the type map)
+------------------------------------------------------------------------- */
+
+void PairLdd::allocate_species()
+{
+  const int n = nelements;
+  memory->create(ignore_me, n, "LDD:ignore_me");
+  memory->create(ignore_pair, n, n, "LDD:ignore_pair");
+  memory->create(bGradient, n, n, "LDD:bGradient");
+  memory->create(self_interaction, n, n, "LDD:self_interaction");
+
+  // 2D grids of owned polymorphic interaction objects (managed with new/delete,
+  // not memory->create, since each cell holds a heap-allocated subclass object)
+  Inds = new LddIndicator **[n];
+  Potls = new LddPotential **[n];
+  GradPotls = new LddPotential **[n];
+
+  // default: every species pair is ignored until an entry defines it
+  for (int i = 0; i < n; i++) {
+    Inds[i] = new LddIndicator *[n];
+    Potls[i] = new LddPotential *[n];
+    GradPotls[i] = new LddPotential *[n];
+    ignore_me[i] = true;
+    for (int j = 0; j < n; j++) {
+      ignore_pair[i][j] = true;
+      bGradient[i][j] = false;
+      self_interaction[i][j] = false;
+      Inds[i][j] = nullptr;
+      Potls[i][j] = nullptr;
+      GradPotls[i][j] = nullptr;
+    }
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -267,8 +305,9 @@ void PairLdd::compute(int eflag, int vflag)
   // loop over this processor's atoms
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
-    const int itype = type[i];
-    // if this type of atom doesn't have any ldd potentials, skip this
+    const int iatype = type[i];
+    const int itype = map[iatype];    // central-atom species
+    // if this species has no ldd potentials, skip this atom
     if (!ignore_me[itype]) {
       xtmp = x[i][0];
       ytmp = x[i][1];
@@ -281,7 +320,8 @@ void PairLdd::compute(int eflag, int vflag)
       for (jj = 0; jj < jnum; jj++) {
         j = jlist[jj];
         j &= NEIGHMASK;
-        jtype = type[j];
+        const int jatype = type[j];
+        jtype = map[jatype];    // neighbor species
         // make sure there's a ld potential for this pair type
         if ((!ignore_pair[itype][jtype]) || (!ignore_pair[jtype][itype])) {
           delx = xtmp - x[j][0];
@@ -289,7 +329,7 @@ void PairLdd::compute(int eflag, int vflag)
           delz = ztmp - x[j][2];
           rsq = delx * delx + dely * dely + delz * delz;
 
-          if (rsq < cutsq[itype][jtype]) {
+          if (rsq < cutsq[iatype][jatype]) {
             r_pair = sqrt(rsq);
             // The pair force decomposition for ldd potentials, divided by r_pair
             fpair_LD = 0.0;
@@ -414,18 +454,11 @@ void PairLdd::compute(int eflag, int vflag)
 
 /* ---------------------------------------------------------------------- */
 
-void PairLdd::settings(int narg, char **arg)
+void PairLdd::settings(int narg, char ** /*arg*/)
 {
-  if (narg != 1) error->all(FLERR, "Need one argument for pair_style pair_ldd");
-
-  cut_LDD_global = utils::numeric(FLERR, arg[0], false, lmp);
-  neighbor->cutneighmax = cut_LDD_global;
-  if (allocated) {
-    int i, j;
-    for (i = 1; i <= atom->ntypes; i++)
-      for (j = i + 1; j <= atom->ntypes; j++)
-        if (setflag[i][j]) cut[i][j] = cut_LDD_global;    // make sure cut_global is declared
-  }
+  // pair_style ldd takes no arguments; the interaction cutoff is the indicator
+  // rc of each species pair, read from the potential file in coeff()
+  if (narg != 0) error->all(FLERR, "Illegal pair_style ldd command: expected no arguments");
 }
 
 /* ---------------------------------------------------------------------- */
@@ -482,195 +515,109 @@ void PairLdd::ErrorNumKeywordArgs(const char *keyword, const char *arglist)
 
 /* ---------------------------------------------------------------------- */
 
-void PairLdd::coeff_ldd(int narg, char **arg)
+void PairLdd::coeff_ldd(int si, int sj, int narg, char **arg)
 {
-  /* Line should look like:
- * pair_coeff      i   j (ldd)
- *      indicator wtype    r0    rc
- *      self self_term
- *      potential  potl_type   *potl_coeffs*
- *      gradient grad_type *grad_coeffs*
- *
- * ldd only included if using hybrid/overlay, which is probable
- * indicator, self, and potential are all required.
- * gradient is optional.
- * potl_coeffs and grad_coeffs depend on the type of potential used
- */
-  if (narg < 2) error->all(FLERR, "You must list coefficients for the ldd pair interaction");
-  //if (!allocated) allocate();
-  int n = atom->ntypes;
-  int i, j, ilo, ihi, jlo, jhi;
+  /* arg holds the keyword portion of a potential file entry (the two leading
+   * species names have already been consumed):
+   *      indicator wtype r0 rc
+   *      self yes/no
+   *      potential potl_type *potl_coeffs*
+   *      gradient grad_type *grad_coeffs*    (optional)
+   *      ignore                              (optional)
+   * indicator, self, and potential are required unless the pair is ignored.
+   */
   int iarg = 0;
-  int ignore = 0;
-
-  utils::bounds(FLERR, arg[0], 1, atom->ntypes, ilo, ihi, error);
-  utils::bounds(FLERR, arg[1], 1, atom->ntypes, jlo, jhi, error);
-  iarg += 2;
-  int the_ind = -1, the_potl = -1, the_grad = -1, n_potl_coeffs = 0;
-  double *potl_coeffs;
-
   bool bSelf = false, bIgnore = false;
 
-  // turn these true after we find the keyword.
-  // used to check for double occurrences.
+  // set true once the corresponding keyword is seen (used to catch duplicates)
   bool bkInd = false, bkPotl = false, bkSelf = false, bkGrad = false;
 
-  // process keywords
-  // all keywords are #defined at the top of this file
   while (iarg < narg) {
     if (strcmp(arg[iarg], KEY_LDD_IND) == 0) {
-      /* check for double keyword */
       if (bkInd) ErrorDoubleKeyword(KEY_LDD_IND);
       bkInd = true;
-      /* make sure the proper number of arguments for this keyword are present */
       if (iarg + 3 >= narg) ErrorNumKeywordArgs(KEY_LDD_IND, "wtype r0 rc");
-
-      for (i = ilo; i <= ihi; ++i) {
-        for (j = jlo; j <= jhi; ++j) {
-          // make a new indicator function of the proper type
-          Inds[i][j] = new_indicator(arg[iarg + 1]);
-          // set coefficients for indicator function
-          Inds[i][j]->init_coeffs(utils::numeric(FLERR, arg[iarg + 2], false, lmp),
-                                  utils::numeric(FLERR, arg[iarg + 3], false, lmp),
-                                  domain->dimension);
-        }
-      }
-      // increment word counter
+      Inds[si][sj] = new_indicator(arg[iarg + 1]);
+      Inds[si][sj]->init_coeffs(utils::numeric(FLERR, arg[iarg + 2], false, lmp),
+                                utils::numeric(FLERR, arg[iarg + 3], false, lmp),
+                                domain->dimension);
       iarg += 4;
     } else if (strcmp(arg[iarg], KEY_LDD_SELF) == 0) {
-      /* check for double keyword */
       if (bkSelf) ErrorDoubleKeyword(KEY_LDD_SELF);
       bkSelf = true;
-      /* make sure the proper number of arguments for this keyword are present */
       if (iarg + 1 >= narg) ErrorNumKeywordArgs(KEY_LDD_SELF, "yes/no");
-
       if (strcmp(arg[iarg + 1], "yes") == 0)
         bSelf = true;
       else if (strcmp(arg[iarg + 1], "no") == 0)
         bSelf = false;
-      else {
-        std::string errmsg =
-            fmt::format("Expected to find either \"yes\"/\"no\" to follow keyword {} instead, we "
-                        "found {}\n Error: Invalid argument to keyword\n",
-                        KEY_LDD_SELF, arg[iarg + 1]);
-        error->all(FLERR, errmsg);
-      }
+      else
+        error->all(FLERR, "Expected yes/no after ldd keyword {}, found {}", KEY_LDD_SELF,
+                   arg[iarg + 1]);
       iarg += 2;
     } else if (strcmp(arg[iarg], KEY_LDD_POTL) == 0) {
-      /* check for double keyword */
       if (bkPotl) ErrorDoubleKeyword(KEY_LDD_POTL);
       bkPotl = true;
-      /* make sure the proper number of arguments for this keyword are present */
       if (iarg + 1 >= narg) ErrorNumKeywordArgs(KEY_LDD_POTL, "type *args*");
-
-      for (i = ilo; i <= ihi; ++i) {
-        for (j = jlo; j <= jhi; ++j) {
-          Potls[i][j] = new_potential(arg[iarg + 1]);
-          // pass whole line so we can extract potential type arguments
-          Potls[i][j]->setup_potl(iarg, narg, arg);
-        }
-      }
-      iarg += (Potls[ilo][jlo]->n_coeffs + 2);
+      Potls[si][sj] = new_potential(arg[iarg + 1]);
+      // pass the whole keyword line so the potential can extract its arguments
+      Potls[si][sj]->setup_potl(iarg, narg, arg);
+      iarg += (Potls[si][sj]->n_coeffs + 2);
     } else if (strcmp(arg[iarg], KEY_LDD_GRAD) == 0) {
-      /* check for double keyword */
       if (bkGrad) ErrorDoubleKeyword(KEY_LDD_GRAD);
       bkGrad = true;
-      /* make sure the proper number of arguments for this keyword are present */
       if (iarg + 1 >= narg) ErrorNumKeywordArgs(KEY_LDD_GRAD, "type *args*");
-
-      for (i = ilo; i <= ihi; ++i) {
-        for (j = jlo; j <= jhi; ++j) {
-          GradPotls[i][j] = new_potential(arg[iarg + 1]);
-          GradPotls[i][j]->setup_potl(iarg, narg, arg);
-        }
-      }
-      iarg += (GradPotls[ilo][jlo]->n_coeffs + 2);
+      GradPotls[si][sj] = new_potential(arg[iarg + 1]);
+      GradPotls[si][sj]->setup_potl(iarg, narg, arg);
+      iarg += (GradPotls[si][sj]->n_coeffs + 2);
     } else if (strcmp(arg[iarg], KEY_LDD_IGNORE) == 0) {
       bIgnore = true;
       iarg += 1;
     } else {
-      std::string errmsg = fmt::format("Recognized keywords for pair_coeff ldd: {} {} {} {} {}\n"
-                                       "However, we found unrecognized keyword: {}\n"
-                                       "Invalid ldd keyword\n",
-                                       KEY_LDD_IND, KEY_LDD_SELF, KEY_LDD_POTL, KEY_LDD_GRAD,
-                                       KEY_LDD_IGNORE, arg[iarg]);
-      error->all(FLERR, errmsg);
+      error->all(FLERR, "Unknown ldd pair_coeff keyword {} (valid: {} {} {} {} {})", arg[iarg],
+                 KEY_LDD_IND, KEY_LDD_SELF, KEY_LDD_POTL, KEY_LDD_GRAD, KEY_LDD_IGNORE);
     }
   }
-  for (i = ilo; i <= ihi; ++i) {
-    for (j = jlo; j <= jhi; ++j) {
-      bGradient[i][j] = bkGrad;
-      ignore_pair[i][j] = bIgnore;
-    }
-  }
+
+  bGradient[si][sj] = bkGrad;
+  ignore_pair[si][sj] = bIgnore;
 
   if (!bIgnore) {
-    // Error checks
-    if (!bkInd) {
-      std::string errmsg = std::string("We never found required keyword ") +
-          std::string(KEY_LDD_IND) + std::string("\n");
-      error->all(FLERR, errmsg);
-    }
-    if (Inds[ilo][jlo]->r0 >= Inds[ilo][jlo]->rc) {
-      std::string errmsg = fmt::format("r0 must be less than rC. However, you specified r0 = {},"
-                                       " rC = {}\n",
-                                       Inds[ilo][jlo]->r0, Inds[ilo][jlo]->rc);
-      error->all(FLERR, errmsg);
-    }
+    if (!bkInd)
+      error->all(FLERR, "ldd species pair {} {}: missing required keyword {}", elements[si],
+                 elements[sj], KEY_LDD_IND);
+    if (!bkPotl)
+      error->all(FLERR, "ldd species pair {} {}: missing required keyword {}", elements[si],
+                 elements[sj], KEY_LDD_POTL);
+    if (!bkSelf)
+      error->all(FLERR, "ldd species pair {} {}: missing required keyword {}", elements[si],
+                 elements[sj], KEY_LDD_SELF);
+    if (Inds[si][sj]->r0 >= Inds[si][sj]->rc)
+      error->all(FLERR, "ldd species pair {} {}: r0 ({}) must be less than rc ({})", elements[si],
+                 elements[sj], Inds[si][sj]->r0, Inds[si][sj]->rc);
 
-    if (!bkSelf) {
-      std::string errmsg = std::string("We never found required keyword ") +
-          std::string(KEY_LDD_SELF) + std::string("\n");
-      error->all(FLERR, errmsg);
-    }
-    if (!bkPotl) {
-      std::string errmsg = std::string("We never found required keyword ") +
-          std::string(KEY_LDD_POTL) + std::string("\n");
-      error->all(FLERR, errmsg);
-    }
-    for (i = ilo; i <= ihi; ++i) {
-      for (j = jlo; j <= jhi; ++j) {
-        self_interaction[i][j] = false;
-        if (bSelf) {
-          if (i == j) {
-            self_interaction[i][j] = true;
-          } else {
-            std::string warnmsg =
-                fmt::format("WARNING: you said to include the self interaction "
-                            "for itype: {} jtype: {}\nHOWEVER, you can only include the "
-                            "self interaction for i == j\nAccordingly, we are "
-                            "turning this off\n",
-                            i, j);
-            error->warning(FLERR, warnmsg);
-          }
-        }
-      }
+    if (bSelf) {
+      if (si == sj)
+        self_interaction[si][sj] = true;
+      else
+        error->warning(FLERR,
+                       "ldd self interaction requested for distinct species {} {}; ignoring",
+                       elements[si], elements[sj]);
     }
   }
-
-  double cut_one = cut_LDD_global;
-
-  for (int i = ilo; i <= ihi; ++i) {
-    bool ignore = true;
-    for (int j = jlo; j <= jhi; ++j) {
-      cut[i][j] = Inds[i][j]->rc;
-      setflag[i][j] = 1;
-      if (!ignore_pair[i][j]) {
-        ignore = false;
-        ignore_me[j] = (ignore && ignore_me[j]);
-      }
-    }
-    ignore_me[i] = (ignore && ignore_me[i]);
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
 }
 
 /* ---------------------------------------------------------------------- */
 
-double PairLdd::init_one(int i, int j)    // perform initializaion for one i,j type pair
+double PairLdd::init_one(int i, int j)
 {
-  return cut_LDD_global;
+  // the cutoff for an atom-type pair is the largest indicator rc over the two
+  // ordered species interactions it maps to (both directions use the same,
+  // symmetric, neighbor-list cutoff)
+  const int si = map[i], sj = map[j];
+  double cut = 0.0;
+  if (!ignore_pair[si][sj] && Inds[si][sj] && (Inds[si][sj]->rc > cut)) cut = Inds[si][sj]->rc;
+  if (!ignore_pair[sj][si] && Inds[sj][si] && (Inds[sj][si]->rc > cut)) cut = Inds[sj][si]->rc;
+  return cut;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -681,40 +628,23 @@ void PairLdd::init_style()    //initialization specific to this pair style
   neighbor->request(this, instance_me);
 }
 
-/* ---------------------------------------------------------------------- */
-
-void PairLdd::write_restart_settings(FILE *fp)    // writes global settings to restart files
-{
-  fwrite(&cut_LDD_global, sizeof(double), 1, fp);
-}
-
-/* ---------------------------------------------------------------------- */
-
-void PairLdd::read_restart_settings(FILE *fp)    // reads global settings from restart files
-{
-  int me = comm->me;
-  if (me == 0) fread(&cut_LDD_global, sizeof(double), 1, fp);
-  MPI_Bcast(&cut_LDD_global, 1, MPI_DOUBLE, 0, world);
-}
-
 /* ----------------------------------------------------------------------
    expose the per-atom local-density data to the rest of LAMMPS (e.g. fix pair)
 ------------------------------------------------------------------------- */
 
 void *PairLdd::extract_peratom(const char *str, int &ncol)
 {
-  const int ntypes = atom->ntypes;
   if (strcmp(str, "local_density") == 0) {
-    ncol = ntypes + 1;
+    ncol = nelements;
     return (void *) local_density;
   } else if (strcmp(str, "grad_density") == 0) {
-    ncol = 3 * (ntypes + 1);
+    ncol = 3 * nelements;
     return (void *) grad_density;
   } else if (strcmp(str, "energy") == 0) {
-    ncol = ntypes + 1;
+    ncol = nelements;
     return (void *) ld_energy;
   } else if (strcmp(str, "grad_energy") == 0) {
-    ncol = ntypes + 1;
+    ncol = nelements;
     return (void *) ld_grad_energy;
   } else if (strcmp(str, "total_energy") == 0) {
     ncol = 0;
@@ -734,7 +664,6 @@ void PairLdd::LDD_calculate_LDs()    //
   const double *const *const x = atom->x;
   const int *const type = atom->type;
   const int nlocal = atom->nlocal;
-  const int ntypes = atom->ntypes;
   double r_pair, wprime;    //MINE
   const int inum = list->inum;
   const int *const ilist = list->ilist;
@@ -748,7 +677,7 @@ void PairLdd::LDD_calculate_LDs()    //
   if (newton_pair) {
     m = nlocal + atom->nghost;
     for (i = 0; i < m; i++) {
-      for (int tidx = 0; tidx <= ntypes; tidx++) {
+      for (int tidx = 0; tidx < nelements; tidx++) {
         local_dens[i][tidx] = 0.0;
         grad_dens[i][GRADTYPE(tidx)] = 0.0;
         grad_dens[i][GRADTYPE(tidx) + 1] = 0.0;
@@ -757,7 +686,7 @@ void PairLdd::LDD_calculate_LDs()    //
     }
   } else {
     for (i = 0; i < nlocal; i++) {
-      for (int tidx = 0; tidx <= ntypes; tidx++) {
+      for (int tidx = 0; tidx < nelements; tidx++) {
         local_dens[i][tidx] = 0.0;
         grad_dens[i][GRADTYPE(tidx)] = 0.0;
         grad_dens[i][GRADTYPE(tidx) + 1] = 0.0;
@@ -768,7 +697,8 @@ void PairLdd::LDD_calculate_LDs()    //
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
-    const int itype = type[i];
+    const int iatype = type[i];
+    const int itype = map[iatype];    // central-atom species
     if (!ignore_me[itype]) {
 
       xtmp = x[i][0];
@@ -781,7 +711,8 @@ void PairLdd::LDD_calculate_LDs()    //
       for (jj = 0; jj < jnum; jj++) {
         j = jlist[jj];
         j &= NEIGHMASK;
-        jtype = type[j];
+        const int jatype = type[j];
+        jtype = map[jatype];    // neighbor species
         // MCL We need the displacements if relevent to either interaction
         if ((!ignore_pair[itype][jtype]) || (!ignore_pair[jtype][itype])) {
           delx = xtmp - x[j][0];
@@ -789,7 +720,7 @@ void PairLdd::LDD_calculate_LDs()    //
           delz = ztmp - x[j][2];
           rsq = delx * delx + dely * dely + delz * delz;
 
-          if (rsq < cutsq[itype][jtype] && (!ignore_pair[itype][jtype])) {
+          if (rsq < cutsq[iatype][jatype] && (!ignore_pair[itype][jtype])) {
             // Compute local density
             r_pair = sqrt(rsq);
             local_dens[i][jtype] += Inds[itype][jtype]->w(r_pair);
@@ -800,7 +731,7 @@ void PairLdd::LDD_calculate_LDs()    //
           }
           if (newton_pair || j < nlocal) {
             if (!ignore_pair[jtype][itype]) {
-              if (rsq < cutsq[jtype][itype]) {
+              if (rsq < cutsq[jatype][iatype]) {
                 r_pair = sqrt(rsq);
                 local_dens[j][itype] += Inds[jtype][itype]->w(r_pair);
                 wprime = Inds[jtype][itype]->wp(r_pair);
@@ -826,7 +757,6 @@ void PairLdd::LDD_calculate_energies()
   int i, ii;
 
   const int *const type = atom->type;
-  const int ntypes = atom->ntypes;
   const int inum = list->inum;
   const int *const ilist = list->ilist;
 
@@ -839,10 +769,10 @@ void PairLdd::LDD_calculate_energies()
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
-    const int itype = type[i];
+    const int itype = map[type[i]];    // central-atom species
     ld_ttl_nrg[i] = 0;
     if (!ignore_me[itype]) {
-      for (int tidx = 1; tidx <= ntypes; tidx++) {
+      for (int tidx = 0; tidx < nelements; tidx++) {
         ld_nrg[i][tidx] = 0;
         ld_grad_nrg[i][tidx] = 0;
         if (!ignore_pair[itype][tidx]) {
@@ -869,13 +799,12 @@ int PairLdd::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int 
   int i, j, k, m;
   double **ld = local_density;
   double **ldg = grad_density;
-  const int ntypes = atom->ntypes;
 
   m = 0;
   for (i = 0; i < n; i++) {
     j = list[i];
-    for (k = 1; k <= ntypes; k++) buf[m++] = ld[j][k];
-    for (k = 1; k <= ntypes; k++) {
+    for (k = 0; k < nelements; k++) buf[m++] = ld[j][k];
+    for (k = 0; k < nelements; k++) {
       buf[m++] = ldg[j][GRADTYPE(k)];
       buf[m++] = ldg[j][GRADTYPE(k) + 1];
       buf[m++] = ldg[j][GRADTYPE(k) + 2];
@@ -892,13 +821,12 @@ void PairLdd::unpack_forward_comm(int n, int first, double *buf)
   int i, k, m, last;
   double **ld = local_density;
   double **ldg = grad_density;
-  const int ntypes = atom->ntypes;
 
   m = 0;
   last = first + n;
   for (i = first; i < last; i++) {
-    for (k = 1; k <= ntypes; k++) ld[i][k] = buf[m++];
-    for (k = 1; k <= ntypes; ++k) {
+    for (k = 0; k < nelements; k++) ld[i][k] = buf[m++];
+    for (k = 0; k < nelements; ++k) {
       ldg[i][GRADTYPE(k)] = buf[m++];
       ldg[i][GRADTYPE(k) + 1] = buf[m++];
       ldg[i][GRADTYPE(k) + 2] = buf[m++];
@@ -913,12 +841,11 @@ int PairLdd::pack_reverse_comm(int n, int first, double *buf)
   int i, k, m, last;
   double **ld = local_density;
   double **ldg = grad_density;
-  const int ntypes = atom->ntypes;
   m = 0;
   last = first + n;
   for (i = first; i < last; i++) {
-    for (k = 1; k <= ntypes; k++) buf[m++] = ld[i][k];
-    for (k = 1; k <= ntypes; k++) {
+    for (k = 0; k < nelements; k++) buf[m++] = ld[i][k];
+    for (k = 0; k < nelements; k++) {
       buf[m++] = ldg[i][GRADTYPE(k)];
       buf[m++] = ldg[i][GRADTYPE(k) + 1];
       buf[m++] = ldg[i][GRADTYPE(k) + 2];
@@ -935,12 +862,11 @@ void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
   int i, j, k, m;
   double **ld = local_density;
   double **ldg = grad_density;
-  const int ntypes = atom->ntypes;
   m = 0;
   for (i = 0; i < n; i++) {
     j = list[i];
-    for (k = 1; k <= ntypes; k++) ld[j][k] += buf[m++];
-    for (k = 1; k <= ntypes; k++) {
+    for (k = 0; k < nelements; k++) ld[j][k] += buf[m++];
+    for (k = 0; k < nelements; k++) {
       ldg[j][GRADTYPE(k)] += buf[m++];
       ldg[j][GRADTYPE(k) + 1] += buf[m++];
       ldg[j][GRADTYPE(k) + 2] += buf[m++];
@@ -953,86 +879,98 @@ void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
 void PairLdd::coeff(int narg, char **arg)
 {
   if (!allocated) allocate();
-  // then the command probably looked like pair_coeff * * ele1 ele2 etc.
-  if (narg > 3) {
-    map_element2type(narg - 3, arg + 3);
-    if (nelements != atom->ntypes) {
-      error->one(FLERR,
-                 "Need unique element map for all atom types in system. nelements: {} ntypes: {}",
-                 nelements, atom->ntypes);
-    }
-  }
-  // parse pair ij != ji syntax in a different file to get around messing with the main-line of lammps
-  read_file(arg[2], nelements);
+
+  // pair_coeff * * <file> <sp1> <sp2> ... : one species name per atom type, in the
+  // manybody style.  The set (and number) of species is taken from these names.
+  if (narg != 3 + atom->ntypes)
+    error->all(FLERR,
+               "Incorrect args for pair_coeff ldd: expected '* * <file> <species> ...' "
+               "with one species name per atom type");
+
+  map_element2type(narg - 3, arg + 3);
+  for (int i = 1; i <= atom->ntypes; i++)
+    if (map[i] < 0)
+      error->all(FLERR, "Pair style ldd does not allow a NULL species in the type map");
+
+  allocate_species();
+  read_file(arg[2]);
+
+  // local densities and the 3 gradient components of every species are
+  // communicated to and from ghost atoms
+  comm_forward = 4 * nelements;
+  comm_reverse = 4 * nelements;
 }
 
-/* ---------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------
+   read the ldd potential file: each entry is
 
-void PairLdd::read_file(char *filename, int nelements)
+     <species_i> <species_j> indicator <w> r0 rc self yes/no
+                 potential <type> <coeffs> [gradient <type> <coeffs>] [ignore]
+
+   the file is read on rank 0 and each line is broadcast so that every rank
+   builds the identical (polymorphic) per-species-pair interaction objects.
+------------------------------------------------------------------------- */
+
+void PairLdd::read_file(char *filename)
 {
-  FILE *lddinp_fp = nullptr;
+  FILE *fp = nullptr;
   if (comm->me == 0) {
-    lddinp_fp = utils::open_potential(filename, lmp, 0);
-    if (!lddinp_fp) {
-      error->one(FLERR, "Cannot open ldd input file {}: {}", filename, utils::getsyserror());
-    }
+    fp = utils::open_potential(filename, lmp, nullptr);
+    if (!fp)
+      error->one(FLERR, "Cannot open ldd potential file {}: {}", filename, utils::getsyserror());
   }
 
-  char line_buf[MAXLINE];
-  std::vector<std::string> ldd_arg_string;
-  int arg_string_size = 0;
-  char **ldd_arg_chars;
-  int num_words = 0;
-  int bdone = 0;
-  // file reader/arg parser loop
-  while (!bdone) {
-    utils::read_lines_from_file(lddinp_fp, 1, MAXLINE, line_buf, comm->me,
-                                world);    // should broadcast to all
+  // track which ordered species pairs have been defined (duplicate/completeness checks)
+  std::vector<int> seen(nelements * nelements, 0);
 
-    if (comm->me == 0) {
-      if (feof(lddinp_fp)) bdone = 1;
-    }    // But only 0 will know if done
-    MPI_Bcast(&bdone, 1, MPI_INT, 0, world);
-    if (bdone) continue;
+  char line[MAXLINE];
+  int done = 0;
+  while (true) {
+    if (comm->me == 0)
+      if (fgets(line, MAXLINE, fp) == nullptr) done = 1;
+    MPI_Bcast(&done, 1, MPI_INT, 0, world);
+    if (done) break;
+    MPI_Bcast(line, MAXLINE, MPI_CHAR, 0, world);
 
-    num_words = utils::trim_and_count_words(line_buf, " ");
-    if (num_words - 1 <= 0) {
-      MPI_Barrier(MPI_COMM_WORLD);
-      continue;
-    } else {
-      ldd_arg_string = utils::split_words(line_buf);
-    }    // break line into args
-    if (!utils::strsame(ldd_arg_string[0].c_str(), "pair_coeff")) {
-      error->all(
-          FLERR,
-          "ERROR:ldd input file {} only accepts lines leading with \"pair_coeff\" commands not: {}\
-                                adjust this line: {} in {}",
-          filename, ldd_arg_string[0].c_str(), line_buf, filename);
-      num_words = 0;
+    // strip comments, then split into whitespace-separated tokens
+    if (char *hash = strchr(line, '#')) *hash = '\0';
+    std::vector<std::string> words = utils::split_words(line);
+    if (words.size() < 2) continue;
+
+    // the first two tokens are species names; skip the entry unless both are mapped
+    int si = -1, sj = -1;
+    for (int e = 0; e < nelements; e++) {
+      if (words[0] == elements[e]) si = e;
+      if (words[1] == elements[e]) sj = e;
     }
-    // then the user is probably passing e.g. pair_coeff A B instead of 1 2
-    // coeff_ldd likes 1 2 so we'll change it out before we pass into there.
-    if (nelements > 0) {
-      for (int k = 0; k < nelements; k++) {
-        if (utils::strsame(ldd_arg_string[1], elements[k])) {
-          ldd_arg_string[1] = std::to_string(k + 1);
-        }
-        if (utils::strsame(ldd_arg_string[2], elements[k])) {
-          ldd_arg_string[2] = std::to_string(k + 1);
-        }
-      }
-    }
+    if (si < 0 || sj < 0) continue;
 
-    ldd_arg_chars = new char *[ldd_arg_string.size() - 1];
-    for (int i = 1; i < ldd_arg_string.size(); i++) {
-      ldd_arg_chars[i - 1] = const_cast<char *>(ldd_arg_string[i].c_str());
-      std::strcpy(ldd_arg_chars[i - 1], ldd_arg_string[i].c_str());
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    coeff_ldd(ldd_arg_string.size() - 1, ldd_arg_chars);
+    if (seen[si * nelements + sj])
+      error->all(FLERR, "Duplicate entry for species pair {} {} in ldd potential file {}", words[0],
+                 words[1], filename);
+    seen[si * nelements + sj] = 1;
 
-    delete[] ldd_arg_chars;
+    // hand the keyword portion (everything after the two species names) to the parser
+    int nkw = (int) words.size() - 2;
+    auto **kw = new char *[nkw];
+    for (int k = 0; k < nkw; k++) kw[k] = const_cast<char *>(words[k + 2].c_str());
+    coeff_ldd(si, sj, nkw, kw);
+    delete[] kw;
+  }
+  if (comm->me == 0) fclose(fp);
 
-  }    // end parser loop
-  MPI_Barrier(MPI_COMM_WORLD);
+  // every ordered species pair must be specified
+  for (int i = 0; i < nelements; i++)
+    for (int j = 0; j < nelements; j++)
+      if (!seen[i * nelements + j])
+        error->all(FLERR, "Missing entry for species pair {} {} in ldd potential file {}",
+                   elements[i], elements[j], filename);
+
+  // a species is inactive as a central atom if all of its outgoing pairs are ignored
+  for (int i = 0; i < nelements; i++) {
+    bool all_ignored = true;
+    for (int j = 0; j < nelements; j++)
+      if (!ignore_pair[i][j]) all_ignored = false;
+    ignore_me[i] = all_ignored;
+  }
 }

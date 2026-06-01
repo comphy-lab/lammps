@@ -4,16 +4,14 @@ date_generated: Mon Feb 23 22:12:39 2026
 epsilon: 5e-14
 skip_tests:
 prerequisites: ! |
-  atom hybrid
   atom full
-  atom ldd
   pair ldd
 pre_commands: ! ""
 post_commands: ! ""
 input_file: in.ldd_excl_check
-pair_style: ldd 2.0
+pair_style: ldd
 pair_coeff: ! |
-  * * LDINDSET2.ldd
+  * * LDINDSET2.ldd A B
 extract: ! ""
 natoms: 13
 init_vdwl: -14.157030988745696

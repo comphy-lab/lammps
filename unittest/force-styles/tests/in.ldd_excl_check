@@ -6,7 +6,7 @@ variable  dihedral_factor index  0.0
 variable  units           index  real
 variable  input_dir       index  .
 variable  data_file       index ${input_dir}/data.fourmol
-variable  pair_style      index 'ldd 2.0'
+variable  pair_style      index 'ldd'
 variable  bond_style      index harmonic
 variable  angle_style     index zero
 variable  dihedral_style  index zero

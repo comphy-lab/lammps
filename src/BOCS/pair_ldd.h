@@ -46,10 +46,8 @@ class PairLdd : public Pair {
   void coeff(int, char **) override;
   void init_style() override;
   double init_one(int, int) override;
-  void write_restart_settings(FILE *) override;
-  void read_restart_settings(FILE *) override;
   void *extract_peratom(const char *, int &) override;
-  void coeff_ldd(int narg, char **arg);
+  void coeff_ldd(int si, int sj, int narg, char **arg);
 
   /* I do this the same way it's done in force.h */
 
@@ -78,20 +76,16 @@ class PairLdd : public Pair {
   void unpack_reverse_comm(int, int *, double *);
 
  protected:
-  double cut_LDD_global;      // longest interaction cutoff obtained from pair_style ldd
-  double **cut;               // cutoffs passed in pair_coeff ldd commands. dim n_types x n_types
-  bool **self_interaction;    // Self interaction settings from pair_coeff. dim n_types x n_types
-  bool **ignore_pair;         // Ignored Potential list. dim n_types x n_types
-  bool *ignore_me;            // Totally ignored central type list. dim_ntypes
-  bool **
-      bGradient;    // List of pair types a surrounded by b that also have a gradient interaction. dim n_types x n_types
+  // all per-species-pair settings below are indexed by species (0..nelements-1);
+  // atom types are mapped to species via the inherited map[] array.
+  bool **self_interaction;    // self-interaction flag for each species pair
+  bool **ignore_pair;         // ignored species pairs
+  bool *ignore_me;            // species with no active interaction as a central atom
+  bool **bGradient;           // species pairs that also carry a gradient interaction
 
-  LddIndicator **
-      *Inds;    //The address of an n_type x n_type structure, holding all a|b indicator info
-  LddPotential **
-      *Potls;    //The address of an n_type x n_type structure, holding all a|b U_rho info
-  LddPotential **
-      *GradPotls;    //The address of an n_type x n_type structure, holding all a|b U_{\nabla} info
+  LddIndicator ***Inds;       // indicator function w(r) for each ordered species pair
+  LddPotential ***Potls;      // U_rho potential for each ordered species pair
+  LddPotential ***GradPotls;  // U_grad potential for each ordered species pair
 
   // per-atom local-density data owned by the pair style (recomputed every step,
   // not stored in data/restart files).  Communicated via the pack/unpack methods
@@ -104,10 +98,11 @@ class PairLdd : public Pair {
   double *total_energy;       // sum of all local-density energies on an atom
 
   void allocate();
+  void allocate_species();
   void grow_peratom();
   void ErrorDoubleKeyword(const char *);
   void ErrorNumKeywordArgs(const char *, const char *);
-  void read_file(char *filename, int nelements);    // reads ldd inp file, executes coeff_ldd
+  void read_file(char *filename);    // reads ldd potential file, executes coeff_ldd per entry
 
  private:
   // Again, the same as done in force.h
