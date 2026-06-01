@@ -90,7 +90,12 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   single_enable = 0;
   one_coeff = 1;
   manybody_flag = 1;
-  // comm sizes (4 * nspecies) are set in coeff() once the species count is known
+  // we communicate the local density and 3 gradient components for each species.
+  // the species count is only known after reading the file in coeff(), but
+  // nspecies <= ntypes, so size the comm buffers here with the ntypes upper bound
+  // (must be set in the constructor so pair_style hybrid picks it up correctly).
+  comm_forward = 4 * atom->ntypes;
+  comm_reverse = 4 * atom->ntypes;
 
   // Initialize these to NULL
   Inds = nullptr;
@@ -871,11 +876,6 @@ void PairLdd::coeff(int narg, char **arg)
 
   allocate_species();
   read_file(arg[2]);
-
-  // local densities and the 3 gradient components of every species are
-  // communicated to and from ghost atoms
-  comm_forward = 4 * nelements;
-  comm_reverse = 4 * nelements;
 }
 
 /* ----------------------------------------------------------------------

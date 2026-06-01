@@ -19,7 +19,7 @@ create_box 4 my_box bond/types 1 angle/types 1 dihedral/types 1 extra/bond/per/a
 mass  * 59.0448 
 
 # Use pair_style hybrid to incorporate the LDD interactions with other forces
-pair_style hybrid/overlay ldd 6.5 table spline 3000
+pair_style hybrid/overlay ldd table spline 3000
 
 molecule CHAIN ABCD.mol
 create_atoms 0 random 60 885401 my_box mol CHAIN 454756
@@ -30,8 +30,11 @@ velocity	all create 300.0 22345 dist gaussian
 
 pair_coeff	* * table nb_interaction_tables/lammps_nb_ACA_ACA.table nb_ACA_ACA 15.0
 
-pair_coeff 	* * ldd ldd_input_file.txt
-# In this example, for simplicity, we opt to set interactions by central site. You can have 2^4 different settings. 
+# map atom types 1-4 to local-density species A,B,C,D (defined in the file)
+pair_coeff 	* * ldd ldd_input_file.txt A B C D
+# In this example, for simplicity, we set interactions by central site, so every
+# ordered species pair X Y reuses the X-centered table.  Up to 4x4 distinct
+# settings are possible (one line per ordered species pair).
 
 neigh_modify	delay 0 every 1 check yes one 10000
 neighbor	15.0 bin
@@ -44,23 +47,15 @@ thermo_style    custom step temp ke pe evdwl etotal press vol
 # variable VOL equal vol/1000.0
 # variable PRESS equal press*1.01325
 
-# Compute ldd atom style qtys #
-# Local densities of each surrounding type #
-# compute 1 all property/atom ldd_local_density1 ldd_local_density2 ldd_local_density3 ldd_local_density4
-# U(rho) for each type X defining rho_X|I 
-#compute 2 all property/atom ldd_energy1 ldd_energy2 ldd_energy3 ldd_energy4
-
-# Total energy from all LD style interactions (All SG terms + All LD terms)
-#compute 3 all property/atom ldd_total_energy
-
-# LD gradient components for each surrounding atom type
-#compute 4 all property/atom ldd_grad_densityx1 ldd_grad_densityy1 ldd_grad_densityz1
-#compute 5 all property/atom ldd_grad_densityx2 ldd_grad_densityy2 ldd_grad_densityz2 
-#compute 6 all property/atom ldd_grad_densityx3 ldd_grad_densityy3 ldd_grad_densityz3
-#compute 7 all property/atom ldd_grad_densityx4 ldd_grad_densityy4 ldd_grad_densityz4
-
-# SG energy contributions
-#compute 8 all property/atom ldd_gradnrg1 ldd_gradnrg2 ldd_gradnrg3 ldd_gradnrg4
+# The per-atom local-density quantities computed by pair style ldd are made
+# available through "fix pair".  Each field has one column per species (in the
+# A,B,C,D order of the type map); grad_density has 3 columns (x,y,z) per species.
+# The example below collects them all into the per-atom array f_lddout:
+#   f_lddout[1..4]    local_density of A,B,C,D
+#   f_lddout[5]       total_energy
+#   f_lddout[6..17]   grad_density (x,y,z) of A,B,C,D
+#   f_lddout[18..21]  grad_energy of A,B,C,D
+# fix lddout all pair 1 ldd local_density 0 total_energy 0 grad_density 0 grad_energy 0
 
 
 
@@ -75,45 +70,10 @@ run_style       verlet
 #fix             print_vol all print 500 "${STEP} ${VOL}" file vol.dat screen no
 #fix             print_press all print 500 "${STEP} ${PRESS}" file press.dat screen no
 
-## Prints trajectory file that can be used with BOCS (fully labeled ldd info)
-# Uncomment if want a trajectory, leave c_X[*} etc commented out if want to post process LD info.
-# dump         4 all custom 500 bocs_traj.lmp id x y z vx vy vz fx fy fz c_1[*] c_2[*] c_3 c_4[*] c_5[*] c_6[*] c_7[*] c_8[*]
+## Dump a trajectory with the per-atom LD quantities (needs "fix lddout" above).
+## f_lddout[*] expands to all 21 columns described next to the fix pair command.
+# dump         4 all custom 500 bocs_traj.lmp id x y z vx vy vz fx fy fz f_lddout[*]
 # dump_modify  4 sort id
-
-# Uncomment if calculating all LD info during run 
-# dump_modify  4 colname c_1[1] lddens1 
-# dump_modify  4 colname c_1[2] lddens2 
-# dump_modify  4 colname c_1[3] lddens3  
-# dump_modify  4 colname c_1[4] lddens4
-# dump_modify  4 colname c_2[1] lddnrg1
-# dump_modify  4 colname c_2[2] lddnrg2
-# dump_modify  4 colname c_2[3] lddnrg3
-# dump_modify  4 colname c_2[4] lddnrg4
-# dump_modify  4 colname c_3 lddttlnrg
-# dump_modify  4 colname c_4[1] gradx1
-# dump_modify  4 colname c_4[2] grady1
-# dump_modify  4 colname c_4[3] gradz13
-# dump_modify  4 colname c_5[1] gradx2
-# dump_modify  4 colname c_5[2] grady2
-# dump_modify  4 colname c_5[3] gradz2
-# dump_modify  4 colname c_6[1] gradx3
-# dump_modify  4 colname c_6[2] grady3
-# dump_modify  4 colname c_6[3] gradz3
-# dump_modify  4 colname c_7[1] gradx4
-# dump_modify  4 colname c_7[2] grady4
-# dump_modify  4 colname c_7[3] gradz4
-# dump_modify  4 colname c_8[1] gradnrg1
-# dump_modify  4 colname c_8[2] gradnrg2
-# dump_modify  4 colname c_8[3] gradnrg3
-# dump_modify  4 colname c_8[4] gradnrg4
-
-
-
- 
-
-
-# dump_modify    2 colname 12 lddnrg1
-# dump_modify   2 colname 13 lddttlnrg
 
 ## Run for this many steps
 run 10000 # production run for 4 ns.
