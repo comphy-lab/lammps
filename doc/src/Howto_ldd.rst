@@ -225,7 +225,7 @@ Example 1) A simple atomic input example using only tabulated LD potentials
    thermo 500
 
    fix 1 all nvt temp 300.0 300.0 100.0
-   dump 1 all ldd 500 dump.txt #A lammps trajectory file with LD info
+   dump 1 all ldd 500 dump.txt #A lammps trajectory file with LD info #FIXME
 
    run 10000
 
@@ -280,7 +280,7 @@ Example 2) Molecular input example that layers tabulated pair, LD and SG interac
    thermo 500
 
    fix 1 all nvt temp 300.0 300.0 100.0
-   dump 1 all ldd 500 dump.txt #A lammps trajectory file with LD info
+   dump 1 all ldd 500 dump.txt #A lammps trajectory file with LD info #FIXME
 
    run 10000
 
@@ -304,7 +304,10 @@ read_data file format examples
 Atom style ldd is a basic atomic atom_style with per-atom fields added
 for local densities, gradients of local densities, LD energy
 contributions and SG energy contributions.  These can be reported using
-:doc:`dump ldd <dump_ldd>`, but this information is calculated just
+dump ldd, but this information is calculated just
+
+.. FIXME dump ldd doesn't exist anymore
+
 based on configurational data, and thus is not used for starting
 simulations.  read_data input therefore can follow usual atomic
 read_data input formats, and when hybridized with other atom styles, the
@@ -399,13 +402,27 @@ Example 2) for the .data file up to the "Atoms" section of the read_data file wh
 dump ldd output
 ---------------
 
-For each central particle :math:`I` and each particle type :math:`\beta`, there is a local density of :math:`\beta` particles that surround :math:`I` :math:`\rho_{\beta|I}`, and a corresponding gradient of that local density, :math:`\frac{\partial \rho_{\beta|I}}{\partial \boldsymbol{R}_I}`.
-If for example :math:`t_I = \alpha`, and an LDD interaction has been defined for the :math:`\beta|\alpha` local densities, then the :doc:`dump ldd <dump_ldd>` command will report :math:`\rho_{\beta|I}` and :math:`\frac{\partial \rho_{\beta|I}}{\partial \boldsymbol{R}_I}` in addition to the simulation x, v, and f information.
-:doc:`dump ldd <dump_ldd>` is essentially a custom lammps dump trajectory output with local density information.
+.. FIXME: we need to check the examples how dump ldd was replaced
 
-See :doc:`dump ldd <dump_ldd>` for details.
+For each central particle :math:`I` and each particle type
+:math:`\beta`, there is a local density of :math:`\beta` particles that
+surround :math:`I` :math:`\rho_{\beta|I}`, and a corresponding gradient
+of that local density, :math:`\frac{\partial \rho_{\beta|I}}{\partial
+\boldsymbol{R}_I}`.  If for example :math:`t_I = \alpha`, and an LDD
+interaction has been defined for the :math:`\beta|\alpha` local
+densities, then the dump ldd command will report
+:math:`\rho_{\beta|I}` and :math:`\frac{\partial
+\rho_{\beta|I}}{\partial \boldsymbol{R}_I}` in addition to the
+simulation x, v, and f information.  dump ldd is
+essentially a custom lammps dump trajectory output with local density
+information.
 
-This trajectory type is natively compatible with the `Bottom-up Open-source Coarse-graining Software <https://github.com/noid-group/BOCS>`_ which can be used to parameterize LD/SG potentials from atomistic data, as well as to convert these lammps trajectories to .trr files for analysis with `gromacs <https://www.gromacs.org/>`_ tools.
+This trajectory type is natively compatible with the `Bottom-up
+Open-source Coarse-graining Software
+<https://github.com/noid-group/BOCS>`_ which can be used to parameterize
+LD/SG potentials from atomistic data, as well as to convert these lammps
+trajectories to .trr files for analysis with `gromacs
+<https://www.gromacs.org/>`_ tools.
 
 -------------
 
@@ -429,7 +446,9 @@ multi-scale coarse graining method implemented in `BOCSv5 and higher
 
 -------------
 
-A number of works have been published using this package (with `BOCS <https://github.com/noid-group/BOCS>`_) in its development stage for different CG studies and are listed below:
+A number of works have been published using this package (with `BOCS
+<https://github.com/noid-group/BOCS>`_) in its development stage for
+different CG studies and are listed below:
 
 .. _DeLyser1:
 

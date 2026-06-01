@@ -64,6 +64,8 @@ Examples
 Description
 """""""""""
 
+.. versionadded:: TBD
+
 Style *ldd* implements the local density potential as first described by
 Pagonabarraga and Frenkel :ref:`(Pagonabarraga)<Pagonabarraga>` and
 additionally the square gradient of local densities first introduced by
@@ -175,8 +177,10 @@ or :doc:`atom_style hybrid <atom_style>` with ldd listed as an arg.
 This atom style requires an argument of ntypes, which is the number of
 particle types used in the simulation.
 
-To save the properties associated with the local density, use :doc:`dump
-style ldd <dump_ldd>`.
+.. FIXME: we need to figure out how to do that now
+
+To save the properties associated with the local density, use dump
+style ldd
 
 The *indicator*, *self*, and *potential* keywords are mandatory, unless
 the *ignore* keyword is provided. The *gradient* keyword is optional.
@@ -205,7 +209,7 @@ forces in the simulation.
 Related commands
 """"""""""""""""
 
-:doc:`atom_style ldd <atom_style>`, :doc:`dump ldd <dump_ldd>`, :doc:`Howto_ldd <Howto_ldd>`
+:doc:`atom_style ldd <atom_style>`
 
 ----------
 

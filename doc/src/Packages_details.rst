@@ -329,7 +329,6 @@ DOI: 10.1063/5.0075291
 *  :doc:`fix bocs <fix_bocs>`
 * :doc:`Howto_ldd <Howto_ldd>`
 * :doc:`atom_style ldd <atom_style>`
-* :doc:`dump ldd <dump_ldd>`
 * :doc:`pair_style ldd <pair_ldd>`
 
 The BOCS package in LAMMPS is part of the BOCS software package:

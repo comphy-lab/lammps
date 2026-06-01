@@ -1,5 +1,6 @@
 .. index:: atom_style
 
+atom_style command
 ==================
 
 Syntax
@@ -18,13 +19,11 @@ Syntax
          *body* args = bstyle bstyle-args
            bstyle = style of body particles
            bstyle-args = additional arguments specific to the bstyle
-                         see the :doc:`Howto body <Howto_body>` doc
-                         page for details
+                         see the :doc:`Howto body <Howto_body>` doc page for details
          *sphere* arg = 0/1 (optional) for static/dynamic particle radii
          *bpm/sphere* arg = 0/1 (optional) for static/dynamic particle radii
-         *ldd* arg = Ntypes
-                     see the :doc:`Howto ldd <Howto_ldd>` doc page
-                     for details
+         *ldd* arg = Nspecies
+           Nspecies = # of distinct species
          *tdpd* arg = Nspecies
            Nspecies = # of chemical species
          *template* arg = template-ID
@@ -376,15 +375,19 @@ end points of the line segment).  Each particle stores a flag in the
 line vector which indicates whether it is a line segment (1) or a
 point particle (0).
 
-For the *ldd* style, particles are represented as in the basic atomic style,
-but for each particle :math:`I`, the local density :math:`\rho_{\alpha|I}` and
-its gradient :math:`\nabla_I \rho_{\alpha|I}` are computed for each surrounding particle type :math:`\alpha`.
-Local densities and gradients are defined via the :doc:`pair_style ldd <pair_ldd>` and associated
-pair_coeff commands. Undefined (*ignored*) local densities will be reported as zero and not
-considered in force calculations.
-When hybridized with a molecular style,
-local density definitions will inherit the bonded exclusions of other
-nb pair interactions. See the :doc:`Howto ldd <Howto_ldd>` page for details.
+.. versionadded:: TBD
+
+For the *ldd* style, particles are represented as in the basic atomic
+style, but for each particle :math:`I`, the local density
+:math:`\rho_{\alpha|I}` and its gradient :math:`\nabla_I
+\rho_{\alpha|I}` are computed for each surrounding particle type
+:math:`\alpha`.  Local densities and gradients are defined via the
+:doc:`pair_style ldd <pair_ldd>` and associated pair_coeff commands.
+Undefined (*ignored*) local densities will be reported as zero and not
+considered in force calculations.  When hybridized with a molecular
+style, local density definitions will inherit the bonded exclusions of
+other nb pair interactions.  See the :doc:`Howto ldd <Howto_ldd>` page
+for details.
 
 The *mdpd* style is for many-body dissipative particle dynamics (mDPD)
 particles which store a density (rho) for considering density-dependent
