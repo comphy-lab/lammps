@@ -248,8 +248,8 @@ many-body DPD conservative force:
 take one argument, the name of a tabulated potential file.  The
 ``table/lin`` and ``table/spline`` forms interpolate :math:`U_{X}` from
 the table linearly or with a cubic spline; the ``table/gradlin`` and
-``table/gradspline`` forms are the corresponding interpolants used after
-the *gradient* keyword.  Each line of a table file holds three numbers,
+``table/gradspline`` forms are the corresponding interpolating styles
+used after the *gradient* keyword.  Each line of a table file holds three numbers,
 :math:`\rho`, :math:`U(\rho)`, and :math:`-dU/d\rho`, on a uniform
 :math:`\rho` grid.  Example tables are provided under
 ``examples/PACKAGES/bocs``.
@@ -273,8 +273,8 @@ three columns per species):
 For example, ``fix f all pair 1 ldd local_density 0 total_energy 0``
 creates the per-atom array ``f_f`` whose first columns are the
 per-species local densities followed by the total energy; these can then
-be output with :doc:`dump custom <dump>` or post-processed with
-:doc:`compute property/atom <compute_property_atom>` style accessors.
+be output with :doc:`dump custom <dump>` or read by other per-atom
+computes and fixes.
 
 Mixing, shift, table, tail correction, restart, rRESPA info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
