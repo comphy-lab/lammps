@@ -48,7 +48,7 @@ class PairLdd : public Pair {
   double init_one(int, int) override;
   void write_restart_settings(FILE *) override;
   void read_restart_settings(FILE *) override;
-  double single(int, int, int, int, double, double, double, double &) override;
+  void *extract_peratom(const char *, int &) override;
   void coeff_ldd(int narg, char **arg);
 
   /* I do this the same way it's done in force.h */
@@ -93,7 +93,18 @@ class PairLdd : public Pair {
   LddPotential **
       *GradPotls;    //The address of an n_type x n_type structure, holding all a|b U_{\nabla} info
 
+  // per-atom local-density data owned by the pair style (recomputed every step,
+  // not stored in data/restart files).  Communicated via the pack/unpack methods
+  // below and exposed to the rest of LAMMPS through extract_peratom() / fix pair.
+  int nmax;                   // current allocated length of the per-atom arrays
+  double **local_density;     // local density of each type around an atom
+  double **grad_density;      // gradient of local density (3 components per type)
+  double **ld_energy;         // u_{b|t_I}(rho_I) per type
+  double **ld_grad_energy;    // u_{\nabla b|t_I}(rho_I) per type
+  double *total_energy;       // sum of all local-density energies on an atom
+
   void allocate();
+  void grow_peratom();
   void ErrorDoubleKeyword(const char *);
   void ErrorNumKeywordArgs(const char *, const char *);
   void read_file(char *filename, int nelements);    // reads ldd inp file, executes coeff_ldd

@@ -425,10 +425,6 @@
 /pair_mesocnt_viscous.cpp
 /pair_mesocnt_viscous.h
 
-/atom_vec_ldd.cpp
-/atom_vec_ldd.h
-/dump_ldd.cpp
-/dump_ldd.h
 /ldd_indicator.cpp
 /ldd_indicator_dpd.cpp
 /ldd_indicator_dpd.h

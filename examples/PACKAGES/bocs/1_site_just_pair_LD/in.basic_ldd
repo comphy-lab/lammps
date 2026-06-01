@@ -1,7 +1,7 @@
 units		real
 dimension	3
 boundary	p p p
-atom_style	ldd 1
+atom_style	atomic
 #		ldd ntypes
 newton		on
 timestep	1.0

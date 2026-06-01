@@ -10,7 +10,7 @@ Syntax
 
    atom_style style args
 
-* style = *amoeba* or *angle* or *apip* or *atomic* or *body* or *bond* or *charge* or *dielectric* or *dipole* or  *dpd* or *edpd* or *electron* or *ellipsoid* or *full* or *ldd* or *line* or *mdpd* or *molecular* or *oxdna* or *peri* or *smd* or *sph* or *sphere* or *bpm/sphere* or *spin* or *tdpd* or *tri* or *template*  or *hybrid*
+* style = *amoeba* or *angle* or *apip* or *atomic* or *body* or *bond* or *charge* or *dielectric* or *dipole* or  *dpd* or *edpd* or *electron* or *ellipsoid* or *full* or *line* or *mdpd* or *molecular* or *oxdna* or *peri* or *smd* or *sph* or *sphere* or *bpm/sphere* or *spin* or *tdpd* or *tri* or *template*  or *hybrid*
 
   .. parsed-literal::
 
@@ -22,8 +22,6 @@ Syntax
                          see the :doc:`Howto body <Howto_body>` doc page for details
          *sphere* arg = 0/1 (optional) for static/dynamic particle radii
          *bpm/sphere* arg = 0/1 (optional) for static/dynamic particle radii
-         *ldd* arg = Nspecies
-           Nspecies = # of distinct species
          *tdpd* arg = Nspecies
            Nspecies = # of chemical species
          *template* arg = template-ID
@@ -48,7 +46,6 @@ Examples
    atom_style template myMols
    atom_style hybrid template twomols charge
    atom_style tdpd 2
-   atom_style ldd 3
 
 Description
 """""""""""
@@ -181,10 +178,6 @@ the Additional Information section below.
      - *atomic* + molecule, radius, rmass, omega, torque, line
      -
      - 2-d rigid body particles
-   * - *ldd*
-     - *atom* + local densities + gradients of local densities + ldd energies
-     - :ref:`BOCS <PKG-BOCS>`
-     - Local Density / Gradient Dependent Potentials
    * - *mdpd*
      - *atomic* + rho, drho, vest
      - :ref:`DPD-MESO <PKG-DPD-MESO>`
@@ -374,20 +367,6 @@ which store a per-particle mass and length and orientation (i.e. the
 end points of the line segment).  Each particle stores a flag in the
 line vector which indicates whether it is a line segment (1) or a
 point particle (0).
-
-.. versionadded:: TBD
-
-For the *ldd* style, particles are represented as in the basic atomic
-style, but for each particle :math:`I`, the local density
-:math:`\rho_{\alpha|I}` and its gradient :math:`\nabla_I
-\rho_{\alpha|I}` are computed for each surrounding particle type
-:math:`\alpha`.  Local densities and gradients are defined via the
-:doc:`pair_style ldd <pair_ldd>` and associated pair_coeff commands.
-Undefined (*ignored*) local densities will be reported as zero and not
-considered in force calculations.  When hybridized with a molecular
-style, local density definitions will inherit the bonded exclusions of
-other nb pair interactions.  See the :doc:`Howto ldd <Howto_ldd>` page
-for details.
 
 The *mdpd* style is for many-body dissipative particle dynamics (mDPD)
 particles which store a density (rho) for considering density-dependent

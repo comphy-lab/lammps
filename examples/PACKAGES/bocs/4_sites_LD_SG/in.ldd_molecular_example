@@ -2,7 +2,7 @@ units		real
 dimension	3
 boundary	p p p
 # Use the hybrid atom style if you want systems that aren't simple atomic + ld info
-atom_style	hybrid full ldd 4
+atom_style	full
 
 newton		on
 timestep	0.5

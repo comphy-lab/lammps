@@ -103,13 +103,13 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   Potls = nullptr;
   GradPotls = nullptr;
 
-  // Somewhere we need to check to make sure the user is using the correct
-  // atom_style. I did it here because it's the first thing called when
-  // the user tries to use this pair type.
-  // This can be moved if there's a better place for it elsewhere.
-  if (!atom->ldd_big_flag) error->all(FLERR, "atomstyle ldd must be used with pair style ldd");
-
-  if (atom->ldd_ntypes != atom->ntypes) error->all(FLERR, "ldd_ntypes doesn't match ntypes");
+  // per-atom local-density arrays owned by this pair style (see header)
+  nmax = 0;
+  local_density = nullptr;
+  grad_density = nullptr;
+  ld_energy = nullptr;
+  ld_grad_energy = nullptr;
+  total_energy = nullptr;
 
   // This is the same as is done in force.cpp
   char *str = (char *) "none";
@@ -167,6 +167,33 @@ PairLdd::~PairLdd()
     memory->destroy(GradPotls);
     allocated = 0;
   }
+
+  memory->destroy(local_density);
+  memory->destroy(grad_density);
+  memory->destroy(ld_energy);
+  memory->destroy(ld_grad_energy);
+  memory->destroy(total_energy);
+}
+
+/* ----------------------------------------------------------------------
+   grow per-atom local-density arrays to current atom->nmax
+------------------------------------------------------------------------- */
+
+void PairLdd::grow_peratom()
+{
+  if (atom->nmax <= nmax) return;
+  nmax = atom->nmax;
+  const int ntypes = atom->ntypes;
+  memory->destroy(local_density);
+  memory->destroy(grad_density);
+  memory->destroy(ld_energy);
+  memory->destroy(ld_grad_energy);
+  memory->destroy(total_energy);
+  memory->create(local_density, nmax, ntypes + 1, "ldd:local_density");
+  memory->create(grad_density, nmax, 3 * (ntypes + 1), "ldd:grad_density");
+  memory->create(ld_energy, nmax, ntypes + 1, "ldd:ld_energy");
+  memory->create(ld_grad_energy, nmax, ntypes + 1, "ldd:ld_grad_energy");
+  memory->create(total_energy, nmax, "ldd:total_energy");
 }
 
 /* ---------------------------------------------------------------------- */
@@ -190,20 +217,6 @@ void PairLdd::allocate()
   memory->create(Potls, n + 1, n + 1, 1, "LDD:potentials");
   memory->create(GradPotls, n + 1, n + 1, 1, "LDD:gradpotls");
 
-  /* MCL 10.04.24
-  * This seems like the wrong way to use this function
-  * [Interaction A B and B A point to the same address when we do this]
-  * Instead I called it over in atom_vec_ldd when the atom_style is called
-  * This seems to fix the address issues
-  if (n > 1)
-  {
-    atom->add_peratom_change_columns("ldd_local_density",n+1);
-    atom->add_peratom_change_columns("ldd_energy",n+1);
-    atom->add_peratom_change_columns("ldd_grad_density",3*(n+1));
-    atom->add_peratom_change_columns("ldd_grad_energy",n+1);
-  }
-  */
-
   // MCL ignore solution fix - we want to ignore a type if it has no specified ldds
   // 10.04.24                - so I set the default to ignore and change it only if spec/
   for (int i = 0; i <= n; i++) ignore_me[i] = true;
@@ -222,9 +235,9 @@ void PairLdd::compute(int eflag, int vflag)
   evdwl = 0.0;
   ev_init(eflag,
           vflag);    // MCL 09.24.25, this lets per atom energies be set up so we can talk to them
-  // OLD MRD way
-  //if (eflag || vflag) ev_setup(eflag,vflag);
-  //else evflag = vflag_fdotr = 0;
+
+  // grow per-atom local-density arrays to include ghost atoms
+  grow_peratom();
 
   const double *const *const x = atom->x;
   double *const *const f = atom->f;
@@ -239,14 +252,14 @@ void PairLdd::compute(int eflag, int vflag)
 
   // ldd stuff
   double r_pair, norm_fact;
-  double **const local_dens = atom->ldd_local_density;
-  double *const LD_ttl_nrg = atom->ldd_total_energy;
+  double **const local_dens = local_density;
+  double *const LD_ttl_nrg = total_energy;
 
   // gradient stuff
   // gf1 = grad force 1. used for the part of the force in the ij dir
   // gf2 = grad force 2. used for the part of the force in the ld gradient dir
   double gf1, gf2[3], eij[3];
-  double **const grad_dens = atom->ldd_grad_density;
+  double **const grad_dens = grad_density;
 
   LDD_calculate_LDs();
   LDD_calculate_energies();
@@ -684,91 +697,30 @@ void PairLdd::read_restart_settings(FILE *fp)    // reads global settings from r
   MPI_Bcast(&cut_LDD_global, 1, MPI_DOUBLE, 0, world);
 }
 
-/* ---------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------
+   expose the per-atom local-density data to the rest of LAMMPS (e.g. fix pair)
+------------------------------------------------------------------------- */
 
-double PairLdd::single(int i, int j, int itype, int jtype, double rsq, double, double factor_lj,
-                       double &fforce)
+void *PairLdd::extract_peratom(const char *str, int &ncol)
 {
-  fforce = 0.0;
-  if ((ignore_pair[itype][jtype]) && (ignore_pair[jtype][itype])) return 0.0;
-  double r_pair = sqrt(rsq);
-  const double *const *const x = atom->x;
-  double **const local_dens = atom->ldd_local_density;
-  double **const grad_dens = atom->ldd_grad_density;
-  double energy = 0.0;
-  double gf1 = 0.0, gf2[3], eij[3];
-  gf2[0] = gf2[1] = gf2[2] = 0.0;
-  double delx, dely, delz;
-  delx = x[i][0] - x[j][0];
-  dely = x[i][1] - x[j][1];
-  delz = x[i][2] - x[j][2];
-  eij[0] = delx / r_pair;
-  eij[1] = dely / r_pair;
-  eij[2] = delz / r_pair;
-
-  if (!ignore_pair[itype][jtype]) {
-    if ((Inds[itype][jtype]->r0 <= r_pair) && (Inds[itype][jtype]->rc >= r_pair)) {
-      fforce += Inds[itype][jtype]->wp(r_pair) * Potls[itype][jtype]->f(local_dens[i][jtype]);
-      energy += Potls[itype][jtype]->u(local_dens[i][jtype]);
-    }
-    if (bGradient[itype][jtype]) {
-      gf1 += GradPotls[itype][jtype]->f(local_dens[i][jtype]) *
-              DOT_PROD_GRAD(grad_dens[i], jtype, grad_dens[i], jtype) *
-              //DOT_PRODUCT(grad_dens[i][jtype],grad_dens[i][jtype]) *
-              Inds[itype][jtype]->wp(r_pair) -
-          2.0 * GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
-              (Inds[itype][jtype]->wp2(r_pair) - Inds[itype][jtype]->wp(r_pair) / r_pair) *
-              DOT_PROD_GRAD(eij, 0, grad_dens[i], jtype);
-      //DOT_PRODUCT(eij,grad_dens[i][jtype]);
-      gf2[0] -= 2.0 * GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
-          Inds[itype][jtype]->wp(r_pair) / r_pair * grad_dens[i][GRADTYPE(jtype)];
-      //grad_dens[i][jtype][0];
-      gf2[1] -= 2.0 * GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
-          Inds[itype][jtype]->wp(r_pair) / r_pair * grad_dens[i][GRADTYPE(jtype) + 1];
-      //grad_dens[i][jtype][1];
-      gf2[2] -= 2.0 * GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
-          Inds[itype][jtype]->wp(r_pair) / r_pair * grad_dens[i][GRADTYPE(jtype) + 2];
-      //grad_dens[i][jtype][2];
-      //
-      energy += GradPotls[itype][jtype]->u(local_dens[i][jtype]) *
-          DOT_PROD_GRAD(grad_dens[i], jtype, grad_dens[i], jtype);
-      //DOT_PRODUCT(grad_dens[i][jtype],grad_dens[i][jtype]);
-    }
+  const int ntypes = atom->ntypes;
+  if (strcmp(str, "local_density") == 0) {
+    ncol = ntypes + 1;
+    return (void *) local_density;
+  } else if (strcmp(str, "grad_density") == 0) {
+    ncol = 3 * (ntypes + 1);
+    return (void *) grad_density;
+  } else if (strcmp(str, "energy") == 0) {
+    ncol = ntypes + 1;
+    return (void *) ld_energy;
+  } else if (strcmp(str, "grad_energy") == 0) {
+    ncol = ntypes + 1;
+    return (void *) ld_grad_energy;
+  } else if (strcmp(str, "total_energy") == 0) {
+    ncol = 0;
+    return (void *) total_energy;
   }
-
-  if (!ignore_pair[jtype][itype]) {
-    if ((Inds[jtype][itype]->r0 <= r_pair) && (Inds[jtype][itype]->rc >= r_pair)) {
-      fforce += Inds[jtype][itype]->wp(r_pair) * Potls[jtype][itype]->f(local_dens[j][itype]);
-      energy += Potls[jtype][itype]->u(local_dens[j][itype]);
-    }
-    if (bGradient[jtype][itype]) {
-      gf1 += GradPotls[jtype][itype]->f(local_dens[j][itype]) *
-              DOT_PROD_GRAD(grad_dens[j], itype, grad_dens[j], itype) *
-              //DOT_PRODUCT(grad_dens[j][itype],grad_dens[j][itype]) *
-              Inds[jtype][itype]->wp(r_pair) +
-          2.0 * GradPotls[jtype][itype]->u(local_dens[j][itype]) *
-              (Inds[jtype][itype]->wp2(r_pair) - Inds[jtype][itype]->wp(r_pair) / r_pair) *
-              DOT_PROD_GRAD(eij, 0, grad_dens[j], itype);
-      //DOT_PRODUCT(eij, grad_dens[j][itype]);
-      gf2[0] += 2.0 * GradPotls[jtype][itype]->u(local_dens[j][itype]) *
-          Inds[jtype][itype]->wp(r_pair) / r_pair * grad_dens[j][GRADTYPE(itype)];
-      //grad_dens[j][itype][0];
-      gf2[1] += 2.0 * GradPotls[jtype][itype]->u(local_dens[j][itype]) *
-          Inds[jtype][itype]->wp(r_pair) / r_pair * grad_dens[j][GRADTYPE(itype) + 1];
-      //grad_dens[j][itype][1];
-      gf2[2] += 2.0 * GradPotls[jtype][itype]->u(local_dens[j][itype]) *
-          Inds[jtype][itype]->wp(r_pair) / r_pair * grad_dens[j][GRADTYPE(itype) + 2];
-      //grad_dens[j][itype][2];
-      energy += GradPotls[jtype][itype]->u(local_dens[j][itype]) *
-          DOT_PROD_GRAD(grad_dens[j], itype, grad_dens[j], itype);
-      //DOT_PRODUCT(grad_dens[j][itype],grad_dens[j][itype]);
-    }
-  }
-  double fx = (fforce + gf1) * delx / r_pair + gf2[0];
-  double fy = (fforce + gf1) * dely / r_pair + gf2[1];
-  double fz = (fforce + gf1) * delz / r_pair + gf2[2];
-  fforce = sqrt(fx * fx + fy * fy + fz * fz);
-  return energy;
+  return nullptr;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -790,8 +742,8 @@ void PairLdd::LDD_calculate_LDs()    //
   const int *const *const firstneigh = list->firstneigh;
   int newton_pair = force->newton_pair;
 
-  double **const local_dens = atom->ldd_local_density;
-  double **const grad_dens = atom->ldd_grad_density;
+  double **const local_dens = local_density;
+  double **const grad_dens = grad_density;
 
   if (newton_pair) {
     m = nlocal + atom->nghost;
@@ -878,11 +830,11 @@ void PairLdd::LDD_calculate_energies()
   const int inum = list->inum;
   const int *const ilist = list->ilist;
 
-  double **const local_dens = atom->ldd_local_density;
-  double **const grad_dens = atom->ldd_grad_density;
-  double **const ld_nrg = atom->ldd_energy;
-  double **const ld_grad_nrg = atom->ldd_grad_energy;
-  double *const ld_ttl_nrg = atom->ldd_total_energy;
+  double **const local_dens = local_density;
+  double **const grad_dens = grad_density;
+  double **const ld_nrg = ld_energy;
+  double **const ld_grad_nrg = ld_grad_energy;
+  double *const ld_ttl_nrg = total_energy;
   double Ai2;
 
   for (ii = 0; ii < inum; ii++) {
@@ -915,8 +867,8 @@ void PairLdd::LDD_calculate_energies()
 int PairLdd::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int *pbc)
 {
   int i, j, k, m;
-  double **ld = atom->ldd_local_density;
-  double **ldg = atom->ldd_grad_density;
+  double **ld = local_density;
+  double **ldg = grad_density;
   const int ntypes = atom->ntypes;
 
   m = 0;
@@ -938,8 +890,8 @@ int PairLdd::pack_forward_comm(int n, int *list, double *buf, int pbc_flag, int 
 void PairLdd::unpack_forward_comm(int n, int first, double *buf)
 {
   int i, k, m, last;
-  double **ld = atom->ldd_local_density;
-  double **ldg = atom->ldd_grad_density;
+  double **ld = local_density;
+  double **ldg = grad_density;
   const int ntypes = atom->ntypes;
 
   m = 0;
@@ -959,8 +911,8 @@ void PairLdd::unpack_forward_comm(int n, int first, double *buf)
 int PairLdd::pack_reverse_comm(int n, int first, double *buf)
 {
   int i, k, m, last;
-  double **ld = atom->ldd_local_density;
-  double **ldg = atom->ldd_grad_density;
+  double **ld = local_density;
+  double **ldg = grad_density;
   const int ntypes = atom->ntypes;
   m = 0;
   last = first + n;
@@ -981,8 +933,8 @@ int PairLdd::pack_reverse_comm(int n, int first, double *buf)
 void PairLdd::unpack_reverse_comm(int n, int *list, double *buf)
 {
   int i, j, k, m;
-  double **ld = atom->ldd_local_density;
-  double **ldg = atom->ldd_grad_density;
+  double **ld = local_density;
+  double **ldg = grad_density;
   const int ntypes = atom->ntypes;
   m = 0;
   for (i = 0; i < n; i++) {

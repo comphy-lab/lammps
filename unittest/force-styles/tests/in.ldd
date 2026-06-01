@@ -13,7 +13,7 @@ variable  dihedral_style  index zero
 variable  improper_style  index zero
 variable  t_target        index 100.0
 
-atom_style       hybrid full ldd 2
+atom_style       full
 neigh_modify     delay 2 every 2 check no
 units            ${units}
 timestep         0.1
