@@ -667,6 +667,8 @@
 /bond_gaussian.h
 /bond_gromos.cpp
 /bond_gromos.h
+/bond_gromos_kokkos.cpp
+/bond_gromos_kokkos.h
 /bond_harmonic.cpp
 /bond_harmonic.h
 /bond_harmonic_restrain.cpp
@@ -685,6 +687,8 @@
 /bond_oxdna_fene.h
 /bond_oxdna2_fene.cpp
 /bond_oxdna2_fene.h
+/bond_oxdna3_fene.cpp
+/bond_oxdna3_fene.h
 /bond_oxrna2_fene.cpp
 /bond_oxrna2_fene.h
 /bond_quartic.cpp
@@ -888,6 +892,8 @@
 /dump_yaml.h
 /dynamical_matrix.cpp
 /dynamical_matrix.h
+/esp.cpp
+/esp.h
 /ewald.cpp
 /ewald.h
 /ewald_cg.cpp
@@ -922,6 +928,8 @@
 /fix_atc.h
 /fix_ave_correlate_long.cpp
 /fix_ave_correlate_long.h
+/fix_baoab.cpp
+/fix_baoab.h
 /fix_bocs.cpp
 /fix_bocs.h
 /fix_bond_break.cpp
@@ -1093,6 +1101,8 @@
 /fix_orient_eco.h
 /fix_orient_fcc.cpp
 /fix_orient_fcc.h
+/fix_oxdna_lrf.cpp
+/fix_oxdna_lrf.h
 /fix_peri_neigh.cpp
 /fix_peri_neigh.h
 /fix_phonon.cpp
@@ -1249,6 +1259,8 @@
 /math_complex.h
 /math_extra_superellipsoids.cpp
 /math_extra_superellipsoids.h
+/math_pswf.cpp
+/math_pswf.h
 /math_vector.h
 /message.cpp
 /message.h
@@ -1328,6 +1340,8 @@
 /pair_cosine_squared.h
 /pair_coul_diel.cpp
 /pair_coul_diel.h
+/pair_coul_esp.cpp
+/pair_coul_esp.h
 /pair_coul_exclude.cpp
 /pair_coul_exclude.h
 /pair_coul_long.cpp
@@ -1464,6 +1478,8 @@
 /pair_lj_cut_coul_cut_soft.h
 /pair_lj_cut_tip4p_cut.cpp
 /pair_lj_cut_tip4p_cut.h
+/pair_lj_cut_coul_esp.cpp
+/pair_lj_cut_coul_esp.h
 /pair_lj_cut_coul_long.cpp
 /pair_lj_cut_coul_long.h
 /pair_lj_cut_coul_long_soft.cpp
@@ -1536,9 +1552,12 @@
 /pair_oxdna_*.h
 /pair_oxdna2_*.cpp
 /pair_oxdna2_*.h
+/pair_oxdna3_*.cpp
+/pair_oxdna3_*.h
 /pair_oxrna2_*.cpp
 /pair_oxrna2_*.h
 /mf_oxdna.h
+/nucleotide_oxdna.h
 /pair_pedone.cpp
 /pair_pedone.h
 /pair_peri.cpp
