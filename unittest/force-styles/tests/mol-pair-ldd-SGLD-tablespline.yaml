@@ -1,6 +1,6 @@
 ---
-lammps_version: 11 Feb 2026
-date_generated: Mon Feb 23 22:12:46 2026
+lammps_version: 30 Mar 2026
+date_generated: Mon Jun  1 12:20:31 2026
 epsilon: 5e-12
 skip_tests:
 prerequisites: ! |
