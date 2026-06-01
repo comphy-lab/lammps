@@ -128,16 +128,15 @@ where the first sum is over all sites, :math:`I` , and the second sum is
 over all site types, :math:`\beta`.  The form of
 :math:`U_{\beta|\alpha}` is specified by the user in the :doc:`ldd
 pair_coeff <pair_ldd>` command using the *potential* keyword.  For
-instance, :math:`U_{\beta|\alpha}(\rho_{\beta|I})` can be defined as
-:doc:`zero <ldd_potential_noforce>` or as a :doc:`constant
-<ldd_potential_constant>`, :doc:`linear <ldd_potential_linear>`,
-:doc:`quadratic <ldd_potential_quadratic>` function of the local
-density.  Alternatively, :math:`U_{\beta|\alpha}(\rho_{\beta|I})` can be
-specified by a table of values using the :doc:`tabulated
-<ldd_potential_table>` keywords.  Additionally the *potential* arg
-:doc:`mdpd <ldd_potential_mdpd>` is a quadratic function in local
-density that can be combined with the dpd pair_style to simulate
-pairwise mdpd interactions in the LD framework.
+instance, :math:`U_{\beta|\alpha}(\rho_{\beta|I})` can be defined as zero
+(*noforce*) or as a *constant*, *linear*, or *quadratic* function of the
+local density.  Alternatively, :math:`U_{\beta|\alpha}(\rho_{\beta|I})`
+can be specified by a table of values using the *table/lin* or
+*table/spline* keywords.  Additionally the *potential* arg *mdpd* is a
+quadratic function in local density that can be combined with the dpd
+pair_style to simulate pairwise mdpd interactions in the LD framework.
+All of these forms are documented on the :doc:`pair_style ldd
+<pair_ldd>` page.
 
 SG (Square Gradient) potentials are defined:
 
@@ -166,24 +165,22 @@ analogous to those stated in `Delyser 2021
 and `Delyser 2019
 <https://pubs.aip.org/aip/jcp/article/151/22/224106/198468/Analysis-of-local-density-potentials>`_.
 
-Because of this, the LDD package must be used with its own custom
-:doc:`atom_style ldd <atom_style>`, which is basically the *atomic*
-atom_style, with extra fields for all local densities and local density
-gradients.
+The per-atom local densities and gradients are owned by the *ldd* pair
+style itself (recomputed every step, not stored in data or restart
+files); no special atom style is required, and the data is exposed to the
+rest of LAMMPS through :doc:`fix pair <fix_pair>` (see the :doc:`pair
+ldd <pair_ldd>` page).
 
-This implementation allows interactions to be specified in a
-pairtypewise manner using the typical pair_coeff commands for each of
-:math:`2^{\text{n}_{\text{types}}}` interactions.  In particular,
-pair_coeff 1 2 specifies the interaction for atoms of type 1 surrounded
-by atoms of type 2, and is distinct from pair_coeff 2 1, which
-corresponds to the interaction for atoms of type 2 surrounded by atoms
-of type 1.  Note that the pair_coeff input (e.g. pair_coeff 1 2) uses a
-"surrounded by" convention. This describes the local densities for
-particles type 1 "surrounded by" type 2.  Conversely, often in published
-works and equations for local densities we tend to use a "given"
-convention to describe the local density.  In this convention the
-equivalent interaction is denoted as 2|1, or type 2 given a central
-particle of type 1.
+Interactions are specified per *species* pair.  The potential file
+defines a set of species and the ``pair_coeff * * file.ldd S1 S2 ...``
+command maps each atom type to a species (several types may map to the
+same species).  Each of the :math:`N_{\text{species}}^2` *ordered*
+species pairs is given on its own line.  In particular, the entry ``A
+B`` specifies the interaction for atoms of species A surrounded by atoms
+of species B, and is distinct from ``B A``, the interaction for species B
+surrounded by species A.  This "surrounded by" convention (``A B``)
+corresponds to the local density often written as ``B|A`` (species B
+given a central particle of species A) in published works.
 
 ------------------
 
@@ -193,31 +190,25 @@ Input File Examples
 Example 1) A simple atomic input example using only tabulated LD potentials
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+The input script uses a plain atomic atom style and maps the two atom
+types to species A and B from the potential file:
+
 .. code-block:: LAMMPS
 
    ## Init system/units
    units real
    dimension 3
-   atom_style ldd 2  # The total number of particle types
+   atom_style atomic
 
    newton on
    timestep 1
 
-   read_data my_mix.data # System initialization, must preceed pair style init or ldd will exit with a warning
+   read_data my_mix.data
    velocity all create 300.0 22345 dist gaussian
 
-   ## pair_style ldd, must be used with atomstyle ldd
-
-   pair_style ldd 6.5 # Longest cutoff of all LD interactions
-
-   # pair_coeff x y indicator keyword r0 rc self arg potential keyword args
-   pair_coeff 1 1 indicator dpd 0.0 6.5 self yes potential table/lin LD_table.1.1.dat # type 1 surrounded by type 1, 1|1
-
-   pair_coeff 1 2 ignore # type 1 surrounded by type 2 , 2|1
-   # n.b. As the above line shows, all 2^ntypes interactions must be specified even if its to note that no LD interaction should be used for this type, see keyword ignore for details in pair_style doc
-   pair_coeff 2 1 indicator dpd 0.0 5.5 self no potential table/lin LD_table.2.1..dat # type 2 surrounded by type 1, 1|2
-
-   pair_coeff 2 2 indicator dpd 0.0 5.5 self yes potential table/line LD_table.2.2.dat # type 2 surrounded by type 2, 2|2
+   ## pair_style ldd takes no cutoff (it comes from each indicator rc)
+   pair_style ldd
+   pair_coeff * * my_mix.ldd A B   # atom type 1 -> species A, type 2 -> species B
 
    ## Run / Output
    run_style verlet
@@ -225,14 +216,32 @@ Example 1) A simple atomic input example using only tabulated LD potentials
    thermo 500
 
    fix 1 all nvt temp 300.0 300.0 100.0
-   dump 1 all ldd 500 dump.txt #A lammps trajectory file with LD info #FIXME
+   # expose the per-atom local densities (one column per species) + total energy
+   fix lddout all pair 1 ldd local_density 0 total_energy 0
+   dump 1 all custom 500 dump.txt id x y z f_lddout[*]
+   dump_modify 1 sort id
 
    run 10000
 
-Note in the above example, only pair types 1|2, 1|1 and 2|2 will interact according to LD potentials.
+with the potential file ``my_mix.ldd``:
+
+.. code-block:: LAMMPS
+
+   # all four ordered species pairs must be listed (use "ignore" for none)
+   A A indicator dpd 0.0 6.5 self yes potential table/lin LD_table.1.1.dat
+   A B ignore
+   B A indicator dpd 0.0 5.5 self no  potential table/lin LD_table.2.1.dat
+   B B indicator dpd 0.0 5.5 self yes potential table/lin LD_table.2.2.dat
+
+Note in the above example, only species pairs A|A, B|A, and B|B interact
+according to LD potentials (the A B entry is ignored).
 
 Example 2) Molecular input example that layers tabulated pair, LD and SG interactions via :doc:`pair_style hybrid <pair_hybrid>`
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+The molecular topology uses the ordinary *full* atom style; the *ldd*
+interactions are layered in with :doc:`pair_style hybrid/overlay
+<pair_hybrid>`:
 
 .. code-block:: LAMMPS
 
@@ -240,7 +249,7 @@ Example 2) Molecular input example that layers tabulated pair, LD and SG interac
 
    units real
    dimension 3
-   atom_style hybrid full ldd 2 # Molecular topology accessible through hybrid atom_style
+   atom_style full
 
    newton on
    timestep 1
@@ -248,12 +257,12 @@ Example 2) Molecular input example that layers tabulated pair, LD and SG interac
    bond_style harmonic
 
    region my_box block 0 40 0 40 0 40
-   create_box 2 my_box bond/types 1 # System init, must pre-ceed pair style ldd
+   create_box 2 my_box bond/types 1
 
    mass 1 59.044
    mass 2 59.044
 
-   pair_style hybrid/overlay ldd 6.5 table spline 3000
+   pair_style hybrid/overlay ldd table spline 3000
 
    molecule DI DIMER.mol
    create_atoms 0 random 250 885401 my_box mol DI 454353
@@ -262,37 +271,31 @@ Example 2) Molecular input example that layers tabulated pair, LD and SG interac
    velocity all create 300.0 22345 dist gaussian
 
    ## Pair styles
-
-   pair_coeff * * table lammps_nb_ALL.table nb_All 15.0 # Pair interaction cutoff should be >= pair_coeff ldd cutoff
-
-   #pair_coeff x y ldd indicator keyword r0 rc self arg potential keyword arg gradient keyword arg
-   pair_coeff 1 1 ldd indicator lucy 0.0 6.5 self no potential table/spline LD.1.1.dat gradient table/gradspline SG.1.1.dat
-
-   pair_coeff 1 2 ldd indicator lucy 0.0 6.5 self no potential table/spline LD.1.2.dat
-   pair_coeff 2 1 ldd indicator lucy 0.0 6.5 self no potential table/spline LD.2.1.dat
-
-   pair_coeff 2 2 ldd indicator lucy 0.0 6.5 self no potential table/spline LD.2.2.dat gradient table/gradspline SG.2.2.dat
+   pair_coeff * * table lammps_nb_ALL.table nb_All 15.0
+   pair_coeff * * ldd dimer.ldd A B   # type 1 -> species A, type 2 -> species B
 
    ## Run / Output
-
    run_style verlet
    neighbor 15.0 bin
    thermo 500
 
    fix 1 all nvt temp 300.0 300.0 100.0
-   dump 1 all ldd 500 dump.txt #A lammps trajectory file with LD info #FIXME
-
    run 10000
 
+with the potential file ``dimer.ldd``:
+
+.. code-block:: LAMMPS
+
+   A A indicator lucy 0.0 6.5 self no potential table/spline LD.1.1.dat gradient table/gradspline SG.1.1.dat
+   A B indicator lucy 0.0 6.5 self no potential table/spline LD.1.2.dat
+   B A indicator lucy 0.0 6.5 self no potential table/spline LD.2.1.dat
+   B B indicator lucy 0.0 6.5 self no potential table/spline LD.2.2.dat gradient table/gradspline SG.2.2.dat
+
 Note in the above example LD cross interactions are both specified, but not necessarily symmetric.
-Also in this example, cross interactions opt not to use the optional *gradient* keyword.
-Conversely homo-interactions (e.g. 1|1 2|2) layer SG potentials on top of the already defined LD and pair interactions.
+Also in this example, the cross interactions opt not to use the optional *gradient* keyword.
+Conversely the like-species interactions (A|A, B|B) layer SG potentials on top of the already defined LD and pair interactions.
 
-See ``examples/PACKAGES/ldd`` for full input files for a 4-site chain example (topology like A-B-C-D).
-
-Note that in all input examples the ldd package is used in the following order: 1) Define the ldd atom style 2) Define the number of atom types in the simulation 3) Call the ldd pair style 4) Call the coeffs for  all types of particles 5) define output 6) run.
-If the simulation box is not defined with the same number of atom types that atom_style ldd is defined with, the LDD package will throw an error and close the program.
-
+See ``examples/PACKAGES/bocs`` for full input files for a 4-site chain example (topology like A-B-C-D).
 
 See :doc:`pair_style ldd <pair_ldd>` for all pair_coeff *args* options that exist, all restrictions, and more examples.
 
@@ -301,20 +304,15 @@ See :doc:`pair_style ldd <pair_ldd>` for all pair_coeff *args* options that exis
 read_data file format examples
 ------------------------------
 
-Atom style ldd is a basic atomic atom_style with per-atom fields added
-for local densities, gradients of local densities, LD energy
-contributions and SG energy contributions.  These can be reported using
-dump ldd, but this information is calculated just
+The *ldd* pair style does not require a special atom style: the local
+densities, their gradients, and the associated energies are owned by the
+pair style and recomputed every step, so they are never read from or
+written to a data file.  The ``read_data`` input therefore follows the
+usual format for whatever atom style you choose, e.g. *atomic* for a
+simple system or *full* for a molecular one.
 
-.. FIXME dump ldd doesn't exist anymore
-
-based on configurational data, and thus is not used for starting
-simulations.  read_data input therefore can follow usual atomic
-read_data input formats, and when hybridized with other atom styles, the
-.data file is the same as atomic hybridized with those styles.
-
-Example 1) for when the :doc:`atom_style ldd <atom_style>` is used by itself (read_data is atomic)
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Example 1) a simple atomic system (``atom_style atomic``)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: LAMMPS
 
@@ -356,7 +354,7 @@ Example 1) for when the :doc:`atom_style ldd <atom_style>` is used by itself (re
    5000 1 44.600000 18.310000 51.990000
 
 
-Example 2) for the .data file up to the "Atoms" section of the read_data file when the atom_style ldd is hybridized with full. Bonds/Angles/Dihedral syntax are standard as listed in :doc:`read_data <read_data>`.
+Example 2) the .data file up to the "Atoms" section for a molecular system (``atom_style full``). Bonds/Angles/Dihedral syntax are standard as listed in :doc:`read_data <read_data>`.
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. code-block:: LAMMPS
@@ -399,30 +397,31 @@ Example 2) for the .data file up to the "Atoms" section of the read_data file wh
 
 -------------------------
 
-dump ldd output
----------------
+Outputting the local-density data
+---------------------------------
 
-.. FIXME: we need to check the examples how dump ldd was replaced
+For each central particle :math:`I` and each species :math:`\beta`, there
+is a local density of :math:`\beta` particles that surround :math:`I`,
+:math:`\rho_{\beta|I}`, and a corresponding gradient :math:`\frac{\partial
+\rho_{\beta|I}}{\partial \boldsymbol{R}_I}`.  These quantities (along with
+the per-species LD/SG energies and the per-atom total energy) are made
+available to the rest of LAMMPS through the :doc:`fix pair <fix_pair>`
+command, which copies the chosen pair-style fields into a per-atom array.
+For example:
 
-For each central particle :math:`I` and each particle type
-:math:`\beta`, there is a local density of :math:`\beta` particles that
-surround :math:`I` :math:`\rho_{\beta|I}`, and a corresponding gradient
-of that local density, :math:`\frac{\partial \rho_{\beta|I}}{\partial
-\boldsymbol{R}_I}`.  If for example :math:`t_I = \alpha`, and an LDD
-interaction has been defined for the :math:`\beta|\alpha` local
-densities, then the dump ldd command will report
-:math:`\rho_{\beta|I}` and :math:`\frac{\partial
-\rho_{\beta|I}}{\partial \boldsymbol{R}_I}` in addition to the
-simulation x, v, and f information.  dump ldd is
-essentially a custom lammps dump trajectory output with local density
-information.
+.. code-block:: LAMMPS
 
-This trajectory type is natively compatible with the `Bottom-up
-Open-source Coarse-graining Software
-<https://github.com/noid-group/BOCS>`_ which can be used to parameterize
-LD/SG potentials from atomistic data, as well as to convert these lammps
-trajectories to .trr files for analysis with `gromacs
-<https://www.gromacs.org/>`_ tools.
+   fix lddout all pair 1 ldd local_density 0 grad_density 0 total_energy 0
+   dump 1 all custom 500 dump.txt id x y z vx vy vz fx fy fz f_lddout[*]
+   dump_modify 1 sort id
+
+writes a custom trajectory that includes the local densities and their
+gradients alongside the usual positions, velocities, and forces (one
+column per species, three per species for the gradient).  Such a
+trajectory can be used with the `Bottom-up Open-source Coarse-graining
+Software <https://github.com/noid-group/BOCS>`_, which can parameterize
+LD/SG potentials from atomistic data and convert LAMMPS trajectories to
+.trr files for analysis with `gromacs <https://www.gromacs.org/>`_ tools.
 
 -------------
 
