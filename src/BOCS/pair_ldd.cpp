@@ -435,6 +435,17 @@ void PairLdd::compute(int eflag, int vflag)
 
 void PairLdd::settings(int narg, char ** /*arg*/)
 {
+  // ldd derives its type map and per-atom communication buffer sizes from the
+  // number of atom types, which is only known once the simulation box exists.
+  // Because ldd is a one_coeff (manybody) style it never reads per-type Pair
+  // Coeffs from a data file, so there is no need to define it before the box.
+  // Require the box up front and fail clearly instead of corrupting memory.
+  // This check belongs in settings() (run only for the pair_style command), not
+  // the constructor, so it is not triggered when the style is rebuilt during a
+  // read_restart (which restores settings from the file instead of settings()).
+  if (domain->box_exist == 0)
+    error->all(FLERR, "Pair style ldd must be defined after the simulation box is created");
+
   // pair_style ldd takes no arguments; the interaction cutoff is the indicator
   // rc of each species pair, read from the potential file in coeff()
   if (narg != 0) error->all(FLERR, "Illegal pair_style ldd command: expected no arguments");

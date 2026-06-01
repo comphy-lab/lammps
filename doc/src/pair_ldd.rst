@@ -297,6 +297,16 @@ LAMMPS was built with that package.  See the :doc:`Build package
 
 This pair style requires ``newton on`` for pair interactions.
 
+The ``pair_style ldd`` command must be issued *after* the simulation box
+has been created (e.g. with :doc:`read_data <read_data>`,
+:doc:`read_restart <read_restart>`, or :doc:`create_box <create_box>`),
+because it sizes its per-type species map and inter-processor communication
+buffers from the number of atom types.  Since ``ldd`` is a manybody-style
+potential that does not read per-type ``Pair Coeffs`` from a data file,
+there is no need to define it earlier.  When continuing from a binary
+restart, re-specify ``pair_style ldd`` and its ``pair_coeff`` settings after
+the :doc:`read_restart <read_restart>` command.
+
 The *indicator*, *self*, and *potential* keywords are mandatory for each
 species pair unless the *ignore* keyword is provided; the *gradient*
 keyword is optional.  Every ordered species pair must appear exactly once
