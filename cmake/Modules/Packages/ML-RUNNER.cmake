@@ -73,6 +73,7 @@ if(DOWNLOAD_RUNNER)
     GIT_TAG "2.0.3_20260528"
     GIT_SHALLOW YES
     GIT_PROGRESS YES
+    PATCH_COMMAND patch -b -p1 < ${LAMMPS_DIR}/cmake/patches/runner-cmake.patch
 
     # Pass CMake arguments to RuNNer's build system
     CMAKE_ARGS
