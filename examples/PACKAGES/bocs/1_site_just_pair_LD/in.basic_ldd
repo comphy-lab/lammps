@@ -12,7 +12,7 @@ create_atoms 1 random 968 13427890 my_box overlap 2
 
 mass 1 32.042
 
-velocity        all create 270 22345 dist gaussian
+velocity        all create 270 22345 dist gaussian loop geom
 
 pair_style     hybrid/overlay ldd lj/cut 14.0
 #pair_style     hybrid/overlay ldd table spline N

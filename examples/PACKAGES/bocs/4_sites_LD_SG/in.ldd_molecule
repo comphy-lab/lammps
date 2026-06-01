@@ -1,45 +1,36 @@
 units           real
 dimension       3
 boundary        p p p
-# Use the hybrid atom style if you want systems that aren't simple atomic + ld info
 atom_style      full
 
-newton          on
-timestep        0.5
+read_data data.ldd_molecule
+
+# Use pair_style hybrid to incorporate the LDD interactions with other forces
+pair_style hybrid/overlay ldd table spline 3000
 
 bond_style harmonic
 angle_style harmonic
 dihedral_style harmonic
 improper_style none
 
-
-region my_box block 0 40 0 40 0 40
-create_box 4 my_box bond/types 1 angle/types 1 dihedral/types 1 extra/bond/per/atom 12 extra/angle/per/atom 12 extra/dihedral/per/atom 8 extra/special/per/atom 30
-
-mass  * 59.0448 
-
-# Use pair_style hybrid to incorporate the LDD interactions with other forces
-pair_style hybrid/overlay ldd table spline 3000
-
-molecule CHAIN ABCD.mol
-create_atoms 0 random 60 885401 my_box mol CHAIN 454756
-
 include ff_bonded_params.lammps
-
-velocity        all create 300.0 22345 dist gaussian
 
 pair_coeff      * * table nb_interaction_tables/lammps_nb_ACA_ACA.table nb_ACA_ACA 15.0
 
 # map atom types 1-4 to local-density species A,B,C,D (defined in the file)
 pair_coeff      * * ldd ABCD_mol.ldd A B C D
+
 # In this example, for simplicity, we set interactions by central site, so every
 # ordered species pair X Y reuses the X-centered table.  Up to 4x4 distinct
 # settings are possible (one line per ordered species pair).
 
-neigh_modify    delay 0 every 1 check yes
+timestep        0.5
+
 neighbor        2.0 bin
+neigh_modify    delay 0 every 1 check yes
 thermo          500
 thermo_style    custom step temp ke pe evdwl etotal press vol
+fix             1  all      nvt        temp       300.0  300.0 100.0
 
 # converting real lammps units to gromacs/bocs units for easy reporting
 # variable STEP equal step
@@ -57,12 +48,6 @@ thermo_style    custom step temp ke pe evdwl etotal press vol
 #   f_lddout[18..21]  grad_energy of A,B,C,D
 # fix lddout all pair 1 ldd local_density 0 total_energy 0 grad_density 0 grad_energy 0
 
-
-
-minimize 1.0e-8 1.0e-10 1000 10000
-
-#Set fixes
-fix             1  all      nvt        temp       300.0  300.0 100.0
 
 run_style       verlet
 # Print statements for the above variables, uncomment both if want sim stats
