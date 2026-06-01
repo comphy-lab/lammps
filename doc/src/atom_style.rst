@@ -10,7 +10,7 @@ Syntax
 
    atom_style style args
 
-* style = *amoeba* or *angle* or *apip* or *atomic* or *body* or *bond* or *charge* or *dielectric* or *dipole* or  *dpd* or *edpd* or *electron* or *ellipsoid* or *full* or *line* or *mdpd* or *molecular* or *oxdna* or *peri* or *smd* or *sph* or *sphere* or *bpm/sphere* or *spin* or *tdpd* or *tri* or *template*  or *hybrid*
+* style = *amoeba* or *angle* or *apip* or *atomic* or *body* or *bond* or *charge* or *dielectric* or *dipole* or  *dpd* or *edpd* or *electron* or *ellipsoid* or *full* or *line* or *mdpd* or *molecular* or *oxdna* or *peri* or *smd* or *sph* or *sphere* or *bpm/sphere* or *spin* or *tdpd* or *tri* or *template* or *hybrid*
 
   .. parsed-literal::
 
@@ -19,7 +19,8 @@ Syntax
          *body* args = bstyle bstyle-args
            bstyle = style of body particles
            bstyle-args = additional arguments specific to the bstyle
-                         see the :doc:`Howto body <Howto_body>` doc page for details
+                         see the :doc:`Howto body <Howto_body>` doc
+                         page for details
          *sphere* arg = 0/1 (optional) for static/dynamic particle radii
          *bpm/sphere* arg = 0/1 (optional) for static/dynamic particle radii
          *tdpd* arg = Nspecies

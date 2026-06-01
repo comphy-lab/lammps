@@ -1,0 +1,245 @@
+LAMMPS (30 Mar 2026 - Development - patch_30Mar2026-1168-gceb40c7bd6-modified)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+units		real
+dimension	3
+boundary	p p p
+# Use the hybrid atom style if you want systems that aren't simple atomic + ld info
+atom_style	full
+
+newton		on
+timestep	0.5
+
+bond_style harmonic
+angle_style harmonic
+dihedral_style harmonic
+improper_style none
+
+
+region my_box block 0 40 0 40 0 40
+create_box 4 my_box bond/types 1 angle/types 1 dihedral/types 1 extra/bond/per/atom 12 extra/angle/per/atom 12 extra/dihedral/per/atom 8 extra/special/per/atom 30
+Created orthogonal box = (0 0 0) to (40 40 40)
+  1 by 1 by 1 MPI processor grid
+
+mass  * 59.0448
+
+# Use pair_style hybrid to incorporate the LDD interactions with other forces
+pair_style hybrid/overlay ldd table spline 3000
+
+molecule CHAIN ABCD.mol
+Read molecule template CHAIN:
+# 5 Bead Chain molecule File
+  1 molecules
+  0 fragments
+  0 bodies
+  4 atoms with max type 4
+  3 bonds with max type 1
+  2 angles with max type 1
+  1 dihedrals with max type 1
+  0 impropers with max type 0
+create_atoms 0 random 60 885401 my_box mol CHAIN 454756
+Created 240 atoms
+  using lattice units in orthogonal box = (0 0 0) to (40 40 40)
+  create_atoms CPU = 0.001 seconds
+
+include ff_bonded_params.lammps
+bond_coeff 1 4 3.0 # < this is v2 and v3
+#bond_coeff 1 2 3.0 < this is v1
+#angle_coeff 1 1 90.0 < This is for v1 amd v2
+angle_coeff 1 10 90 # v3 had 40, now we just multiplied
+dihedral_coeff 1 1 1 1
+
+velocity	all create 300.0 22345 dist gaussian
+
+pair_coeff	* * table nb_interaction_tables/lammps_nb_ACA_ACA.table nb_ACA_ACA 15.0
+WARNING: 3 of 399 force values in table nb_ACA_ACA are inconsistent with -dE/dr.
+WARNING:  Should only be flagged at inflection points (src/pair_table.cpp:469)
+
+# map atom types 1-4 to local-density species A,B,C,D (defined in the file)
+pair_coeff 	* * ldd ldd_input_file.txt A B C D
+# In this example, for simplicity, we set interactions by central site, so every
+# ordered species pair X Y reuses the X-centered table.  Up to 4x4 distinct
+# settings are possible (one line per ordered species pair).
+
+neigh_modify	delay 0 every 1 check yes one 10000
+neighbor	15.0 bin
+thermo          500
+thermo_style    custom step temp ke pe evdwl etotal press vol
+
+# converting real lammps units to gromacs/bocs units for easy reporting
+# variable STEP equal step
+# variable TEMP equal temp
+# variable VOL equal vol/1000.0
+# variable PRESS equal press*1.01325
+
+# The per-atom local-density quantities computed by pair style ldd are made
+# available through "fix pair".  Each field has one column per species (in the
+# A,B,C,D order of the type map); grad_density has 3 columns (x,y,z) per species.
+# The example below collects them all into the per-atom array f_lddout:
+#   f_lddout[1..4]    local_density of A,B,C,D
+#   f_lddout[5]       total_energy
+#   f_lddout[6..17]   grad_density (x,y,z) of A,B,C,D
+#   f_lddout[18..21]  grad_energy of A,B,C,D
+# fix lddout all pair 1 ldd local_density 0 total_energy 0 grad_density 0 grad_energy 0
+
+
+
+minimize 1.0e-8 1.0e-10 1000 10000
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- pair ldd command: doi:10.1063/1.5128665
+
+@Article{DeLyser1,
+ author = {Michael R. DeLyser and W. G. Noid},
+ title = {Analysis of local density potentials},
+ journal = {The journal of chemical physics},
+ year =    2019,
+ volume =  151,
+ pages =   {22:224106}
+}
+
+- pair ldd command gradient keyword: doi:10.1063/5.0075291
+
+@Article{DeLyser2,
+ author = {Michael R. DeLyser and W. G. Noid},
+ title = {Coarse-grained models for local density gradients},
+ journal = {The Journal of Chemical Physics},
+ year =    2021,
+ volume =  156,
+ pages =   {034106}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 10000, page size: 100000
+  master list distance cutoff = 30
+  ghost atom cutoff = 30
+  binsize = 15, bins = 3 3 3
+  2 neighbor lists, perpetual/occasional/extra = 2 0 0
+  (1) pair ldd, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+  (2) pair table, perpetual
+      attributes: half, newton on, cut 30
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 17.16 | 17.16 | 17.16 Mbytes
+   Step          Temp          KinEng         PotEng         E_vdwl         TotEng         Press          Volume    
+         0   300            213.72408      15980.509      15980.509      16194.233      19402.689      64000        
+       500   300            213.72408     -1392.2257     -1505.3577     -1178.5016      16.703649      64000        
+      1000   300            213.72408     -1759.9436     -1962.1132     -1546.2195      131.67142      64000        
+Loop time of 1.49948 on 1 procs for 1000 steps with 240 atoms
+
+99.5% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = max iterations
+  Energy initial, next-to-last, final = 
+      15980.5085205553  -1759.60813159581  -1759.94359968125
+  Force two-norm initial, final = 5439.9509 8.8061142
+  Force max component initial, final = 1351.817 1.7524469
+  Final line search alpha, max atom move = 0.034123831 0.0598002
+  Iterations, force evaluations = 1000 1696
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.4624     | 1.4624     | 1.4624     |   0.0 | 97.52
+Bond    | 0.011103   | 0.011103   | 0.011103   |   0.0 |  0.74
+Neigh   | 0.0063481  | 0.0063481  | 0.0063481  |   0.0 |  0.42
+Comm    | 0.013377   | 0.013377   | 0.013377   |   0.0 |  0.89
+Output  | 4.8714e-05 | 4.8714e-05 | 4.8714e-05 |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.006245   |            |       |  0.42
+
+Nlocal:            240 ave         240 max         240 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           3660 ave        3660 max        3660 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          43026 ave       43026 max       43026 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 43026
+Ave neighs/atom = 179.275
+Ave special neighs/atom = 3
+Neighbor list builds = 4
+Dangerous builds = 0
+
+#Set fixes
+fix             1  all      nvt        temp       300.0  300.0 100.0
+
+run_style       verlet
+# Print statements for the above variables, uncomment both if want sim stats
+#fix             print_temp all print 500 "${STEP} ${TEMP}" file temp.dat screen no
+#fix             print_vol all print 500 "${STEP} ${VOL}" file vol.dat screen no
+#fix             print_press all print 500 "${STEP} ${PRESS}" file press.dat screen no
+
+## Dump a trajectory with the per-atom LD quantities (needs "fix lddout" above).
+## f_lddout[*] expands to all 21 columns described next to the fix pair command.
+# dump         4 all custom 500 bocs_traj.lmp id x y z vx vy vz fx fy fz f_lddout[*]
+# dump_modify  4 sort id
+
+## Run for this many steps
+run 10000 # production run for 4 ns.
+WARNING: Using a manybody potential with bonds/angles/dihedrals and special_bond exclusions (src/pair.cpp:253)
+Per MPI rank memory allocation (min/avg/max) = 16.04 | 16.04 | 16.04 Mbytes
+   Step          Temp          KinEng         PotEng         E_vdwl         TotEng         Press          Volume    
+      1000   300            213.72408     -1759.9436     -1962.1132     -1546.2195      131.67142      64000        
+      1500   216.7228       154.39627     -1623.0324     -1893.6804     -1468.6362     -111.10514      64000        
+      2000   305.64393      217.7449      -1556.7458     -1847.3623     -1339.0009      108.75366      64000        
+      2500   319.20271      227.40435     -1543.1509     -1818.2057     -1315.7465     -142.72207      64000        
+      3000   304.77978      217.12926     -1555.8363     -1806.5429     -1338.7071     -166.28206      64000        
+      3500   280.14176      199.5768      -1578.9534     -1837.2565     -1379.3766     -109.81513      64000        
+      4000   328.46405      234.00226     -1601.5583     -1883.0358     -1367.556       56.935965      64000        
+      4500   311.84496      222.16259     -1590.0708     -1872.0795     -1367.9082      89.718428      64000        
+      5000   298.55578      212.6952      -1596.9606     -1878.6555     -1384.2654      175.85747      64000        
+      5500   300.95375      214.40354     -1623.4939     -1898.3231     -1409.0903      47.479302      64000        
+      6000   280.47281      199.81265     -1639.1859     -1914.2127     -1439.3733     -16.575201      64000        
+      6500   319.52988      227.63743     -1635.9744     -1954.7042     -1408.3369     -39.951112      64000        
+      7000   296.77967      211.42987     -1643.4789     -1971.5571     -1432.049       93.644576      64000        
+      7500   284.97069      203.01699     -1654.0195     -1954.9228     -1451.0025     -76.05248       64000        
+      8000   295.64823      210.62382     -1646.4168     -1972.077      -1435.793       41.671808      64000        
+      8500   296.02891      210.89502     -1655.5019     -1968.4855     -1444.6069      12.121989      64000        
+      9000   292.77371      208.57598     -1669.6588     -2019.7134     -1461.0828     -17.042908      64000        
+      9500   300.16438      213.84118     -1692.3384     -2027.5341     -1478.4972      92.644801      64000        
+     10000   350.67733      249.8273      -1713.3204     -2042.0867     -1463.4931     -25.178743      64000        
+     10500   288.15671      205.28676     -1698.1086     -2052.3447     -1492.8219     -69.875406      64000        
+     11000   274.38281      195.47404     -1712.7422     -2031.7432     -1517.2682      122.56015      64000        
+Loop time of 9.29 on 1 procs for 10000 steps with 240 atoms
+
+Performance: 46.502 ns/day, 0.516 hours/ns, 1076.426 timesteps/s, 258.342 katom-step/s
+99.5% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 9.1144     | 9.1144     | 9.1144     |   0.0 | 98.11
+Bond    | 0.056747   | 0.056747   | 0.056747   |   0.0 |  0.61
+Neigh   | 0.0029268  | 0.0029268  | 0.0029268  |   0.0 |  0.03
+Comm    | 0.076777   | 0.076777   | 0.076777   |   0.0 |  0.83
+Output  | 0.00039815 | 0.00039815 | 0.00039815 |   0.0 |  0.00
+Modify  | 0.02687    | 0.02687    | 0.02687    |   0.0 |  0.29
+Other   |            | 0.01186    |            |       |  0.13
+
+Nlocal:            240 ave         240 max         240 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           3647 ave        3647 max        3647 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          42806 ave       42806 max       42806 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 42806
+Ave neighs/atom = 178.35833
+Ave special neighs/atom = 3
+Neighbor list builds = 2
+Dangerous builds = 0
+Total wall time: 0:00:10

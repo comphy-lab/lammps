@@ -291,13 +291,13 @@ N. J. H. Dunn and W. G. Noid, "Bottom-up coarse-grained models that
 accurately describe the structure, pressure, and compressibility of
 molecular liquids", J. Chem. Phys. 143, 243148 (2015).
 
-The package also includes an atom_style and pair_style that flexibly
-define interactions as function of the local density and/or gradient of
-the local density around a central particle.  It furthermore includes a
-dump style that is natively compatible with the Bottom-up Open-source
-Coarse-graining Software (BOCS), which is an external coarse-graining
-package that can be used to parameterize such potentials from atomistic
-simulation data (see link below).
+The package also includes a pair_style that flexibly defines interactions
+as a function of the local density and/or gradient of the local density
+around a central particle.  Its per-atom local-density data can be written
+out with :doc:`fix pair <fix_pair>` in a form that is compatible with the
+Bottom-up Open-source Coarse-graining Software (BOCS), an external
+coarse-graining package that can be used to parameterize such potentials
+from atomistic simulation data (see link below).
 
 The package is compatible with molecular topologies, allows the user to
 specify the length-scale and weighting functions for multiple types of
@@ -309,7 +309,7 @@ The local density potentials implemented define "local density" flexibly
 with different choices of indicator weighting functions and asymmetry in
 interactions as generically described in: Michael R. DeLyser
 and W. G. Noid (2019). "Analysis of local density potentials" The
-Journal of Chemical Physics 151, : 224106 DOI: 10.1063/1.512866
+Journal of Chemical Physics 151, : 224106 DOI: 10.1063/1.5128665
 
 The square gradient potential implementation is described in:
 Michael R. DeLyser and W. G. Noid (2021) "Coarse-grained models for
@@ -328,7 +328,6 @@ DOI: 10.1063/5.0075291
 * ``examples/PACKAGES/bocs``
 *  :doc:`fix bocs <fix_bocs>`
 * :doc:`Howto_ldd <Howto_ldd>`
-* :doc:`atom_style ldd <atom_style>`
 * :doc:`pair_style ldd <pair_ldd>`
 
 The BOCS package in LAMMPS is part of the BOCS software package:

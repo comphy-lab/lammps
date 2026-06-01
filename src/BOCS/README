@@ -16,19 +16,19 @@ Dunn, NJH; Lebold, KM; DeLyser, MR; Rudzinski, JF; Noid, WG.
 "BOCS: Bottom-Up Open-Source Coarse-Graining Software."
 J. Phys. Chem. B. 122, 13, 3363-3377 (2018).
 
-The package also includes an atom_style and pair_style that flexibly
-define interactions as function of the local density and/or gradient of
-the local density around a central particle.  It furthermore includes a
-dump style that is natively compatible with the Bottom-up Open-source
-Coarse-graining Software (BOCS), which is an external coarse-graining
+The package also includes a pair_style that flexibly defines interactions
+as a function of the local density and/or gradient of the local density
+around a central particle.  Its per-atom local-density data can be written
+out with "fix pair" in a form that is compatible with the Bottom-up
+Open-source Coarse-graining Software (BOCS), an external coarse-graining
 package that can be used to parameterize such potentials from atomistic
-simulation data. Please see the following packages for details:
+simulation data. Please see the following references for details:
 
-Michael R. DeLyser and W. G. Noid (2019). “Analysis of local density potentials” The
-Journal of Chemical Physics 151, : 224106 DOI: 10.1063/1.512866
+Michael R. DeLyser and W. G. Noid (2019). "Analysis of local density potentials" The
+Journal of Chemical Physics 151, : 224106 DOI: 10.1063/1.5128665
 
-Michael R. DeLyser and W. G. Noid (2021) “Coarse-grained models for
-local density gradients” The Journal of Chemical Physics, 156, 034106
+Michael R. DeLyser and W. G. Noid (2021) "Coarse-grained models for
+local density gradients" The Journal of Chemical Physics, 156, 034106
 DOI: 10.1063/5.0075291
 
 Example inputs are in the examples/PACKAGES/bocs folder.
