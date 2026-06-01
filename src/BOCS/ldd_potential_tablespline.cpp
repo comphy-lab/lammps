@@ -92,7 +92,7 @@ void LddPotentialTableSpline::spline(double x[], double y[], int n, double yp1, 
 
   y2[n - 1] = (un - qn * u[n - 2]) / (qn * y2[n - 2] + 1.0);
 
-  for (j = n - 2; j > 1; j--) { y2[j] = y2[j] * y2[j + 1] + u[j]; }
+  for (j = n - 2; j > 0; j--) { y2[j] = y2[j] * y2[j + 1] + u[j]; }
 }
 
 void LddPotentialTableSpline::setup_potl(int ipt, int narg, char **arg)
