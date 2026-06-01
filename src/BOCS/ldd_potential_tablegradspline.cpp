@@ -100,10 +100,8 @@ void LddPotentialTableGradSpline::setup_potl(int ipt, int narg, char **arg)
 {
   if (!allocated) allocate();
 
-  if (narg <= ipt + 1) {
-    error->all(FLERR, "ERROR: unable to read filename following table_lin");
-    exit(EXIT_FAILURE);
-  }
+  if (narg <= ipt + 1)
+    error->all(FLERR, "Missing filename following the ldd table/gradspline keyword");
   read_table_file(arg[ipt + 2], true);
 
   spline(&(potl_table.r[0]), &(potl_table.u[0]), potl_table.n_pts, BIGGER, BIGGER,

@@ -50,7 +50,8 @@ void LddPotentialTableGradLin::setup_potl(int ipt, int narg, char **arg)
 {
   if (!allocated) allocate();
 
-  if (narg <= ipt + 1) error->all(FLERR, "ERROR: unable to read filename following table_lin");
+  if (narg <= ipt + 1)
+    error->all(FLERR, "Missing filename following the ldd table/gradlin keyword");
 
   read_table_file(arg[ipt + 2], false);
 }
