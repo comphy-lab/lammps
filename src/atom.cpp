@@ -3367,7 +3367,6 @@ int Atom::extract_datatype(const char *name)
   if (strcmp(name,"apip_lambda_const") == 0) return LAMMPS_DOUBLE;
   if (strcmp(name,"apip_f_const_lambda") == 0) return LAMMPS_DOUBLE_2D;
   if (strcmp(name,"apip_f_dyn_lambda") == 0) return LAMMPS_DOUBLE_2D;
-
   // end of customization section
   // --------------------------------------------------------------------
 

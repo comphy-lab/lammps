@@ -49,17 +49,13 @@ class PairLdd : public Pair {
   void *extract_peratom(const char *, int &) override;
   void coeff_ldd(int si, int sj, int narg, char **arg);
 
-  /* I do this the same way it's done in force.h */
-
-  char *indicator_style;            // key for LDD indicator map
-  class LddIndicator *indicator;    // w(r) and all associated info
+  // factory maps for the indicator and potential subclasses,
+  // built the same way as the style maps in force.cpp
   typedef LddIndicator *(*IndicatorCreator)(LAMMPS *);
   typedef std::map<std::string, IndicatorCreator> IndicatorCreatorMap;
   IndicatorCreatorMap *indicator_map;
   class LddIndicator *new_indicator(const std::string &);
 
-  char *potential_style;            // key for LDD potential U_x map
-  class LddPotential *potential;    // U_x and all associated info
   typedef LddPotential *(*PotentialCreator)(LAMMPS *);
   typedef std::map<std::string, PotentialCreator> PotentialCreatorMap;
   PotentialCreatorMap *potential_map;

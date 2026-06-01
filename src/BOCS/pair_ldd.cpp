@@ -110,14 +110,6 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   ld_grad_energy = nullptr;
   total_energy = nullptr;
 
-  // This is the same as is done in force.cpp
-  char *str = (char *) "none";
-  int n = strlen(str) + 1;
-  indicator_style = new char[n];
-  strcpy(indicator_style, str);
-
-  potential_style = new char[n];
-  strcpy(potential_style, str);
   map = new int[atom->ntypes + 1];
 
   LDD_factory();
@@ -185,8 +177,6 @@ PairLdd::~PairLdd()
   memory->destroy(ld_grad_energy);
   memory->destroy(total_energy);
 
-  delete[] indicator_style;
-  delete[] potential_style;
   delete indicator_map;
   delete potential_map;
 }

@@ -5554,7 +5554,6 @@ TEST_F(AtomStyleTest, oxdna)
     END_HIDE_OUTPUT();
 }
 
-
 } // namespace LAMMPS_NS
 
 int main(int argc, char **argv)
