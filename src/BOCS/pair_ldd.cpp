@@ -89,7 +89,6 @@ PairLdd::PairLdd(LAMMPS *lmp) : Pair(lmp)
   // after compute(), so there is no meaningful single() pair contribution
   single_enable = 0;
   one_coeff = 1;
-  manybody_flag = 1;
   // we communicate the local density and 3 gradient components for each species.
   // the species count is only known after reading the file in coeff(), but
   // nspecies <= ntypes, so size the comm buffers here with the ntypes upper bound
