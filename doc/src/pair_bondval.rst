@@ -28,13 +28,11 @@ Syntax
 Examples
 """"""""
 
-Example for a three-element perovskite BaTiO3 system:
+A three-element perovskite BaTiO3 system:
 
 .. code-block:: LAMMPS
 
    pair_style hybrid/overlay lj/cut/coul/long 8.0 8.0 bondval 2.0 8.0 bondval/vec 2.0 8.0
-
-   read_data btolammps.data
 
    # lj/cut/coul/long parameters: epsilon sigma
    pair_coeff 1 1 lj/cut/coul/long 2.0 2.44805
@@ -63,8 +61,6 @@ Example for a three-element perovskite BaTiO3 system:
 Description
 """""""""""
 
-.. versionadded:: TBD
-
 The bond-valence potential is an empirical potential based on the
 conservation of the bond-valence (bondval) and bond-valence vector
 (bondval/vec), fitted to DFT calculations for a given bulk semiconductor.
@@ -73,19 +69,18 @@ to combine Coulombic, Lennard-Jones repulsion, bond-valence, and
 bond-valence vector contributions.
 
 The bond-valence for a given atom pair (:math:`V_{ij}`) is a measure
-of the bonding strength calculated from the interatomic distance
+of the bonding strength calculated from the length of the bond
 (:math:`r_{ij}`) by:
 
 .. math::
 
-   V_{ij} = \left( \frac{r_{0,ij}}{r_{ij}} \right)^{\alpha_{ij}}
+   V_{ij} = \left( \frac{r0_{ij}}{r_{ij}} \right)^{\alpha_{ij}}
 
-where :math:`r_{0,ij}` and :math:`\alpha_{ij}` are Brown's empirical
-parameters for bond-valence.  The bond-valence vector contribution from
-neighbor j to atom i is defined as
-:math:`\vec{V}_{ij} = V_{ij} \hat{R}_{ji}`, where
-:math:`\hat{R}_{ji} = (\mathbf{r}_i - \mathbf{r}_j)/r_{ij}` is the
-unit vector pointing from atom j toward atom i.
+where :math:`r0_{ij}` and :math:`\alpha_{ij}` are Brown's empirical
+parameters for bond-valence.  The bond-valence vector is a vector lying
+along the bond between atom i and j:
+:math:`\vec{V}_{ij} = V_{ij} \hat{R}_{ij}`, where
+:math:`\hat{R}_{ij}` is the unit vector pointing from atom i toward atom j.
 
 The total potential energy of the system consists of a Coulombic energy
 (:math:`E_c`), a short-range repulsive energy (:math:`E_r`), a
@@ -110,18 +105,17 @@ bond-valence energy (:math:`E_{BV}`), a bond-valence vector energy
 
 .. math::
 
-   E_{BVV} = \sum_i D_i \left(|\vec{W}_i|^2 - W_{0,i}^2\right)^2
+   E_{BVV} = \sum_i D_i \left(|\vec{W}_i|^2-|\vec{W}_{0,i}|^2\right)^2
 
 .. math::
 
    E_a = k \sum_i^{N_{\mathrm{oxygen}}} \left(\theta_i - 180^{\circ}\right)^2
 
 where :math:`V_i = \sum_{j \neq i} V_{ij}` is the bond-valence sum
-(BVS), and :math:`\vec{W}_i = \sum_{j \neq i} V_{ij} \hat{R}_{ji}` is
-the bond-valence vector sum (BVVS) with :math:`\hat{R}_{ji}` the unit
-vector pointing from atom j toward atom i.  :math:`q_i` is the ionic
+(BVS), and :math:`\vec{W}_i = \sum_{j \neq i} \vec{V}_{ij}` is
+the bond-valence vector sum (BVVS), :math:`q_i` is the ionic
 charge, :math:`B_{ij}` is the short-range repulsion parameter,
-:math:`S_i` and :math:`D_i` are spring constants (energy units),
+:math:`S_i` and :math:`D_i` are scaling parameters (energy units),
 :math:`k` is the angle spring constant, and :math:`\theta_i` is the
 O-O-O angle along the common axis of two adjacent oxygen octahedra.
 
@@ -131,9 +125,8 @@ the bond-valence vector energy term.  The remaining energy contributions
 (:math:`E_c` and :math:`E_r`) are typically provided by
 :doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>`, and
 :math:`E_a` by an :doc:`angle_style <angle_style>`.  The *power*
-argument to the pair_style command is the exponent used in computing
-the forces and should be set to 2.0 to be consistent with the
-quadratic energy expressions above.
+argument to the pair_style command specifies the exponent used in computing
+the forces and is usually set to 2.0.
 
 The quantities :math:`r_{ij}`, :math:`V_i`, and :math:`\vec{W}_i`
 are computed at each timestep from the current atom positions.  All
@@ -157,32 +150,31 @@ the pair style name must be included as shown in the examples.
 
 For *bondval*:
 
-* :math:`r_{0,ij}` = Brown's empirical bond-valence parameter (distance units)
-* :math:`\alpha_{ij}` = Brown's empirical bond-valence exponent (dimensionless)
-* :math:`S_i` = bond-valence spring constant (energy units)
-* :math:`V_{0,i}` = ideal bond-valence sum (dimensionless)
+* :math:`r0_{ij}` = first of Brown's empirical bond-valence parameter (distance units)
+* :math:`\alpha_{ij}` = second of Brown's empirical bond-valence exponent (dimensionless)
+* :math:`S_i` = penalty for deviating from ideal bond valence (energy units)
+* :math:`V_{0,i}` = ideal bond-valence for a given atom type (dimensionless)
 * cutoff (distance units) -- optional
 
-The first two parameters (:math:`r_{0,ij}` and :math:`\alpha_{ij}`) are
-pair-dependent and contribute to the bond-valence calculation for all
-atom type pairs.  The spring constant :math:`S_i` and ideal value
-:math:`V_{0,i}` are atom-type dependent and only the same-species values
-(I = J) are used when computing the energy; for cross-species pairs
-(I :math:`\neq` J) they should be set to zero.
+The first two parameters (:math:`r0_{ij}` and :math:`\alpha_{ij}`) are
+pair atom-type dependent and contribute to the bond-valence calculation for all
+atom-type pairs.  The penalty constant :math:`S_i` and ideal value
+:math:`V_{0,i}` are single atom-type dependent. Thus only same-species values
+(I = J) are nonzero in input file. 
 
 For *bondval/vec*:
 
-* :math:`r_{0,ij}` = Brown's empirical bond-valence parameter (distance units)
-* :math:`\alpha_{ij}` = Brown's empirical bond-valence exponent (dimensionless)
-* :math:`D_i` = bond-valence vector spring constant (energy units)
-* :math:`W_{0,i}` = ideal bond-valence vector magnitude (dimensionless)
+* :math:`r0_{ij}` = first of Brown's empirical bond-valence parameter (distance units)
+* :math:`\alpha_{ij}` = second of Brown's empirical bond-valence exponent (dimensionless)
+* :math:`D_i` = penalty for deviating from ideal bond valence vector (energy units)
+* :math:`W_{0,i}` = ideal bond-valence vector for a given atom type (dimensionless)
 * cutoff (distance units) -- optional
 
-The same distinction applies: :math:`r_{0,ij}` and :math:`\alpha_{ij}`
-are pair-dependent and used for all pairs, while :math:`D_i` and
-:math:`W_{0,i}` are atom-type dependent and only the same-species values
-(I = J) contribute to the energy.  For cross-species pairs (I
-:math:`\neq` J) they should be set to zero.
+The same distinction applies: :math:`r0_{ij}` and :math:`\alpha_{ij}`
+are pair atom-type dependent and used for all pairs, while :math:`D_i` and
+:math:`W_{0,i}` are atom-type dependent. Thus only same-species values
+(I = J) are nonzero in input file. 
+
 
 The final cutoff coefficient is optional for both styles.  If not
 specified, the global cutoff given in the pair_style command is used.
@@ -225,10 +217,13 @@ For a physically correct simulation, *bondval*, *bondval/vec*, and a
 :doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>` contribution
 for :math:`E_c` and :math:`E_r` must all be combined via
 ``hybrid/overlay``.  The published parameters for this potential are
-fitted to reproduce only the :math:`r^{-12}` repulsion term
-(:math:`E_r`); the attractive :math:`r^{-6}` contribution of the
-Lennard-Jones potential should be suppressed by appropriate choice of
-the :math:`\epsilon` and :math:`\sigma` coefficients.
+fitted to only include :math:`r^{-12}` repulsion term
+(:math:`E_r`) in the Lennard-Jones potential, while the attractive :math:`r^{-6}` 
+contribution is set to 0. 
+To run with the published parameters correctly, users must manually initialize 
+the internal variables ``lj2`` and ``lj4`` in the source code of
+:doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>` to be zero
+in order to remove the attractive :math:`r^{-6}` contribution.
 
 Related commands
 """"""""""""""""
