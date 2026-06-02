@@ -389,12 +389,12 @@ different CG studies and are listed below:
 
 .. _Lesniewski1:
 
-**(Lesniewski)** Lesniewski, Remsing, Noid "Coarse Graining the Hydrophobic Effect." The Journal of Chemical Physics, In Prep 2025
+**(Lesniewski)** Lesniewski, Remsing, Noid "Revisiting what we lose by coarse-graining: Modeling cooperative hydrophobic phenomena with short-ranged, pair-additive forces." The Journal of Chemical Physics, 164, 204111 (2026)
 
 .. _Dutta:
 
-**(Dutta)** Dutta, Lesniewski, Qaisrani, Noid, Andrienko, Nikoubashman. "Accurate coarse-graining of small organic molecules in melts and thin films using density-dependent potentials". In Prep 2025
+**(Dutta)** Dutta, Lesniewski, Qaisrani, Noid, Andrienko, Nikoubashman. "Accurate coarse-graining of conjugated organic molecules in melts and thin films using density-dependent potentials". The Journal of Chemical Theory and Computation, 22, 7, 3697-3708 (2026)
 
 .. _Lesniewski2:
 
-**(Lesniewski)** Lesniewski, DeLyser, W. G. Noid "Progress toward a better BOCS: systematic coarse-graining with local density potentials" In Prep 2025
+**(Lesniewski)** Lesniewski, DeLyser, W. G. Noid "Progress toward a better BOCS: systematic coarse-graining with local density potentials" In Prep 2026
