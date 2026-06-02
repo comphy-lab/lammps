@@ -77,7 +77,7 @@ primary style in the title (or to use a more generic title), and to make
 sure each documented style has an index entry and is reachable through
 the command tables.
 
-In reStructuredText a heading is indicated by underling it with
+In reStructuredText a heading is indicated by underlining it with
 characters and the the level of a heading is set by kind of character
 used.  The underline must be **at least as long** as the heading text; a
 shorter underline will trigger an error message, and the convention is
@@ -441,13 +441,6 @@ are acceptable:
   examples/PACKAGES/foo``;
 * reference specific input files by their path in the relevant
   discussion.
-
-There is additional, semi-automated tooling for keeping the lists of
-example directories in the manual and the top-level ``README``
-synchronized (proposed in pull request #4995).  Once that is merged, the
-example lists can be regenerated instead of being edited by hand; until
-then, keep any example references in the documentation consistent with
-the directories you add.
 
 Other documentation that may need updating
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
