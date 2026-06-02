@@ -212,7 +212,8 @@ types to species A and B from the potential file:
 
    ## Run / Output
    run_style verlet
-   neighbor 15.0 bin
+   neigh_modify    delay 5 every 1 check yes
+   neighbor        2.0 bin
    thermo 500
 
    fix 1 all nvt temp 300.0 300.0 100.0
@@ -257,7 +258,7 @@ interactions are layered in with :doc:`pair_style hybrid/overlay
    bond_style harmonic
 
    region my_box block 0 40 0 40 0 40
-   create_box 2 my_box bond/types 1
+   create_box 2 my_box bond/types 1 extra/bond/per/atom 1
 
    mass 1 59.044
    mass 2 59.044
@@ -276,7 +277,8 @@ interactions are layered in with :doc:`pair_style hybrid/overlay
 
    ## Run / Output
    run_style verlet
-   neighbor 15.0 bin
+   neigh_modify    delay 5 every 1 check yes
+   neighbor        2.0 bin
    thermo 500
 
    fix 1 all nvt temp 300.0 300.0 100.0
