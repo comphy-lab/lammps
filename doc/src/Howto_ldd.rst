@@ -301,7 +301,7 @@ See :doc:`pair_style ldd <pair_ldd>` for all pair_coeff *args* options that exis
 
 -------------------------
 
-read_data file format examples
+read_data file format
 ------------------------------
 
 The *ldd* pair style does not require a special atom style: the local
@@ -310,90 +310,6 @@ pair style and recomputed every step, so they are never read from or
 written to a data file.  The ``read_data`` input therefore follows the
 usual format for whatever atom style you choose, e.g. *atomic* for a
 simple system or *full* for a molecular one.
-
-Example 1) a simple atomic system (``atom_style atomic``)
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code-block:: LAMMPS
-
-   Topology of CG water translated from gromacs input
-
-   5000 atoms
-   0 bonds
-   0 angles
-   0 dihedrals
-   0 impropers
-
-   1 atom types
-   0 bond types
-   0 angle types
-   0 dihedral types
-   0 improper types
-
-   0.000000 53.222800 xlo xhi
-   0.000000 53.222800 ylo yhi
-   0.000000 53.222800 zlo zhi
-
-   Masses
-
-   1 18.0154 # SOL
-
-   Atoms
-
-   1 1 46.050000 19.400000 9.760000 #atidx typeidx x y z
-   2 1 7.860000 36.680000 8.090000
-   3 1 42.340000 39.600000 8.310000
-   4 1 22.950000 37.630000 5.880000
-
-   .
-   .
-   .
-   .
-   4998 1 15.120000 8.330000 19.900000
-   4999 1 5.300000 42.540000 30.500000
-   5000 1 44.600000 18.310000 51.990000
-
-
-Example 2) the .data file up to the "Atoms" section for a molecular system (``atom_style full``). Bonds/Angles/Dihedral syntax are standard as listed in :doc:`read_data <read_data>`.
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code-block:: LAMMPS
-
-   LAMMPS data file via write_data, version 12 Jun 2025, timestep = 985, units = real
-
-   500 atoms
-   4 atom types
-   375 bonds
-   1 bond types
-   250 angles
-   1 angle types
-   125 dihedrals
-   1 dihedral types
-
-   0 40 xlo xhi
-   0 40 ylo yhi
-   0 40 zlo zhi
-
-   Masses
-
-   1 59.0448
-   2 59.0448
-   3 59.0448
-   4 59.0448
-
-   Atoms # hybrid
-
-   19 3 6.337397372531347 1.5408419900080126 7.155488269009223 5 0 0 0 0 #id type x y z molid q nx ny nz
-   20 4 4.504049144010551 1.3471156110429994 9.244879846603403 5 0 0 0 0
-   129 1 6.919214369251321 4.484508069873466 10.334931011393717 33 0 0 0 0
-   130 2 4.485538449090976 5.13320081653011 11.674419677953514 33 0 0 0 0
-   131 3 4.2382325348268 7.693584581555052 10.175944460105603 33 0 0 0 0
-   132 4 2.4530920970231946 8.798676084329882 12.317895781012147 33 0 0 0 0
-
-   .
-   .
-   .
-
 
 -------------------------
 
@@ -407,6 +323,8 @@ is a local density of :math:`\beta` particles that surround :math:`I`,
 the per-species LD/SG energies and the per-atom total energy) are made
 available to the rest of LAMMPS through the :doc:`fix pair <fix_pair>`
 command, which copies the chosen pair-style fields into a per-atom array.
+:doc:`\pair_style ldd <pair_ldd>` describes the list of available options and quantities output.
+
 For example:
 
 .. code-block:: LAMMPS
