@@ -233,8 +233,8 @@ with the potential file ``my_mix.ldd``:
    B A indicator dpd 0.0 5.5 self no  potential table/lin LD_table.2.1.dat
    B B indicator dpd 0.0 5.5 self yes potential table/lin LD_table.2.2.dat
 
-Note in the above example, only species pairs A|A, B|A, and B|B interact
-according to LD potentials (the A B entry is ignored).
+Note in the above example, only species pairs A|A, A|B, and B|B interact
+according to LD potentials (the A B entry, corresponding to B|A, is ignored).
 
 Example 2) Molecular input example that layers tabulated pair, LD and SG interactions via :doc:`pair_style hybrid <pair_hybrid>`
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -323,7 +323,7 @@ is a local density of :math:`\beta` particles that surround :math:`I`,
 the per-species LD/SG energies and the per-atom total energy) are made
 available to the rest of LAMMPS through the :doc:`fix pair <fix_pair>`
 command, which copies the chosen pair-style fields into a per-atom array.
-:doc:`\pair_style ldd <pair_ldd>` describes the list of available options and quantities output.
+:doc:`\pair_style ldd <pair_ldd>` describes the available options and quantities output.
 
 For example:
 
