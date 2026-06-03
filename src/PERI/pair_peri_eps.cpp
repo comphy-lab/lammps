@@ -148,7 +148,7 @@ void PairPeriEPS::compute(int eflag, int vflag)
         // of the bond-based theory used in PMB model
 
         double kshort = (15.0 * 18.0 * bulkmodulus[itype][itype]) /
-          (3.141592653589793 * cutsq[itype][jtype] * cutsq[itype][jtype]);
+          (MY_PI * cutsq[itype][jtype] * cutsq[itype][jtype]);
         rk = (kshort * vfrac[j]) * (dr / cut[itype][jtype]);
 
         if (r > 0.0) fpair = -(rk/r);

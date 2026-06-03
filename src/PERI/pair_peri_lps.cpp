@@ -179,7 +179,7 @@ void PairPeriLPS::compute(int eflag, int vflag)
 
   // communicate dilatation (theta) of each particle
   comm->forward_comm(this);
-  // communicate wighted volume (wvolume) upon every reneighbor
+  // communicate weighted volume (wvolume) upon every reneighbor
   if (neighbor->ago == 0)
     comm->forward_comm(fix_peri_neigh);
 
