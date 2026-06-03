@@ -175,7 +175,7 @@ void PairPeriEPS::compute(int eflag, int vflag)
   int  maxpartner = 0;
   for (i = 0; i < nlocal; i++) maxpartner = MAX(maxpartner,npartner[i]);
 
-  if (nlocal > nmax) {
+  if (atom->nmax > nmax) {
     memory->destroy(s0_new);
     memory->destroy(smin_new);
     memory->destroy(theta);
