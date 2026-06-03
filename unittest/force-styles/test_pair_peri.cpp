@@ -52,12 +52,12 @@ namespace LAMMPS_NS {
 // single MPI rank, so nlocal == natoms and tags are dense 1..natoms)
 struct PeriData {
     int natoms = 0;
-    std::vector<double> z;       // reference-frame z coordinate, by tag-1
-    std::vector<int> type;       // atom type, by tag-1
-    std::vector<double> damage;  // fraction of broken bonds, by tag-1
-    std::vector<double> s0;      // per-atom critical stretch, by tag-1
-    std::vector<double> smin;    // per-atom minimum stretch, by tag-1
-    std::vector<double> fx, fy, fz;  // per-atom force, by tag-1
+    std::vector<double> z;          // reference-frame z coordinate, by tag-1
+    std::vector<int> type;          // atom type, by tag-1
+    std::vector<double> damage;     // fraction of broken bonds, by tag-1
+    std::vector<double> s0;         // per-atom critical stretch, by tag-1
+    std::vector<double> smin;       // per-atom minimum stretch, by tag-1
+    std::vector<double> fx, fy, fz; // per-atom force, by tag-1
     double max_damage = 0.0;
 };
 
@@ -82,9 +82,14 @@ protected:
     void create(const std::vector<std::string> &extra = {})
     {
         destroy();
-        LAMMPS::argv args = {"PeriTest", "-log", "none", "-screen", "none", "-nocite"};
-        for (const auto &e : extra) args.push_back(e);
-        if (!verbose) ::testing::internal::CaptureStdout();
+        LAMMPS::argv args = {"PeriTest", "-log", "none", "-nocite"};
+        for (const auto &e : extra)
+            args.push_back(e);
+        if (!verbose) {
+            args.push_back("-screen");
+            args.push_back("none");
+            ::testing::internal::CaptureStdout();
+        }
         lmp = new LAMMPS(args, MPI_COMM_WORLD);
         if (!verbose) ::testing::internal::GetCapturedStdout();
     }
@@ -133,8 +138,7 @@ protected:
             // type interface so that bonds crossing it are stretched
             double dlo = stretch * (0.0 - 4.5);
             double dhi = stretch * (10.0 - 4.5);
-            command(fmt::format("displace_atoms all ramp z {} {} z 0.0 10.0 units box",
-                                dlo, dhi));
+            command(fmt::format("displace_atoms all ramp z {} {} z 0.0 10.0 units box", dlo, dhi));
         }
         command("run 1 post no");
     }
@@ -143,7 +147,7 @@ protected:
     {
         PeriData d;
         auto *atom = lmp->atom;
-        d.natoms   = (int) atom->natoms;
+        d.natoms   = (int)atom->natoms;
         d.z.assign(d.natoms, 0.0);
         d.type.assign(d.natoms, 0);
         d.damage.assign(d.natoms, 0.0);
@@ -157,24 +161,24 @@ protected:
         cdmg->compute_peratom();
         double *dmg = cdmg->vector_atom;
 
-        double **x0    = atom->x0;
-        double **f     = atom->f;
-        int *type      = atom->type;
-        double *s0     = atom->s0;
-        double *smin   = atom->smin;
-        tagint *tag    = atom->tag;
-        int nlocal     = atom->nlocal;
+        double **x0  = atom->x0;
+        double **f   = atom->f;
+        int *type    = atom->type;
+        double *s0   = atom->s0;
+        double *smin = atom->smin;
+        tagint *tag  = atom->tag;
+        int nlocal   = atom->nlocal;
         for (int i = 0; i < nlocal; ++i) {
-            int t = (int) tag[i] - 1;
+            int t = (int)tag[i] - 1;
             if (t < 0 || t >= d.natoms) continue;
-            d.z[t]      = x0[i][2];
-            d.type[t]   = type[i];
-            d.damage[t] = dmg[i];
-            d.s0[t]     = s0[i];
-            d.smin[t]   = smin[i];
-            d.fx[t]     = f[i][0];
-            d.fy[t]     = f[i][1];
-            d.fz[t]     = f[i][2];
+            d.z[t]       = x0[i][2];
+            d.type[t]    = type[i];
+            d.damage[t]  = dmg[i];
+            d.s0[t]      = s0[i];
+            d.smin[t]    = smin[i];
+            d.fx[t]      = f[i][0];
+            d.fy[t]      = f[i][1];
+            d.fz[t]      = f[i][2];
             d.max_damage = std::max(d.max_damage, dmg[i]);
         }
         return d;
@@ -251,7 +255,7 @@ TEST_F(PeriTest, lps_interface_fracture_984)
     PeriData weak = extract();
 
     double near_sum = 0.0;
-    int near_n = 0;
+    int near_n      = 0;
     for (int t = 0; t < weak.natoms; ++t)
         if (std::fabs(weak.z[t] - 4.5) < 1.5) {
             near_sum += weak.damage[t];
@@ -269,7 +273,7 @@ TEST_F(PeriTest, lps_interface_fracture_984)
 TEST_F(PeriTest, no_break_below_threshold)
 {
     create();
-    build_bar(pmb(0.1, 0.1, 0.25), 0.01);  // strain 0.01 < s00 0.1
+    build_bar(pmb(0.1, 0.1, 0.25), 0.01); // strain 0.01 < s00 0.1
     PeriData d = extract();
     EXPECT_DOUBLE_EQ(d.max_damage, 0.0);
 }
@@ -319,10 +323,10 @@ TEST_F(PeriTest, momentum_conservation)
     command("run 0 post no");
 
     auto px = [&]() {
-        double **v   = lmp->atom->v;
+        double **v    = lmp->atom->v;
         double *rmass = lmp->atom->rmass;
-        int nlocal   = lmp->atom->nlocal;
-        double p[3]  = {0.0, 0.0, 0.0};
+        int nlocal    = lmp->atom->nlocal;
+        double p[3]   = {0.0, 0.0, 0.0};
         for (int i = 0; i < nlocal; ++i) {
             p[0] += rmass[i] * v[i][0];
             p[1] += rmass[i] * v[i][1];
@@ -333,7 +337,8 @@ TEST_F(PeriTest, momentum_conservation)
     auto p0 = px();
     command("run 50 post no");
     auto p1 = px();
-    for (int k = 0; k < 3; ++k) EXPECT_NEAR(p0[k], p1[k], 1.0e-10);
+    for (int k = 0; k < 3; ++k)
+        EXPECT_NEAR(p0[k], p1[k], 1.0e-10);
 }
 
 // ------------------------------------------------------------------------
