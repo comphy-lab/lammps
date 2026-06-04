@@ -54,7 +54,7 @@ class EwaldGPU {
   /** Called from the kspace setup() so it is refreshed whenever the box
     * changes.  (Re)allocates the k-vector and structure-factor buffers. **/
   void setup(const int kmax, const int kcount, int *kxvecs, int *kyvecs,
-             int *kzvecs, double *unitk, bool &success);
+             int *kzvecs, double **eg, double *unitk, bool &success);
 
   /// Compute the local (per-rank) structure factors on the device.
   /** Uploads x/q (gated on ago), runs the cs/sn and structure-factor
@@ -62,6 +62,12 @@ class EwaldGPU {
   int structure(const int ago, const int nlocal, const int nall,
                 double **host_x, int *host_type, double *host_q,
                 double *host_sfacrl, double *host_sfacim, bool &success);
+
+  /// K-space field/force: upload the global structure factors and run the
+  /// field kernel, reusing the resident cs/sn.  The k-space force is queued
+  /// for merging with the pair force by fix gpu.
+  void compute_forces(double *host_sfacrl_all, double *host_sfacim_all,
+                      const double qscale, const int slabflag, bool &success);
 
   /// Check if there is enough storage for atom arrays and realloc if not
   inline void resize_atom(const int inum, const int nall, bool &success) {
@@ -104,16 +110,19 @@ class EwaldGPU {
   /// k-vector integer indices (length kcount), constant per box
   UCL_D_Vec<int> d_kxvecs, d_kyvecs, d_kzvecs;
 
+  /// per-k field coefficients eg[k][0..2] packed into x,y,z (constant per box)
+  UCL_D_Vec<numtyp4> d_eg;
+
   /// cos/sin of m*unitk[ic]*r for m in [-kmax,kmax], 3 dirs, all local atoms
   UCL_D_Vec<numtyp> d_cs, d_sn;
 
-  /// local (per-rank) structure factors, copied back to host each step
+  /// structure factors: local after k_structure, global (sfac_all) for k_field
   UCL_Vector<acctyp,acctyp> d_sfacrl, d_sfacim;
 
   // ------------------------- DEVICE KERNELS -------------------------
 
   UCL_Program *ewald_program;
-  UCL_Kernel k_cssn, k_structure;
+  UCL_Kernel k_cssn, k_structure, k_field;
 
   // --------------------------- TEXTURES -----------------------------
 
@@ -129,6 +138,10 @@ class EwaldGPU {
   int _kmax, _kcount, _nlocal;
   int _cs_kmax, _cs_nlocal;
   numtyp _unitk[3];
+
+  // per-step field/force parameters (kept as members for stable kernel args)
+  numtyp _qscale;
+  int _slabflag;
 
   void compile_kernels(UCL_Device &dev);
   void resize_cssn(const int nlocal, bool &success);

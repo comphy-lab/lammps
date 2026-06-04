@@ -48,6 +48,7 @@ EwaldGPUT::~EwaldGPU() {
   clear(0.0);
   k_cssn.clear();
   k_structure.clear();
+  k_field.clear();
   if (ewald_program) delete ewald_program;
   delete ans;
 }
@@ -92,7 +93,8 @@ int EwaldGPUT::init(const int nlocal, const int nall, FILE *_screen,
 // ---------------------------------------------------------------------------
 template <class numtyp, class acctyp>
 void EwaldGPUT::setup(const int kmax, const int kcount, int *kxvecs,
-                      int *kyvecs, int *kzvecs, double *unitk, bool &success) {
+                      int *kyvecs, int *kzvecs, double **eg, double *unitk,
+                      bool &success) {
   _kmax=kmax;
   _kcount=kcount;
   _unitk[0]=(numtyp)unitk[0];
@@ -111,13 +113,19 @@ void EwaldGPUT::setup(const int kmax, const int kcount, int *kxvecs,
   success = success && (d_kzvecs.alloc(kcount,*ucl_device,UCL_READ_ONLY)==
                         UCL_SUCCESS);
 
+  // (re)allocate and upload the field coefficients eg[k][0..2]
+
+  d_eg.clear();
+  success = success && (d_eg.alloc(kcount,*ucl_device,UCL_READ_ONLY)==
+                        UCL_SUCCESS);
+
   // (re)allocate the structure-factor buffers (host+device, length kcount)
 
   d_sfacrl.clear();
   d_sfacim.clear();
-  success = success && (d_sfacrl.alloc(kcount,*ucl_device,UCL_WRITE_ONLY,
+  success = success && (d_sfacrl.alloc(kcount,*ucl_device,UCL_READ_WRITE,
                                        UCL_READ_WRITE)==UCL_SUCCESS);
-  success = success && (d_sfacim.alloc(kcount,*ucl_device,UCL_WRITE_ONLY,
+  success = success && (d_sfacim.alloc(kcount,*ucl_device,UCL_READ_WRITE,
                                        UCL_READ_WRITE)==UCL_SUCCESS);
   if (!success)
     return;
@@ -130,10 +138,54 @@ void EwaldGPUT::setup(const int kmax, const int kcount, int *kxvecs,
   view.view(kzvecs,kcount,*ucl_device);
   ucl_copy(d_kzvecs,view,false);
 
+  UCL_H_Vec<numtyp4> eg_view;
+  eg_view.alloc(kcount,*ucl_device);
+  for (int k=0; k<kcount; k++) {
+    eg_view[k].x=(numtyp)eg[k][0];
+    eg_view[k].y=(numtyp)eg[k][1];
+    eg_view[k].z=(numtyp)eg[k][2];
+    eg_view[k].w=(numtyp)0.0;
+  }
+  ucl_copy(d_eg,eg_view,false);
+  eg_view.clear();
+
   // force reallocation of the per-atom cs/sn arrays (kmax may have changed)
 
   _cs_kmax=-1;
   _cs_nlocal=0;
+}
+
+// ---------------------------------------------------------------------------
+// K-space contribution to the per-atom field and force
+// ---------------------------------------------------------------------------
+template <class numtyp, class acctyp>
+void EwaldGPUT::compute_forces(double *host_sfacrl_all, double *host_sfacim_all,
+                               const double qscale, const int slabflag,
+                               bool &success) {
+  if (_nlocal==0)
+    return;
+
+  // upload the global structure factors (after the host MPI_Allreduce)
+  for (int k=0; k<_kcount; k++) {
+    d_sfacrl[k]=(acctyp)host_sfacrl_all[k];
+    d_sfacim[k]=(acctyp)host_sfacim_all[k];
+  }
+  d_sfacrl.update_device(_kcount,false);
+  d_sfacim.update_device(_kcount,false);
+
+  _qscale=(numtyp)qscale;
+  _slabflag=slabflag;
+
+  const int BX=_block_size;
+  const int GX=static_cast<int>(ceil(static_cast<double>(_nlocal)/BX));
+  k_field.set_size(GX,BX);
+  k_field.run(&atom->q, &d_cs, &d_sn, &d_kxvecs, &d_kyvecs, &d_kzvecs, &d_eg,
+              &d_sfacrl, &d_sfacim, &ans->force, &_qscale, &_slabflag, &_kmax,
+              &_nlocal, &_kcount);
+
+  ans->copy_answers(false,false,false,false,0);
+  device->add_ans_object(ans);
+  success=true;
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +270,7 @@ void EwaldGPUT::clear(const double /*cpu_time*/) {
   d_kxvecs.clear();
   d_kyvecs.clear();
   d_kzvecs.clear();
+  d_eg.clear();
   d_cs.clear();
   d_sn.clear();
   d_sfacrl.clear();
@@ -245,6 +298,7 @@ void EwaldGPUT::compile_kernels(UCL_Device &dev) {
 
   k_cssn.set_function(*ewald_program,"k_ewald_cssn");
   k_structure.set_function(*ewald_program,"k_ewald_structure");
+  k_field.set_function(*ewald_program,"k_ewald_field");
   pos_tex.get_texture(*ewald_program,"pos_tex");
   q_tex.get_texture(*ewald_program,"q_tex");
 

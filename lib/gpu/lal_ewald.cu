@@ -140,3 +140,60 @@ __kernel void k_ewald_structure(const __global numtyp *restrict q_,
     sfacim[k]=si;
   }
 }
+
+// ---------------------------------------------------------------------------
+// K-space contribution to the per-atom electric field and force.
+// One thread per atom sums over all k-vectors, reusing the resident cs/sn and
+// the global structure factors sfacrl_all/sfacim_all.  Writes the k-space
+// force qscale*q_i*ek_i into the answer array (merged with the pair force by
+// fix gpu).
+// ---------------------------------------------------------------------------
+__kernel void k_ewald_field(const __global numtyp *restrict q_,
+                            const __global numtyp *restrict cs,
+                            const __global numtyp *restrict sn,
+                            const __global int *restrict kxvecs,
+                            const __global int *restrict kyvecs,
+                            const __global int *restrict kzvecs,
+                            const __global numtyp4 *restrict eg,
+                            const __global acctyp *restrict sfacrl_all,
+                            const __global acctyp *restrict sfacim_all,
+                            __global acctyp3 *restrict ans,
+                            const numtyp qscale, const int slabflag,
+                            const int kmax, const int nlocal, const int kcount) {
+  int i=GLOBAL_ID_X;
+  if (i<nlocal) {
+    acctyp ekx=(acctyp)0.0;
+    acctyp eky=(acctyp)0.0;
+    acctyp ekz=(acctyp)0.0;
+
+    for (int k=0; k<kcount; k++) {
+      const int kx=kxvecs[k];
+      const int ky=kyvecs[k];
+      const int kz=kzvecs[k];
+      const numtyp csx=cs[CS_INDEX(kx,0,i,nlocal,kmax)];
+      const numtyp snx=sn[CS_INDEX(kx,0,i,nlocal,kmax)];
+      const numtyp csy=cs[CS_INDEX(ky,1,i,nlocal,kmax)];
+      const numtyp sny=sn[CS_INDEX(ky,1,i,nlocal,kmax)];
+      const numtyp csz=cs[CS_INDEX(kz,2,i,nlocal,kmax)];
+      const numtyp snz=sn[CS_INDEX(kz,2,i,nlocal,kmax)];
+      const numtyp cypz=csy*csz-sny*snz;
+      const numtyp sypz=sny*csz+csy*snz;
+      const numtyp exprl=csx*cypz-snx*sypz;
+      const numtyp expim=snx*cypz+csx*sypz;
+      const acctyp partial=expim*sfacrl_all[k]-exprl*sfacim_all[k];
+      const numtyp4 egk=eg[k];
+      ekx+=partial*egk.x;
+      eky+=partial*egk.y;
+      ekz+=partial*egk.z;
+    }
+
+    numtyp qi;
+    fetch(qi,i,q_tex);
+    const numtyp qfac=qscale*qi;
+    acctyp3 f;
+    f.x=qfac*ekx;
+    f.y=qfac*eky;
+    f.z=(slabflag!=2) ? qfac*ekz : (acctyp)0.0;
+    ans[i]=f;
+  }
+}
