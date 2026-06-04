@@ -37,6 +37,8 @@ class PairPeriEPS : public PairPeri {
   void read_restart_settings(FILE *) override {}
   double compute_DeviatoricForceStateNorm(int);
   double memory_usage() override;
+ private:
+  int maxpartner;
 };
 
 }    // namespace LAMMPS_NS

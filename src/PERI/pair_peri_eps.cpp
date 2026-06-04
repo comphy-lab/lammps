@@ -170,7 +170,7 @@ void PairPeriEPS::compute(int eflag, int vflag)
 
   // grow bond forces array if necessary
 
-  int  maxpartner = 0;
+  maxpartner = 0;
   for (i = 0; i < nlocal; i++) maxpartner = MAX(maxpartner,npartner[i]);
 
   if (nlocal > nmax) {
@@ -560,6 +560,6 @@ double PairPeriEPS::compute_DeviatoricForceStateNorm(int i)
 double PairPeriEPS::memory_usage()
 {
   double bytes = PairPeri::memory_usage();
-  // TEMPORARY: deviatorPlasticExtTemp[nlocal][maxpartner] during compute()
+  bytes += (double) sizeof(double) * maxpartner * atom->nlocal;
   return bytes;
 }
