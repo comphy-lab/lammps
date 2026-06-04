@@ -26,7 +26,6 @@
 #include "modify.h"
 #include "fix.h"
 #include "fix_property_atom_kokkos.h"
-#include "utils.h"
 
 #include <map>
 
