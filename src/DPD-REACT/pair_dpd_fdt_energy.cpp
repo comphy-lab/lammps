@@ -583,3 +583,12 @@ void PairDPDfdtEnergy::unpack_reverse_comm(int n, int *list, double *buf)
     duMech[j] += buf[m++];
   }
 }
+
+/* ---------------------------------------------------------------------- */
+
+double PairDPDfdtEnergy::memory_usage()
+{
+  double bytes = Pair::memory_usage();
+  if (duCond) bytes += (double)(atom->nlocal + atom->nghost) * 2 * sizeof(double);    // duCond + duMech
+  return bytes;
+}
