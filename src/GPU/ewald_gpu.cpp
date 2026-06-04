@@ -34,14 +34,16 @@ using namespace MathConst;
 void EWALD_GPU_API(init)(const int nlocal, const int nall, FILE *screen,
                          int &success);
 void EWALD_GPU_API(setup)(const int kmax, const int kcount, int *kxvecs,
-                          int *kyvecs, int *kzvecs, double **eg, double *unitk,
-                          int &success);
+                          int *kyvecs, int *kzvecs, double *ug, double **eg,
+                          double **vg, double *unitk, int &success);
 int EWALD_GPU_API(structure)(const int ago, const int nlocal, const int nall,
                              double **host_x, int *host_type, double *host_q,
                              double *host_sfacrl, double *host_sfacim,
                              bool &success);
 void EWALD_GPU_API(compute)(double *host_sfacrl_all, double *host_sfacim_all,
                             const double qscale, const int slabflag,
+                            const int eflag_atom, const int vflag_atom,
+                            double *host_eatom, double **host_vatom,
                             bool &success);
 void EWALD_GPU_API(clear)(const double cpu_time);
 double EWALD_GPU_API(bytes)();
@@ -88,7 +90,8 @@ void EwaldGPU::setup()
   Ewald::setup();
 
   int success = 0;
-  EWALD_GPU_API(setup)(kmax, kcount, kxvecs, kyvecs, kzvecs, eg, unitk, success);
+  EWALD_GPU_API(setup)(kmax, kcount, kxvecs, kyvecs, kzvecs, ug, eg, vg, unitk,
+                       success);
   GPU_EXTRA::check_flag(success, error, world);
 }
 
@@ -106,18 +109,17 @@ void EwaldGPU::compute(int eflag, int vflag)
   }
   if (qsqsum == 0.0) return;
 
-  // triclinic, or per-atom energy/virial requested: use the host path.
-  // Ewald::compute() still gets its structure factors from the device via the
-  // overridden eik_dot_r(); the host loop then handles the per-atom terms.
-  // (Per-atom on the device is added in stage C2.)
+  // triclinic boxes use the host path; Ewald::compute() still gets its
+  // structure factors from the device via the overridden eik_dot_r()
 
-  if (triclinic || evflag_atom) {
+  if (triclinic) {
     Ewald::compute(eflag, vflag);
     return;
   }
 
   const int nlocal = atom->nlocal;
   const int nall = atom->nlocal + atom->nghost;
+  double *q = atom->q;
 
   // structure factors on the device
 
@@ -132,10 +134,11 @@ void EwaldGPU::compute(int eflag, int vflag)
 
   const double qscale = qqrd2e * scale;
 
-  // per-atom field/force on the device (queued for fix gpu to merge with the
-  // pair force)
+  // per-atom field/force on the device (force queued for fix gpu to merge
+  // with the pair force; raw per-atom energy/virial copied into eatom/vatom)
 
-  EWALD_GPU_API(compute)(sfacrl_all, sfacim_all, qscale, slabflag, success);
+  EWALD_GPU_API(compute)(sfacrl_all, sfacim_all, qscale, slabflag, eflag_atom,
+                         vflag_atom, eatom, vatom, success);
   if (!success)
     error->one(FLERR, "Insufficient memory on accelerator for ewald/gpu");
 
@@ -159,6 +162,22 @@ void EwaldGPU::compute(int eflag, int vflag)
       for (int j = 0; j < 6; j++) virial[j] += uk*vg[k][j];
     }
     for (int j = 0; j < 6; j++) virial[j] *= qscale;
+  }
+
+  // per-atom energy/virial: the device returned the raw k-vector sums; apply
+  // the q_i factor, self-energy correction, and qscale here to match the CPU
+
+  if (evflag_atom) {
+    if (eflag_atom) {
+      for (int i = 0; i < nlocal; i++) {
+        eatom[i] = q[i]*eatom[i] - (g_ewald*q[i]*q[i]/MY_PIS +
+          MY_PI2*q[i]*qsum / (g_ewald*g_ewald*volume));
+        eatom[i] *= qscale;
+      }
+    }
+    if (vflag_atom)
+      for (int i = 0; i < nlocal; i++)
+        for (int j = 0; j < 6; j++) vatom[i][j] *= q[i]*qscale;
   }
 
   // 2d slab correction (host; adds to atom->f and the energy)

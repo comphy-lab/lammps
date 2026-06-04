@@ -80,10 +80,10 @@ void ewald_gpu_init_d(const int nlocal, const int nall, FILE *screen,
 // Upload the (constant per box) k-vectors and grid parameters
 // ---------------------------------------------------------------------------
 void ewald_gpu_setup_d(const int kmax, const int kcount, int *kxvecs,
-                       int *kyvecs, int *kzvecs, double **eg, double *unitk,
-                       int &success) {
+                       int *kyvecs, int *kzvecs, double *ug, double **eg,
+                       double **vg, double *unitk, int &success) {
   bool succ=true;
-  EWALDMF.setup(kmax,kcount,kxvecs,kyvecs,kzvecs,eg,unitk,succ);
+  EWALDMF.setup(kmax,kcount,kxvecs,kyvecs,kzvecs,ug,eg,vg,unitk,succ);
   success = succ ? 0 : -3;
 }
 
@@ -103,9 +103,11 @@ int ewald_gpu_structure_d(const int ago, const int nlocal, const int nall,
 // ---------------------------------------------------------------------------
 void ewald_gpu_compute_d(double *host_sfacrl_all, double *host_sfacim_all,
                          const double qscale, const int slabflag,
+                         const int eflag_atom, const int vflag_atom,
+                         double *host_eatom, double **host_vatom,
                          bool &success) {
   EWALDMF.compute_forces(host_sfacrl_all,host_sfacim_all,qscale,slabflag,
-                         success);
+                         eflag_atom,vflag_atom,host_eatom,host_vatom,success);
 }
 
 void ewald_gpu_clear_d(const double cpu_time) {

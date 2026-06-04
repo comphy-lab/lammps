@@ -93,8 +93,8 @@ int EwaldGPUT::init(const int nlocal, const int nall, FILE *_screen,
 // ---------------------------------------------------------------------------
 template <class numtyp, class acctyp>
 void EwaldGPUT::setup(const int kmax, const int kcount, int *kxvecs,
-                      int *kyvecs, int *kzvecs, double **eg, double *unitk,
-                      bool &success) {
+                      int *kyvecs, int *kzvecs, double *ug, double **eg,
+                      double **vg, double *unitk, bool &success) {
   _kmax=kmax;
   _kcount=kcount;
   _unitk[0]=(numtyp)unitk[0];
@@ -113,10 +113,16 @@ void EwaldGPUT::setup(const int kmax, const int kcount, int *kxvecs,
   success = success && (d_kzvecs.alloc(kcount,*ucl_device,UCL_READ_ONLY)==
                         UCL_SUCCESS);
 
-  // (re)allocate and upload the field coefficients eg[k][0..2]
+  // (re)allocate and upload the energy/field/virial coefficients
 
   d_eg.clear();
+  d_ug.clear();
+  d_vg.clear();
   success = success && (d_eg.alloc(kcount,*ucl_device,UCL_READ_ONLY)==
+                        UCL_SUCCESS);
+  success = success && (d_ug.alloc(kcount,*ucl_device,UCL_READ_ONLY)==
+                        UCL_SUCCESS);
+  success = success && (d_vg.alloc(kcount*6,*ucl_device,UCL_READ_ONLY)==
                         UCL_SUCCESS);
 
   // (re)allocate the structure-factor buffers (host+device, length kcount)
@@ -140,14 +146,23 @@ void EwaldGPUT::setup(const int kmax, const int kcount, int *kxvecs,
 
   UCL_H_Vec<numtyp4> eg_view;
   eg_view.alloc(kcount,*ucl_device);
+  UCL_H_Vec<numtyp> ug_view, vg_view;
+  ug_view.alloc(kcount,*ucl_device);
+  vg_view.alloc(kcount*6,*ucl_device);
   for (int k=0; k<kcount; k++) {
     eg_view[k].x=(numtyp)eg[k][0];
     eg_view[k].y=(numtyp)eg[k][1];
     eg_view[k].z=(numtyp)eg[k][2];
     eg_view[k].w=(numtyp)0.0;
+    ug_view[k]=(numtyp)ug[k];
+    for (int j=0; j<6; j++) vg_view[k*6+j]=(numtyp)vg[k][j];
   }
   ucl_copy(d_eg,eg_view,false);
+  ucl_copy(d_ug,ug_view,false);
+  ucl_copy(d_vg,vg_view,false);
   eg_view.clear();
+  ug_view.clear();
+  vg_view.clear();
 
   // force reallocation of the per-atom cs/sn arrays (kmax may have changed)
 
@@ -161,6 +176,8 @@ void EwaldGPUT::setup(const int kmax, const int kcount, int *kxvecs,
 template <class numtyp, class acctyp>
 void EwaldGPUT::compute_forces(double *host_sfacrl_all, double *host_sfacim_all,
                                const double qscale, const int slabflag,
+                               const int eflag_atom, const int vflag_atom,
+                               double *host_eatom, double **host_vatom,
                                bool &success) {
   if (_nlocal==0)
     return;
@@ -175,16 +192,33 @@ void EwaldGPUT::compute_forces(double *host_sfacrl_all, double *host_sfacim_all,
 
   _qscale=(numtyp)qscale;
   _slabflag=slabflag;
+  _eflag_atom=eflag_atom;
+  _vflag_atom=vflag_atom;
 
   const int BX=_block_size;
   const int GX=static_cast<int>(ceil(static_cast<double>(_nlocal)/BX));
   k_field.set_size(GX,BX);
   k_field.run(&atom->q, &d_cs, &d_sn, &d_kxvecs, &d_kyvecs, &d_kzvecs, &d_eg,
-              &d_sfacrl, &d_sfacim, &ans->force, &_qscale, &_slabflag, &_kmax,
-              &_nlocal, &_kcount);
+              &d_ug, &d_vg, &d_sfacrl, &d_sfacim, &ans->force, &d_eatom,
+              &d_vatom, &_qscale, &_slabflag, &_eflag_atom, &_vflag_atom,
+              &_kmax, &_nlocal, &_kcount);
 
   ans->copy_answers(false,false,false,false,0);
   device->add_ans_object(ans);
+
+  // copy the raw per-atom energy/virial back to the host
+  if (eflag_atom) {
+    d_eatom.update_host(_nlocal,false);
+    for (int i=0; i<_nlocal; i++)
+      host_eatom[i]=d_eatom[i];
+  }
+  if (vflag_atom) {
+    d_vatom.update_host(_nlocal*6,false);
+    for (int i=0; i<_nlocal; i++)
+      for (int j=0; j<6; j++)
+        host_vatom[i][j]=d_vatom[i*6+j];
+  }
+
   success=true;
 }
 
@@ -201,8 +235,14 @@ void EwaldGPUT::resize_cssn(const int nlocal, bool &success) {
 
   d_cs.clear();
   d_sn.clear();
+  d_eatom.clear();
+  d_vatom.clear();
   success = success && (d_cs.alloc(sz,*ucl_device)==UCL_SUCCESS);
   success = success && (d_sn.alloc(sz,*ucl_device)==UCL_SUCCESS);
+  success = success && (d_eatom.alloc(newn,*ucl_device,UCL_WRITE_ONLY,
+                                      UCL_READ_WRITE)==UCL_SUCCESS);
+  success = success && (d_vatom.alloc(newn*6,*ucl_device,UCL_WRITE_ONLY,
+                                      UCL_READ_WRITE)==UCL_SUCCESS);
   if (!success)
     return;
 
@@ -271,8 +311,12 @@ void EwaldGPUT::clear(const double /*cpu_time*/) {
   d_kyvecs.clear();
   d_kzvecs.clear();
   d_eg.clear();
+  d_ug.clear();
+  d_vg.clear();
   d_cs.clear();
   d_sn.clear();
+  d_eatom.clear();
+  d_vatom.clear();
   d_sfacrl.clear();
   d_sfacim.clear();
 

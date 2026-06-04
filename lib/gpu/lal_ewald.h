@@ -54,7 +54,8 @@ class EwaldGPU {
   /** Called from the kspace setup() so it is refreshed whenever the box
     * changes.  (Re)allocates the k-vector and structure-factor buffers. **/
   void setup(const int kmax, const int kcount, int *kxvecs, int *kyvecs,
-             int *kzvecs, double **eg, double *unitk, bool &success);
+             int *kzvecs, double *ug, double **eg, double **vg, double *unitk,
+             bool &success);
 
   /// Compute the local (per-rank) structure factors on the device.
   /** Uploads x/q (gated on ago), runs the cs/sn and structure-factor
@@ -65,9 +66,13 @@ class EwaldGPU {
 
   /// K-space field/force: upload the global structure factors and run the
   /// field kernel, reusing the resident cs/sn.  The k-space force is queued
-  /// for merging with the pair force by fix gpu.
+  /// for merging with the pair force by fix gpu.  When requested, the raw
+  /// per-atom energy/virial are copied back into host_eatom/host_vatom (the
+  /// caller applies the q_i factor, self-energy correction, and qscale).
   void compute_forces(double *host_sfacrl_all, double *host_sfacim_all,
-                      const double qscale, const int slabflag, bool &success);
+                      const double qscale, const int slabflag,
+                      const int eflag_atom, const int vflag_atom,
+                      double *host_eatom, double **host_vatom, bool &success);
 
   /// Check if there is enough storage for atom arrays and realloc if not
   inline void resize_atom(const int inum, const int nall, bool &success) {
@@ -113,8 +118,14 @@ class EwaldGPU {
   /// per-k field coefficients eg[k][0..2] packed into x,y,z (constant per box)
   UCL_D_Vec<numtyp4> d_eg;
 
+  /// per-k energy coefficient ug[k] and virial coefficients vg[k][0..5]
+  UCL_D_Vec<numtyp> d_ug, d_vg;
+
   /// cos/sin of m*unitk[ic]*r for m in [-kmax,kmax], 3 dirs, all local atoms
   UCL_D_Vec<numtyp> d_cs, d_sn;
+
+  /// raw per-atom energy and virial (only used when requested)
+  UCL_Vector<acctyp,acctyp> d_eatom, d_vatom;
 
   /// structure factors: local after k_structure, global (sfac_all) for k_field
   UCL_Vector<acctyp,acctyp> d_sfacrl, d_sfacim;
@@ -141,7 +152,7 @@ class EwaldGPU {
 
   // per-step field/force parameters (kept as members for stable kernel args)
   numtyp _qscale;
-  int _slabflag;
+  int _slabflag, _eflag_atom, _vflag_atom;
 
   void compile_kernels(UCL_Device &dev);
   void resize_cssn(const int nlocal, bool &success);

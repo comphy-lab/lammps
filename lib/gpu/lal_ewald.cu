@@ -155,16 +155,24 @@ __kernel void k_ewald_field(const __global numtyp *restrict q_,
                             const __global int *restrict kyvecs,
                             const __global int *restrict kzvecs,
                             const __global numtyp4 *restrict eg,
+                            const __global numtyp *restrict ug,
+                            const __global numtyp *restrict vg,
                             const __global acctyp *restrict sfacrl_all,
                             const __global acctyp *restrict sfacim_all,
                             __global acctyp3 *restrict ans,
+                            __global acctyp *restrict eatom,
+                            __global acctyp *restrict vatom,
                             const numtyp qscale, const int slabflag,
+                            const int eflag_atom, const int vflag_atom,
                             const int kmax, const int nlocal, const int kcount) {
   int i=GLOBAL_ID_X;
   if (i<nlocal) {
     acctyp ekx=(acctyp)0.0;
     acctyp eky=(acctyp)0.0;
     acctyp ekz=(acctyp)0.0;
+    acctyp ea=(acctyp)0.0;
+    acctyp va0=(acctyp)0.0, va1=(acctyp)0.0, va2=(acctyp)0.0;
+    acctyp va3=(acctyp)0.0, va4=(acctyp)0.0, va5=(acctyp)0.0;
 
     for (int k=0; k<kcount; k++) {
       const int kx=kxvecs[k];
@@ -185,6 +193,20 @@ __kernel void k_ewald_field(const __global numtyp *restrict q_,
       ekx+=partial*egk.x;
       eky+=partial*egk.y;
       ekz+=partial*egk.z;
+
+      if (eflag_atom || vflag_atom) {
+        const acctyp pp=exprl*sfacrl_all[k]+expim*sfacim_all[k];
+        const acctyp ugpp=ug[k]*pp;
+        if (eflag_atom) ea+=ugpp;
+        if (vflag_atom) {
+          va0+=vg[k*6  ]*ugpp;
+          va1+=vg[k*6+1]*ugpp;
+          va2+=vg[k*6+2]*ugpp;
+          va3+=vg[k*6+3]*ugpp;
+          va4+=vg[k*6+4]*ugpp;
+          va5+=vg[k*6+5]*ugpp;
+        }
+      }
     }
 
     numtyp qi;
@@ -195,5 +217,17 @@ __kernel void k_ewald_field(const __global numtyp *restrict q_,
     f.y=qfac*eky;
     f.z=(slabflag!=2) ? qfac*ekz : (acctyp)0.0;
     ans[i]=f;
+
+    // raw per-atom contributions; the host applies the q_i factor, the
+    // self-energy correction, and qscale to match the CPU exactly
+    if (eflag_atom) eatom[i]=ea;
+    if (vflag_atom) {
+      vatom[i*6  ]=va0;
+      vatom[i*6+1]=va1;
+      vatom[i*6+2]=va2;
+      vatom[i*6+3]=va3;
+      vatom[i*6+4]=va4;
+      vatom[i*6+5]=va5;
+    }
   }
 }
