@@ -34,6 +34,7 @@ class EwaldGPU : public Ewald {
   double memory_usage() override;
 
  protected:
+  double cpu_time;    // accumulated host-side (non-GPU) k-space time
   void eik_dot_r() override;
 };
 

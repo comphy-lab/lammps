@@ -50,7 +50,7 @@ double EWALD_GPU_API(bytes)();
 
 /* ---------------------------------------------------------------------- */
 
-EwaldGPU::EwaldGPU(LAMMPS *lmp) : Ewald(lmp)
+EwaldGPU::EwaldGPU(LAMMPS *lmp) : Ewald(lmp), cpu_time(0.0)
 {
   GPU_EXTRA::gpu_ready(lmp->modify, lmp->error);
 }
@@ -61,7 +61,7 @@ EwaldGPU::EwaldGPU(LAMMPS *lmp) : Ewald(lmp)
 
 EwaldGPU::~EwaldGPU()
 {
-  EWALD_GPU_API(clear)(0.0);
+  EWALD_GPU_API(clear)(cpu_time);
 }
 
 /* ----------------------------------------------------------------------
@@ -129,6 +129,8 @@ void EwaldGPU::compute(int eflag, int vflag)
   if (!success)
     error->one(FLERR, "Insufficient memory on accelerator for ewald/gpu");
 
+  const double t_cpu = MPI_Wtime();
+
   MPI_Allreduce(sfacrl, sfacrl_all, kcount, MPI_DOUBLE, MPI_SUM, world);
   MPI_Allreduce(sfacim, sfacim_all, kcount, MPI_DOUBLE, MPI_SUM, world);
 
@@ -179,6 +181,8 @@ void EwaldGPU::compute(int eflag, int vflag)
       for (int i = 0; i < nlocal; i++)
         for (int j = 0; j < 6; j++) vatom[i][j] *= q[i]*qscale;
   }
+
+  cpu_time += MPI_Wtime() - t_cpu;
 
   // 2d slab correction (host; adds to atom->f and the energy)
 

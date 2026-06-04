@@ -90,6 +90,29 @@ class EwaldGPU {
   /// Total host memory used by library
   double host_memory_usage() const;
 
+  /// Accumulate the per-phase device timers into their totals
+  inline void acc_timers() {
+    if (device->time_device()) {
+      ans->acc_timers();
+      time_in.add_to_total();
+      time_out.add_to_total();
+      time_map.add_to_total();
+      time_rho.add_to_total();
+      time_interp.add_to_total();
+    }
+  }
+
+  /// Zero the per-phase device timers
+  inline void zero_timers() {
+    atom->zero_timers();
+    ans->zero_timers();
+    time_in.zero();
+    time_out.zero();
+    time_map.zero();
+    time_rho.zero();
+    time_interp.zero();
+  }
+
   // -------------------------- DEVICE DATA -------------------------
 
   /// Device Properties and Atom and Neighbor storage
@@ -97,6 +120,9 @@ class EwaldGPU {
 
   /// Geryon device
   UCL_Device *ucl_device;
+
+  /// Device timers: host->device, device->host, cs/sn, structure, field
+  UCL_Timer time_in, time_out, time_map, time_rho, time_interp;
 
   /// LAMMPS pointer for screen output
   FILE *screen;
@@ -143,7 +169,7 @@ class EwaldGPU {
  protected:
   bool _allocated, _compiled;
   int _block_size;
-  double _max_bytes, _max_an_bytes;
+  double _max_bytes, _max_an_bytes, _cpu_idle_time;
 
   // grid parameters
   int _kmax, _kcount, _nlocal;

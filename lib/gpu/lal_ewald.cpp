@@ -75,6 +75,18 @@ int EwaldGPUT::init(const int nlocal, const int nall, FILE *_screen,
 
   compile_kernels(*ucl_device);
 
+  time_in.init(*ucl_device);
+  time_in.zero();
+  time_out.init(*ucl_device);
+  time_out.zero();
+  time_map.init(*ucl_device);
+  time_map.zero();
+  time_rho.init(*ucl_device);
+  time_rho.zero();
+  time_interp.init(*ucl_device);
+  time_interp.zero();
+  _cpu_idle_time=0.0;
+
   pos_tex.bind_float(atom->x,4);
   q_tex.bind_float(atom->q,1);
 
@@ -195,6 +207,7 @@ void EwaldGPUT::compute_forces(double *host_sfacrl_all, double *host_sfacim_all,
   _eflag_atom=eflag_atom;
   _vflag_atom=vflag_atom;
 
+  time_interp.start();
   const int BX=_block_size;
   const int GX=static_cast<int>(ceil(static_cast<double>(_nlocal)/BX));
   k_field.set_size(GX,BX);
@@ -202,6 +215,7 @@ void EwaldGPUT::compute_forces(double *host_sfacrl_all, double *host_sfacim_all,
               &d_ug, &d_vg, &d_sfacrl, &d_sfacim, &ans->force, &d_eatom,
               &d_vatom, &_qscale, &_slabflag, &_eflag_atom, &_vflag_atom,
               &_kmax, &_nlocal, &_kcount);
+  time_interp.stop();
 
   ans->copy_answers(false,false,false,false,0);
   device->add_ans_object(ans);
@@ -258,6 +272,9 @@ int EwaldGPUT::structure(const int ago, const int nlocal, const int nall,
                          double **host_x, int *host_type, double *host_q,
                          double *host_sfacrl, double *host_sfacim,
                          bool &success) {
+  // roll up the previous step's per-phase timers into their totals
+  acc_timers();
+
   if (nlocal==0)
     return 0;
 
@@ -273,26 +290,34 @@ int EwaldGPUT::structure(const int ago, const int nlocal, const int nall,
   if (!success)
     return 0;
 
+  time_in.start();
   atom->cast_x_data(host_x,host_type);
   atom->cast_q_data(host_q);
   atom->add_x_data(host_x,host_type);
   atom->add_q_data();
+  time_in.stop();
 
   const int BX=_block_size;
 
   // cos/sin recurrence: one thread per atom
+  time_map.start();
   const int GX=static_cast<int>(ceil(static_cast<double>(nlocal)/BX));
   k_cssn.set_size(GX,BX);
   k_cssn.run(&atom->x, &d_cs, &d_sn, &_unitk[0], &_unitk[1], &_unitk[2],
              &_kmax, &_nlocal);
+  time_map.stop();
 
   // structure factor reduction: one block per k-vector
+  time_rho.start();
   k_structure.set_size(_kcount,BX);
   k_structure.run(&atom->q, &d_cs, &d_sn, &d_kxvecs, &d_kyvecs, &d_kzvecs,
                   &d_sfacrl, &d_sfacim, &_kmax, &_nlocal, &_kcount);
+  time_rho.stop();
 
+  time_out.start();
   d_sfacrl.update_host(_kcount,false);
   d_sfacim.update_host(_kcount,false);
+  time_out.stop();
   for (int k=0; k<_kcount; k++) {
     host_sfacrl[k]=d_sfacrl[k];
     host_sfacim[k]=d_sfacim[k];
@@ -302,7 +327,7 @@ int EwaldGPUT::structure(const int ago, const int nlocal, const int nall,
 }
 
 template <class numtyp, class acctyp>
-void EwaldGPUT::clear(const double /*cpu_time*/) {
+void EwaldGPUT::clear(const double cpu_time) {
   if (!_allocated)
     return;
   _allocated=false;
@@ -319,6 +344,17 @@ void EwaldGPUT::clear(const double /*cpu_time*/) {
   d_vatom.clear();
   d_sfacrl.clear();
   d_sfacim.clear();
+
+  acc_timers();
+  device->output_kspace_times(time_in,time_out,time_map,time_rho,time_interp,
+                              *ans,_max_bytes+_max_an_bytes,cpu_time,
+                              _cpu_idle_time,screen);
+
+  time_in.clear();
+  time_out.clear();
+  time_map.clear();
+  time_rho.clear();
+  time_interp.clear();
 
   ans->clear();
 }
