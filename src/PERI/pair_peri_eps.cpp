@@ -554,3 +554,12 @@ double PairPeriEPS::compute_DeviatoricForceStateNorm(int i)
     }
   return sqrt(norm);
 }
+
+/* ---------------------------------------------------------------------- */
+
+double PairPeriEPS::memory_usage()
+{
+  double bytes = PairPeri::memory_usage();
+  // TEMPORARY: deviatorPlasticExtTemp[nlocal][maxpartner] during compute()
+  return bytes;
+}
