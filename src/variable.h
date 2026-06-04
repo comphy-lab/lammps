@@ -54,6 +54,7 @@ class Variable : protected Pointers {
 
   tagint int_between_brackets(char *&, int);
   double evaluate_boolean(char *);
+  double memory_usage();
 
  public:
   int nvar;        // # of defined variables
