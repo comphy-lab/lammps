@@ -275,10 +275,18 @@ int EwaldGPUT::structure(const int ago, const int nlocal, const int nall,
   // roll up the previous step's per-phase timers into their totals
   acc_timers();
 
-  if (nlocal==0)
-    return 0;
-
   _nlocal=nlocal;
+
+  // a rank with no local atoms contributes zero to the structure factors;
+  // zero the host arrays so the subsequent MPI_Allreduce is correct
+  if (nlocal==0) {
+    for (int k=0; k<_kcount; k++) {
+      host_sfacrl[k]=0.0;
+      host_sfacim[k]=0.0;
+    }
+    return 0;
+  }
+
   ans->inum(nlocal);
 
   if (ago==0) {
