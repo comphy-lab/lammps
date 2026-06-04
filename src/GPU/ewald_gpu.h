@@ -29,8 +29,12 @@ class EwaldGPU : public Ewald {
   EwaldGPU(class LAMMPS *);
   ~EwaldGPU() override;
   void init() override;
+  void setup() override;
   void compute(int, int) override;
   double memory_usage() override;
+
+ protected:
+  void eik_dot_r() override;
 };
 
 }    // namespace LAMMPS_NS

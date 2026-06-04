@@ -76,6 +76,27 @@ void ewald_gpu_init_d(const int nlocal, const int nall, FILE *screen,
     fprintf(screen,"\n");
 }
 
+// ---------------------------------------------------------------------------
+// Upload the (constant per box) k-vectors and grid parameters
+// ---------------------------------------------------------------------------
+void ewald_gpu_setup_d(const int kmax, const int kcount, int *kxvecs,
+                       int *kyvecs, int *kzvecs, double *unitk, int &success) {
+  bool succ=true;
+  EWALDMF.setup(kmax,kcount,kxvecs,kyvecs,kzvecs,unitk,succ);
+  success = succ ? 0 : -3;
+}
+
+// ---------------------------------------------------------------------------
+// Compute the local (per-rank) structure factors on the device
+// ---------------------------------------------------------------------------
+int ewald_gpu_structure_d(const int ago, const int nlocal, const int nall,
+                          double **host_x, int *host_type, double *host_q,
+                          double *host_sfacrl, double *host_sfacim,
+                          bool &success) {
+  return EWALDMF.structure(ago,nlocal,nall,host_x,host_type,host_q,
+                           host_sfacrl,host_sfacim,success);
+}
+
 void ewald_gpu_clear_d(const double cpu_time) {
   EWALDMF.clear(cpu_time);
 }

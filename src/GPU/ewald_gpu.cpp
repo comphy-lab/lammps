@@ -21,6 +21,7 @@
 #include "atom.h"
 #include "error.h"
 #include "gpu_extra.h"
+#include "neighbor.h"
 
 using namespace LAMMPS_NS;
 
@@ -30,6 +31,13 @@ using namespace LAMMPS_NS;
 
 void EWALD_GPU_API(init)(const int nlocal, const int nall, FILE *screen,
                          int &success);
+void EWALD_GPU_API(setup)(const int kmax, const int kcount, int *kxvecs,
+                          int *kyvecs, int *kzvecs, double *unitk,
+                          int &success);
+int EWALD_GPU_API(structure)(const int ago, const int nlocal, const int nall,
+                             double **host_x, int *host_type, double *host_q,
+                             double *host_sfacrl, double *host_sfacim,
+                             bool &success);
 void EWALD_GPU_API(clear)(const double cpu_time);
 double EWALD_GPU_API(bytes)();
 
@@ -55,13 +63,27 @@ EwaldGPU::~EwaldGPU()
 
 void EwaldGPU::init()
 {
-  Ewald::init();
-
-  // GPU device init (plumbing only in this stage; the reciprocal-space
-  // computation still runs on the host through Ewald::compute())
+  // initialize the GPU device and atom storage first, so that the device is
+  // ready when Ewald::init() -> setup() uploads the k-space coefficients
 
   int success = 0;
   EWALD_GPU_API(init)(atom->nlocal, atom->nlocal+atom->nghost, screen, success);
+  GPU_EXTRA::check_flag(success, error, world);
+
+  Ewald::init();
+}
+
+/* ----------------------------------------------------------------------
+   called whenever the box changes: refresh the k-space coefficients on
+   the device after the base class recomputes them
+------------------------------------------------------------------------- */
+
+void EwaldGPU::setup()
+{
+  Ewald::setup();
+
+  int success = 0;
+  EWALD_GPU_API(setup)(kmax, kcount, kxvecs, kyvecs, kzvecs, unitk, success);
   GPU_EXTRA::check_flag(success, error, world);
 }
 
@@ -71,7 +93,33 @@ void EwaldGPU::init()
 
 void EwaldGPU::compute(int eflag, int vflag)
 {
+  // Ewald::compute() dispatches to the virtual eik_dot_r() below for the
+  // structure factors (orthogonal boxes) or eik_dot_r_triclinic() on the
+  // host (triclinic fallback); the remaining field/force/energy work still
+  // runs on the host in this stage.
+
   Ewald::compute(eflag, vflag);
+}
+
+/* ----------------------------------------------------------------------
+   structure factors: computed on the device, then used by the host
+   field/force loop in Ewald::compute()
+------------------------------------------------------------------------- */
+
+void EwaldGPU::eik_dot_r()
+{
+  // host cs/sn are still needed by the host field/force loop in this stage
+  Ewald::eik_dot_r();
+
+  // recompute the (local) structure factors on the device and overwrite
+  // the host values, so the GPU path drives the energy and forces
+
+  bool success = true;
+  EWALD_GPU_API(structure)(neighbor->ago, atom->nlocal,
+                           atom->nlocal+atom->nghost, atom->x, atom->type,
+                           atom->q, sfacrl, sfacim, success);
+  if (!success)
+    error->one(FLERR, "Insufficient memory on accelerator for ewald/gpu");
 }
 
 /* ---------------------------------------------------------------------- */
