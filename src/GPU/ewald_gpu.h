@@ -35,7 +35,6 @@ class EwaldGPU : public Ewald {
 
  protected:
   double cpu_time;    // accumulated host-side (non-GPU) k-space time
-  void eik_dot_r() override;
 };
 
 }    // namespace LAMMPS_NS

@@ -204,27 +204,6 @@ void EwaldGPU::compute(int eflag, int vflag)
   if (slabflag == 1) slabcorr();
 }
 
-/* ----------------------------------------------------------------------
-   structure factors on the device, used by the host field/force loop in
-   Ewald::compute() for the per-atom / triclinic fallback path
-------------------------------------------------------------------------- */
-
-void EwaldGPU::eik_dot_r()
-{
-  // host cs/sn are still needed by the host field/force loop in the fallback
-  Ewald::eik_dot_r();
-
-  // recompute the (local) structure factors on the device and overwrite the
-  // host values, so the GPU result drives the energy and forces
-
-  bool success = true;
-  EWALD_GPU_API(structure)(neighbor->ago, atom->nlocal,
-                           atom->nlocal+atom->nghost, atom->x, atom->type,
-                           atom->q, sfacrl, sfacim, success);
-  if (!success)
-    error->one(FLERR, "Insufficient memory on accelerator for ewald/gpu");
-}
-
 /* ---------------------------------------------------------------------- */
 
 double EwaldGPU::memory_usage()
