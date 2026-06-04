@@ -99,7 +99,8 @@ __kernel void k_ewald_structure(const __global numtyp *restrict q_,
                                 __global acctyp *restrict sfacim,
                                 const int kmax, const int nlocal,
                                 const int kcount) {
-  __local acctyp red[2][BLOCK_PAIR];
+  __local acctyp red0[BLOCK_PAIR];
+  __local acctyp red1[BLOCK_PAIR];
 
   const int tid=THREAD_ID_X;
   const int k=BLOCK_ID_X;
@@ -133,11 +134,24 @@ __kernel void k_ewald_structure(const __global numtyp *restrict q_,
     }
   }
 
-  block_reduce_add2(simd_size(),red,tid,sr,si);
+  // deterministic shared-memory tree reduction across the block.  This is
+  // written out explicitly (rather than using block_reduce_add2 from
+  // lal_aux_fun1.h, which only exists for SHUFFLE_AVAIL==0) so it compiles on
+  // every backend regardless of whether warp-shuffle reductions are available.
+  red0[tid]=sr;
+  red1[tid]=si;
+  __syncthreads();
+  for (int s=BLOCK_SIZE_X/2; s>0; s>>=1) {
+    if (tid<s) {
+      red0[tid]+=red0[tid+s];
+      red1[tid]+=red1[tid+s];
+    }
+    __syncthreads();
+  }
 
   if (tid==0 && k<kcount) {
-    sfacrl[k]=sr;
-    sfacim[k]=si;
+    sfacrl[k]=red0[0];
+    sfacim[k]=red1[0];
   }
 }
 
