@@ -120,7 +120,7 @@ void PairLJLongTIP4PLong::compute(int eflag, int vflag)
   double qqrd2e = force->qqrd2e;
   double cut_coulsqplus = (cut_coul+2.0*qdist)*(cut_coul+2.0*qdist);
 
-  int order1 = ewald_order&(1<<1), order6 = ewald_order&(1<<6);
+  int order1 = ewald_order & EWALD_COUL, order6 = ewald_order & EWALD_DISP;
   int ni;
   double *lj1i, *lj2i, *lj3i, *lj4i, *offseti;
   double g2 = g_ewald_6*g_ewald_6, g6 = g2*g2*g2, g8 = g6*g2;
@@ -503,7 +503,7 @@ void PairLJLongTIP4PLong::compute_inner()
   double qqrd2e = force->qqrd2e;
   double cut_coulsqplus = (cut_coul+2.0*qdist)*(cut_coul+2.0*qdist);
 
-  int order1 = ewald_order&(1<<1);
+  int order1 = ewald_order & EWALD_COUL;
   int ni;
   double *lj1i, *lj2i;
 
@@ -756,7 +756,7 @@ void PairLJLongTIP4PLong::compute_middle()
   double qqrd2e = force->qqrd2e;
   double cut_coulsqplus = (cut_coul+2.0*qdist)*(cut_coul+2.0*qdist);
 
-  int order1 = ewald_order&(1<<1);
+  int order1 = ewald_order & EWALD_COUL;
   int ni;
   double  *lj1i, *lj2i;
 
@@ -1027,7 +1027,7 @@ void PairLJLongTIP4PLong::compute_outer(int eflag, int vflag)
   double qqrd2e = force->qqrd2e;
   double cut_coulsqplus = (cut_coul+2.0*qdist)*(cut_coul+2.0*qdist);
 
-  int order1 = ewald_order&(1<<1), order6 = ewald_order&(1<<6);
+  int order1 = ewald_order & EWALD_COUL, order6 = ewald_order & EWALD_DISP;
   int ni;
   double *lj1i, *lj2i, *lj3i, *lj4i, *offseti;
   double g2 = g_ewald_6*g_ewald_6, g6 = g2*g2*g2, g8 = g6*g2;
