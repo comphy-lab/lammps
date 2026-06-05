@@ -469,10 +469,10 @@ void PairLJLongDipoleLong::compute(int eflag, int vflag)
         muj[0] = mu[j][0]; muj[1] = mu[j][1]; muj[2] = mu[j][2];
         {                                               // series real space
           double r = sqrt(rsq);
-          double x = g_ewald*r;
-          double f = exp(-x*x)*qqrd2e;
+          double grij = g_ewald*r;
+          double f = exp(-grij*grij)*qqrd2e;
 
-          B0 = 1.0/(1.0+EWALD_P*x);                     // eqn 2.8
+          B0 = 1.0/(1.0+EWALD_P*grij);                  // eqn 2.8
           B0 *= ((((A5*B0+A4)*B0+A3)*B0+A2)*B0+A1)*f/r;
           B1 = (B0 + C1 * f) * r2inv;
           B2 = (3.0*B1 + C2 * f) * r2inv;
@@ -529,30 +529,30 @@ void PairLJLongDipoleLong::compute(int eflag, int vflag)
 
       if (rsq < cut_ljsqi[typej]) {                     // lj
         if (order6) {                                   // long-range lj
-          double rn = r2inv*r2inv*r2inv;
-          double x2 = g2*rsq, a2 = 1.0/x2;
-          x2 = a2*exp(-x2)*lj4i[typej];
+          double r6inv = r2inv*r2inv*r2inv;
+          double r12inv = r6inv*r6inv;
+          double gr2 = g2*rsq, a2 = 1.0/gr2;
+          double expterm = a2*exp(-gr2)*lj4i[typej];      // damped 1/r^6 reciprocal term
+          double g6term = g6*((a2+1.0)*a2+0.5)*expterm;
+          double g8term = g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*expterm*rsq;
           if (ni < 0) {
-            force_lj =
-              (rn*=rn)*lj1i[typej]-g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*x2*rsq;
-            if (eflag) evdwl = rn*lj3i[typej]-g6*((a2+1.0)*a2+0.5)*x2;
+            force_lj = r12inv*lj1i[typej]-g8term;
+            if (eflag) evdwl = r12inv*lj3i[typej]-g6term;
           } else {                                        // special case
-            double f = special_lj[ni], t = rn*(1.0-f);
-            force_lj = f*(rn *= rn)*lj1i[typej]-
-              g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*x2*rsq+t*lj2i[typej];
-            if (eflag) evdwl =
-                         f*rn*lj3i[typej]-g6*((a2+1.0)*a2+0.5)*x2+t*lj4i[typej];
+            double factor = special_lj[ni], t = r6inv*(1.0-factor);
+            force_lj = factor*r12inv*lj1i[typej]-g8term+t*lj2i[typej];
+            if (eflag) evdwl = factor*r12inv*lj3i[typej]-g6term+t*lj4i[typej];
           }
         } else {                                          // cut lj
-          double rn = r2inv*r2inv*r2inv;
+          double r6inv = r2inv*r2inv*r2inv;
           if (ni < 0) {
-            force_lj = rn*(rn*lj1i[typej]-lj2i[typej]);
-            if (eflag) evdwl = rn*(rn*lj3i[typej]-lj4i[typej])-offseti[typej];
+            force_lj = r6inv*(r6inv*lj1i[typej]-lj2i[typej]);
+            if (eflag) evdwl = r6inv*(r6inv*lj3i[typej]-lj4i[typej])-offseti[typej];
           } else {                                        // special case
-            double f = special_lj[ni];
-            force_lj = f*rn*(rn*lj1i[typej]-lj2i[typej]);
-            if (eflag) evdwl = f*(
-              rn*(rn*lj3i[typej]-lj4i[typej])-offseti[typej]);
+            double factor = special_lj[ni];
+            force_lj = factor*r6inv*(r6inv*lj1i[typej]-lj2i[typej]);
+            if (eflag) evdwl = factor*(
+              r6inv*(r6inv*lj3i[typej]-lj4i[typej])-offseti[typej]);
           }
         }
         force_lj *= r2inv;
