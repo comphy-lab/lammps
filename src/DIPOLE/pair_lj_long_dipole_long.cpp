@@ -530,7 +530,7 @@ void PairLJLongDipoleLong::compute(int eflag, int vflag)
           double expterm = a2*exp(-gr2)*lj4i[typej];      // damped 1/r^6 reciprocal term
           double g6term = g6*((a2+1.0)*a2+0.5)*expterm;
           double g8term = g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*expterm*rsq;
-          if (ni < 0) {
+          if (ni == 0) {
             force_lj = r12inv*lj1i[typej]-g8term;
             if (eflag) evdwl = r12inv*lj3i[typej]-g6term;
           } else {                                        // special case
@@ -540,7 +540,7 @@ void PairLJLongDipoleLong::compute(int eflag, int vflag)
           }
         } else {                                          // cut lj
           double r6inv = r2inv*r2inv*r2inv;
-          if (ni < 0) {
+          if (ni == 0) {
             force_lj = r6inv*(r6inv*lj1i[typej]-lj2i[typej]);
             if (eflag) evdwl = r6inv*(r6inv*lj3i[typej]-lj4i[typej])-offseti[typej];
           } else {                                        // special case
@@ -580,80 +580,4 @@ void PairLJLongDipoleLong::compute(int eflag, int vflag)
 
   if (vflag_fdotr) virial_fdotr_compute();
 }
-
-/* ---------------------------------------------------------------------- */
-
-/*
-double PairLJLongDipoleLong::single(int i, int j, int itype, int jtype,
-                            double rsq, double factor_coul, double factor_lj,
-                            double &fforce)
-{
-  double r6inv, force_coul, force_lj;
-  double g2 = g_ewald*g_ewald, g6 = g2*g2*g2, g8 = g6*g2, *q = atom->q;
-
-  double eng = 0.0;
-  double r2inv = 1.0/rsq;
-
-  if ((ewald_order&(1<<3)) && (rsq < cut_coulsq)) {     // coulombic
-    double *mui = atom->mu[i], *muj = atom->mu[j];
-    double *xi = atom->x[i], *xj = atom->x[j];
-    double qi = q[i], qj = q[j];
-    double G0, G1, G2, B0, B1, B2, B3, mudi, mudj, muij;
-    vector d = {xi[0]-xj[0], xi[1]-xj[1], xi[2]-xj[2]};
-    {                                                   // series real space
-      double r = sqrt(rsq);
-      double x = g_ewald*r;
-      double f = exp(-x*x)*qqrd2e;
-
-      B0 = 1.0/(1.0+EWALD_P*x);                 // eqn 2.8
-      B0 *= ((((A5*B0+A4)*B0+A3)*B0+A2)*B0+A1)*f/r;
-      B1 = (B0 + C1 * f) * r2inv;
-      B2 = (3.0*B1 + C2 * f) * r2inv;
-      B3 = (5.0*B2 + C3 * f) * r2inv;
-
-      mudi = mui[0]*d[0]+mui[1]*d[1]+mui[2]*d[2];
-      mudj = muj[0]*d[0]+muj[1]*d[1]+muj[2]*d[2];
-      muij = mui[0]*muj[0]+mui[1]*muj[1]+mui[2]*muj[2];
-      G0 = qi*(qj = q[j]);                              // eqn 2.10
-      G1 = qi*mudj-qj*mudi+muij;
-      G2 = -mudi*mudj;
-      force_coul = G0*B1+G1*B2+G2*B3;
-
-      eng += G0*B0+G1*B1+G2*B2;
-      if (factor_coul < 1.0) {                          // adj part, eqn 2.13
-        force_coul -= (f = force->qqrd2e*(1.0-factor_coul)/r)*(
-            (3.0*G1+6.0*muij+15.0*G2*r2inv)*r2inv+G0);
-        eng -= f*((G1+3.0*G2*r2inv)*r2inv+G0);
-        B1 -= f*r2inv;
-      }
-      B0 = mudj*B2-qj*B1; B3 = qi*B1+mudi*B2;           // position independent
-      //force_d[0] = B0*mui[0]+B3*muj[0];               // force contributions
-      //force_d[1] = B0*mui[1]+B3*muj[1];
-      //force_d[2] = B0*mui[2]+B3*muj[2];
-    }                                                   // table real space
-  }
-  else force_coul = 0.0;
-
-  if (rsq < cut_ljsq[itype][jtype]) {                   // lennard-jones
-    r6inv = r2inv*r2inv*r2inv;
-    if (ewald_order&0x40) {                             // long-range
-      double x2 = g2*rsq, a2 = 1.0/x2, t = r6inv*(1.0-factor_lj);
-      x2 = a2*exp(-x2)*lj4[itype][jtype];
-      force_lj = factor_lj*(r6inv *= r6inv)*lj1[itype][jtype]-
-        g8*(((6.0*a2+6.0)*a2+3.0)*a2+a2)*x2*rsq+t*lj2[itype][jtype];
-      eng += factor_lj*r6inv*lj3[itype][jtype]-
-        g6*((a2+1.0)*a2+0.5)*x2+t*lj4[itype][jtype];
-    }
-    else {                                              // cut
-      force_lj = factor_lj*r6inv*(lj1[itype][jtype]*r6inv-lj2[itype][jtype]);
-      eng += factor_lj*(r6inv*(r6inv*lj3[itype][jtype]-
-            lj4[itype][jtype])-offset[itype][jtype]);
-    }
-  }
-  else force_lj = 0.0;
-
-  fforce = (force_coul+force_lj)*r2inv;
-  return eng;
-}
-*/
 
