@@ -28,10 +28,6 @@ namespace LAMMPS_NS {
 #define EWALD_NORDER 6
 #define EWALD_NFUNCS 4
 #define EWALD_MAX_NSUMS 10
-#define EWALD_NSUMS \
-  {                 \
-    1, 1, 7, 1      \
-  }
 
 class EwaldDisp : public KSpace {
  public:

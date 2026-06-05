@@ -40,37 +40,40 @@ using namespace MathExtra;
 
 static constexpr double SMALL = 0.00001;
 
-//#define DEBUG
-
 struct LAMMPS_NS::complex { double re, im; };
 struct LAMMPS_NS::cvector { complex x, y, z; };
 struct LAMMPS_NS::hvector { double x, y, z; };
 struct LAMMPS_NS::kvector { long x, y, z; };
 
-#define COMPLEX_NULL {0, 0}
+// complex arithmetic helpers operating on the local complex struct.
+// the destination may alias an input, so the multiplies copy first.
 
-#define C_RMULT(d, x, y) { \
-  complex t = x; \
-  d.re = t.re*y.re-t.im*y.im; \
-  d.im = t.re*y.im+t.im*y.re; }
+static inline void c_rmult(complex &d, const complex &x, const complex &y) {  // d = x*y
+  complex t = x;
+  d.re = t.re*y.re - t.im*y.im;
+  d.im = t.re*y.im + t.im*y.re;
+}
 
-#define C_CRMULT(d, x, y) { \
-  complex t = x; \
-  d.re = t.re*y.re-t.im*y.im; \
-  d.im = -t.re*y.im-t.im*y.re; }
+static inline void c_crmult(complex &d, const complex &x, const complex &y) { // d = x*conj(y)
+  complex t = x;
+  d.re = t.re*y.re - t.im*y.im;
+  d.im = -t.re*y.im - t.im*y.re;
+}
 
-#define C_SET(d, x, y) { \
-  d.re = x; \
-  d.im = y; }
+static inline void c_set(complex &d, double re, double im) {
+  d.re = re;
+  d.im = im;
+}
 
-#define C_CONJ(d, x) {                          \
-  d.re = x.re; \
-  d.im = -x.im; }
+static inline void c_conj(complex &d, const complex &x) {                     // d = conj(x)
+  d.re = x.re;
+  d.im = -x.im;
+}
 
-#define C_ANGLE(d, angle) { \
-  double a = angle; \
-  d.re = cos(a); \
-  d.im = sin(a); }
+static inline void c_angle(complex &d, double angle) {                        // d = e^(i*angle)
+  d.re = cos(angle);
+  d.im = sin(angle);
+}
 
 static inline void shape_add(double *dest, const double *src) {                // h_a+h_b
   dest[0] += src[0]; dest[1] += src[1]; dest[2] += src[2];
@@ -169,7 +172,7 @@ void EwaldDisp::init()
   memset(function, 0, EWALD_NFUNCS*sizeof(int));
   for (int i=0; i<=EWALD_NORDER; ++i)                        // transcribe order
     if (ewald_order&(1<<i)) {                                // from pair_style
-      int n[] = EWALD_NSUMS, k = 0;
+      int n[] = {1, 1, 7, 1}, k = 0;   // number of k-space sums per function
       switch (i) {
         case 1:
           k = 0; break;
@@ -778,7 +781,7 @@ void EwaldDisp::compute_ek()
   kvector *k, *nk = kvec+nkvec;
   auto *z = new cvector[2*nbox+1];
   cvector z1, *zx, *zy, *zz, *zn = z+2*nbox;
-  complex *cek, zxyz, zxy = COMPLEX_NULL, cx = COMPLEX_NULL;
+  complex *cek, zxyz, zxy = {0, 0}, cx = {0, 0};
   double mui[3];
   double *x = atom->x[0], *xn = x+3*atom->nlocal, *q = atom->q, qi = 0.0;
   double bi = 0.0, ci[7];
@@ -790,21 +793,21 @@ void EwaldDisp::compute_ek()
   memset(cek_local, 0, n*sizeof(complex));                // reset sums
   while (x<xn) {
     zx = (zy = (zz = z+nbox)+1)-2;
-    C_SET(zz->x, 1, 0); C_SET(zz->y, 1, 0); C_SET(zz->z, 1, 0);        // z[0]
+    c_set(zz->x, 1, 0); c_set(zz->y, 1, 0); c_set(zz->z, 1, 0);        // z[0]
     if (tri) {                                                // triclinic z[1]
-      C_ANGLE(z1.x, unit[0]*x[0]+unit[5]*x[1]+unit[4]*x[2]);
-      C_ANGLE(z1.y, unit[1]*x[1]+unit[3]*x[2]);
-      C_ANGLE(z1.z, x[2]*unit[2]); x += 3;
+      c_angle(z1.x, unit[0]*x[0]+unit[5]*x[1]+unit[4]*x[2]);
+      c_angle(z1.y, unit[1]*x[1]+unit[3]*x[2]);
+      c_angle(z1.z, x[2]*unit[2]); x += 3;
     }
     else {                                                // orthogonal z[1]
-      C_ANGLE(z1.x, *(x++)*unit[0]);
-      C_ANGLE(z1.y, *(x++)*unit[1]);
-      C_ANGLE(z1.z, *(x++)*unit[2]);
+      c_angle(z1.x, *(x++)*unit[0]);
+      c_angle(z1.y, *(x++)*unit[1]);
+      c_angle(z1.z, *(x++)*unit[2]);
     }
     for (; zz<zn; --zx, ++zy, ++zz) {                  // set up z[k]=e^(ik.r)
-      C_RMULT(zy->x, zz->x, z1.x);                        // 3D k-vector
-      C_RMULT(zy->y, zz->y, z1.y); C_CONJ(zx->y, zy->y);
-      C_RMULT(zy->z, zz->z, z1.z); C_CONJ(zx->z, zy->z);
+      c_rmult(zy->x, zz->x, z1.x);                        // 3D k-vector
+      c_rmult(zy->y, zz->y, z1.y); c_conj(zx->y, zy->y);
+      c_rmult(zy->z, zz->z, z1.z); c_conj(zx->z, zy->z);
     }
     kx = ky = -1;
     cek = cek_local;
@@ -819,9 +822,9 @@ void EwaldDisp::compute_ek()
     for (k=kvec; k<nk; ++k) {                                // compute rho(k)
       if (ky!=k->y) {                                   // based on order in
         if (kx!=k->x) cx = z[kx = k->x].x;                // reallocate
-        C_RMULT(zxy, z[ky = k->y].y, cx);
+        c_rmult(zxy, z[ky = k->y].y, cx);
       }
-      C_RMULT(zxyz, z[k->z].z, zxy);
+      c_rmult(zxyz, z[k->z].z, zxy);
       if (func[0]) {
                cek->re += zxyz.re*qi; (cek++)->im += zxyz.im*qi;
       }
@@ -852,7 +855,7 @@ void EwaldDisp::compute_force()
   hvector *h, *nh;
   cvector *z = ekr_local;
   double mysum[EWALD_MAX_NSUMS][3], mui[3] = {0.0,0.0,0.0};
-  complex *cek, zc, zx = COMPLEX_NULL, zxy = COMPLEX_NULL;
+  complex *cek, zc, zx = {0, 0}, zxy = {0, 0};
   complex *cek_coul;
   double *f = atom->f[0], *fn = f+3*atom->nlocal, *q = atom->q, *t = nullptr;
   double *mu = atom->mu ? atom->mu[0] : nullptr;
@@ -880,9 +883,9 @@ void EwaldDisp::compute_force()
     for (nh = (h = hvec)+nkvec; h<nh; ++h, ++k) {
       if (ky!=k->y) {                                   // based on order in
         if (kx!=k->x) zx = z[kx = k->x].x;                 // reallocate
-        C_RMULT(zxy, z[ky = k->y].y, zx);
+        c_rmult(zxy, z[ky = k->y].y, zx);
       }
-      C_CRMULT(zc, z[k->z].z, zxy);
+      c_crmult(zc, z[k->z].z, zxy);
       if (func[0]) {                                        // 1/r
         double im = *(ke++)*(zc.im*cek->re+cek->im*zc.re);
         if (func[3]) cek_coul = cek;
@@ -1045,7 +1048,7 @@ void EwaldDisp::compute_energy_peratom()
   cvector *z = ekr_local;
   double mui[3] = {0.0,0.0,0.0};
   double mysum[EWALD_MAX_NSUMS];
-  complex *cek, zc = COMPLEX_NULL, zx = COMPLEX_NULL, zxy = COMPLEX_NULL;
+  complex *cek, zc = {0, 0}, zx = {0, 0}, zxy = {0, 0};
   complex *cek_coul;
   double *q = atom->q;
   double *eatomj = eatom;
@@ -1073,9 +1076,9 @@ void EwaldDisp::compute_energy_peratom()
     for (nh = (h = hvec)+nkvec; h<nh; ++h, ++k) {
       if (ky!=k->y) {                              // based on order in
         if (kx!=k->x) zx = z[kx = k->x].x;                 // reallocate
-        C_RMULT(zxy, z[ky = k->y].y, zx);
+        c_rmult(zxy, z[ky = k->y].y, zx);
       }
-      C_CRMULT(zc, z[k->z].z, zxy);
+      c_crmult(zc, z[k->z].z, zxy);
       if (func[0]) {                                        // 1/r
         mysum[0] += *(ke++)*(cek->re*zc.re - cek->im*zc.im);
         if (func[3]) cek_coul = cek;
@@ -1202,7 +1205,7 @@ void EwaldDisp::compute_virial_dipole()
   double mui[3] = {0.0,0.0,0.0};
   double mysum[6];
   double sum_total[6];
-  complex *cek, zc, zx = COMPLEX_NULL, zxy = COMPLEX_NULL;
+  complex *cek, zc, zx = {0, 0}, zxy = {0, 0};
   complex *cek_coul;
   double *mu = atom->mu ? atom->mu[0] : nullptr;
   double *vatomj = nullptr;
@@ -1231,9 +1234,9 @@ void EwaldDisp::compute_virial_dipole()
     for (nh = (h = hvec)+nkvec; h<nh; ++h, ++k) {
       if (ky!=k->y) {                                   // based on order in
         if (kx!=k->x) zx = z[kx = k->x].x;                 // reallocate
-        C_RMULT(zxy, z[ky = k->y].y, zx);
+        c_rmult(zxy, z[ky = k->y].y, zx);
       }
-      C_CRMULT(zc, z[k->z].z, zxy);
+      c_crmult(zc, z[k->z].z, zxy);
       double im = 0.0;
       if (func[0]) {                                        // 1/r
         ke++;
@@ -1295,7 +1298,7 @@ void EwaldDisp::compute_virial_peratom()
   hvector *h, *nh;
   cvector *z = ekr_local;
   double  mui[3] = {0.0,0.0,0.0};
-  complex *cek, zc = COMPLEX_NULL, zx = COMPLEX_NULL, zxy = COMPLEX_NULL;
+  complex *cek, zc = {0, 0}, zx = {0, 0}, zxy = {0, 0};
   complex *cek_coul;
   double *kv;
   double *q = atom->q;
@@ -1324,9 +1327,9 @@ void EwaldDisp::compute_virial_peratom()
     for (nh = (h = hvec)+nkvec; h<nh; ++h, ++k) {
       if (ky!=k->y) {                                // based on order in
           if (kx!=k->x) zx = z[kx = k->x].x;                 // reallocate
-          C_RMULT(zxy, z[ky = k->y].y, zx);
+          c_rmult(zxy, z[ky = k->y].y, zx);
       }
-      C_CRMULT(zc, z[k->z].z, zxy);
+      c_crmult(zc, z[k->z].z, zxy);
       if (func[0]) {                                        // 1/r
           if (func[3]) cek_coul = cek;
           double r = cek->re*zc.re - cek->im*zc.im; ++cek;
