@@ -39,12 +39,6 @@ using namespace LAMMPS_NS;
 using namespace MathExtra;
 using namespace EwaldConst;
 
-// bits in ewald_order / ewald_off flag which interaction order is treated
-// with the long-range (k-space) solver: order 1 = Coulomb (1/r),
-// order 6 = dispersion (1/r^6).
-
-enum { EWALD_COUL = 1 << 1, EWALD_DISP = 1 << 6 };
-
 /* ---------------------------------------------------------------------- */
 
 PairBuckLongCoulLong::PairBuckLongCoulLong(LAMMPS *lmp) : Pair(lmp)
