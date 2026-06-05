@@ -37,6 +37,12 @@
 using namespace LAMMPS_NS;
 using namespace EwaldConst;
 
+// bits in ewald_order / ewald_off flag which interaction order is treated
+// with the long-range (k-space) solver: order 1 = Coulomb (1/r),
+// order 6 = LJ dispersion (1/r^6).
+
+enum { EWALD_COUL = 1 << 1, EWALD_DISP = 1 << 6 };
+
 /* ---------------------------------------------------------------------- */
 
 PairLJLongTIP4PLong::PairLJLongTIP4PLong(LAMMPS *lmp) :
@@ -1415,16 +1421,16 @@ void PairLJLongTIP4PLong::settings(int narg, char **arg)
 
   ewald_off = 0;
   ewald_order = 0;
-  options(arg, 6);
-  options(++arg, 1);
-  if (!comm->me && ewald_order&(1<<6))
+  options(arg, EWALD_DISP);
+  options(++arg, EWALD_COUL);
+  if (!comm->me && ewald_order & EWALD_DISP)
     error->warning(FLERR,"Mixing forced for lj coefficients");
-  if (!comm->me && ewald_order==((1<<1)|(1<<6)))
+  if (!comm->me && ewald_order == (EWALD_COUL | EWALD_DISP))
     error->warning(FLERR,
                    "Using largest cutoff for pair_style lj/long/tip4p/long");
-  if (!((ewald_order^ewald_off) & (1<<6)))
+  if (!((ewald_order^ewald_off) & EWALD_DISP))
     dispersionflag = 0;
-  if (!((ewald_order^ewald_off)&(1<<1)))
+  if (!((ewald_order^ewald_off) & EWALD_COUL))
     error->all(FLERR,
                "Coulomb cut not supported in pair_style lj/long/tip4p/long");
   typeO_str = arg[1];
