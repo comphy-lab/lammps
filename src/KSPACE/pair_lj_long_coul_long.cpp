@@ -501,29 +501,35 @@ void PairLJLongCoulLong::compute(int eflag, int vflag)
 
       if (order1 && (rsq < cut_coulsq)) {                   // coulombic
         if (!ncoultablebits || rsq <= tabinnersq) {         // series real space
-          double r = sqrt(rsq), x = g_ewald*r;
-          double s = qri*q[j], t = 1.0/(1.0+EWALD_P*x);
+          double r = sqrt(rsq);
+          double grij = g_ewald*r;                          // Ewald scaled distance
+          double t = 1.0/(1.0+EWALD_P*grij);
+          double erfc_poly = ((((t*A5+A4)*t+A3)*t+A2)*t+A1); // erfc series approximation
+          double pre = qri*q[j];                            // qqrd2e * qi * qj
           if (ni == 0) {
-            s *= g_ewald*exp(-x*x);
-            force_coul = (t *= ((((t*A5+A4)*t+A3)*t+A2)*t+A1)*s/x)+EWALD_F*s;
+            pre *= g_ewald*exp(-grij*grij);
+            t *= erfc_poly*pre/grij;                         // real-space Coulomb energy
+            force_coul = t+EWALD_F*pre;
             if (eflag) ecoul = t;
           } else {                                          // special case
-            r = s*(1.0-special_coul[ni])/r; s *= g_ewald*exp(-x*x);
-            force_coul = (t *= ((((t*A5+A4)*t+A3)*t+A2)*t+A1)*s/x)+EWALD_F*s-r;
-            if (eflag) ecoul = t-r;
+            double adjust = pre*(1.0-special_coul[ni])/r;   // subtract excluded interaction
+            pre *= g_ewald*exp(-grij*grij);
+            t *= erfc_poly*pre/grij;
+            force_coul = t+EWALD_F*pre-adjust;
+            if (eflag) ecoul = t-adjust;
           }
         } else {                                            // table real space
-          union_int_float_t t;
-          t.f = rsq;
-          const int k = (t.i & ncoulmask)>>ncoulshiftbits;
-          double f = (rsq-rtable[k])*drtable[k], qiqj = qi*q[j];
+          union_int_float_t rsq_lookup;
+          rsq_lookup.f = rsq;
+          const int k = (rsq_lookup.i & ncoulmask)>>ncoulshiftbits;
+          double fraction = (rsq-rtable[k])*drtable[k], qiqj = qi*q[j];
           if (ni == 0) {
-            force_coul = qiqj*(ftable[k]+f*dftable[k]);
-            if (eflag) ecoul = qiqj*(etable[k]+f*detable[k]);
+            force_coul = qiqj*(ftable[k]+fraction*dftable[k]);
+            if (eflag) ecoul = qiqj*(etable[k]+fraction*detable[k]);
           } else {                                          // special case
-            t.f = (1.0-special_coul[ni])*(ctable[k]+f*dctable[k]);
-            force_coul = qiqj*(ftable[k]+f*dftable[k]-(double)t.f);
-            if (eflag) ecoul = qiqj*(etable[k]+f*detable[k]-(double)t.f);
+            rsq_lookup.f = (1.0-special_coul[ni])*(ctable[k]+fraction*dctable[k]);
+            force_coul = qiqj*(ftable[k]+fraction*dftable[k]-(double)rsq_lookup.f);
+            if (eflag) ecoul = qiqj*(etable[k]+fraction*detable[k]-(double)rsq_lookup.f);
           }
         }
       } else force_coul = ecoul = 0.0;
@@ -531,46 +537,48 @@ void PairLJLongCoulLong::compute(int eflag, int vflag)
       if (rsq < cut_ljsqi[typej]) {                         // lj
         if (order6) {                                       // long-range lj
           if (!ndisptablebits || rsq <= tabinnerdispsq) {    // series real space
-            double rn = r2inv*r2inv*r2inv;
-            double x2 = g2*rsq, a2 = 1.0/x2;
-            x2 = a2*exp(-x2)*lj4i[typej];
+            double r6inv = r2inv*r2inv*r2inv;
+            double r12inv = r6inv*r6inv;
+            double gr2 = g2*rsq, a2 = 1.0/gr2;
+            double expterm = a2*exp(-gr2)*lj4i[typej];       // damped 1/r^6 reciprocal term
+            double g6term = g6*((a2+1.0)*a2+0.5)*expterm;
+            double g8term = g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*expterm*rsq;
             if (ni == 0) {
-              force_lj =
-              (rn*=rn)*lj1i[typej]-g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*x2*rsq;
-              if (eflag)
-                evdwl = rn*lj3i[typej]-g6*((a2+1.0)*a2+0.5)*x2;
+              force_lj = r12inv*lj1i[typej]-g8term;
+              if (eflag) evdwl = r12inv*lj3i[typej]-g6term;
             } else {                                        // special case
-              double f = special_lj[ni], t = rn*(1.0-f);
-              force_lj = f*(rn *= rn)*lj1i[typej]-
-              g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*x2*rsq+t*lj2i[typej];
-              if (eflag)
-                evdwl = f*rn*lj3i[typej]-g6*((a2+1.0)*a2+0.5)*x2+t*lj4i[typej];
+              double factor = special_lj[ni], t = r6inv*(1.0-factor);
+              force_lj = factor*r12inv*lj1i[typej]-g8term+t*lj2i[typej];
+              if (eflag) evdwl = factor*r12inv*lj3i[typej]-g6term+t*lj4i[typej];
             }
           } else {                                          // table real space
-            union_int_float_t disp_t;
-            disp_t.f = rsq;
-            const int disp_k = (disp_t.i & ndispmask)>>ndispshiftbits;
+            union_int_float_t rsq_lookup;
+            rsq_lookup.f = rsq;
+            const int disp_k = (rsq_lookup.i & ndispmask)>>ndispshiftbits;
             double f_disp = (rsq-rdisptable[disp_k])*drdisptable[disp_k];
-            double rn = r2inv*r2inv*r2inv;
+            double ftable_disp = fdisptable[disp_k]+f_disp*dfdisptable[disp_k];
+            double etable_disp = edisptable[disp_k]+f_disp*dedisptable[disp_k];
+            double r6inv = r2inv*r2inv*r2inv;
+            double r12inv = r6inv*r6inv;
             if (ni == 0) {
-              force_lj = (rn*=rn)*lj1i[typej]-(fdisptable[disp_k]+f_disp*dfdisptable[disp_k])*lj4i[typej];
-              if (eflag) evdwl = rn*lj3i[typej]-(edisptable[disp_k]+f_disp*dedisptable[disp_k])*lj4i[typej];
+              force_lj = r12inv*lj1i[typej]-ftable_disp*lj4i[typej];
+              if (eflag) evdwl = r12inv*lj3i[typej]-etable_disp*lj4i[typej];
             } else {                                        // special case
-              double f = special_lj[ni], t = rn*(1.0-f);
-              force_lj = f*(rn *= rn)*lj1i[typej]-(fdisptable[disp_k]+f_disp*dfdisptable[disp_k])*lj4i[typej]+t*lj2i[typej];
-              if (eflag) evdwl = f*rn*lj3i[typej]-(edisptable[disp_k]+f_disp*dedisptable[disp_k])*lj4i[typej]+t*lj4i[typej];
+              double factor = special_lj[ni], t = r6inv*(1.0-factor);
+              force_lj = factor*r12inv*lj1i[typej]-ftable_disp*lj4i[typej]+t*lj2i[typej];
+              if (eflag) evdwl = factor*r12inv*lj3i[typej]-etable_disp*lj4i[typej]+t*lj4i[typej];
             }
           }
         } else {                                                // cut lj
-          double rn = r2inv*r2inv*r2inv;
+          double r6inv = r2inv*r2inv*r2inv;
           if (ni == 0) {
-            force_lj = rn*(rn*lj1i[typej]-lj2i[typej]);
-            if (eflag) evdwl = rn*(rn*lj3i[typej]-lj4i[typej])-offseti[typej];
+            force_lj = r6inv*(r6inv*lj1i[typej]-lj2i[typej]);
+            if (eflag) evdwl = r6inv*(r6inv*lj3i[typej]-lj4i[typej])-offseti[typej];
           } else {                                        // special case
-            double f = special_lj[ni];
-            force_lj = f*rn*(rn*lj1i[typej]-lj2i[typej]);
+            double factor = special_lj[ni];
+            force_lj = factor*r6inv*(r6inv*lj1i[typej]-lj2i[typej]);
             if (eflag)
-              evdwl = f * (rn*(rn*lj3i[typej]-lj4i[typej])-offseti[typej]);
+              evdwl = factor * (r6inv*(r6inv*lj3i[typej]-lj4i[typej])-offseti[typej]);
           }
         }
       } else force_lj = evdwl = 0.0;
@@ -656,10 +664,10 @@ void PairLJLongCoulLong::compute_inner()
 
       typej = type[j];
       if (rsq < cut_ljsqi[typej]) {                          // lennard-jones
-        double rn = r2inv*r2inv*r2inv;
+        double r6inv = r2inv*r2inv*r2inv;
         force_lj = ni == 0 ?
-          rn*(rn*lj1i[typej]-lj2i[typej]) :
-          rn*(rn*lj1i[typej]-lj2i[typej])*special_lj[ni];
+          r6inv*(r6inv*lj1i[typej]-lj2i[typej]) :
+          r6inv*(r6inv*lj1i[typej]-lj2i[typej])*special_lj[ni];
       } else force_lj = 0.0;
 
       fpair = (force_coul + force_lj) * r2inv;
@@ -749,10 +757,10 @@ void PairLJLongCoulLong::compute_middle()
 
       typej = type[j];
       if (rsq < cut_ljsqi[typej]) {                          // lennard-jones
-        double rn = r2inv*r2inv*r2inv;
+        double r6inv = r2inv*r2inv*r2inv;
         force_lj = ni == 0 ?
-          rn*(rn*lj1i[typej]-lj2i[typej]) :
-          rn*(rn*lj1i[typej]-lj2i[typej])*special_lj[ni];
+          r6inv*(r6inv*lj1i[typej]-lj2i[typej]) :
+          r6inv*(r6inv*lj1i[typej]-lj2i[typej])*special_lj[ni];
       } else force_lj = 0.0;
 
       fpair = (force_coul + force_lj) * r2inv;
@@ -853,86 +861,92 @@ void PairLJLongCoulLong::compute_outer(int eflag, int vflag)
 
       if (order1 && (rsq < cut_coulsq)) {                // coulombic
         if (!ncoultablebits || rsq <= tabinnersq) {        // series real space
-          double r = sqrt(rsq), s = qri*q[j];
+          double r = sqrt(rsq), pre = qri*q[j];
           if (respa_flag)                                // correct for respa
-            respa_coul = ni == 0 ? frespa*s/r : frespa*s/r*special_coul[ni];
-          double x = g_ewald*r, t = 1.0/(1.0+EWALD_P*x);
+            respa_coul = ni == 0 ? frespa*pre/r : frespa*pre/r*special_coul[ni];
+          double grij = g_ewald*r, t = 1.0/(1.0+EWALD_P*grij);
+          double erfc_poly = ((((t*A5+A4)*t+A3)*t+A2)*t+A1);
           if (ni == 0) {
-            s *= g_ewald*exp(-x*x);
-            force_coul = (t *= ((((t*A5+A4)*t+A3)*t+A2)*t+A1)*s/x)+EWALD_F*s-respa_coul;
+            pre *= g_ewald*exp(-grij*grij);
+            t *= erfc_poly*pre/grij;
+            force_coul = t+EWALD_F*pre-respa_coul;
             if (eflag) ecoul = t;
           } else {                                        // correct for special
-            r = s*(1.0-special_coul[ni])/r; s *= g_ewald*exp(-x*x);
-            force_coul = (t *= ((((t*A5+A4)*t+A3)*t+A2)*t+A1)*s/x)+EWALD_F*s-r-respa_coul;
-            if (eflag) ecoul = t-r;
+            double adjust = pre*(1.0-special_coul[ni])/r;
+            pre *= g_ewald*exp(-grij*grij);
+            t *= erfc_poly*pre/grij;
+            force_coul = t+EWALD_F*pre-adjust-respa_coul;
+            if (eflag) ecoul = t-adjust;
           }
         } else {                                             // table real space
           if (respa_flag) {
-            double r = sqrt(rsq), s = qri*q[j];
-            respa_coul = ni == 0 ? frespa*s/r : frespa*s/r*special_coul[ni];
+            double r = sqrt(rsq), pre = qri*q[j];
+            respa_coul = ni == 0 ? frespa*pre/r : frespa*pre/r*special_coul[ni];
           }
-          union_int_float_t t;
-          t.f = rsq;
-          const int k = (t.i & ncoulmask) >> ncoulshiftbits;
-          double f = (rsq-rtable[k])*drtable[k], qiqj = qi*q[j];
+          union_int_float_t rsq_lookup;
+          rsq_lookup.f = rsq;
+          const int k = (rsq_lookup.i & ncoulmask) >> ncoulshiftbits;
+          double fraction = (rsq-rtable[k])*drtable[k], qiqj = qi*q[j];
           if (ni == 0) {
-            force_coul = qiqj*(ftable[k]+f*dftable[k]);
-            if (eflag) ecoul = qiqj*(etable[k]+f*detable[k]);
+            force_coul = qiqj*(ftable[k]+fraction*dftable[k]);
+            if (eflag) ecoul = qiqj*(etable[k]+fraction*detable[k]);
           } else {                                        // correct for special
-            t.f = (1.0-special_coul[ni])*(ctable[k]+f*dctable[k]);
-            force_coul = qiqj*(ftable[k]+f*dftable[k]-(double)t.f);
+            rsq_lookup.f = (1.0-special_coul[ni])*(ctable[k]+fraction*dctable[k]);
+            force_coul = qiqj*(ftable[k]+fraction*dftable[k]-(double)rsq_lookup.f);
             if (eflag) {
-              t.f = (1.0-special_coul[ni])*(ptable[k]+f*dptable[k]);
-              ecoul = qiqj*(etable[k]+f*detable[k]-(double)t.f);
+              rsq_lookup.f = (1.0-special_coul[ni])*(ptable[k]+fraction*dptable[k]);
+              ecoul = qiqj*(etable[k]+fraction*detable[k]-(double)rsq_lookup.f);
             }
           }
         }
       } else force_coul = respa_coul = ecoul = 0.0;
 
       if (rsq < cut_ljsqi[typej]) {                        // lennard-jones
-        double rn = r2inv*r2inv*r2inv;
+        double r6inv = r2inv*r2inv*r2inv;
         if (respa_flag) respa_lj = ni == 0 ?                 // correct for respa
-            frespa*rn*(rn*lj1i[typej]-lj2i[typej]) :
-            frespa*rn*(rn*lj1i[typej]-lj2i[typej])*special_lj[ni];
+            frespa*r6inv*(r6inv*lj1i[typej]-lj2i[typej]) :
+            frespa*r6inv*(r6inv*lj1i[typej]-lj2i[typej])*special_lj[ni];
         if (order6) {                                        // long-range form
           if (!ndisptablebits || rsq <= tabinnerdispsq) {
-            double x2 = g2*rsq, a2 = 1.0/x2;
-            x2 = a2*exp(-x2)*lj4i[typej];
+            double r12inv = r6inv*r6inv;
+            double gr2 = g2*rsq, a2 = 1.0/gr2;
+            double expterm = a2*exp(-gr2)*lj4i[typej];
+            double g6term = g6*((a2+1.0)*a2+0.5)*expterm;
+            double g8term = g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*expterm*rsq;
             if (ni == 0) {
-              force_lj =
-                (rn*=rn)*lj1i[typej]-g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*x2*rsq-respa_lj;
-              if (eflag) evdwl = rn*lj3i[typej]-g6*((a2+1.0)*a2+0.5)*x2;
+              force_lj = r12inv*lj1i[typej]-g8term-respa_lj;
+              if (eflag) evdwl = r12inv*lj3i[typej]-g6term;
             } else {                                        // correct for special
-              double f = special_lj[ni], t = rn*(1.0-f);
-              force_lj = f*(rn *= rn)*lj1i[typej]-
-                g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*x2*rsq+t*lj2i[typej]-respa_lj;
-              if (eflag)
-                evdwl = f*rn*lj3i[typej]-g6*((a2+1.0)*a2+0.5)*x2+t*lj4i[typej];
+              double factor = special_lj[ni], t = r6inv*(1.0-factor);
+              force_lj = factor*r12inv*lj1i[typej]-g8term+t*lj2i[typej]-respa_lj;
+              if (eflag) evdwl = factor*r12inv*lj3i[typej]-g6term+t*lj4i[typej];
             }
           } else {                        // table real space
-            union_int_float_t disp_t;
-            disp_t.f = rsq;
-            const int disp_k = (disp_t.i & ndispmask)>>ndispshiftbits;
+            union_int_float_t rsq_lookup;
+            rsq_lookup.f = rsq;
+            const int disp_k = (rsq_lookup.i & ndispmask)>>ndispshiftbits;
             double f_disp = (rsq-rdisptable[disp_k])*drdisptable[disp_k];
-            double rn = r2inv*r2inv*r2inv;
+            double ftable_disp = fdisptable[disp_k]+f_disp*dfdisptable[disp_k];
+            double etable_disp = edisptable[disp_k]+f_disp*dedisptable[disp_k];
+            double r12inv = r6inv*r6inv;
             if (ni == 0) {
-              force_lj = (rn*=rn)*lj1i[typej]-(fdisptable[disp_k]+f_disp*dfdisptable[disp_k])*lj4i[typej]-respa_lj;
-              if (eflag) evdwl = rn*lj3i[typej]-(edisptable[disp_k]+f_disp*dedisptable[disp_k])*lj4i[typej];
+              force_lj = r12inv*lj1i[typej]-ftable_disp*lj4i[typej]-respa_lj;
+              if (eflag) evdwl = r12inv*lj3i[typej]-etable_disp*lj4i[typej];
             } else {                  // special case
-              double f = special_lj[ni], t = rn*(1.0-f);
-              force_lj = f*(rn *= rn)*lj1i[typej]-(fdisptable[disp_k]+f_disp*dfdisptable[disp_k])*lj4i[typej]+t*lj2i[typej]-respa_lj;
-              if (eflag) evdwl = f*rn*lj3i[typej]-(edisptable[disp_k]+f_disp*dedisptable[disp_k])*lj4i[typej]+t*lj4i[typej];
+              double factor = special_lj[ni], t = r6inv*(1.0-factor);
+              force_lj = factor*r12inv*lj1i[typej]-ftable_disp*lj4i[typej]+t*lj2i[typej]-respa_lj;
+              if (eflag) evdwl = factor*r12inv*lj3i[typej]-etable_disp*lj4i[typej]+t*lj4i[typej];
             }
           }
         } else {                                                // cut form
           if (ni == 0) {
-            force_lj = rn*(rn*lj1i[typej]-lj2i[typej])-respa_lj;
-            if (eflag) evdwl = rn*(rn*lj3i[typej]-lj4i[typej])-offseti[typej];
+            force_lj = r6inv*(r6inv*lj1i[typej]-lj2i[typej])-respa_lj;
+            if (eflag) evdwl = r6inv*(r6inv*lj3i[typej]-lj4i[typej])-offseti[typej];
           } else {                                        // correct for special
-            double f = special_lj[ni];
-            force_lj = f*rn*(rn*lj1i[typej]-lj2i[typej])-respa_lj;
+            double factor = special_lj[ni];
+            force_lj = factor*r6inv*(r6inv*lj1i[typej]-lj2i[typej])-respa_lj;
             if (eflag)
-              evdwl = f*(rn*(rn*lj3i[typej]-lj4i[typej])-offseti[typej]);
+              evdwl = factor*(r6inv*(r6inv*lj3i[typej]-lj4i[typej])-offseti[typej]);
           }
         }
       } else force_lj = respa_lj = evdwl = 0.0;
@@ -972,31 +986,38 @@ double PairLJLongCoulLong::single(int i, int j, int itype, int jtype,
   r2inv = 1.0/rsq;
   if ((ewald_order & EWALD_COUL) && (rsq < cut_coulsq)) {     // coulombic
     if (!ncoultablebits || rsq <= tabinnersq) {                // series real space
-      double r = sqrt(rsq), x = g_ewald*r;
-      double s = force->qqrd2e*q[i]*q[j], t = 1.0/(1.0+EWALD_P*x);
-      r = s*(1.0-factor_coul)/r; s *= g_ewald*exp(-x*x);
-      force_coul = (t *= ((((t*A5+A4)*t+A3)*t+A2)*t+A1)*s/x)+EWALD_F*s-r;
-      eng += t-r;
+      double r = sqrt(rsq);
+      double grij = g_ewald*r;
+      double pre = force->qqrd2e*q[i]*q[j];
+      double t = 1.0/(1.0+EWALD_P*grij);
+      double erfc_poly = ((((t*A5+A4)*t+A3)*t+A2)*t+A1);
+      double adjust = pre*(1.0-factor_coul)/r;
+      pre *= g_ewald*exp(-grij*grij);
+      t *= erfc_poly*pre/grij;
+      force_coul = t+EWALD_F*pre-adjust;
+      eng += t-adjust;
     } else {                                                // table real space
-      union_int_float_t t;
-      t.f = rsq;
-      const int k = (t.i & ncoulmask) >> ncoulshiftbits;
-      double f = (rsq-rtable[k])*drtable[k], qiqj = q[i]*q[j];
-      t.f = (1.0-factor_coul)*(ctable[k]+f*dctable[k]);
-      force_coul = qiqj*(ftable[k]+f*dftable[k]-(double)t.f);
-      eng += qiqj*(etable[k]+f*detable[k]-(double)t.f);
+      union_int_float_t rsq_lookup;
+      rsq_lookup.f = rsq;
+      const int k = (rsq_lookup.i & ncoulmask) >> ncoulshiftbits;
+      double fraction = (rsq-rtable[k])*drtable[k], qiqj = q[i]*q[j];
+      rsq_lookup.f = (1.0-factor_coul)*(ctable[k]+fraction*dctable[k]);
+      force_coul = qiqj*(ftable[k]+fraction*dftable[k]-(double)rsq_lookup.f);
+      eng += qiqj*(etable[k]+fraction*detable[k]-(double)rsq_lookup.f);
     }
   } else force_coul = 0.0;
 
   if (rsq < cut_ljsq[itype][jtype]) {                       // lennard-jones
     r6inv = r2inv*r2inv*r2inv;
     if (ewald_order & EWALD_DISP) {                         // long-range
-      double x2 = g2*rsq, a2 = 1.0/x2, t = r6inv*(1.0-factor_lj);
-      x2 = a2*exp(-x2)*lj4[itype][jtype];
-      force_lj = factor_lj*(r6inv *= r6inv)*lj1[itype][jtype]-
-               g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*x2*rsq+t*lj2[itype][jtype];
-      eng += factor_lj*r6inv*lj3[itype][jtype]-
-        g6*((a2+1.0)*a2+0.5)*x2+t*lj4[itype][jtype];
+      double r12inv = r6inv*r6inv;
+      double gr2 = g2*rsq, a2 = 1.0/gr2;
+      double expterm = a2*exp(-gr2)*lj4[itype][jtype];
+      double t = r6inv*(1.0-factor_lj);
+      double g6term = g6*((a2+1.0)*a2+0.5)*expterm;
+      double g8term = g8*(((6.0*a2+6.0)*a2+3.0)*a2+1.0)*expterm*rsq;
+      force_lj = factor_lj*r12inv*lj1[itype][jtype]-g8term+t*lj2[itype][jtype];
+      eng += factor_lj*r12inv*lj3[itype][jtype]-g6term+t*lj4[itype][jtype];
     } else {                                                // cut
       force_lj = factor_lj*r6inv*(lj1[itype][jtype]*r6inv-lj2[itype][jtype]);
       eng += factor_lj*(r6inv*(r6inv*lj3[itype][jtype]-
