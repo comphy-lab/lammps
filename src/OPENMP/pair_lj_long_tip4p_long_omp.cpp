@@ -33,6 +33,12 @@
 using namespace LAMMPS_NS;
 using namespace EwaldConst;
 
+// bits in ewald_order / ewald_off flag which interaction order is treated
+// with the long-range (k-space) solver: order 1 = Coulomb (1/r),
+// order 6 = LJ dispersion (1/r^6).
+
+enum { EWALD_COUL = 1 << 1, EWALD_DISP = 1 << 6 };
+
 /* ---------------------------------------------------------------------- */
 
 PairLJLongTIP4PLongOMP::PairLJLongTIP4PLongOMP(LAMMPS *lmp) :
@@ -87,8 +93,8 @@ void PairLJLongTIP4PLongOMP::compute(int eflag, int vflag)
   // be updated. this needs to be done in every step.
   for (i = 0; i < nall; i++) hneigh_thr[i].t = 0;
 
-  const int order1 = ewald_order&(1<<1);
-  const int order6 = ewald_order&(1<<6);
+  const int order1 = ewald_order & EWALD_COUL;
+  const int order6 = ewald_order & EWALD_DISP;
 
   const int nthreads = comm->nthreads;
   const int inum = list->inum;
@@ -422,8 +428,8 @@ void PairLJLongTIP4PLongOMP::compute_middle()
 void PairLJLongTIP4PLongOMP::compute_outer(int eflag, int vflag)
 {
   ev_init(eflag,vflag);
-  const int order1 = ewald_order&(1<<1);
-  const int order6 = ewald_order&(1<<6);
+  const int order1 = ewald_order & EWALD_COUL;
+  const int order6 = ewald_order & EWALD_DISP;
 
   const int nall = atom->nlocal + atom->nghost;
 
@@ -1103,7 +1109,7 @@ void PairLJLongTIP4PLongOMP::eval_inner(int iifrom, int iito, ThrData * const th
   const double cut_out_off_sq = cut_out_off*cut_out_off;
 
   int ni;
-  const int order1 = (ewald_order|(ewald_off^-1))&(1<<1);
+  const int order1 = (ewald_order | ~ewald_off) & EWALD_COUL;
   double qri;
 
   int i,j,ii,jj,jnum,itype,jtype;
@@ -1352,7 +1358,7 @@ void PairLJLongTIP4PLongOMP::eval_middle(int iifrom, int iito, ThrData * const t
   const double qqrd2e = force->qqrd2e;
 
   const double cut_coulsqplus = (cut_coul+2.0*qdist)*(cut_coul+2.0*qdist);
-  const int order1 = (ewald_order|(ewald_off^-1))&(1<<1);
+  const int order1 = (ewald_order | ~ewald_off) & EWALD_COUL;
 
   const double cut_in_off = cut_respa[0];
   const double cut_in_on = cut_respa[1];
