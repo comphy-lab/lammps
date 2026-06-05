@@ -184,6 +184,9 @@ void *PairLJLongCoulLong::extract(const char *id, int &dim)
   if (strcmp(id,"ewald_cut") == 0) return (void *) &cut_coul;
   if (strcmp(id,"ewald_mix") == 0) return (void *) &mix_flag;
   if (strcmp(id,"cut_coul") == 0) return (void *) &cut_coul;
+  if (strcmp(id,"cut_vdwl") == 0) return (void *) &cut_lj_global;
+  // "cut_LJ" is a deprecated alias for "cut_vdwl", kept for backward
+  // compatibility; remove after a suitable deprecation period
   if (strcmp(id,"cut_LJ") == 0) return (void *) &cut_lj_global;
   return nullptr;
 }

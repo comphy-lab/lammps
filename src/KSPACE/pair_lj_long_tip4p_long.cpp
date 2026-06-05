@@ -1624,24 +1624,21 @@ void *PairLJLongTIP4PLong::extract(const char *str, int &dim)
   if (strcmp(str,"typeB") == 0) return (void *) &typeB;
   if (strcmp(str,"cut_coul") == 0) return (void *) &cut_coul;
 
-  const char *ids[] = {
-    "B", "sigma", "epsilon", "ewald_order", "ewald_cut", "cut_coul",
-    "ewald_mix", "cut_LJ", nullptr};
-  void *ptrs[] = {
-    lj4, sigma, epsilon, &ewald_order, &cut_coul, &cut_coul,
-    &mix_flag, &cut_lj_global, nullptr};
-  int i;
+  // per-type-pair arrays are 2d, scalars are 0d
 
-  i=0;
-  while (ids[i] != nullptr) {
-    if (i <=2) dim = 2;
-    else dim = 0;
+  dim = 2;
+  if (strcmp(str,"B") == 0) return (void *) lj4;
+  if (strcmp(str,"sigma") == 0) return (void *) sigma;
+  if (strcmp(str,"epsilon") == 0) return (void *) epsilon;
 
-    if (strcmp(ids[i],str) == 0)
-      return ptrs[i];
-
-    ++i;
-  }
+  dim = 0;
+  if (strcmp(str,"ewald_order") == 0) return (void *) &ewald_order;
+  if (strcmp(str,"ewald_cut") == 0) return (void *) &cut_coul;
+  if (strcmp(str,"ewald_mix") == 0) return (void *) &mix_flag;
+  if (strcmp(str,"cut_vdwl") == 0) return (void *) &cut_lj_global;
+  // "cut_LJ" is a deprecated alias for "cut_vdwl", kept for backward
+  // compatibility; remove after a suitable deprecation period
+  if (strcmp(str,"cut_LJ") == 0) return (void *) &cut_lj_global;
   return nullptr;
 }
 
