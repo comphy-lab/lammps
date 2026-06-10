@@ -122,13 +122,13 @@ charge, :math:`B_{ij}` is the short-range repulsion parameter,
 O-O-O angle along the common axis of two adjacent oxygen octahedra.
 
 The pair style *bondval* computes :math:`E_{BV}`, the bond-valence
-energy term.  The pair style *bondval/vec* computes :math:`E_{BVV}`,
-the bond-valence vector energy term.  The remaining energy contributions
-(:math:`E_c` and :math:`E_r`) are typically provided by
-:doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>`, and
-:math:`E_a` by an :doc:`angle_style <angle_style>`.  The *power*
-argument to the pair_style command specifies the exponent used in computing
-the forces and is usually set to 2.0.
+energy term.  The pair style *bondval/vec* computes :math:`E_{BVV}`, the
+bond-valence vector energy term.  The remaining energy contributions
+(:math:`E_c` and :math:`E_r`) are typically provided by :doc:`pair_style
+lj/cut/coul/long <pair_lj_cut_coul>`, and :math:`E_a` by an
+:doc:`angle_style <angle_style>`.  The *power* argument to the
+pair_style command specifies the exponent used in computing the forces
+and is usually set to 2.0.
 
 The quantities :math:`r_{ij}`, :math:`V_i`, and :math:`\vec{W}_i`
 are computed at each timestep from the current atom positions.  All
@@ -216,7 +216,7 @@ These pair styles must be used with
 as standalone pair styles.
 
 For a physically correct simulation, *bondval*, *bondval/vec*, and a
-:doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>` contribution
+:doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul>` contribution
 for :math:`E_c` and :math:`E_r` must all be combined via
 ``hybrid/overlay``.  The published parameters for this potential are
 fitted to only include :math:`r^{-12}` repulsion term
@@ -224,14 +224,14 @@ fitted to only include :math:`r^{-12}` repulsion term
 contribution is set to 0.
 To run with the published parameters correctly, users must manually initialize
 the internal variables ``lj2`` and ``lj4`` in the source code of
-:doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>` to be zero
+:doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul>` to be zero
 in order to remove the attractive :math:`r^{-6}` contribution.
 
 Related commands
 """"""""""""""""
 
 * :doc:`pair_style hybrid/overlay <pair_hybrid>`
-* :doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>`
+* :doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul>`
 * :doc:`angle_style harmonic <angle_harmonic>`
 * :doc:`kspace_style <kspace_style>`
 
