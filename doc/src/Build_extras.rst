@@ -598,6 +598,12 @@ They must be specified in uppercase.
    *  - SKX
       - HOST
       - Intel Skylake Xeon Server CPUs (AVX512)
+   *  - KNC
+      - HOST
+      - Intel Knights Corner Xeon Phi
+   *  - KNL
+      - HOST
+      - Intel Knights Landing Xeon Phi
    *  - SPR
       - HOST
       - Intel Sapphire Rapids Xeon Server CPUs (AVX512)
@@ -765,6 +771,13 @@ This list was last updated for version 5.1.0 of the Kokkos library.
 
       Please note that enabling OpenMP for KOKKOS requires that OpenMP is
       also :ref:`enabled for the rest of LAMMPS <serial>`.
+
+      For Intel KNLs using OpenMP, set these variables:
+
+      .. code-block:: bash
+
+         -D Kokkos_ARCH_KNL=yes
+         -D Kokkos_ENABLE_OPENMP=yes
 
       For NVIDIA GPUs using CUDA, set these variables:
 
