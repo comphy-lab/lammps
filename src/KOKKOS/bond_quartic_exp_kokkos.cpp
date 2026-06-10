@@ -16,7 +16,7 @@
    Contributing author: Ray Shan (Materials Design)
 ------------------------------------------------------------------------- */
 
-#include "bond_quarticexp_kokkos.h"
+#include "bond_quartic_exp_kokkos.h"
 
 #include "atom_kokkos.h"
 #include "atom_masks.h"

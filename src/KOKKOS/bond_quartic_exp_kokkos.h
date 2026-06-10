@@ -19,10 +19,10 @@ BondStyle(quartic/exp/kk/host,BondQuarticExpKokkos<LMPHostType>);
 // clang-format on
 #else
 
-#ifndef LMP_BOND_QUARTICEXP_KOKKOS_H
-#define LMP_BOND_QUARTICEXP_KOKKOS_H
+#ifndef LMP_BOND_QUARTIC_EXP_KOKKOS_H
+#define LMP_BOND_QUARTIC_EXP_KOKKOS_H
 
-#include "bond_quarticexp.h"
+#include "bond_quartic_exp.h"
 #include "kokkos_type.h"
 
 namespace LAMMPS_NS {

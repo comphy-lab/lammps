@@ -17,8 +17,8 @@ BondStyle(quartic/exp,BondQuarticExp);
 // clang-format on
 #else
 
-#ifndef LMP_BOND_QUARTICEXP_H
-#define LMP_BOND_QUARTICEXP_H
+#ifndef LMP_BOND_QUARTIC_EXP_H
+#define LMP_BOND_QUARTIC_EXP_H
 
 #include "bond.h"
 

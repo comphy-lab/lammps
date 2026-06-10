@@ -12,7 +12,7 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-#include "bond_quarticexp.h"
+#include "bond_quartic_exp.h"
 
 #include "atom.h"
 #include "comm.h"
