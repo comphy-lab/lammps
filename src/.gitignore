@@ -984,6 +984,8 @@
 /fix_freeze.h
 /fix_gcmc.cpp
 /fix_gcmc.h
+/fix_gemc.cpp
+/fix_gemc.h
 /fix_gjf.cpp
 /fix_gjf.h
 /fix_gld.cpp
@@ -1797,6 +1799,9 @@
 /fix_drude.h
 /fix_drude_transform.cpp
 /fix_drude_transform.h
+/fix_gemc.cpp
+/fix_gemc_mcmoves.cpp
+/fix_gemc.h
 /fix_graphics_replica.cpp
 /fix_graphics_replica.h
 /fix_langevin_drude.cpp
