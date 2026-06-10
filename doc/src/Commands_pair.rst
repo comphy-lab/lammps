@@ -1,10 +1,11 @@
+.. include:: Commands_html.rst
+
 Pair styles
 ===========
 
 All LAMMPS :doc:`pair_style <pair_style>` commands.  Some styles have
 accelerated versions.  This is indicated by additional letters in
-parenthesis: g = GPU, i = INTEL, k = KOKKOS, o = OPENMP, t =
-OPT.
+parenthesis: g = GPU, i = INTEL, k = KOKKOS, o = OPENMP, t = OPT.
 
 .. table_from_list::
    :columns: 3
@@ -69,6 +70,7 @@ OPT.
    * :doc:`coul/debye (gko) <pair_coul>`
    * :doc:`coul/diel (ko) <pair_coul_diel>`
    * :doc:`coul/dsf (gko) <pair_coul>`
+   * :doc:`coul/esp <pair_coul>`
    * :doc:`coul/exclude <pair_coul>`
    * :doc:`coul/long (gko) <pair_coul>`
    * :doc:`coul/long/cs (g) <pair_cs>`
@@ -133,6 +135,7 @@ OPT.
    * :doc:`lambda/input/csp/apip <pair_lambda_input_apip>`
    * :doc:`lambda/zone/apip <pair_lambda_zone_apip>`
    * :doc:`lcbop (o) <pair_lcbop>`
+   * :doc:`ldd <pair_ldd>`
    * :doc:`lebedeva/z <pair_lebedeva_z>`
    * :doc:`lennard/mdf (ko) <pair_mdf>`
    * :doc:`lepton (o) <pair_lepton>`
