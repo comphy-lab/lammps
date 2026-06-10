@@ -1,10 +1,11 @@
+.. include:: Commands_html.rst
+
 Pair styles
 ===========
 
 All LAMMPS :doc:`pair_style <pair_style>` commands.  Some styles have
 accelerated versions.  This is indicated by additional letters in
-parenthesis: g = GPU, i = INTEL, k = KOKKOS, o = OPENMP, t =
-OPT.
+parenthesis: g = GPU, i = INTEL, k = KOKKOS, o = OPENMP, t = OPT.
 
 .. table_from_list::
    :columns: 3
@@ -67,6 +68,7 @@ OPT.
    * :doc:`coul/debye (gko) <pair_coul>`
    * :doc:`coul/diel (ko) <pair_coul_diel>`
    * :doc:`coul/dsf (gko) <pair_coul>`
+   * :doc:`coul/esp <pair_coul>`
    * :doc:`coul/exclude <pair_coul>`
    * :doc:`coul/long (gko) <pair_coul>`
    * :doc:`coul/long/cs (g) <pair_cs>`
@@ -131,6 +133,7 @@ OPT.
    * :doc:`lambda/input/csp/apip <pair_lambda_input_apip>`
    * :doc:`lambda/zone/apip <pair_lambda_zone_apip>`
    * :doc:`lcbop (o) <pair_lcbop>`
+   * :doc:`ldd <pair_ldd>`
    * :doc:`lebedeva/z <pair_lebedeva_z>`
    * :doc:`lennard/mdf (ko) <pair_mdf>`
    * :doc:`lepton (o) <pair_lepton>`
@@ -237,6 +240,12 @@ OPT.
    * :doc:`oxdna2/hbond <pair_oxdna2>`
    * :doc:`oxdna2/stk <pair_oxdna2>`
    * :doc:`oxdna2/xstk <pair_oxdna2>`
+   * :doc:`oxdna3/coaxstk <pair_oxdna3>`
+   * :doc:`oxdna3/dh <pair_oxdna3>`
+   * :doc:`oxdna3/excv <pair_oxdna3>`
+   * :doc:`oxdna3/hbond <pair_oxdna3>`
+   * :doc:`oxdna3/stk <pair_oxdna3>`
+   * :doc:`oxdna3/xstk <pair_oxdna3>`
    * :doc:`oxrna2/excv <pair_oxrna2>`
    * :doc:`oxrna2/hbond <pair_oxrna2>`
    * :doc:`oxrna2/dh <pair_oxrna2>`
@@ -264,6 +273,7 @@ OPT.
    * :doc:`resquared (go) <pair_resquared>`
    * :doc:`rheo <pair_rheo>`
    * :doc:`rheo/solid <pair_rheo_solid>`
+   * :doc:`runner <pair_runner>`
    * :doc:`saip/metal (t) <pair_saip_metal>`
    * :doc:`saip/metal/tmd (t) <pair_saip_metal>`
    * :doc:`sdpd/taitwater/isothermal <pair_sdpd_taitwater_isothermal>`

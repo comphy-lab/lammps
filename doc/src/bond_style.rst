@@ -104,6 +104,7 @@ accelerated styles exist.
 * :doc:`nonlinear <bond_nonlinear>` - nonlinear bond
 * :doc:`oxdna/fene <bond_oxdna>` - modified FENE bond suitable for DNA modeling
 * :doc:`oxdna2/fene <bond_oxdna>` - same as oxdna but used with different pair styles
+* :doc:`oxdna3/fene <bond_oxdna>` - same as oxdna but used with different pair styles
 * :doc:`oxrna2/fene <bond_oxdna>` - modified FENE bond suitable for RNA modeling
 * :doc:`quartic <bond_quartic>` - breakable quartic bond
 * :doc:`quartic/exp <bond_quartic_exp>` - quartic bond with optional exponential repulsion
