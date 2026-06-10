@@ -61,6 +61,8 @@ A three-element perovskite BaTiO3 system:
 Description
 """""""""""
 
+.. versionadded:: TBD
+
 The bond-valence potential is an empirical potential based on the
 conservation of the bond-valence (bondval) and bond-valence vector
 (bondval/vec), fitted to DFT calculations for a given bulk semiconductor.
@@ -160,7 +162,7 @@ The first two parameters (:math:`r0_{ij}` and :math:`\alpha_{ij}`) are
 pair atom-type dependent and contribute to the bond-valence calculation for all
 atom-type pairs.  The penalty constant :math:`S_i` and ideal value
 :math:`V_{0,i}` are single atom-type dependent. Thus only same-species values
-(I = J) are nonzero in input file. 
+(I = J) are nonzero in input file.
 
 For *bondval/vec*:
 
@@ -173,7 +175,7 @@ For *bondval/vec*:
 The same distinction applies: :math:`r0_{ij}` and :math:`\alpha_{ij}`
 are pair atom-type dependent and used for all pairs, while :math:`D_i` and
 :math:`W_{0,i}` are atom-type dependent. Thus only same-species values
-(I = J) are nonzero in input file. 
+(I = J) are nonzero in input file.
 
 
 The final cutoff coefficient is optional for both styles.  If not
@@ -218,9 +220,9 @@ For a physically correct simulation, *bondval*, *bondval/vec*, and a
 for :math:`E_c` and :math:`E_r` must all be combined via
 ``hybrid/overlay``.  The published parameters for this potential are
 fitted to only include :math:`r^{-12}` repulsion term
-(:math:`E_r`) in the Lennard-Jones potential, while the attractive :math:`r^{-6}` 
-contribution is set to 0. 
-To run with the published parameters correctly, users must manually initialize 
+(:math:`E_r`) in the Lennard-Jones potential, while the attractive :math:`r^{-6}`
+contribution is set to 0.
+To run with the published parameters correctly, users must manually initialize
 the internal variables ``lj2`` and ``lj4`` in the source code of
 :doc:`pair_style lj/cut/coul/long <pair_lj_cut_coul_long>` to be zero
 in order to remove the attractive :math:`r^{-6}` contribution.
