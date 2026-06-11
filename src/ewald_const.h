@@ -30,6 +30,25 @@ static constexpr double A5 = 1.061405429;
 
 enum { EWALD_COUL = 1 << 1, EWALD_DIPOLE = 1 << 3, EWALD_DISP = 1 << 6 };
 
+// highest interaction order that can be requested via ewald_order
+
+static constexpr int EWALD_MAXORDER = 6;
+
+// the dispersion-capable k-space solvers (ewald/disp, pppm/disp) compute up
+// to four kinds of contributions ("terms"); their termflag[] array records
+// which ones are enabled.  the first three indices are common to both
+// solvers; index 3 is solver-specific: long-range point dipoles (ewald/disp)
+// or unmixed per-type-pair dispersion (pppm/disp).
+
+enum {
+  TERM_COUL = 0,          // Coulomb 1/r
+  TERM_DISP_GEOM = 1,     // dispersion 1/r^6, geometric mixing
+  TERM_DISP_ARITH = 2,    // dispersion 1/r^6, arithmetic mixing
+  TERM_DIPOLE = 3,        // point dipoles (ewald/disp only)
+  TERM_DISP_NONE = 3,     // dispersion 1/r^6, no mixing (pppm/disp only)
+  EWALD_NTERMS = 4
+};
+
 }    // namespace LAMMPS_NS::EwaldConst
 
 #endif
