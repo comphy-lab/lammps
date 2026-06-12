@@ -24,10 +24,10 @@
            D. F. Richards, J. N. Glosli, B. Chan, M. R. Dorr, E. W. Draeger, J.-
         L. Fattebert, W. D. Krauss, T. Spelce, F. H. Streitz, M. P. Surh, and
         J. A. Gunnels,
-        “Beyond homogeneous decomposition: scaling long-range forces
-        on massively parallel systems,”
+        "Beyond homogeneous decomposition: scaling long-range forces
+        on massively parallel systems,"
         in Proceedings of the Conference on High Performance Computing Networking,
-        Storage and Analysis, ser. SC ’09. New York, NY, USA:
+        Storage and Analysis, ser. SC '09. New York, NY, USA:
         Association for Computing Machinery, 2009.
 ------------------------------------------------------------------------- */
 
@@ -98,8 +98,8 @@ void VerletSplitRK::init()
 {
   if (comm->style != Comm::BRICK)
     error->universe_all(FLERR,"Verlet/split/rk can only currently be used with comm_style brick");
-  if (!force->kspace && comm->me == 0)
-    error->warning(FLERR,"A KSpace style must be defined with verlet/split/rk");
+  if (!force->kspace)
+    error->universe_all(FLERR,"A KSpace style must be defined with verlet/split/rk");
 
   // error for as-yet unsupported verlet/split KSpace options
 

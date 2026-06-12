@@ -70,6 +70,7 @@ class PPPM_RK : public PPPM {
   MPI_Request mpi_requests_virial;
   MPI_Request mpi_requests_flags;
   MPI_Request mpi_requests_domain_box;
+
   // Tags for communication within MPI_Comm block
   enum MPI_Block_Tags { TAG_FLAGS = 1, TAG_BOX, N_MPI_TAGS };
 
@@ -139,8 +140,8 @@ class PPPM_RK : public PPPM {
       MPI_Wait(&mpi_requests_grid_z, MPI_STATUS_IGNORE);
     }
 
-    //Update from buffers
-    //energy and virial are updated in PPPM_RK::compute_interpolate_forces(int eflag, int vflag)
+    // Update from buffers
+    // energy and virial are updated in PPPM_RK::compute_interpolate_forces(int eflag, int vflag)
     if (differentiation_flag == 1) {
       for (int k = nzlo_in; k <= nzhi_in; k++)
         for (int j = nylo_in; j <= nyhi_in; j++)
@@ -167,19 +168,19 @@ class PPPM_RK : public PPPM {
     if (differentiation_flag == 1) {
       FFT_SCALAR *usrc = &u_brick_buf[nzlo_in][nylo_in][nxlo_in];
       prepareUBrickScatterBufs();
-      MPI_Iscatterv(usrc, density_sizes, density_disps, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0,
-                    block_kforce_u, &mpi_requests_grid_u);
+      MPI_Iscatterv(usrc, density_sizes, density_disps, MPI_FFT_SCALAR, nullptr, 0, MPI_FFT_SCALAR,
+                    0, block_kforce_u, &mpi_requests_grid_u);
     } else {
       FFT_SCALAR *xsrc = &vdx_brick_buf[nzlo_in][nylo_in][nxlo_in];
       FFT_SCALAR *ysrc = &vdy_brick_buf[nzlo_in][nylo_in][nxlo_in];
       FFT_SCALAR *zsrc = &vdz_brick_buf[nzlo_in][nylo_in][nxlo_in];
       prepareXYZBrickScatterBufs();
-      MPI_Iscatterv(xsrc, density_sizes, density_disps, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0,
-                    block_kforce_x, &mpi_requests_grid_x);
-      MPI_Iscatterv(ysrc, density_sizes, density_disps, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0,
-                    block_kforce_y, &mpi_requests_grid_y);
-      MPI_Iscatterv(zsrc, density_sizes, density_disps, MPI_DOUBLE, NULL, 0, MPI_DOUBLE, 0,
-                    block_kforce_z, &mpi_requests_grid_z);
+      MPI_Iscatterv(xsrc, density_sizes, density_disps, MPI_FFT_SCALAR, nullptr, 0, MPI_FFT_SCALAR,
+                    0, block_kforce_x, &mpi_requests_grid_x);
+      MPI_Iscatterv(ysrc, density_sizes, density_disps, MPI_FFT_SCALAR, nullptr, 0, MPI_FFT_SCALAR,
+                    0, block_kforce_y, &mpi_requests_grid_y);
+      MPI_Iscatterv(zsrc, density_sizes, density_disps, MPI_FFT_SCALAR, nullptr, 0, MPI_FFT_SCALAR,
+                    0, block_kforce_z, &mpi_requests_grid_z);
     }
   }
   void wait_sending_scatter_grid_potentials_ev(int eflag, int vflag)

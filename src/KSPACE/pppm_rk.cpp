@@ -33,7 +33,7 @@
       "Beyond homogeneous decomposition: scaling long-range forces
       on massively parallel systems,"
       in Proceedings of the Conference on High Performance Computing Networking,
-      Storage and Analysis, ser. SC ’09. New York, NY, USA:
+      Storage and Analysis, ser. SC '09. New York, NY, USA:
       Association for Computing Machinery, 2009.
 ------------------------------------------------------------------------- */
 
@@ -85,6 +85,8 @@ PPPM_RK::PPPM_RK(LAMMPS *lmp) :
   }
 }
 
+/* ---------------------------------------------------------------------- */
+
 void PPPM_RK::init()
 {
   PPPM::init();
@@ -110,6 +112,8 @@ void PPPM_RK::init()
   }
   setupRKBlock();
 }
+
+/* ---------------------------------------------------------------------- */
 
 //Adapted from the constructor of VerletSplit
 /*Main purpose is to instantiate the inter-RK block communicator
@@ -294,6 +298,8 @@ void PPPM_RK::setupRKBlock()
 
 PPPM_RK::~PPPM_RK()
 {
+  if (copymode) return;
+
   memory->destroy3d_offset(density_brick_buf,nzlo_in,nylo_in,nxlo_in);
   if (differentiation_flag == 1) {
     memory->destroy3d_offset(u_brick_buf,nzlo_in,nylo_in,nxlo_in);
