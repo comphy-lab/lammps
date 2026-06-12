@@ -276,38 +276,50 @@ parameters and how to choose them is described in
 
 ----------
 
-The *pppm/rk* kspace style is a variant of *pppm* designed for a heterogeneous multicore pppm computation
-of long-range forces.
-The heterogeneity is in the sense that the MPI communicator is partitioned into two classes of
-MPI processes. Thus, the use of *pppm/rk* requires the use of the command line `-partition` option.
-E.g.,
-```mpirun -n 100 path/to/lammps/binary/lmp -partition 96 4 -in in.somescript```
-The R-process class of processes primarily computes the short-range forces and atom-wise updates,
-the latter of which includes the accumulation of charge densities.
-In the above command-line example, there would be 96 R-processes and 4 K-processes.
-The K-process class is mainly responsible for solving the Poisson equations with 3d FFT.
-The number of K-processes divides the number of R-processes,
-and the total number of processes is furthermore partitioned orthogonally into inter-RK blocks
-(as seen also in the `VerletSplit` class).
-Each inter-RK block communicator has one representative K process, with the rest of the processes being R processes.
+.. versionadded:: TBD
 
-The *pppm/rk* kspace style must be paired with an analogous *rk* type run style, e.g., *verlet/split/rk*.
-An error is generated otherwise. Also, *pppm/rk* does not currently support group/group computation (`group_group_enable==0`).
+The *pppm/rk* kspace style is a variant of *pppm* designed for a
+heterogeneous multicore pppm computation of long-range forces.  The
+heterogeneity is in the sense that the MPI communicator is partitioned
+into two classes of MPI processes. Thus, the use of *pppm/rk* requires
+the use of the command line `-partition` option.  E.g.,
 
-This approach is based on the enhanced baseline decomposition of :ref:`(Dandurand) <kspaceDandurand2025>` and works cited within.
+.. code-block:: LAMMPS
+
+  mpirun -n 100 lmp -partition 96 4 -in in.somescript
+
+The R-process class of processes primarily computes the short-range
+forces and atom-wise updates, the latter of which includes the
+accumulation of charge densities.  In the above command-line example,
+there would be 96 R-processes and 4 K-processes.  The K-process class is
+mainly responsible for solving the Poisson equations with 3d FFT.  The
+number of K-processes divides the number of R-processes, and the total
+number of processes is furthermore partitioned orthogonally into
+inter-RK blocks (as seen also in the `VerletSplit` class).  Each
+inter-RK block communicator has one representative K process, with the
+rest of the processes being R processes.
+
+The :doc:`pppm/rk <kspace_style>` kspace style must be paired with an
+analogous *rk* type run style, e.g., *verlet/split/rk*.  An error is
+generated otherwise. Also, *pppm/rk* does not currently support
+group/group computation (`group_group_enable==0`).
+
+This approach is based on the enhanced baseline decomposition of
+:ref:`(Dandurand) <kspaceDandurand2025>` and works cited within.
 
 ----------
 
 .. note::
 
    All of the PPPM styles can be used with single-precision FFTs by
-   using the compiler switch -DFFT_SINGLE for the FFT_INC setting in your
-   low-level Makefile.  This setting also changes some of the PPPM
+   using the compiler switch -DFFT_SINGLE for the FFT_INC setting in
+   your low-level Makefile.  This setting also changes some of the PPPM
    operations (e.g. mapping charge to mesh and interpolating electric
-   fields to particles) to be performed in single precision.  This option
-   can speed-up long-range calculations, particularly in parallel or on
-   GPUs.  The use of the -DFFT_SINGLE flag is discussed on the :doc:`Build settings <Build_settings>` doc page. MSM does not currently support
-   the -DFFT_SINGLE compiler switch.
+   fields to particles) to be performed in single precision.  This
+   option can speed-up long-range calculations, particularly in parallel
+   or on GPUs.  The use of the -DFFT_SINGLE flag is discussed on the
+   :doc:`Build settings <Build_settings>` doc page. MSM does not
+   currently support the -DFFT_SINGLE compiler switch.
 
 ----------
 
