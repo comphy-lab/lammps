@@ -188,17 +188,18 @@ of 128 cores.  For *verlet*, the number of processes per compute node is
 fixed at *96*.  Each run time is an average over five experiments. The
 average time using *verlet* was 17.9 seconds with standard deviation
 0.66 seconds.  The average run times using *verlet/split* are provided
-in the cells of the VS column.  The average run times using
-*verlet/split/rk* are provided in the cells of the VSRK column.  The
-average run times are given with a 95% margin of error, which follows
-the ± symbol of each cell entry.  The percentage change VS% and VSRK% in
-run times over the baseline *verlet* time of 17.9 seconds are given by
-*VS% = 100(VS - 17.9)/17.9* and *VSRK% = 100*(VSRK - 17.9)/17.9*.  The
-time results were obtained from computations run on the Kelvin2 cluster,
-which runs a Linux (Centos 7) operating system on 6 Dell PowerEdge R6525
-compute nodes with AMD EPYC 7713 dual 64-Core Processors (1TiB RAM per
-node) connected by an EDR InfiniBand fabric.  We build LAMMPS using gcc
-version 14.1.0 with OpenMPI version 5.0.3 and the default KISS-FFT.
+in the cells of the *verlet/split* column.  The average run times using
+*verlet/split/rk* are provided in the cells of the *verlet/split/rk*
+column.  The average run times are given with a 95% margin of error,
+which follows the +/- symbol of each cell entry.  The percentage change
+VS% and VSRK% in run times over the baseline *verlet* time of 17.9
+seconds are given by *VS% = 100(VS - 17.9)/17.9* and *VSRK% =
+100*(VSRK - 17.9)/17.9*.  The time results were obtained from
+computations run on the Kelvin2 cluster, which runs a Linux (CentOS 7)
+operating system on 6 Dell PowerEdge R6525 compute nodes with AMD EPYC
+7713 dual 64-Core Processors (1TiB RAM per node) connected by an EDR
+InfiniBand fabric.  We build LAMMPS using gcc version 14.1.0 with
+OpenMPI version 5.0.3 and the default KISS-FFT.
 
 Under conditions (e.g., *k=1,2,4*) when K space computation times
 dominate over R space computation times during each iteration,
