@@ -327,8 +327,8 @@ inter-RK blocks (as seen also in the `VerletSplit` class).  Each
 inter-RK block communicator has one representative K process, with the
 rest of the processes being R processes.
 
-The :doc:`pppm/rk <kspace_style>` kspace style must be paired with an
-analogous *rk* type run style, e.g., *verlet/split/rk*.  An error is
+The *pppm/rk* kspace style must be paired with an analogous *rk* type
+run style, e.g., :doc:`verlet/split/rk <run_style>`.  An error is
 generated otherwise. Also, *pppm/rk* does not currently support
 group/group computation (`group_group_enable==0`).
 

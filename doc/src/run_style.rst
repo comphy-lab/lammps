@@ -160,7 +160,7 @@ The requirements for the run style *verlet/split/rk* are similar to that
 of *verlet/split*, and much of what was written above about the latter
 applies to the former, including the partition requirements.  Note that
 the use of run style *verlet/split/rk* must be paired with the use of
-kspace style *pppm/rk*.
+kspace style :doc:`pppm/rk <kspace_style>`.
 
 The main difference is that for *verlet/split/rk*, the work of the K
 space processes is restricted to the solution of the Poisson equations
@@ -188,11 +188,10 @@ rationales for considering the use of *verlet/split/rk*.
 The implementation of *verlet/split/rk* requires the parallel
 partitioning to occur in the computation of the long-range
 forces. Consequently, the use of *verlet/split/rk* requires the use of
-an */rk* type kspace style, e.g., *pppm/rk*.
+an */rk* type kspace style like :doc:`pppm/rk <kspace_style>`.
 
-The details of run style *verlet/split/rk* coupled with kspace style
-*pppm/rk* are discussed in :ref:`(Dandurand) <runstyleDandurand2025>`
-and other works cited within.
+This approach is based on the enhanced baseline decomposition of
+:ref:`(Dandurand) <runstyleDandurand2025>` and works cited within.
 
 ----------
 
