@@ -332,8 +332,8 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
       for (int j = nylo_in; j <= nyhi_in; j++)
         memcpy(&density_brick_buf[k][j][nxlo_in],&density_brick[k][j][nxlo_in],(nxhi_in-nxlo_in+1)*sizeof(FFT_SCALAR));
 
-    MPI_Igatherv(&density_brick_buf[nzlo_in][nylo_in][nxlo_in],nfft_brick,MPI_DOUBLE,
-                 nullptr,nullptr,nullptr,MPI_DOUBLE,0,block_density_brick,&mpi_requests_density);
+    MPI_Igatherv(&density_brick_buf[nzlo_in][nylo_in][nxlo_in],nfft_brick,MPI_FFT_SCALAR,
+                 nullptr,nullptr,nullptr,MPI_FFT_SCALAR,0,block_density_brick,&mpi_requests_density);
 
     // Rspace sends eflag,vflag (and possibly domain box_change) to Kspace
     if (me_block == 1) {
@@ -354,18 +354,18 @@ void PPPM_RK::r2k_comm(int &eflag, int &vflag)
     int buf_len = (nzhi_in - nzlo_in + 1)*(nyhi_in - nylo_in + 1)*(nxhi_in - nxlo_in + 1);
     if (differentiation_flag == 1) {
       FFT_SCALAR *usrc = &u_brick_buf[nzlo_in][nylo_in][nxlo_in];
-      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_DOUBLE,
-                    usrc,buf_len,MPI_DOUBLE,0,block_kforce_u,&mpi_requests_grid_u);
+      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_FFT_SCALAR,
+                    usrc,buf_len,MPI_FFT_SCALAR,0,block_kforce_u,&mpi_requests_grid_u);
     } else {
       FFT_SCALAR *xsrc = &vdx_brick_buf[nzlo_in][nylo_in][nxlo_in];
       FFT_SCALAR *ysrc = &vdy_brick_buf[nzlo_in][nylo_in][nxlo_in];
       FFT_SCALAR *zsrc = &vdz_brick_buf[nzlo_in][nylo_in][nxlo_in];
-      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_DOUBLE,
-                    xsrc,buf_len,MPI_DOUBLE,0,block_kforce_x,&mpi_requests_grid_x);
-      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_DOUBLE,
-                    ysrc,buf_len,MPI_DOUBLE,0,block_kforce_y,&mpi_requests_grid_y);
-      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_DOUBLE,
-                    zsrc,buf_len,MPI_DOUBLE,0,block_kforce_z,&mpi_requests_grid_z);
+      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_FFT_SCALAR,
+                    xsrc,buf_len,MPI_FFT_SCALAR,0,block_kforce_x,&mpi_requests_grid_x);
+      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_FFT_SCALAR,
+                    ysrc,buf_len,MPI_FFT_SCALAR,0,block_kforce_y,&mpi_requests_grid_y);
+      MPI_Iscatterv(nullptr,nullptr,nullptr,MPI_FFT_SCALAR,
+                    zsrc,buf_len,MPI_FFT_SCALAR,0,block_kforce_z,&mpi_requests_grid_z);
     }
   } else { //kproc
     // Kspace receives eflag,vflag from Rspace
