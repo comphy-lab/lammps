@@ -448,7 +448,6 @@ void PairBuckLongCoulLong::write_data_all(FILE *fp)
 
 void PairBuckLongCoulLong::compute(int eflag, int vflag)
 {
-
   double evdwl,ecoul,fpair;
   evdwl = ecoul = 0.0;
   ev_init(eflag,vflag);
@@ -473,17 +472,24 @@ void PairBuckLongCoulLong::compute(int eflag, int vflag)
          *buck1i, *buck2i, *buckai, *buckci, *rhoinvi, *offseti;
   double r, rsq, r2inv, force_coul, force_buck;
   double g2 = g_ewald_6*g_ewald_6, g6 = g2*g2*g2, g8 = g6*g2;
-  double xi[3], d[3];
+  double xi[3], d[3], fi[3];
 
   for (ii = 0; ii < inum; ii++) {                          // loop over my atoms
     i = ilist[ii];
     if (order1) qri = (qi = q[i])*qqrd2e;                // initialize constants
     typei = type[i];
     offseti = offset[typei];
-    buck1i = buck1[typei]; buck2i = buck2[typei];
-    buckai = buck_a[typei]; buckci = buck_c[typei]; rhoinvi = rhoinv[typei];
-    cutsqi = cutsq[typei]; cut_bucksqi = cut_bucksq[typei];
-    xi[0] = x[i][0]; xi[1] = x[i][1]; xi[2] = x[i][2];
+    buck1i = buck1[typei];
+    buck2i = buck2[typei];
+    buckai = buck_a[typei];
+    buckci = buck_c[typei];
+    rhoinvi = rhoinv[typei];
+    cutsqi = cutsq[typei];
+    cut_bucksqi = cut_bucksq[typei];
+    xi[0] = x[i][0];
+    xi[1] = x[i][1];
+    xi[2] = x[i][2];
+    fi[0] = fi[1] = fi[2] = 0.0;
     int *jlist = firstneigh[i];
     int jnum = numneigh[i];
 
@@ -585,9 +591,9 @@ void PairBuckLongCoulLong::compute(int eflag, int vflag)
       fpair = (force_coul+force_buck)*r2inv;
 
       double fdx = d[0]*fpair, fdy = d[1]*fpair, fdz = d[2]*fpair;
-      f[i][0] += fdx;
-      f[i][1] += fdy;
-      f[i][2] += fdz;
+      fi[0] += fdx;                        // force update
+      fi[1] += fdy;
+      fi[2] += fdz;
       if (newton_pair || j < nlocal) {
         f[j][0] -= fdx;
         f[j][1] -= fdy;
@@ -597,6 +603,9 @@ void PairBuckLongCoulLong::compute(int eflag, int vflag)
       if (evflag) ev_tally(i,j,nlocal,newton_pair,
                            evdwl,ecoul,fpair,d[0],d[1],d[2]);
     }
+    f[i][0] += fi[0];
+    f[i][1] += fi[1];
+    f[i][2] += fi[2];
   }
 
   if (vflag_fdotr) virial_fdotr_compute();
@@ -632,15 +641,20 @@ void PairBuckLongCoulLong::compute_inner()
   int *numneigh = list->numneigh_inner;
   int **firstneigh = list->firstneigh_inner;
   double qri, *cut_bucksqi, *buck1i, *buck2i, *rhoinvi;
-  double xi[3], d[3];
+  double xi[3], d[3], fi[3];
 
   for (ii = 0; ii < inum; ii++) {                          // loop over my atoms
     i = ilist[ii];
     if (order1) qri = qqrd2e*q[i];
-    xi[0] = x[i][0]; xi[1] = x[i][1]; xi[2] = x[i][2];
+    xi[0] = x[i][0];
+    xi[1] = x[i][1];
+    xi[2] = x[i][2];
+    fi[0] = fi[1] = fi[2] = 0.0;
     typei = type[i];
     cut_bucksqi = cut_bucksq[typei];
-    buck1i = buck1[typei]; buck2i = buck2[typei]; rhoinvi = rhoinv[typei];
+    buck1i = buck1[typei];
+    buck2i = buck2[typei];
+    rhoinvi = rhoinv[typei];
     int *jlist = firstneigh[i];
     int jnum = numneigh[i];
 
@@ -679,15 +693,18 @@ void PairBuckLongCoulLong::compute_inner()
       }
 
       double fdx = d[0]*fpair, fdy = d[1]*fpair, fdz = d[2]*fpair;
-      f[i][0] += fdx;                                          // force update
-      f[i][1] += fdy;
-      f[i][2] += fdz;
+      fi[0] += fdx;                       // force update
+      fi[1] += fdy;
+      fi[2] += fdz;
       if (newton_pair || j < nlocal) {
         f[j][0] -= fdx;
         f[j][1] -= fdy;
         f[j][2] -= fdz;
       }
     }
+    f[i][0] += fi[0];
+    f[i][1] += fi[1];
+    f[i][2] += fi[2];
   }
 }
 
@@ -726,15 +743,20 @@ void PairBuckLongCoulLong::compute_middle()
   int *numneigh = list->numneigh_middle;
   int **firstneigh = list->firstneigh_middle;
   double qri, *cut_bucksqi, *buck1i, *buck2i, *rhoinvi;
-  double xi[3], d[3];
+  double xi[3], d[3], fi[3];
 
   for (ii = 0; ii < inum; ii++) {                          // loop over my atoms
     i = ilist[ii];
     if (order1) qri = qqrd2e*q[i];
-    xi[0] = x[i][0]; xi[1] = x[i][1]; xi[2] = x[i][2];
+    xi[0] = x[i][0];
+    xi[1] = x[i][1];
+    xi[2] = x[i][2];
+    fi[0] = fi[1] = fi[2] = 0.0;
     typei = type[i];
     cut_bucksqi = cut_bucksq[typei];
-    buck1i = buck1[typei]; buck2i = buck2[typei]; rhoinvi = rhoinv[typei];
+    buck1i = buck1[typei];
+    buck2i = buck2[typei];
+    rhoinvi = rhoinv[typei];
     int *jlist = firstneigh[i];
     int jnum = numneigh[i];
 
@@ -778,15 +800,18 @@ void PairBuckLongCoulLong::compute_middle()
       }
 
       double fdx = d[0]*fpair, fdy = d[1]*fpair, fdz = d[2]*fpair;
-      f[i][0] += fdx;                                          // force update
-      f[i][1] += fdy;
-      f[i][2] += fdz;
+      fi[0] += fdx;                       // force update
+      fi[1] += fdy;
+      fi[2] += fdz;
       if (newton_pair || j < nlocal) {
         f[j][0] -= fdx;
         f[j][1] -= fdy;
         f[j][2] -= fdz;
       }
     }
+    f[i][0] += fi[0];
+    f[i][1] += fi[1];
+    f[i][2] += fi[2];
   }
 }
 
@@ -819,7 +844,7 @@ void PairBuckLongCoulLong::compute_outer(int eflag, int vflag)
   double r, rsq, r2inv, force_coul, force_buck;
   double g2 = g_ewald_6*g_ewald_6, g6 = g2*g2*g2, g8 = g6*g2;
   double respa_buck = 0.0, respa_coul = 0.0, frespa = 0.0;
-  double xi[3], d[3];
+  double xi[3], d[3], fi[3];
 
   double cut_in_off = cut_respa[2];
   double cut_in_on = cut_respa[3];
@@ -833,10 +858,17 @@ void PairBuckLongCoulLong::compute_outer(int eflag, int vflag)
     if (order1) qri = (qi = q[i])*qqrd2e;                // initialize constants
     typei = type[i];
     offseti = offset[typei];
-    buck1i = buck1[typei]; buck2i = buck2[typei];
-    buckai = buck_a[typei]; buckci = buck_c[typei]; rhoinvi = rhoinv[typei];
-    cutsqi = cutsq[typei]; cut_bucksqi = cut_bucksq[typei];
-    xi[0] = x[i][0]; xi[1] = x[i][1]; xi[2] = x[i][2];
+    buck1i = buck1[typei];
+    buck2i = buck2[typei];
+    buckai = buck_a[typei];
+    buckci = buck_c[typei];
+    rhoinvi = rhoinv[typei];
+    cutsqi = cutsq[typei];
+    cut_bucksqi = cut_bucksq[typei];
+    xi[0] = x[i][0];
+    xi[1] = x[i][1];
+    xi[2] = x[i][2];
+    fi[0] = fi[1] = fi[2] = 0.0;
     int *jlist = firstneigh[i];
     int jnum = numneigh[i];
 
@@ -959,9 +991,9 @@ void PairBuckLongCoulLong::compute_outer(int eflag, int vflag)
       fpair = (force_coul+force_buck)*r2inv;
 
       double fdx = d[0]*fpair, fdy = d[1]*fpair, fdz = d[2]*fpair;
-      f[i][0] += fdx;
-      f[i][1] += fdy;
-      f[i][2] += fdz;
+      fi[0] += fdx;                        // force update
+      fi[1] += fdy;
+      fi[2] += fdz;
       if (newton_pair || j < nlocal) {
         f[j][0] -= fdx;
         f[j][1] -= fdy;
@@ -974,6 +1006,9 @@ void PairBuckLongCoulLong::compute_outer(int eflag, int vflag)
                  evdwl,ecoul,fvirial,d[0],d[1],d[2]);
       }
     }
+    f[i][0] += fi[0];
+    f[i][1] += fi[1];
+    f[i][2] += fi[2];
   }
 }
 

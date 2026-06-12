@@ -72,7 +72,7 @@ void PairLJLongTIP4PLong::compute(int eflag, int vflag)
   int n,vlist[6];
   int key;
   int iH1,iH2,jH1,jH2;
-  double qtmp,xtmp,ytmp,ztmp,delx,dely,delz,evdwl,ecoul;
+  double qtmp,xtmp,ytmp,ztmp,fxtmp,fytmp,fztmp,delx,dely,delz,evdwl,ecoul;
   double fraction,table;
   double r,r2inv,forcecoul,forcelj,cforce;
   double factor_coul;
@@ -132,6 +132,7 @@ void PairLJLongTIP4PLong::compute(int eflag, int vflag)
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
+    fxtmp = fytmp = fztmp = 0.0;
     itype = type[i];
     if (itype == typeO) {
       if (hneigh[i][0] < 0) {
@@ -226,9 +227,9 @@ void PairLJLongTIP4PLong::compute(int eflag, int vflag)
         }
 
         forcelj *= r2inv;
-        f[i][0] += delx*forcelj;
-        f[i][1] += dely*forcelj;
-        f[i][2] += delz*forcelj;
+        fxtmp += delx*forcelj;
+        fytmp += dely*forcelj;
+        fztmp += delz*forcelj;
         f[j][0] -= delx*forcelj;
         f[j][1] -= dely*forcelj;
         f[j][2] -= delz*forcelj;
@@ -321,9 +322,9 @@ void PairLJLongTIP4PLong::compute(int eflag, int vflag)
           key = 0;
 
           if (itype != typeO) {
-            f[i][0] += delx * cforce;
-            f[i][1] += dely * cforce;
-            f[i][2] += delz * cforce;
+            fxtmp += delx * cforce;
+            fytmp += dely * cforce;
+            fztmp += delz * cforce;
 
             if (vflag) {
               v[0] = x[i][0] * delx * cforce;
@@ -349,9 +350,9 @@ void PairLJLongTIP4PLong::compute(int eflag, int vflag)
             fH[1] = 0.5 * alpha * fd[1];
             fH[2] = 0.5 * alpha * fd[2];
 
-            f[i][0] += fO[0];
-            f[i][1] += fO[1];
-            f[i][2] += fO[2];
+            fxtmp += fO[0];
+            fytmp += fO[1];
+            fztmp += fO[2];
 
             f[iH1][0] += fH[0];
             f[iH1][1] += fH[1];
@@ -447,6 +448,9 @@ void PairLJLongTIP4PLong::compute(int eflag, int vflag)
         }
       }
     }
+    f[i][0] += fxtmp;
+    f[i][1] += fytmp;
+    f[i][2] += fztmp;
   }
 }
 
@@ -456,7 +460,7 @@ void PairLJLongTIP4PLong::compute_inner()
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
   int iH1,iH2,jH1,jH2;
-  double qtmp,xtmp,ytmp,ztmp,delx,dely,delz;
+  double qtmp,xtmp,ytmp,ztmp,fxtmp,fytmp,fztmp,delx,dely,delz;
   double r2inv,forcecoul,forcelj,cforce;
   double fO[3],fH[3],fd[3];
   double *x1,*x2;
@@ -516,6 +520,7 @@ void PairLJLongTIP4PLong::compute_inner()
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
+    fxtmp = fytmp = fztmp = 0.0;
     itype = type[i];
     if (itype == typeO && order1) {
       if (hneigh[i][0] < 0) {
@@ -573,9 +578,9 @@ void PairLJLongTIP4PLong::compute_inner()
         }
 
         forcelj *= r2inv;
-        f[i][0] += delx*forcelj;
-        f[i][1] += dely*forcelj;
-        f[i][2] += delz*forcelj;
+        fxtmp += delx*forcelj;
+        fytmp += dely*forcelj;
+        fztmp += delz*forcelj;
         f[j][0] -= delx*forcelj;
         f[j][1] -= dely*forcelj;
         f[j][2] -= delz*forcelj;
@@ -647,9 +652,9 @@ void PairLJLongTIP4PLong::compute_inner()
           // vlist stores 2,4,6 atoms whose forces contribute to virial
 
           if (itype != typeO) {
-            f[i][0] += delx * cforce;
-            f[i][1] += dely * cforce;
-            f[i][2] += delz * cforce;
+            fxtmp += delx * cforce;
+            fytmp += dely * cforce;
+            fztmp += delz * cforce;
 
           } else {
             fd[0] = delx*cforce;
@@ -664,9 +669,9 @@ void PairLJLongTIP4PLong::compute_inner()
             fH[1] = 0.5 * alpha * fd[1];
             fH[2] = 0.5 * alpha * fd[2];
 
-            f[i][0] += fO[0];
-            f[i][1] += fO[1];
-            f[i][2] += fO[2];
+            fxtmp += fO[0];
+            fytmp += fO[1];
+            fztmp += fO[2];
 
             f[iH1][0] += fH[0];
             f[iH1][1] += fH[1];
@@ -710,6 +715,9 @@ void PairLJLongTIP4PLong::compute_inner()
         }
       }
     }
+    f[i][0] += fxtmp;
+    f[i][1] += fytmp;
+    f[i][2] += fztmp;
   }
 }
 
@@ -719,7 +727,7 @@ void PairLJLongTIP4PLong::compute_middle()
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
   int iH1,iH2,jH1,jH2;
-  double qtmp,xtmp,ytmp,ztmp,delx,dely,delz;
+  double qtmp,xtmp,ytmp,ztmp,fxtmp,fytmp,fztmp,delx,dely,delz;
   double r2inv,forcecoul,forcelj,cforce;
   double fO[3],fH[3],fd[3];
   double *x1,*x2;
@@ -769,6 +777,7 @@ void PairLJLongTIP4PLong::compute_middle()
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
+    fxtmp = fytmp = fztmp = 0.0;
     itype = type[i];
     if (itype == typeO && order1) {
       if (hneigh[i][0] < 0) {
@@ -830,9 +839,9 @@ void PairLJLongTIP4PLong::compute_middle()
         }
 
         forcelj *= r2inv;
-        f[i][0] += delx*forcelj;
-        f[i][1] += dely*forcelj;
-        f[i][2] += delz*forcelj;
+        fxtmp += delx*forcelj;
+        fytmp += dely*forcelj;
+        fztmp += delz*forcelj;
         f[j][0] -= delx*forcelj;
         f[j][1] -= dely*forcelj;
         f[j][2] -= delz*forcelj;
@@ -908,9 +917,9 @@ void PairLJLongTIP4PLong::compute_middle()
           // vlist stores 2,4,6 atoms whose forces contribute to virial
 
           if (itype != typeO) {
-            f[i][0] += delx * cforce;
-            f[i][1] += dely * cforce;
-            f[i][2] += delz * cforce;
+            fxtmp += delx * cforce;
+            fytmp += dely * cforce;
+            fztmp += delz * cforce;
 
           } else {
             fd[0] = delx*cforce;
@@ -925,9 +934,9 @@ void PairLJLongTIP4PLong::compute_middle()
             fH[1] = 0.5 * alpha * fd[1];
             fH[2] = 0.5 * alpha * fd[2];
 
-            f[i][0] += fO[0];
-            f[i][1] += fO[1];
-            f[i][2] += fO[2];
+            fxtmp += fO[0];
+            fytmp += fO[1];
+            fztmp += fO[2];
 
             f[iH1][0] += fH[0];
             f[iH1][1] += fH[1];
@@ -971,6 +980,9 @@ void PairLJLongTIP4PLong::compute_middle()
         }
       }
     }
+    f[i][0] += fxtmp;
+    f[i][1] += fytmp;
+    f[i][2] += fztmp;
   }
 }
 
@@ -982,7 +994,7 @@ void PairLJLongTIP4PLong::compute_outer(int eflag, int vflag)
   int n,vlist[6];
   int key;
   int iH1,iH2,jH1,jH2;
-  double qtmp,xtmp,ytmp,ztmp,delx,dely,delz,evdwl,ecoul;
+  double qtmp,xtmp,ytmp,ztmp,fxtmp,fytmp,fztmp,delx,dely,delz,evdwl,ecoul;
   double r2inv,forcecoul,forcelj,cforce, respa_coul, respa_lj, frespa,fvirial;
   double fO[3],fH[3],fd[3],v[6];
   double *x1,*x2,*xH1,*xH2;
@@ -1049,6 +1061,7 @@ void PairLJLongTIP4PLong::compute_outer(int eflag, int vflag)
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
+    fxtmp = fytmp = fztmp = 0.0;
     itype = type[i];
     if (itype == typeO) {
       if (hneigh[i][0] < 0) {
@@ -1152,9 +1165,9 @@ void PairLJLongTIP4PLong::compute_outer(int eflag, int vflag)
         }
 
         forcelj *= r2inv;
-        f[i][0] += delx*forcelj;
-        f[i][1] += dely*forcelj;
-        f[i][2] += delz*forcelj;
+        fxtmp += delx*forcelj;
+        fytmp += dely*forcelj;
+        fztmp += delz*forcelj;
         f[j][0] -= delx*forcelj;
         f[j][1] -= dely*forcelj;
         f[j][2] -= delz*forcelj;
@@ -1265,9 +1278,9 @@ void PairLJLongTIP4PLong::compute_outer(int eflag, int vflag)
           key = 0;
 
           if (itype != typeO) {
-            f[i][0] += delx * cforce;
-            f[i][1] += dely * cforce;
-            f[i][2] += delz * cforce;
+            fxtmp += delx * cforce;
+            fytmp += dely * cforce;
+            fztmp += delz * cforce;
 
             if (vflag) {
               v[0] = x[i][0] * delx * fvirial;
@@ -1293,9 +1306,9 @@ void PairLJLongTIP4PLong::compute_outer(int eflag, int vflag)
             fH[1] = 0.5 * alpha * fd[1];
             fH[2] = 0.5 * alpha * fd[2];
 
-            f[i][0] += fO[0];
-            f[i][1] += fO[1];
-            f[i][2] += fO[2];
+            fxtmp += fO[0];
+            fytmp += fO[1];
+            fztmp += fO[2];
 
             f[iH1][0] += fH[0];
             f[iH1][1] += fH[1];
@@ -1407,6 +1420,9 @@ void PairLJLongTIP4PLong::compute_outer(int eflag, int vflag)
         }
       }
     }
+    f[i][0] += fxtmp;
+    f[i][1] += fytmp;
+    f[i][2] += fztmp;
   }
 }
 

@@ -466,16 +466,31 @@ void PairLJLongCoulLong::compute(int eflag, int vflag)
   double *cutsqi, *cut_ljsqi, *lj1i, *lj2i, *lj3i, *lj4i, *offseti;
   double rsq, r2inv, force_coul, force_lj;
   double g2 = g_ewald_6*g_ewald_6, g6 = g2*g2*g2, g8 = g6*g2;
-  double xi[3], d[3];
+  double xi[3], d[3], fi[3];
 
   for (ii = 0; ii < inum; ii++) {                          // loop over my atoms
     i = ilist[ii];
-    if (order1) qri = (qi = q[i])*qqrd2e;                // initialize constants
+
+    // initialize cached outer loop values
+
+    if (order1) {
+      qi = q[i];
+      qri = qi*qqrd2e;
+    }
+
     typei = type[i];
     offseti = offset[typei];
-    lj1i = lj1[typei]; lj2i = lj2[typei]; lj3i = lj3[typei]; lj4i = lj4[typei];
-    cutsqi = cutsq[typei]; cut_ljsqi = cut_ljsq[typei];
-    xi[0] = x[i][0]; xi[1] = x[i][1]; xi[2] = x[i][2];
+    lj1i = lj1[typei];
+    lj2i = lj2[typei];
+    lj3i = lj3[typei];
+    lj4i = lj4[typei];
+    cutsqi = cutsq[typei];
+    cut_ljsqi = cut_ljsq[typei];
+    xi[0] = x[i][0];
+    xi[1] = x[i][1];
+    xi[2] = x[i][2];
+    fi[0] = fi[1] = fi[2] = 0.0;
+
     int *jlist = firstneigh[i];
     int jnum = numneigh[i];
 
@@ -505,8 +520,8 @@ void PairLJLongCoulLong::compute(int eflag, int vflag)
             t *= erfc_poly*pre/grij;                         // real-space Coulomb energy
             force_coul = t+EWALD_F*pre;
             if (eflag) ecoul = t;
-          } else {                                          // special case
-            double adjust = pre*(1.0-special_coul[ni])/r;   // subtract excluded interaction
+          } else {                                          // special case: for excluded pair
+            double adjust = pre*(1.0-special_coul[ni])/r;   // subtract kspace part of coulomb
             pre *= g_ewald*exp(-grij*grij);
             t *= erfc_poly*pre/grij;
             force_coul = t+EWALD_F*pre-adjust;
@@ -580,9 +595,9 @@ void PairLJLongCoulLong::compute(int eflag, int vflag)
       fpair = (force_coul+force_lj)*r2inv;
 
       double fdx = d[0]*fpair, fdy = d[1]*fpair, fdz = d[2]*fpair;
-      f[i][0] += fdx;
-      f[i][1] += fdy;
-      f[i][2] += fdz;
+      fi[0] += fdx;                        // force update
+      fi[1] += fdy;
+      fi[2] += fdz;
       if (newton_pair || j < nlocal) {
         f[j][0] -= fdx;
         f[j][1] -= fdy;
@@ -592,6 +607,9 @@ void PairLJLongCoulLong::compute(int eflag, int vflag)
       if (evflag) ev_tally(i,j,nlocal,newton_pair,
                            evdwl,ecoul,fpair,d[0],d[1],d[2]);
     }
+    f[i][0] += fi[0];
+    f[i][1] += fi[1];
+    f[i][2] += fi[2];
   }
 
   if (vflag_fdotr) virial_fdotr_compute();
@@ -627,14 +645,18 @@ void PairLJLongCoulLong::compute_inner()
   int *numneigh = list->numneigh_inner;
   int **firstneigh = list->firstneigh_inner;
   double qri, *cut_ljsqi, *lj1i, *lj2i;
-  double xi[3], d[3];
+  double xi[3], d[3], fi[3];
 
   for (ii = 0; ii < inum; ii++) {                          // loop over my atoms
     i = ilist[ii];
-    xi[0] = x[i][0]; xi[1] = x[i][1]; xi[2] = x[i][2];
+    xi[0] = x[i][0];
+    xi[1] = x[i][1];
+    xi[2] = x[i][2];
+    fi[0] = fi[1] = fi[2] = 0.0;
     typei = type[i];
     cut_ljsqi = cut_ljsq[typei];
-    lj1i = lj1[typei]; lj2i = lj2[typei];
+    lj1i = lj1[typei];
+    lj2i = lj2[typei];
     int *jlist = firstneigh[i];
     int jnum = numneigh[i];
     for (jj = 0; jj < jnum; jj++) {                         // loop over neighbors
@@ -672,15 +694,18 @@ void PairLJLongCoulLong::compute_inner()
       }
 
       double fdx = d[0]*fpair, fdy = d[1]*fpair, fdz = d[2]*fpair;
-      f[i][0] += fdx;                                          // force update
-      f[i][1] += fdy;
-      f[i][2] += fdz;
+      fi[0] += fdx;                       // force update
+      fi[1] += fdy;
+      fi[2] += fdz;
       if (newton_pair || j < nlocal) {
         f[j][0] -= fdx;
         f[j][1] -= fdy;
         f[j][2] -= fdz;
       }
     }
+    f[i][0] += fi[0];
+    f[i][1] += fi[1];
+    f[i][2] += fi[2];
   }
 }
 
@@ -719,15 +744,19 @@ void PairLJLongCoulLong::compute_middle()
   int *numneigh = list->numneigh_middle;
   int **firstneigh = list->firstneigh_middle;
   double qri, *cut_ljsqi, *lj1i, *lj2i;
-  double xi[3], d[3];
+  double xi[3], d[3], fi[3];
 
   for (ii = 0; ii < inum; ii++) {                          // loop over my atoms
     i = ilist[ii];
     if (order1) qri = qqrd2e*q[i];
-    xi[0] = x[i][0]; xi[1] = x[i][1]; xi[2] = x[i][2];
+    xi[0] = x[i][0];
+    xi[1] = x[i][1];
+    xi[2] = x[i][2];
+    fi[0] = fi[1] = fi[2] = 0.0;
     typei = type[i];
     cut_ljsqi = cut_ljsq[typei];
-    lj1i = lj1[typei]; lj2i = lj2[typei];
+    lj1i = lj1[typei];
+    lj2i = lj2[typei];
     int *jlist = firstneigh[i];
     int jnum = numneigh[i];
 
@@ -769,15 +798,18 @@ void PairLJLongCoulLong::compute_middle()
       }
 
       double fdx = d[0]*fpair, fdy = d[1]*fpair, fdz = d[2]*fpair;
-      f[i][0] += fdx;                                          // force update
-      f[i][1] += fdy;
-      f[i][2] += fdz;
+      fi[0] += fdx;                       // force update
+      fi[1] += fdy;
+      fi[2] += fdz;
       if (newton_pair || j < nlocal) {
         f[j][0] -= fdx;
         f[j][1] -= fdy;
         f[j][2] -= fdz;
       }
     }
+    f[i][0] += fi[0];
+    f[i][1] += fi[1];
+    f[i][2] += fi[2];
   }
 }
 
@@ -810,7 +842,7 @@ void PairLJLongCoulLong::compute_outer(int eflag, int vflag)
   double rsq, r2inv, force_coul, force_lj;
   double g2 = g_ewald_6*g_ewald_6, g6 = g2*g2*g2, g8 = g6*g2;
   double respa_lj = 0.0, respa_coul = 0.0, frespa = 0.0;
-  double xi[3], d[3];
+  double xi[3], d[3], fi[3];
 
   double cut_in_off = cut_respa[2];
   double cut_in_on = cut_respa[3];
@@ -824,9 +856,16 @@ void PairLJLongCoulLong::compute_outer(int eflag, int vflag)
     if (order1) qri = (qi = q[i])*qqrd2e;                // initialize constants
     typei = type[i];
     offseti = offset[typei];
-    lj1i = lj1[typei]; lj2i = lj2[typei]; lj3i = lj3[typei]; lj4i = lj4[typei];
-    cutsqi = cutsq[typei]; cut_ljsqi = cut_ljsq[typei];
-    xi[0] = x[i][0]; xi[1] = x[i][1]; xi[2] = x[i][2];
+    lj1i = lj1[typei];
+    lj2i = lj2[typei];
+    lj3i = lj3[typei];
+    lj4i = lj4[typei];
+    cutsqi = cutsq[typei];
+    cut_ljsqi = cut_ljsq[typei];
+    xi[0] = x[i][0];
+    xi[1] = x[i][1];
+    xi[2] = x[i][2];
+    fi[0] = fi[1] = fi[2] = 0.0;
     int *jlist = firstneigh[i];
     int jnum = numneigh[i];
 
@@ -948,9 +987,9 @@ void PairLJLongCoulLong::compute_outer(int eflag, int vflag)
       fpair = (force_coul+force_lj)*r2inv;
 
       double fdx = d[0]*fpair, fdy = d[1]*fpair, fdz = d[2]*fpair;
-      f[i][0] += fdx;
-      f[i][1] += fdy;
-      f[i][2] += fdz;
+      fi[0] += fdx;                        // force update
+      fi[1] += fdy;
+      fi[2] += fdz;
       if (newton_pair || j < nlocal) {
         f[j][0] -= fdx;
         f[j][1] -= fdy;
@@ -963,6 +1002,9 @@ void PairLJLongCoulLong::compute_outer(int eflag, int vflag)
                  evdwl,ecoul,fvirial,d[0],d[1],d[2]);
       }
     }
+    f[i][0] += fi[0];
+    f[i][1] += fi[1];
+    f[i][2] += fi[2];
   }
 }
 
