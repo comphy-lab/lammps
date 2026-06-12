@@ -169,110 +169,30 @@ processes carry out the other long-range force computations that the K
 space processes would have done for *verlet/split*. There are two
 rationales for considering the use of *verlet/split/rk*.
 
-**Rationale 1**: One of the most significant bottlenecks to parallel
-scalability is due to the communication overhead for the 3d FFTs in
-solving the Poisson equation.  The other steps (such as accumulating the
-charge densities and interpolating the long-range forces) have better
-parallel scaling, and so their reallocation to the R space processes may
-result in improved parallel speedup at large enough node counts where
-the speedup for solving the Poisson equation lags behind the speedup of
-the other computations (thus the Poisson equation solution is a
-bottleneck in parallel execution).
+- *Rationale 1*: One of the most significant bottlenecks to parallel
+  scalability is due to the communication overhead for the 3d FFTs in
+  solving the Poisson equation.  The other steps (such as accumulating
+  the charge densities and interpolating the long-range forces) have
+  better parallel scaling, and so their reallocation to the R space
+  processes may result in improved parallel speedup at large enough node
+  counts where the speedup for solving the Poisson equation lags behind
+  the speedup of the other computations (thus the Poisson equation
+  solution is a bottleneck in parallel execution).
 
-The following table demonstrates a comparison of run times for
-*example/VISCOSITY* modified with the use of the command ``replicate 4 4
-4``.  The number of R space processes per node is 96, and the number of
-K space processes *k* per node varies by *k=1,2,4,8,16,32*. The number
-of compute nodes used is 6, and each compute node may employ a maximum
-of 128 cores.  For *verlet*, the number of processes per compute node is
-fixed at *96*.  Each run time is an average over five experiments. The
-average time using *verlet* was 17.9 seconds with standard deviation
-0.66 seconds.  The average run times using *verlet/split* are provided
-in the cells of the *verlet/split* column.  The average run times using
-*verlet/split/rk* are provided in the cells of the *verlet/split/rk*
-column.  The average run times are given with a 95% margin of error,
-which follows the +/- symbol of each cell entry.  The percentage change
-VS% and VSRK% in run times over the baseline *verlet* time of 17.9
-seconds are given by *VS% = 100(VS - 17.9)/17.9* and *VSRK% =
-100*(VSRK - 17.9)/17.9*.  The time results were obtained from
-computations run on the Kelvin2 cluster, which runs a Linux (CentOS 7)
-operating system on 6 Dell PowerEdge R6525 compute nodes with AMD EPYC
-7713 dual 64-Core Processors (1TiB RAM per node) connected by an EDR
-InfiniBand fabric.  We build LAMMPS using gcc version 14.1.0 with
-OpenMPI version 5.0.3 and the default KISS-FFT.
-
-Under conditions (e.g., *k=1,2,4*) when K space computation times
-dominate over R space computation times during each iteration,
-*verlet/split/rk* shows improved (i.e., less) run time over
-*verlet/split*.
-
-+-------+-------------------+------------------------+-------+-------+
-| Ratio | verlet/split (VS) | verlet/split/rk (VSRK) | VS%   | VSRK% |
-+-------+-------------------+------------------------+-------+-------+
-| k=1   | 67.2 +/- 1.09     | 39.9 +/- 1.13          | 275.5 | 122.8 |
-+-------+-------------------+------------------------+-------+-------+
-| k=2   | 40.0 +/- 0.23     | 25.6 +/- 0.27          | 123.4 | 42.8  |
-+-------+-------------------+------------------------+-------+-------+
-| k=4   | 23.9 +/- 0.11     | 18.5 +/- 0.18          | 33.6  | 3.2   |
-+-------+-------------------+------------------------+-------+-------+
-
-Note that in the setting *k=1,2,4* at the current node count of 6, the
-baseline *verlet* run style has better run time performance than either
-*verlet/split* or *verlet/split/rk* as indicated by the positive values
-for VS% and VSRK%. This is likely due to the fact that the extra K space
-processes per node used with the baseline Verlet approach results in a
-substantial reduction of computational time for the otherwise dominant K
-space computation.
-
-However, under the baseline Verlet allocation of processes with
-*k=8,16,32*, the number of processes assigned for the K space
-computations becomes detrimental for parallel scalability.  By contrast,
-for the two split run styles with *k=8,16,32*, the balance of process
-assignment prevents the K space computation from being a computational
-bottleneck, and thus a reduction in the *verlet/split* and
-*verlet/split/rk* run times over the baseline Verlet run times is
-evident (as indicated by the negative-valued VS% and VSRK%).
-
-+-------+-------------------+------------------------+-------+-------+
-| Ratio | verlet/split (VS) | verlet/split/rk (VSRK) | VS%   | VSRK% |
-+-------+-------------------+------------------------+-------+-------+
-| k=8   | 16.9 +/- 0.21     | 17.4 +/- 0.28          | -5.7  | -2.9  |
-+-------+-------------------+------------------------+-------+-------+
-| k=16  | 13.6 +/- 0.43     | 17.2 +/- 0.12          | -24.0 | -3.9  |
-+-------+-------------------+------------------------+-------+-------+
-| k=32  | 13.4 +/- 0.22     | 17.2 +/- 1.28          | -25.3 | -4.0  |
-+-------+-------------------+------------------------+-------+-------+
-
-When both *verlet/split* and *verlet/split/rk* result in a dominance of
-the R space over K space computations, then the VS times will tend to be
-slightly better than the VSRK times due to extra R space computations
-required by the latter that would have been carried out with the K space
-processes by the former.  The slightly lower VS run time over that of
-VSRK is evident at the current node count for *k=8,16,32*.
-
-As the number of compute nodes increases, the dominance of the K space
-computation becomes unavoidable for any configuration of R and K space
-processes.  The *verlet/split/rk* approach allocates all but the least
-scalable computations to the R processes, and this would mitigate the
-computational bottleneck caused by the poor scalability of the K space
-computations at large node counts.  Thus, for higher node counts, the
-allocation of processes employed with *verlet/split/rk* is more likely
-to be optimal.
-
-**Rationale 2**: The approach *verlet/split/rk* avoids having to
-communicate atom-specific information between the R space and K space
-processes.  Thus, re-neighboring, for example, stays confined to the R
-space processes and does not require inter-R/K communication, and so the
-communication overhead is reduced.
+- *Rationale 2*: The approach *verlet/split/rk* avoids having to
+  communicate atom-specific information between the R space and K space
+  processes.  Thus, re-neighboring, for example, stays confined to the R
+  space processes and does not require inter-R/K communication, and so
+  the communication overhead is reduced.
 
 The implementation of *verlet/split/rk* requires the parallel
 partitioning to occur in the computation of the long-range
 forces. Consequently, the use of *verlet/split/rk* requires the use of
 an */rk* type kspace style, e.g., *pppm/rk*.
 
-The contribution of run style *verlet/split/rk* coupled with kspace
-style *pppm/rk* supports the enhanced baseline described in
-:ref:`(Dandurand) <runstyleDandurand2025>` and other works cited within.
+The details of run style *verlet/split/rk* coupled with kspace style
+*pppm/rk* are discussed in :ref:`(Dandurand) <runstyleDandurand2025>`
+and other works cited within.
 
 ----------
 
