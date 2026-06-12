@@ -22,6 +22,8 @@ KSpaceStyle(pppm/rk,PPPM_RK);
 
 #include "pppm.h"
 
+#include <cstring>
+
 namespace LAMMPS_NS {
 
 class PPPM_RK : public PPPM {
