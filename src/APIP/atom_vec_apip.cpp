@@ -174,10 +174,14 @@ void AtomVecApip::force_clear(int n, size_t nbytes)
 
 int AtomVecApip::property_atom(const std::string &name)
 {
-  if (name == "apip_lambda") return 0;
-  if (name == "apip_lambda_input") return 1;
-  if (name == "apip_e_fast") return 2;
-  if (name == "apip_e_precise") return 3;
+  // gate each attribute on its flag: apip_lambda_input is only allocated for
+  // atom_style apip thermostat, so without this guard a request for it under
+  // atom_style apip conservative would dereference a null per-atom array
+
+  if (name == "apip_lambda" && atom->apip_lambda_flag) return 0;
+  if (name == "apip_lambda_input" && atom->apip_lambda_input_flag) return 1;
+  if (name == "apip_e_fast" && atom->apip_e_fast_flag) return 2;
+  if (name == "apip_e_precise" && atom->apip_e_precise_flag) return 3;
   return -1;
 }
 
