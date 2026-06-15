@@ -494,9 +494,6 @@ The eam pair styles can only be used via the *pair* keyword of the
 :doc:`run_style respa <run_style>` command.  They do not support the
 *inner*, *middle*, *outer* keywords.
 
-
-
-
 ----------
 
 Restrictions
@@ -511,6 +508,7 @@ add an extra "s-band" embedding term to the standard EAM energy, can be run
 with the existing *eam/fs* and :doc:`hybrid/overlay <pair_hybrid>` styles
 without modifying LAMMPS.  See the :doc:`Howto_eam_overlay <Howto_eam_overlay>`
 page for the construction and a helper script that builds the s-band file.
+
 Related commands
 """"""""""""""""
 

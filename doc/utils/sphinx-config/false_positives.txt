@@ -2285,6 +2285,7 @@ makelist
 makepkg
 Makse
 Malavasi
+Malerba
 Malfreyt
 malloc
 Malolepsza
@@ -2952,6 +2953,7 @@ Oleinik
 Olfason
 olivedrab
 Ollila
+Olsson
 Olvera
 omegaDD
 omegax
@@ -3060,6 +3062,7 @@ Parrinello
 Partay
 Particuology
 Pascuet
+Pasianot
 Pasquier
 pastewka
 Pastewka
@@ -4009,6 +4012,7 @@ templating
 Templeton
 Tencer
 Tequil
+Terentyev
 ters
 tersoff
 Tersoff
@@ -4415,6 +4419,7 @@ vzi
 vzz
 Waals
 Wadley
+Wallenius
 wallstyle
 walltime
 Waltham
