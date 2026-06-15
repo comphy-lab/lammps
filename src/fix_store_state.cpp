@@ -422,7 +422,10 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
   avalues = nullptr;
   FixStoreState::grow_arrays(atom->nmax);
   atom->add_callback(Atom::GROW);
-  atom->add_callback(Atom::RESTART);
+
+  // only historyflag = 0 writes per-atom data to restart files.
+
+  if (!historyflag) atom->add_callback(Atom::RESTART);
 
   // zero the array since dump may access it on timestep 0
   // zero the array since a variable may access it before first run
@@ -451,7 +454,9 @@ FixStoreState::~FixStoreState()
   // unregister callbacks to this fix from Atom class
 
   atom->delete_callback(id,Atom::GROW);
-  atom->delete_callback(id,Atom::RESTART);
+
+  // the RESTART callback is only registered for historyflag = 0
+  if (!historyflag) atom->delete_callback(id,Atom::RESTART);
 
   memory->destroy(avalues);
 
