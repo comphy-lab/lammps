@@ -29,26 +29,27 @@ A key point to understand is that LAMMPS supports two forms of granular
 surfaces.  You cannot use both in the same simulation.
 
 The first is *global* which means that each processor stores a copy of
-all the triangles/lines.  This is suitable when a modest number of
-triangles/lines is needed.  They can be large triangles/lines, any of
-which span a significant fraction of the simulation box size in one or
-more dimensions.
+all the triangles/lines.  This is suitable when only a modest number
+of triangles/lines is needed.  They can be large triangles/lines, any
+of which span a significant fraction of the simulation box size in one
+or more dimensions.
 
-The second is *local* which means that the collection of triangles/lines
-is distributed across processors in the same manner that particles are
-distributed.  Each processor is assigned to a sub-domain of the
-simulation box and owns whichever triangles/lines have their center
-point in the processor's sub-domain.  Similar to particles, each
-processor may also own ghost copies of triangles/lines whose finite size
-overlaps with the processor's sub-domain.  The total number of
-triangles/lines in the system can now be very large.  For effective
-distribution and minimal communication, all the triangles/lines should
-be small, no more than a few particle diameters in size.  If even one
-larger triangle or line is defined then the neighbor list cutoff and
-communication cutoff will be set correspondingly larger, which can slow
-down the simulation.  Note that a large triangle are line can instead be
-defined as multiple smaller triangles or lines without changing the
-topology of the collective surface.
+The second is *local* which means that the collection of
+triangles/lines is distributed across processors in the same manner
+that particles are distributed.  Each processor is assigned to a
+sub-domain of the simulation box and owns whichever triangles/lines
+have their center point in the processor's sub-domain.  Similar to
+particles, each processor may also own ghost copies of triangles/lines
+whose finite size overlaps with the processor's sub-domain.  The total
+number of triangles/lines in the system can now be very large.  For
+effective distribution and minimal communication, all the
+triangles/lines should be small, no more than a few particle diameters
+in size.  If even one larger triangle or line is defined then the
+neighbor list cutoff and communication cutoff will be set
+correspondingly larger, which can slow down the simulation.  Note that
+a large triangle or line can instead be defined as multiple connected
+smaller triangles or lines without changing the topology of the
+collective surface.
 
 One of these two commands must be specified to use *global* or *local*
 surfaces in your granular simulation:
@@ -94,13 +95,14 @@ or *molecule ID* of any triangle or line.
 
 For both global and local surfaces, types are used to define the style
 of granular interactions for individual triangles/lines.  Different
-styles can be used within a single object consisting of connected
-triangles/lines.  See the Surface Connectivity section below.
+types, and thus styles, can be used within a single object consisting
+of connected triangles/lines.  See the Surface Connectivity section
+below.
 
-Molecule IDs are used to determine which triangles/lines are connected.
-They are therefore intended to be assigned uniquely to each
-inter-connected set of triangles/lines, as if each object were a
-"molecule".
+Molecule IDs can be used to limit which triangles/lines are considered
+to be "connected", as described below.  They are therefore intended to
+be assigned uniquely to each inter-connected set of triangles/lines,
+as if each object were a "molecule".
 
 For local surfaces, the molecule ID can be used to define groups which
 enables assignment of different motions to different surface objects.
@@ -148,16 +150,15 @@ For both *global* and *local* surfaces, granular particles interact with
 both sides of each triangle or line segment.  This means a surface such
 as a mixer blade can be infinitely thin.
 
-Triangles and line segments can be "connected" to form a contiguous
-surface if they share common edges or corner point (triangles) or end
-points (line segments).  Each triangle edge or corner point can be
-shared by multiple adjacent triangles.  A triangle edge is shared by two
+Triangles and line segments are considered to be "connected" and form
+a contiguous surface, if they (1) have the same molecule ID and (2)
+share common edges or corner point (triangles) or end points (line
+segments).  Each triangle edge or corner point can be shared by
+multiple adjacent triangles.  A triangle edge is shared by two
 triangles if both the end points of the edge are corner points of both
-triangles.  A triangle corner point is shared by two triangles if it is
-a corner point of both.  Likewise a line segment end point is shared by
-two line segments if it is an end point of both segments.
-
-.. NOTE: say something about epsilon criterion for "shared" ?
+triangles.  A triangle corner point is shared by two triangles if it
+is a corner point of both.  Likewise a line segment end point is
+shared by two line segments if it is an end point of both segments.
 
 There is no requirement that a triangle edge or triangle corner point or
 line segment end point be connected to another triangle or line segment.
@@ -194,15 +195,16 @@ granular particle (right).  In any of these cases, when a particle gets
 very close to the center of the mixer it will interact with both nearby
 line segments as expected.
 
-As an example of an invalid intersection, consider a 2d simulation of a
-T shaped object defined by 2 line segments (next figure, left).  The
-vertical line segment (blue) ends at the midpoint of the horizontal line
-segment (red).  Without proper connectivity, there is no way to censor a
-force from the geometrically hidden vertical segment as a particle
-(gray) moves horizontally across the top of the T.  In contrast, if the
-T shape is defined by 3 line segments that all share a common endpoint
-at the center of the top of the T (right), then the connectivity would
-censor the force from the vertical segment (blue).
+As an example of an invalid intersection, consider a 2d simulation of
+a T shaped object (next figure, left) defined by only 2 line segments
+(red, blue).  The vertical line segment (blue) ends at the midpoint of
+the horizontal line segment (red).  Without proper connectivity, there
+is no way to censor a force from the geometrically hidden vertical
+segment as a particle (gray) moves horizontally across the top of
+the T.  In contrast, the same T shape can be defined in a valid manner
+(right) by using 3 line segments (red, green, blue) which all share a
+common endpoint at the center of the top of the T.  The connectivity
+will then correctly censor the force from the vertical segment (blue).
 
 .. figure:: img/gransurf_T_geom.png
             :figwidth: 50%
@@ -256,30 +258,31 @@ triangles for an edge connection.
 
 An INEXACT match means that the two points can be EPSILON apart.
 EPSILON is defined as a tiny fraction (1.0e-4) of the size of the
-smallest triangle or line in the system.
-
-The reason INEXACT matches are allowed is that data files can be created
-in a variety of manners, including by LAMMPS itself as a simulation runs
-via the :doc:`write_data <write_data>` command.  Internally,
-triangle-style and line-style particles do not store their corner points
-directly.  Instead, the center point of the triangle/line is stored,
-along with an orientation of the triangle/line and a displacement vector
-from the center point for each corner point.  This means that when new
-corner points values are written to a data file for two different
-triangles/line, they may differ by epsilon due to round-offs in
+smallest triangle or line in the system.  The reason INEXACT matches
+are allowed is that data files can be created in a variety of manners,
+including by LAMMPS itself as a simulation runs via the
+:doc:`write_data <write_data>` command.  Internally, triangle-style
+and line-style particles do not store their corner points directly.
+Instead, the center point of the triangle/line is stored, along with
+an orientation of the triangle/line and a displacement vector from the
+center point for each corner point.  This means that when new corner
+points values are written to a data file for two different
+triangles/line, they may differ slightly due to round-offs in
 finite-precision arithmetic.
 
 Note that due to how connectivity is defined, two triangles/lines will
-not be connected if their corner points are separated by even small
-distances (greater than EPSILON).  Likewise they will not be connected
-if the corner point of one triangle/line is very close to (or even on)
-the surface of another triangle or middle of another line segment.  In
-general these kinds of granular surfaces could be problematic and should
-be avoided, but LAMMPS does not check for these conditions.
+not be connected if their corner points are separated by small
+distances (greater than EPSILON, but still small).  Likewise they will
+not be connected if the corner point of one triangle/line is very
+close to (or even on) the surface of another triangle or middle of
+another line segment.  In general these kinds of granular surfaces
+could be problematic and should be avoided, but LAMMPS does not check
+for these conditions.
 
 In addition, note that connectivity is only defined between two
-triangles/lines of the same molecule ID.  This way surfaces of two
-molecules can move independently, as described in the following section.
+triangles/lines with the same molecule ID.  This way surfaces of two
+molecules can move independently, as described in the following
+section.
 
 Note that if a triangle or line segment has a free edge or free
 corner/end point (not connected to any other triangle/line), granular
@@ -339,15 +342,16 @@ concave or convex based on their normal vectors.  In scenarios where
 flat surfaces are perfectly flat (parallel normal vectors) this
 designation is arbitrary.
 
-Each point or edge of a line or triangle are then classified as being
+Each point or edge of a line or triangle is then classified as being
 internal, external, or unconnected based on the connectivity.  For
 lines, an end point is internal if it only has flat connections,
-external if it has at least one non-flat (concave or convex) connection,
-and unconnected if it has no connections.  The same is true for edges on
-a triangle.  Corners on triangles inherit their classification from the
-two edges that meet at it.  If either edge is unconnected, the corner is
-unconnected.  Otherwise, the corner is external if either edge is
-external, and internal if both edges are internal.
+external if it has at least one non-flat (concave or convex)
+connection, and unconnected if it has no connections.  The same is
+true for edges on a triangle.  Corners on triangles inherit their
+classification from the two edges that meet at it.  If either edge is
+unconnected, the corner is unconnected.  Otherwise, the corner is
+external if either edge is external, and internal if both edges are
+internal.
 
 To calculate force on a particle, LAMMPS finds a set of all lines or
 triangles that are geometrically in contact with the particle,
@@ -373,23 +377,23 @@ lines/triangles, the calculation of :math:`\delta_f` and
 :math:`\hat{n}_f` is more complicated and is described in the remainder
 of this section.
 
-First, LAMMPS needs to identify a set of consistent sides of contact for
-each line/triangle in :math:`{S}_\mathrm{all}`.  For a single line or
-triangle, which side or face of the surface is in contact is
+First, LAMMPS needs to identify a set of consistent sides of contact
+for each line/triangle in :math:`{S}_\mathrm{all}`.  For a single line
+or triangle, which side or face of the surface is in contact is
 unambiguous.  However, if a particle is in contact with two or more
 connected lines/triangles this depends on the network of connectivity.
 For instance, the below figure highlights a 2D system with a particle
 (gray circle) in contact with two (green) lines that are part of a
 rhombus shaped object.  From a naive local determination, one would
-determine the particle is in contact with the sides/faces of the line
-with a surface normal oriented in the blue direction, one of which
-points inwards, into the object.  However, through the context of the
-convex connection, one can identify the physical surface normals (red).
-LAMMPS evaluates a consistent set of sides/faces (setting the sign of
-:math:`\hat{n}_s`) by walking through all connections of contacted
-surfaces starting from the primary contact.  If there are still
-unchecked surfaces, LAMMPS finds the unchecked surface with the largest
-overlap and repeats the process.
+determine the particle is in contact with the sides/faces of the two
+lines with each surface normal oriented in the blue direction, one of
+which points inwards, into the object.  However, through the context
+of the convex connection, one can identify the physical (correct)
+surface normals (red).  LAMMPS evaluates a consistent set of
+sides/faces (setting the sign of :math:`\hat{n}_s`) by walking through
+all connections of contacted surfaces starting from the primary
+contact.  If there are still unchecked surfaces, LAMMPS finds the
+unchecked surface with the largest overlap and repeats the process.
 
 .. figure:: img/gransurf_consistent_side.png
             :figwidth: 33%
@@ -632,15 +636,15 @@ out-of-plane such as pleats or sawteeth, relative to the length of an
 edge.
 
 To build a neighbor list between particles and lines/triangles, LAMMPS
-assigns a radius to each line/triangle that corresponds to the radius of
-the circle/sphere that encloses the object.  Therefore, one must be
+assigns a radius to each line/triangle that corresponds to the radius
+of the circle/sphere that encloses the object.  Therefore, one must be
 aware that systems with large disparities between triangle/line and
-particle radii may slow down the neighbor list build for and could
-benefit from :doc:`the multi neighbor style <neighbor>` for *local*
-surfaces.  Furthermore, triangles with very high aspect ratios should
-generally be avoided as they can lead to large neighbor lists containing
-many particles which are not actually close to being contact with the
-triangle (false positives).
+particle radii may slow down the neighbor list build, and could
+benefit from using the :doc:`the multi neighbor style <neighbor>`
+command for *local* surfaces.  Furthermore, triangles with very high
+aspect ratios should generally be avoided as they can lead to large
+neighbor lists containing many particles which are not actually close
+to being contact with the triangle (false positives).
 
 ----------
 

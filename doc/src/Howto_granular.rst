@@ -7,17 +7,16 @@ This means they have an angular velocity and torque can be imparted
 to them to cause them to rotate.
 
 The various atom, pair, fix, and compute styles listed below on this
-page are useful for creating granular models.
+page are useful for creating granular models with such particles.
 
 You can also define granular "surfaces" which are a collection of line
 segments (2d systems) or triangles (3d systems), which act as
 boundaries interacting with the particles.  This is particularly
-useful for defining a complex wall or boundary
-geometry. Particle/surface interactions can be specified with similar
-options as the pair styles listed below for particle-only systems.
+useful for defining a complex wall or boundary geometry.
+Particle/surface interactions can be specified with similar options as
+the pair styles listed below for particle/particle interactions.
 
-This Howto doc page and two fixes and additional pair style explain
-how to define and use granular surfaces:
+These doc pages describe how to define and use granular surfaces:
 
 * :doc:`Howto granular surfaces <Howto_granular_surfaces>`
 * :doc:`fix surface/global <fix_surface_global>`
