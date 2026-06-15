@@ -238,7 +238,7 @@ switching parameter can be calculated from *apip_lambda_input* and
 mixes the energies of a fast (*apip_e_fast*) and a precise
 (*apip_e_precise*) potential into an adaptive-precision energy.
 
-.. versionchanged:: 30Mar2026
+.. versionchanged:: TBD
 
 Alternatively, the switching parameter can be calculated from a
 locally averaged descriptor (*apip_la_avg*) to obtain a conservative
@@ -302,10 +302,12 @@ none
 Related commands
 """"""""""""""""
 
-:doc:`dump custom <dump>`, :doc:`compute reduce <compute_reduce>`,
-:doc:`fix ave/atom <fix_ave_atom>`, :doc:`fix ave/chunk
-:doc:<fix_ave_chunk>`, `fix property/atom <fix_property_atom>`,
-:doc::doc:`fix store/state <fix_store_state>`
+:doc:`dump custom <dump>`,
+:doc:`compute reduce <compute_reduce>`,
+:doc:`fix ave/atom <fix_ave_atom>`,
+:doc:`fix ave/chunk <fix_ave_chunk>`,
+:doc:`fix property/atom <fix_property_atom>`,
+:doc:`fix store/state <fix_store_state>`
 
 Default
 """""""

@@ -43,7 +43,7 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
   if (narg < 5) utils::missing_cmd_args(FLERR,"fix store/state", error);
 
   nevery = utils::inumeric(FLERR,arg[3],false,lmp);
-  if (nevery < 0) error->all(FLERR,"Invalid fix store/state N value {}", nevery);
+  if (nevery < 0) error->all(FLERR, 3, "Invalid fix store/state N value {}", nevery);
 
   // parse values
   // customize a new keyword by adding to if statement

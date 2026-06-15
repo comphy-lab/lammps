@@ -409,8 +409,6 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
     // index[i] = I index of history[I][J] for history frame (1 to Nrepeat)
     // colindex[i] = J index of history[I][J] for fix SS value (1 to Nattribute)
 
-    // NOTE for Axel: correct way to write regex ?
-
     } else if (utils::strmatch(arg[iarg],"^history\\[\\d+\\]\\[\\d+\\]$")) {
       historyflag = 1;
       pack_choice[i] = &ComputePropertyAtom::pack_history;

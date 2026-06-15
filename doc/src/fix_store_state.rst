@@ -86,6 +86,10 @@ Examples
 Description
 """""""""""
 
+.. versionchanged:: TBD
+
+   The *history* keyword was added.
+
 Define a fix that stores attributes for each atom in the group either
 once or for multiple recent timesteps by use of the optional *history*
 keyword.
@@ -99,10 +103,10 @@ calculation or output.
 
 .. note::
 
-   Actually, only atom attributes specified by keywords like *xu*
-   or *vy* or *radius* are initially stored immediately at the point in
-   your input script when the fix is defined.  Attributes specified by a
-   compute, fix, or variable are not initially stored until the first run
+   Only atom attributes specified by keywords like *xu* or *vy* or
+   *radius* are initially stored immediately at the point in your input
+   script when the fix is defined.  Attributes specified by a compute,
+   fix, or variable are not initially stored until the first run
    following the fix definition begins.  This is because calculating
    those attributes may require quantities that are not defined in
    between runs.
@@ -148,7 +152,7 @@ attributes for steps 1905,1910,1915, ... 2000.  Between timesteps 1000
 to 1905, no attributes are stored, which can be more efficient if
 those attributes are not needed.
 
-.. note::
+.. warning::
 
    Specifying a large value for *Nrepeat* may require significant
    extra memory.  Since the attribute values need to persist with each
