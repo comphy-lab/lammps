@@ -407,6 +407,13 @@ FixStoreState::FixStoreState(LAMMPS *lmp, int narg, char **arg) :
     most_recent_step = -1;
     most_recent_index = -1;
     count_history = 0;
+
+    // pack_exchange() packs up to count_history*vsize doubles per atom, with
+    // count_history <= nrepeat_history.  Reserve that fixed upper bound in
+    // maxexchange so Comm::init_exchange() sizes the exchange buffer's bufextra
+    // accordingly (BUFEXTRA alone is not guaranteed to be large enough).
+
+    maxexchange = nrepeat_history * vsize;
   }
 
   // perform initial allocation of atom-based arrays
