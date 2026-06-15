@@ -71,7 +71,7 @@ class FixStoreState : public Fix {
   int nrepeat_history;     // # of history frames to store
   int nfreq_history;       // enable output of stored history on these steps
   int count_history;       // number of currently stored history frames
-  int most_recent_step;    // timestep for most recent history frame
+  bigint most_recent_step; // timestep for most recent history frame
   int most_recent_index;   // index of most recent frame in avalues_history
   int vsize;               // number of values (needed for extract())
 

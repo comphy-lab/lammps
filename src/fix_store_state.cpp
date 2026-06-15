@@ -559,8 +559,8 @@ void FixStoreState::end_of_step()
   //   logic here will skip this step if not needed in history
 
   if (historyflag && nfreq_history > nevery*nrepeat_history && update->ntimestep % nfreq_history) {
-    int nfreq_next = (update->ntimestep/nfreq_history)*nfreq_history + nfreq_history;
-    int nprevious = (nfreq_next-update->ntimestep) / nevery;
+    bigint nfreq_next = (update->ntimestep/nfreq_history)*nfreq_history + nfreq_history;
+    bigint nprevious = (nfreq_next-update->ntimestep) / nevery;
     if (nprevious >= nrepeat_history) return;
   }
 
