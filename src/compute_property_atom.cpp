@@ -566,7 +566,7 @@ void ComputePropertyAtom::compute_peratom()
       memory->create(vector_atom,nmax,"property/atom:vector");
     } else {
       memory->destroy(array_atom);
-        memory->create(array_atom,nmax,nvalues,"property/atom:array");
+      memory->create(array_atom,nmax,nvalues,"property/atom:array");
     }
   }
 
@@ -575,11 +575,11 @@ void ComputePropertyAtom::compute_peratom()
 
   if (historyflag) {
     if (nfreq_history == 0 && update->ntimestep % nevery_history)
-      error->all(FLERR,"Compute {} not accessing history ot compatible times{}",
-     style, utils::errorurl(7));
+      error->all(FLERR,"Compute {} is accessing stored history on an incompatible timestep{}",
+                 style, utils::errorurl(7));
     if (nfreq_history && update->ntimestep % nfreq_history)
-      error->all(FLERR,"Compute {} not accessing history ot compatible times{}",
-     style, utils::errorurl(7));
+      error->all(FLERR,"Compute {} is accessing stored history on an incompatible timestep{}",
+                 style, utils::errorurl(7));
   }
 
   // fill vector or array with per-atom values
