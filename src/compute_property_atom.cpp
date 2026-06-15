@@ -519,6 +519,7 @@ ComputePropertyAtom::~ComputePropertyAtom()
   delete[] fixID;
 
   memory->destroy(vector_atom);
+  memory->destroy(array_atom);
 }
 
 /* ---------------------------------------------------------------------- */
