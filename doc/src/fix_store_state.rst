@@ -134,7 +134,7 @@ attributes for steps 5,10,15, ... 500.  On step 600, each atom stores
 attributes for steps 105,105,110, ... 600.  For timesteps < 495, less
 than 100 attributes are necessarily stored.
 
-If Nfreq is non-zero, it must be a mutiple of Nevery, and the
+If Nfreq is non-zero, it must be a multiple of Nevery, and the
 attributes are accessible only on timesteps which are a multiple of
 Nfreq.  This can be useful to limit storage of atom attributes to only
 the time windows when the attributes are needed.  For example, this
@@ -144,7 +144,7 @@ command in the Examples section above:
 
    fix 2 all store/state 0 vx vy vz history 5 20 1000
 
-will store attibutes once every 5 timesteps repeated 20 times
+will store attributes once every 5 timesteps repeated 20 times
 (including the current timestep), but only preceding timesteps which
 are multiples of 1000.  On step 1000, each atom stores attributes for
 steps 905,910,915, ... 1000.  On step 2000, each atom stores
@@ -223,13 +223,13 @@ this fix.
 
 If the optional *history* keyword is not used, this fix produces a
 per-atom vector if a single input is specified.  Or a per-atom array
-if mutiple inputs are specified, where the number of columns for each
+if multiple inputs are specified, where the number of columns for each
 atom is the number of inputs.  These can be accessed by various
 :doc:`output commands <Howto_output>`.  These per-atom values can be
 accessed on any timestep (see the discussion of Noutput below).
 
 If the *history* keyword is used, no per-atom vector or array is
-produced.  Instead, the fix provides access to its mulitiple timesteps
+produced.  Instead, the fix provides access to its multiple timesteps
 of stored per-atom history via its *extract()* method.
 The :doc:`compute property/atom <compute_property_atom>`
 command is an example of a command which does this.
