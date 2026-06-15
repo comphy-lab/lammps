@@ -28,6 +28,7 @@
 #include "math_extra.h"
 #include "memory.h"
 #include "modify.h"
+#include "tokenizer.h"
 #include "update.h"
 
 #include <cmath>
@@ -412,17 +413,14 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
     } else if (utils::strmatch(arg[iarg],"^history\\[\\d+\\]\\[\\d+\\]$")) {
       historyflag = 1;
       pack_choice[i] = &ComputePropertyAtom::pack_history;
-      // NOTE for Axel: better way to parse 2 indices ??
-      char *ptrstart = strchr(arg[iarg],'[');
-      char *ptrstop = strchr(ptrstart,']');
-      *ptrstop = '\0';
-      index[i] = utils::inumeric(FLERR,ptrstart+1,true,lmp);
-      *ptrstop = ']';
-      ptrstart = ptrstop + 1;;
-      ptrstop = strchr(ptrstart,']');
-      *ptrstop = '\0';
-      colindex[i] = utils::inumeric(FLERR,ptrstart+1,true,lmp);
-      *ptrstop = ']';
+      // parse the two bracketed indices of history[I][J];
+      // the regex guarantees at least 3 tokens when splitting on the brackets
+      // utils::inumeric() catches illegal values within the brackets
+      // I = history frame (1 to Nrepeat), J = fix store/state value (1 to Nattribute)
+      ValueTokenizer hist(arg[iarg],"[]");
+      hist.skip();                                                // the "history" keyword
+      index[i] = utils::inumeric(FLERR,hist.next_string(),false,lmp);     // I
+      colindex[i] = utils::inumeric(FLERR,hist.next_string(),false,lmp);  // J
 
     // any other attribute could be recognized by atom style
     // otherwise break for processing optional args
