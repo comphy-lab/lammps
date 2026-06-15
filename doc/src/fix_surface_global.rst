@@ -64,7 +64,6 @@ Examples
 
    molecule lines surf.line
    fix 1 all surface/global input mol linesurf model 1 1 hooke 4000.0 NULL 100.0 NULL 0.5 1
-
    fix 1 all surface/global input stl 1 1 object.stl model * 1 hooke/history 4000.0 NULL 100.0 NULL 0.5 1
 
 Description
@@ -103,13 +102,14 @@ options listed above for the *source* argument of the *input* keyword:
 If triangles or lines were previously read in by the :doc:`molecule
 <molecule>` command, the *source* argument of the *input* keyword is
 *mol* and its *template-ID* argument is the molecule template ID used
-with the :doc:`molecule <molecule>` command.  Note that a doc:`molecule
-<molecule>` command can read and assign several molecule files to the
-same template-ID.  Each molecule file must define triangles or lines,
-not atoms.  For multiple molecule files, the set of triangles or lines
-defined used by this input option will be the union of the triangles and
-lines from all the molecule files.  Note that each line/triangle in a
-molecule file is assigned a type and molecule ID.
+with the :doc:`molecule <molecule>` command.  Note that a
+:doc:`molecule <molecule>` command can read and assign several
+molecule files to the same template-ID.  Each molecule file must
+define triangles or lines, not atoms.  For multiple molecule files,
+the set of triangles or lines defined by this input option will be the
+union of the triangles and lines from all the molecule files.  Note
+that each line/triangle in a molecule file is assigned a type and
+molecule ID.
 
 An STL (stereolithography) file defines a set of triangles.  For use
 with this command, the *source* argument of the *input* keyword is
@@ -118,32 +118,33 @@ triangles from the file.  Note that STL files do not contain types or
 other flags for each triangle.  The *smol* argument is the numeric
 molecule ID assigned to all triangles in the file.  The *stlfile*
 argument is the name of the STL file.  It can be in text or binary
-format; this command auto-detects the format.  One triangle particle is
+format; this command auto-detects the format.  One global triangle is
 created for each triangle in the STL file(s).  Note that STL files
 cannot be used for 2d simulations since they only define triangles.
 
-This `Wikipedia page <https://en.wikipedia.org/wiki/STL_(file_format)>`_
-describes the format of both text and binary STL files.  Binary STL
-files can be converted to ASCII for editing with the stl_bin2txt tool in
-the lammps/tools directory.  Examples of text-based STL files are
-included in the examples/gransurf directory.
+This `Wikipedia page
+<https://en.wikipedia.org/wiki/STL_(file_format)>`_ describes the
+format of both text and binary STL files.  Binary STL files can be
+converted to ASCII for editing via the stl_bin2txt tool in the
+lammps/tools directory.  Examples of text-based STL files are included
+in the examples/gransurf directory.
 
 Note that this command allows for multiple uses of the *input* keyword,
 each with a *source* argument as either *mol* or *stl*.  The surfaces
 used by this command are the union of the triangles and lines from all
 the input keywords.
 
-Once all the distributed triangle/line particles are defined, this
-command calculates their connectivity.  Two triangles are "connected" if
-they are in the same molecule and have a single corner point in common
-or an edge in common (2 corner points).  Two line segments are
-"connected" if they are in the same molecule and they have an end point
-in common.  More technical details on connectivity and its significance
-for granular surface simulations is given on :doc:`Howto granular
-surfaces <Howto_granular_surfaces>` doc page.  In brief, a pair of
-connected surfaces interact with a particle which contacts both of them
-simultaneously according to a set of rules which are designed to
-generate physically sensible forces on the particle.
+Once all the global triangle/line particles are defined, this command
+calculates their connectivity.  Two triangles are "connected" if they
+are in the same molecule and have a single corner point in common or
+an edge in common (2 corner points).  Two line segments are
+"connected" if they are in the same molecule and they have an end
+point in common.  More technical details on connectivity and its
+significance for granular surface simulations is given on :doc:`Howto
+granular surfaces <Howto_granular_surfaces>` doc page.  In brief, a
+pair of connected surfaces interact with a particle which contacts
+both of them simultaneously according to a set of rules which are
+designed to generate physically sensible forces on the particle.
 
 Note that there is no requirement that all the surfaces be connected to
 one another.  The surfaces can represent the surface of one or more
@@ -169,10 +170,10 @@ leading asterisk means all types from 1 to n (inclusive).  A trailing
 asterisk means all types from n to :math:`N` (inclusive).  A middle
 asterisk means all types from m to n (inclusive).
 
-The model keywords must specify an interactions for each particle type
+The model keywords must specify interactions for each particle type
 interacting with each surface type, otherwise an error is flagged.  If
-use of the model keywords specifies an individual particle/surface type
-pair more than once, then the final specification is used.
+use of the model keywords specifies an individual particle/surface
+type pair more than once, then the final specification is used.
 
 The number of particle types is the number of atom types in the system.
 The number of surface types is determined by the maximum surface type in
@@ -182,23 +183,23 @@ type/region <fix_modify>` command (described below) is used to assign
 new types to surfaces after they are read in.  As for particles, there
 is no requirement that triangles/lines exist for every surface type.
 
-The *fstyle* argument (for force style) can be any of the styles defined
-by the :doc:`pair_style gran/\* <pair_gran>` or the more general
-:doc:`pair_style granular <pair_granular>` commands.  Currently the
-options are *hooke*, *hooke/history*, or *hertz/history* for the former,
-and *granular* with all the possible options of the associated
-*pair_coeff* command for the latter.  The equation for the force between
-a triangle/line and a particle touching it is the same as the
-corresponding equation on the :doc:`pair_style gran/\* <pair_gran>` and
-:doc:`pair_style granular <pair_granular>` doc pages, in the limit of
-one of the two particles going to infinite radius and mass (flat
-surface).  Specifically, delta = radius - r = overlap of particle with
-triangle/line, m_eff = mass of particle, and the effective radius of
-contact = RiRj/Ri+Rj is set to the radius of the particle.  See the
-:doc:`Howto granular surfaces <Howto_granular_surfaces>` page for
-information on how overlaps and normal vectors are calculated based on
-the geometry of the surface and when friction is transferred between
-lines/triangles.
+The *fstyle* argument (for force style) can be any of the styles
+defined by the :doc:`pair_style gran/\* <pair_gran>` or the more
+general :doc:`pair_style granular <pair_granular>` commands.
+Currently the options are *hooke*, *hooke/history*, or *hertz/history*
+for the former, and *granular* with all the possible options of the
+associated *pair_coeff* command for the latter.  The equation for the
+force between a triangle/line and a particle touching it is the same
+as the corresponding equation on the :doc:`pair_style gran/\*
+<pair_gran>` and :doc:`pair_style granular <pair_granular>` doc pages,
+in the limit of one of the two particles going to infinite radius and
+mass (flat surface).  Specifically, *delta* = *radius* - *r* = overlap
+of particle with triangle/line, *m_eff* = mass of particle, and the
+effective radius of contact = *RiRj/Ri+Rj* is set to the radius of the
+particle.  See the :doc:`Howto granular surfaces
+<Howto_granular_surfaces>` page for information on how overlaps and
+normal vectors are calculated based on the geometry of the surface and
+when friction is transferred between lines/triangles.
 
 The parameters *Kn*, *Kt*, *gamma_n*, *gamma_t*, *xmu*, *dampflag*, and
 the optional keyword *limit_damping* have the same meaning and units as
@@ -266,12 +267,10 @@ color style "const" the default value of "white" can be changed using
 :doc:`dump_modify fcolor <dump_image>`.  The transparency is by default
 fully opaque and can be changed with *dump\_modify ftrans*\ .
 
-For 2d systems, the *fflag1* setting allows to set the radius of the
-rendered cylinders.
+For 2d systems, *fflag1* sets the radius of the rendered cylinders.
 
-For 3d systems, the *fflag1* setting selects the render style (1 =
-triangles, 2 = wireframe, 3 = both and *fflag2* sets the diameter of the
-wireframe.
+For 3d systems, *fflag1* selects the render style (1 = triangles, 2 =
+wireframe, 3 = both), and *fflag2* sets the diameter of the wireframe.
 
 -----------------
 
@@ -281,12 +280,12 @@ Restart, fix_modify, output, run start/stop, minimize info
 No information about this fix is written to :doc:`binary restart files
 <restart>`.
 
-This fix defines three new keywords for the doc:`fix_modify
-<fix_modify>` command, *move*, *type/region*, and *mol/region*.  Because
-they are specific to this command, they are only described here, not on
-the doc:`fix_modify <fix_modify>` doc page.  All keywords can be used
-multiple times.  In the description that follows, a surface means a
-triangle (3d) or line segment (2d).
+This fix defines three new keywords for the :doc:`fix_modify
+<fix_modify>` command, *move*, *type/region*, and *mol/region*.
+Because they are specific to this command, they are only described
+here, not on the :doc:`fix_modify <fix_modify>` doc page.  All
+keywords can be used multiple times.  In the description that follows,
+a surface means a triangle (3d) or line segment (2d).
 
 The *move* keyword can be used to make all or a subset of the surfaces
 move in a prescribed manner, similar to the :doc:`fix move <fix_move>`
@@ -359,7 +358,8 @@ no change is made to those position or velocity components of an
 individual triangle/line, which is different than the explanation given
 by the :doc:`fix move <fix_move>` command for individual particles.
 
-Note that for *local* surfaces the same motion operations can be
+Note that for *local* surfaces (see the :doc:`fix surface/local
+<fix_surface_local>` doc page) the same motion operations can be
 performed using the :doc:`fix move <fix_move>` command with a group-ID
 defined by the :doc:`group <group>` which includes the appropriate
 particle types for triangle and line-segment particles.
@@ -384,7 +384,7 @@ as a sphere or block.  The geometric center point of a triangle or line
 segment is used to determine where a surface is in the region or not.
 If it is, its molecule ID is reset to *smol*.
 
-Examples for both keywords are as follows:
+Examples for the various keywords are as follows:
 
 .. code-block:: LAMMPS
 
@@ -401,9 +401,9 @@ command.  This fix is not invoked during :doc:`energy minimization
 Restrictions
 """"""""""""
 
-This fix is part of the GRANSURF.  It is only enabled if LAMMPS was
-built with that package.  See the :doc:`Build package <Build_package>`
-page for more info.
+This fix is part of the GRANSURF package.  It is only enabled if
+LAMMPS was built with that package.  See the :doc:`Build package
+<Build_package>` page for more info.
 
 Molecule IDs are not currently used by granular surface interactions,
 though they may be in the future.  They are intended to be assigned

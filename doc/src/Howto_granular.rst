@@ -26,8 +26,8 @@ how to define and use granular surfaces:
 
 ----------
 
-To run a simulation of a granular model, you will typically want to use
-the following commands:
+To run a simulation of particles with a granular model, you will
+typically want to use the following commands:
 
 * :doc:`atom_style sphere <atom_style>`
 * :doc:`fix nve/sphere <fix_nve_sphere>`
@@ -68,6 +68,8 @@ additional models.
 To add your own custom granular contact model to the :doc:`pair_style
 granular <pair_granular>` command, see the :doc:`Modifying granular
 sub-models <Modify_gran_sub_mod>` doc page.
+
+----------
 
 These commands implement fix options specific to granular systems:
 

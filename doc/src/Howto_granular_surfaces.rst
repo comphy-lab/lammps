@@ -4,19 +4,21 @@ Granular surfaces
 .. versionadded:: TBD
 
 As explained on the :doc:`Howto granular <Howto_granular>` doc page,
-granular systems are composed of spherical particles with a diameter, as
-opposed to point particles.  This means they have an angular velocity
-and torque can be imparted to them to cause them to rotate.
+granular systems are composed of finite-size spherical or aspherical
+particles with explicit diameters, as opposed to point particles.
+This means they have an angular velocity and torque can be imparted to
+them to cause them to rotate.
 
-The :doc:`Howto granular <Howto_granular>` doc page lists various atom,
-pair, fix, and compute styles useful for creating granular models for
-systems of interacting particles.
+The :doc:`Howto granular <Howto_granular>` doc page lists various
+atom, pair, fix, and compute styles useful for creating granular
+models with such particles.
 
-This page explains how you can also define granular surfaces which are a
-collection of triangles (3d systems) or line segments (2d systems),
-which act as boundaries interacting with the particles.  Different kinds
-of particle/surface interactions can be specified with similar options
-as the :doc:`granular pair style <pair_granular>` command.
+This page explains how you can also define granular surfaces which are
+a collection of triangles (3d systems) or line segments (2d systems),
+which act as boundaries interacting with the particles.  This is
+particularly useful for defining a complex wall or boundary geometry.
+As described below, particle/surface interactions can be specified
+with similar options as those for particle/particle interactions.
 
 ----------
 

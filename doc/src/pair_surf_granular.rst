@@ -30,23 +30,27 @@ Description
 .. versionadded:: TBD
 
 The *surf/granular* pair style is designed for interactions between
-surface meshes made out of lines/triangles and finite-sized atoms
+granular surfaces made out of lines/triangles and finite-sized atoms
 and must be used in conjunction with :doc:`fix surface/local
-<fix_surface_local>`.
+<fix_surface_local>`.  See the :doc:`Howto granular surfaces
+<Howto_granular_surfaces>` doc page for more information on granular
+surfaces.
 
 The equation for the force between a triangle/line and a particle
-touching it is the same as the corresponding equation on the :doc:`pair_style granular <pair_granular>` doc page in the limit of one of the two particles
-going to infinite radius and mass (flat surface).  Specifically, :math:`\delta`
-= overlap of particle with triangle/line, :math:`m_eff` = mass of particle, and
-the effective radius of contact `R_{eff}= R_i R_j/R_i + R_j` is set to the
-radius of the particle. See the :doc:`Howto granular surfaces
-<Howto_granular_surfaces>` page for information on how overlaps and normal
-vectors are calculated based on the geometry of the surface and when friction
-is transferred between lines/triangles.
+touching it is the same as the corresponding equation on the
+:doc:`pair_style granular <pair_granular>` doc page in the limit of
+one of the two particles going to infinite radius and mass (flat
+surface).  Specifically, :math:`\delta` = overlap of particle with
+triangle/line, :math:`m_eff` = mass of particle, and the effective
+radius of contact `R_{eff}= R_i R_j/R_i + R_j` is set to the radius of
+the particle. See the :doc:`Howto granular surfaces
+<Howto_granular_surfaces>` doc page for information on how overlaps
+and normal vectors are calculated based on the geometry of the surface
+and when friction is transferred between lines/triangles.
 
-Pair coefficients are identical to those in the :doc:`granular <pair_granular>`
-pair style. The only exception is that forces cannot extend beyond contact as
-in the JKR contact model.
+Pair coefficients are identical to those in the :doc:`granular
+<pair_granular>` pair style. The only exception is that forces cannot
+extend beyond contact as in the JKR contact model.
 
 -----------
 
@@ -57,11 +61,12 @@ The :doc:`pair_modify <pair_modify>` mix, shift, table, and tail options
 are not relevant for granular pair styles.
 
 Mixing of coefficients is carried out using geometric averaging for
-most quantities.  See the doc page for :doc:`pair granular <pair_granular>` discussion of exceptions.
+most quantities.  See the doc page for :doc:`pair granular
+<pair_granular>` discussion of exceptions.
 
-These pair styles write their information to :doc:`binary restart files <restart>`,
-so a pair_style command does not need to be specified in an input script that reads
-a restart file.
+These pair styles write their information to :doc:`binary restart
+files <restart>`, so a pair_style command does not need to be
+specified in an input script that reads a restart file.
 
 These pair styles can only be used via the *pair* keyword of the
 :doc:`run_style respa <run_style>` command.  They do not support the
@@ -71,17 +76,17 @@ The single() function of these pair styles returns 0.0 for the energy
 of a pairwise interaction, since energy is not conserved in these
 dissipative potentials.  It also returns only the normal component of
 the pairwise interaction force.  However, the single() function also
-calculates extra pairwise quantities. See the doc page for
-:doc:`pair granular <pair_granular>` for additional information on
-what these quantities are and how to access them.
+calculates extra pairwise quantities. See the doc page for :doc:`pair
+granular <pair_granular>` for additional information on what these
+quantities are and how to access them.
 
 ---------
 
 Restrictions
 """"""""""""
 
-This pair style is part of the GRANSURF.  It is only enabled if LAMMPS
-was built with that package.  See the :doc:`Build package
+This pair style is part of the GRANSURF package.  It is only enabled
+if LAMMPS was built with that package.  See the :doc:`Build package
 <Build_package>` page for more info.
 
 This pair style must be in used in conjunction with
