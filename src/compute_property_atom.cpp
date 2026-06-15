@@ -470,41 +470,7 @@ ComputePropertyAtom::ComputePropertyAtom(LAMMPS *lmp, int narg, char **arg) :
 
   if (historyflag == 1)
     error->all(FLERR,"Compute property/atom history attribute requires history option");
-  if (historyflag == 2) {
-    if (strcmp(fixhistory->style,"store/state") != 0)
-      error->all(FLERR,"Compute {} history fix style is not store/state", style);
-
-    int dim;
-    int *flag_history_ptr = (int *) fixhistory->extract("flag_history",dim);
-    int flag_history = *((int *) fixhistory->extract("flag_history",dim));
-    if (!flag_history)
-      error->all(FLERR,"Compute {} history fix does not store history", style);
-
-    nattribute_history = *((int *) fixhistory->extract("nattribute_history",dim));
-    nevery_history = *((int *) fixhistory->extract("nevery_history",dim));
-    nrepeat_history = *((int *) fixhistory->extract("nrepeat_history",dim));
-    nfreq_history = *((int *) fixhistory->extract("nfreq_history",dim));
-    count_history_ptr = (int *) fixhistory->extract("count_history",dim);
-    most_recent_index_ptr = (int *) fixhistory->extract("most_recent_index",dim);
-    history = (double ***) fixhistory->extract("history",dim);
-
-    // check all history attributes:
-    // ihistory = index[i] is from 1 to Nrepeat
-    // jhistory = colindex[i] is from 1 to Nattribute
-
-    for (int i = 0; i < nvalues; i++) {
-      if (pack_choice[i] == &ComputePropertyAtom::pack_history) {
-  if (index[i] < 1 || index[i] > nrepeat_history)
-    error->all(FLERR,
-         "Compute {} history references invalid history frame {} from fix store/state",
-         style, index[i]);
-  if (colindex[i] < 1 || colindex[i] > nattribute_history)
-    error->all(FLERR,
-         "Compute {} history references invalid attribute {} from fix store/state",
-         style, colindex[i]);
-      }
-    }
-  }
+  if (historyflag == 2) setup_history();
 
   nmax = 0;
 }
@@ -531,9 +497,60 @@ void ComputePropertyAtom::init()
   avec_tri = dynamic_cast<AtomVecTri *>(atom->style_match("tri"));
   avec_body = dynamic_cast<AtomVecBody *>(atom->style_match("body"));
 
-  // NOTE: need to reset custom vector/array indices here, like dump custom does
-  //       in case have been deleted ?
-  // NOTE: need to check that fix store state is still defined and valid ?
+  // re-resolve the history fix and re-cache its extract() pointers, in case the
+  // referenced fix store/state was deleted and/or redefined since construction
+
+  if (historyflag == 2) setup_history();
+
+  // NOTE: custom vector/array indices (index[i] for the i*_/d*_ keywords) are
+  //       not re-resolved here, even though the referenced custom property could
+  //       have been removed between runs, the way dump custom guards against it.
+}
+
+/* ----------------------------------------------------------------------
+   resolve the history fix by ID and (re)cache the pointers and scalars it
+   exposes via extract().  Called from the constructor and again from init()
+   so the cached pointers cannot dangle if the fix store/state instance is
+   deleted and/or redefined between runs.
+------------------------------------------------------------------------- */
+
+void ComputePropertyAtom::setup_history()
+{
+  fixhistory = modify->get_fix_by_id(fixID);
+  if (!fixhistory)
+    error->all(FLERR,"Compute {} history fix {} does not exist", style, fixID);
+  if (strcmp(fixhistory->style,"store/state") != 0)
+    error->all(FLERR,"Compute {} history fix style is not store/state", style);
+
+  int dim;
+  int flag_history = *((int *) fixhistory->extract("flag_history",dim));
+  if (!flag_history)
+    error->all(FLERR,"Compute {} history fix does not store history", style);
+
+  nattribute_history = *((int *) fixhistory->extract("nattribute_history",dim));
+  nevery_history = *((int *) fixhistory->extract("nevery_history",dim));
+  nrepeat_history = *((int *) fixhistory->extract("nrepeat_history",dim));
+  nfreq_history = *((int *) fixhistory->extract("nfreq_history",dim));
+  count_history_ptr = (int *) fixhistory->extract("count_history",dim);
+  most_recent_index_ptr = (int *) fixhistory->extract("most_recent_index",dim);
+  history = (double ***) fixhistory->extract("history",dim);
+
+  // validate all history attribute references against the (current) fix params
+  //   index[i]    = history frame, 1 to Nrepeat
+  //   colindex[i] = fix store/state attribute, 1 to Nattribute
+
+  for (int i = 0; i < nvalues; i++) {
+    if (pack_choice[i] == &ComputePropertyAtom::pack_history) {
+      if (index[i] < 1 || index[i] > nrepeat_history)
+        error->all(FLERR,
+                   "Compute {} history references invalid history frame {} from fix store/state",
+                   style, index[i]);
+      if (colindex[i] < 1 || colindex[i] > nattribute_history)
+        error->all(FLERR,
+                   "Compute {} history references invalid attribute {} from fix store/state",
+                   style, colindex[i]);
+    }
+  }
 }
 
 /* ---------------------------------------------------------------------- */

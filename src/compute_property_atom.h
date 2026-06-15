@@ -53,6 +53,8 @@ class ComputePropertyAtom : public Compute {
   int *count_history_ptr,*most_recent_index_ptr;
   double ***history;
 
+  void setup_history();    // (re)resolve fix store/state and cache its extract() pointers
+
   // function ptr for each attribute
 
   using FnPtrPack = void (ComputePropertyAtom::*)(int);
