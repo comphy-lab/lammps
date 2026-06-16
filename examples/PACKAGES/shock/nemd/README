@@ -1,9 +1,9 @@
-This example reproduces the 2010 study of theshockwave structure in a
-fluid of Holian et al.[1]
+This example reproduces the 2010 study of the shockwave structure in
+a fluid of Holian et al.[1]
 
 It runs a non-equilibrium molecular dynamics simulations of strong
 shockwave propagation in a fluid.  The potential is the smoothly
-truncated cubic spline Lennard-Jones proposed by Holian and REvelo
+truncated cubic spline Lennard-Jones proposed by Holian and Ravelo
 because of its combination of computational efficiency, qualitative
 realism, and energy conservation. The same potential has also been
 used to study shockwaves in solids.[2]
@@ -19,7 +19,7 @@ A secondary output is the collisional velocity correlation function
 In order to run this example, LAMMPS must be compiled with the
 EXTRA-PAIR and EXTRA-COMPUTE packages. It also requires the history
 keywords that were added to fix store/state and compute property/atom
-on xx/xx/2026.
+on 06/23/2026.
 
 [1] Holian, Mareschal, and Ravelo, J. Chem. Phys. 133, 114502 (2010).
 [2] Ravelo, Holian, Germann and Lomdahl, Phys Rev B, 70, 014103 (2004).
