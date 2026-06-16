@@ -628,7 +628,7 @@ of this parameter is determined based on the GPU architecture at runtime.
 .. versionadded:: TBD
 
 The *auto/tuning* keyword enables the auto-tuning feature of
-the KOKKOS package.  When enabled, the KOKKOS styles in use will scan
+the KOKKOS package when using GPUs.  When enabled, the KOKKOS styles in use will scan
 through the possible values of the kernel launch parameters (that is, execution policies)
 such as *pair/team/size* and *threads/per/atom* for pair styles and *bond/chunk/size*
 for bond styles, and find the combination that gives the best simulation
@@ -661,8 +661,13 @@ is more than 20% below the last optimal performance for *nsamples* times,
 a re-scan will be triggered.  Setting *reltol* to be equal or greater than 1.0
 will disable the re-scanning.
 
-The *auto/tuning* feature is supported by a limited number of the KOKKOS styles
-and disabled by default.
+If *nevery* is 0, autotuning is disabled and the 3 parameters *nsamples*,
+*mode* and *reltol* need to be specified but have no effect to the run.
+
+The *auto/tuning* feature is currently supported by a limited number of the KOKKOS styles
+and disabled by default.  The parameter scanning process of a KOKKOS style
+is logged into the corresponding text file, *tuning-[style-name].log*
+in the working folder.
 
 OPENMP package settings
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -798,7 +803,7 @@ For the KOKKOS package when using GPUs, the option defaults are:
 
 .. parsed-literal::
 
-   neigh = full, neigh/qeq = full, newton = off, binsize = 2x LAMMPS default value, comm = device, sort = device, atom/map = device, neigh/transpose = off, gpu/aware = on
+   neigh = full, neigh/qeq = full, newton = off, binsize = 2x LAMMPS default value, comm = device, sort = device, atom/map = device, neigh/transpose = off, gpu/aware = on, auto/tuning = disabled
 
 For GPUs, option neigh/thread = on when there are 16k atoms or less on
 an MPI rank, otherwise it is "off". When LAMMPS can safely detect that
