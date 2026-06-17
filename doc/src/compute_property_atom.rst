@@ -93,7 +93,7 @@ Syntax
 
            PERI package per-atom properties:
            vfrac = volume fraction
-           s0 = max stretch of any bond a particle is part of
+           s0 = critical bond stretch (bond-breaking threshold) of a particle
 
   .. parsed-literal::
 
