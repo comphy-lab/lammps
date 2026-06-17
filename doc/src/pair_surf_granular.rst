@@ -48,9 +48,18 @@ the particle. See the :doc:`Howto granular surfaces
 and normal vectors are calculated based on the geometry of the surface
 and when friction is transferred between lines/triangles.
 
-Pair coefficients are identical to those in the :doc:`granular
-<pair_granular>` pair style. The only exception is that forces cannot
-extend beyond contact as in the JKR contact model.
+
+All model choices and parameters are entered in the :doc:`pair_coeff
+<pair_coeff>` command.  Coefficient values are not global, but can be
+set to different values for different combinations of particle types,
+as determined by the :doc:`pair_coeff <pair_coeff>` command.  If the
+contact model choice is the same for two particle types, the mixing
+for the cross-coefficients can be carried out automatically.  For
+additional flexibility, coefficients as well as model forms can vary
+between particle types. Available pair coefficients and contact models
+are identical to those in the :doc:`granular <pair_granular>` pair
+style. The only exception is that forces cannot extend beyond contact
+as in the JKR contact model.
 
 -----------
 

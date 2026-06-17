@@ -224,12 +224,7 @@ void PairSurfGranular::compute(int eflag, int vflag)
 
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
-      j &= NEIGHMASK;           // ignore special bonds for now
-
-      // Do we need special bonds?
-      // factor_lj = special_lj[sbmask(j)];
-      // j &= NEIGHMASK;
-      // if (factor_lj == 0) continue;
+      j &= NEIGHMASK; // ignore special bonds for now
 
       // sanity check that neighbor list is built correctly
 

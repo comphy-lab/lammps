@@ -467,7 +467,7 @@ two flat lines are perfectly parallel, then :math:`\hat{n}_{f,i} =
 \hat{n}_{s,i} = \hat{n}_{s,j}` implying the concave/convex designation
 has no effect.  Lastly, if a point is shared by more than two lines,
 then LAMMPS finds which connecting line has a normal vector closest to
-:math:`\hat{n}_{s,i}` to determining whether its a concave or convex
+:math:`\hat{n}_{s,i}` to determining whether it's a concave or convex
 connection.
 
 To illustrate, these scenarios are visualized in the figure below.  In
@@ -477,15 +477,10 @@ Here the leftmost line is labeled *i* and the rightmost line is labeled
 *j*.  The direction of the force :math:`\hat{n}_{f,i}` from line *i* is
 indicated by arrows.  Along the entire contact, :math:`\hat{n}_{f,i} =
 \hat{n}_{s,i}` where the normal vectors for each line are indicated by
-gray arrows for clarity.  If alternatively :math:`\hat{n}_{f,i} =
-\hat{n}_{r,i}`, then the force at the right most positions (blue/purple)
-would have a relatively large component parallel to the adjacent line
-*j* which would produce an unphysical wobble in the direction of the net
-force from the two lines as the particle moved around the bend.  In the
-right panel, the contact point is at a convex corner such that
-:math:`\hat{n}_{f,i} = \hat{n}_{r,i}` (red, green) unless
-:math:`\hat{n}_{r,i}` has a component pointing into the the adjacent
-line :math:`j`, in which case :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`
+gray arrows for clarity.  In the right panel, the contact point is at a
+convex corner such that :math:`\hat{n}_{f,i} = \hat{n}_{r,i}` (red,
+green) unless :math:`\hat{n}_{r,i}` has a component pointing into the
+adjacent line :math:`j`, in which case :math:`\hat{n}_{f,i} = \hat{n}_{s,j}`
 (blue, purple).
 
 .. figure:: img/gransurf_nonflat_turn.png
@@ -618,7 +613,7 @@ separated by a gap less than the expected overlap distance between a
 particle and a surface can lead to unintended additional forces.
 
 .. figure:: img/gransurf_U_geom.png
-            :figwidth: 75
+            :figwidth: 75%
             :align: right
             :target: _images/gransurf_U_geom.png
 
