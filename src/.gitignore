@@ -104,6 +104,7 @@
 /image_objects.h
 /scalable_font.cpp
 /scalable_font.h
+/scalable_sans_font.h
 
 /kim_*.cpp
 /kim_*.h
