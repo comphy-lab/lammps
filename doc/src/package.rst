@@ -129,9 +129,9 @@ Syntax
           chunksize = # of iterations each thread will perform for the bond force computation
         *auto/tuning = nevery nsamples mode reltol
           nevery = # timesteps between autotuning adjustments (default = 0, no autotuning)
-          nsamples = # samples the tuner(s) collects per parameter set (default = 5)
-          mode = how to pick a representative value from the samples to a parameter set, i.e. maximum, average or median value
-          reltol = relative tolerance for performance degradation that triggers a re-scan of parameter space (default = 0.2)
+          nsamples = # samples the tuner(s) collects for each parameter combination
+          mode = how to pick a performance value from the samples collected, i.e. maximum, average or median value
+          reltol = relative tolerance for performance degradation that triggers re-tuning of parameter values
     *omp* args = Nthreads keyword value ...
       Nthreads = # of OpenMP threads to associate with each MPI process
       zero or more keyword/value pairs may be appended
@@ -622,52 +622,57 @@ each thread finds the neighbor list of an atom).  If not specified, the default 
 of this parameter is determined based on the GPU architecture at runtime.
 
 The *bond/chunk/size* keyword sets the number of iterations that a work item
-is scheduled used for launching the bond force kernel on the GPU.  The default value
+is scheduled for the bond force kernel on the GPU.  The default value
 of this parameter is determined based on the GPU architecture at runtime.
 
 .. versionadded:: TBD
 
 The *auto/tuning* keyword enables the auto-tuning feature of
-the KOKKOS package when using GPUs.  When enabled, the KOKKOS styles in use will scan
-through the possible values of the kernel launch parameters (that is, execution policies)
-such as *pair/team/size* and *threads/per/atom* for pair styles and *bond/chunk/size*
-for bond styles, and find the combination that gives the best simulation
-performance in terms of the number of timesteps per second.
-The optimal combination of the kernel launch parameters are then fixed
-for the remaining part of the run, unless the performance drops below
-a certain relative tolerance compared to the found optimal performance.
+the KOKKOS package when using GPUs.  When enabled, the tuner of the KOKKOS styles
+in use will scan through the possible values of kernel launch parameters,
+such as *pair/team/size* and *threads/per/atom* for pair styles,
+*bond/chunk/size* for bond styles, and *nbin/atoms/per/bin* for neighbor builds.
+When the scanning completes, the tuner stores the best overall performance
+(in terms of the number of timesteps per second) with the corresponding
+kernel launch parameter combination.  
+
+The tuner then uses the optimal parameter combination to launch the kernels
+on the GPU and monitors the simulation performance periodically.
+If the performance drops below a certain relative tolerance from
+the last stored optimal value, the tuner may attempt to find the new optimal
+parameter combination by rerunning the scanning process.
 
 The following parameters are needed for the auto-tuning process.
 
-*nevery* controls the interval used to estimate
-the overall performance for a combination of these two parameters.
-*nevery* needs to be large enough to have a stable estimate
-of the performance, to achieve a sufficiently large number of kernel calls,
-while small enough to reduce the time required for scanning
-over all the combinations. *nevery* = 100 is usually a reasonable value.
+   *nevery* controls the interval used to estimate the overall performance
+   for a combination of these two parameters.  *nevery* needs to be large
+   enough to have a stable estimate of the performance, to achieve 
+   a sufficiently large number of kernel calls, while small enough to reduce
+   the time required for scanning over all the combinations.
+   *nevery* = 100 is usually a reasonable value.
 
-*nsamples* indicates the number of samples the tuners will
-collect for each parameter set.  *nsamples* = 5 is usually a reasonable value.
+   *nsamples* indicates the number of samples the tuners will collect
+   for each parameter combination.  *nsamples* = 5 is usually a reasonable value.
 
-*mode* controls how the representative performance of a paramter set
-is selected from the collected samples: *max* means the maximum value,
-*ave* means the arithmetic average value, and *median* means the median
-value.
+   *mode* determines how the performance of a collection of samples is determined:
+   *max* means the maximum value, *ave* means the arithmetic average value,
+   and *median* means the median value.
 
-*reltol* sets the relative tolerance for performance degradation
-compared to the last optimal performance, which will trigger a re-scan
-of the parameter space.  A value of 0.2 means that if the current performance
-is more than 20% below the last optimal performance for *nsamples* times,
-a re-scan will be triggered.  Setting *reltol* to be equal or greater than 1.0
-will disable the re-scanning.
+   *reltol* sets the relative tolerance for performance degradation
+   compared to the last optimal performance, which may trigger a re-scan
+   of the parameter space.  Setting *reltol* to be equal or greater than 1.0
+   will disable the re-scanning.
+
+For example, suppose that the last stored best performance is
+1000 timesteps per second, and that *nevery* = 100 and *nsamples* = 5,
+*reltol* = 0.2. The tuners monitor the performance every 100 timesteps,
+and if the performance drops below 800 timesteps per second by 5 times
+the tuners will trigger a re-scanning over the parameter combinations
+to find a new optimal parameter combination.
 
 If *nevery* is 0, autotuning is disabled and the 3 parameters *nsamples*,
 *mode* and *reltol* need to be specified but have no effect to the run.
 
-The *auto/tuning* feature is currently supported by a limited number of the KOKKOS styles
-and disabled by default.  The parameter scanning process of a KOKKOS style
-is logged into the corresponding text file, *tuning-[style-name].log*
-in the working folder.
 
 OPENMP package settings
 ^^^^^^^^^^^^^^^^^^^^^^^
