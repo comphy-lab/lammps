@@ -63,6 +63,26 @@ as in the JKR contact model.
 
 -----------
 
+LAMMPS automatically sets pairwise cutoff values for *pair_style
+granular* based on the atom radii.  In the vast majority of situations,
+this is adequate. However, a cutoff value can optionally be appended to
+the *pair_style granular* command to specify a global cutoff (i.e. a
+cutoff for all atom types).  Additionally, the optional *cutoff* keyword
+can be passed to the *pair_coeff* command, followed by a cutoff value.
+This will set a pairwise cutoff for the atom types in the *pair_coeff*
+command.  These options may be useful in some rare cases where the automatic
+cutoff determination is not sufficient, e.g.  if particle diameters are
+being modified via the *fix adapt* command.  In that case, the global cutoff
+specified as part of the *pair_style granular* command is applied to all
+atom types, unless it is overridden for a given atom type combination by
+the *cutoff* value specified in the *pair coeff* command.  If *cutoff*
+is only specified in the *pair coeff* command and no global cutoff is
+appended to the *pair_style granular* command, then LAMMPS will use that
+cutoff for the specified atom type combination, and automatically set
+pairwise cutoffs for the remaining atom types.
+
+-----------
+
 Mixing, shift, table, tail correction, restart, rRESPA info
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
