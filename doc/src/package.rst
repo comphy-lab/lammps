@@ -644,6 +644,11 @@ currently support auto-tuning:
 * :doc:`tersoff/kk <pair_tersoff>`
 * :doc:`zbl/kk <pair_zbl>`
 
+These styles serve as templates for incorporating autotuners into
+other KOKKOS styles in the future. To avoid duplicated codes,
+one possibility is to refactor the tuners so that KOKKOS styles
+can request and enable them through a consistent API.
+
 It is recommended that auto-tuning is enabled only when the simulated system
 is in steady state.  The performance gain due to auto-tuning typically varies
 with the KOKKOS styles and the simulated system.  For the benchmark systems
