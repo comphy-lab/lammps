@@ -48,7 +48,6 @@ the particle. See the :doc:`Howto granular surfaces
 and normal vectors are calculated based on the geometry of the surface
 and when friction is transferred between lines/triangles.
 
-
 All model choices and parameters are entered in the :doc:`pair_coeff
 <pair_coeff>` command.  Coefficient values are not global, but can be
 set to different values for different combinations of particle types,
