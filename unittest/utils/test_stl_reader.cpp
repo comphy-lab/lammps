@@ -16,6 +16,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <string>
