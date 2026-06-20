@@ -330,7 +330,7 @@ the charge:
    the full-size images)</center><br>
 
 .. versionchanged:: TBD
-   
+
 Similar color selections are available for coloring bonds. The available
 options are: *type*, *atom*, *c_ID* (or *c_ID[I]*), and *none*.  With
 *type* the bonds are colored by having a color assigned to each bond
@@ -366,7 +366,7 @@ bonds are drawn.
 
    <center>(Different bond colorization settings. Left to right: by type, by element,
    by bond force, and no bonds. Click to see the full-size images)</center>
-   
+
 --------------------
 
 Transparency
