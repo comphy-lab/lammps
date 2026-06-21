@@ -639,7 +639,6 @@ currently support auto-tuning:
 * :doc:`lj/charmm/coul/long/kk <pair_charmm>`
 * :doc:`lj/cut/dipole/cut/kk <pair_dipole>`
 * :doc:`dpd/kk <pair_dpd>`
-* :doc:`snap/kk <pair_snap>`
 * :doc:`sw/kk <pair_sw>`
 * :doc:`tersoff/kk <pair_tersoff>`
 * :doc:`zbl/kk <pair_zbl>`
