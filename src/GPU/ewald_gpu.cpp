@@ -34,24 +34,22 @@ using namespace MathConst;
 
 // external functions from gpu library
 
-#define EWALD_GPU_API(api)  ewald_gpu_ ## api ## _d
-
-void EWALD_GPU_API(init)(const int nlocal, const int nall, FILE *screen,
+void ewald_gpu_init(const int nlocal, const int nall, FILE *screen,
                          int &success);
-void EWALD_GPU_API(setup)(const int kmax, const int kcount, int *kxvecs,
+void ewald_gpu_setup(const int kmax, const int kcount, int *kxvecs,
                           int *kyvecs, int *kzvecs, double *ug, double **eg,
                           double **vg, double *unitk, int &success);
-int EWALD_GPU_API(structure)(const int ago, const int nlocal, const int nall,
+int ewald_gpu_structure(const int ago, const int nlocal, const int nall,
                              double **host_x, int *host_type, double *host_q,
                              double *host_sfacrl, double *host_sfacim,
                              bool &success);
-void EWALD_GPU_API(compute)(double *host_sfacrl_all, double *host_sfacim_all,
+void ewald_gpu_compute(double *host_sfacrl_all, double *host_sfacim_all,
                             const double qscale, const int slabflag,
                             const int eflag_atom, const int vflag_atom,
                             double *host_eatom, double **host_vatom,
                             bool &success);
-void EWALD_GPU_API(clear)(const double cpu_time);
-double EWALD_GPU_API(bytes)();
+void ewald_gpu_clear(const double cpu_time);
+double ewald_gpu_bytes();
 
 /* ---------------------------------------------------------------------- */
 
@@ -66,7 +64,7 @@ EwaldGPU::EwaldGPU(LAMMPS *lmp) : Ewald(lmp), cpu_time(0.0)
 
 EwaldGPU::~EwaldGPU()
 {
-  EWALD_GPU_API(clear)(cpu_time);
+  ewald_gpu_clear(cpu_time);
 }
 
 /* ----------------------------------------------------------------------
@@ -89,7 +87,7 @@ void EwaldGPU::init()
   // ready when Ewald::init() -> setup() uploads the k-space coefficients
 
   int success = 0;
-  EWALD_GPU_API(init)(atom->nlocal, atom->nlocal+atom->nghost, screen, success);
+  ewald_gpu_init(atom->nlocal, atom->nlocal+atom->nghost, screen, success);
   GPU_EXTRA::check_flag(success, error, world);
 
   Ewald::init();
@@ -105,7 +103,7 @@ void EwaldGPU::setup()
   Ewald::setup();
 
   int success = 0;
-  EWALD_GPU_API(setup)(kmax, kcount, kxvecs, kyvecs, kzvecs, ug, eg, vg, unitk,
+  ewald_gpu_setup(kmax, kcount, kxvecs, kyvecs, kzvecs, ug, eg, vg, unitk,
                        success);
   GPU_EXTRA::check_flag(success, error, world);
 }
@@ -139,7 +137,7 @@ void EwaldGPU::compute(int eflag, int vflag)
   // structure factors on the device
 
   bool success = true;
-  EWALD_GPU_API(structure)(neighbor->ago, nlocal, nall, atom->x, atom->type,
+  ewald_gpu_structure(neighbor->ago, nlocal, nall, atom->x, atom->type,
                            atom->q, sfacrl, sfacim, success);
   if (!success)
     error->one(FLERR, "Insufficient memory on accelerator for ewald/gpu");
@@ -154,7 +152,7 @@ void EwaldGPU::compute(int eflag, int vflag)
   // per-atom field/force on the device (force queued for fix gpu to merge
   // with the pair force; raw per-atom energy/virial copied into eatom/vatom)
 
-  EWALD_GPU_API(compute)(sfacrl_all, sfacim_all, qscale, slabflag, eflag_atom,
+  ewald_gpu_compute(sfacrl_all, sfacim_all, qscale, slabflag, eflag_atom,
                          vflag_atom, eatom, vatom, success);
   if (!success)
     error->one(FLERR, "Insufficient memory on accelerator for ewald/gpu");
@@ -209,6 +207,6 @@ void EwaldGPU::compute(int eflag, int vflag)
 double EwaldGPU::memory_usage()
 {
   double bytes = Ewald::memory_usage();
-  bytes += EWALD_GPU_API(bytes)();
+  bytes += ewald_gpu_bytes();
   return bytes;
 }
