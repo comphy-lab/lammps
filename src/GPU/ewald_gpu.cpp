@@ -55,6 +55,7 @@ double ewald_gpu_bytes();
 
 EwaldGPU::EwaldGPU(LAMMPS *lmp) : Ewald(lmp), cpu_time(0.0)
 {
+  triclinic_support = 0;
   GPU_EXTRA::gpu_ready(lmp->modify, lmp->error);
 }
 
@@ -121,14 +122,6 @@ void EwaldGPU::compute(int eflag, int vflag)
     natoms_original = atom->natoms;
   }
   if (qsqsum == 0.0) return;
-
-  // triclinic boxes use the host path; Ewald::compute() still gets its
-  // structure factors from the device via the overridden eik_dot_r()
-
-  if (triclinic) {
-    Ewald::compute(eflag, vflag);
-    return;
-  }
 
   const int nlocal = atom->nlocal;
   const int nall = atom->nlocal + atom->nghost;
