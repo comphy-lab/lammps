@@ -468,11 +468,11 @@ Triclinic cells are not yet supported with the *slab* keyword for the
 *pppm/tip4p*, *pppm/stagger*, *esp*, *pppm/gpu*, or *pppm/intel* styles,
 nor for the *slab nozforce* and *slab ew2d* options.
 
-The slab correction has also been extended to point dipole interactions
-:ref:`(Klapp) <Klapp>` in :doc:`kspace_style <kspace_style>` *ewald/disp*,
-*ewald/dipole*, and *pppm/dipole*\ .  This dipole slab correction is
-independent of the triclinic support described above and is currently
-limited to orthogonal (non-triclinic) simulation cells.
+The slab correction has also been extended to point dipole
+interactions :ref:`(Klapp) <Klapp>` in :doc:`kspace_style
+<kspace_style>` *ewald/disp*, *ewald/dipole*, and *pppm/dipole*\ .
+This dipole slab correction is currently limited to orthogonal
+(non-triclinic) simulation cells.
 
 .. versionchanged:: TBD
 
