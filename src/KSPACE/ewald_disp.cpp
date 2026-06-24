@@ -364,15 +364,18 @@ double EwaldDisp::rms(int km, double prd, bigint natoms,
     sqrt(1.0/(MY_PI*km*natoms)) *
     exp(-MY_PI*MY_PI*km*km/(g2*prd*prd));
 
-  // Lennard-Jones (uses the dispersion splitting parameter g_ewald_6)
+  // Lennard-Jones reciprocal-space RMS force error (uses the dispersion
+  // splitting parameter g_ewald_6).  Kolafa-Perram / Deserno-Holm analysis
+  // extended to r^-6: with the large-h asymptotic of the dispersion influence
+  // coefficient B(h) ~ 24 g^5 exp(-h^2/(4g^2))/h^2 and h_max = 2 pi km/prd,
+  //   dF_recip ~ (b2 g^6 / sqrt(N V)) sqrt(prd/(2 pi km)) exp(-pi^2 km^2/(g^2 prd^2)).
 
   double g2_6 = g_ewald_6*g_ewald_6;
-  double g7 = g2_6*g2_6*g2_6*g_ewald_6;
+  double g6 = g2_6*g2_6*g2_6;
 
-  value += 4.0*b2*g7/3.0 *
-    sqrt(1.0/(MY_PI*natoms)) *
-    (exp(-MY_PI*MY_PI*km*km/(g2_6*prd*prd)) *
-    (MY_PI*km/(g_ewald_6*prd) + 1));
+  value += b2*g6/sqrt((double)natoms*volume) *
+    sqrt(prd/(2.0*MY_PI*km)) *
+    exp(-MY_PI*MY_PI*km*km/(g2_6*prd*prd));
 
   // dipole
 
