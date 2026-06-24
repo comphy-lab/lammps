@@ -1522,10 +1522,18 @@ double EwaldDisp::NewtonSolve(double x, double Rc,
   //Begin algorithm
 
   for (int i = 0; i < maxit; i++) {
-    dx = f(x,Rc,natoms,vol,b2) / derivf(x,Rc,natoms,vol,b2);
+    double dfx = derivf(x,Rc,natoms,vol,b2);
+    if (dfx == 0.0 || dfx != dfx) // flat/invalid derivative
+      return -1;
+    dx = f(x,Rc,natoms,vol,b2) / dfx;
+    // Damped (backtracking) Newton: the error estimate is monotonic in g with a
+    // unique positive root, but a raw Newton step can overshoot to g <= 0 at
+    // large cutoffs (where f is flat near the initial guess) and abort.  Halve
+    // the step until it keeps x positive so the solver converges robustly.
+    while (x - dx <= 0.0) dx *= 0.5;
     x = x - dx; //Update x
     if (fabs(dx) < tol) return x;
-    if (x < 0 || x != x) // solver failed
+    if (x != x) // solver failed
       return -1;
   }
   return -1;
@@ -1550,8 +1558,14 @@ double EwaldDisp::f(double x, double Rc, bigint natoms, double vol, double b2)
       sqrt(13.0/6.0*Cc*Cc + 2.0/15.0*Dc*Dc - 13.0/15.0*Cc*Dc) *
       exp(-rg2)) - accuracy;
   } else if (function[1] || function[2]) { // LJ
-    f = (4.0*MY_PI*b2*powint(x,4)/vol/sqrt((double)natoms)*erfc(a) *
-      (6.0*powint(a,-5) + 6.0*powint(a,-3) + 3.0/a + a) - accuracy);
+    // Kolafa-Perram real-space RMS force error for r^-6, extended by
+    // Isele-Holder et al. (J. Chem. Phys. 137, 174107 (2012), Eq. 20).  The
+    // published Eq. 20 has a dimensional typo in the denominator (sqrt(N) V Rc);
+    // the correct form is sqrt(N V Rc), which makes the estimate dimensionally
+    // consistent and match measured bulk errors to ~Kolafa-Perram accuracy.
+    double a2 = a*a;
+    f = (b2*sqrt(MY_PI)*powint(x,5)/sqrt(vol*Rc*(double)natoms) *
+      (6.0/(a2*a2*a2) + 6.0/(a2*a2) + 3.0/a2 + 1.0) * exp(-a2) - accuracy);
   }
 
   return f;
