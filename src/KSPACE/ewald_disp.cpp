@@ -364,14 +364,15 @@ double EwaldDisp::rms(int km, double prd, bigint natoms,
     sqrt(1.0/(MY_PI*km*natoms)) *
     exp(-MY_PI*MY_PI*km*km/(g2*prd*prd));
 
-  // Lennard-Jones
+  // Lennard-Jones (uses the dispersion splitting parameter g_ewald_6)
 
-  double g7 = g2*g2*g2*g_ewald;
+  double g2_6 = g_ewald_6*g_ewald_6;
+  double g7 = g2_6*g2_6*g2_6*g_ewald_6;
 
   value += 4.0*b2*g7/3.0 *
     sqrt(1.0/(MY_PI*natoms)) *
-    (exp(-MY_PI*MY_PI*km*km/(g2*prd*prd)) *
-    (MY_PI*km/(g_ewald*prd) + 1));
+    (exp(-MY_PI*MY_PI*km*km/(g2_6*prd*prd)) *
+    (MY_PI*km/(g_ewald_6*prd) + 1));
 
   // dipole
 
@@ -499,6 +500,7 @@ void EwaldDisp::coefficients()
   double h[3];
   hvector *hi = hvec, *nh;
   double eta2 = 0.25/(g_ewald*g_ewald);
+  double eta2_6 = 0.25/(g_ewald_6*g_ewald_6);    // dispersion uses its own g_ewald_6
   double b1, b2, expb2, h1, h2, c1, c2;
   double *ke = kenergy, *kv = kvirial;
   int func0 = function[0], func12 = function[1]||function[2],
@@ -517,10 +519,12 @@ void EwaldDisp::coefficients()
       *(kv++) = -c2*h[2]*h[1];
     }
     if (func12) {                                        // -Bij/r^6 coeffs
-      b1 = sqrt(b2);                                        // minus sign folded
+      double b2_6 = h2*eta2_6;                             // dispersion split width
+      double expb2_6 = exp(-b2_6);
+      b1 = sqrt(b2_6);                                     // minus sign folded
       h1 = sqrt(h2);                                        // into constants
-      *(ke++) = c1 = -h1*h2*((c2=MY_PIS*erfc(b1))+(0.5/b2-1.0)*expb2/b1);
-      *(kv++) = c1-(c2 = 3.0*h1*(c2-expb2/b1))*h[0]*h[0];
+      *(ke++) = c1 = -h1*h2*((c2=MY_PIS*erfc(b1))+(0.5/b2_6-1.0)*expb2_6/b1);
+      *(kv++) = c1-(c2 = 3.0*h1*(c2-expb2_6/b1))*h[0]*h[0];
       *(kv++) = c1-c2*h[1]*h[1];                        // lammps convention
       *(kv++) = c1-c2*h[2]*h[2];                        // instead of voigt
       *(kv++) = -c2*h[1]*h[0];
@@ -628,6 +632,7 @@ void EwaldDisp::init_coeff_sums()
 void EwaldDisp::init_self()
 {
   double g1 = g_ewald, g2 = g1*g1, g3 = g1*g2;
+  double g3_6 = g_ewald_6*g_ewald_6*g_ewald_6;    // dispersion uses its own g_ewald_6
   const double qscale = force->qqrd2e * scale;
 
   memset(energy_self, 0, EWALD_NFUNCS*sizeof(double));        // self energy
@@ -638,13 +643,13 @@ void EwaldDisp::init_self()
     energy_self[0] = qsqsum*qscale*g1/MY_PIS-virial_self[0];
   }
   if (function[1]) {                                        // geometric 1/r^6
-    virial_self[1] = MY_PI*MY_PIS*g3/(6.0*volume)*sum[1].x*sum[1].x;
-    energy_self[1] = -sum[1].x2*g3*g3/12.0+virial_self[1];
+    virial_self[1] = MY_PI*MY_PIS*g3_6/(6.0*volume)*sum[1].x*sum[1].x;
+    energy_self[1] = -sum[1].x2*g3_6*g3_6/12.0+virial_self[1];
   }
   if (function[2]) {                                        // arithmetic 1/r^6
-    virial_self[2] = MY_PI*MY_PIS*g3/(48.0*volume)*(sum[2].x*sum[8].x+
+    virial_self[2] = MY_PI*MY_PIS*g3_6/(48.0*volume)*(sum[2].x*sum[8].x+
         sum[3].x*sum[7].x+sum[4].x*sum[6].x+0.5*sum[5].x*sum[5].x);
-    energy_self[2] = -sum[2].x2*g3*g3/3.0+virial_self[2];
+    energy_self[2] = -sum[2].x2*g3_6*g3_6/3.0+virial_self[2];
   }
   if (function[3]) {                                        // dipole
     virial_self[3] = 0;                                        // in surface
@@ -659,6 +664,7 @@ void EwaldDisp::init_self_peratom()
   if (!(vflag_atom || eflag_atom)) return;
 
   double g1 = g_ewald, g2 = g1*g1, g3 = g1*g2;
+  double g3_6 = g_ewald_6*g_ewald_6*g_ewald_6;    // dispersion uses its own g_ewald_6
   const double qscale = force->qqrd2e * scale;
   double *energy = energy_self_peratom[0];
   double *virial = virial_self_peratom[0];
@@ -682,8 +688,8 @@ void EwaldDisp::init_self_peratom()
   if (function[1]) {                                        // geometric 1/r^6
     double *ei = energy+1;
     double *vi = virial+1;
-    double ce = -g3*g3/12.0;
-    double cv = MY_PI*MY_PIS*g3/(6.0*volume);
+    double ce = -g3_6*g3_6/12.0;
+    double cv = MY_PI*MY_PIS*g3_6/(6.0*volume);
     int *typei = atom->type, *typen = typei + atom->nlocal;
     for (; typei < typen; typei++, vi += EWALD_NFUNCS, ei += EWALD_NFUNCS) {
       double b = B[*typei];
@@ -695,8 +701,8 @@ void EwaldDisp::init_self_peratom()
     double *bi;
     double *ei = energy+2;
     double *vi = virial+2;
-    double ce = -g3*g3/3.0;
-    double cv = 0.5*MY_PI*MY_PIS*g3/(48.0*volume);
+    double ce = -g3_6*g3_6/3.0;
+    double cv = 0.5*MY_PI*MY_PIS*g3_6/(48.0*volume);
     int *typei = atom->type, *typen = typei + atom->nlocal;
     for (; typei < typen; typei++, vi += EWALD_NFUNCS, ei += EWALD_NFUNCS) {
       bi = B+7*typei[0]+7;
