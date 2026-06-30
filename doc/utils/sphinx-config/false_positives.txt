@@ -358,6 +358,7 @@ blockiness
 blocksize
 blocky
 blueviolet
+bmap
 bn
 bni
 bnumeric
@@ -608,6 +609,7 @@ collisional
 colname
 colorbar
 colormap
+colormaps
 colorscale
 Columic
 colvars
@@ -923,6 +925,7 @@ dmi
 dname
 dnf
 DNi
+dnote
 Dobnikar
 Dobson
 docenv
@@ -1351,6 +1354,7 @@ frcmod
 fread
 Freitas
 Frenkel
+frictionless
 Friedrichs
 fs
 fsaa
@@ -1495,6 +1499,8 @@ Graining
 Grama
 grana
 granregion
+GRANSURF
+gransurf
 graphene
 Gravelle
 Greathouse
@@ -1819,6 +1825,7 @@ iter
 iteratively
 iters
 Ith
+Itokawa
 Itsets
 itype
 itypeN
@@ -2346,12 +2353,16 @@ Maxfoo
 maxima
 maxit
 maxiter
+Maxmol
+maxmol
 maxreplace
 maxsize
 maxspecial
 maxSteps
 maxstrain
 maxtry
+Maxtype
+maxtype
 maxvol
 maxwell
 Maxwellian
@@ -3633,6 +3644,7 @@ Santangelo
 Sanyal
 Sanz
 Sarath
+sawteeth
 sc
 scafacos
 SCAFACOS
@@ -3786,6 +3798,8 @@ smallint
 Smallint
 smallsmall
 smatb
+smax
+smaxtype
 smd
 SMD
 smi
@@ -3868,6 +3882,7 @@ Steinhardt
 Steinhauser
 Stepaniants
 stepwise
+stereolithography
 Stesmans
 stevens
 stiffnesses
