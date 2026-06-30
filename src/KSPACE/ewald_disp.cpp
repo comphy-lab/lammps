@@ -181,7 +181,13 @@ void EwaldDisp::init()
           t = TERM_DIPOLE;
           break;
         case 6:
-          if (ewald_mix == Pair::GEOMETRIC) t = TERM_DISP_GEOM;
+          // honor kspace_modify mix/disp (base-class mixflag): 1 = force geometric,
+          // 2 = none, 0 = follow the pair style's rule.  ewald/disp has no eigenvalue
+          // splitting (the "none" path of pppm/disp), so mix/disp none is rejected.
+          if (mixflag == 2)
+            error->all(FLERR,"kspace_modify mix/disp none is not supported by "
+                             "kspace_style ewald/disp");
+          if (mixflag == 1 || ewald_mix == Pair::GEOMETRIC) t = TERM_DISP_GEOM;
           else if (ewald_mix == Pair::ARITHMETIC) t = TERM_DISP_ARITH;
           else error->all(FLERR,"Unsupported mixing rule in kspace_style ewald/disp");
           break;
