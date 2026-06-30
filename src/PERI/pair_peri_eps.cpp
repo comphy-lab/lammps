@@ -358,7 +358,7 @@ void PairPeriEPS::compute(int eflag, int vflag)
         // a bounded O(1) residual factor (1 + m_i/m_j)/2).  Adopting that exact
         // radial-return form changes results near free surfaces, so it is left
         // to a future PR and review by a domain expert; see the discussion in
-        // pull request #5046 and doc/src/pair_peri.rst.
+        // pull request #5046, tracking issue #5064, and doc/src/pair_peri.rst.
       }
 
       if (r > 0.0) fbondElastoPlastic = -((rkNew/r) * vfrac[j] * vfrac_scale);

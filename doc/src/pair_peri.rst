@@ -175,7 +175,8 @@ from earlier versions.
 The dimensionally exact form of this update is a per-bond radial return that is
 also exact at free surfaces (where the interior approximation leaves a small
 bounded residual).  Adopting it would slightly change results near boundaries,
-so it is left for a future revision and review by a peridynamics expert.
+so it is left for a future revision and review by a peridynamics expert; this
+is tracked as `issue #5064 <https://github.com/lammps/lammps/issues/5064>`_.
 
 ----------
 
